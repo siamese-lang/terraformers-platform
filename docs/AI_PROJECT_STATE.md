@@ -6,17 +6,19 @@ This checkpoint lets a new conversation or agent resume from repository evidence
 
 - Repository: `siamese-lang/terraformers-platform`
 - Default branch: `main`
-- State captured from main SHA: `36fbd9eefb61c42a84fc1a2147d6c3677195bcb6`
+- M0 closure evidence SHA: `3ccf17582ae91ad131d3efe8ce1a38492c401c72`
 
-This SHA is the reference base used to write this state document. Current `main` may differ after merge, so every new task must verify GitHub `main` again rather than treating this SHA as permanently current. It is not this PR's head SHA or a predicted merge SHA.
+M0 closure was validated against this main SHA. Current `main` may differ after merge, so every new task must verify GitHub `main` again rather than treating this SHA as permanently current. It is not this PR's head SHA or a predicted merge SHA.
 
 ## Current milestone
 
 - Milestone: **M0 — Baseline & Governance**
-- Status: **ACTIVE**
-- Phase: governance/documentation closure
+- Status: **COMPLETE**
+- Phase: transition ready for M1 activation
+- Next milestone: **M1 — Cloud Decoupling**
+- M1 status: **PLANNED / ready for activation**
 
-M0 remains active until its final consistency and closure work is completed.
+M1 remains planned until its active plan is created and merged.
 
 ## Completed
 
@@ -30,7 +32,9 @@ M0 remains active until its final consistency and closure work is completed.
 - [GCP deployment architecture and capability mapping](architecture/deployment-gcp.md)
 - [Modernization master plan](plans/MASTER_PLAN.md)
 - [Active M0 plan](plans/active/M0-baseline-and-governance.md)
-- [AI project state](AI_PROJECT_STATE.md) (created by this change)
+- [AI project state](AI_PROJECT_STATE.md)
+- M0 final cross-document consistency validation — **PASS**
+- M0 closure evidence SHA — `3ccf17582ae91ad131d3efe8ce1a38492c401c72`
 
 ## Verified architectural direction
 
@@ -80,11 +84,11 @@ Do not infer the user's account state.
 
 ## Remaining M0 work
 
-Only **M0 final consistency / closure** remains after this change merges. That task must validate all source-of-truth links; check AGENTS, inventory, ADRs, target/deployment architecture, plans, and this state for contradictions; record the exact closure main SHA; mark M0 `COMPLETE`; record M1 entry readiness; and set the immediate next milestone to **M1 — Cloud Decoupling**. None of that closure is complete in this change.
+No remaining M0 work.
 
 ## Immediate next work
 
-The next single task is **M0 final consistency / closure**. Cloud Shell capacity discovery, M1 implementation, and GCP resource creation are not immediate work; they belong after M0 closure in the appropriate milestone/plan.
+The next single task is to create `docs/plans/active/M1-cloud-decoupling.md` and record M1 Cloud Decoupling's actual first incomplete task and exit evidence as source of truth. Do not start M1 implementation until that active plan is merged.
 
 ## Do not revisit
 
@@ -106,7 +110,7 @@ Without new evidence, an ADR where needed, and the change gate, do not:
 
 ## Working rules
 
-Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this document, (4) read `MASTER_PLAN.md`, (5) read the current active milestone plan, and (6) start from its first incomplete item.
+Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this document, (4) read `MASTER_PLAN.md`, and (5) read the current active milestone plan. No M1 active plan exists yet, so the next task is to create it; do not start M1 implementation before that plan is merged.
 
 For a substantive change, record an observed problem, reproducible evidence, a change that directly addresses it, and same-condition revalidation. Establish a fixed evaluation baseline before AI changes, reproduce a failure before reliability changes, and require diagnosis evidence—not dashboard count—for observability completion.
 

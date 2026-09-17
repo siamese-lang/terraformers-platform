@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE**
+**COMPLETE**
 
 ## Objective
 
@@ -28,17 +28,13 @@
 - [x] [ADR-003: Require evaluation before AI/RAG complexity](../../architecture/decisions/ADR-003-evaluation-before-complexity.md)
 - [x] [ADR-004: Gate architectural changes on reproducible evidence](../../architecture/decisions/ADR-004-change-gates.md)
 - [x] [Target architecture](../../architecture/target-architecture.md)
-- [x] [Modernization master plan](../MASTER_PLAN.md)과 이 active M0 plan 생성 (현재 변경)
+- [x] [Modernization master plan](../MASTER_PLAN.md)과 active M0 plan
 - [x] [GCP deployment architecture](../../architecture/deployment-gcp.md)
 - [x] [AI project state](../../AI_PROJECT_STATE.md)
 
 ## Remaining work
 
-아래 한 작업만 M0 remaining work다. Application/runtime implementation을 추가하지 않는다.
-
-1. [ ] M0 final consistency / closure
-   - Source-of-truth links와 architecture/ADR/plan 사이 contradiction을 확인한다.
-   - Exact closure main SHA와 M1 entry readiness를 기록한다.
+No remaining M0 work.
 
 ## Exit criteria
 
@@ -50,17 +46,23 @@
 - [x] `docs/plans/active/M0-baseline-and-governance.md`가 존재한다.
 - [x] `docs/architecture/deployment-gcp.md`가 존재한다.
 - [x] `docs/AI_PROJECT_STATE.md`가 존재한다.
-- [ ] 모든 문서의 repository-relative links가 valid하다.
-- [ ] Accepted decisions 사이 contradiction이 없다.
+- [x] 모든 문서의 repository-relative links가 valid하다.
+- [x] Accepted decisions 사이 contradiction이 없다.
 - [x] M0에서 runtime/application 변경을 하지 않았다.
-- [ ] Exact closure main SHA가 기록되어 있다.
-- [ ] Immediate next milestone이 **M1 — Cloud Decoupling**으로 기록되어 있다.
+- [x] Exact closure main SHA가 기록되어 있다.
+- [x] Immediate next milestone이 **M1 — Cloud Decoupling**으로 기록되어 있다.
 
-M0는 모든 criterion과 remaining work가 완료 evidence를 가질 때만 `COMPLETE`가 된다.
+M0의 모든 criterion과 remaining work가 완료 evidence를 가지므로 status는 `COMPLETE`다.
+
+## Closure evidence
+
+- M0 closure evidence SHA: `3ccf17582ae91ad131d3efe8ce1a38492c401c72`
+- Validation performed: required source-of-truth existence, repository-relative links, accepted decision consistency, evidence-first rules, deferred/gated decisions, M0 implementation scope
+- Result: **PASS**
 
 ## Immediate next work
 
-이 변경이 merge된 뒤 수행할 next single task는 **M0 final consistency / closure**다.
+Next single task는 M1 — Cloud Decoupling 진입 준비를 위해 `docs/plans/active/M1-cloud-decoupling.md`를 생성하고, M1의 실제 첫 미완료 작업과 exit evidence를 source of truth로 고정하는 것이다. 이 plan이 merge되기 전에는 M1 implementation을 시작하지 않는다.
 
 ## Evidence links
 

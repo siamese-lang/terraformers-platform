@@ -28,7 +28,7 @@
 - [x] [ADR-003: Require evaluation before AI/RAG complexity](../../architecture/decisions/ADR-003-evaluation-before-complexity.md)
 - [x] [ADR-004: Gate architectural changes on reproducible evidence](../../architecture/decisions/ADR-004-change-gates.md)
 - [x] [Target architecture](../../architecture/target-architecture.md)
-- [x] [Modernization master plan](../MASTER_PLAN.md)과 이 active M0 plan 생성 (현재 변경)
+- [x] [Modernization master plan](../MASTER_PLAN.md)과 active M0 plan
 - [x] [GCP deployment architecture](../../architecture/deployment-gcp.md)
 - [x] [AI project state](../../AI_PROJECT_STATE.md)
 

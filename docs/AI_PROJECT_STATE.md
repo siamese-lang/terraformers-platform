@@ -32,7 +32,7 @@ M1 remains planned until its active plan is created and merged.
 - [GCP deployment architecture and capability mapping](architecture/deployment-gcp.md)
 - [Modernization master plan](plans/MASTER_PLAN.md)
 - [Active M0 plan](plans/active/M0-baseline-and-governance.md)
-- [AI project state](AI_PROJECT_STATE.md) (created by this change)
+- [AI project state](AI_PROJECT_STATE.md)
 - M0 final cross-document consistency validation — **PASS**
 - M0 closure evidence SHA — `3ccf17582ae91ad131d3efe8ce1a38492c401c72`
 

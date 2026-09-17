@@ -63,7 +63,7 @@ M0는 모든 criterion과 remaining work가 완료 evidence를 가질 때만 `CO
 
 이 변경이 merge된 뒤 수행할 next single task는 **`docs/AI_PROJECT_STATE.md` 작성**이다.
 
-이 문서는 GKE 사용 여부/구체 topology, node count, VM type/size, managed DB product, specific IdP, model provider/model, exact OpenSearch hosting, exact observability backend를 임의로 확정하지 않는다. 해당 선택은 quota/capacity/runtime evidence와 별도 decision을 필요로 한다.
+이 문서는 current main SHA, current milestone, completed evidence, deferred/blocked items, immediate next work와 do-not-revisit decisions를 기록한다. Architecture/product 결정을 새로 만들지 않는다.
 
 ## Evidence links
 

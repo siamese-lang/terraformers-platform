@@ -23,7 +23,7 @@
 
 | Milestone | Status | Purpose | Exit evidence |
 | --- | --- | --- | --- |
-| M0 — Baseline & Governance | **ACTIVE** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 모든 M0 문서와 valid links, 상호 모순 없음, closure SHA와 M1 진입 기록 |
+| M0 — Baseline & Governance | **COMPLETE** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 모든 M0 문서와 valid links, 상호 모순 없음, closure SHA와 M1 진입 기록 |
 | M1 — Cloud Decoupling | PLANNED | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
 | M2 — Runtime Parity | PLANNED | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
 | M3 — AI Evaluation Baseline | PLANNED | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 machine-readable baseline과 failure taxonomy |
@@ -39,11 +39,13 @@
 
 **Problem.** 장기 작업에서 repository의 현재 사실, reusable asset, target architecture, decision rule과 실행 순서가 흔들리지 않도록 하나의 governance baseline이 필요하다.
 
-**Work.** [Component inventory](../architecture/component-inventory.md), [working contract](../../AGENTS.md), ADR-001~004와 [target architecture](../architecture/target-architecture.md)를 baseline으로 삼고 이 master plan과 [active M0 plan](active/M0-baseline-and-governance.md)을 추가한다. 남은 작업은 `deployment-gcp.md`, `AI_PROJECT_STATE.md`, final cross-document consistency/M0 closure뿐이다. M0에서는 application/runtime implementation을 하지 않는다.
+**Work.** [Component inventory](../architecture/component-inventory.md), [working contract](../../AGENTS.md), ADR-001~004와 [target architecture](../architecture/target-architecture.md)를 baseline으로 삼고 이 master plan과 [active M0 plan](active/M0-baseline-and-governance.md)을 추가했다. M0에서는 application/runtime implementation을 하지 않았다.
 
-**Evidence.** 현재 존재하는 inventory, working contract, accepted ADR-001~004, target architecture, 이 master plan과 active M0 plan이 완료 evidence다. 나머지는 active M0 plan에서 미완료로 추적한다.
+**Evidence.** M0 closure validation은 main SHA `3ccf17582ae91ad131d3efe8ce1a38492c401c72`에서 **PASS**했다. Required source-of-truth 존재와 repository-relative link validity, accepted decision consistency를 확인했고, deferred/gated decisions를 유지했으며 application/runtime implementation이 없음을 확인했다.
 
-**Exit condition.** Project scope와 architecture source of truth가 존재하고 logical architecture와 GCP deployment target이 분리되어야 한다. Deferred technology가 명확하고 active M0 plan의 미완료 항목이 없어야 한다. `AI_PROJECT_STATE.md`에 exact closure main SHA와 next milestone인 M1이 기록되어야 한다.
+**Exit condition.** **MET.** Project scope와 architecture source of truth가 존재하고 logical architecture와 GCP deployment target이 분리되어 있다. Deferred technology가 명확하고 M0 plan의 미완료 항목이 없으며, `AI_PROJECT_STATE.md`에 exact M0 closure evidence SHA와 next milestone인 M1이 기록되어 있다.
+
+**Immediate next single task.** `docs/plans/active/M1-cloud-decoupling.md`를 생성하여 M1 Cloud Decoupling의 실제 첫 미완료 작업과 exit evidence를 source of truth로 고정한다. 해당 plan이 merge되기 전에는 M1 implementation을 시작하지 않는다.
 
 ## M1 — Cloud Decoupling
 

@@ -12,13 +12,13 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current milestone
 
-- Milestone: **M0 — Baseline & Governance**
-- Status: **COMPLETE**
-- Phase: transition ready for M1 activation
-- Next milestone: **M1 — Cloud Decoupling**
-- M1 status: **PLANNED / ready for activation**
+- Milestone: **M1 — Cloud Decoupling**
+- Status: **ACTIVE**
+- Phase: provider boundary decoupling
+- Active plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
+- First implementation task: **M1-1 — Backend external identity neutralization**
 
-M1 remains planned until its active plan is created and merged.
+M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order and has not started in the plan-activation change.
 
 ## Completed
 
@@ -86,9 +86,13 @@ Do not infer the user's account state.
 
 No remaining M0 work.
 
+## Remaining M1 work
+
+M1-1 backend external identity neutralization; M1-2 backend JWT/resource-server boundary; M1-3 frontend auth/session boundary; M1-4 object storage decoupling completion; M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
+
 ## Immediate next work
 
-The next single task is to create `docs/plans/active/M1-cloud-decoupling.md` and record M1 Cloud Decoupling's actual first incomplete task and exit evidence as source of truth. Do not start M1 implementation until that active plan is merged.
+**M1-1 — Backend external identity neutralization:** 현재 Cognito-specific external subject persistence/lookup semantics를 provider-neutral external identity mapping으로 전환하되 internal `user_id`와 기존 Cognito data compatibility를 보존한다. 이 atomic implementation task는 IdP 선택, full JWT/security rewrite 또는 frontend auth rewrite를 포함하지 않는다.
 
 ## Do not revisit
 
@@ -110,7 +114,7 @@ Without new evidence, an ADR where needed, and the change gate, do not:
 
 ## Working rules
 
-Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this document, (4) read `MASTER_PLAN.md`, and (5) read the current active milestone plan. No M1 active plan exists yet, so the next task is to create it; do not start M1 implementation before that plan is merged.
+Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this document, (4) read `MASTER_PLAN.md`, and (5) read the [active M1 plan](plans/active/M1-cloud-decoupling.md). Start with its first incomplete task and do not expand that atomic task into later M1 boundaries.
 
 For a substantive change, record an observed problem, reproducible evidence, a change that directly addresses it, and same-condition revalidation. Establish a fixed evaluation baseline before AI changes, reproduce a failure before reliability changes, and require diagnosis evidence—not dashboard count—for observability completion.
 
@@ -126,4 +130,5 @@ Interpret this checkpoint through the [repository working contract](../AGENTS.md
 - [ADR-003](architecture/decisions/ADR-003-evaluation-before-complexity.md)
 - [ADR-004](architecture/decisions/ADR-004-change-gates.md)
 - [Modernization master plan](plans/MASTER_PLAN.md)
+- [Active M1 plan](plans/active/M1-cloud-decoupling.md)
 - [Active M0 plan](plans/active/M0-baseline-and-governance.md)

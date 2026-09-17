@@ -29,17 +29,15 @@
 - [x] [ADR-004: Gate architectural changes on reproducible evidence](../../architecture/decisions/ADR-004-change-gates.md)
 - [x] [Target architecture](../../architecture/target-architecture.md)
 - [x] [Modernization master plan](../MASTER_PLAN.md)과 이 active M0 plan 생성 (현재 변경)
+- [x] [GCP deployment architecture](../../architecture/deployment-gcp.md)
 
 ## Remaining work
 
-아래 세 작업만 M0 remaining work다. Application/runtime implementation을 추가하지 않는다.
+아래 두 작업만 M0 remaining work다. Application/runtime implementation을 추가하지 않는다.
 
-1. [ ] `docs/architecture/deployment-gcp.md` 작성
-   - Logical target architecture를 GCP deployment 관점에 매핑한다.
-   - Known, unknown, gated decision을 구분하고 product/topology를 과도하게 확정하지 않는다.
-2. [ ] `docs/AI_PROJECT_STATE.md` 작성
+1. [ ] `docs/AI_PROJECT_STATE.md` 작성
    - Current main SHA, current milestone, completed evidence, blocked/deferred items, immediate next work, do-not-revisit decisions를 기록한다.
-3. [ ] M0 final consistency / closure
+2. [ ] M0 final consistency / closure
    - Source-of-truth links와 architecture/ADR/plan 사이 contradiction을 확인한다.
    - Exact closure main SHA와 M1 entry readiness를 기록한다.
 
@@ -51,7 +49,7 @@
 - [x] `docs/architecture/target-architecture.md`가 존재한다.
 - [x] `docs/plans/MASTER_PLAN.md`가 존재한다.
 - [x] `docs/plans/active/M0-baseline-and-governance.md`가 존재한다.
-- [ ] `docs/architecture/deployment-gcp.md`가 존재한다.
+- [x] `docs/architecture/deployment-gcp.md`가 존재한다.
 - [ ] `docs/AI_PROJECT_STATE.md`가 존재한다.
 - [ ] 모든 문서의 repository-relative links가 valid하다.
 - [ ] Accepted decisions 사이 contradiction이 없다.
@@ -63,7 +61,7 @@ M0는 모든 criterion과 remaining work가 완료 evidence를 가질 때만 `CO
 
 ## Immediate next work
 
-이 변경이 merge된 뒤 수행할 next single task는 **`docs/architecture/deployment-gcp.md` 작성**이다.
+이 변경이 merge된 뒤 수행할 next single task는 **`docs/AI_PROJECT_STATE.md` 작성**이다.
 
 이 문서는 GKE 사용 여부/구체 topology, node count, VM type/size, managed DB product, specific IdP, model provider/model, exact OpenSearch hosting, exact observability backend를 임의로 확정하지 않는다. 해당 선택은 quota/capacity/runtime evidence와 별도 decision을 필요로 한다.
 

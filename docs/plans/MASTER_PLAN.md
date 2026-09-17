@@ -24,7 +24,7 @@
 | Milestone | Status | Purpose | Exit evidence |
 | --- | --- | --- | --- |
 | M0 — Baseline & Governance | **COMPLETE** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 모든 M0 문서와 valid links, 상호 모순 없음, closure SHA와 M1 진입 기록 |
-| M1 — Cloud Decoupling | PLANNED | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
+| M1 — Cloud Decoupling | **ACTIVE** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
 | M2 — Runtime Parity | PLANNED | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
 | M3 — AI Evaluation Baseline | PLANNED | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 machine-readable baseline과 failure taxonomy |
 | M4 — AI Targeted Improvement | PLANNED | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
@@ -48,6 +48,8 @@
 **Immediate next single task.** `docs/plans/active/M1-cloud-decoupling.md`를 생성하여 M1 Cloud Decoupling의 실제 첫 미완료 작업과 exit evidence를 source of truth로 고정한다. 해당 plan이 merge되기 전에는 M1 implementation을 시작하지 않는다.
 
 ## M1 — Cloud Decoupling
+
+**Status.** **ACTIVE.** 실행 순서와 task별 evidence는 [active M1 plan](active/M1-cloud-decoupling.md)을 따른다. 현재 첫 구현 작업은 **M1-1 — Backend external identity neutralization**이다.
 
 **Problem.** Cognito, Amplify, S3, SigV4/AOSS, Bedrock과 vendor runtime configuration이 application boundary에 결합된 지점은 portable runtime을 방해한다.
 

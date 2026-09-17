@@ -30,14 +30,13 @@
 - [x] [Target architecture](../../architecture/target-architecture.md)
 - [x] [Modernization master plan](../MASTER_PLAN.md)과 이 active M0 plan 생성 (현재 변경)
 - [x] [GCP deployment architecture](../../architecture/deployment-gcp.md)
+- [x] [AI project state](../../AI_PROJECT_STATE.md)
 
 ## Remaining work
 
-아래 두 작업만 M0 remaining work다. Application/runtime implementation을 추가하지 않는다.
+아래 한 작업만 M0 remaining work다. Application/runtime implementation을 추가하지 않는다.
 
-1. [ ] `docs/AI_PROJECT_STATE.md` 작성
-   - Current main SHA, current milestone, completed evidence, blocked/deferred items, immediate next work, do-not-revisit decisions를 기록한다.
-2. [ ] M0 final consistency / closure
+1. [ ] M0 final consistency / closure
    - Source-of-truth links와 architecture/ADR/plan 사이 contradiction을 확인한다.
    - Exact closure main SHA와 M1 entry readiness를 기록한다.
 
@@ -50,7 +49,7 @@
 - [x] `docs/plans/MASTER_PLAN.md`가 존재한다.
 - [x] `docs/plans/active/M0-baseline-and-governance.md`가 존재한다.
 - [x] `docs/architecture/deployment-gcp.md`가 존재한다.
-- [ ] `docs/AI_PROJECT_STATE.md`가 존재한다.
+- [x] `docs/AI_PROJECT_STATE.md`가 존재한다.
 - [ ] 모든 문서의 repository-relative links가 valid하다.
 - [ ] Accepted decisions 사이 contradiction이 없다.
 - [x] M0에서 runtime/application 변경을 하지 않았다.
@@ -61,9 +60,7 @@ M0는 모든 criterion과 remaining work가 완료 evidence를 가질 때만 `CO
 
 ## Immediate next work
 
-이 변경이 merge된 뒤 수행할 next single task는 **`docs/AI_PROJECT_STATE.md` 작성**이다.
-
-이 문서는 current main SHA, current milestone, completed evidence, deferred/blocked items, immediate next work와 do-not-revisit decisions를 기록한다. Architecture/product 결정을 새로 만들지 않는다.
+이 변경이 merge된 뒤 수행할 next single task는 **M0 final consistency / closure**다.
 
 ## Evidence links
 

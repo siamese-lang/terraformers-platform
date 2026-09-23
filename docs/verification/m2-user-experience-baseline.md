@@ -1,9 +1,10 @@
 # M2 User Experience Baseline
 
-**Status: PENDING**
+**Status: PASS**
 
-This is an evidence-collection change, not a production behavior change. M2 remains **ACTIVE** and
-M2-5 remains **TODO** until the authoritative workflow artifacts have been reviewed. The checked-out
+This is an evidence-collection change, not a production behavior change. The authoritative workflow
+artifacts have been reviewed and the baseline evidence is **PASS**. M2 remains **ACTIVE** and M2-5
+remains **TODO** because the first confirmed gap is provider-specific user-visible frontend copy. The checked-out
 base is `9d904c95655977c14e71fc1ac424dd91ce79550b` (the expected current GitHub `main`; the supplied
 checkout has no local `main` ref).
 
@@ -28,6 +29,78 @@ reused overlay, with `imagePullPolicy=Never`, required `terraformers-backend:por
 The pod reported `ErrImageNeverPull`, so the backend HTTP user flow was **NOT REACHED** and this is
 not application-parity evidence. The verifier now uses the overlay image identity and checks the
 rendered image before creating or waiting on the runtime.
+
+## Authoritative result
+
+**M2 User Experience Baseline Verification** run #2 passed at validated head
+`a756c46efe88124528b5c0467c5e8c1e4ac461fb`. Both workflow jobs completed successfully:
+
+- `Portable backend user flow` — **SUCCESS**
+- `Frontend contract` — **SUCCESS**
+
+The backend machine-readable summary recorded:
+
+```text
+runtime_ready=PASS
+project_upload=PASS
+analysis_terminal=PASS
+owned_project_list=PASS
+owner_private_get=PASS
+other_private_forbidden=PASS
+anonymous_private_forbidden=PASS
+terraform_read=PASS
+terraform_update=PASS
+terraform_update_readback=PASS
+other_terraform_update_forbidden=PASS
+anonymous_terraform_update_rejected=PASS
+project_tree=PASS
+private_comment_read_forbidden=PASS
+private_comment_write_forbidden=PASS
+other_visibility_forbidden=PASS
+anonymous_visibility_rejected=PASS
+owner_publish=PASS
+anonymous_public_get=PASS
+public_project_list=PASS
+frontend_public_project_list=PASS
+public_source_read=PASS
+public_terraform_read=PASS
+public_tree_read=PASS
+anonymous_comment_write_rejected=PASS
+canonical_comment_create=PASS
+canonical_comment_list=PASS
+compat_comment_create=PASS
+compat_comment_list=PASS
+comment_attribution=PASS
+project_delete=PASS
+first_confirmed_gap=none
+cloud_credentials_required=false
+```
+
+The Terraform update was also checked across API content, MariaDB checksum/inline content, and the
+filesystem test-runtime object. All three hashes matched:
+
+`cf1ca391b45023fd5f866aef84e24abb6bef1bc12e4d87ed32c10e0d57b1590c`.
+
+Comment attribution was verified from MariaDB: the canonical comment belonged to
+`m2-ux-other` and the compatibility comment belonged to `m2-ux-owner`; spoofed request identity
+fields did not control the stored author.
+
+The frontend job recorded:
+
+```text
+frontend_tests=PASS
+frontend_production_build=PASS
+frontend_entrypoint=PASS
+public_identity_copy_provider_neutral=FAIL
+analysis_waiting_copy_provider_neutral=FAIL
+project_tree_locator_provider_neutral=FAIL
+known_provider_specific_visible_copy=3
+first_confirmed_gap=frontend_provider_specific_visible_copy
+browser_e2e_required_for_m2=false
+```
+
+Therefore the backend user/project/comment/runtime contract has no confirmed M2-5 gap. The
+authoritative first gap is limited to three provider-specific strings in active generic frontend UI.
 
 ## Backend actual HTTP matrix
 
@@ -87,7 +160,7 @@ entrypoint check. Its artifact is `frontend-summary.txt`.
 Authoritative frontend fields are `frontend_tests`, `frontend_production_build`, and
 `frontend_entrypoint`, each `PASS` or `FAIL`.
 
-Run #1 recorded all three fields as `PASS`. Its focused classifications remain the three `FAIL`
+Run #2 recorded all three fields as `PASS`. Its focused classifications remain the three `FAIL`
 values below, with `known_provider_specific_visible_copy=3`,
 `first_confirmed_gap=frontend_provider_specific_visible_copy`, and
 `browser_e2e_required_for_m2=false`; no production fix is included here.
@@ -121,10 +194,10 @@ Kubernetes frontend workload remain deferred; general desirability is not eviden
 
 ## First confirmed gap
 
-If every runtime assertion passes, the baseline classification is
+All authoritative runtime assertions passed. The baseline classification is therefore
 `first_confirmed_gap=frontend_provider_specific_visible_copy`, with the three detailed FAIL values
-above. Any runtime HTTP failure takes priority and its first failing check from `backend-summary.txt`
-is authoritative. Review must not advance M2-5 or M2-6 before authoritative artifacts are available.
+above. M2-5 remains **TODO** until those three active generic UI presentations are made
+provider-neutral and the same frontend regression/build/classifier conditions pass.
 
 ## NOT COVERED
 
@@ -134,5 +207,7 @@ is authoritative. Review must not advance M2-5 or M2-6 before authoritative arti
 - Load, concurrency, HA, backup/restore, production retention, or security penetration testing.
 - Historical/provider-adapter source strings outside the three active generic UI presentations.
 
-The immediate next single task is to run and review **M2 User Experience Baseline Verification**,
-then apply only the smallest evidence-gated fix for the authoritative first confirmed gap.
+The immediate next single task is the smallest evidence-gated frontend-only fix for the three
+confirmed provider-specific visible strings, followed by the same frontend regression suite,
+production build, and focused classifier. No backend, runtime topology, browser framework, or
+production provider change is justified by this baseline.

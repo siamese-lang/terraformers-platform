@@ -12,15 +12,15 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current milestone
 
-- Milestone: **M2 — Runtime Parity**
-- Status: **COMPLETE**
-- Phase: milestone closure complete
-- Completed plan: [M2 — Runtime Parity](plans/active/M2-runtime-parity.md)
-- Current implementation task: **Create M3 — AI Evaluation Baseline active plan**
+- Milestone: **M3 — AI Evaluation Baseline**
+- Status: **ACTIVE**
+- Phase: evaluation contract and provenance baseline
+- Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
+- Current implementation task: **M3-1 — Evaluation contract and stage-provenance schema**
 
-M0, M1, and M2 are complete. M1-1 through M1-8 and M2-1 through M2-6 have closure evidence. M3
-remains planned; its implementation does not begin until an active M3 plan becomes repository source
-of truth.
+M0, M1, and M2 are complete. M3 is now the active milestone. Its first task defines the
+fixed-evaluation contract needed to explain what the RAG pipeline used and where an observable
+failure first occurred; it does not change prompt/retrieval/model behavior.
 
 ## Completed
 
@@ -102,27 +102,23 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 ## Current gaps
 
-The following M2 gaps are observed repository facts or execution questions, not completed
-implementations or product selections:
+M3 activation inspection found these AI/RAG measurement gaps:
 
-- the Kubernetes base has a backend workload but no frontend Deployment/Service; this does not by
-  itself prove that a frontend container is required;
-- the local-stub path uses H2 with Flyway disabled and disabled/metadata-only storage, stub analysis,
-  disabled embedding/retrieval, and logging progress, so it cannot alone prove MariaDB/Flyway,
-  object-byte, active provider, or production-like authenticated parity;
-- metadata-only object stubs do not persist or read uploaded/result bytes;
-- M2-2 provides a self-contained portable Kind runtime where namespace/apply, MariaDB 11.4 +
-  Flyway, prod backend rollout/readiness, health, and repository semantics pass; M2-3 proves
-  signed-JWT authentication through neutral external identity to internal numeric users plus project
-  ownership/authorization; and M2-4 now proves authenticated upload → source file → analysis →
-  Terraform result plus exact source/result byte persistence/read-back in the deterministic
-  `portable-object-store` fixture. That filesystem mechanism is test-runtime-only and does not
-  select production storage; and
-- M2-5 now proves the portable backend user/project/comment HTTP matrix plus frontend Jest/build
-  contracts, with `browser_e2e_required_for_m2=false`; the three previously observed
-  provider-specific visible strings were removed by a frontend-only change and same-condition
-  revalidation now reports `known_provider_specific_visible_copy=0` and
-  `first_confirmed_gap=none`.
+- no fixed/versioned AI evaluation dataset exists;
+- the current pipeline is `image → extracted architecture facts → retrieval query → embedding/OpenSearch → ranked references → generation → Terraform validation`;
+- extracted architecture facts and retrieval query are not retained in the final result;
+- retrieved `ReferenceDocument` objects contain score, authority, source path, corpus/provider
+  version, priority, resource types, and risk tags, but `AnalysisResult` currently retains only
+  reference IDs;
+- current logs expose useful counts/IDs but do not provide one per-case provenance chain through
+  extraction, retrieval, generation, and validation;
+- there is no explicit evidence mapping that lets a failed generated resource be classified as an
+  extraction, retrieval, grounding, generation, or validation problem;
+- `terraformers-reference-v2` currently contains 128 documents (90 provider documentation, 30
+  provider schema, 8 project decisions); that corpus identity is a baseline input, not a new active
+  cloud-provider decision;
+- LangChain/LangGraph remain evidence-gated. M3 first measures the existing linear Spring Boot
+  pipeline; framework adoption is considered only if measured failures justify it.
 
 ## Historical AWS implementation
 
@@ -161,11 +157,14 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Create M3 — AI Evaluation Baseline active plan.** Define the smallest repository-owned plan for a
-fixed/versioned evaluation dataset, one reusable evaluation runner, one machine-readable result
-format, and one baseline/failure-taxonomy report. Reuse the existing corpus/provider/validator
-contracts first. Do not begin M3 implementation as part of M2 closure and do not create separate
-workflow/script infrastructure for each evaluation component.
+**M3-1 — Evaluation contract and stage-provenance schema.** Define the fixed evaluation case and
+machine-readable result contract needed to preserve input/config identity, extracted architecture
+facts, retrieval query, ordered reference hits with scores/source metadata, references supplied to
+generation, generated components/relationships/Terraform resource types, validation result, stage
+latency, and normalized failure stage.
+
+Do not change prompt content, retrieval ranking, corpus contents, model choice, or production
+orchestration in M3-1. Do not introduce LangChain/LangGraph merely to implement the schema.
 
 ## Do not revisit
 
@@ -189,9 +188,10 @@ Without new evidence, an ADR where needed, and the change gate, do not:
 
 Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this
 document, (4) read `MASTER_PLAN.md`, and (5) read the
-[completed M2 plan](plans/active/M2-runtime-parity.md). The next single task is to create the M3
-active plan; do not begin M3 implementation before that plan becomes source of truth. Retain the
-[completed M1 plan](plans/active/M1-cloud-decoupling.md) as historical milestone evidence.
+[active M3 plan](plans/active/M3-ai-evaluation-baseline.md). Start with its first incomplete task
+and do not absorb M4 improvement work into M3 baseline collection. Retain the
+[completed M2 plan](plans/active/M2-runtime-parity.md) and [completed M1 plan](plans/active/M1-cloud-decoupling.md)
+as historical milestone evidence.
 
 For a substantive change, record an observed problem, reproducible evidence, a change that directly addresses it, and same-condition revalidation. Establish a fixed evaluation baseline before AI changes, reproduce a failure before reliability changes, and require diagnosis evidence—not dashboard count—for observability completion.
 

@@ -26,7 +26,7 @@
 | M0 — Baseline & Governance | **COMPLETE** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 모든 M0 문서와 valid links, 상호 모순 없음, closure SHA와 M1 진입 기록 |
 | M1 — Cloud Decoupling | **COMPLETE** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
 | M2 — Runtime Parity | **COMPLETE** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
-| M3 — AI Evaluation Baseline | PLANNED | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 machine-readable baseline과 failure taxonomy |
+| M3 — AI Evaluation Baseline | **ACTIVE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
 | M4 — AI Targeted Improvement | PLANNED | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
 | M5 — Backend Reliability Baseline | PLANNED | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
 | M6 — Backend Reliability Improvement | PLANNED | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
@@ -86,13 +86,30 @@ implementation until that plan is the repository source of truth.
 
 ## M3 — AI Evaluation Baseline
 
-**Problem.** Fixed evaluation dataset과 반복 가능한 comparison이 없어 AI/RAG 변경의 개선 여부를 판단할 수 없다.
+**Status.** **ACTIVE.** The [active M3 plan](active/M3-ai-evaluation-baseline.md) defines the
+evaluation-first sequence. The first implementation task is **M3-1 — Evaluation contract and
+stage-provenance schema**.
 
-**Work.** Fixed/versioned evaluation cases, repeatable runner, machine-readable result, baseline report와 failure taxonomy를 만든다. Component extraction, relationship extraction, retrieval, grounding/unsupported output, Terraform formatting/parsing/validation, latency, 실제 측정 가능한 model/token/cost 정보를 평가한다. 임의 threshold는 만들지 않는다.
+**Problem.** Fixed evaluation data and stage-level provenance do not yet exist, so a bad final
+Terraform result cannot be reliably localized to architecture-fact extraction, retrieval, grounding,
+generation, or validation.
 
-**Evidence.** Versioned inputs/configuration, runner command, machine-readable output, baseline report와 분류된 failure를 보존한다.
+**Work.** Build one fixed/versioned dataset, one reusable runner, one machine-readable provenance
+record, and one baseline/failure-taxonomy report. Preserve extracted facts, retrieval query,
+retrieved document IDs/scores/source metadata, generation outputs, Terraform resource types,
+validation result, runtime/model/corpus identity, and stage timing. Explainability means observable
+provenance; hidden model chain-of-thought is not required or treated as evidence.
 
-**Exit condition.** 같은 dataset과 configuration으로 반복 가능한 baseline이 존재한다.
+**Evidence.** Per-case machine-readable traces and a reproducible baseline report must show what data
+was retrieved and supplied to generation and identify the first observable divergent stage for each
+failure where evidence permits.
+
+**Exit condition.** The same dataset/configuration can be rerun, failures are attributable to
+specific pipeline stages, and M4 receives evidence-backed failure classes. LangChain, LangGraph, or
+other framework adoption remains evidence-gated rather than being an M3 prerequisite.
+
+**Immediate next single task.** Execute M3-1 only. Define the evaluation case/result contract and
+stage-provenance schema without changing production AI behavior.
 
 ## M4 — AI Targeted Improvement
 

@@ -4,7 +4,7 @@
 
 **ACTIVE**
 
-M0 is complete. M1 implementation has not started in this plan-activation change; work begins with the first `TODO` below after this plan is merged.
+M0 is complete. M1 implementation is in progress; completed work and the first remaining `TODO` below determine the current execution state.
 
 ## Objective
 
@@ -63,7 +63,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 ### M1-2 — Backend JWT / Resource Server boundary
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / coupling.** `CognitoJwtSecurityConfig` validates Cognito-specific `token_use` and `client_id` claims, while `AuthenticatedUserService` contains Cognito-specific JWT assumptions and wording.
 
@@ -73,7 +73,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 **Validation.** Verify accepted and rejected token/claim cases, internal-user mapping, security routes, and existing authorization regressions.
 
-**Completion evidence.** Pending. Record completion SHA or PR, tests/checks, and remaining task here.
+**Completion evidence.** At validated head `9b32f0ded961da74e5a83f4af7ac80b91872cc81`, generic `JwtResourceServerSecurityConfig` owns the resource-server security policy and issuer/JWK decoder wiring, while `JwtProviderTokenValidator` isolates provider-specific validation through `CognitoAccessTokenValidator`. `JwtExternalIdentityMapper` and `CognitoJwtExternalIdentityMapper` map JWT claims into provider-neutral `AuthenticatedExternalIdentity` values before application persistence, and `AuthenticatedUserService` no longer reads Cognito-specific claims or hard-codes the Cognito provider key. Current Cognito compatibility remains intact: provider key `cognito`, JWT `sub`, `token_use=access`, configured `client_id`, display-name precedence/fallback, email collision handling, and concurrent-create retry. Backend Local Verification was **SUCCESS** at this head: both **Backend local smoke baseline** and **MariaDB schema and repository validation** passed.
 
 ### M1-3 — Frontend auth/session boundary
 
@@ -188,11 +188,11 @@ The following GCP/runtime choices also remain **GATED**: GKE topology, node/VM s
 
 ## Immediate next work
 
-**M1-2 — Backend JWT / Resource Server boundary**
+**M1-3 — Frontend auth/session boundary**
 
-JWT validation과 claim mapping의 Cognito-specific assumptions를 provider boundary 뒤로 이동하고 M1-1의 neutral persistence semantics를 재사용한다. Exact IdP는 선택하지 않으며 frontend authentication은 M1-3에서 다룬다.
+현재 authenticated/guest/checking 상태, protected navigation, login/logout, API bearer-token attachment, 401/403 handling, profile synchronization을 유지하면서 직접적인 Amplify/Cognito 호출을 provider-neutral auth/session client boundary 뒤로 이동한다.
 
-This task is limited to the backend JWT/resource-server boundary; it does not select an IdP or implement the M1-3 frontend auth boundary.
+This task preserves the existing frontend flow and does not select an exact OIDC library or identity provider.
 
 ## Evidence and references
 

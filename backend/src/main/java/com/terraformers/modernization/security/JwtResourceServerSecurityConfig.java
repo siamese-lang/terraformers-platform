@@ -9,21 +9,17 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
-import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.OAuth2TokenValidator;
-import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-public class CognitoJwtSecurityConfig {
+public class JwtResourceServerSecurityConfig {
 
     @Bean
     @ConditionalOnProperty(name = "terraformers.security.jwt.enabled", havingValue = "true")
-    SecurityFilterChain cognitoSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
@@ -47,11 +43,7 @@ public class CognitoJwtSecurityConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(
-            name = "terraformers.security.jwt.enabled",
-            havingValue = "false",
-            matchIfMissing = true
-    )
+    @ConditionalOnProperty(name = "terraformers.security.jwt.enabled", havingValue = "false", matchIfMissing = true)
     SecurityFilterChain localPermitAllSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
@@ -64,30 +56,16 @@ public class CognitoJwtSecurityConfig {
 
     @Bean
     @ConditionalOnProperty(name = "terraformers.security.jwt.enabled", havingValue = "true")
-    JwtDecoder cognitoJwtDecoder(
+    JwtDecoder jwtDecoder(
             @Value("${terraformers.security.jwt.issuer-uri}") String issuerUri,
             @Value("${terraformers.security.jwt.jwk-set-uri}") String jwkSetUri,
-            @Value("${terraformers.security.jwt.client-id}") String clientId
+            JwtProviderTokenValidator providerTokenValidator
     ) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
-        OAuth2TokenValidator<Jwt> issuerValidator = JwtValidators.createDefaultWithIssuer(issuerUri);
-        OAuth2TokenValidator<Jwt> cognitoClaimsValidator = jwt -> validateCognitoClaims(jwt, clientId);
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(issuerValidator, cognitoClaimsValidator));
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(issuerUri),
+                providerTokenValidator
+        ));
         return decoder;
-    }
-
-    private OAuth2TokenValidatorResult validateCognitoClaims(Jwt jwt, String clientId) {
-        if (!"access".equals(jwt.getClaimAsString("token_use"))) {
-            return failure("invalid_token_use", "Cognito token_use must be access");
-        }
-
-        if (!clientId.equals(jwt.getClaimAsString("client_id"))) {
-            return failure("invalid_client", "Cognito access-token client_id does not match configured client id");
-        }
-        return OAuth2TokenValidatorResult.success();
-    }
-
-    private OAuth2TokenValidatorResult failure(String code, String description) {
-        return OAuth2TokenValidatorResult.failure(new OAuth2Error(code, description, null));
     }
 }

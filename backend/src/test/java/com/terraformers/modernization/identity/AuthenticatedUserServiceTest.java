@@ -18,108 +18,103 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 class AuthenticatedUserServiceTest {
 
-    private static final String PROVIDER = "cognito";
-
+    private static final String PROVIDER = "test-provider";
     private UserRepository userRepository;
+    private JwtExternalIdentityMapper mapper;
     private AuthenticatedUserService service;
+    private Jwt jwt;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
-        service = new AuthenticatedUserService(userRepository);
+        mapper = mock(JwtExternalIdentityMapper.class);
+        service = new AuthenticatedUserService(userRepository, mapper);
+        jwt = Jwt.withTokenValue("token").header("alg", "none").claim("opaque", "value").build();
     }
 
     @Test
     void returnsExistingUserByProviderAndSubjectWithoutCreatingAnotherUser() {
+        map(identity("subject", null, null, "fallback"));
         UserEntity existing = activeUser("subject", "Existing user");
         when(findIdentity("subject")).thenReturn(Optional.of(existing));
 
-        UserEntity actual = service.getOrCreate(jwt("subject"));
-
-        assertThat(actual).isSameAs(existing);
+        assertThat(service.getOrCreate(jwt)).isSameAs(existing);
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    void createsUserFromAccessTokenWithoutEmailClaim() {
-        Jwt accessToken = Jwt.withTokenValue("access-token")
-                .header("alg", "none")
-                .claim("sub", "access-sub")
-                .claim("cognito:username", "terraformers-user")
-                .claim("token_use", "access")
-                .claim("client_id", "test-client")
-                .build();
-        when(findIdentity("access-sub")).thenReturn(Optional.empty());
+    void createsUserFromProviderNeutralIdentity() {
+        map(identity("new-subject", null, null, "provider fallback"));
+        when(findIdentity("new-subject")).thenReturn(Optional.empty());
         when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UserEntity created = service.getOrCreate(accessToken);
+        UserEntity created = service.getOrCreate(jwt);
 
         ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
         verify(userRepository).save(captor.capture());
-        verify(userRepository, never()).findByEmail(any());
         assertThat(created).isSameAs(captor.getValue());
         assertThat(created.getExternalIdentityProvider()).isEqualTo(PROVIDER);
-        assertThat(created.getExternalIdentitySubject()).isEqualTo("access-sub");
-        assertThat(created.getEmail()).isNull();
-        assertThat(created.getDisplayName()).isEqualTo("terraformers-user");
+        assertThat(created.getExternalIdentitySubject()).isEqualTo("new-subject");
+        assertThat(created.getDisplayName()).isEqualTo("provider fallback");
         assertThat(created.getRole()).isEqualTo(UserRole.USER);
         assertThat(created.getStatus()).isEqualTo(UserStatus.ACTIVE);
     }
 
     @Test
-    void subjectFallbackSuppliesDisplayNameWhenTokenHasNoProfileClaims() {
-        when(findIdentity("subject-only")).thenReturn(Optional.empty());
-        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    void rejectsEmailAlreadyLinkedToAnotherExternalIdentity() {
+        map(identity("new-subject", "person@example.com", null, "person@example.com"));
+        UserEntity other = activeUser("other-subject", "Other user");
+        other.setEmail("person@example.com");
+        when(findIdentity("new-subject")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("person@example.com")).thenReturn(Optional.of(other));
 
-        UserEntity created = service.getOrCreate(jwt("subject-only"));
-
-        assertThat(created.getDisplayName()).isEqualTo("subject-only");
+        assertThatThrownBy(() -> service.getOrCreate(jwt))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("authenticated email is already linked to another external identity");
+        verify(userRepository, never()).save(any());
     }
 
     @Test
-    void uuidOnlyAccessTokenDoesNotOverwriteCustomDisplayName() {
+    void providerFallbackDoesNotOverwriteCustomDisplayName() {
+        map(identity("subject", null, null, "provider fallback"));
         UserEntity existing = activeUser("subject", "Custom nickname");
-        Jwt accessToken = Jwt.withTokenValue("access-token").header("alg", "none")
-                .claim("sub", "subject")
-                .claim("cognito:username", "123e4567-e89b-12d3-a456-426614174000")
-                .build();
         when(findIdentity("subject")).thenReturn(Optional.of(existing));
 
-        UserEntity actual = service.getOrCreate(accessToken);
-
-        assertThat(actual.getDisplayName()).isEqualTo("Custom nickname");
+        assertThat(service.getOrCreate(jwt).getDisplayName()).isEqualTo("Custom nickname");
         verify(userRepository, never()).save(existing);
     }
 
     @Test
-    void retriesNeutralIdentityLookupAfterConcurrentCreate() {
+    void explicitDisplayNameUpdatesExistingUser() {
+        map(identity("subject", null, "Identity name", "fallback"));
+        UserEntity existing = activeUser("subject", "Old name");
+        when(findIdentity("subject")).thenReturn(Optional.of(existing));
+        when(userRepository.save(existing)).thenReturn(existing);
+
+        assertThat(service.getOrCreate(jwt).getDisplayName()).isEqualTo("Identity name");
+    }
+
+    @Test
+    void retriesSameProviderAndSubjectLookupAfterConcurrentCreate() {
+        map(identity("subject", null, null, "fallback"));
         UserEntity concurrentWinner = activeUser("subject", "Concurrent winner");
         when(findIdentity("subject")).thenReturn(Optional.empty(), Optional.of(concurrentWinner));
         when(userRepository.save(any(UserEntity.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate external identity"));
 
-        UserEntity actual = service.getOrCreate(jwt("subject"));
-
-        assertThat(actual).isSameAs(concurrentWinner);
+        assertThat(service.getOrCreate(jwt)).isSameAs(concurrentWinner);
         verify(userRepository, times(2))
                 .findByExternalIdentityProviderAndExternalIdentitySubject(PROVIDER, "subject");
     }
 
-    @Test
-    void rejectsEmailAlreadyLinkedToAnotherExternalIdentity() {
-        UserEntity other = activeUser("other-subject", "Other user");
-        other.setEmail("person@example.com");
-        when(findIdentity("new-subject")).thenReturn(Optional.empty());
-        when(userRepository.findByEmail("person@example.com")).thenReturn(Optional.of(other));
-        Jwt token = Jwt.withTokenValue("token").header("alg", "none")
-                .claim("sub", "new-subject")
-                .claim("email", "Person@Example.com")
-                .build();
+    private void map(AuthenticatedExternalIdentity identity) {
+        when(mapper.map(jwt)).thenReturn(identity);
+    }
 
-        assertThatThrownBy(() -> service.getOrCreate(token))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("authenticated email is already linked to another external identity");
-        verify(userRepository, never()).save(any());
+    private AuthenticatedExternalIdentity identity(
+            String subject, String email, String explicitName, String fallbackName
+    ) {
+        return new AuthenticatedExternalIdentity(PROVIDER, subject, email, explicitName, fallbackName);
     }
 
     private Optional<UserEntity> findIdentity(String subject) {
@@ -132,9 +127,5 @@ class AuthenticatedUserServiceTest {
         user.setDisplayName(displayName);
         user.setStatus(UserStatus.ACTIVE);
         return user;
-    }
-
-    private Jwt jwt(String subject) {
-        return Jwt.withTokenValue("token").header("alg", "none").claim("sub", subject).build();
     }
 }

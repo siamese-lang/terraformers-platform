@@ -16,9 +16,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Status: **ACTIVE**
 - Phase: provider boundary decoupling
 - Active plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
-- Current implementation task: **M1-2 — Backend JWT / Resource Server boundary**
+- Current implementation task: **M1-3 — Frontend auth/session boundary**
 
-M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 complete and M1-2 next.
+M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 and M1-2 complete and M1-3 next.
 
 ## Completed
 
@@ -39,6 +39,10 @@ M0 remains complete; its closure evidence is preserved below. M1 implementation 
   - neutral provider-plus-subject persistence and lookup with an additive compatibility migration;
   - existing Cognito user linkage and internal numeric `user_id` preserved; and
   - Backend Local Verification and MariaDB schema/repository validation — **PASS** at `edc9eb87e9bb1105c4f5d94f117356768190db92`.
+- M1-2 Backend JWT / Resource Server boundary — **COMPLETE**
+  - generic resource-server wiring separated from provider-specific JWT validation;
+  - Cognito token validation and JWT claim interpretation isolated behind provider boundaries while preserving current token/user compatibility; and
+  - Backend Local Verification, including MariaDB schema/repository validation — **PASS** at `9b32f0ded961da74e5a83f4af7ac80b91872cc81`.
 
 ## Verified architectural direction
 
@@ -91,11 +95,11 @@ No remaining M0 work.
 
 ## Remaining M1 work
 
-M1-2 backend JWT/resource-server boundary; M1-3 frontend auth/session boundary; M1-4 object storage decoupling completion; M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
+M1-3 frontend auth/session boundary; M1-4 object storage decoupling completion; M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
 
 ## Immediate next work
 
-**M1-2 — Backend JWT / Resource Server boundary:** JWT validation과 claim mapping의 Cognito-specific assumptions를 provider boundary 뒤로 이동하고 M1-1의 neutral persistence semantics를 재사용한다. Exact IdP는 선택하지 않으며 frontend authentication은 M1-3에서 다룬다.
+**M1-3 — Frontend auth/session boundary:** 현재 authenticated/guest/checking 상태, protected navigation, login/logout, API bearer-token attachment, 401/403 handling, profile synchronization을 유지하면서 직접적인 Amplify/Cognito 호출을 provider-neutral auth/session client boundary 뒤로 이동한다. Exact OIDC library 또는 IdP는 아직 선택하지 않는다.
 
 ## Do not revisit
 

@@ -226,26 +226,38 @@ durability.
 
 **Status: TODO**
 
-**Problem / gap.** Existing controller and frontend regression tests do not yet constitute portable
-runtime evidence for the complete core user experience, and the need for browser-level smoke remains
+**Problem / gap.** Existing controller and frontend regression tests did not yet constitute portable
+runtime evidence for the complete core user experience, and the need for browser-level smoke was
 unclassified.
 
-**Current evidence.** Backend domain/controller tests cover project/file/comment contracts;
-provider-neutral frontend auth/session behavior, frontend tests, and production build are reusable.
-No browser E2E suite or coverage criterion is confirmed.
+**Current evidence.** At validated head `a756c46efe88124528b5c0467c5e8c1e4ac461fb`,
+**M2 User Experience Baseline Verification** run #2 passed both the portable backend user-flow and
+frontend-contract jobs. The actual runtime matrix passed authenticated upload/analysis, owned/private
+project access, negative authorization, Terraform read/update/read-back, project tree, publish/public
+reads, canonical and compatibility comments, authenticated attribution, and deletion. Frontend Jest
+regression, production build, and built entrypoint also passed. No concrete M2 exit requirement was
+identified that requires browser E2E, so `browser_e2e_required_for_m2=false`.
 
-**Change boundary.** Verify project list/get, private/public visibility, Terraform draft read/update,
-project tree, comment create/list, authenticated attribution, and unauthorized/forbidden behavior,
-reusing existing controller/integration tests. Reuse the frontend auth/session boundary and build.
-Add the smallest browser smoke only if M2-1 evidence shows it is required for an exit criterion. Do
-not add a frontend container or Kubernetes workload merely to increase deployment components.
+The remaining confirmed gap is presentation-only:
+`frontend_provider_specific_visible_copy`. Three active generic UI locations still present
+historical providers as if they were the active target: Cognito identity copy, Bedrock waiting copy,
+and an `s3://` locator synthesized from historical logical bucket/key fields.
 
-**Validation.** Run backend domain/controller regressions and frontend tests/build against their
-documented contracts; if browser evidence is required, execute the minimal user-flow smoke
-repeatably against the portable runtime.
+**Change boundary.** Make only those active generic frontend presentations provider-neutral while
+preserving user flow and API contracts. Do not change backend behavior, runtime topology, auth
+provider selection, analysis provider selection, storage provider selection, compatibility
+adapters, or database fields. Do not add Playwright/Cypress/Selenium, a frontend container, Nginx,
+or a Kubernetes frontend workload because the baseline did not establish a browser-only M2 gap.
 
-**Completion evidence.** Record the contract matrix and exact tests for backend core flows plus the
-frontend/browser evidence required by the baseline classification, including negative access cases.
+**Validation.** Run the existing frontend regression suite, production build, built-entrypoint check,
+and the focused provider-visible UX classifier under the same conditions. The classifier must move
+all three detailed fields to `PASS` and `known_provider_specific_visible_copy` to `0`. Existing
+backend runtime evidence from the authoritative baseline remains the M2-5 behavioral reference; rerun
+the backend Kind matrix only if the frontend-only fix unexpectedly touches backend/runtime contracts.
+
+**Completion evidence.** Record the before/after user-visible copy, exact changed frontend files,
+frontend tests/build result, focused classifier result, and confirmation that no production
+provider/product was selected. M2-5 becomes **DONE** only after this same-condition revalidation.
 
 ### M2-6 — Runtime parity closure
 

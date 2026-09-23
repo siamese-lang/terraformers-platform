@@ -14,14 +14,14 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: reusable evaluation runner and provenance capture
+- Phase: current live/provider baseline execution
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Current implementation task: **M3-3 — Reusable evaluation runner and provenance capture**
+- Current implementation task: **M3-4 — Current live/provider baseline**
 
-M0, M1, and M2 are complete. M3 is now the active milestone. M3-1 defined the
-stage-provenance contract and M3-2 fixed the first repository-owned evaluation dataset. M3-3 is the
-current task: execute those fixed cases through one reusable runner without tuning production
-AI/RAG behavior.
+M0, M1, and M2 are complete. M3 is now the active milestone. M3-1 defined the stage-provenance
+contract, M3-2 fixed the first repository-owned evaluation dataset, and M3-3 added one reusable
+runner that shares the current extraction/retrieval/generation/validation boundaries. M3-4 now runs
+that fixed dataset against the current live/provider path without tuning AI/RAG behavior.
 
 ## Completed
 
@@ -104,6 +104,15 @@ AI/RAG behavior.
   - required five existing `PROJECT_DECISION` documents across positive cases so retrieval quality can be distinguished from generic vector hits; and
   - `EvaluationDatasetLoaderTest` validates deterministic loading, fixture identity, case composition, expectation completeness, and corpus-reference existence.
 
+- M3-2 Fixed/versioned evaluation dataset — **COMPLETE**
+  - added `terraformers-eval-v1` with four architecture, one ambiguous, and one non-architecture WebP fixture;
+  - fixed stage-level expectations and required repository-owned project-decision retrieval evidence; and
+  - `EvaluationDatasetLoader` verifies exact fixture SHA-256 and case/schema identity before execution.
+- M3-3 Reusable evaluation runner and provenance capture — **COMPLETE**
+  - added one runner/result/writer path that emits M3-1 stage provenance for the fixed dataset;
+  - extracted Bedrock generation into a shared `AnalysisGenerationStage` so production and evaluation use the same model-call/retry path; and
+  - full backend regression and deterministic runner cases passed, including retrieval provenance, input classification, validation, and first-divergence localization.
+
 ## Verified architectural direction
 
 This project is **not** a greenfield rewrite, a simple AWS-to-GCP migration, or a technology-count expansion exercise. It **is** modernization of the existing Terraformers system through reuse of existing domain/business flows, a provider-neutral logical architecture, a current GCP deployment target, reproduced-failure-based backend reliability work, fixed-evaluation-based AI/RAG work, actual-RCA-based observability, and cloud portability. The Spring Boot application remains the logical center.
@@ -167,13 +176,13 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M3-3 — Reusable evaluation runner and provenance capture.** Build one runner that loads
-`terraformers-eval-v1` through `EvaluationDatasetLoader` and records the M3-1 `EvaluationTrace`
-stages for each case. Reuse the existing extraction, retrieval, generation, and Terraform validation
-boundaries rather than implementing a parallel AI service.
+**M3-4 — Current live/provider baseline.** Wire the current selected live analysis/retrieval
+configuration into the completed `EvaluationRunner`, execute `terraformers-eval-v1` without
+changing prompts, ranking, corpus, or model choice, and preserve exact provider/model/corpus/config
+identity plus machine-readable results.
 
-Do not change prompt content, retrieval ranking, corpus contents, model choice, or production
-orchestration merely to make dataset cases pass. Do not add one workflow/script per evaluation stage.
+If required live credentials/resources or cost approval are unavailable, record the exact blocker
+instead of substituting a different provider/model or fabricating baseline results.
 
 ## Do not revisit
 

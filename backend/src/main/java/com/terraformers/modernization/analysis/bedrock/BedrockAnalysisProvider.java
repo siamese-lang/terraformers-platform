@@ -1,6 +1,7 @@
 package com.terraformers.modernization.analysis.bedrock;
 
 import com.terraformers.modernization.analysis.AnalysisProvider;
+import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
@@ -22,6 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.core.exception.ApiCallAttemptTimeoutException;
+import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse;
@@ -164,10 +168,30 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
         } catch (ArchitectureInputRejectedException exception) {
             logRejectedCall(context, modelId, attempt, promptMode, exception, startedAt);
             throw exception;
+        } catch (ApiCallAttemptTimeoutException | ApiCallTimeoutException exception) {
+            logFailedCall(context, modelId, attempt, promptMode, exception, startedAt);
+            throw new AnalysisProviderTimeoutException(exception);
+        } catch (SdkClientException exception) {
+            logFailedCall(context, modelId, attempt, promptMode, exception, startedAt);
+            if (hasReadTimeout(exception)) {
+                throw new AnalysisProviderTimeoutException(exception);
+            }
+            throw exception;
         } catch (RuntimeException exception) {
             logFailedCall(context, modelId, attempt, promptMode, exception, startedAt);
             throw exception;
         }
+    }
+
+    private boolean hasReadTimeout(Throwable exception) {
+        Throwable current = exception;
+        while (current != null) {
+            if (current.getMessage() != null && current.getMessage().toLowerCase().contains("read timed out")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private void logRejectedCall(AnalysisRequestContext context, String modelId, int attempt, BedrockPromptMode promptMode,

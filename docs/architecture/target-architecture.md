@@ -188,8 +188,8 @@ The target dependency direction is:
 
 `Frontend → provider-neutral auth/session client boundary → external identity provider adapter`
 
-The neutral frontend auth client is a confirmed **NEW** implementation gap, so this direction is a
-target boundary rather than a description of current code. No identity provider is selected.
+M1 implemented this neutral auth/session client boundary and isolated Amplify/Cognito calls in a
+compatibility adapter. No replacement identity provider is selected.
 
 ### Backend identity
 
@@ -198,10 +198,10 @@ Internal business identity remains separate from the external authentication sub
 `cognito_sub`/`cognitoSub` naming, `findByCognitoSub`, Cognito claim/username interpretation, and
 Cognito-specific errors are **MODIFY**.
 
-The target maps an external provider/issuer and subject through a provider-neutral boundary to the
-internal user. Claim interpretation belongs in an identity adapter. This document neither chooses
-an IdP nor specifies schema migration mechanics; compatibility and uniqueness must be validated
-when that work is designed.
+M1 maps an external provider and subject through a provider-neutral boundary to the internal user,
+and generic resource-server wiring delegates provider token checks through a validator port. Claim
+interpretation belongs in an identity adapter. The historical `cognito_sub` mirror remains for data
+compatibility; this document does not choose a replacement IdP.
 
 ## Persistence and object storage
 
@@ -223,10 +223,11 @@ assumption:
 
 - **REUSE:** `ReferenceRetriever`, structured query construction, response parsing, optional
   retrieval mode, and the versioned corpus/index logical contract.
-- **MODIFY:** SigV4, `AWS4Auth`, `aoss` service assumptions, endpoint authentication, and the
-  corresponding ingestion transport.
-- **NEW:** a provider-neutral OpenSearch transport/authentication implementation boundary for both
-  runtime retrieval and batch ingestion. The authentication product and credential mechanism are
+- **IMPLEMENTED IN M1:** runtime retrieval sends provider-neutral URI/body requests through
+  `OpenSearchTransport`; SigV4 credentials, region, and `aoss`/`es` signing remain in the
+  `SignedOpenSearchHttpClient` compatibility adapter.
+- **RESIDUAL GAP:** batch ingestion transport remains coupled to AWS4Auth/AOSS, S3 receipts,
+  Bedrock embedding, and CodeBuild. Its future authentication product and credential mechanism are
   undecided.
 
 Query embedding model and dimension must remain compatible with the ingested corpus/index
@@ -270,8 +271,9 @@ deployment decision.
 | Status | Logical boundary or capability |
 |---|---|
 | **REUSE** | Spring Boot API/application; project/user/file/comment flows; internal identity semantics; integrated `AnalysisJob` lifecycle; provider ports; Terraform draft validation; MariaDB/Flyway; versioned corpus and corpus contract; object-storage application services; Micrometer/health/correlation contracts; container and Kubernetes workload contract; deterministic tests/checks |
-| **MODIFY** | Frontend Amplify/Cognito binding; backend Cognito subject/claim binding; provider-specific model/embedding adapters; S3 adapters; SQS progress adapter isolation; SigV4/AOSS retrieval and ingestion transport/authentication |
-| **NEW** | Provider-neutral frontend auth client and backend external-subject/claim boundary; portable OpenSearch transport/auth implementation; fixed AI/RAG evaluation dataset/harness/report; reliability/failure-injection harness; trace propagation/export/validation capability; GCP runtime/IaC (outside this logical design) |
+| **MODIFY** | Provider-specific compatibility implementations for Amplify/Cognito, model/embedding, S3, SQS, and SigV4/AOSS; AWS-bound batch ingestion transport/authentication |
+| **NEW** | Batch-ingestion transport portability; fixed AI/RAG evaluation dataset/harness/report; reliability/failure-injection harness; trace propagation/export/validation capability; GCP runtime/IaC (outside this logical design) |
+| **IMPLEMENTED IN M1** | Provider-neutral frontend auth/session client; backend external identity and JWT-provider boundaries; object-storage ports; runtime OpenSearch transport; model/embedding selectors; canonical neutral runtime configuration |
 | **DEFER** | Technology/product and topology choices lacking observed-problem evidence and a same-condition validation plan |
 | **HISTORICAL** | AWS adapters, infrastructure, runtime overlays, observability deployment, delivery workflows, and live-operation assumptions retained as compatibility/reference assets |
 

@@ -7,9 +7,6 @@ import java.net.SocketTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.core.exception.ApiCallAttemptTimeoutException;
-import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
-import software.amazon.awssdk.core.exception.SdkClientException;
 
 @Service
 public class AnalysisJobRunner {
@@ -67,9 +64,7 @@ public class AnalysisJobRunner {
                 return FORMAT_FAILURE_REASON;
             }
             if (current instanceof SocketTimeoutException
-                    || current instanceof ApiCallAttemptTimeoutException
-                    || current instanceof ApiCallTimeoutException
-                    || (current instanceof SdkClientException && hasReadTimeout(current))) {
+                    || current instanceof AnalysisProviderTimeoutException) {
                 return TIMEOUT_FAILURE_REASON;
             }
             current = current.getCause();
@@ -77,14 +72,4 @@ public class AnalysisJobRunner {
         return GENERIC_FAILURE_REASON;
     }
 
-    private boolean hasReadTimeout(Throwable exception) {
-        Throwable current = exception;
-        while (current != null) {
-            if (current.getMessage() != null && current.getMessage().toLowerCase().contains("read timed out")) {
-                return true;
-            }
-            current = current.getCause();
-        }
-        return false;
-    }
 }

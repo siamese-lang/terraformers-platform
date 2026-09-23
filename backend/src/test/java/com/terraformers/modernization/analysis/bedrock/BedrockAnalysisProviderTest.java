@@ -131,7 +131,9 @@ class BedrockAnalysisProviderTest {
         BedrockRuntimeClient timeoutClient = mock(BedrockRuntimeClient.class);
         when(timeoutClient.invokeModel(any(InvokeModelRequest.class)))
                 .thenThrow(SdkClientException.builder().message("Read timed out").build());
-        assertThatThrownBy(() -> provider(timeoutClient).analyze(context())).isInstanceOf(SdkClientException.class);
+        assertThatThrownBy(() -> provider(timeoutClient).analyze(context()))
+                .isInstanceOf(com.terraformers.modernization.analysis.AnalysisProviderTimeoutException.class)
+                .hasCauseInstanceOf(SdkClientException.class);
         verify(timeoutClient, times(1)).invokeModel(any(InvokeModelRequest.class));
     }
 

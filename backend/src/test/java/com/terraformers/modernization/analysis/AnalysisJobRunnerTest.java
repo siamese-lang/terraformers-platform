@@ -15,9 +15,6 @@ import java.net.SocketTimeoutException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
-import software.amazon.awssdk.core.exception.ApiCallAttemptTimeoutException;
-import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
-import software.amazon.awssdk.core.exception.SdkClientException;
 
 class AnalysisJobRunnerTest {
 
@@ -62,10 +59,7 @@ class AnalysisJobRunnerTest {
         AnalysisJobEntity running = new AnalysisJobEntity();
         when(stateService.markRunning("job-1")).thenReturn(running);
         when(orchestrator.executeProviderAndStoreDraft(running))
-                .thenThrow(software.amazon.awssdk.core.exception.SdkClientException.builder()
-                        .message("Unable to execute HTTP request: Read timed out")
-                        .cause(new SocketTimeoutException("Read timed out"))
-                        .build());
+                .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("Read timed out")));
 
         new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(new SimpleMeterRegistry())).run("job-1");
 
@@ -88,19 +82,19 @@ class AnalysisJobRunnerTest {
 
     @Test
     void apiCallAttemptTimeoutMarksJobFailedWithSafeTimeoutMessage() {
-        assertFailureReason(ApiCallAttemptTimeoutException.builder().message("attempt timed out").build(),
+        assertFailureReason(new AnalysisProviderTimeoutException(new RuntimeException("attempt timed out")),
                 AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
     }
 
     @Test
     void apiCallTimeoutMarksJobFailedWithSafeTimeoutMessage() {
-        assertFailureReason(ApiCallTimeoutException.builder().message("call timed out").build(),
+        assertFailureReason(new AnalysisProviderTimeoutException(new RuntimeException("call timed out")),
                 AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
     }
 
     @Test
-    void generalSdkClientExceptionMarksJobFailedWithGenericMessage() {
-        assertFailureReason(SdkClientException.builder().message("connection reset").build(),
+    void generalProviderExceptionMarksJobFailedWithGenericMessage() {
+        assertFailureReason(new IllegalStateException("connection reset"),
                 AnalysisJobRunner.GENERIC_FAILURE_REASON);
     }
 

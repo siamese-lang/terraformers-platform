@@ -1,9 +1,9 @@
 # Bedrock Provider Integration
 
 Bedrock is selected explicitly through `ANALYSIS_PROVIDER=bedrock` and, for
-active retrieval, `EMBEDDING_PROVIDER=bedrock`. The legacy
-`BEDROCK_PROVIDER_ENABLED` fallback is removed; model settings remain in the
-adapter-specific `BedrockRuntimeProperties` populated by `aws-compat`.
+active retrieval, `EMBEDDING_PROVIDER=bedrock`. No legacy boolean fallback is
+supported; model settings remain in the adapter-specific
+`BedrockRuntimeProperties` populated by `aws-compat`.
 
 ## 1. Purpose
 
@@ -19,7 +19,7 @@ Default behavior:
 terraformers:
   analysis:
     provider: stub
-    embedding-provider: bedrock
+    embedding-provider: disabled
     bedrock:
       model-id: ""
       embedding-model-id: ""
@@ -30,14 +30,17 @@ Production Bedrock path:
 
 ```bash
 ANALYSIS_PROVIDER=bedrock
-S3_READER_ENABLED=true
+EMBEDDING_PROVIDER=bedrock
+OBJECT_READER_PROVIDER=s3
 BEDROCK_MODEL_ID=<bedrock-model-id>
 BEDROCK_MAX_TOKENS=4096
 ```
 
 When `terraformers.analysis.provider=stub`, `StubAnalysisProvider` remains active and no AWS model call is made.
 
-When `terraformers.analysis.provider=bedrock`, the neutral selection layer delegates to `BedrockAnalysisProvider`. If the generic selector is absent, `BEDROCK_PROVIDER_ENABLED=true` continues to select Bedrock as a transitional compatibility fallback; an explicit generic selector always wins, and removal of this alias is deferred to M1-7.
+When `terraformers.analysis.provider=bedrock`, the neutral selection layer delegates to
+`BedrockAnalysisProvider`. There is no legacy boolean fallback. Historical AWS runtime combines
+the `prod,aws-compat` profiles so Bedrock model settings remain adapter-owned.
 
 ## 3. Request flow
 
@@ -55,7 +58,7 @@ AnalysisJobOrchestrator
 ## 4. Implementation components
 
 - `BedrockAnalysisProvider`
-  - feature-flagged provider implementation
+  - compatibility implementation selected by `ANALYSIS_PROVIDER=bedrock`
   - owns Bedrock Runtime invocation
   - does not log image bytes, prompt body, or generated secret values
 
@@ -76,8 +79,9 @@ Before enabling Bedrock provider in a deployed environment, verify:
 ```text
 [ ] backend pod has AWS runtime identity through IRSA or equivalent role
 [ ] role can invoke the selected Bedrock model
-[ ] S3_READER_ENABLED=true and source object can be read
-[ ] ANALYSIS_PROVIDER=bedrock (or transitional BEDROCK_PROVIDER_ENABLED=true)
+[ ] OBJECT_READER_PROVIDER=s3 and source object can be read
+[ ] ANALYSIS_PROVIDER=bedrock
+[ ] EMBEDDING_PROVIDER=bedrock when reference retrieval is active
 [ ] BEDROCK_MODEL_ID is set
 [ ] model region matches backend AWS region
 [ ] request/response bodies are not logged
@@ -98,5 +102,5 @@ Before enabling Bedrock provider in a deployed environment, verify:
 ## 7. Portfolio explanation
 
 ```text
-원본 Python 분석 서비스가 담당하던 Bedrock 호출을 Spring Boot backend의 AnalysisProvider port 뒤로 옮겼습니다. 기본값은 stub provider라서 CI와 로컬 검증은 AWS credential 없이 가능하고, 운영 환경에서는 generic analysis provider selector와 S3_READER_ENABLED를 설정해 같은 backend lifecycle 안에서 S3 객체 조회, reference retrieval, Bedrock 호출, 결과 파싱까지 수행하도록 했습니다.
+원본 Python 분석 서비스가 담당하던 Bedrock 호출을 Spring Boot backend의 AnalysisProvider port 뒤로 옮겼습니다. 기본값은 stub provider라서 CI와 로컬 검증은 AWS credential 없이 가능하고, AWS compatibility runtime에서는 `prod,aws-compat`, `ANALYSIS_PROVIDER=bedrock`, `EMBEDDING_PROVIDER=bedrock`, `OBJECT_READER_PROVIDER=s3`를 명시해 같은 backend lifecycle 안에서 S3 객체 조회, reference retrieval, Bedrock 호출, 결과 파싱까지 수행하도록 했습니다.
 ```

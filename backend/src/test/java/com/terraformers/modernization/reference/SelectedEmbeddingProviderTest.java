@@ -15,6 +15,7 @@ class SelectedEmbeddingProviderTest {
     @Test
     void delegatesBedrockSelectionToCompatibilityAdapter() {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        properties.setEmbeddingProvider("bedrock");
         BedrockEmbeddingProvider bedrock = mock(BedrockEmbeddingProvider.class);
         @SuppressWarnings("unchecked") ObjectProvider<BedrockEmbeddingProvider> provider = mock(ObjectProvider.class);
         when(provider.getObject()).thenReturn(bedrock);

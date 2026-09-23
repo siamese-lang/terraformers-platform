@@ -16,8 +16,9 @@ The goal is not to present OpenSearch as the main project topic. The goal is to 
 ### Local / CI default
 
 ```text
-StubEmbeddingProvider
+RETRIEVAL_MODE=DISABLED
   -> StubReferenceRetriever
+  -> no EmbeddingProvider invocation
 ```
 
 This path does not require AWS credentials and exists so Maven tests, Docker build, API smoke, and RDB status transitions can be verified reliably.
@@ -33,13 +34,13 @@ BedrockEmbeddingProvider
           -> OpenSearch / AOSS k-NN query
 ```
 
-This path is enabled only when runtime flags are explicitly set.
+This path is enabled only when the provider-neutral selectors are explicitly set.
 
 ## 3. Required runtime flags
 
 ```text
-BEDROCK_EMBEDDING_ENABLED=true
-OPENSEARCH_RETRIEVER_ENABLED=true
+EMBEDDING_PROVIDER=bedrock
+RETRIEVAL_MODE=REQUIRED
 OPENSEARCH_ENDPOINT=<OpenSearch or AOSS endpoint>
 OPENSEARCH_SERVICE_NAME=aoss     # use es for classic Amazon OpenSearch Service domains when applicable
 OPENSEARCH_TOP_K=3
@@ -49,7 +50,10 @@ CONTENT_FIELD_NAME=<reference content field>
 BEDROCK_EMBEDDING_MODEL_ID=<embedding model id>
 ```
 
-The default value for `OPENSEARCH_SERVICE_NAME` is `aoss` because the original service used AOSS-style reference retrieval. If the deployment uses a classic Amazon OpenSearch Service domain, the service name may need to be `es`. This setting is owned by the current AWS compatibility adapter and is not part of the provider-neutral transport call.
+`OPENSEARCH_SERVICE_NAME` is configured by `application-aws-compat.yml` and bound to
+`AwsOpenSearchRuntimeProperties`. Its compatibility default is `aoss`; a classic Amazon
+OpenSearch Service domain may require `es`. This setting is not part of the provider-neutral
+transport call.
 
 ## 4. Backend responsibilities
 

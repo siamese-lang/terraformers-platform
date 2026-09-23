@@ -57,15 +57,15 @@ renders ConfigMap, Deployment, ServiceAccount, and Service only. It does not ren
 
 ## 3. Local/stub runtime mode
 
-Default values keep all AWS runtime adapters disabled.
+Default values select only provider-neutral local-safe implementations.
 
 ```text
-S3_READER_ENABLED=false
-S3_WRITER_ENABLED=false
-BEDROCK_PROVIDER_ENABLED=false
-BEDROCK_EMBEDDING_ENABLED=false
-OPENSEARCH_RETRIEVER_ENABLED=false
-ANALYSIS_SQS_PUBLISHER_ENABLED=false
+OBJECT_READER_PROVIDER=disabled
+OBJECT_WRITER_PROVIDER=metadata-only
+ANALYSIS_PROVIDER=stub
+EMBEDDING_PROVIDER=disabled
+RETRIEVAL_MODE=DISABLED
+PROGRESS_PUBLISHER=logging
 ```
 
 This mode uses:
@@ -73,11 +73,12 @@ This mode uses:
 ```text
 StubObjectReader
 StubObjectWriter
-StubEmbeddingProvider
 StubReferenceRetriever
 StubAnalysisProvider
 LoggingProgressPublisher
 ```
+
+With retrieval disabled, no `EmbeddingProvider` invocation occurs.
 
 Use this mode for Maven verification, Docker image verification, and local smoke tests.
 
@@ -86,12 +87,13 @@ Use this mode for Maven verification, Docker image verification, and local smoke
 Enable this mode only after AWS resources and IAM policies exist.
 
 ```text
-S3_READER_ENABLED=true
-S3_WRITER_ENABLED=true
-BEDROCK_PROVIDER_ENABLED=true
-BEDROCK_EMBEDDING_ENABLED=true
-OPENSEARCH_RETRIEVER_ENABLED=true
-ANALYSIS_SQS_PUBLISHER_ENABLED=true
+SPRING_PROFILES_ACTIVE=prod,aws-compat
+OBJECT_READER_PROVIDER=s3
+OBJECT_WRITER_PROVIDER=s3
+ANALYSIS_PROVIDER=bedrock
+EMBEDDING_PROVIDER=bedrock
+RETRIEVAL_MODE=REQUIRED
+PROGRESS_PUBLISHER=logging
 ```
 
 This mode uses:
@@ -102,8 +104,10 @@ AwsS3ObjectWriter
 BedrockEmbeddingProvider
 OpenSearchReferenceRetriever
 BedrockAnalysisProvider
-SqsProgressPublisher
+LoggingProgressPublisher
 ```
+
+Set `PROGRESS_PUBLISHER=sqs` only when the historical SQS adapter and its queue URLs are deliberately configured.
 
 ## 5. ConfigMap vs Secret
 

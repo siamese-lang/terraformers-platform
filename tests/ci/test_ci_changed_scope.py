@@ -20,6 +20,7 @@ class ChangedScopeTest(unittest.TestCase):
         flags = self.flags("docs/AI_PROJECT_STATE.md")
         self.assertFalse(any(flags["m1"].values()))
         self.assertFalse(any(flags["m2-baseline"].values()))
+        self.assertFalse(any(flags["m2-authenticated"].values()))
         self.assertFalse(any(flags["terraform-static"].values()))
         self.assertFalse(any(flags["aws-runtime-package"].values()))
 
@@ -35,9 +36,25 @@ class ChangedScopeTest(unittest.TestCase):
         self.assertTrue(flags["m2-persistent"]["portable_persistent_runtime"])
         self.assertFalse(flags["aws-runtime-package"]["aws_runtime_deployment_package"])
 
+    def test_authenticated_overlay_only_runs_authenticated_runtime(self):
+        flags = self.flags("infra/kubernetes/overlays/portable-authenticated/jwks-server.yaml")
+        self.assertTrue(flags["m2-authenticated"]["authenticated_identity_parity"])
+        self.assertFalse(flags["m2-persistent"]["portable_persistent_runtime"])
+        self.assertFalse(flags["m2-baseline"]["kind_local_stub_baseline"])
+        self.assertFalse(flags["aws-runtime-package"]["aws_runtime_deployment_package"])
+
+    def test_authenticated_evidence_doc_skips_authenticated_runtime(self):
+        flags = self.flags("docs/verification/m2-authenticated-identity-parity.md")
+        self.assertFalse(flags["m2-authenticated"]["authenticated_identity_parity"])
+
+    def test_authenticated_http_helper_runs_authenticated_runtime(self):
+        flags = self.flags("scripts/checks/lib/http-status.sh")
+        self.assertTrue(flags["m2-authenticated"]["authenticated_identity_parity"])
+
     def test_base_manifest_runs_all_runtime_dependents(self):
         flags = self.flags("infra/kubernetes/base/backend-deployment.yaml")
         self.assertTrue(flags["m2-persistent"]["portable_persistent_runtime"])
+        self.assertTrue(flags["m2-authenticated"]["authenticated_identity_parity"])
         self.assertTrue(flags["m1"]["runtime_contract"])
         self.assertTrue(flags["aws-runtime-package"]["aws_runtime_deployment_package"])
 
@@ -56,6 +73,7 @@ class ChangedScopeTest(unittest.TestCase):
         self.assertTrue(flags["m1"]["backend_regression"])
         self.assertTrue(flags["m1"]["mariadb_regression"])
         self.assertTrue(flags["m2-persistent"]["portable_persistent_runtime"])
+        self.assertTrue(flags["m2-authenticated"]["authenticated_identity_parity"])
 
     def test_deleted_base_manifest_is_collected_and_classified(self):
         with tempfile.TemporaryDirectory() as directory:

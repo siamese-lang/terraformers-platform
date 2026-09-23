@@ -12,6 +12,7 @@ WORKFLOW_OUTPUTS = {
     "m1": ("boundary_contract", "backend_regression", "mariadb_regression", "frontend_regression", "runtime_contract"),
     "m2-baseline": ("kind_local_stub_baseline",),
     "m2-persistent": ("portable_persistent_runtime",),
+    "m2-authenticated": ("authenticated_identity_parity",),
     "terraform-static": ("terraform_static_verification",),
     "aws-runtime-package": ("aws_runtime_deployment_package",),
 }
@@ -87,6 +88,19 @@ def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
             or base
             or under(path, "infra/kubernetes/overlays/portable-persistent")
             or path in {"scripts/checks/kind-portable-persistent-smoke.sh", ".github/workflows/m2-portable-persistent-runtime-verification.yml"}
+        )
+        result["m2-authenticated"]["authenticated_identity_parity"] |= (
+            backend_main
+            or path in {"backend/pom.xml", "backend/Dockerfile"}
+            or base
+            or under(path, "infra/kubernetes/overlays/portable-persistent")
+            or under(path, "infra/kubernetes/overlays/portable-authenticated")
+            or path in {
+                "scripts/checks/http-status-helper-verification.sh",
+                "scripts/checks/lib/http-status.sh",
+                "scripts/checks/kind-portable-authenticated-smoke.sh",
+                ".github/workflows/m2-authenticated-identity-parity-verification.yml",
+            }
         )
         result["terraform-static"]["terraform_static_verification"] |= (
             under(path, "infra/terraform")

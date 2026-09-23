@@ -1,0 +1,62 @@
+name: M2 Authenticated Identity Parity Verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      authenticated_identity_parity: ${{ steps.scope.outputs.authenticated_identity_parity }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Classify changed files
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            python3 scripts/checks/ci_changed_scope.py --workflow m2-authenticated --all --github-output "$GITHUB_OUTPUT"
+          else
+            python3 scripts/checks/ci_changed_scope.py --workflow m2-authenticated --base "$BASE_SHA" --head "$HEAD_SHA" --github-output "$GITHUB_OUTPUT"
+          fi
+
+  authenticated-identity:
+    name: Authenticated identity and ownership
+    needs: scope
+    if: needs.scope.outputs.authenticated_identity_parity == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Setup Kind
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: terraformers-portable-authenticated
+          wait: 120s
+      - name: Verify HTTP status helper
+        run: bash scripts/checks/http-status-helper-verification.sh
+      - name: Verify authenticated identity parity
+        run: bash scripts/checks/kind-portable-authenticated-smoke.sh
+      - name: Upload sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-authenticated-identity
+          path: artifacts/m2-authenticated-identity

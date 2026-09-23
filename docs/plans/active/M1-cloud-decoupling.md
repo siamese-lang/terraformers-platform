@@ -119,7 +119,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 ### M1-6 — Model / embedding provider configuration
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / coupling.** `AnalysisRuntimeProperties` uses Bedrock-specific model fields and enablement, while `BedrockAnalysisProvider`, `BedrockArchitectureFactsExtractor`, and `BedrockEmbeddingProvider` bind those values to AWS runtime clients.
 
@@ -129,7 +129,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 **Validation.** Verify provider selection/config binding and existing analysis, embedding, parsing, validation, and disabled/stub behavior without changing quality claims.
 
-**Completion evidence.** Pending. Record completion SHA or PR, tests/checks, and remaining task here.
+**Completion evidence.** At validated head `631fefe9ebae72becc66d33a9a672e9ffcb36bb2`, provider-neutral `AnalysisProvider` and `EmbeddingProvider` ports are selected through generic analysis/embedding provider selectors while Bedrock remains a compatibility adapter. Bedrock generation model ID, embedding model ID, and max-token settings moved to dedicated `BedrockRuntimeProperties`; `BedrockAnalysisProvider`, `BedrockEmbeddingProvider`, and `BedrockArchitectureFactsExtractor` now own those provider-specific settings. `OpenSearchReferenceRetriever` and `RetrievalModeReferenceRetriever` no longer depend on Bedrock embedding model IDs. The new generic selector takes precedence while legacy `BEDROCK_PROVIDER_ENABLED` remains a transitional fallback for existing production configuration, and local/test startup remains credential-free through lazy Bedrock adapter resolution. Existing Bedrock prompt/parsing/retry behavior, embedding response/dimension validation, retrieval-mode semantics, and runtime validation were preserved. Backend Local Verification was **SUCCESS** at this head: both **Backend local smoke baseline** and **MariaDB schema and repository validation** passed. Terraform Static Verification and AWS Deployment Contract Inventory Verification also passed.
 
 ### M1-7 — Runtime configuration neutralization
 
@@ -188,11 +188,11 @@ The following GCP/runtime choices also remain **GATED**: GKE topology, node/VM s
 
 ## Immediate next work
 
-**M1-6 — Model / embedding provider configuration**
+**M1-7 — Runtime configuration neutralization**
 
-기존 `AnalysisProvider`와 `EmbeddingProvider` application contract를 유지하면서 generic provider selection/configuration과 Bedrock-specific runtime/model identifiers를 분리하고, generation과 embedding provider 설정이 provider-neutral boundary를 통해 선택되도록 정리한다.
+M1-1~M1-6에서 구현한 provider-neutral boundary를 기준으로 production/runtime configuration에서 Cognito, S3, Bedrock, AOSS/SigV4 같은 provider-specific 이름이 generic application selection concept로 남아 있는 부분을 정리하고, 필요한 AWS compatibility aliases/profile은 명시적으로 분리한다.
 
-This task does not select a new model/provider, change embedding dimensions, or perform AI quality improvement.
+This task does not implement GCP runtime infrastructure, choose replacement providers, or change application/domain behavior.
 
 ## Evidence and references
 

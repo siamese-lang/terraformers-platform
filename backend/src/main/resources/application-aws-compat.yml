@@ -1,0 +1,25 @@
+# Historical AWS compatibility adapters. Combine with the canonical prod profile;
+# this profile does not make AWS the active deployment target.
+terraformers:
+  security:
+    jwt:
+      provider: cognito
+      cognito:
+        client-id: ${COGNITO_USER_POOL_CLIENT_ID:}
+  storage:
+    reader-provider: ${OBJECT_READER_PROVIDER:s3}
+    writer-provider: ${OBJECT_WRITER_PROVIDER:s3}
+  analysis:
+    provider: ${ANALYSIS_PROVIDER:bedrock}
+    embedding-provider: ${EMBEDDING_PROVIDER:bedrock}
+    progress-publisher: ${PROGRESS_PUBLISHER:logging}
+    bedrock:
+      model-id: ${BEDROCK_MODEL_ID:}
+      embedding-model-id: ${BEDROCK_EMBEDDING_MODEL_ID:}
+      max-tokens: ${BEDROCK_MAX_TOKENS:8192}
+    sqs:
+      progress-queue-url: ${AI_LOG_QUEUE_URL:}
+      result-queue-url: ${TERRAFORM_LOG_QUEUE_URL:}
+  aws:
+    opensearch:
+      signing-service-name: ${OPENSEARCH_SERVICE_NAME:aoss}

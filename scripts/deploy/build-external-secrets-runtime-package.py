@@ -27,11 +27,10 @@ EXPECTED_EXTERNAL_SECRET = "terraformers-backend-runtime"
 RUNTIME_CONFIG_KEYS = [
     "SPRING_DATASOURCE_URL",
     "SPRING_DATASOURCE_USERNAME",
-    "COGNITO_REGION",
-    "COGNITO_USER_POOL_ID",
+    "JWT_ISSUER_URI",
+    "JWT_JWK_SET_URI",
+    "UPLOAD_SOURCE_BUCKET",
     "COGNITO_USER_POOL_CLIENT_ID",
-    "COGNITO_JWKS_URL",
-    "S3_BUCKET_NAME",
     "ANALYSIS_RESULT_BUCKET_NAME",
 ]
 
@@ -189,13 +188,14 @@ def main() -> int:
         payload = {
             "SPRING_DATASOURCE_URL": output_value(stateful, "spring_datasource_url"),
             "SPRING_DATASOURCE_USERNAME": output_value(stateful, "database_username"),
-            "COGNITO_REGION": output_value(stateful, "cognito_region"),
-            "COGNITO_USER_POOL_ID": output_value(stateful, "cognito_user_pool_id"),
+            "JWT_ISSUER_URI": "https://cognito-idp."
+            + output_value(stateful, "cognito_region") + ".amazonaws.com/"
+            + output_value(stateful, "cognito_user_pool_id"),
+            "JWT_JWK_SET_URI": output_value(stateful, "cognito_jwks_url"),
+            "UPLOAD_SOURCE_BUCKET": output_value(runtime, "upload_bucket_name"),
             "COGNITO_USER_POOL_CLIENT_ID": output_value(
                 stateful, "cognito_user_pool_client_id"
             ),
-            "COGNITO_JWKS_URL": output_value(stateful, "cognito_jwks_url"),
-            "S3_BUCKET_NAME": output_value(runtime, "upload_bucket_name"),
             "ANALYSIS_RESULT_BUCKET_NAME": output_value(runtime, "result_bucket_name"),
         }
         if list(payload) != RUNTIME_CONFIG_KEYS:

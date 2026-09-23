@@ -17,9 +17,11 @@ class SignedOpenSearchHttpClientTest {
 
     @Test
     void rejectsBlankSigningServiceNameBeforeSendingARequest() {
-        assertThatThrownBy(() -> new SignedOpenSearchHttpClient(" "))
+        AwsOpenSearchRuntimeProperties properties = new AwsOpenSearchRuntimeProperties();
+        properties.setSigningServiceName(" ");
+        assertThatThrownBy(() -> new SignedOpenSearchHttpClient(properties))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("opensearch-service-name");
+                .hasMessageContaining("signing-service-name");
     }
 
     @Test

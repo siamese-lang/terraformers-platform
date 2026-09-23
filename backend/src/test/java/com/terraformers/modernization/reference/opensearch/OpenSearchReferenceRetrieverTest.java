@@ -70,9 +70,8 @@ class OpenSearchReferenceRetrieverTest {
     }
 
     @Test
-    void doesNotValidateAwsSigningServiceName() {
+    void remainsUnawareOfAwsSigningConfiguration() {
         AnalysisRuntimeProperties properties = activeProperties();
-        properties.setOpensearchServiceName(" ");
         OpenSearchTransport transport = mock(OpenSearchTransport.class);
         OpenSearchKnnQueryBuilder queryBuilder = mock(OpenSearchKnnQueryBuilder.class);
         when(queryBuilder.build(any(), any(), any(), any(Integer.class), any(), any(), any())).thenReturn("body");
@@ -98,7 +97,6 @@ class OpenSearchReferenceRetrieverTest {
         properties.setContentFieldName("content");
         properties.setCorpusVersion("terraformers-reference-v2");
         properties.setProviderVersion("5.100.0");
-        properties.setOpensearchServiceName("aoss");
         properties.setOpensearchTopK(2);
         return properties;
     }

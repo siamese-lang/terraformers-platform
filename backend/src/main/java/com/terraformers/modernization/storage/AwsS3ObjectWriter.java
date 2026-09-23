@@ -9,7 +9,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 @Component
-@ConditionalOnProperty(prefix = "terraformers.storage", name = "s3-writer-enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "terraformers.storage", name = "writer-provider", havingValue = "s3")
 public class AwsS3ObjectWriter implements ObjectWriter {
 
     private final S3Client s3Client;

@@ -1,5 +1,10 @@
 # Backend Analysis Adapter Design
 
+Runtime selection uses `ANALYSIS_PROVIDER=stub|bedrock`,
+`EMBEDDING_PROVIDER=disabled|bedrock`, and
+`PROGRESS_PUBLISHER=logging|sqs`. Canonical safe defaults are `stub`,
+`disabled`, and `logging`; Bedrock and SQS settings remain in `aws-compat`.
+
 ## 1. Purpose
 
 This document explains how the public modernization baseline replaces the original Python analysis runtime with Spring Boot backend-owned orchestration.
@@ -31,7 +36,7 @@ GET /api/analysis/jobs/{id}
 Current implementations:
 
 - `StubObjectReader`: default local/CI-safe object reader. It infers a content type from the object key and does not require AWS credentials.
-- `AwsS3ObjectReader`: optional production adapter enabled by `terraformers.storage.s3-reader-enabled=true`.
+- `AwsS3ObjectReader`: compatibility adapter selected by `OBJECT_READER_PROVIDER=s3`.
 
 Target responsibility:
 
@@ -47,7 +52,7 @@ Target responsibility:
 Current implementations:
 
 - `StubObjectWriter`: default local/CI-safe writer. It returns the requested bucket/key without calling AWS.
-- `AwsS3ObjectWriter`: optional production adapter enabled by `terraformers.storage.s3-writer-enabled=true`.
+- `AwsS3ObjectWriter`: compatibility adapter selected by `OBJECT_WRITER_PROVIDER=s3`.
 
 Target responsibility:
 
@@ -77,7 +82,7 @@ Current implementations:
   - allows `AnalysisProvider` tests to verify the reference retrieval step without OpenSearch credentials.
 
 - `OpenSearchReferenceRetriever`
-  - optional production adapter enabled by `terraformers.analysis.opensearch-retriever-enabled=true`;
+  - active retrieval implementation selected through `RETRIEVAL_MODE=REQUIRED|OPTIONAL`;
   - uses `EmbeddingProvider` to build a vector;
   - builds an OpenSearch k-NN query with `OpenSearchKnnQueryBuilder`;
   - sends a SigV4 signed request with `SignedOpenSearchHttpClient`;
@@ -127,8 +132,8 @@ Production optional: AwsS3ObjectReader + OpenSearchReferenceRetriever + BedrockA
 ```
 
 This keeps CI deterministic and credential-free while making the production adapter path explicit.
-`BEDROCK_PROVIDER_ENABLED` remains only as a transitional fallback when the generic analysis
-provider selector is absent; an explicit selector has precedence, and M1-7 owns alias cleanup.
+The legacy Bedrock boolean fallback has been removed; analysis implementations are selected only
+through `ANALYSIS_PROVIDER`.
 
 ### ProgressPublisher
 
@@ -137,7 +142,7 @@ provider selector is absent; an explicit selector has precedence, and M1-7 owns 
 Current implementations:
 
 - `LoggingProgressPublisher`: default local/CI-safe publisher
-- `SqsProgressPublisher`: optional runtime adapter enabled by `terraformers.analysis.sqs-publisher-enabled=true`
+- `SqsProgressPublisher`: compatibility adapter selected by `PROGRESS_PUBLISHER=sqs`
 
 This allows local build and tests to run without AWS credentials while keeping the production SQS boundary explicit.
 
@@ -166,16 +171,17 @@ Production runtime config is injected through `application-prod.yml` and environ
 
 Important values:
 
-- `S3_READER_ENABLED`
-- `S3_WRITER_ENABLED`
+- `OBJECT_READER_PROVIDER`
+- `OBJECT_WRITER_PROVIDER`
+- `ANALYSIS_PROVIDER`
+- `EMBEDDING_PROVIDER`
+- `RETRIEVAL_MODE`
+- `PROGRESS_PUBLISHER`
 - `ANALYSIS_RESULT_BUCKET_NAME`
 - `ANALYSIS_RESULT_KEY_PREFIX`
-- `BEDROCK_PROVIDER_ENABLED`
-- `BEDROCK_EMBEDDING_ENABLED`
 - `BEDROCK_MODEL_ID`
 - `BEDROCK_EMBEDDING_MODEL_ID`
 - `BEDROCK_MAX_TOKENS`
-- `OPENSEARCH_RETRIEVER_ENABLED`
 - `OPENSEARCH_ENDPOINT`
 - `OPENSEARCH_SERVICE_NAME`
 - `OPENSEARCH_TOP_K`
@@ -184,9 +190,10 @@ Important values:
 - `CONTENT_FIELD_NAME`
 - `AI_LOG_QUEUE_URL`
 - `TERRAFORM_LOG_QUEUE_URL`
-- `ANALYSIS_SQS_PUBLISHER_ENABLED`
 
-Secret values must not be logged. Queue URLs, endpoints, and bucket names should be treated as runtime configuration and managed through Secrets Manager / External Secrets or repository environment variables depending on the deployment stage.
+The selectors and logical OpenSearch/object locations belong to the canonical contract. Bedrock
+model identifiers, SQS queue URLs, and the AWS OpenSearch signing name are AWS compatibility
+adapter configuration in `application-aws-compat.yml`. Secret values must not be logged.
 
 ## 6. Current completion boundary
 
@@ -206,7 +213,7 @@ Implemented in the public baseline:
 
 Not yet complete:
 
-- Terraform/Kubernetes runtime variables for the new adapter switches
+- replacement provider/runtime implementations for the current GCP deployment target
 - full browser E2E validation
 - deployed AWS evidence
 

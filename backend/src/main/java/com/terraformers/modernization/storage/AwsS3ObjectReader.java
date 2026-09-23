@@ -11,7 +11,7 @@ import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 @Component
-@ConditionalOnProperty(prefix = "terraformers.storage", name = "s3-reader-enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "terraformers.storage", name = "reader-provider", havingValue = "s3")
 public class AwsS3ObjectReader implements ObjectReader {
 
     private final S3Client s3Client;

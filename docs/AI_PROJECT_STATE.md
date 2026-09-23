@@ -16,9 +16,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Status: **ACTIVE**
 - Phase: provider boundary decoupling
 - Active plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
-- Current implementation task: **M1-7 — Runtime configuration neutralization**
+- Current implementation task: **M1-8 — Contract/regression verification and closure**
 
-M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-6 complete and M1-7 next.
+M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-7 complete and M1-8 next.
 
 ## Completed
 
@@ -59,6 +59,10 @@ M0 remains complete; its closure evidence is preserved below. M1 implementation 
   - generic analysis and embedding provider selectors now choose implementations behind the existing `AnalysisProvider` and `EmbeddingProvider` ports;
   - Bedrock generation/embedding model identifiers and max-token settings are isolated in `BedrockRuntimeProperties`, with legacy `BEDROCK_PROVIDER_ENABLED` retained only as a transitional fallback; and
   - Backend Local Verification, MariaDB schema/repository validation, Terraform Static Verification, and AWS Deployment Contract Inventory Verification — **PASS** at `631fefe9ebae72becc66d33a9a672e9ffcb36bb2`.
+- M1-7 Runtime configuration neutralization — **COMPLETE**
+  - canonical production/runtime configuration now uses provider-neutral JWT, storage, analysis, embedding, retrieval, and progress-publisher selectors, while Cognito/S3/Bedrock/SQS/AWS OpenSearch signing values are isolated in the explicit `aws-compat` profile;
+  - canonical Kubernetes/runtime-secret/deployment contracts were updated to neutral base keys, legacy Bedrock/S3/SQS enable switches were removed from the canonical selection contract, and historical AWS compatibility remains explicitly preserved; and
+  - Backend Local Verification, MariaDB schema/repository validation, AWS Deployment Contract Inventory Verification, AWS Runtime Deployment Package Verification, and Terraform Static Verification — **PASS** at `b4e3c4cb0cf42e64904111447395f7a1435ca9aa`.
 
 ## Verified architectural direction
 
@@ -108,11 +112,11 @@ No remaining M0 work.
 
 ## Remaining M1 work
 
-M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
+M1-8 contract/regression verification and closure.
 
 ## Immediate next work
 
-**M1-7 — Runtime configuration neutralization:** M1-1~M1-6에서 구현한 provider-neutral boundary를 기준으로 production/runtime configuration의 generic selection concepts와 AWS compatibility settings를 분리하고, Cognito/S3/Bedrock/AOSS-specific 이름이 generic application contract로 남아 있는 부분을 정리한다. GCP runtime infrastructure나 replacement provider는 선택하지 않는다.
+**M1-8 — Contract/regression verification and closure:** M1-1~M1-7의 provider-neutral boundary와 canonical runtime contract를 consolidated regression/contract evidence로 검증하고, 기존 business behavior·MariaDB/Flyway compatibility·AWS compatibility adapter isolation을 확인한다. 확인된 regression만 최소 수정하고 M1 범위를 확장하지 않는다.
 
 ## Do not revisit
 

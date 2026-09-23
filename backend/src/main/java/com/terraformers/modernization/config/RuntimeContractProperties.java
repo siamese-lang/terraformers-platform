@@ -11,11 +11,9 @@ public class RuntimeContractProperties {
             "SPRING_DATASOURCE_URL",
             "SPRING_DATASOURCE_USERNAME",
             "SPRING_DATASOURCE_PASSWORD",
-            "COGNITO_REGION",
-            "COGNITO_USER_POOL_ID",
-            "COGNITO_USER_POOL_CLIENT_ID",
-            "COGNITO_JWKS_URL",
-            "S3_BUCKET_NAME"
+            "JWT_ISSUER_URI",
+            "JWT_JWK_SET_URI",
+            "UPLOAD_SOURCE_BUCKET"
     ));
 
     public List<String> getRequiredEnv() {

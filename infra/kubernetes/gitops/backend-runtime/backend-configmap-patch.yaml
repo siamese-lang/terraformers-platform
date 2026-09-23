@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: terraformers-backend-runtime-config
 data:
-  SPRING_PROFILES_ACTIVE: "prod"
+  SPRING_PROFILES_ACTIVE: "prod,aws-compat"
   AWS_REGION: "ap-northeast-2"
   DEPLOYMENT_ENVIRONMENT: "dev"
   OTEL_SERVICE_NAME: "terraformers-backend"
@@ -11,9 +11,10 @@ data:
 
   # Production image analysis reads private S3 objects and invokes the configured Bedrock models.
   # OPENSEARCH_ENDPOINT is supplied through the private runtime Secret from the rag-runtime output.
-  S3_READER_ENABLED: "true"
-  S3_WRITER_ENABLED: "true"
-  BEDROCK_PROVIDER_ENABLED: "true"
+  OBJECT_READER_PROVIDER: "s3"
+  OBJECT_WRITER_PROVIDER: "s3"
+  ANALYSIS_PROVIDER: "bedrock"
+  EMBEDDING_PROVIDER: "bedrock"
   BEDROCK_MODEL_ID: "global.anthropic.claude-sonnet-4-6"
   RETRIEVAL_MODE: "REQUIRED"
   BEDROCK_EMBEDDING_MODEL_ID: "amazon.titan-embed-text-v2:0"
@@ -23,7 +24,7 @@ data:
   CORPUS_VERSION: "terraformers-reference-v2"
   PROVIDER_VERSION: "5.100.0"
   EXPECTED_VECTOR_DIMENSION: "1024"
-  ANALYSIS_SQS_PUBLISHER_ENABLED: "false"
+  PROGRESS_PUBLISHER: "logging"
 
   BEDROCK_MAX_TOKENS: "8192"
   OPENSEARCH_SERVICE_NAME: "aoss"

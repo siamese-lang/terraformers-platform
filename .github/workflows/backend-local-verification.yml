@@ -69,11 +69,11 @@ jobs:
       SPRING_DATASOURCE_URL: jdbc:mariadb://127.0.0.1:3306/terraformers
       SPRING_DATASOURCE_USERNAME: terraformers
       SPRING_DATASOURCE_PASSWORD: terraformers
-      COGNITO_REGION: ap-northeast-2
-      COGNITO_USER_POOL_ID: validation-pool
-      COGNITO_USER_POOL_CLIENT_ID: validation-client
-      COGNITO_JWKS_URL: http://127.0.0.1:65535/.well-known/jwks.json
-      S3_BUCKET_NAME: validation-bucket
+      JWT_PROVIDER: cognito
+      JWT_ISSUER_URI: https://identity.example.test/validation-pool
+      JWT_JWK_SET_URI: http://127.0.0.1:65535/.well-known/jwks.json
+      TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID: validation-client
+      UPLOAD_SOURCE_BUCKET: validation-upload-bucket
       SERVER_PORT: '18080'
 
     steps:

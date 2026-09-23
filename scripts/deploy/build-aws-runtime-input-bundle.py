@@ -35,11 +35,10 @@ BASE_SECRET_KEYS = [
     "SPRING_DATASOURCE_URL",
     "SPRING_DATASOURCE_USERNAME",
     "SPRING_DATASOURCE_PASSWORD",
-    "COGNITO_REGION",
-    "COGNITO_USER_POOL_ID",
+    "JWT_ISSUER_URI",
+    "JWT_JWK_SET_URI",
+    "UPLOAD_SOURCE_BUCKET",
     "COGNITO_USER_POOL_CLIENT_ID",
-    "COGNITO_JWKS_URL",
-    "S3_BUCKET_NAME",
 ]
 
 
@@ -241,13 +240,14 @@ def main() -> int:
             "SPRING_DATASOURCE_URL": output_value(stateful, "spring_datasource_url"),
             "SPRING_DATASOURCE_USERNAME": output_value(stateful, "database_username"),
             "SPRING_DATASOURCE_PASSWORD": args.database_password,
-            "COGNITO_REGION": output_value(stateful, "cognito_region"),
-            "COGNITO_USER_POOL_ID": output_value(stateful, "cognito_user_pool_id"),
+            "JWT_ISSUER_URI": "https://cognito-idp."
+            + output_value(stateful, "cognito_region") + ".amazonaws.com/"
+            + output_value(stateful, "cognito_user_pool_id"),
+            "JWT_JWK_SET_URI": output_value(stateful, "cognito_jwks_url"),
+            "UPLOAD_SOURCE_BUCKET": output_value(runtime, "upload_bucket_name"),
             "COGNITO_USER_POOL_CLIENT_ID": output_value(
                 stateful, "cognito_user_pool_client_id"
             ),
-            "COGNITO_JWKS_URL": output_value(stateful, "cognito_jwks_url"),
-            "S3_BUCKET_NAME": output_value(runtime, "upload_bucket_name"),
             "ANALYSIS_RESULT_BUCKET_NAME": output_value(runtime, "result_bucket_name"),
         }
         if list(secret_env)[: len(BASE_SECRET_KEYS)] != BASE_SECRET_KEYS:

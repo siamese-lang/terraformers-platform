@@ -19,16 +19,18 @@ terraformers:
   security:
     jwt:
       enabled: true
+      provider: cognito
       issuer-uri: https://cognito-idp.ap-northeast-2.amazonaws.com/test-pool
       jwk-set-uri: http://127.0.0.1:65535/.well-known/jwks.json
-      client-id: test-client
+      cognito:
+        client-id: test-client
   storage:
-    s3-reader-enabled: false
-    s3-writer-enabled: false
+    reader-provider: disabled
+    writer-provider: metadata-only
   analysis:
     mode: integrated-java
     provider: stub
-    embedding-provider: bedrock
+    embedding-provider: disabled
     retrieval-mode: disabled
     result-key-prefix: analysis-results
-    sqs-publisher-enabled: false
+    progress-publisher: logging

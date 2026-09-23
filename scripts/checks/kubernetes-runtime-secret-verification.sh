@@ -58,7 +58,7 @@ assert_contains 'name: terraformers-backend-runtime-secrets' "${RENDERED_SECRET}
 assert_contains 'namespace: terraformers-runtime' "${RENDERED_SECRET}" "Rendered Secret must target terraformers-runtime namespace."
 assert_contains '^type: Opaque$' "${RENDERED_SECRET}" "Rendered Secret must be Opaque."
 assert_contains 'SPRING_DATASOURCE_URL:' "${RENDERED_SECRET}" "Rendered Secret must include datasource URL."
-assert_contains 'COGNITO_JWKS_URL:' "${RENDERED_SECRET}" "Rendered Secret must include Cognito JWKS URL."
+assert_contains 'JWT_JWK_SET_URI:' "${RENDERED_SECRET}" "Rendered Secret must include neutral JWT JWK set URI."
 assert_contains 'AI_LOG_QUEUE_URL:' "${RENDERED_SECRET}" "Rendered Secret must include AI log queue URL."
 assert_contains 'CONTENT_FIELD_NAME:' "${RENDERED_SECRET}" "Rendered Secret must include OpenSearch content field name."
 

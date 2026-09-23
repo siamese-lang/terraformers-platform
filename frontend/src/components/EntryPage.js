@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signUp, signIn, resetPassword, fetchAuthSession } from 'aws-amplify/auth';
+import {
+  getToken,
+  requestPasswordReset,
+  signIn,
+  signUp,
+} from '../auth/authClient';
 import { useAuthSession } from '../auth/AuthSessionContext';
 import '../styles/login.css';
 
@@ -29,14 +34,9 @@ function EntryPage() {
     try {
       if (currentView === 'signUp') {
         await signUp({
-          username: formData.email,
+          email: formData.email,
           password: formData.password,
-          options: {
-            userAttributes: {
-              email: formData.email,
-              nickname: formData.nickname,
-            },
-          },
+          nickname: formData.nickname,
         });
         navigate('/confirm-sign-up');
       } else if (currentView === 'logIn') {
@@ -44,20 +44,19 @@ function EntryPage() {
           username: formData.username,
           password: formData.password,
         });
-        const session = await fetchAuthSession();
-        const token = session.tokens ? session.tokens.accessToken : null;
+        const token = await getToken('access');
         if (token !== null) {
           await refresh();
           navigate('/generate', { replace: true });
         } else {
-          setError('Operation failed: missing access token after sign-in. Please check Cognito app client configuration.');
+          setError('Operation failed: missing access token after sign-in. Please check authentication configuration.');
         }
       } else if (currentView === 'PWReset') {
-        await resetPassword({ username: formData.email });
+        await requestPasswordReset(formData.email);
         changeView('logIn');
       }
     } catch (authError) {
-      console.error('[auth] Cognito sign-up/sign-in failed. Check browser auth configuration.', {
+      console.error('[auth] Sign-up/sign-in failed. Check browser auth configuration.', {
         name: authError?.name,
         message: authError?.message,
       });

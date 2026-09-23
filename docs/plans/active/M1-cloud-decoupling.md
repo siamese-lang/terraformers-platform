@@ -77,7 +77,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 ### M1-3 — Frontend auth/session boundary
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / coupling.** `AuthSessionContext.js` and `utils/api.js` call `aws-amplify/auth` directly, while `awsConfig.js` constructs Cognito configuration and provider-specific errors leak into UI paths.
 
@@ -87,7 +87,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 **Validation.** Run focused auth/session, protected-route, API error-handling, and existing route/business-flow tests against the boundary.
 
-**Completion evidence.** Pending. Record completion SHA or PR, tests/checks, and remaining task here.
+**Completion evidence.** At validated head `1e72c4d9320f3e4af82aeede8fb4c63366e80de9`, frontend application/UI code consumes provider-neutral `authClient.js` capabilities, while current Cognito/Amplify behavior is isolated in `auth/providers/cognitoAmplifyAuthClient.js`. `AuthSessionContext`, `utils/api.js`, login/sign-up/reset/confirmation components, and application bootstrap no longer import Amplify auth APIs directly. Existing `checking`/`authenticated`/`guest` state, protected-route behavior, neutral user shape, nickname profile synchronization, bearer token selection, exactly-once 401 retry, auth-expired signaling, login/logout/sign-up/reset/confirmation flows, and Cognito compatibility are preserved. Guest detection and Amplify user/token/configuration details remain inside the provider adapter, including sequential current-user then attribute resolution. Frontend CI was **SUCCESS**: dependency installation, all frontend tests, production bundle build, production entrypoint verification, and artifact upload passed. Frontend Delivery Contract Verification also passed.
 
 ### M1-4 — Object storage decoupling completion
 
@@ -188,11 +188,11 @@ The following GCP/runtime choices also remain **GATED**: GKE topology, node/VM s
 
 ## Immediate next work
 
-**M1-3 — Frontend auth/session boundary**
+**M1-4 — Object storage decoupling completion**
 
-현재 authenticated/guest/checking 상태, protected navigation, login/logout, API bearer-token attachment, 401/403 handling, profile synchronization을 유지하면서 직접적인 Amplify/Cognito 호출을 provider-neutral auth/session client boundary 뒤로 이동한다.
+기존 `ObjectReader`/`ObjectWriter` application contract를 유지하면서 S3 adapter 선택/configuration과 bucket/key/provider naming이 application/service/DTO 경계에 누출되는지 검증하고, 확인된 provider coupling만 최소 수정한다.
 
-This task preserves the existing frontend flow and does not select an exact OIDC library or identity provider.
+This task does not select GCS or redesign storage; the current S3 implementation may remain as a compatibility adapter.
 
 ## Evidence and references
 

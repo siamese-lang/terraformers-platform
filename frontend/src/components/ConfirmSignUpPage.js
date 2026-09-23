@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { confirmSignUp } from 'aws-amplify/auth';
+import { confirmSignUp } from '../auth/authClient';
 import { useNavigate } from 'react-router-dom';
 
 function ConfirmSignUpPage() {
@@ -21,7 +21,7 @@ function ConfirmSignUpPage() {
       });
       navigate('/login');
     } catch (confirmError) {
-      console.error('[auth] Cognito confirmation failed.', {
+      console.error('[auth] Account confirmation failed.', {
         name: confirmError?.name,
         message: confirmError?.message,
       });

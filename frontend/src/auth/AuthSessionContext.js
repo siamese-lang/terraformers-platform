@@ -6,23 +6,10 @@ import {
   useMemo,
   useState,
 } from 'react';
-import {
-  fetchUserAttributes,
-  getCurrentUser,
-  signOut,
-} from 'aws-amplify/auth';
+import { getCurrentUser, signOut } from './authClient';
 import api from '../utils/api';
 
 const AuthSessionContext = createContext(undefined);
-
-function normalizeUser(currentUser, attributes = {}) {
-  return {
-    userId: currentUser.userId,
-    username: currentUser.username,
-    email: attributes.email || '',
-    nickname: attributes.nickname || '',
-  };
-}
 
 export function AuthSessionProvider({ children }) {
   const [status, setStatus] = useState('checking');
@@ -35,13 +22,16 @@ export function AuthSessionProvider({ children }) {
 
     try {
       const currentUser = await getCurrentUser();
-      const attributes = await fetchUserAttributes();
+      if (!currentUser) {
+        setUser(null);
+        setStatus('guest');
+        return false;
+      }
 
-      const normalizedUser = normalizeUser(currentUser, attributes);
-      setUser(normalizedUser);
+      setUser(currentUser);
       setStatus('authenticated');
-      if (normalizedUser.nickname.trim()) {
-        api.patch('/api/users/me/display-name', { displayName: normalizedUser.nickname }).catch(() => {
+      if (currentUser.nickname.trim()) {
+        api.patch('/api/users/me/display-name', { displayName: currentUser.nickname }).catch(() => {
           // Profile synchronization is intentionally best-effort and must not affect login.
         });
       }
@@ -50,18 +40,11 @@ export function AuthSessionProvider({ children }) {
       setUser(null);
       setStatus('guest');
 
-      const expectedGuestErrors = new Set([
-        'UserUnAuthenticatedException',
-        'NotAuthorizedException',
-      ]);
-
-      if (!expectedGuestErrors.has(authError?.name)) {
-        console.error('[auth] Failed to resolve the current Cognito user.', {
-          name: authError?.name,
-          message: authError?.message,
-        });
-        setError('로그인 상태를 확인하지 못했습니다.');
-      }
+      console.error('[auth] Failed to resolve the current user.', {
+        name: authError?.name,
+        message: authError?.message,
+      });
+      setError('로그인 상태를 확인하지 못했습니다.');
 
       return false;
     }
@@ -92,7 +75,7 @@ export function AuthSessionProvider({ children }) {
       setUser(null);
       setStatus('guest');
     } catch (signOutError) {
-      console.error('[auth] Cognito sign-out failed.', {
+      console.error('[auth] Sign-out failed.', {
         name: signOutError?.name,
         message: signOutError?.message,
       });

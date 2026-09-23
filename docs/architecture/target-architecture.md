@@ -36,6 +36,9 @@ The status terms used throughout are:
    cause analysis, not merely when a dashboard exists.
 6. Substantive technology choices remain **DEFER** unless an observed problem, reproducible
    evidence, a directly relevant proposed change, and same-condition revalidation are all present.
+7. Cloud environments are not duplicated by milestone. One target runtime is built and reused;
+   evaluation, improvement, observability, and final closure operate on that same runtime whenever
+   their capability requirements overlap.
 
 ## Overall logical architecture
 
@@ -170,11 +173,13 @@ durable handoff, queue/broker use, and transactional outbox use are not decided.
 failure injection against the current lifecycle, invariant checks, and same-scenario revalidation
 before any architecture change.
 
-AI/RAG quality work is distinct from runtime execution. The required improvement path is: fixed
-evaluation dataset → baseline → failure taxonomy → targeted change → same-condition
-re-evaluation. The repository has a versioned corpus and deterministic corpus/ingestion checks, but
-the fixed evaluation dataset, scoring harness, and comparison report are a confirmed **NEW** gap.
-No specific evaluator, model, embedding model, metric threshold, or agent framework is selected.
+AI/RAG quality work is distinct from serving orchestration but must measure the actual target
+runtime. M3-1 through M3-3 implemented the fixed evaluation dataset, stage-provenance contract, and
+reusable runner. Because the historical AWS runtime is absent, the target AI/RAG runtime foundation
+is built once before the first live baseline; that same runtime is then reused for targeted changes
+and later deployment/observability work. No specific target model, embedding model, retrieval
+hosting product, metric threshold, or agent framework is selected until the relevant evidence gate
+is satisfied.
 
 ## Identity boundary
 
@@ -261,6 +266,11 @@ configuration contract, and deterministic validation are **REUSE**. Provider-spe
 implements this contract without changing domain interfaces. Existing EKS overlays, Argo CD
 runtime configuration, and AWS integrations are **HISTORICAL** references.
 
+The live deployment lifecycle uses one target runtime. A cloud stack created before M3-4 must be a
+reusable part of that target runtime rather than disposable evaluation infrastructure; later
+milestones extend and close it instead of rebuilding a separate production stack. Local/CI/Kind
+fixtures are deterministic verification paths and do not count as additional live environments.
+
 This document does not determine GKE use or topology, nodes, VM sizes, autoscaling, ingress,
 network/subnets/IPs, load balancers, or concrete database/object-storage hosting. GCP runtime/IaC
 is a confirmed **NEW** repository gap, but its design belongs to a separate evidence-based
@@ -272,8 +282,9 @@ deployment decision.
 |---|---|
 | **REUSE** | Spring Boot API/application; project/user/file/comment flows; internal identity semantics; integrated `AnalysisJob` lifecycle; provider ports; Terraform draft validation; MariaDB/Flyway; versioned corpus and corpus contract; object-storage application services; Micrometer/health/correlation contracts; container and Kubernetes workload contract; deterministic tests/checks |
 | **MODIFY** | Provider-specific compatibility implementations for Amplify/Cognito, model/embedding, S3, SQS, and SigV4/AOSS; AWS-bound batch ingestion transport/authentication |
-| **NEW** | Batch-ingestion transport portability; fixed AI/RAG evaluation dataset/harness/report; reliability/failure-injection harness; trace propagation/export/validation capability; GCP runtime/IaC (outside this logical design) |
+| **NEW** | Batch-ingestion transport portability; reliability/failure-injection harness; trace propagation/export/validation capability; GCP runtime/IaC (outside this logical design) |
 | **IMPLEMENTED IN M1** | Provider-neutral frontend auth/session client; backend external identity and JWT-provider boundaries; object-storage ports; runtime OpenSearch transport; model/embedding selectors; canonical neutral runtime configuration |
+| **IMPLEMENTED IN M3-1~M3-3** | Fixed AI/RAG evaluation dataset; stage-provenance contract; reusable evaluation runner/result writer |
 | **DEFER** | Technology/product and topology choices lacking observed-problem evidence and a same-condition validation plan |
 | **HISTORICAL** | AWS adapters, infrastructure, runtime overlays, observability deployment, delivery workflows, and live-operation assumptions retained as compatibility/reference assets |
 

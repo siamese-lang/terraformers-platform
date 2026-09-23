@@ -14,13 +14,16 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: current live/provider baseline blocked
+- Phase: target AI/RAG runtime foundation
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Current implementation task: **M3-4 — Current live/provider baseline**
+- Current implementation task: **M3-R1 — Target runtime evidence and capability decision**
 
-M0, M1, and M2 are complete. M3 is now the active milestone. M3-1 defined the stage-provenance
-contract, M3-2 fixed the first repository-owned evaluation dataset, and M3-3 added one reusable
-runner that shares the current extraction/retrieval/generation/validation boundaries. M3-4 is currently blocked because the repository's last real Bedrock+AOSS compatibility runtime was intentionally torn down and the live AWS identity/state bootstrap was also removed. No substitute provider has been used.
+M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
+repository-owned evaluation dataset, and M3-3 added one reusable runner. Historical AWS live
+infrastructure is intentionally absent, so M3-4 is **WAITING_FOR_TARGET_RUNTIME**, not a request to
+recreate AWS. M3-R1 through M3-R3 now establish the actual GCP/open-source-oriented target AI/RAG
+runtime once; that same runtime is reused by M3-4, M4, later observability/failure work, and M9
+closure.
 
 ## Completed
 
@@ -180,14 +183,20 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Resolve M3-4 live baseline substrate.** Do not start M3-5 yet. The current repository proves that
-the historical Bedrock + REQUIRED AOSS runtime was fully torn down, including the AOSS collection,
-state bucket, project GitHub OIDC provider, and live roles. All six fixed evaluation cases are
-therefore **BLOCKED**, not failed.
+**M3-R1 — Target runtime evidence and capability decision.** Collect the actual GCP project,
+region, billing/quota/cost constraints and the minimum capability requirements imposed by the
+existing provider-neutral ports. Compare only viable GCP/open-source-oriented candidates for:
 
-The next action that can produce AI quality evidence requires explicit approval for a faithful live
-evaluation substrate and its cost exposure. Do not substitute the stub provider, a local retriever,
-another model, or another vector store and call that the current baseline.
+- generation model access;
+- embedding model access and dimension/versioning;
+- OpenSearch-compatible retrieval/index persistence;
+- corpus ingestion;
+- runtime identity/authentication and network access.
+
+This is **not** an evaluation-only environment design. The selected components become the project's
+single live target AI/RAG runtime and must be reusable by the serving backend and later M4/M7/M8/M9
+work. Do not deploy resources in M3-R1 before the candidate decision and cost boundary are recorded.
+Do not resume M3-4 until M3-R3 confirms the target runtime is usable.
 
 ## Do not revisit
 
@@ -211,8 +220,9 @@ Without new evidence, an ADR where needed, and the change gate, do not:
 
 Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this
 document, (4) read `MASTER_PLAN.md`, and (5) read the
-[active M3 plan](plans/active/M3-ai-evaluation-baseline.md). Start with its first incomplete task
-and do not absorb M4 improvement work into M3 baseline collection. Retain the
+[active M3 plan](plans/active/M3-ai-evaluation-baseline.md). Follow its explicit dependency order:
+M3-R1 → M3-R2 → M3-R3 → resume M3-4. Do not create an evaluation-only cloud stack and do not
+absorb M4 improvement work into M3 baseline collection. Retain the
 [completed M2 plan](plans/active/M2-runtime-parity.md) and [completed M1 plan](plans/active/M1-cloud-decoupling.md)
 as historical milestone evidence.
 

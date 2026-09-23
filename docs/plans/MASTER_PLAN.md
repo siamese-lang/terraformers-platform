@@ -15,6 +15,8 @@
 - 한 작업은 하나의 logical하고 verifiable한 결과로 제한한다.
 - Exit evidence 없이 milestone 상태를 `COMPLETE`로 바꾸지 않는다.
 - Evidence로 인해 sequencing 변경이 필요하면 `MASTER_PLAN.md`와 해당 active plan을 같은 작업에서 갱신한다.
+- Live cloud environment는 기본적으로 하나의 target runtime만 구축하고 milestone 간 재사용한다. Evaluation-only cloud stack과 later "real" stack을 별도로 구현하지 않는다.
+- Target runtime이 선행되어야 baseline을 실행할 수 있음이 확인되면 dependency task를 앞으로 당긴다. 이는 completed milestone을 다시 여는 것이 아니다.
 - `DEFER` technology는 milestone 이름이나 진입만으로 승인되지 않는다.
 - `KEEP`으로 판정된 domain/business contract와 deterministic validation 자산을 우선 재사용하고 historical AWS 자산은 active runtime이 아닌 compatibility/baseline/reference로 다룬다.
 - 성능, AI 품질, reliability, observability 개선은 각각 비교 가능한 측정, fixed evaluation baseline, 동일 failure scenario 재검증, 실제 진단 evidence 없이 완료로 주장하지 않는다.
@@ -32,7 +34,7 @@
 | M6 — Backend Reliability Improvement | PLANNED | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
 | M7 — Observability | PLANNED | 실제 장애를 signal 간 연결로 RCA하고 recovery 확인 | 하나 이상의 실제 failure에 대한 metric/log/trace 기반 원인 및 recovery evidence |
 | M8 — Failure & Load Verification | PLANNED | AI, reliability, observability 결합 상태를 failure/load 조건에서 검증 | Reproducible scenario, telemetry, resulting state, recovery와 operator evidence |
-| M9 — GCP Runtime Closure | PLANNED | GCP runtime의 delivery, rollback, teardown evidence 최종 정리 | Reproducible IaC/deployment, immutable release, smoke, rollback, teardown evidence |
+| M9 — GCP Runtime Closure | PLANNED | 앞선 milestone에서 사용한 동일 GCP target runtime의 delivery, rollback, teardown evidence 최종 정리 | Reused target IaC/runtime, immutable release, smoke, rollback, teardown evidence |
 | M10 — Portfolio Closure | PLANNED | 문제 해결 evidence를 역추적 가능한 최종 결과물로 구성 | Repository evidence에 연결된 2~3개의 strongest case |
 
 ## M0 — Baseline & Governance
@@ -86,28 +88,43 @@ implementation until that plan is the repository source of truth.
 
 ## M3 — AI Evaluation Baseline
 
-**Status.** **ACTIVE / BLOCKED AT M3-4.** The
-[active M3 plan](active/M3-ai-evaluation-baseline.md) records M3-1 through M3-3 as complete. The
-current task is **M3-4 — Current live/provider baseline**.
+**Status.** **ACTIVE — DEPENDENCY RESEQUENCED.** The
+[active M3 plan](active/M3-ai-evaluation-baseline.md) records M3-1 through M3-3 as complete.
+M3-4 live evaluation is **WAITING_FOR_TARGET_RUNTIME**. The current task is
+**M3-R1 — Target runtime evidence and capability decision**.
 
-**Problem.** The evaluation contract, fixed dataset, and reusable provenance runner now exist, but a
-faithful live quality baseline still requires an executable real model + retrieval substrate.
+**Problem.** The evaluation contract, fixed dataset, and reusable provenance runner exist, but the
+historical AWS live runtime was intentionally removed. Recreating an AWS evaluation stack or
+building a throwaway cloud test environment would duplicate infrastructure that is not the project
+target.
 
-**Work.** Reuse the fixed `terraformers-eval-v1` dataset and `EvaluationRunner`; do not change
-prompt, ranking, corpus, model, or retrieval implementation during baseline collection.
+**Sequencing decision.** Insert M3-R1 through M3-R3 before M3-4:
 
-**Current evidence.** The last committed real compatibility path is Bedrock generation + Bedrock
-embedding + REQUIRED AOSS retrieval. Repository lifecycle evidence proves that the project AWS
-runtime and AOSS collection were intentionally torn down and that the state bucket, project GitHub
-OIDC provider, and live roles were also deleted. Consequently all six fixed cases are currently
-blocked from live execution. No alternate provider/retriever has been substituted.
+1. **M3-R1 — Target runtime evidence and capability decision:** collect actual GCP
+   quota/billing/cost/runtime constraints and select only the minimum target capabilities required
+   by the existing neutral ports.
+2. **M3-R2 — Single target AI/RAG runtime foundation:** implement the selected GCP/open-source
+   adapters, IaC/runtime identity/networking, retrieval/index, and model/embedding access as the
+   actual project runtime—not an evaluation-only stack.
+3. **M3-R3 — Corpus ingestion and serving-path smoke:** load the versioned corpus and prove the
+   existing Spring Boot-facing contracts can use the target runtime.
+4. Resume **M3-4** on that same runtime and collect the fixed live baseline.
 
-**Exit condition.** The same dataset/configuration must produce live machine-readable traces that can
-be rerun and localized by stage. A blocker record alone does not satisfy the M3 exit condition.
+**Environment rule.** The runtime created in M3-R2/R3 is reused by M3-4, M4, later
+observability/failure work, and M9. Local/CI/Kind fixtures remain deterministic verification tools,
+not a second cloud environment. M9 closes this same runtime; it does not rebuild it.
 
-**Immediate next single task.** Resolve the M3-4 live execution substrate with explicit approval for
-any paid resource creation/redeployment, then execute the fixed dataset through the existing runner.
-Do not start M3-5 or M4 from blocked/no-run evidence.
+**Evidence.** M3-R1 records the decision inputs and cost boundary. M3-R2/R3 record reusable target
+IaC/configuration and a serving-path smoke. M3-4 then records live machine-readable evaluation
+traces from the fixed `terraformers-eval-v1` dataset.
+
+**Exit condition.** The same target runtime can execute the fixed dataset repeatedly, preserve
+stage provenance, and provide failure classes for M4. No AWS compatibility recreation or temporary
+parallel cloud environment is part of the exit condition.
+
+**Immediate next single task.** Execute **M3-R1** only. Gather actual GCP project/quota/billing
+constraints plus model/embedding/retrieval/corpus-ingestion capability requirements, then compare
+candidate target shapes. Do not deploy paid resources before that decision is recorded.
 
 ## M4 — AI Targeted Improvement
 
@@ -161,13 +178,19 @@ Do not start M3-5 or M4 from blocked/no-run evidence.
 
 ## M9 — GCP Runtime Closure
 
-**Problem.** 현재 deployment target인 GCP에서 delivery lifecycle과 resource/cost closure가 재현 가능하게 정리되어야 한다.
+**Problem.** The target GCP runtime built and used earlier in the project must have a reproducible
+delivery, rollback, and resource/cost closure lifecycle.
 
-**Work.** Deployment architecture와 quota/capacity evidence에 따라 GCP IaC, workload identity, image publishing, immutable release identity, deployment, smoke, rollback, teardown/cost closure를 정리한다. 구체 topology와 product는 근거 없이 선택하지 않는다.
+**Work.** Reuse the same target runtime, IaC modules, application image, provider adapters, and
+configuration introduced before M3-4. Complete immutable release identity, deployment, smoke,
+rollback, and teardown/cost closure. Do **not** create a separate "production" architecture or
+rebuild the runtime from scratch merely because M9 has been reached.
 
-**Evidence.** Reproducible IaC/deployment, release identity, smoke, rollback, teardown/closure 기록을 보존한다.
+**Evidence.** Reproducible plan/apply for the reused target IaC, release identity, smoke, rollback,
+and teardown/closure records.
 
-**Exit condition.** 승인된 GCP target에서 deploy-to-close lifecycle 전체가 repository evidence로 재현 가능하다.
+**Exit condition.** The single approved GCP target runtime used by prior milestones has a complete,
+reproducible deploy-to-close lifecycle in repository evidence.
 
 ## M10 — Portfolio Closure
 

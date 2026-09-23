@@ -11,7 +11,7 @@ public record StoredUploadObject(
         return new StoredUploadObject("metadata-only", false, bucket, key, null);
     }
 
-    public static StoredUploadObject s3(String bucket, String key, String eTag) {
-        return new StoredUploadObject("s3", true, bucket, key, eTag);
+    public static StoredUploadObject from(ObjectWriteResult result) {
+        return new StoredUploadObject(result.provider(), result.persisted(), result.bucket(), result.key(), result.eTag());
     }
 }

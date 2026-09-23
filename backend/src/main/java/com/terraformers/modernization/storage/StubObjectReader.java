@@ -9,6 +9,11 @@ import org.springframework.stereotype.Component;
 public class StubObjectReader implements ObjectReader {
 
     @Override
+    public boolean isAvailable() {
+        return false;
+    }
+
+    @Override
     public ObjectMetadata readMetadata(ObjectReference reference) {
         String contentType = inferContentType(reference.key());
         return new ObjectMetadata(

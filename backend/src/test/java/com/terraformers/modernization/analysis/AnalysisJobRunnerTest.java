@@ -41,7 +41,7 @@ class AnalysisJobRunnerTest {
                         List.of(),
                         List.of()
                 ),
-                new ObjectWriteResult("result-bucket", "analysis/main.tf", "etag")
+                new ObjectWriteResult("s3", true, "result-bucket", "analysis/main.tf", "etag")
         );
         when(stateService.markRunning("job-1")).thenReturn(running);
         when(orchestrator.executeProviderAndStoreDraft(running)).thenReturn(execution);

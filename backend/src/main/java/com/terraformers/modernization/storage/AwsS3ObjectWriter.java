@@ -18,9 +18,19 @@ public class AwsS3ObjectWriter implements ObjectWriter {
         this.s3Client = S3Client.builder().build();
     }
 
+    AwsS3ObjectWriter(S3Client s3Client) {
+        this.s3Client = s3Client;
+    }
+
     @Override
     public ObjectWriteResult writeText(ObjectWriteRequest request) {
-        byte[] bytes = request.content().getBytes(StandardCharsets.UTF_8);
+        return writeBytes(new ObjectBinaryWriteRequest(
+                request.bucket(), request.key(), request.content().getBytes(StandardCharsets.UTF_8), request.contentType()));
+    }
+
+    @Override
+    public ObjectWriteResult writeBytes(ObjectBinaryWriteRequest request) {
+        byte[] bytes = request.bytes();
         PutObjectResponse response = s3Client.putObject(PutObjectRequest.builder()
                 .bucket(request.bucket())
                 .key(request.key())
@@ -28,6 +38,6 @@ public class AwsS3ObjectWriter implements ObjectWriter {
                 .contentLength((long) bytes.length)
                 .build(), RequestBody.fromBytes(bytes));
 
-        return new ObjectWriteResult(request.bucket(), request.key(), response.eTag());
+        return new ObjectWriteResult("s3", true, request.bucket(), request.key(), response.eTag());
     }
 }

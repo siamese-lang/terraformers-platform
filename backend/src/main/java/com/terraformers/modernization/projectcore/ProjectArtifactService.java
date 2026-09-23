@@ -98,8 +98,8 @@ public class ProjectArtifactService {
         file.setOriginalFilename("main.tf");
         file.setS3Bucket(writeResult.bucket());
         file.setS3Key(writeResult.key());
-        file.setStorageProvider(writeResult.eTag() == null ? "metadata-only" : "s3");
-        file.setBinaryPersisted(writeResult.eTag() != null);
+        file.setStorageProvider(writeResult.provider());
+        file.setBinaryPersisted(writeResult.persisted());
         file.setStorageETag(writeResult.eTag());
         file.setContentType(TERRAFORM_CONTENT_TYPE);
         file.setSizeBytes((long) content.getBytes(StandardCharsets.UTF_8).length);
@@ -165,8 +165,8 @@ public class ProjectArtifactService {
         file.setChecksum(sha256(normalizedContent));
         file.setS3Bucket(writeResult.bucket());
         file.setS3Key(writeResult.key());
-        file.setStorageProvider(writeResult.eTag() == null ? "metadata-only" : "s3");
-        file.setBinaryPersisted(writeResult.eTag() != null);
+        file.setStorageProvider(writeResult.provider());
+        file.setBinaryPersisted(writeResult.persisted());
         file.setStorageETag(writeResult.eTag());
         return fileRepository.save(file);
     }

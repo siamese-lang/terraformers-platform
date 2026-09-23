@@ -1,11 +1,13 @@
 package com.terraformers.modernization.storage;
 
 public record ObjectWriteResult(
+        String provider,
+        boolean persisted,
         String bucket,
         String key,
         String eTag
 ) {
-    public String objectUri() {
-        return "s3://" + bucket + "/" + key;
+    public ObjectReference reference() {
+        return new ObjectReference(bucket, key);
     }
 }

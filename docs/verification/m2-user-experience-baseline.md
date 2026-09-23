@@ -22,6 +22,13 @@ The authoritative command is
 `artifacts/m2-user-experience-baseline/backend-summary.txt`. Workflow success means that the
 baseline was collected and required runtime assertions passed, not that M2-5 is complete.
 
+The first authoritative attempt reached and passed the frontend contract, but the backend fixture
+stopped before application startup: it loaded `terraformers-backend:m2-user-experience` while the
+reused overlay, with `imagePullPolicy=Never`, required `terraformers-backend:portable-persistent`.
+The pod reported `ErrImageNeverPull`, so the backend HTTP user flow was **NOT REACHED** and this is
+not application-parity evidence. The verifier now uses the overlay image identity and checks the
+rendered image before creating or waiting on the runtime.
+
 ## Backend actual HTTP matrix
 
 The following expected values are assertions in the verifier. Actual PASS/FAIL values and sanitized
@@ -79,6 +86,11 @@ entrypoint check. Its artifact is `frontend-summary.txt`.
 
 Authoritative frontend fields are `frontend_tests`, `frontend_production_build`, and
 `frontend_entrypoint`, each `PASS` or `FAIL`.
+
+Run #1 recorded all three fields as `PASS`. Its focused classifications remain the three `FAIL`
+values below, with `known_provider_specific_visible_copy=3`,
+`first_confirmed_gap=frontend_provider_specific_visible_copy`, and
+`browser_e2e_required_for_m2=false`; no production fix is included here.
 
 ## Provider-specific visible UX classification
 

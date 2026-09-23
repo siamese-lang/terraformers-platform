@@ -6,7 +6,7 @@ OVERLAY_DIR="${REPO_ROOT}/infra/kubernetes/overlays/portable-object-store"
 OUTPUT_DIR="${REPO_ROOT}/artifacts/m2-user-experience-baseline"
 NAMESPACE="${PORTABLE_NAMESPACE:-terraformers-portable}"
 CLUSTER_NAME="${KIND_CLUSTER_NAME:-terraformers-portable-user-experience}"
-IMAGE_NAME="${PORTABLE_BACKEND_IMAGE:-terraformers-backend:m2-user-experience}"
+IMAGE_NAME="${PORTABLE_BACKEND_IMAGE:-terraformers-backend:portable-persistent}"
 BACKEND_PORT="${PORTABLE_BACKEND_PORT:-18080}"
 ISSUER="https://identity.example.test/portable-authenticated"
 CLIENT_ID="portable-runtime-client"
@@ -42,6 +42,11 @@ openssl rsa -in "$TEMP_DIR/private.pem" -noout -modulus 2>/dev/null | cut -d= -f
 printf '{"keys":[{"kid":"%s","kty":"RSA","alg":"RS256","use":"sig","n":"%s","e":"AQAB"}]}' "$KEY_ID" "$(b64url_file "$TEMP_DIR/modulus.bin")" >"$TEMP_DIR/jwks.json"
 printf %s 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=' | base64 -d >"$TEMP_DIR/architecture.png"
 printf 'overlay=infra/kubernetes/overlays/portable-object-store\nobject_store=filesystem\nanalysis_provider=stub\nissuer=%s\ncloud_credentials_required=false\n' "$ISSUER" >"$OUTPUT_DIR/runtime-config-summary.txt"
+rendered_backend_image="$(kubectl kustomize "$OVERLAY_DIR" | awk '$1 == "image:" && $2 ~ /^terraformers-backend:/ { print $2 }' | sort -u)"
+if [[ "$rendered_backend_image" != "$IMAGE_NAME" ]]; then
+  printf 'Backend image mismatch: verifier builds %s but overlay requires %s\n' "$IMAGE_NAME" "${rendered_backend_image:-<none>}" >&2
+  exit 1
+fi
 kind get clusters | grep -Fxq "$CLUSTER_NAME" || kind create cluster --name "$CLUSTER_NAME"
 kubectl config use-context "kind-$CLUSTER_NAME"; docker build -t "$IMAGE_NAME" backend; kind load docker-image "$IMAGE_NAME" --name "$CLUSTER_NAME"
 kubectl delete namespace "$NAMESPACE" --ignore-not-found --wait=true; kubectl apply -k "$OVERLAY_DIR"

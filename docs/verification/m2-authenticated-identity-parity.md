@@ -1,14 +1,14 @@
 # M2 Authenticated Identity and Ownership Parity
 
-**Status: PENDING**
+**Status: PASS**
 
 ## Verification identity
 
 - Implementation base SHA: `d902e7bf095eadb686d3cf01d433c8425029fa5b`
 - Runtime: Kind, namespace `terraformers-portable`, Spring `prod` profile, MariaDB 11.4 and Flyway.
 - Command: `bash scripts/checks/kind-portable-authenticated-smoke.sh`
-- Authoritative result: the dedicated GitHub Actions workflow must pass before this document or M2-3
-  can be marked complete.
+- Authoritative result: **PASS** — M2 Authenticated Identity Parity Verification run #3 at
+  `eda4b9469f258b71aae8e28a0b3ec1a226c4412a`.
 
 ### Historical run #1
 
@@ -27,6 +27,39 @@ fixture, and the backend were Ready, and backend health was `UP`. It then stoppe
 the first HTTP authentication request because the verifier expanded `method` in the same `local`
 statement that initialized it under `set -u`. Authentication requests were therefore **NOT REACHED**;
 this was a shell harness initialization failure, not an authentication-parity failure.
+
+### Authoritative run #3
+
+The third workflow run completed successfully. The uploaded machine-readable summary recorded:
+
+```text
+runtime_ready=PASS
+jwks_ready=PASS
+owner_token_accepted=PASS
+owner_user_created=PASS
+provider_subject_persisted=PASS
+numeric_user_id=PASS
+same_identity_reused=PASS
+second_identity_distinct=PASS
+anonymous_protected_rejected=PASS
+invalid_token_rejected=PASS
+owner_private_access=PASS
+non_owner_private_forbidden=PASS
+non_owner_modification_forbidden=PASS
+owner_modification_allowed=PASS
+display_name_update=PASS
+display_name_preserved=PASS
+cloud_credentials_required=false
+```
+
+Observed HTTP statuses were: anonymous `GET /api/projects` → 401, signed wrong-client token → 401,
+owner authenticated list/get → 200, non-owner private project get → 403, non-owner visibility
+modification → 403, owner visibility modification → 200, display-name update → 204, and subsequent
+owner list → 200. MariaDB evidence recorded owner `user_id=1` and other user `user_id=2`, both
+selected by `external_identity_provider='cognito'` plus their neutral external subjects. The seeded
+ownership fixture used `project_id=1` and ended with visibility `PUBLIC` after the authorized
+owner update. No private RSA key, raw bearer token, database password, or unredacted Secret was
+uploaded.
 
 The `portable-authenticated` overlay composes the already verified `portable-persistent` fixture and
 adds a BusyBox static HTTP server for JWKS. The verifier generates an ephemeral RSA-2048 key with
@@ -71,5 +104,5 @@ active model or retrieval integrations, comments, a frontend workload, browser E
 project UX, production identity-provider selection, or production topology. Upload and analysis
 remain M2-4 scope; broader user/comment/frontend parity remains M2-5 scope.
 
-M2 remains **ACTIVE** and M2-3 remains **TODO** until the authoritative workflow succeeds and the
-evidence is reviewed. The immediate next single task after that acceptance is M2-4.
+M2 remains **ACTIVE**. M2-3 is **DONE** based on the authoritative run #3 evidence above. The
+immediate next single task is **M2-4 — Upload → analysis → Terraform result parity**.

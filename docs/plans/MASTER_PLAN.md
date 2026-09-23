@@ -86,31 +86,28 @@ implementation until that plan is the repository source of truth.
 
 ## M3 — AI Evaluation Baseline
 
-**Status.** **ACTIVE.** The [active M3 plan](active/M3-ai-evaluation-baseline.md) defines the
-evaluation-first sequence. M3-1 and M3-2 are complete; the current implementation task is
-**M3-3 — Reusable evaluation runner and provenance capture**.
+**Status.** **ACTIVE / BLOCKED AT M3-4.** The
+[active M3 plan](active/M3-ai-evaluation-baseline.md) records M3-1 through M3-3 as complete. The
+current task is **M3-4 — Current live/provider baseline**.
 
-**Problem.** Fixed evaluation data and stage-level provenance do not yet exist, so a bad final
-Terraform result cannot be reliably localized to architecture-fact extraction, retrieval, grounding,
-generation, or validation.
+**Problem.** The evaluation contract, fixed dataset, and reusable provenance runner now exist, but a
+faithful live quality baseline still requires an executable real model + retrieval substrate.
 
-**Work.** Build one fixed/versioned dataset, one reusable runner, one machine-readable provenance
-record, and one baseline/failure-taxonomy report. Preserve extracted facts, retrieval query,
-retrieved document IDs/scores/source metadata, generation outputs, Terraform resource types,
-validation result, runtime/model/corpus identity, and stage timing. Explainability means observable
-provenance; hidden model chain-of-thought is not required or treated as evidence.
+**Work.** Reuse the fixed `terraformers-eval-v1` dataset and `EvaluationRunner`; do not change
+prompt, ranking, corpus, model, or retrieval implementation during baseline collection.
 
-**Evidence.** Per-case machine-readable traces and a reproducible baseline report must show what data
-was retrieved and supplied to generation and identify the first observable divergent stage for each
-failure where evidence permits.
+**Current evidence.** The last committed real compatibility path is Bedrock generation + Bedrock
+embedding + REQUIRED AOSS retrieval. Repository lifecycle evidence proves that the project AWS
+runtime and AOSS collection were intentionally torn down and that the state bucket, project GitHub
+OIDC provider, and live roles were also deleted. Consequently all six fixed cases are currently
+blocked from live execution. No alternate provider/retriever has been substituted.
 
-**Exit condition.** The same dataset/configuration can be rerun, failures are attributable to
-specific pipeline stages, and M4 receives evidence-backed failure classes. LangChain, LangGraph, or
-other framework adoption remains evidence-gated rather than being an M3 prerequisite.
+**Exit condition.** The same dataset/configuration must produce live machine-readable traces that can
+be rerun and localized by stage. A blocker record alone does not satisfy the M3 exit condition.
 
-**Immediate next single task.** Execute **M3-3 — Reusable evaluation runner and provenance capture**
-against the fixed `terraformers-eval-v1` dataset. Reuse current application boundaries and do not
-tune production AI behavior to the cases.
+**Immediate next single task.** Resolve the M3-4 live execution substrate with explicit approval for
+any paid resource creation/redeployment, then execute the fixed dataset through the existing runner.
+Do not start M3-5 or M4 from blocked/no-run evidence.
 
 ## M4 — AI Targeted Improvement
 

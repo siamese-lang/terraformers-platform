@@ -1,0 +1,64 @@
+{
+  "recordVersion": "m3-live-baseline-status-v1",
+  "recordedAgainstMainSha": "3e706f97c94a051432de9ce576a820d8672a5b4f",
+  "datasetVersion": "terraformers-eval-v1",
+  "evaluationSchemaVersion": "m3-evaluation-v1",
+  "status": "BLOCKED",
+  "baselineType": "CURRENT_IMPLEMENTED_REAL_PROVIDER_PATH",
+  "committedCompatibilityConfiguration": {
+    "springProfiles": [
+      "prod",
+      "aws-compat"
+    ],
+    "awsRegion": "ap-northeast-2",
+    "analysisProvider": "bedrock",
+    "embeddingProvider": "bedrock",
+    "retrievalMode": "REQUIRED",
+    "generationModelId": "global.anthropic.claude-sonnet-4-6",
+    "embeddingModelId": "amazon.titan-embed-text-v2:0",
+    "corpusVersion": "terraformers-reference-v2",
+    "providerVersion": "5.100.0",
+    "indexName": "terraformers-reference-v1",
+    "vectorFieldName": "embedding",
+    "contentFieldName": "content",
+    "expectedVectorDimension": 1024,
+    "topK": 8,
+    "opensearchSigningService": "aoss"
+  },
+  "execution": {
+    "executableCaseCount": 0,
+    "executedCaseCount": 0,
+    "failedCaseCount": 0,
+    "blockedCaseCount": 6,
+    "blockedCaseIds": [
+      "arch-vpc-three-tier",
+      "arch-cloudfront-private-alb",
+      "arch-private-aoss",
+      "arch-s3-metadata-split",
+      "ambiguous-cropped-service-sketch",
+      "non-architecture-deployment-dashboard"
+    ]
+  },
+  "blockers": [
+    {
+      "code": "LIVE_RAG_COLLECTION_ABSENT",
+      "evidence": "docs/lifecycle/aws-final-zero-resource-proof.md",
+      "detail": "Project-scoped final AWS proof records zero OpenSearch Serverless collections and zero Terraformers runtime resources."
+    },
+    {
+      "code": "LIVE_AWS_IDENTITY_BOOTSTRAP_ABSENT",
+      "evidence": "docs/lifecycle/aws-final-zero-resource-proof.md",
+      "detail": "State bucket, project GitHub OIDC provider, and live IAM roles were deleted; retained GitHub identifiers are stale until redeployment."
+    },
+    {
+      "code": "LIVE_COST_APPROVAL_NOT_ESTABLISHED",
+      "evidence": "docs/lifecycle/aws-redeploy-runbook.md",
+      "detail": "Recreating the faithful AWS evaluation substrate exposes paid AOSS, networking, and Bedrock usage and requires explicit approval."
+    }
+  ],
+  "substitution": {
+    "used": false,
+    "reason": "A stub provider, local retriever, alternate model, or alternate vector store would not measure the current implemented real provider path."
+  },
+  "nextRequiredAction": "Approve and provide a faithful live evaluation substrate, then execute terraformers-eval-v1 through EvaluationRunner."
+}

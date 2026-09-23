@@ -106,19 +106,10 @@ closure.
   - required five existing `PROJECT_DECISION` documents across positive cases so retrieval quality can be distinguished from generic vector hits; and
   - `EvaluationDatasetLoaderTest` validates deterministic loading, fixture identity, case composition, expectation completeness, and corpus-reference existence.
 
-- M3-2 Fixed/versioned evaluation dataset — **COMPLETE**
-  - added `terraformers-eval-v1` with four architecture, one ambiguous, and one non-architecture WebP fixture;
-  - fixed stage-level expectations and required repository-owned project-decision retrieval evidence; and
-  - `EvaluationDatasetLoader` verifies exact fixture SHA-256 and case/schema identity before execution.
 - M3-3 Reusable evaluation runner and provenance capture — **COMPLETE**
   - added one runner/result/writer path that emits M3-1 stage provenance for the fixed dataset;
   - extracted Bedrock generation into a shared `AnalysisGenerationStage` so production and evaluation use the same model-call/retry path; and
   - full backend regression and deterministic runner cases passed, including retrieval provenance, input classification, validation, and first-divergence localization.
-
-- M3-4 Current live/provider baseline — **BLOCKED**
-  - current committed AWS compatibility identity is Bedrock generation + Bedrock embedding + REQUIRED AOSS retrieval against `terraformers-reference-v2`;
-  - final lifecycle evidence proves the project AOSS collection/runtime, state bucket, GitHub OIDC provider, and live roles were deleted; and
-  - all six `terraformers-eval-v1` cases are recorded as blocked with no substitute provider or fabricated quality score.
 
 ## Verified architectural direction
 
@@ -128,23 +119,20 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 ## Current gaps
 
-M3 activation inspection found these AI/RAG measurement gaps:
+Current M3 gaps after M3-1 through M3-3:
 
-- no fixed/versioned AI evaluation dataset exists;
-- the current pipeline is `image → extracted architecture facts → retrieval query → embedding/OpenSearch → ranked references → generation → Terraform validation`;
-- extracted architecture facts and retrieval query are not retained in the final result;
-- retrieved `ReferenceDocument` objects contain score, authority, source path, corpus/provider
-  version, priority, resource types, and risk tags, but `AnalysisResult` currently retains only
-  reference IDs;
-- current logs expose useful counts/IDs but do not provide one per-case provenance chain through
-  extraction, retrieval, generation, and validation;
-- there is no explicit evidence mapping that lets a failed generated resource be classified as an
-  extraction, retrieval, grounding, generation, or validation problem;
-- `terraformers-reference-v2` currently contains 128 documents (90 provider documentation, 30
-  provider schema, 8 project decisions); that corpus identity is a baseline input, not a new active
-  cloud-provider decision;
-- LangChain/LangGraph remain evidence-gated. M3 first measures the existing linear Spring Boot
-  pipeline; framework adoption is considered only if measured failures justify it.
+- no active target AI/RAG runtime exists yet;
+- GCP/open-source generation, embedding, OpenSearch-compatible retrieval hosting, corpus ingestion,
+  runtime identity/authentication, networking, quota and cost choices remain evidence-gated;
+- the fixed `terraformers-eval-v1` dataset, stage-provenance contract, reusable runner, and
+  machine-readable result writer are already implemented and must be reused;
+- M3-4 live quality evidence is **WAITING_FOR_TARGET_RUNTIME**; the historical AWS blocker record is
+  readiness evidence only and must not be treated as a failed AI baseline;
+- the versioned `terraformers-reference-v2` corpus remains reusable, but its embedding/index
+  contract must be reconciled with the selected target embedding model and retrieval runtime before
+  ingestion;
+- LangChain/LangGraph remain evidence-gated. M3-R1 through M3-R3 establish the target runtime first;
+  framework adoption is considered only after M3-4/M3-5 expose a concrete failure class.
 
 ## Historical AWS implementation
 

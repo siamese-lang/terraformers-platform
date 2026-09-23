@@ -2,7 +2,7 @@ package com.terraformers.modernization.reference;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
+import com.terraformers.modernization.analysis.bedrock.BedrockRuntimeProperties;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.util.Base64;
 import java.util.List;
@@ -23,10 +23,10 @@ public class BedrockArchitectureFactsExtractor {
 
     private final BedrockRuntimeClient client;
     private final ObjectMapper objectMapper;
-    private final AnalysisRuntimeProperties properties;
+    private final BedrockRuntimeProperties properties;
 
     public BedrockArchitectureFactsExtractor(@Lazy BedrockRuntimeClient client, ObjectMapper objectMapper,
-                                             AnalysisRuntimeProperties properties) {
+                                             BedrockRuntimeProperties properties) {
         this.client = client;
         this.objectMapper = objectMapper;
         this.properties = properties;
@@ -102,8 +102,8 @@ public class BedrockArchitectureFactsExtractor {
     }
 
     private String requireModelId() {
-        String id = properties.getBedrockModelId();
-        if (id == null || id.isBlank()) throw new IllegalStateException("terraformers.analysis.bedrock-model-id must be set for retrieval facts");
+        String id = properties.getModelId();
+        if (id == null || id.isBlank()) throw new IllegalStateException("terraformers.analysis.bedrock.model-id must be set for retrieval facts");
         return id.strip();
     }
 

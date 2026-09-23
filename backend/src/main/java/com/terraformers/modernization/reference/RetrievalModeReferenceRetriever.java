@@ -38,14 +38,14 @@ public class RetrievalModeReferenceRetriever implements ReferenceRetriever {
             if (mode == RetrievalMode.REQUIRED && documents.isEmpty()) {
                 throw new IllegalStateException("required reference retrieval returned no documents");
             }
-            log.info("reference retrieval outcome={} mode={} modelId={} index={} topK={} hitCount={} documentIds={} elapsedMs={}",
+            log.info("reference retrieval outcome={} mode={} embeddingProvider={} index={} topK={} hitCount={} documentIds={} elapsedMs={}",
                     documents.isEmpty() ? "empty" : "success", mode,
-                    properties.getBedrockEmbeddingModelId(), properties.getIndexName(), properties.getOpensearchTopK(),
+                    properties.resolvedEmbeddingProvider(), properties.getIndexName(), properties.getOpensearchTopK(),
                     documents.size(), documents.stream().map(ReferenceDocument::id).toList(), elapsedMillis(started));
             return documents;
         } catch (RuntimeException exception) {
-            log.warn("reference retrieval outcome=failure mode={} stage=search modelId={} index={} topK={} errorClass={} elapsedMs={}",
-                    mode, properties.getBedrockEmbeddingModelId(), properties.getIndexName(), properties.getOpensearchTopK(),
+            log.warn("reference retrieval outcome=failure mode={} stage=search embeddingProvider={} index={} topK={} errorClass={} elapsedMs={}",
+                    mode, properties.resolvedEmbeddingProvider(), properties.getIndexName(), properties.getOpensearchTopK(),
                     exception.getClass().getName(), elapsedMillis(started));
             if (mode == RetrievalMode.REQUIRED) {
                 throw exception;

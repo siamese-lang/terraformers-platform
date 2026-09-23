@@ -43,6 +43,7 @@ The implementation must use runtime configuration, not hardcoded values.
 
 Required values:
 
+- `EMBEDDING_PROVIDER=bedrock`
 - `BEDROCK_EMBEDDING_MODEL_ID`
 - `OPENSEARCH_ENDPOINT`
 - `INDEX_NAME`
@@ -50,7 +51,9 @@ Required values:
 - `CONTENT_FIELD_NAME`
 - AWS region and runtime identity
 
-These values are provided through `application-prod.yml`, environment variables, and the Secret/runtime config delivery mechanism described in the deployment documents.
+The selector is provider-neutral. The model ID is owned by the selected Bedrock compatibility
+adapter, while `OpenSearchReferenceRetriever` validates only the index/retrieval contract. These
+values are provided through `application-prod.yml`, environment variables, and the Secret/runtime config delivery mechanism described in the deployment documents.
 
 ## 5. Failure classification
 

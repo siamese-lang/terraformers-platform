@@ -2,6 +2,9 @@ package com.terraformers.modernization.config;
 
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.AnalysisMode;
+import com.terraformers.modernization.analysis.AnalysisProviderType;
+import com.terraformers.modernization.analysis.EmbeddingProviderType;
+import com.terraformers.modernization.analysis.bedrock.BedrockRuntimeProperties;
 import com.terraformers.modernization.reference.RetrievalMode;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +18,11 @@ import org.springframework.stereotype.Component;
 public class RuntimeAdapterContractValidator implements ApplicationRunner {
 
     private final AnalysisRuntimeProperties properties;
+    private final BedrockRuntimeProperties bedrockProperties;
 
-    public RuntimeAdapterContractValidator(AnalysisRuntimeProperties properties) {
+    public RuntimeAdapterContractValidator(AnalysisRuntimeProperties properties, BedrockRuntimeProperties bedrockProperties) {
         this.properties = properties;
+        this.bedrockProperties = bedrockProperties;
     }
 
     @Override
@@ -37,12 +42,16 @@ public class RuntimeAdapterContractValidator implements ApplicationRunner {
             missing.add("ANALYSIS_MODE_INTEGRATED_JAVA");
         }
 
-        if (properties.isBedrockProviderEnabled()) {
-            requireText(missing, "BEDROCK_MODEL_ID", properties.getBedrockModelId());
+        if (properties.resolvedProvider() == AnalysisProviderType.BEDROCK) {
+            requireText(missing, "BEDROCK_MODEL_ID", bedrockProperties.getModelId());
         }
         if (properties.getRetrievalMode() != null && properties.getRetrievalMode() != RetrievalMode.DISABLED) {
-            if (!properties.isBedrockProviderEnabled()) missing.add("BEDROCK_PROVIDER_ENABLED");
-            requireText(missing, "BEDROCK_EMBEDDING_MODEL_ID", properties.getBedrockEmbeddingModelId());
+            if (properties.resolvedProvider() != AnalysisProviderType.BEDROCK) missing.add("ANALYSIS_PROVIDER_BEDROCK");
+            if (properties.resolvedEmbeddingProvider() == EmbeddingProviderType.DISABLED) {
+                missing.add("EMBEDDING_PROVIDER");
+            } else if (properties.resolvedEmbeddingProvider() == EmbeddingProviderType.BEDROCK) {
+                requireText(missing, "BEDROCK_EMBEDDING_MODEL_ID", bedrockProperties.getEmbeddingModelId());
+            }
             requireText(missing, "OPENSEARCH_ENDPOINT", properties.getOpensearchEndpoint());
             requireText(missing, "INDEX_NAME", properties.getIndexName());
             requireText(missing, "VECTOR_FIELD_NAME", properties.getVectorFieldName());

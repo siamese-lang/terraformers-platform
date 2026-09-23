@@ -92,7 +92,6 @@ class OpenSearchReferenceRetrieverTest {
 
     private AnalysisRuntimeProperties activeProperties() {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setBedrockEmbeddingModelId("embedding-model");
         properties.setOpensearchEndpoint("https://search.example");
         properties.setIndexName("references");
         properties.setVectorFieldName("embedding");

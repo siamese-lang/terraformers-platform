@@ -3,6 +3,7 @@ package com.terraformers.modernization.reference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
+import com.terraformers.modernization.analysis.bedrock.BedrockRuntimeProperties;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,16 +15,20 @@ import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse;
 
 @Component
+@Lazy
 public class BedrockEmbeddingProvider implements EmbeddingProvider {
 
     private final BedrockRuntimeClient client;
     private final ObjectMapper objectMapper;
     private final AnalysisRuntimeProperties properties;
+    private final BedrockRuntimeProperties bedrockProperties;
 
-    public BedrockEmbeddingProvider(@Lazy BedrockRuntimeClient client, ObjectMapper objectMapper, AnalysisRuntimeProperties properties) {
+    public BedrockEmbeddingProvider(@Lazy BedrockRuntimeClient client, ObjectMapper objectMapper, AnalysisRuntimeProperties properties,
+                                    BedrockRuntimeProperties bedrockProperties) {
         this.client = client;
         this.objectMapper = objectMapper;
         this.properties = properties;
+        this.bedrockProperties = bedrockProperties;
     }
 
     @Override
@@ -32,7 +37,7 @@ public class BedrockEmbeddingProvider implements EmbeddingProvider {
         try {
             String body = objectMapper.writeValueAsString(Map.of("inputText", text));
             InvokeModelResponse response = client.invokeModel(InvokeModelRequest.builder()
-                    .modelId(properties.getBedrockEmbeddingModelId())
+                    .modelId(bedrockProperties.getEmbeddingModelId())
                     .contentType("application/json")
                     .accept("application/json")
                     .body(SdkBytes.fromUtf8String(body))
@@ -59,8 +64,8 @@ public class BedrockEmbeddingProvider implements EmbeddingProvider {
     }
 
     private void requireEmbeddingModelId() {
-        if (properties.getBedrockEmbeddingModelId() == null || properties.getBedrockEmbeddingModelId().isBlank()) {
-            throw new IllegalStateException("terraformers.analysis.bedrock-embedding-model-id must be set when Bedrock embedding is enabled");
+        if (bedrockProperties.getEmbeddingModelId() == null || bedrockProperties.getEmbeddingModelId().isBlank()) {
+            throw new IllegalStateException("terraformers.analysis.bedrock.embedding-model-id must be set when Bedrock embedding is enabled");
         }
     }
 }

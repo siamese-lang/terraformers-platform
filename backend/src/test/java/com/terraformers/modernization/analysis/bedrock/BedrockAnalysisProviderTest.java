@@ -48,8 +48,9 @@ class BedrockAnalysisProviderTest {
                         """)))
                 .build());
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setBedrockModelId("configured-model-id");
-        properties.setBedrockMaxTokens(2048);
+        BedrockRuntimeProperties bedrockProperties = new BedrockRuntimeProperties();
+        bedrockProperties.setModelId("configured-model-id");
+        bedrockProperties.setMaxTokens(2048);
         properties.setRetrievalMode(com.terraformers.modernization.reference.RetrievalMode.DISABLED);
 
         BedrockAnalysisProvider provider = new BedrockAnalysisProvider(
@@ -57,9 +58,10 @@ class BedrockAnalysisProviderTest {
                 objectReader(),
                 referenceRetriever(),
                 properties,
+                bedrockProperties,
                 new BedrockPromptBuilder(objectMapper),
                 new BedrockResponseParser(objectMapper),
-                new BedrockArchitectureFactsExtractor(client, objectMapper, properties),
+                new BedrockArchitectureFactsExtractor(client, objectMapper, bedrockProperties),
                 new RetrievalQueryTextBuilder(),
                 observability()
         );
@@ -71,6 +73,7 @@ class BedrockAnalysisProviderTest {
         InvokeModelRequest request = captor.getValue();
         assertThat(request.modelId()).isEqualTo("configured-model-id");
         JsonNode body = objectMapper.readTree(request.body().asUtf8String());
+        assertThat(body.path("max_tokens").asInt()).isEqualTo(2048);
         assertThat(body.path("messages").get(0).path("content").get(0).path("type").asText()).isEqualTo("image");
         assertThat(body.toString()).contains("<analysis_json>");
         assertThat(body.toString()).contains("<terraform_hcl>");
@@ -158,11 +161,12 @@ class BedrockAnalysisProviderTest {
 
     private BedrockAnalysisProvider provider(BedrockRuntimeClient client) {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setBedrockModelId("configured-model-id");
-        properties.setBedrockMaxTokens(8192);
-        return new BedrockAnalysisProvider(client, objectReader(), referenceRetriever(), properties,
+        BedrockRuntimeProperties bedrockProperties = new BedrockRuntimeProperties();
+        bedrockProperties.setModelId("configured-model-id");
+        bedrockProperties.setMaxTokens(8192);
+        return new BedrockAnalysisProvider(client, objectReader(), referenceRetriever(), properties, bedrockProperties,
                 new BedrockPromptBuilder(objectMapper), new BedrockResponseParser(objectMapper),
-                new BedrockArchitectureFactsExtractor(client, objectMapper, properties), new RetrievalQueryTextBuilder(),
+                new BedrockArchitectureFactsExtractor(client, objectMapper, bedrockProperties), new RetrievalQueryTextBuilder(),
                 observability());
     }
 

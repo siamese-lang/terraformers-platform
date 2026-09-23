@@ -5,22 +5,35 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - ".github/workflows/aws-runtime-deployment-package-verification.yml"
-      - "scripts/checks/aws-runtime-deployment-package-verification.sh"
-      - "scripts/deploy/build-aws-runtime-deployment-package.sh"
-      - "scripts/deploy/build-aws-runtime-input-bundle.py"
-      - "scripts/deploy/render-backend-runtime-secret.sh"
-      - "scripts/deploy/render-aws-runtime-manifest.sh"
-      - "scripts/deploy/aws-runtime-deploy-preflight.sh"
-      - "infra/kubernetes/**"
-      - "docs/aws-runtime-deployment-package.md"
 
 permissions:
   contents: read
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      aws_runtime_deployment_package: ${{ steps.scope.outputs.aws_runtime_deployment_package }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Classify changed files
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            python3 scripts/checks/ci_changed_scope.py --workflow aws-runtime-package --all --github-output "$GITHUB_OUTPUT"
+          else
+            python3 scripts/checks/ci_changed_scope.py --workflow aws-runtime-package --base "$BASE_SHA" --head "$HEAD_SHA" --github-output "$GITHUB_OUTPUT"
+          fi
+
   aws-runtime-deployment-package:
+    needs: scope
+    if: needs.scope.outputs.aws_runtime_deployment_package == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

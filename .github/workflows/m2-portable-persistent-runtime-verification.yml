@@ -3,19 +3,37 @@ name: M2 Portable Persistent Runtime Verification
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - '.github/workflows/m2-portable-persistent-runtime-verification.yml'
-      - 'backend/**'
-      - 'infra/kubernetes/base/**'
-      - 'infra/kubernetes/overlays/portable-persistent/**'
-      - 'scripts/checks/kind-portable-persistent-smoke.sh'
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      portable_persistent_runtime: ${{ steps.scope.outputs.portable_persistent_runtime }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Classify changed files
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            python3 scripts/checks/ci_changed_scope.py --workflow m2-persistent --all --github-output "$GITHUB_OUTPUT"
+          else
+            python3 scripts/checks/ci_changed_scope.py --workflow m2-persistent --base "$BASE_SHA" --head "$HEAD_SHA" --github-output "$GITHUB_OUTPUT"
+          fi
+
   portable-persistent-runtime:
     name: Portable persistent runtime
+    needs: scope
+    if: needs.scope.outputs.portable_persistent_runtime == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

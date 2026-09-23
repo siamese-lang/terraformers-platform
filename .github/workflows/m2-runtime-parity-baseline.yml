@@ -9,8 +9,31 @@ permissions:
   contents: read
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      kind_local_stub_baseline: ${{ steps.scope.outputs.kind_local_stub_baseline }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Classify changed files
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            python3 scripts/checks/ci_changed_scope.py --workflow m2-baseline --all --github-output "$GITHUB_OUTPUT"
+          else
+            python3 scripts/checks/ci_changed_scope.py --workflow m2-baseline --base "$BASE_SHA" --head "$HEAD_SHA" --github-output "$GITHUB_OUTPUT"
+          fi
+
   kind-local-stub-baseline:
     name: Measure Kind local-stub runtime
+    needs: scope
+    if: needs.scope.outputs.kind_local_stub_baseline == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
 

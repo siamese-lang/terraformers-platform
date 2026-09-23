@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: terraformers-backend-runtime-config
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  OBJECT_READER_PROVIDER: "disabled"
+  OBJECT_WRITER_PROVIDER: "metadata-only"
+  ANALYSIS_PROVIDER: "stub"
+  EMBEDDING_PROVIDER: "disabled"
+  RETRIEVAL_MODE: "DISABLED"
+  PROGRESS_PUBLISHER: "logging"
+  # Prevent the prod profile from constructing a live AWS telemetry client.
+  MANAGEMENT_CLOUDWATCH_METRICS_EXPORT_ENABLED: "false"

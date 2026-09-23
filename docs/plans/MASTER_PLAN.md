@@ -24,7 +24,7 @@
 | Milestone | Status | Purpose | Exit evidence |
 | --- | --- | --- | --- |
 | M0 — Baseline & Governance | **COMPLETE** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 모든 M0 문서와 valid links, 상호 모순 없음, closure SHA와 M1 진입 기록 |
-| M1 — Cloud Decoupling | **ACTIVE** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
+| M1 — Cloud Decoupling | **COMPLETE** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
 | M2 — Runtime Parity | PLANNED | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
 | M3 — AI Evaluation Baseline | PLANNED | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 machine-readable baseline과 failure taxonomy |
 | M4 — AI Targeted Improvement | PLANNED | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
@@ -49,15 +49,17 @@
 
 ## M1 — Cloud Decoupling
 
-**Status.** **ACTIVE.** 실행 순서와 task별 evidence는 [active M1 plan](active/M1-cloud-decoupling.md)을 따른다. 현재 첫 구현 작업은 **M1-1 — Backend external identity neutralization**이다.
+**Status.** **COMPLETE.** M1-1~M1-8이 완료되었고 closure evidence는 [active M1 plan](active/M1-cloud-decoupling.md)과 [M1 closure verification](../verification/m1-cloud-decoupling-closure.md)에 기록되어 있다.
 
 **Problem.** Cognito, Amplify, S3, SigV4/AOSS, Bedrock과 vendor runtime configuration이 application boundary에 결합된 지점은 portable runtime을 방해한다.
 
 **Work.** Backend external identity mapping, frontend auth integration, object storage adapter, OpenSearch transport/auth, model/embedding provider configuration과 vendor-specific runtime configuration의 경계를 분리한다. 특정 IdP, queue 또는 model은 이 milestone 자체로 선택하지 않는다. 기존 business flow를 재작성하지 않고 `AnalysisProvider`, `EmbeddingProvider`, `ReferenceRetriever`, `ObjectReader`/`ObjectWriter`, internal user semantics, `AnalysisJob` lifecycle, MariaDB/Flyway를 재사용한다.
 
-**Evidence.** Provider-neutral contract tests, vendor SDK/type이 domain/service contract에 침투하지 않는다는 inspection, existing business regression tests, cloud-neutral configuration boundary를 남긴다.
+**Evidence.** M1 closure head `d843fb9f08cd6255c1a4738ac220a40b5e760d75`에서 provider-neutral boundary static verification, full backend regression, MariaDB/Flyway/repository validation, frontend regression, runtime-contract verification, Backend Local Verification, Terraform Static Verification, AWS deployment contract inventory가 모두 **PASS**했다. 검증 과정에서 generic `AnalysisJobRunner`의 AWS/Bedrock-specific failure-type leakage와 neutral failure wrapper 도입 뒤 observability category regression을 발견했고, provider-neutral failure semantics로 최소 수정한 뒤 동일 closure suite로 재검증했다.
 
-**Exit condition.** Core가 portable contract에만 의존하고 승인된 adapter/configuration boundary로 기존 business behavior가 유지됨을 evidence로 증명한다.
+**Exit condition.** **MET.** Core application lifecycle과 provider-neutral ports/configuration은 vendor-specific SDK/type에서 분리되었고, 기존 AWS 구현은 compatibility/reference adapter로 남아 있다. Existing user/project/file/comment/analysis behavior와 MariaDB/Flyway compatibility는 deterministic regression suite에서 유지되었으며, GCP product/topology 선택은 M1 범위 밖의 gated decision으로 남는다.
+
+**Immediate next single task.** Current repository evidence를 기준으로 M2 — Runtime Parity active plan을 작성한다. M2 plan이 source of truth로 merge되기 전에는 M2 implementation을 시작하지 않는다.
 
 ## M2 — Runtime Parity
 

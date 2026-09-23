@@ -77,16 +77,18 @@ This keeps OpenSearch reference retrieval testable without model calls while sti
 
 Current implementations:
 
-- `StubReferenceRetriever`
-  - returns deterministic reference documents for local/CI verification;
-  - allows `AnalysisProvider` tests to verify the reference retrieval step without OpenSearch credentials.
-
+- `RetrievalModeReferenceRetriever`
+  - returns an empty reference list without invoking a vector retriever when `RETRIEVAL_MODE=DISABLED`;
+  - delegates active `REQUIRED` or `OPTIONAL` retrieval to `OpenSearchReferenceRetriever`.
 - `OpenSearchReferenceRetriever`
   - active retrieval implementation selected through `RETRIEVAL_MODE=REQUIRED|OPTIONAL`;
   - uses `EmbeddingProvider` to build a vector;
   - builds an OpenSearch k-NN query with `OpenSearchKnnQueryBuilder`;
-  - sends a SigV4 signed request with `SignedOpenSearchHttpClient`;
+  - sends a provider-neutral URI/body request through `OpenSearchTransport`;
   - parses ranked reference documents with `OpenSearchResponseParser`.
+
+`SignedOpenSearchHttpClient` implements `OpenSearchTransport` as the historical AWS compatibility
+adapter and owns AWS credentials, region, SigV4, and the `aoss`/`es` signing service name.
 
 Operational boundary:
 
@@ -127,7 +129,7 @@ Current implementations:
 Important boundary:
 
 ```text
-Local/CI default: StubObjectReader + StubReferenceRetriever + StubAnalysisProvider + StubObjectWriter
+Local/CI default: StubObjectReader + RetrievalModeReferenceRetriever(DISABLED) + StubAnalysisProvider + StubObjectWriter
 Production optional: AwsS3ObjectReader + OpenSearchReferenceRetriever + BedrockAnalysisProvider + AwsS3ObjectWriter
 ```
 
@@ -204,7 +206,8 @@ Implemented in the public baseline:
 - S3 object reader port and optional S3 adapter
 - S3 object writer port and optional S3 result storage adapter
 - embedding provider port and optional Bedrock embedding adapter
-- reference retrieval port, stub retriever, and optional SigV4-signed OpenSearch/AOSS retriever
+- reference retrieval port, disabled-mode empty result, and optional OpenSearch retriever with a
+  provider-neutral transport port and SigV4 compatibility adapter
 - Bedrock provider boundary and optional Bedrock Runtime adapter
 - SQS progress publisher boundary and optional SQS adapter
 - local/CI-safe stub path
@@ -217,8 +220,7 @@ Not yet complete:
 - full browser E2E validation
 - deployed AWS evidence
 
-## 7. Next implementation steps
+## 7. Remaining boundary
 
-1. Add Terraform/Kubernetes runtime variables for the new adapter switches.
-2. Add browser E2E validation after deployment manifests are available.
-3. Collect deployed AWS evidence after runtime validation.
+Replacement providers for the current GCP deployment target remain gated. Browser E2E and any
+live provider evidence are later deployment concerns rather than changes to these adapter ports.

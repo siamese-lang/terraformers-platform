@@ -73,7 +73,7 @@ This mode uses:
 ```text
 StubObjectReader
 StubObjectWriter
-StubReferenceRetriever
+RetrievalModeReferenceRetriever (DISABLED -> empty references)
 StubAnalysisProvider
 LoggingProgressPublisher
 ```

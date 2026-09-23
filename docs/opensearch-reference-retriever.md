@@ -17,7 +17,7 @@ The goal is not to present OpenSearch as the main project topic. The goal is to 
 
 ```text
 RETRIEVAL_MODE=DISABLED
-  -> StubReferenceRetriever
+  -> RetrievalModeReferenceRetriever returns empty references
   -> no EmbeddingProvider invocation
 ```
 

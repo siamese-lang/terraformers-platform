@@ -2,9 +2,9 @@
 
 ## Status
 
-**ACTIVE**
+**COMPLETE**
 
-M0 is complete. M1 implementation is in progress; completed work and the first remaining `TODO` below determine the current execution state.
+M0 and M1 are complete. M1-1 through M1-8 are closed with consolidated contract/regression evidence; this plan is retained as the completed M1 source of truth.
 
 ## Objective
 
@@ -147,7 +147,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 ### M1-8 — Contract/regression verification and closure
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / coupling.** M1 cannot close from boundary changes alone; cross-boundary compatibility and preserved business behavior require consolidated evidence.
 
@@ -157,7 +157,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 **Validation.** Inspect provider-neutral contracts; run relevant unit/integration and business regressions; check vendor SDK/type leakage in domain/application contracts, schema/data compatibility, and generic configuration boundaries; consolidate M1 evidence and M2 Runtime Parity readiness.
 
-**Completion evidence.** Pending. Record closure SHA or PR, exact checks/results, residual limitations, and M2 readiness here before changing M1 to `COMPLETE`.
+**Completion evidence.** At validated head `d843fb9f08cd6255c1a4738ac220a40b5e760d75`, the dedicated M1 closure workflow passed all five jobs: **boundary-contract**, **backend-regression**, **mariadb-regression**, **frontend-regression**, and **runtime-contract**. **Backend Local Verification**, **Terraform Static Verification**, and **AWS Deployment Contract Inventory Verification** also passed. The closure verifier confirmed backend external identity, JWT/provider, frontend auth/session, object storage, OpenSearch transport, model/embedding, and runtime-configuration boundaries; AWS SDK imports remain allowlisted to compatibility/historical adapters. Full backend tests, MariaDB 11.4 + Flyway/Hibernate/repository smoke, frontend tests/build, and deterministic runtime-contract verification preserved existing business/schema/runtime behavior. Closure inspection found and fixed two linked provider-boundary regressions in the generic analysis lifecycle—AWS/Bedrock-specific failure types in `AnalysisJobRunner` and the resulting observability category regression after neutral failure translation—then revalidated the same closure suite successfully. Accepted residual limitations are the AWS-bound batch ingestion path, historical CloudWatch integration, Cognito/Amplify compatibility adapter/configuration, and intentionally unselected GCP products/topology. M2 readiness is established without selecting those products.
 
 ## Exit criteria
 
@@ -188,11 +188,11 @@ The following GCP/runtime choices also remain **GATED**: GKE topology, node/VM s
 
 ## Immediate next work
 
-**M1-8 — Contract/regression verification and closure**
+**Create the M2 — Runtime Parity active plan**
 
-M1-1~M1-7에서 만든 provider-neutral identity/auth, storage, OpenSearch transport, model/embedding selection, runtime configuration 경계를 전체적으로 재검증하고 기존 user/project/file/comment/analysis business behavior와 MariaDB/Flyway compatibility가 유지되는지 consolidated evidence를 만든다.
+Current repository evidence and the M1 closure report must be used to define M2's atomic work sequence, validation evidence, and exit criteria before runtime-parity implementation begins.
 
-This task is closure/verification work. Fix only verified regressions with the smallest attributable change; do not expand M1 architecture or select GCP runtime products.
+Do not select gated GCP products or topology merely by entering M2; those choices still require repository evidence and the accepted decision gate.
 
 ## Evidence and references
 

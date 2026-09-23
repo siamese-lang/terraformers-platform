@@ -1,15 +1,9 @@
 package com.terraformers.modernization.analysis;
 
-import com.terraformers.modernization.analysis.bedrock.BedrockOutputTruncatedException;
-import com.terraformers.modernization.analysis.bedrock.BedrockResponseFormatException;
-import com.terraformers.modernization.analysis.bedrock.ArchitectureInputRejectedException;
 import java.net.SocketTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.core.exception.ApiCallAttemptTimeoutException;
-import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
-import software.amazon.awssdk.core.exception.SdkClientException;
 
 @Service
 public class AnalysisJobRunner {
@@ -57,19 +51,15 @@ public class AnalysisJobRunner {
     private String safeFailureReason(RuntimeException exception) {
         Throwable current = exception;
         while (current != null) {
-            if (current instanceof BedrockOutputTruncatedException) {
-                return TRUNCATED_FAILURE_REASON;
-            }
-            if (current instanceof ArchitectureInputRejectedException) {
-                return REJECTED_INPUT_FAILURE_REASON;
-            }
-            if (current instanceof BedrockResponseFormatException) {
-                return FORMAT_FAILURE_REASON;
+            if (current instanceof AnalysisProviderFailureException providerFailure) {
+                return switch (providerFailure.reason()) {
+                    case OUTPUT_TRUNCATED -> TRUNCATED_FAILURE_REASON;
+                    case INPUT_REJECTED -> REJECTED_INPUT_FAILURE_REASON;
+                    case RESPONSE_FORMAT -> FORMAT_FAILURE_REASON;
+                };
             }
             if (current instanceof SocketTimeoutException
-                    || current instanceof ApiCallAttemptTimeoutException
-                    || current instanceof ApiCallTimeoutException
-                    || (current instanceof SdkClientException && hasReadTimeout(current))) {
+                    || current instanceof AnalysisProviderTimeoutException) {
                 return TIMEOUT_FAILURE_REASON;
             }
             current = current.getCause();
@@ -77,14 +67,4 @@ public class AnalysisJobRunner {
         return GENERIC_FAILURE_REASON;
     }
 
-    private boolean hasReadTimeout(Throwable exception) {
-        Throwable current = exception;
-        while (current != null) {
-            if (current.getMessage() != null && current.getMessage().toLowerCase().contains("read timed out")) {
-                return true;
-            }
-            current = current.getCause();
-        }
-        return false;
-    }
 }

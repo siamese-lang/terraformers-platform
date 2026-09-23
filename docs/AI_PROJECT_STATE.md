@@ -14,12 +14,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M2 — Runtime Parity**
 - Status: **ACTIVE**
-- Phase: portable persistent runtime substrate
+- Phase: authenticated identity and ownership parity
 - Active plan: [M2 — Runtime Parity](plans/active/M2-runtime-parity.md)
-- Current implementation task: **M2-2 — Portable persistent runtime substrate**
+- Current implementation task: **M2-3 — Authenticated identity and ownership parity**
 
 M0 and M1 are complete. M1-1 through M1-8 have closure evidence. M2 is active through its
-repository-owned plan; M2-1 is complete and M2-2 is the first remaining task.
+repository-owned plan; M2-1 and M2-2 are complete and M2-3 is the first remaining task.
 
 ## Completed
 
@@ -72,6 +72,10 @@ repository-owned plan; M2-1 is complete and M2-2 is the first remaining task.
   - backend regression, MariaDB 11.4 + Flyway/schema/repository validation, frontend tests/build, and deterministic runtime-contract verification were **PASS** as distinct runtime identities;
   - Kind cluster creation and backend image build/load reached workload application, which then **FAIL**ed because namespace `terraformers-local` did not exist; downstream rollout/HTTP/auth/object-byte/active-provider paths remain **NOT COVERED** rather than inferred; and
   - M2 Runtime Parity Baseline evidence collection — **PASS** at `2623303347e15e580d83f583262c51d2573edbbd`, with the target Kind runtime failure preserved in the uploaded evidence.
+- M2-2 Portable persistent runtime substrate — **COMPLETE**
+  - added a separate self-contained `terraformers-portable` Kind fixture with MariaDB 11.4, canonical `prod` backend configuration, stub/disabled cloud adapters, fixture-only credentials, and no live cloud credentials;
+  - namespace/apply, MariaDB readiness, backend rollout/readiness, health, Flyway schema history, and the existing repository smoke all passed against the same in-cluster MariaDB instance; and
+  - M2 Portable Persistent Runtime Verification — **PASS** at `02a00efec167a92c8170e8787b68e28ce6dc2339`. The fixture deliberately does not claim DB restart durability, authentication/ownership, object-byte persistence, active provider behavior, or production topology.
 
 ## Verified architectural direction
 
@@ -90,9 +94,10 @@ implementations or product selections:
   disabled embedding/retrieval, and logging progress, so it cannot alone prove MariaDB/Flyway,
   object-byte, active provider, or production-like authenticated parity;
 - metadata-only object stubs do not persist or read uploaded/result bytes;
-- the first confirmed Kind runtime gap is earlier than authentication: the local-stub workload
-  cannot be applied because namespace `terraformers-local` is absent; rollout and HTTP paths are
-  therefore not yet reached. The no-bearer-JWT upload remains an unconfirmed downstream hypothesis; and
+- M2-2 now provides a separate self-contained portable Kind runtime where namespace/apply,
+  MariaDB 11.4 + Flyway, prod backend rollout/readiness, health, and repository semantics all pass;
+  authentication/ownership remains unproven, and the no-bearer-JWT upload path is still an
+  unconfirmed downstream issue for M2-3/M2-4; and
 - frontend unit/build regression exists, but portable browser E2E and coverage criteria remain
   `UNKNOWN/TBD`.
 
@@ -133,11 +138,11 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M2-2 — Portable persistent runtime substrate:** M2-1에서 확인된 evidence를 기준으로
-canonical provider-neutral configuration과 MariaDB + Flyway를 사용하는 최소 deterministic
-runtime fixture를 정하고, backend startup/readiness와 repository persistence를 반복 가능하게
-검증한다. Kind namespace/apply gap은 이 task의 persistent-runtime fixture에 직접 필요한 범위에서만
-최소 수정하고, authenticated identity·object-byte persistence·active provider 문제를 선행 해결하지 않는다.
+**M2-3 — Authenticated identity and ownership parity:** M2-2의 portable persistent runtime을
+기반으로 deterministic test JWT/JWK 또는 동등한 repository-owned fixture를 사용해 external
+identity → internal user → project ownership → private-resource access와 unauthenticated/forbidden
+negative path를 검증한다. 새 production IdP를 선택하지 않고, object-byte persistence나
+upload/analysis end-to-end는 M2-4로 넘긴다.
 
 ## Do not revisit
 

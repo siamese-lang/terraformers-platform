@@ -1,0 +1,117 @@
+name: M2 Runtime Parity Baseline
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  kind-local-stub-baseline:
+    name: Measure Kind local-stub runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup kind
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: terraformers-local-smoke
+          wait: 120s
+
+      - name: Execute smoke without treating the measured result as a harness failure
+        id: smoke
+        shell: bash
+        run: |
+          set +e
+          bash scripts/checks/kind-local-stub-smoke.sh \
+            > >(tee /tmp/kind-local-stub-smoke.stdout.log) \
+            2> >(tee /tmp/kind-local-stub-smoke.stderr.log >&2)
+          exit_code=$?
+          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Collect diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          output=artifacts/kind-local-stub-smoke
+          mkdir -p "$output"
+          cp /tmp/kind-local-stub-smoke.*.log "$output"/ 2>/dev/null || true
+          kind get clusters > "$output/kind-clusters.txt" 2>&1
+          kubectl -n terraformers-local get all -o wide > "$output/resources.txt" 2>&1
+          kubectl -n terraformers-local describe pods > "$output/pods-describe.txt" 2>&1
+          kubectl -n terraformers-local logs deployment/terraformers-backend --tail=200 \
+            > "$output/backend.log" 2>&1
+
+      - name: Classify step-level baseline
+        if: always()
+        shell: bash
+        env:
+          SMOKE_EXIT_CODE: ${{ steps.smoke.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          source_dir=artifacts/kind-local-stub-smoke
+          output_dir=artifacts/m2-runtime-parity-baseline
+          mkdir -p "$output_dir"
+
+          startup=NOT_COVERED
+          health=NOT_COVERED
+          upload=NOT_COVERED
+          project_tree=NOT_COVERED
+          terraform_read=NOT_COVERED
+
+          if [[ -s "$source_dir/pods.txt" ]]; then
+            startup=PASS
+          elif [[ "${SMOKE_EXIT_CODE:-}" != "" && "${SMOKE_EXIT_CODE}" != "0" ]]; then
+            startup=FAIL
+          fi
+
+          if [[ -s "$source_dir/health.json" ]]; then
+            health=PASS
+          elif [[ "$startup" == PASS && "${SMOKE_EXIT_CODE:-}" != "0" ]]; then
+            health=FAIL
+          fi
+
+          if [[ -s "$source_dir/upload-response.json" ]]; then
+            upload=PASS
+          elif [[ "$health" == PASS && "${SMOKE_EXIT_CODE:-}" != "0" ]]; then
+            upload=FAIL
+          fi
+
+          if [[ -s "$source_dir/project-tree.json" ]]; then
+            project_tree=PASS
+          elif [[ "$upload" == PASS && "${SMOKE_EXIT_CODE:-}" != "0" ]]; then
+            project_tree=FAIL
+          fi
+
+          if [[ -s "$source_dir/main-tf.json" ]]; then
+            terraform_read=PASS
+          elif [[ "$project_tree" == PASS && "${SMOKE_EXIT_CODE:-}" != "0" ]]; then
+            terraform_read=FAIL
+          fi
+
+          {
+            echo "evidence_collection=PASS"
+            echo "kind_smoke_exit_code=${SMOKE_EXIT_CODE:-NOT_COVERED}"
+            echo "kind_startup=$startup"
+            echo "kind_health=$health"
+            echo "kind_upload=$upload"
+            echo "kind_project_tree=$project_tree"
+            echo "kind_terraform_read=$terraform_read"
+          } | tee "$output_dir/summary.txt"
+
+      - name: Upload baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: m2-kind-local-stub-baseline
+          path: |
+            artifacts/kind-local-stub-smoke
+            artifacts/m2-runtime-parity-baseline
+          if-no-files-found: error

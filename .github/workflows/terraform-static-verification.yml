@@ -6,29 +6,35 @@ on:
     branches:
       - main
       - agent/rdb-domain-realignment
-    paths:
-      - "infra/terraform/**"
-      - "corpus/terraformers-reference/**"
-      - "config/runtime-teardown-stages.json"
-      - "scripts/rag/**"
-      - "scripts/teardown/**"
-      - "tests/rag/**"
-      - "scripts/checks/rag-corpus-contract-verification.py"
-      - "scripts/checks/terraform-static-verification.sh"
-      - "scripts/checks/approved-terraform-apply-contract-verification.py"
-      - "scripts/deploy/verify-approved-terraform-apply-contract.py"
-      - "scripts/deploy/summarize-terraform-plan.py"
-      - ".github/workflows/aws-live-terraform-apply.yml"
-      - ".github/workflows/aws-terraform-destroy-plan.yml"
-      - ".github/workflows/aws-runtime-teardown.yml"
-      - ".github/workflows/terraform-static-verification.yml"
-      - "docs/**"
 
 permissions:
   contents: read
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      terraform_static_verification: ${{ steps.scope.outputs.terraform_static_verification }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Classify changed files
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            python3 scripts/checks/ci_changed_scope.py --workflow terraform-static --all --github-output "$GITHUB_OUTPUT"
+          else
+            python3 scripts/checks/ci_changed_scope.py --workflow terraform-static --base "$BASE_SHA" --head "$HEAD_SHA" --github-output "$GITHUB_OUTPUT"
+          fi
+
   terraform-static-verification:
+    needs: scope
+    if: needs.scope.outputs.terraform_static_verification == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

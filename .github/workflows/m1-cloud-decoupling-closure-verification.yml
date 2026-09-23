@@ -9,7 +9,34 @@ permissions:
   contents: read
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      boundary_contract: ${{ steps.scope.outputs.boundary_contract }}
+      backend_regression: ${{ steps.scope.outputs.backend_regression }}
+      mariadb_regression: ${{ steps.scope.outputs.mariadb_regression }}
+      frontend_regression: ${{ steps.scope.outputs.frontend_regression }}
+      runtime_contract: ${{ steps.scope.outputs.runtime_contract }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Classify changed files
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            python3 scripts/checks/ci_changed_scope.py --workflow m1 --all --github-output "$GITHUB_OUTPUT"
+          else
+            python3 scripts/checks/ci_changed_scope.py --workflow m1 --base "$BASE_SHA" --head "$HEAD_SHA" --github-output "$GITHUB_OUTPUT"
+          fi
+
   boundary-contract:
+    needs: scope
+    if: needs.scope.outputs.boundary_contract == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -25,6 +52,8 @@ jobs:
           if-no-files-found: error
 
   backend-regression:
+    needs: scope
+    if: needs.scope.outputs.backend_regression == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -38,6 +67,8 @@ jobs:
         run: bash scripts/checks/backend-local-verification.sh
 
   mariadb-regression:
+    needs: scope
+    if: needs.scope.outputs.mariadb_regression == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -73,6 +104,8 @@ jobs:
         run: bash scripts/checks/mariadb-schema-validation.sh
 
   frontend-regression:
+    needs: scope
+    if: needs.scope.outputs.frontend_regression == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -88,6 +121,8 @@ jobs:
       - run: test -s frontend/build/index.html
 
   runtime-contract:
+    needs: scope
+    if: needs.scope.outputs.runtime_contract == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

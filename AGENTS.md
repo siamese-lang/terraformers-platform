@@ -40,6 +40,8 @@
 - 대규모 rewrite보다 existing abstraction과 contract의 재사용을 우선한다.
 - architecture change가 발생하면 관련 source-of-truth 문서를 같은 작업에서 갱신한다.
 - inventory의 `UNKNOWN/TBD`를 확인된 요구사항이나 선택된 제품으로 바꾸지 않는다. 먼저 evidence와 명시적 결정을 남긴다.
+- 각 작업 시작 시 해당 작업이 네 개선 축 중 무엇을 직접 전진시키는지, 또는 그 축을 진행하기 위한 필수 선행조건인지 명시한다. 둘 다 아니면 기본 결정은 DEFER다.
+- test, verifier, workflow, evidence document 자체를 프로젝트 개선 결과로 취급하지 않는다. 그것들은 product/runtime/engineering claim을 뒷받침하는 수단이다.
 
 ## New technology decision gate
 
@@ -91,6 +93,20 @@
 - 실패 시 정확한 base/main SHA와 head SHA, 실행한 command/check, 최초 오류를 기록한다.
 - 이미 통과한 검증은 code path, dependency, configuration 또는 검증 대상이 달라진 이유가 없으면 반복 실행하지 않는다.
 - validation은 작업 범위와 주장에 비례해야 하며, 관련된 기존 deterministic test와 executable check를 우선 사용한다.
+
+## Validation discipline and repository growth
+
+Evidence는 의사결정과 완료 주장을 제한하는 조건이지, repository에 검증 인프라를 계속 추가하라는 의미가 아니다. 기본 원칙은 **existing verification reuse first, new verification code by exception**이다.
+
+- 새 test는 변경된 production behavior 또는 확인된 failure의 회귀를 실제로 잡을 때만 추가한다. 문서 상태, task 상태, SHA 문자열, 기존 test의 PASS 문구만 확인하는 test는 추가하지 않는다.
+- 새 verifier/script는 기존 test나 command로 재현할 수 없는 engineering behavior를 반복 검증해야 하고, 향후 관련 production 변경에서도 재사용될 명확한 대상이 있어야 한다. 일회성 milestone 확인은 PR 결과와 문서 기록으로 충분하면 script로 승격하지 않는다.
+- 새 GitHub Actions workflow는 기존 workflow/job에 합리적으로 포함할 수 없고 독립적인 지속 검증 경계가 있을 때만 추가한다. milestone/subtask마다 workflow를 하나씩 만드는 패턴은 금지한다.
+- milestone closure는 원칙적으로 이미 통과한 evidence를 검토하고 source-of-truth 문서를 갱신하는 작업이다. closure 자체를 위해 '검증을 검증하는 verifier'나 self-referential workflow를 만들지 않는다.
+- 동일 fixture/bootstrap/JWT/JWKS/Kind setup을 여러 script에 복제하지 않는다. 반복 사용이 확인되면 기존 harness를 확장하거나 공통 helper로 통합하고, 단일 시나리오 때문에 새 parallel harness를 만들지 않는다.
+- 새로운 validation code를 제안하기 전에는 다음 네 질문에 답한다: (1) 어떤 실제 product/runtime failure를 잡는가, (2) 기존 test/check가 왜 부족한가, (3) 어떤 미래 변경에서도 재사용되는가, (4) 추가 maintenance cost보다 regression value가 큰가. 하나라도 답할 수 없으면 추가하지 않는다.
+- verification-only 변경 규모가 production/engineering 변경보다 커지는 작업은 자동 진행하지 않는다. baseline/evaluation/failure-injection처럼 milestone 자체가 측정인 경우를 제외하고, 왜 기존 자산 재사용으로 해결할 수 없는지 먼저 설명해야 한다.
+- generated artifacts, logs, one-off investigation output은 source control에 영구 보존할 필요가 있을 때만 commit한다. 그렇지 않으면 CI artifact 또는 PR evidence로 남긴다.
+- validation 성공은 프로젝트 목표 달성과 동일하지 않다. 완료 보고에는 반드시 '무엇이 실제로 개선되었는가'를 별도로 적고, 답이 '검증이 추가되었다'뿐이면 그 작업의 필요성을 재검토한다.
 
 ## Completion report
 

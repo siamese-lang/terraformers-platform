@@ -13,13 +13,14 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current milestone
 
 - Milestone: **M2 — Runtime Parity**
-- Status: **ACTIVE**
-- Phase: runtime parity closure
-- Active plan: [M2 — Runtime Parity](plans/active/M2-runtime-parity.md)
-- Current implementation task: **M2-6 — Runtime parity closure**
+- Status: **COMPLETE**
+- Phase: milestone closure complete
+- Completed plan: [M2 — Runtime Parity](plans/active/M2-runtime-parity.md)
+- Current implementation task: **Create M3 — AI Evaluation Baseline active plan**
 
-M0 and M1 are complete. M1-1 through M1-8 have closure evidence. M2 is active through its
-repository-owned plan; M2-1 through M2-5 are complete and M2-6 is the first remaining task.
+M0, M1, and M2 are complete. M1-1 through M1-8 and M2-1 through M2-6 have closure evidence. M3
+remains planned; its implementation does not begin until an active M3 plan becomes repository source
+of truth.
 
 ## Completed
 
@@ -88,6 +89,10 @@ repository-owned plan; M2-1 through M2-5 are complete and M2-6 is the first rema
   - the authoritative portable runtime matrix passed project list/get, private/public authorization, Terraform read/update/read-back, project tree, canonical and frontend-compatible comments, authenticated attribution, and deletion;
   - frontend Jest regression, production build, and built entrypoint passed, while the baseline isolated three provider-specific user-visible strings and classified browser E2E as not required for M2; and
   - the frontend-only follow-up at `7d8cdf357cb16a9073c86c6eb5140e617219180d` removed the Cognito/Bedrock/`s3://` presentation leakage without changing APIs or provider selection. M2 User Experience Baseline Verification run #5 then passed with all three provider-neutral classifications `PASS`, `known_provider_specific_visible_copy=0`, and `first_confirmed_gap=none`.
+- M2-6 Runtime parity closure — **COMPLETE**
+  - reviewed the accepted M2-1 through M2-5 evidence against all 14 M2 exit criteria without adding a closure-specific verifier or workflow;
+  - confirmed no subsequent production/runtime change invalidated the latest successful M2-5 claims; and
+  - [M2 Runtime Parity Closure](verification/m2-runtime-parity-closure.md) records **PASS** with explicit residual limitations.
 
 ## Verified architectural direction
 
@@ -156,14 +161,11 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M2-6 — Runtime parity closure:** consolidate M2-1 through M2-5 into one closure record and verify
-the M2 exit criteria against repository-owned evidence. Do not add new architecture or features in
-the closure task. Confirm that portable startup, MariaDB/Flyway persistence, authenticated identity
-and ownership, upload/analysis/Terraform result flow, object-byte persistence/read-back,
-user/project/comment behavior, and frontend regression/build evidence are all repeatable; preserve
-runtime/config identity and explicit limitations; and confirm that no arbitrary GCP product,
-production IdP/storage/model, browser framework, or historical AWS runtime was selected as part of
-M2.
+**Create M3 — AI Evaluation Baseline active plan.** Define the smallest repository-owned plan for a
+fixed/versioned evaluation dataset, one reusable evaluation runner, one machine-readable result
+format, and one baseline/failure-taxonomy report. Reuse the existing corpus/provider/validator
+contracts first. Do not begin M3 implementation as part of M2 closure and do not create separate
+workflow/script infrastructure for each evaluation component.
 
 ## Do not revisit
 
@@ -187,8 +189,8 @@ Without new evidence, an ADR where needed, and the change gate, do not:
 
 Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this
 document, (4) read `MASTER_PLAN.md`, and (5) read the
-[active M2 plan](plans/active/M2-runtime-parity.md). Start with its first incomplete task and do not
-expand that atomic task into later M2 boundaries. Retain the
+[completed M2 plan](plans/active/M2-runtime-parity.md). The next single task is to create the M3
+active plan; do not begin M3 implementation before that plan becomes source of truth. Retain the
 [completed M1 plan](plans/active/M1-cloud-decoupling.md) as historical milestone evidence.
 
 For a substantive change, record an observed problem, reproducible evidence, a change that directly addresses it, and same-condition revalidation. Establish a fixed evaluation baseline before AI changes, reproduce a failure before reliability changes, and require diagnosis evidence—not dashboard count—for observability completion.

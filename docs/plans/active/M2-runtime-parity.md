@@ -2,11 +2,12 @@
 
 ## Status
 
-**ACTIVE**
+**COMPLETE**
 
-M0 and M1 are complete. M2 proves the existing cloud-neutral application contracts in a portable,
-deterministic runtime; it is not a new-feature or GCP-deployment milestone. The first incomplete
-task is **M2-6 — Runtime parity closure**.
+M0, M1, and M2 are complete. M2 proved the existing cloud-neutral application contracts in a
+portable, deterministic runtime; it was not a new-feature or GCP-deployment milestone. M2-1 through
+M2-6 are **DONE**. The immediate next single task is **Create M3 — AI Evaluation Baseline active
+plan**; M3 implementation does not begin in this closure.
 
 ## Objective
 
@@ -259,28 +260,30 @@ requirement was identified.
 
 ### M2-6 — Runtime parity closure
 
-**Status: TODO**
+**Status: DONE**
 
-**Problem / gap.** M2 requires one consolidated, repeatable proof rather than disconnected task
-artifacts.
+**Problem / gap.** M2 required a consolidated closure judgment over the accepted M2-1 through M2-5
+runtime and regression evidence without turning milestone closure into another verification product.
 
-**Current evidence.** M2-1 through M2-5 will provide baseline, persistent runtime, authentication,
-core analysis flow, and user-experience evidence.
+**Current evidence.** M2-1 through M2-5 provide the accepted portable runtime, persistent runtime,
+authenticated identity/ownership, upload/analysis/Terraform result, object-byte persistence,
+user/project/comment, and frontend evidence.
 
-**Change boundary.** Consolidate those artifacts in
-`docs/verification/m2-runtime-parity-closure.md`. Add a dedicated deterministic **M2 Runtime Parity
-Verification** workflow only if the preceding evidence shows it is the smallest way to keep closure
-repeatable. If closure finds a real regression, apply only the smallest attributable fix and rerun
-the same conditions. Do not include M3 implementation.
+**Change boundary.** Consolidate the accepted evidence in
+`docs/verification/m2-runtime-parity-closure.md`, review the 14 M2 exit criteria, and update
+source-of-truth status documents. Do not add a closure-specific verifier/workflow and do not include
+M3 implementation.
 
-**Validation.** From recorded runtime configuration and a clean state, verify reproducible startup,
-authenticated runtime, MariaDB/Flyway, upload/analysis/result flow, user/project/comment flow,
-persistence semantics, required frontend/browser flow, and absence of live cloud credentials or
-arbitrary GCP selection.
+**Validation.** The latest successful M2-5 implementation evidence is
+`7d8cdf357cb16a9073c86c6eb5140e617219180d`. Review confirmed that subsequent changes through the
+closure base `c87ba7b505d41b7471aa993a07ea8d3ce43971ee` do not modify production/runtime behavior in a
+way that invalidates the accepted M2 claims. Existing accepted workflow evidence remains the
+validation basis; no redundant runtime rerun is required.
 
-**Completion evidence.** A consolidated closure report records commands, base/head SHA, runtime and
-identity configuration, results, residual limitations, and all M2 exit-criterion mappings. After M2
-closure, the immediate next single task is **Create M3 — AI Evaluation Baseline active plan**.
+**Completion evidence.** [M2 Runtime Parity Closure](../../verification/m2-runtime-parity-closure.md)
+records **PASS** for all 14 exit criteria, preserves runtime/configuration identity and residual
+limitations, and explicitly makes no new runtime claim. M2 is **COMPLETE**. The immediate next
+single task is **Create M3 — AI Evaluation Baseline active plan**.
 
 ## Exit criteria
 

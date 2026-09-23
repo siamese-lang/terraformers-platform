@@ -6,7 +6,7 @@
 
 M0 and M1 are complete. M2 proves the existing cloud-neutral application contracts in a portable,
 deterministic runtime; it is not a new-feature or GCP-deployment milestone. The first incomplete
-task is **M2-4 — Upload → analysis → Terraform result parity**.
+task is **M2-5 — User/project/comment and frontend experience parity**.
 
 ## Objective
 
@@ -182,7 +182,7 @@ exposed a shell-harness initialization bug; both were fixed and rerun before acc
 
 ### M2-4 — Upload → analysis → Terraform result parity
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / gap.** The complete application chain and its source/result persistence semantics have
 not been proven in one portable deterministic runtime; metadata-only storage cannot prove byte
@@ -204,8 +204,23 @@ transitions and terminal result, Terraform validation, source/result metadata, r
 bytes, ownership, and read-back. Revalidate any evidence-driven fixture change under the same
 conditions.
 
-**Completion evidence.** Preserve a reproducible end-to-end result with job transitions, validation
-outcome, database records, object persistence classification/read-back, and configuration identity.
+**Completion evidence.** At validated head `99fa2864ae3ef86536332172c4a3e50be612e686`,
+the dedicated **M2 Object Byte Storage Verification** workflow passed on GitHub Actions after the
+initial incorrect unit-test SHA-256 vector was corrected. Using the same authenticated 68-byte PNG
+input as the PR #24 baseline, the `portable-object-store` Kind fixture recorded **PASS** for
+authenticated upload, project/source-file creation, exact source byte persistence/read-back and
+SHA-256 equality, source metadata read-back, analysis lifecycle to `SUCCEEDED`,
+`stub-integrated-java` provider execution, Terraform draft validation, generated result-file
+registration, Terraform inline read-back/checksum equality, direct result object existence and
+checksum equality, and project/project-tree linkage. The source and result rows both recorded
+`storage_provider=filesystem` and `binary_persisted=1`; `/source-image` and
+`/source-object` both returned HTTP 200. The source SHA-256 matched the fixed upload identity
+`431ced6916a2a21a156e38701afe55bbd7f88969fbbfc56d7fe099d47f265460`, and the generated
+Terraform filesystem SHA-256 matched both the database checksum and API-content SHA-256
+`6d1090d8c6dab2944a745322324a3646bfdc933f4bb0a267d847493c6e5d448c`.
+This filesystem adapter is a deterministic single-runtime verification mechanism only; it does not
+select production storage or claim pod-recreation, node-failure, shared-volume, backup, or HA
+durability.
 
 ### M2-5 — User/project/comment and frontend experience parity
 

@@ -16,9 +16,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Status: **ACTIVE**
 - Phase: provider boundary decoupling
 - Active plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
-- Current implementation task: **M1-6 — Model / embedding provider configuration**
+- Current implementation task: **M1-7 — Runtime configuration neutralization**
 
-M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-5 complete and M1-6 next.
+M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-6 complete and M1-7 next.
 
 ## Completed
 
@@ -55,6 +55,10 @@ M0 remains complete; its closure evidence is preserved below. M1 implementation 
   - `OpenSearchReferenceRetriever` now depends on provider-neutral `OpenSearchTransport` and no longer knows SigV4 or signing service names;
   - AWS credentials, region, payload signing, and `aoss`/`es` signing semantics remain inside the `SignedOpenSearchHttpClient` compatibility adapter, while retrieval/query/parser behavior is preserved; and
   - Backend Local Verification, MariaDB schema/repository validation, and Terraform Static Verification — **PASS** at `7d25243f0ee727d251d21ff5affeb9841df5fc3e`.
+- M1-6 Model / embedding provider configuration — **COMPLETE**
+  - generic analysis and embedding provider selectors now choose implementations behind the existing `AnalysisProvider` and `EmbeddingProvider` ports;
+  - Bedrock generation/embedding model identifiers and max-token settings are isolated in `BedrockRuntimeProperties`, with legacy `BEDROCK_PROVIDER_ENABLED` retained only as a transitional fallback; and
+  - Backend Local Verification, MariaDB schema/repository validation, Terraform Static Verification, and AWS Deployment Contract Inventory Verification — **PASS** at `631fefe9ebae72becc66d33a9a672e9ffcb36bb2`.
 
 ## Verified architectural direction
 
@@ -66,7 +70,6 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 The following are **NEW**, **MODIFY**, or planned gaps—not completed implementations:
 
-- provider-neutralization of current model provider adapters;
 - fixed AI/RAG evaluation dataset, harness, and report;
 - backend reliability/failure-injection harness;
 - trace propagation, export, and end-to-end validation; and
@@ -105,11 +108,11 @@ No remaining M0 work.
 
 ## Remaining M1 work
 
-M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
+M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
 
 ## Immediate next work
 
-**M1-6 — Model / embedding provider configuration:** 기존 `AnalysisProvider`와 `EmbeddingProvider` application contract를 유지하면서 generic provider selection/configuration과 Bedrock-specific runtime/model identifiers를 분리한다. 새 모델/provider를 선택하거나 embedding dimension 또는 AI 품질을 변경하지 않는다.
+**M1-7 — Runtime configuration neutralization:** M1-1~M1-6에서 구현한 provider-neutral boundary를 기준으로 production/runtime configuration의 generic selection concepts와 AWS compatibility settings를 분리하고, Cognito/S3/Bedrock/AOSS-specific 이름이 generic application contract로 남아 있는 부분을 정리한다. GCP runtime infrastructure나 replacement provider는 선택하지 않는다.
 
 ## Do not revisit
 

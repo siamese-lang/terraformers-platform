@@ -19,7 +19,8 @@ terraformers:
     s3-writer-enabled: false
   analysis:
     mode: integrated-java
-    bedrock-provider-enabled: false
+    provider: stub
+    embedding-provider: bedrock
     retrieval-mode: disabled
     result-key-prefix: analysis-results
     sqs-publisher-enabled: false

@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
+import com.terraformers.modernization.analysis.bedrock.BedrockRuntimeProperties;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
 import org.junit.jupiter.api.Test;
@@ -70,8 +70,8 @@ class BedrockArchitectureFactsExtractorTest {
     }
 
     private BedrockArchitectureFactsExtractor extractor(BedrockRuntimeClient client) {
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setBedrockModelId("model");
+        BedrockRuntimeProperties properties = new BedrockRuntimeProperties();
+        properties.setModelId("model");
         return new BedrockArchitectureFactsExtractor(client, new ObjectMapper(), properties);
     }
     private ObjectContent source() { return new ObjectContent(new ObjectMetadata("bucket", "key", "image/png", 14, "etag"), "SENTINEL_IMAGE".getBytes()); }

@@ -69,9 +69,6 @@ public class OpenSearchReferenceRetriever {
         if (isBlank(properties.getProviderVersion())) {
             throw new IllegalStateException("terraformers.analysis.provider-version must be set when OpenSearch retriever is enabled");
         }
-        if (isBlank(properties.getBedrockEmbeddingModelId())) {
-            throw new IllegalStateException("terraformers.analysis.bedrock-embedding-model-id must be set for active retrieval");
-        }
         if (properties.getOpensearchTopK() <= 0) {
             throw new IllegalStateException("terraformers.analysis.opensearch-top-k must be positive for active retrieval");
         }

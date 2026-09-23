@@ -72,11 +72,15 @@ terraformers:
     s3-writer-enabled: ${S3_WRITER_ENABLED:false}
   analysis:
     mode: integrated-java
+    # Generic selection wins when ANALYSIS_PROVIDER is set. The legacy switch remains an M1-7 compatibility fallback.
+    provider: ${ANALYSIS_PROVIDER:}
+    embedding-provider: ${EMBEDDING_PROVIDER:bedrock}
     bedrock-provider-enabled: ${BEDROCK_PROVIDER_ENABLED:false}
     retrieval-mode: ${RETRIEVAL_MODE:DISABLED}
-    bedrock-model-id: ${BEDROCK_MODEL_ID:}
-    bedrock-embedding-model-id: ${BEDROCK_EMBEDDING_MODEL_ID:}
-    bedrock-max-tokens: ${BEDROCK_MAX_TOKENS:8192}
+    bedrock:
+      model-id: ${BEDROCK_MODEL_ID:}
+      embedding-model-id: ${BEDROCK_EMBEDDING_MODEL_ID:}
+      max-tokens: ${BEDROCK_MAX_TOKENS:8192}
     opensearch-endpoint: ${OPENSEARCH_ENDPOINT:}
     opensearch-service-name: ${OPENSEARCH_SERVICE_NAME:aoss}
     opensearch-top-k: ${OPENSEARCH_TOP_K:3}

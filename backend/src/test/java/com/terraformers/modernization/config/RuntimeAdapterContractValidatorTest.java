@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
+import com.terraformers.modernization.analysis.bedrock.BedrockRuntimeProperties;
 import com.terraformers.modernization.reference.RetrievalMode;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,7 @@ class RuntimeAdapterContractValidatorTest {
     @Test
     void disabledAdaptersDoNotRequirePlaceholderSettings() {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        RuntimeAdapterContractValidator validator = new RuntimeAdapterContractValidator(properties);
+        RuntimeAdapterContractValidator validator = validator(properties, new BedrockRuntimeProperties());
 
         assertThat(validator.findMissingEnabledAdapterSettings()).isEmpty();
         assertThatCode(() -> validator.run(null)).doesNotThrowAnyException();
@@ -23,13 +24,13 @@ class RuntimeAdapterContractValidatorTest {
     @Test
     void enabledAdaptersReportOnlyTheirMissingSettings() {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setBedrockProviderEnabled(true);
+        properties.setProvider("bedrock");
         properties.setRetrievalMode(RetrievalMode.REQUIRED);
         properties.setSqsPublisherEnabled(true);
         properties.setOpensearchEndpoint("https://search.example.com");
         properties.setIndexName("terraform-reference");
 
-        RuntimeAdapterContractValidator validator = new RuntimeAdapterContractValidator(properties);
+        RuntimeAdapterContractValidator validator = validator(properties, new BedrockRuntimeProperties());
 
         assertThat(validator.findMissingEnabledAdapterSettings())
                 .containsExactly(
@@ -49,9 +50,10 @@ class RuntimeAdapterContractValidatorTest {
     @Test
     void enabledAdaptersPassWhenTheirOwnSettingsArePresent() {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setBedrockProviderEnabled(true);
-        properties.setBedrockModelId("bedrock-model");
-        properties.setBedrockEmbeddingModelId("embedding-model");
+        properties.setProvider("bedrock");
+        BedrockRuntimeProperties bedrock = new BedrockRuntimeProperties();
+        bedrock.setModelId("bedrock-model");
+        bedrock.setEmbeddingModelId("embedding-model");
         properties.setRetrievalMode(RetrievalMode.REQUIRED);
         properties.setOpensearchEndpoint("https://search.example.com");
         properties.setIndexName("terraform-reference");
@@ -61,9 +63,14 @@ class RuntimeAdapterContractValidatorTest {
         properties.setProgressQueueUrl("https://sqs.example.com/progress");
         properties.setResultQueueUrl("https://sqs.example.com/result");
 
-        RuntimeAdapterContractValidator validator = new RuntimeAdapterContractValidator(properties);
+        RuntimeAdapterContractValidator validator = validator(properties, bedrock);
 
         assertThat(validator.findMissingEnabledAdapterSettings()).isEqualTo(List.of());
         assertThatCode(() -> validator.run(null)).doesNotThrowAnyException();
+    }
+
+    private RuntimeAdapterContractValidator validator(AnalysisRuntimeProperties properties,
+                                                       BedrockRuntimeProperties bedrockProperties) {
+        return new RuntimeAdapterContractValidator(properties, bedrockProperties);
     }
 }

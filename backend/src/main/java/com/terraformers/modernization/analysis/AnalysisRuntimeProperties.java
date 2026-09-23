@@ -8,8 +8,8 @@ public class AnalysisRuntimeProperties {
 
     private AnalysisMode mode = AnalysisMode.INTEGRATED_JAVA;
     private RetrievalMode retrievalMode = RetrievalMode.DISABLED;
-    private String bedrockModelId;
-    private String bedrockEmbeddingModelId;
+    private String provider;
+    private String embeddingProvider = "bedrock";
     private String opensearchEndpoint;
     private String indexName;
     private String vectorFieldName;
@@ -18,7 +18,6 @@ public class AnalysisRuntimeProperties {
     private String providerVersion = "5.100.0";
     private Integer expectedVectorDimension;
     private boolean bedrockProviderEnabled;
-    private int bedrockMaxTokens = 8192;
     private int opensearchTopK = 3;
     private String opensearchServiceName = "aoss";
     private String resultBucketName;
@@ -38,20 +37,20 @@ public class AnalysisRuntimeProperties {
     public RetrievalMode getRetrievalMode() { return retrievalMode; }
     public void setRetrievalMode(RetrievalMode retrievalMode) { this.retrievalMode = retrievalMode; }
 
-    public String getBedrockModelId() {
-        return bedrockModelId;
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
+    public String getEmbeddingProvider() { return embeddingProvider; }
+    public void setEmbeddingProvider(String embeddingProvider) { this.embeddingProvider = embeddingProvider; }
+
+    public AnalysisProviderType resolvedProvider() {
+        if (provider == null || provider.isBlank()) {
+            return bedrockProviderEnabled ? AnalysisProviderType.BEDROCK : AnalysisProviderType.STUB;
+        }
+        return AnalysisProviderType.from(provider);
     }
 
-    public void setBedrockModelId(String bedrockModelId) {
-        this.bedrockModelId = bedrockModelId;
-    }
-
-    public String getBedrockEmbeddingModelId() {
-        return bedrockEmbeddingModelId;
-    }
-
-    public void setBedrockEmbeddingModelId(String bedrockEmbeddingModelId) {
-        this.bedrockEmbeddingModelId = bedrockEmbeddingModelId;
+    public EmbeddingProviderType resolvedEmbeddingProvider() {
+        return EmbeddingProviderType.from(embeddingProvider);
     }
 
     public String getOpensearchEndpoint() {
@@ -111,14 +110,6 @@ public class AnalysisRuntimeProperties {
 
     public void setBedrockProviderEnabled(boolean bedrockProviderEnabled) {
         this.bedrockProviderEnabled = bedrockProviderEnabled;
-    }
-
-    public int getBedrockMaxTokens() {
-        return bedrockMaxTokens;
-    }
-
-    public void setBedrockMaxTokens(int bedrockMaxTokens) {
-        this.bedrockMaxTokens = bedrockMaxTokens;
     }
 
     public int getOpensearchTopK() {

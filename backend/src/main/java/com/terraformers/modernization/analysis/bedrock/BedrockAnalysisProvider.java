@@ -18,8 +18,8 @@ import com.terraformers.modernization.storage.ObjectReference;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
@@ -27,7 +27,7 @@ import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse;
 
 @Component
-@ConditionalOnProperty(prefix = "terraformers.analysis", name = "bedrock-provider-enabled", havingValue = "true")
+@Lazy
 public class BedrockAnalysisProvider implements AnalysisProvider {
 
     private static final Logger log = LoggerFactory.getLogger(BedrockAnalysisProvider.class);
@@ -36,6 +36,7 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
     private final ObjectReader objectReader;
     private final ReferenceRetriever referenceRetriever;
     private final AnalysisRuntimeProperties properties;
+    private final BedrockRuntimeProperties bedrockProperties;
     private final BedrockPromptBuilder promptBuilder;
     private final BedrockResponseParser responseParser;
     private final BedrockArchitectureFactsExtractor factsExtractor;
@@ -48,6 +49,7 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
             ObjectReader objectReader,
             ReferenceRetriever referenceRetriever,
             AnalysisRuntimeProperties properties,
+            BedrockRuntimeProperties bedrockProperties,
             BedrockPromptBuilder promptBuilder,
             BedrockResponseParser responseParser, BedrockArchitectureFactsExtractor factsExtractor,
             RetrievalQueryTextBuilder queryTextBuilder, AnalysisObservability observability
@@ -56,6 +58,7 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
         this.objectReader = objectReader;
         this.referenceRetriever = referenceRetriever;
         this.properties = properties;
+        this.bedrockProperties = bedrockProperties;
         this.promptBuilder = promptBuilder;
         this.responseParser = responseParser;
         this.factsExtractor = factsExtractor;
@@ -144,7 +147,7 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
     ) {
         long startedAt = System.nanoTime();
         String requestBody = promptBuilder.buildClaudeVisionRequest(
-                source, references, properties.getBedrockMaxTokens(), promptMode);
+                source, references, bedrockProperties.getMaxTokens(), promptMode);
         try {
             InvokeModelResponse response = observability.recordBedrock(() -> bedrockRuntimeClient.invokeModel(InvokeModelRequest.builder()
                     .modelId(modelId)
@@ -204,9 +207,9 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
     }
 
     private String requireModelId() {
-        if (properties.getBedrockModelId() == null || properties.getBedrockModelId().isBlank()) {
-            throw new IllegalStateException("terraformers.analysis.bedrock-model-id must be set when Bedrock provider is enabled");
+        if (bedrockProperties.getModelId() == null || bedrockProperties.getModelId().isBlank()) {
+            throw new IllegalStateException("terraformers.analysis.bedrock.model-id must be set when Bedrock provider is enabled");
         }
-        return properties.getBedrockModelId().strip();
+        return bedrockProperties.getModelId().strip();
     }
 }

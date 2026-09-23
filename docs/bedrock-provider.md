@@ -13,21 +13,26 @@ Default behavior:
 ```yaml
 terraformers:
   analysis:
-    bedrock-provider-enabled: false
+    provider: stub
+    embedding-provider: bedrock
+    bedrock:
+      model-id: ""
+      embedding-model-id: ""
+      max-tokens: 8192
 ```
 
 Production Bedrock path:
 
 ```bash
-BEDROCK_PROVIDER_ENABLED=true
+ANALYSIS_PROVIDER=bedrock
 S3_READER_ENABLED=true
 BEDROCK_MODEL_ID=<bedrock-model-id>
 BEDROCK_MAX_TOKENS=4096
 ```
 
-When `BEDROCK_PROVIDER_ENABLED=false`, `StubAnalysisProvider` remains active and no AWS model call is made.
+When `terraformers.analysis.provider=stub`, `StubAnalysisProvider` remains active and no AWS model call is made.
 
-When `BEDROCK_PROVIDER_ENABLED=true`, `BedrockAnalysisProvider` becomes the `AnalysisProvider` implementation.
+When `terraformers.analysis.provider=bedrock`, the neutral selection layer delegates to `BedrockAnalysisProvider`. If the generic selector is absent, `BEDROCK_PROVIDER_ENABLED=true` continues to select Bedrock as a transitional compatibility fallback; an explicit generic selector always wins, and removal of this alias is deferred to M1-7.
 
 ## 3. Request flow
 
@@ -67,7 +72,7 @@ Before enabling Bedrock provider in a deployed environment, verify:
 [ ] backend pod has AWS runtime identity through IRSA or equivalent role
 [ ] role can invoke the selected Bedrock model
 [ ] S3_READER_ENABLED=true and source object can be read
-[ ] BEDROCK_PROVIDER_ENABLED=true
+[ ] ANALYSIS_PROVIDER=bedrock (or transitional BEDROCK_PROVIDER_ENABLED=true)
 [ ] BEDROCK_MODEL_ID is set
 [ ] model region matches backend AWS region
 [ ] request/response bodies are not logged
@@ -88,5 +93,5 @@ Before enabling Bedrock provider in a deployed environment, verify:
 ## 7. Portfolio explanation
 
 ```text
-원본 Python 분석 서비스가 담당하던 Bedrock 호출을 Spring Boot backend의 AnalysisProvider port 뒤로 옮겼습니다. 기본값은 stub provider라서 CI와 로컬 검증은 AWS credential 없이 가능하고, 운영 환경에서는 BEDROCK_PROVIDER_ENABLED와 S3_READER_ENABLED를 켜서 같은 backend lifecycle 안에서 S3 객체 조회, reference retrieval, Bedrock 호출, 결과 파싱까지 수행하도록 했습니다.
+원본 Python 분석 서비스가 담당하던 Bedrock 호출을 Spring Boot backend의 AnalysisProvider port 뒤로 옮겼습니다. 기본값은 stub provider라서 CI와 로컬 검증은 AWS credential 없이 가능하고, 운영 환경에서는 generic analysis provider selector와 S3_READER_ENABLED를 설정해 같은 backend lifecycle 안에서 S3 객체 조회, reference retrieval, Bedrock 호출, 결과 파싱까지 수행하도록 했습니다.
 ```

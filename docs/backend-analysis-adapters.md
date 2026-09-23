@@ -60,10 +60,9 @@ Target responsibility:
 
 `EmbeddingProvider` is the boundary for turning retrieval text into an embedding vector.
 
-Current implementations:
-
-- `StubEmbeddingProvider`: default local/CI-safe deterministic vector provider.
-- `BedrockEmbeddingProvider`: optional production adapter enabled by `terraformers.analysis.bedrock-embedding-enabled=true`.
+The current concrete implementation is `BedrockEmbeddingProvider`. The generic
+`terraformers.analysis.embedding-provider` selector accepts `bedrock` (and `disabled` for a
+retrieval-disabled runtime); it does not expose the Bedrock model ID to generic retrieval code.
 
 This keeps OpenSearch reference retrieval testable without model calls while still exposing the real Bedrock embedding path for deployment.
 
@@ -87,8 +86,8 @@ Current implementations:
 Operational boundary:
 
 ```text
-Local/CI default: StubEmbeddingProvider + StubReferenceRetriever
-Production optional: BedrockEmbeddingProvider + OpenSearchReferenceRetriever
+Retrieval disabled: no EmbeddingProvider invocation
+Active retrieval: selected EmbeddingProvider + OpenSearchReferenceRetriever
 ```
 
 Target responsibility:
@@ -113,7 +112,7 @@ Current implementations:
   - exists so Maven, Docker, API, RDB, storage boundary, reference boundary, and status transition can be verified without AWS model calls.
 
 - `BedrockAnalysisProvider`
-  - optional production adapter enabled by `terraformers.analysis.bedrock-provider-enabled=true`;
+  - compatibility adapter selected by `terraformers.analysis.provider=bedrock`;
   - reads uploaded object content through `ObjectReader`;
   - builds a Claude vision request through `BedrockPromptBuilder`;
   - invokes Bedrock Runtime through AWS SDK v2;
@@ -128,6 +127,8 @@ Production optional: AwsS3ObjectReader + OpenSearchReferenceRetriever + BedrockA
 ```
 
 This keeps CI deterministic and credential-free while making the production adapter path explicit.
+`BEDROCK_PROVIDER_ENABLED` remains only as a transitional fallback when the generic analysis
+provider selector is absent; an explicit selector has precedence, and M1-7 owns alias cleanup.
 
 ### ProgressPublisher
 

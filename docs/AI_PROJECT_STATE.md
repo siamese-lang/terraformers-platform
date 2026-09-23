@@ -16,9 +16,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Status: **ACTIVE**
 - Phase: provider boundary decoupling
 - Active plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
-- Current implementation task: **M1-3 — Frontend auth/session boundary**
+- Current implementation task: **M1-4 — Object storage decoupling completion**
 
-M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 and M1-2 complete and M1-3 next.
+M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-3 complete and M1-4 next.
 
 ## Completed
 
@@ -43,6 +43,10 @@ M0 remains complete; its closure evidence is preserved below. M1 implementation 
   - generic resource-server wiring separated from provider-specific JWT validation;
   - Cognito token validation and JWT claim interpretation isolated behind provider boundaries while preserving current token/user compatibility; and
   - Backend Local Verification, including MariaDB schema/repository validation — **PASS** at `9b32f0ded961da74e5a83f4af7ac80b91872cc81`.
+- M1-3 Frontend auth/session boundary — **COMPLETE**
+  - application/UI auth calls now use a provider-neutral frontend auth client;
+  - Cognito/Amplify configuration, guest-error normalization, user attributes, token objects, and provider calls are isolated in the compatibility adapter while existing session/routing/API/auth-flow semantics are preserved; and
+  - Frontend CI and Frontend Delivery Contract Verification — **PASS** at `1e72c4d9320f3e4af82aeede8fb4c63366e80de9`.
 
 ## Verified architectural direction
 
@@ -54,7 +58,6 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 The following are **NEW**, **MODIFY**, or planned gaps—not completed implementations:
 
-- provider-neutral frontend auth/session boundary;
 - portable OpenSearch transport/authentication;
 - provider-neutralization of current object, model, and identity provider adapters;
 - fixed AI/RAG evaluation dataset, harness, and report;
@@ -95,11 +98,11 @@ No remaining M0 work.
 
 ## Remaining M1 work
 
-M1-3 frontend auth/session boundary; M1-4 object storage decoupling completion; M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
+M1-4 object storage decoupling completion; M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
 
 ## Immediate next work
 
-**M1-3 — Frontend auth/session boundary:** 현재 authenticated/guest/checking 상태, protected navigation, login/logout, API bearer-token attachment, 401/403 handling, profile synchronization을 유지하면서 직접적인 Amplify/Cognito 호출을 provider-neutral auth/session client boundary 뒤로 이동한다. Exact OIDC library 또는 IdP는 아직 선택하지 않는다.
+**M1-4 — Object storage decoupling completion:** 기존 `ObjectReader`/`ObjectWriter` application contract를 유지하면서 S3 adapter selection/configuration과 bucket/key/provider naming이 application/service/DTO 경계에 누출되는지 검증하고, 확인된 provider coupling만 최소 수정한다. GCS를 자동 선택하거나 storage를 재설계하지 않는다.
 
 ## Do not revisit
 

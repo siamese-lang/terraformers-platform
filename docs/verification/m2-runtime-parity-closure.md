@@ -3,8 +3,9 @@
 **Status: PENDING**
 
 This record consolidates already accepted M2 evidence. It does not rerun the heavy Kind, Java,
-frontend, Terraform, or cloud workflows and does not mark M2 complete. The dedicated lightweight
-closure workflow must pass and be reviewed before the milestone status changes.
+frontend, Terraform, or cloud workflows. M2 closure is a review of already accepted runtime and
+regression evidence, not a new executable verification product. Milestone status changes only after
+this evidence chain and the current repository state are reviewed.
 
 ## Closure base
 
@@ -106,8 +107,8 @@ storage default.
 
 ### 14. Consolidated M2 closure evidence exists
 - Result: PASS
-- Evidence: this pending review record and generated `summary.txt`, `exit-criteria.json`, `exit-criteria.md`, and `boundary-summary.txt`.
-- Limitation: a local PASS does not change M2/M2-6 status before authoritative workflow review.
+- Evidence: this closure record links the accepted M2-1 through M2-5 runtime/regression evidence and their validated heads.
+- Limitation: the closure record does not create a new runtime claim; M2/M2-6 status changes only after review of the linked evidence and current repository state.
 
 ## Residual limitations
 
@@ -138,9 +139,12 @@ to later milestones (including M3, M5, M7, and M9), not reasons to broaden M2.
 
 These are preserved diagnostic history, not unresolved closure blockers.
 
-## Closure execution
+## Closure review
 
-Run `python3 scripts/checks/m2-runtime-parity-closure-verification.py`. The checker reuses the M1
-boundary verifier and M2 frontend classifier, verifies the evidence/status/storage invariants, and
-writes sanitized machine-readable closure artifacts under `artifacts/m2-runtime-parity-closure/`.
-Until its authoritative workflow result is reviewed, M2 remains `ACTIVE` and M2-6 remains `TODO`.
+M2-6 does not add another verifier or workflow. Review the accepted M2-1 through M2-5 evidence above,
+confirm that no production/runtime code changed after the latest successful M2-5 validation in a way
+that invalidates those claims, and update the M2 plan, master plan, and project-state documents.
+If that review discovers a genuinely uncovered runtime claim, add only the smallest validation that
+directly exercises that claim; do not create a closure-specific test of documents or previous tests.
+
+Until this review is completed, M2 remains `ACTIVE` and M2-6 remains `TODO`.

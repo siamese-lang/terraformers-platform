@@ -34,7 +34,7 @@ class AuthenticatedUserServiceTest {
 
     @Test
     void returnsExistingUserByProviderAndSubjectWithoutCreatingAnotherUser() {
-        map(identity("subject", "person@example.com", null, "fallback"));
+        map(identity("subject", null, null, "fallback"));
         UserEntity existing = activeUser("subject", "Existing user");
         when(findIdentity("subject")).thenReturn(Optional.of(existing));
 

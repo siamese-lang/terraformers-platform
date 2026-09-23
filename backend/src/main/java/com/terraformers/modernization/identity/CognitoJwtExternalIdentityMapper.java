@@ -17,11 +17,7 @@ public class CognitoJwtExternalIdentityMapper implements JwtExternalIdentityMapp
         if (email != null) {
             email = email.toLowerCase(Locale.ROOT);
         }
-        String explicitDisplayName = firstNonBlankOrNull(
-                optionalClaim(jwt, "name", 100),
-                optionalClaim(jwt, "preferred_username", 100),
-                optionalClaim(jwt, "nickname", 100)
-        );
+        String explicitDisplayName = explicitDisplayName(jwt);
         String fallbackDisplayName = firstNonBlank(email, jwt.getClaimAsString("cognito:username"), subject);
         if (fallbackDisplayName.length() > 100) {
             fallbackDisplayName = fallbackDisplayName.substring(0, 100);
@@ -53,6 +49,20 @@ public class CognitoJwtExternalIdentityMapper implements JwtExternalIdentityMapp
         return normalized;
     }
 
+    private String explicitDisplayName(Jwt jwt) {
+        for (String claimName : new String[] {"name", "preferred_username", "nickname"}) {
+            String value = jwt.getClaimAsString(claimName);
+            if (value != null && !value.isBlank()) {
+                String normalized = value.strip();
+                if (normalized.length() > 100) {
+                    throw new IllegalArgumentException(claimName + " exceeds maximum length 100");
+                }
+                return normalized;
+            }
+        }
+        return null;
+    }
+
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {
@@ -62,12 +72,4 @@ public class CognitoJwtExternalIdentityMapper implements JwtExternalIdentityMapp
         throw new IllegalStateException("display name could not be resolved");
     }
 
-    private String firstNonBlankOrNull(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value.strip();
-            }
-        }
-        return null;
-    }
 }

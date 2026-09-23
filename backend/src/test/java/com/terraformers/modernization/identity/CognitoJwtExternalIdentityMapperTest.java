@@ -36,6 +36,27 @@ class CognitoJwtExternalIdentityMapperTest {
     }
 
     @Test
+    void validNameShortCircuitsOverlongLowerPriorityNickname() {
+        assertThat(mapper.map(jwt(Map.of(
+                "sub", "subject", "name", "Name", "nickname", "n".repeat(101)
+        ))).explicitDisplayName()).isEqualTo("Name");
+    }
+
+    @Test
+    void validPreferredUsernameShortCircuitsOverlongLowerPriorityNickname() {
+        assertThat(mapper.map(jwt(Map.of(
+                "sub", "subject", "preferred_username", "preferred", "nickname", "n".repeat(101)
+        ))).explicitDisplayName()).isEqualTo("preferred");
+    }
+
+    @Test
+    void rejectsSelectedExplicitDisplayNameWhenItIsOverlong() {
+        assertThatThrownBy(() -> mapper.map(jwt(Map.of("sub", "subject", "name", "n".repeat(101)))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("name exceeds maximum length 100");
+    }
+
+    @Test
     void usesCognitoUsernameThenSubjectAsFallback() {
         assertThat(mapper.map(jwt(Map.of("sub", "subject", "cognito:username", "username")))
                 .fallbackDisplayName()).isEqualTo("username");
@@ -44,7 +65,7 @@ class CognitoJwtExternalIdentityMapperTest {
 
     @Test
     void rejectsMissingOrBlankSubject() {
-        assertThatThrownBy(() -> mapper.map(jwt(Map.of())))
+        assertThatThrownBy(() -> mapper.map(jwt(Map.of("unrelated", "value"))))
                 .isInstanceOf(AuthenticationCredentialsNotFoundException.class);
         assertThatThrownBy(() -> mapper.map(jwt(Map.of("sub", "  "))))
                 .isInstanceOf(AuthenticationCredentialsNotFoundException.class);

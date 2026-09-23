@@ -12,13 +12,14 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current milestone
 
-- Milestone: **M1 — Cloud Decoupling**
-- Status: **COMPLETE**
-- Phase: closure complete; M2 planning next
-- Completed plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
-- Current implementation task: **none — create the M2 Runtime Parity active plan before implementation**
+- Milestone: **M2 — Runtime Parity**
+- Status: **ACTIVE**
+- Phase: portable runtime baseline / parity verification
+- Active plan: [M2 — Runtime Parity](plans/active/M2-runtime-parity.md)
+- Current implementation task: **M2-1 — Portable runtime baseline and parity gap inventory**
 
-M0 and M1 are complete. M1-1 through M1-8 have closure evidence. M2 remains PLANNED until an M2 active plan is written and merged.
+M0 and M1 are complete. M1-1 through M1-8 have closure evidence. M2 is active through its
+repository-owned plan; no M2 implementation task is complete yet.
 
 ## Completed
 
@@ -76,12 +77,19 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 ## Current gaps
 
-The following are **NEW**, **MODIFY**, or planned gaps—not completed implementations:
+The following M2 gaps are observed repository facts or execution questions, not completed
+implementations or product selections:
 
-- fixed AI/RAG evaluation dataset, harness, and report;
-- backend reliability/failure-injection harness;
-- trace propagation, export, and end-to-end validation; and
-- GCP provider-specific IaC/runtime implementation.
+- the Kubernetes base has a backend workload but no frontend Deployment/Service; this does not by
+  itself prove that a frontend container is required;
+- the local-stub path uses H2 with Flyway disabled and disabled/metadata-only storage, stub analysis,
+  disabled embedding/retrieval, and logging progress, so it cannot alone prove MariaDB/Flyway,
+  object-byte, active provider, or production-like authenticated parity;
+- metadata-only object stubs do not persist or read uploaded/result bytes;
+- the Kind smoke calls protected upload without a bearer JWT, while current identity resolution
+  rejects a null JWT; its actual current-main result must be executed and classified in M2-1; and
+- frontend unit/build regression exists, but portable browser E2E and coverage criteria remain
+  `UNKNOWN/TBD`.
 
 ## Historical AWS implementation
 
@@ -120,7 +128,11 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Create the M2 — Runtime Parity active plan:** M1 closure evidence와 current main의 portable/runtime contracts를 기준으로 M2의 atomic work sequence, validation evidence, exit criteria를 source of truth로 작성한다. M2 plan merge 전에는 runtime-parity implementation을 시작하지 않는다.
+**M2-1 — Portable runtime baseline and parity gap inventory:** current portable/local runtime을
+변경 없이 실행하고 backend regression, MariaDB/Flyway repository validation, frontend
+test/build, runtime-contract verification, Kind startup/health/upload/project-tree/Terraform-read를
+`PASS`, `FAIL`, `NOT COVERED`로 분류한다. 확인된 failure를 이 baseline 작업에서 대규모로
+수정하지 않는다.
 
 ## Do not revisit
 
@@ -142,7 +154,11 @@ Without new evidence, an ADR where needed, and the change gate, do not:
 
 ## Working rules
 
-Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this document, (4) read `MASTER_PLAN.md`, and (5) read the [active M1 plan](plans/active/M1-cloud-decoupling.md). Start with its first incomplete task and do not expand that atomic task into later M1 boundaries.
+Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this
+document, (4) read `MASTER_PLAN.md`, and (5) read the
+[active M2 plan](plans/active/M2-runtime-parity.md). Start with its first incomplete task and do not
+expand that atomic task into later M2 boundaries. Retain the
+[completed M1 plan](plans/active/M1-cloud-decoupling.md) as historical milestone evidence.
 
 For a substantive change, record an observed problem, reproducible evidence, a change that directly addresses it, and same-condition revalidation. Establish a fixed evaluation baseline before AI changes, reproduce a failure before reliability changes, and require diagnosis evidence—not dashboard count—for observability completion.
 
@@ -158,5 +174,7 @@ Interpret this checkpoint through the [repository working contract](../AGENTS.md
 - [ADR-003](architecture/decisions/ADR-003-evaluation-before-complexity.md)
 - [ADR-004](architecture/decisions/ADR-004-change-gates.md)
 - [Modernization master plan](plans/MASTER_PLAN.md)
-- [Active M1 plan](plans/active/M1-cloud-decoupling.md)
+- [Active M2 plan](plans/active/M2-runtime-parity.md)
+- [Completed M1 plan](plans/active/M1-cloud-decoupling.md)
+- [M1 closure verification](verification/m1-cloud-decoupling-closure.md)
 - [Active M0 plan](plans/active/M0-baseline-and-governance.md)

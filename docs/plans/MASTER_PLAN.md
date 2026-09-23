@@ -25,7 +25,7 @@
 | --- | --- | --- | --- |
 | M0 — Baseline & Governance | **COMPLETE** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 모든 M0 문서와 valid links, 상호 모순 없음, closure SHA와 M1 진입 기록 |
 | M1 — Cloud Decoupling | **COMPLETE** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
-| M2 — Runtime Parity | **ACTIVE** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
+| M2 — Runtime Parity | **COMPLETE** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
 | M3 — AI Evaluation Baseline | PLANNED | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 machine-readable baseline과 failure taxonomy |
 | M4 — AI Targeted Improvement | PLANNED | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
 | M5 — Backend Reliability Baseline | PLANNED | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
@@ -63,20 +63,26 @@
 
 ## M2 — Runtime Parity
 
-**Status.** **ACTIVE.** The [active M2 plan](active/M2-runtime-parity.md) defines the evidence-first
-sequence and exit criteria. The current first implementation task is **M2-1 — Portable runtime
-baseline and parity gap inventory**.
+**Status.** **COMPLETE.** The [completed M2 plan](active/M2-runtime-parity.md) records M2-1 through
+M2-6 as done, and [M2 Runtime Parity Closure](../verification/m2-runtime-parity-closure.md) records
+the final exit-criteria review.
 
-**Problem.** Cloud-neutralized application이 기존 핵심 사용자 경험과 persistence semantics를 portable/current runtime에서 실제 수행할 수 있는지 증명되어야 한다.
+**Problem.** Cloud-neutralized application이 기존 핵심 사용자 경험과 persistence semantics를 portable/current runtime에서 실제 수행할 수 있는지 증명되어야 했다.
 
-**Work.** `architecture/image input → upload/source object → project/file → analysis job → retrieval/model → Terraform draft validation → result persistence` flow와 기존 user/project/comment flow를 복구·검증한다. 새 기능 개발이 아니라 parity가 목적이다.
+**Work.** `architecture/image input → upload/source object → project/file → analysis job → retrieval/model → Terraform draft validation → result persistence` flow와 기존 user/project/comment flow를 portable runtime에서 검증했다. 새 기능 개발이나 GCP product 선택이 아니라 parity가 목적이었다.
 
-**Evidence.** Reproducible deployment/startup, end-to-end smoke, core business regression tests, result/data persistence 확인, runtime identity/config evidence를 수집한다.
+**Evidence.** M2-1 through M2-5 established accepted evidence for portable startup, MariaDB/Flyway,
+authenticated identity/ownership, upload/analysis/Terraform result flow, exact object-byte
+persistence/read-back, user/project/comment behavior, and frontend regression/build. M2-6 reviewed
+those results against all 14 exit criteria without adding closure-specific verification
+infrastructure.
 
-**Exit condition.** 핵심 flow와 user/project/comment contract가 portable/current runtime에서 반복 가능하게 동작하고 결과가 보존된다.
+**Exit condition.** **MET.** All 14 M2 exit criteria are recorded as **PASS** with explicit residual
+limitations in the closure report. No production IdP/storage/model, arbitrary GCP topology, or M3
+implementation was selected as part of M2.
 
-**Immediate next single task.** Execute M2-1 without implementation changes and record current
-portable/local behavior as `PASS`, `FAIL`, or `NOT COVERED` in the runtime-parity baseline evidence.
+**Immediate next single task.** Create **M3 — AI Evaluation Baseline** active plan. Do not begin M3
+implementation until that plan is the repository source of truth.
 
 ## M3 — AI Evaluation Baseline
 

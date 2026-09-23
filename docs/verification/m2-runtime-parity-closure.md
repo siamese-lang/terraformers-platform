@@ -1,17 +1,17 @@
 # M2 Runtime Parity Closure
 
-**Status: PENDING**
+**Status: PASS**
 
 This record consolidates already accepted M2 evidence. It does not rerun the heavy Kind, Java,
 frontend, Terraform, or cloud workflows. M2 closure is a review of already accepted runtime and
-regression evidence, not a new executable verification product. Milestone status changes only after
-this evidence chain and the current repository state are reviewed.
+regression evidence, not a new executable verification product. The evidence chain and current
+repository state have been reviewed for M2 closure.
 
 ## Closure base
 
 - Base/current `main` SHA: `c87ba7b505d41b7471aa993a07ea8d3ce43971ee`.
-- Milestone: M2 — Runtime Parity (`ACTIVE`).
-- At validation start M2-1 through M2-5 are `DONE`; M2-6 is `TODO`.
+- Milestone: M2 — Runtime Parity (`COMPLETE`).
+- M2-1 through M2-6 are `DONE`.
 - Closure verification reads the accepted documents and current source invariants rather than
   repeating runtime checks whose code path, dependencies, and configuration have not changed.
 
@@ -87,7 +87,7 @@ storage default.
 
 ### 10. Provider-neutral application boundary remains intact
 - Result: PASS
-- Evidence: the current-source M1 closure verifier must report `m1_cloud_decoupling_boundary=passed`.
+- Evidence: accepted M1 closure evidence reports `m1_cloud_decoupling_boundary=passed`, and no production/runtime change after the latest successful M2-5 validation invalidates that boundary.
 - Limitation: historical compatibility adapters remain preserved behind boundaries.
 
 ### 11. Historical AWS implementation is not restored as the active target
@@ -102,13 +102,13 @@ storage default.
 
 ### 13. Residual limitations are explicit
 - Result: PASS
-- Evidence: the Residual limitations section below is verified by the closure checker.
+- Evidence: the Residual limitations section below explicitly records the claims that remain outside M2.
 - Limitation: limitations belonging to M3, M5, M7, or M9 are not converted into M2 failures.
 
 ### 14. Consolidated M2 closure evidence exists
 - Result: PASS
 - Evidence: this closure record links the accepted M2-1 through M2-5 runtime/regression evidence and their validated heads.
-- Limitation: the closure record does not create a new runtime claim; M2/M2-6 status changes only after review of the linked evidence and current repository state.
+- Limitation: the closure record does not create a new runtime claim; it records the completed review of linked evidence and current repository state.
 
 ## Residual limitations
 
@@ -141,10 +141,10 @@ These are preserved diagnostic history, not unresolved closure blockers.
 
 ## Closure review
 
-M2-6 does not add another verifier or workflow. Review the accepted M2-1 through M2-5 evidence above,
-confirm that no production/runtime code changed after the latest successful M2-5 validation in a way
-that invalidates those claims, and update the M2 plan, master plan, and project-state documents.
-If that review discovers a genuinely uncovered runtime claim, add only the smallest validation that
-directly exercises that claim; do not create a closure-specific test of documents or previous tests.
+M2-6 added no verifier or workflow. Review of the accepted M2-1 through M2-5 evidence confirmed that
+no production/runtime code changed after the latest successful M2-5 validation in a way that
+invalidates those claims. The 14 M2 exit criteria are therefore satisfied by the accepted evidence
+and explicit residual limitations above.
 
-Until this review is completed, M2 remains `ACTIVE` and M2-6 remains `TODO`.
+M2 is `COMPLETE` and M2-6 is `DONE`. The immediate next single task is to create the M3 — AI
+Evaluation Baseline active plan. M3 implementation does not begin as part of this closure.

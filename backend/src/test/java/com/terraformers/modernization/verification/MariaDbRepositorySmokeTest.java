@@ -61,7 +61,7 @@ class MariaDbRepositorySmokeTest {
         String suffix = UUID.randomUUID().toString();
 
         UserEntity owner = new UserEntity();
-        owner.setCognitoSub("mariadb-smoke-" + suffix);
+        owner.setExternalIdentity("cognito", "mariadb-smoke-" + suffix);
         owner.setEmail("mariadb-smoke-" + suffix + "@example.com");
         owner.setDisplayName("MariaDB Smoke User");
         owner = userRepository.saveAndFlush(owner);
@@ -160,7 +160,10 @@ class MariaDbRepositorySmokeTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(userRepository.findByCognitoSub("mariadb-smoke-" + suffix))
+        assertThat(userRepository.findByExternalIdentityProviderAndExternalIdentitySubject(
+                "cognito",
+                "mariadb-smoke-" + suffix
+        ))
                 .get()
                 .extracting(UserEntity::getUserId)
                 .isEqualTo(ownerId);

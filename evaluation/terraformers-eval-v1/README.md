@@ -74,8 +74,14 @@ This dataset does **not**:
 The AWS-shaped positive cases reflect the currently versioned historical corpus used to establish the
 baseline. GCP remains the modernization deployment target at the deployment layer.
 
-## M3-3 handoff
+## M3-4 handoff
 
-M3-3 should reuse `EvaluationDatasetLoader` and the M3-1 `EvaluationTrace` contract to run all six
-cases through one evaluation runner. It must record observed stage provenance rather than embedding
-case-specific execution logic in the runner.
+M3-3 now provides `EvaluationRunner` and `EvaluationResultWriter`. A deterministic contract run is
+covered by:
+
+`mvn -q -f backend/pom.xml -Dtest=EvaluationRunnerTest test`
+
+M3-4 should wire the current selected live/provider configuration into the same runner, preserve the
+exact provider/model/corpus/configuration identity, and persist the resulting machine-readable run
+without changing prompt, retrieval ranking, corpus content, or model choice.
+

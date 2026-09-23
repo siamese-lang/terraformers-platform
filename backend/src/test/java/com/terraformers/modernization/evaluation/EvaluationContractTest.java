@@ -196,6 +196,8 @@ class EvaluationContractTest {
     private GenerationEvidence generation(String resourceType) {
         return new GenerationEvidence(
                 List.of("tfaws-vpc-schema"),
+                EvaluationCase.InputClassification.ARCHITECTURE_DIAGRAM,
+                0.95,
                 "Generated VPC draft",
                 List.of("VPC"),
                 List.of(),

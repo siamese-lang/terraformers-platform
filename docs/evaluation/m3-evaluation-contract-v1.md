@@ -19,7 +19,7 @@ It deliberately does not capture or require hidden model chain-of-thought.
 - Stage wrapper: `EvaluationTrace.StageTrace<T>`
 
 The first concrete dataset is `terraformers-eval-v1` under
-[`evaluation/terraformers-eval-v1/`](../../../evaluation/terraformers-eval-v1/). Dataset version
+[`evaluation/terraformers-eval-v1/`](../../evaluation/terraformers-eval-v1/). Dataset version
 and schema version are separate so the same result contract can compare multiple fixed datasets.
 
 ## EvaluationCase

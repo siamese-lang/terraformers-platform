@@ -99,7 +99,7 @@ failure first occurred; it does not change prompt/retrieval/model behavior.
   - [M3 Evaluation Contract v1](evaluation/m3-evaluation-contract-v1.md) plus `EvaluationContractTest` cover success and four representative failure locations without changing production AI behavior.
 - M3-2 Fixed/versioned evaluation dataset — **COMPLETE**
   - added `terraformers-eval-v1` with four positive architecture cases, one ambiguous case, and one non-architecture case;
-  - fixed decoded input identity with repository-owned WebP fixtures and SHA-256, plus stage-level extraction/retrieval/generation/validation expectations;
+  - fixed input identity with repository-owned WebP fixtures and SHA-256, plus stage-level extraction/retrieval/generation/validation expectations;
   - required five existing `PROJECT_DECISION` documents across positive cases so retrieval quality can be distinguished from generic vector hits; and
   - `EvaluationDatasetLoaderTest` validates deterministic loading, fixture identity, case composition, expectation completeness, and corpus-reference existence.
 

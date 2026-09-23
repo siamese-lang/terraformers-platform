@@ -77,9 +77,7 @@
         "requiredProjectDecisionIds": [
           "tfref-v2-sg-relations"
         ],
-        "forbiddenRiskTags": [
-          "public-cidr"
-        ]
+        "forbiddenRiskTags": []
       },
       "generation": {
         "terraformExpected": true,
@@ -178,9 +176,7 @@
         "requiredProjectDecisionIds": [
           "tfref-v2-alb-private-origin"
         ],
-        "forbiddenRiskTags": [
-          "public-cidr"
-        ]
+        "forbiddenRiskTags": []
       },
       "generation": {
         "terraformExpected": true,
@@ -277,9 +273,7 @@
           "tfref-v2-aoss-private",
           "tfref-v2-aoss-access"
         ],
-        "forbiddenRiskTags": [
-          "public-cidr"
-        ]
+        "forbiddenRiskTags": []
       },
       "generation": {
         "terraformExpected": true,

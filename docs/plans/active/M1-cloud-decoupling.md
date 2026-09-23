@@ -133,7 +133,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 ### M1-7 — Runtime configuration neutralization
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / coupling.** `application-prod.yml`, `AnalysisRuntimeProperties`, security configuration, and storage conditionals use AWS product names as generic application selection/configuration concepts.
 
@@ -143,7 +143,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 **Validation.** Verify configuration binding, startup/required-variable inspection, adapter selection, compatibility configuration, and absence of provider-specific settings masquerading as generic application contracts.
 
-**Completion evidence.** Pending. Record completion SHA or PR, tests/checks, and remaining task here.
+**Completion evidence.** At validated head `b4e3c4cb0cf42e64904111447395f7a1435ca9aa`, `application-prod.yml` defines a provider-neutral canonical runtime contract for JWT issuer/JWK, object-reader/writer selection, analysis/embedding selection, retrieval mode, progress publisher, and logical storage locations, while `application-aws-compat.yml` contains Cognito, S3, Bedrock, SQS, and AWS OpenSearch signing compatibility settings. Canonical Kubernetes base/local manifests use neutral selectors, the historical AWS runtime overlay explicitly composes `prod,aws-compat`, and runtime-secret/deployment-contract tooling validates neutral base keys separately from AWS adapter settings. Legacy `BEDROCK_PROVIDER_ENABLED` selection fallback and S3/SQS boolean switches were removed from the canonical contract; Cognito client-id, Bedrock model IDs, SQS queue URLs, and SigV4 signing name are adapter-owned. Canonical `prod` startup remains independently validated without enabling the AWS compatibility profile, including MariaDB/Flyway/repository smoke. Backend Local Verification was **SUCCESS** at this head: both **Backend local smoke baseline** and **MariaDB schema and repository validation** passed. **AWS Deployment Contract Inventory Verification**, **AWS Runtime Deployment Package Verification**, and **Terraform Static Verification** also passed.
 
 ### M1-8 — Contract/regression verification and closure
 
@@ -188,11 +188,11 @@ The following GCP/runtime choices also remain **GATED**: GKE topology, node/VM s
 
 ## Immediate next work
 
-**M1-7 — Runtime configuration neutralization**
+**M1-8 — Contract/regression verification and closure**
 
-M1-1~M1-6에서 구현한 provider-neutral boundary를 기준으로 production/runtime configuration에서 Cognito, S3, Bedrock, AOSS/SigV4 같은 provider-specific 이름이 generic application selection concept로 남아 있는 부분을 정리하고, 필요한 AWS compatibility aliases/profile은 명시적으로 분리한다.
+M1-1~M1-7에서 만든 provider-neutral identity/auth, storage, OpenSearch transport, model/embedding selection, runtime configuration 경계를 전체적으로 재검증하고 기존 user/project/file/comment/analysis business behavior와 MariaDB/Flyway compatibility가 유지되는지 consolidated evidence를 만든다.
 
-This task does not implement GCP runtime infrastructure, choose replacement providers, or change application/domain behavior.
+This task is closure/verification work. Fix only verified regressions with the smallest attributable change; do not expand M1 architecture or select GCP runtime products.
 
 ## Evidence and references
 

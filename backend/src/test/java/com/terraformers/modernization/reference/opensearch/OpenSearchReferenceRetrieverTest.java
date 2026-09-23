@@ -1,6 +1,7 @@
 package com.terraformers.modernization.reference.opensearch;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -23,7 +24,7 @@ class OpenSearchReferenceRetrieverTest {
         EmbeddingProvider embedding = mock(EmbeddingProvider.class);
         OpenSearchKnnQueryBuilder queryBuilder = mock(OpenSearchKnnQueryBuilder.class);
         OpenSearchResponseParser parser = mock(OpenSearchResponseParser.class);
-        SignedOpenSearchHttpClient client = mock(SignedOpenSearchHttpClient.class);
+        OpenSearchTransport transport = mock(OpenSearchTransport.class);
         AnalysisRuntimeProperties properties = activeProperties();
         List<Float> vector = List.of(0.1f, 0.2f);
         when(embedding.embed(any())).thenReturn(vector);
@@ -36,14 +37,14 @@ class OpenSearchReferenceRetrieverTest {
                 eq("5.100.0"),
                 eq(List.of("aws_vpc"))
         )).thenReturn("knn-body");
-        when(client.post(any(URI.class), eq("knn-body"), eq("aoss"))).thenReturn("response");
+        when(transport.post(any(URI.class), eq("knn-body"))).thenReturn("response");
         List<ReferenceDocument> expected = List.of(new ReferenceDocument("ref-1", "title", "content", 1.0));
         when(parser.parse("response", "content")).thenReturn(expected);
 
-        OpenSearchReferenceRetriever retriever = new OpenSearchReferenceRetriever(embedding, queryBuilder, parser, client, properties);
+        OpenSearchReferenceRetriever retriever = new OpenSearchReferenceRetriever(embedding, queryBuilder, parser, transport, properties);
         assertThat(retriever.retrieve(query())).isEqualTo(expected);
 
-        InOrder order = inOrder(embedding, queryBuilder, client, parser);
+        InOrder order = inOrder(embedding, queryBuilder, transport, parser);
         order.verify(embedding).embed(any());
         order.verify(queryBuilder).build(
                 "embedding",
@@ -54,7 +55,7 @@ class OpenSearchReferenceRetrieverTest {
                 "5.100.0",
                 List.of("aws_vpc")
         );
-        order.verify(client).post(URI.create("https://search.example/references/_search"), "knn-body", "aoss");
+        order.verify(transport).post(URI.create("https://search.example/references/_search"), "knn-body");
         order.verify(parser).parse("response", "content");
     }
 
@@ -64,8 +65,29 @@ class OpenSearchReferenceRetrieverTest {
         properties.setOpensearchTopK(0);
         OpenSearchReferenceRetriever retriever = new OpenSearchReferenceRetriever(
                 mock(EmbeddingProvider.class), mock(OpenSearchKnnQueryBuilder.class), mock(OpenSearchResponseParser.class),
-                mock(SignedOpenSearchHttpClient.class), properties);
+                mock(OpenSearchTransport.class), properties);
         assertThatThrownBy(() -> retriever.retrieve(query())).hasMessageContaining("top-k must be positive");
+    }
+
+    @Test
+    void doesNotValidateAwsSigningServiceName() {
+        AnalysisRuntimeProperties properties = activeProperties();
+        properties.setOpensearchServiceName(" ");
+        OpenSearchTransport transport = mock(OpenSearchTransport.class);
+        OpenSearchKnnQueryBuilder queryBuilder = mock(OpenSearchKnnQueryBuilder.class);
+        when(queryBuilder.build(any(), any(), any(), any(Integer.class), any(), any(), any())).thenReturn("body");
+        when(transport.post(any(), any())).thenReturn("response");
+        OpenSearchResponseParser parser = mock(OpenSearchResponseParser.class);
+        when(parser.parse(any(), any())).thenReturn(List.of());
+
+        OpenSearchReferenceRetriever retriever = new OpenSearchReferenceRetriever(
+                text -> List.of(0.1f),
+                queryBuilder,
+                parser,
+                transport,
+                properties);
+
+        assertThatCode(() -> retriever.retrieve(query())).doesNotThrowAnyException();
     }
 
     private AnalysisRuntimeProperties activeProperties() {

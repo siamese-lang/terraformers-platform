@@ -16,9 +16,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Status: **ACTIVE**
 - Phase: provider boundary decoupling
 - Active plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
-- Current implementation task: **M1-5 — OpenSearch transport/auth boundary**
+- Current implementation task: **M1-6 — Model / embedding provider configuration**
 
-M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-4 complete and M1-5 next.
+M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-5 complete and M1-6 next.
 
 ## Completed
 
@@ -51,6 +51,10 @@ M0 remains complete; its closure evidence is preserved below. M1 implementation 
   - source reads and upload/result writes now flow through provider-neutral `ObjectReader`/`ObjectWriter` contracts;
   - AWS S3 SDK types are isolated to compatibility adapters, while explicit provider/persistence semantics eliminate eTag-based false-S3 classification; and
   - Backend Local Verification and MariaDB schema/repository validation — **PASS** at `ca7f60382143a25a010ec49131075011c76c7c1f`.
+- M1-5 OpenSearch transport/auth boundary — **COMPLETE**
+  - `OpenSearchReferenceRetriever` now depends on provider-neutral `OpenSearchTransport` and no longer knows SigV4 or signing service names;
+  - AWS credentials, region, payload signing, and `aoss`/`es` signing semantics remain inside the `SignedOpenSearchHttpClient` compatibility adapter, while retrieval/query/parser behavior is preserved; and
+  - Backend Local Verification, MariaDB schema/repository validation, and Terraform Static Verification — **PASS** at `7d25243f0ee727d251d21ff5affeb9841df5fc3e`.
 
 ## Verified architectural direction
 
@@ -62,7 +66,6 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 The following are **NEW**, **MODIFY**, or planned gaps—not completed implementations:
 
-- portable OpenSearch transport/authentication;
 - provider-neutralization of current model provider adapters;
 - fixed AI/RAG evaluation dataset, harness, and report;
 - backend reliability/failure-injection harness;
@@ -102,11 +105,11 @@ No remaining M0 work.
 
 ## Remaining M1 work
 
-M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
+M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
 
 ## Immediate next work
 
-**M1-5 — OpenSearch transport/auth boundary:** 기존 `ReferenceRetriever`, OpenSearch query builder/response parser, corpus/index contract를 유지하면서 AWS SigV4/AOSS transport/authentication을 provider-neutral OpenSearch transport boundary 뒤로 이동한다. OpenSearch 자체를 교체하거나 retrieval semantics를 변경하지 않는다.
+**M1-6 — Model / embedding provider configuration:** 기존 `AnalysisProvider`와 `EmbeddingProvider` application contract를 유지하면서 generic provider selection/configuration과 Bedrock-specific runtime/model identifiers를 분리한다. 새 모델/provider를 선택하거나 embedding dimension 또는 AI 품질을 변경하지 않는다.
 
 ## Do not revisit
 

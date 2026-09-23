@@ -1,6 +1,7 @@
 package com.terraformers.modernization.reference.opensearch;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -8,6 +9,18 @@ import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.http.SdkHttpFullRequest;
 
 class SignedOpenSearchHttpClientTest {
+
+    @Test
+    void implementsProviderNeutralTransport() {
+        assertThat(OpenSearchTransport.class).isAssignableFrom(SignedOpenSearchHttpClient.class);
+    }
+
+    @Test
+    void rejectsBlankSigningServiceNameBeforeSendingARequest() {
+        assertThatThrownBy(() -> new SignedOpenSearchHttpClient(" "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("opensearch-service-name");
+    }
 
     @Test
     void includesExactPayloadHashInRequestBeforeSigning() {

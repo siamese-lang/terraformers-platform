@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -23,14 +24,21 @@ import software.amazon.awssdk.http.SdkHttpMethod;
 import software.amazon.awssdk.regions.Region;
 
 @Component
-public class SignedOpenSearchHttpClient {
+public class SignedOpenSearchHttpClient implements OpenSearchTransport {
 
     private final HttpClient httpClient;
     private final Aws4Signer signer;
     private final AwsCredentialsProvider credentialsProvider;
     private final Region region;
+    private final String serviceName;
 
-    public SignedOpenSearchHttpClient() {
+    public SignedOpenSearchHttpClient(
+            @Value("${terraformers.analysis.opensearch-service-name:aoss}") String serviceName
+    ) {
+        if (serviceName == null || serviceName.isBlank()) {
+            throw new IllegalArgumentException("terraformers.analysis.opensearch-service-name must not be blank for AWS SigV4 signing");
+        }
+        this.serviceName = serviceName;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
@@ -39,7 +47,8 @@ public class SignedOpenSearchHttpClient {
         this.region = resolveRegion();
     }
 
-    public String post(URI uri, String body, String serviceName) {
+    @Override
+    public String post(URI uri, String body) {
         byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         SdkHttpFullRequest unsignedRequest = buildUnsignedRequest(uri, bytes);
 

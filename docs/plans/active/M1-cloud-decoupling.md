@@ -105,7 +105,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 ### M1-5 — OpenSearch transport/auth boundary
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / coupling.** `OpenSearchReferenceRetriever` depends directly on `SignedOpenSearchHttpClient`, which owns AWS credential signing and the configurable `aoss` service assumption.
 
@@ -115,7 +115,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 **Validation.** Verify query payload and parsing regressions independently from transport, then exercise transport adapter selection/auth behavior and applicable ingestion checks.
 
-**Completion evidence.** Pending. Record completion SHA or PR, tests/checks, and remaining task here.
+**Completion evidence.** At validated head `7d25243f0ee727d251d21ff5affeb9841df5fc3e`, `OpenSearchReferenceRetriever` depends on the provider-neutral `OpenSearchTransport` contract and sends only the search URI plus JSON request body. AWS credentials, region resolution, SigV4 signing, payload hashing, and `aoss`/`es` signing service-name semantics are isolated in the `SignedOpenSearchHttpClient` compatibility adapter. Query construction, response parsing, endpoint construction, corpus/provider-version filtering, top-K behavior, and `RetrievalModeReferenceRetriever` REQUIRED/OPTIONAL/DISABLED semantics were preserved. The AWS-bound batch ingestion script was inspected and remains a documented compatibility implementation; its corpus/version/checksum/mapping/idempotency/k-NN validation contract is reusable, while boto3/S3 receipts/AWS4Auth/Bedrock/CodeBuild portability is deferred to later provider/runtime work rather than mixed into this backend transport change. Backend Local Verification was **SUCCESS** at this head: both **Backend local smoke baseline** and **MariaDB schema and repository validation** passed. Terraform Static Verification also passed.
 
 ### M1-6 — Model / embedding provider configuration
 
@@ -188,11 +188,11 @@ The following GCP/runtime choices also remain **GATED**: GKE topology, node/VM s
 
 ## Immediate next work
 
-**M1-4 — Object storage decoupling completion**
+**M1-6 — Model / embedding provider configuration**
 
-기존 `ObjectReader`/`ObjectWriter` application contract를 유지하면서 S3 adapter 선택/configuration과 bucket/key/provider naming이 application/service/DTO 경계에 누출되는지 검증하고, 확인된 provider coupling만 최소 수정한다.
+기존 `AnalysisProvider`와 `EmbeddingProvider` application contract를 유지하면서 generic provider selection/configuration과 Bedrock-specific runtime/model identifiers를 분리하고, generation과 embedding provider 설정이 provider-neutral boundary를 통해 선택되도록 정리한다.
 
-This task does not select GCS or redesign storage; the current S3 implementation may remain as a compatibility adapter.
+This task does not select a new model/provider, change embedding dimensions, or perform AI quality improvement.
 
 ## Evidence and references
 

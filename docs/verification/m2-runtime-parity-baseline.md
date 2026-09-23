@@ -2,20 +2,23 @@
 
 ## Status
 
-**PENDING**
+**PASS**
 
-M2-1 remains `TODO`. M2 baseline run #1 established the results below at the previous PR head, but
-the evidence harness fix in the current head still requires authoritative GitHub Actions validation
-before M2-1 can be closed.
+M2-1 is complete. M2 baseline run #2 at validated head
+`2623303347e15e580d83f583262c51d2573edbbd` completed evidence collection successfully while
+preserving the observed target-runtime failure. A baseline `PASS` means evidence collection and
+classification succeeded; it does not mean portable runtime parity passed.
 
 ## Source revision
 
 - Expected and locally checked-out base `main` SHA:
   `0dba5192e2b52e758c3eaa7e026a442d174a4ee5`.
-- Validated previous PR head: `149fe5c3c6cb85feffc6b7075ebc438076ca8e61`.
-- Authoritative evidence set: **M2 baseline run #1** and the M1 Cloud Decoupling Closure workflow at
-  that previous head.
-- PR/head SHA: to be recorded with the authoritative evidence after this change is pushed.
+- Validated implementation/evidence head:
+  `2623303347e15e580d83f583262c51d2573edbbd`.
+- Authoritative evidence set: **M2 Runtime Parity Baseline run #2** plus **M1 Cloud Decoupling
+  Closure Verification run #9** at the same head.
+- Related checks at this head: **Terraform Static Verification — PASS** and
+  **AWS Deployment Contract Inventory Verification — PASS**.
 
 ## Runtime identities
 
@@ -48,7 +51,7 @@ from their distinct M1 closure jobs; they are not evidence that those capabiliti
 | Frontend tests/build | `npm --prefix frontend ci --legacy-peer-deps --no-audit --no-fund`; `CI=true npm --prefix frontend test -- --runInBand`; `npm --prefix frontend run build`; `test -s frontend/build/index.html` via M1 closure workflow | Node 24 unit/session/build contract | PASS | Authoritative frontend regression job succeeded at the validated previous head. | Unit/session/build parity is established; browser parity is not. |
 | Browser runtime E2E | No repository-owned browser E2E was executed | Browser runtime | NOT COVERED | The frontend commands cover unit/session/build only. | Do not infer browser parity from frontend CI. |
 | Runtime contract | `bash scripts/checks/runtime-contract-verification.sh` via M1 closure workflow | Neutral canonical configuration plus historical AWS compatibility separation | PASS | Authoritative runtime-contract job succeeded at the validated previous head. | This is deterministic contract evidence, not live-cloud evidence. |
-| Kind cluster creation and image build/load | `bash scripts/checks/kind-local-stub-smoke.sh`; M2 baseline run #1 | GitHub runner, Kind + `local-stub` image | PASS | Runner setup, checkout, Kind cluster creation, backend Docker image build, and image load completed. | The cluster and image boundary is not the first runtime gap. |
+| Kind cluster creation and image build/load | `bash scripts/checks/kind-local-stub-smoke.sh`; M2 baseline run #2 | GitHub runner, Kind + `local-stub` image | PASS | Runner setup, checkout, Kind cluster creation, backend Docker image build, and image load completed. | The cluster and image boundary is not the first runtime gap. |
 | Kind workload apply/runtime startup | Same as above | Kind + `local-stub` | FAIL | First confirmed failure: `kubectl apply -k infra/kubernetes/overlays/local-stub` returned `namespaces "terraformers-local" not found`. | Portable Kind workload application failed before backend startup because the target namespace was absent. No runtime fix is made in M2-1. |
 | Kind backend rollout | Same as above | Kind + `local-stub` | NOT COVERED | Manifest application failed before a backend workload was created. | Rollout remains downstream of the confirmed namespace/apply gap. |
 | Kind health | Same as above | Kind + `local-stub` | NOT COVERED | Backend startup was not reached; no successful health artifact exists. | Health remains downstream of workload application and rollout. |
@@ -82,12 +85,15 @@ authoritative harnesses for backend, MariaDB, frontend, and runtime-contract reg
 - The local-stub runtime, by configuration, does not cover MariaDB/Flyway integration, object-byte
   persistence, an active retrieval/model provider, or a production IdP.
 - Browser runtime E2E has no executed evidence in this baseline.
-- The evidence workflow fix itself remains pending authoritative validation at the new PR head.
+- The evidence harness fix is authoritatively validated: evidence collection is PASS while the
+  workload-startup failure remains explicitly recorded.
 
 ## Next-task input
 
-Before selecting M2-2, review the authoritative workflow results and record the PR/head SHA, exact
-run links, and the first observed Kind boundary in this document. Passes and failures should then be
-handed forward as evidence: database-contract evidence separately from Kind runtime evidence, and
-the first actual Kind failure (if any) separately from all downstream `NOT COVERED` steps. No runtime
-or product selection is made by this baseline.
+M2-2 now receives two separate evidence inputs: (1) MariaDB/Flyway/schema/repository validation
+already passes as a standalone canonical-prod contract, and (2) the current Kind portable runtime
+fails earlier at namespace/workload application. M2-2 should choose the smallest deterministic
+portable persistent-runtime fixture that joins backend startup/readiness with MariaDB + Flyway,
+fixing only the directly required workload/fixture gap. Authenticated identity, object-byte
+persistence, active retrieval/model, and browser E2E remain later or unresolved parity inputs. No
+runtime product selection was made by M2-1.

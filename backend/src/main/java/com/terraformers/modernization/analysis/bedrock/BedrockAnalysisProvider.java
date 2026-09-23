@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis.bedrock;
 
 import com.terraformers.modernization.analysis.AnalysisProvider;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
@@ -72,6 +74,18 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
 
     @Override
     public AnalysisResult analyze(AnalysisRequestContext context) {
+        try {
+            return analyzeWithBedrock(context);
+        } catch (BedrockOutputTruncatedException exception) {
+            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.OUTPUT_TRUNCATED, exception);
+        } catch (ArchitectureInputRejectedException exception) {
+            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.INPUT_REJECTED, exception);
+        } catch (BedrockResponseFormatException exception) {
+            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.RESPONSE_FORMAT, exception);
+        }
+    }
+
+    private AnalysisResult analyzeWithBedrock(AnalysisRequestContext context) {
         long analysisStartedAt = System.nanoTime();
         String modelId = requireModelId();
 

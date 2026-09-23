@@ -119,6 +119,7 @@ def main() -> int:
     ]))
 
     analysis_properties = read("backend/src/main/java/com/terraformers/modernization/analysis/AnalysisRuntimeProperties.java")
+    analysis_job_runner = read("backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRunner.java")
     generic_retrieval = "\n".join(path.read_text(encoding="utf-8") for path in sorted((JAVA / "reference").glob("*.java"))
                                     if not path.name.startswith("Bedrock"))
     forbidden_properties = ["bedrockModelId", "bedrockEmbeddingModelId", "bedrockProviderEnabled",
@@ -129,6 +130,10 @@ def main() -> int:
         (lacks(analysis_properties, forbidden_properties), "generic AnalysisRuntimeProperties excludes provider-specific values"),
         ("BEDROCK_" not in generic_retrieval and "bedrockModelId" not in generic_retrieval,
          "generic retrieval code does not know Bedrock model configuration"),
+        (lacks(analysis_job_runner, ["analysis.bedrock", "BedrockOutputTruncatedException",
+                                    "BedrockResponseFormatException", "ArchitectureInputRejectedException",
+                                    "software.amazon"]),
+         "generic AnalysisJobRunner contains no Bedrock or AWS exception dependency"),
     ]))
 
     prod = read("backend/src/main/resources/application-prod.yml")

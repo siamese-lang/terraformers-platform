@@ -12,6 +12,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.terraformers.modernization.analysis.AnalysisMode;
 import com.terraformers.modernization.analysis.AnalysisObservability;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
+import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
@@ -30,6 +33,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
@@ -112,7 +116,9 @@ class BedrockAnalysisProviderTest {
                 .thenReturn(response("still partial", "max_tokens", 8192));
 
         assertThatThrownBy(() -> provider(client).analyze(context()))
-                .isInstanceOf(BedrockOutputTruncatedException.class);
+                .isInstanceOfSatisfying(AnalysisProviderFailureException.class,
+                        failure -> assertThat(failure.reason()).isEqualTo(AnalysisProviderFailureReason.OUTPUT_TRUNCATED))
+                .hasCauseInstanceOf(BedrockOutputTruncatedException.class);
         verify(client, times(2)).invokeModel(any(InvokeModelRequest.class));
     }
 
@@ -120,7 +126,10 @@ class BedrockAnalysisProviderTest {
     void doesNotRetryFormatOrRuntimeErrors() throws Exception {
         BedrockRuntimeClient formatClient = mock(BedrockRuntimeClient.class);
         when(formatClient.invokeModel(any(InvokeModelRequest.class))).thenReturn(response("not tagged", "end_turn", 10));
-        assertThatThrownBy(() -> provider(formatClient).analyze(context())).isInstanceOf(BedrockResponseFormatException.class);
+        assertThatThrownBy(() -> provider(formatClient).analyze(context()))
+                .isInstanceOfSatisfying(AnalysisProviderFailureException.class,
+                        failure -> assertThat(failure.reason()).isEqualTo(AnalysisProviderFailureReason.RESPONSE_FORMAT))
+                .hasCauseInstanceOf(BedrockResponseFormatException.class);
         verify(formatClient, times(1)).invokeModel(any(InvokeModelRequest.class));
 
         BedrockRuntimeClient runtimeClient = mock(BedrockRuntimeClient.class);
@@ -132,9 +141,17 @@ class BedrockAnalysisProviderTest {
         when(timeoutClient.invokeModel(any(InvokeModelRequest.class)))
                 .thenThrow(SdkClientException.builder().message("Read timed out").build());
         assertThatThrownBy(() -> provider(timeoutClient).analyze(context()))
-                .isInstanceOf(com.terraformers.modernization.analysis.AnalysisProviderTimeoutException.class)
+                .isInstanceOf(AnalysisProviderTimeoutException.class)
                 .hasCauseInstanceOf(SdkClientException.class);
         verify(timeoutClient, times(1)).invokeModel(any(InvokeModelRequest.class));
+
+        BedrockRuntimeClient apiTimeoutClient = mock(BedrockRuntimeClient.class);
+        when(apiTimeoutClient.invokeModel(any(InvokeModelRequest.class)))
+                .thenThrow(ApiCallTimeoutException.builder().message("call timed out").build());
+        assertThatThrownBy(() -> provider(apiTimeoutClient).analyze(context()))
+                .isInstanceOf(AnalysisProviderTimeoutException.class)
+                .hasCauseInstanceOf(ApiCallTimeoutException.class);
+        verify(apiTimeoutClient, times(1)).invokeModel(any(InvokeModelRequest.class));
     }
 
     @Test
@@ -144,7 +161,10 @@ class BedrockAnalysisProviderTest {
                 <analysis_json>{"inputType":"NON_ARCHITECTURE_IMAGE","classificationConfidence":0.98,"classificationReason":"This is a photo.","summary":"","components":[],"relationships":[],"warnings":[]}</analysis_json>
                 <terraform_hcl></terraform_hcl>
                 """, "end_turn", 10));
-        assertThatThrownBy(() -> provider(client).analyze(context())).isInstanceOf(ArchitectureInputRejectedException.class);
+        assertThatThrownBy(() -> provider(client).analyze(context()))
+                .isInstanceOfSatisfying(AnalysisProviderFailureException.class,
+                        failure -> assertThat(failure.reason()).isEqualTo(AnalysisProviderFailureReason.INPUT_REJECTED))
+                .hasCauseInstanceOf(ArchitectureInputRejectedException.class);
         verify(client, times(1)).invokeModel(any(InvokeModelRequest.class));
     }
 
@@ -157,7 +177,10 @@ class BedrockAnalysisProviderTest {
                         <analysis_json>{"inputType":"AMBIGUOUS","classificationConfidence":0.4,"classificationReason":"Relationships are not clear.","summary":"","components":[],"relationships":[],"warnings":[]}</analysis_json>
                         <terraform_hcl></terraform_hcl>
                         """, "end_turn", 10));
-        assertThatThrownBy(() -> provider(client).analyze(context())).isInstanceOf(ArchitectureInputRejectedException.class);
+        assertThatThrownBy(() -> provider(client).analyze(context()))
+                .isInstanceOfSatisfying(AnalysisProviderFailureException.class,
+                        failure -> assertThat(failure.reason()).isEqualTo(AnalysisProviderFailureReason.INPUT_REJECTED))
+                .hasCauseInstanceOf(ArchitectureInputRejectedException.class);
         verify(client, times(2)).invokeModel(any(InvokeModelRequest.class));
     }
 

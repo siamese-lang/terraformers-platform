@@ -6,10 +6,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 import com.terraformers.modernization.storage.ObjectWriteResult;
-import com.terraformers.modernization.analysis.bedrock.BedrockOutputTruncatedException;
-import com.terraformers.modernization.analysis.bedrock.BedrockResponseFormatException;
-import com.terraformers.modernization.analysis.bedrock.ArchitectureInputRejectedException;
-import com.terraformers.modernization.analysis.bedrock.ArchitectureInputType;
 import java.util.List;
 import java.net.SocketTimeoutException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -100,18 +96,24 @@ class AnalysisJobRunnerTest {
 
     @Test
     void truncatedBedrockOutputMarksJobFailedWithSafeMessage() {
-        assertFailureReason(new BedrockOutputTruncatedException(), AnalysisJobRunner.TRUNCATED_FAILURE_REASON);
+        assertFailureReason(providerFailure(AnalysisProviderFailureReason.OUTPUT_TRUNCATED),
+                AnalysisJobRunner.TRUNCATED_FAILURE_REASON);
     }
 
     @Test
     void invalidBedrockFormatMarksJobFailedWithSafeMessage() {
-        assertFailureReason(new BedrockResponseFormatException("response body details"), AnalysisJobRunner.FORMAT_FAILURE_REASON);
+        assertFailureReason(providerFailure(AnalysisProviderFailureReason.RESPONSE_FORMAT),
+                AnalysisJobRunner.FORMAT_FAILURE_REASON);
     }
 
     @Test
     void rejectedArchitectureInputMarksJobFailedWithDedicatedMessage() {
-        assertFailureReason(new ArchitectureInputRejectedException(ArchitectureInputType.NON_ARCHITECTURE_IMAGE, 0.98),
+        assertFailureReason(providerFailure(AnalysisProviderFailureReason.INPUT_REJECTED),
                 AnalysisJobRunner.REJECTED_INPUT_FAILURE_REASON);
+    }
+
+    private AnalysisProviderFailureException providerFailure(AnalysisProviderFailureReason reason) {
+        return new AnalysisProviderFailureException(reason, new RuntimeException("provider detail"));
     }
 
     private void assertFailureReason(RuntimeException exception, String expectedReason) {

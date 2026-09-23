@@ -1,8 +1,5 @@
 package com.terraformers.modernization.analysis;
 
-import com.terraformers.modernization.analysis.bedrock.BedrockOutputTruncatedException;
-import com.terraformers.modernization.analysis.bedrock.BedrockResponseFormatException;
-import com.terraformers.modernization.analysis.bedrock.ArchitectureInputRejectedException;
 import java.net.SocketTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,14 +51,12 @@ public class AnalysisJobRunner {
     private String safeFailureReason(RuntimeException exception) {
         Throwable current = exception;
         while (current != null) {
-            if (current instanceof BedrockOutputTruncatedException) {
-                return TRUNCATED_FAILURE_REASON;
-            }
-            if (current instanceof ArchitectureInputRejectedException) {
-                return REJECTED_INPUT_FAILURE_REASON;
-            }
-            if (current instanceof BedrockResponseFormatException) {
-                return FORMAT_FAILURE_REASON;
+            if (current instanceof AnalysisProviderFailureException providerFailure) {
+                return switch (providerFailure.reason()) {
+                    case OUTPUT_TRUNCATED -> TRUNCATED_FAILURE_REASON;
+                    case INPUT_REJECTED -> REJECTED_INPUT_FAILURE_REASON;
+                    case RESPONSE_FORMAT -> FORMAT_FAILURE_REASON;
+                };
             }
             if (current instanceof SocketTimeoutException
                     || current instanceof AnalysisProviderTimeoutException) {

@@ -39,13 +39,17 @@ vendor-string absence. M1-8 adds no migration.
 
 ## Regression found and minimal correction
 
-Static allowlist inspection found one real boundary regression: `AnalysisJobRunner`, a generic
-analysis lifecycle service, imported AWS SDK timeout exception types. Before the fix, an exact
-production-source import inventory reported that non-adapter file. The smallest correction adds a
-provider-neutral `AnalysisProviderTimeoutException`; the Bedrock adapter translates AWS timeout
-exceptions into it, while the runner retains the same safe user-facing timeout classification.
-The focused runner/provider tests and full backend suite provide same-condition after-validation.
-No other production behavior or architecture was changed.
+Static allowlist inspection first found that `AnalysisJobRunner`, a generic analysis lifecycle
+service, imported AWS SDK timeout exception types. The first correction added the provider-neutral
+`AnalysisProviderTimeoutException` and moved SDK/read-timeout translation into the Bedrock adapter.
+Review then found the remaining coupling: the same runner still imported and classified concrete
+Bedrock truncation, rejected-input, and response-format exceptions. The follow-up correction adds
+small provider-neutral failure reasons and translates final Bedrock failures at the provider
+boundary. The runner now knows only neutral failure signals and retains the same user-facing
+messages. Bedrock's standard-to-compact truncation retry occurs before translation, so its retry
+count, parser/prompt behavior, state transitions, and observability semantics remain unchanged.
+The strengthened verifier and focused runner/provider tests provide same-condition regression
+coverage. No other production behavior or architecture was changed.
 
 ## Accepted residual limitations
 

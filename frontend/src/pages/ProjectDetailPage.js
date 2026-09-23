@@ -127,7 +127,7 @@ function ProjectDetailPage() {
           {isUpdatingVisibility ? '변경 중...' : isPublic ? '비공개로 전환' : '공개하기'}
         </button>
       </section>
-      {project.analysisStatus === 'RUNNING' && <div><p>이미지 복잡도에 따라 1~3분 정도 걸릴 수 있습니다.</p><p>다른 페이지로 이동해도 분석은 계속되며 내 프로젝트에서 다시 확인할 수 있습니다.</p>{waitingForBedrock && <p>Bedrock 모델의 응답을 기다리고 있습니다.</p>}</div>}
+      {project.analysisStatus === 'RUNNING' && <div><p>이미지 복잡도에 따라 1~3분 정도 걸릴 수 있습니다.</p><p>다른 페이지로 이동해도 분석은 계속되며 내 프로젝트에서 다시 확인할 수 있습니다.</p>{waitingForBedrock && <p>분석 모델의 응답을 기다리고 있습니다.</p>}</div>}
       {imageUrl && <img src={imageUrl} alt={`${project.displayName} architecture`} style={{ objectFit: 'contain', maxWidth: '100%', height: 'auto', maxHeight: 640 }} />}
       {project.failureReason && <p role="alert" className="error">{project.failureReason}</p>}
       {project.analysisStatus === 'FAILED' && <Link to="/generate">새 분석 시작</Link>}

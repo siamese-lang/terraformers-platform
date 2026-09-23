@@ -28,6 +28,8 @@ test('does not call comments API without a verified public project selection', a
   render(<PublicProjectsReadOnly selectedProjectId="private-999" onSelectProject={jest.fn()} />);
 
   expect(await screen.findByText('Public numeric')).toBeInTheDocument();
+  expect(screen.getByText(/댓글 작성자는 로그인한 사용자 계정으로 확인됩니다/)).toBeInTheDocument();
+  expect(screen.queryByText(/Cognito 로그인 사용자/)).not.toBeInTheDocument();
   await waitFor(() => expect(api.get).toHaveBeenCalledWith('/api/public-projects'));
   expect(api.get).not.toHaveBeenCalledWith(expect.stringContaining('/api/getProjectComments/'));
   expect(screen.getByText('댓글을 보려면 공개 프로젝트를 선택하세요.')).toBeInTheDocument();

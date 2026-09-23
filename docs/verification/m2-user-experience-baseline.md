@@ -3,8 +3,7 @@
 **Status: PASS**
 
 This is an evidence-collection change, not a production behavior change. The authoritative workflow
-artifacts have been reviewed and the baseline evidence is **PASS**. M2 remains **ACTIVE** and M2-5
-remains **TODO** because the first confirmed gap is provider-specific user-visible frontend copy. The checked-out
+artifacts have been reviewed and the baseline evidence is **PASS**. M2 remains **ACTIVE** and M2-5 is now **DONE** after same-condition frontend and backend revalidation. The checked-out
 base is `9d904c95655977c14e71fc1ac424dd91ce79550b` (the expected current GitHub `main`; the supplied
 checkout has no local `main` ref).
 
@@ -102,6 +101,44 @@ browser_e2e_required_for_m2=false
 Therefore the backend user/project/comment/runtime contract has no confirmed M2-5 gap. The
 authoritative first gap is limited to three provider-specific strings in active generic frontend UI.
 
+
+## Follow-up resolution
+
+The confirmed frontend presentation gap was resolved at validated head
+`7d8cdf357cb16a9073c86c6eb5140e617219180d` by changing only the three active generic UI
+presentations identified by the baseline:
+
+- the public-project comment identity copy now says that the author is the signed-in user account,
+  without naming Cognito;
+- the long-running analysis message now waits for the analysis model response, without naming
+  Bedrock; and
+- the project-tree source subtitle now displays the logical `sourceKey` instead of constructing an
+  `s3://` URI from historical bucket/key fields.
+
+No backend API, database field, provider adapter, runtime topology, auth provider, analysis provider,
+or storage provider selection changed.
+
+**M2 User Experience Baseline Verification** run #5 passed at the same validated head. The frontend
+artifact recorded:
+
+```text
+frontend_tests=PASS
+frontend_production_build=PASS
+frontend_entrypoint=PASS
+public_identity_copy_provider_neutral=PASS
+analysis_waiting_copy_provider_neutral=PASS
+project_tree_locator_provider_neutral=PASS
+known_provider_specific_visible_copy=0
+first_confirmed_gap=none
+browser_e2e_required_for_m2=false
+```
+
+The portable backend user-flow job also passed again, with every backend summary field remaining
+`PASS`, `first_confirmed_gap=none`, and `cloud_credentials_required=false`. This confirms that
+the frontend-only change did not alter the verified user/project/comment/runtime behavior.
+
+M2-5 is therefore **DONE**. The next task is **M2-6 — Runtime parity closure**.
+
 ## Backend actual HTTP matrix
 
 The following expected values are assertions in the verifier. Actual PASS/FAIL values and sanitized
@@ -194,10 +231,10 @@ Kubernetes frontend workload remain deferred; general desirability is not eviden
 
 ## First confirmed gap
 
-All authoritative runtime assertions passed. The baseline classification is therefore
-`first_confirmed_gap=frontend_provider_specific_visible_copy`, with the three detailed FAIL values
-above. M2-5 remains **TODO** until those three active generic UI presentations are made
-provider-neutral and the same frontend regression/build/classifier conditions pass.
+The baseline originally classified `frontend_provider_specific_visible_copy` as the first gap.
+The follow-up frontend-only fix above removed all three provider-specific visible strings, and the
+same classifier now reports `known_provider_specific_visible_copy=0` and
+`first_confirmed_gap=none`.
 
 ## NOT COVERED
 
@@ -207,7 +244,5 @@ provider-neutral and the same frontend regression/build/classifier conditions pa
 - Load, concurrency, HA, backup/restore, production retention, or security penetration testing.
 - Historical/provider-adapter source strings outside the three active generic UI presentations.
 
-The immediate next single task is the smallest evidence-gated frontend-only fix for the three
-confirmed provider-specific visible strings, followed by the same frontend regression suite,
-production build, and focused classifier. No backend, runtime topology, browser framework, or
-production provider change is justified by this baseline.
+The immediate next single task is **M2-6 — Runtime parity closure**. No backend, runtime topology,
+browser framework, or production provider change was required to complete M2-5.

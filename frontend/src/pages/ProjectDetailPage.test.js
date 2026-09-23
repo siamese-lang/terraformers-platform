@@ -35,15 +35,15 @@ test('shows failure without requesting Terraform and cleans object URLs on unmou
   expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:source');
 });
 
-test('shows running guidance and Bedrock waiting message after 30 seconds without fake progress', async () => {
+test('shows running guidance and analysis waiting message after 30 seconds without fake progress', async () => {
   api.get.mockResolvedValue({ data: { displayName: 'Diagram', analysisStatus: 'RUNNING', sourceFileId: null, resultFileId: null } });
   renderPage();
   await screen.findByText('AI가 아키텍처를 분석하고 있습니다.');
   expect(screen.getByText('이미지 복잡도에 따라 1~3분 정도 걸릴 수 있습니다.')).toBeInTheDocument();
   expect(screen.getByText('다른 페이지로 이동해도 분석은 계속되며 내 프로젝트에서 다시 확인할 수 있습니다.')).toBeInTheDocument();
-  expect(screen.queryByText('Bedrock 모델의 응답을 기다리고 있습니다.')).not.toBeInTheDocument();
+  expect(screen.queryByText('분석 모델의 응답을 기다리고 있습니다.')).not.toBeInTheDocument();
   jest.advanceTimersByTime(30000);
-  expect(await screen.findByText('Bedrock 모델의 응답을 기다리고 있습니다.')).toBeInTheDocument();
+  expect(await screen.findByText('분석 모델의 응답을 기다리고 있습니다.')).toBeInTheDocument();
   expect(screen.queryByText(/%/)).not.toBeInTheDocument();
 });
 

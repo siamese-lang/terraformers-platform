@@ -19,3 +19,29 @@ test('uses the containment wrapper for the source image', async () => {
   await waitFor(() => expect(container.querySelector('.project-source-image-wrapper')).toBeInTheDocument());
   expect(screen.getByAltText('Persisted architecture')).toHaveClass('project-source-image');
 });
+
+test('shows a logical source key without constructing a provider-specific URI', async () => {
+  api.get.mockImplementation((url) => {
+    if (url === '/api/project-tree/1') {
+      return Promise.resolve({
+        data: {
+          projectId: 1,
+          tree: [{
+            id: 'source-file-1',
+            type: 'file',
+            name: 'architecture.png',
+            sourceBucket: 'portable-validation-bucket',
+            sourceKey: 'browser-uploads/1/architecture.png',
+          }],
+        },
+      });
+    }
+    if (url.endsWith('/source-image')) return Promise.resolve({ data: new Blob(['image']) });
+    return Promise.resolve({ data: { content: '' } });
+  });
+
+  render(<ProjectTreeReadOnly selectedProjectId="1" />);
+
+  expect(await screen.findByText('browser-uploads/1/architecture.png')).toBeInTheDocument();
+  expect(screen.queryByText('s3://portable-validation-bucket/browser-uploads/1/architecture.png')).not.toBeInTheDocument();
+});

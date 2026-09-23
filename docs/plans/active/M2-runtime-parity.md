@@ -6,7 +6,7 @@
 
 M0 and M1 are complete. M2 proves the existing cloud-neutral application contracts in a portable,
 deterministic runtime; it is not a new-feature or GCP-deployment milestone. The first incomplete
-task is **M2-5 — User/project/comment and frontend experience parity**.
+task is **M2-6 — Runtime parity closure**.
 
 ## Objective
 
@@ -224,40 +224,38 @@ durability.
 
 ### M2-5 — User/project/comment and frontend experience parity
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / gap.** Existing controller and frontend regression tests did not yet constitute portable
 runtime evidence for the complete core user experience, and the need for browser-level smoke was
 unclassified.
 
-**Current evidence.** At validated head `a756c46efe88124528b5c0467c5e8c1e4ac461fb`,
-**M2 User Experience Baseline Verification** run #2 passed both the portable backend user-flow and
-frontend-contract jobs. The actual runtime matrix passed authenticated upload/analysis, owned/private
-project access, negative authorization, Terraform read/update/read-back, project tree, publish/public
-reads, canonical and compatibility comments, authenticated attribution, and deletion. Frontend Jest
-regression, production build, and built entrypoint also passed. No concrete M2 exit requirement was
-identified that requires browser E2E, so `browser_e2e_required_for_m2=false`.
+**Current evidence.** The authoritative baseline at
+`a756c46efe88124528b5c0467c5e8c1e4ac461fb` passed the full portable backend
+user/project/comment HTTP matrix plus frontend tests/build, and classified
+`browser_e2e_required_for_m2=false`. That baseline isolated the remaining gap to three
+provider-specific user-visible strings in active generic frontend UI.
 
-The remaining confirmed gap is presentation-only:
-`frontend_provider_specific_visible_copy`. Three active generic UI locations still present
-historical providers as if they were the active target: Cognito identity copy, Bedrock waiting copy,
-and an `s3://` locator synthesized from historical logical bucket/key fields.
+**Change boundary.** Only those three presentations were changed: Cognito-specific signed-in-user
+copy became provider-neutral account wording, the Bedrock-specific waiting message became
+provider-neutral analysis-model wording, and the generic project tree now displays the logical
+`sourceKey` instead of constructing an `s3://` locator. Backend behavior, APIs, database fields,
+provider adapters, runtime topology, and provider/product selection were unchanged.
 
-**Change boundary.** Make only those active generic frontend presentations provider-neutral while
-preserving user flow and API contracts. Do not change backend behavior, runtime topology, auth
-provider selection, analysis provider selection, storage provider selection, compatibility
-adapters, or database fields. Do not add Playwright/Cypress/Selenium, a frontend container, Nginx,
-or a Kubernetes frontend workload because the baseline did not establish a browser-only M2 gap.
+**Validation.** At validated head `7d8cdf357cb16a9073c86c6eb5140e617219180d`,
+**Frontend CI**, **M1 Cloud Decoupling Closure Verification**, and **M2 User Experience Baseline
+Verification** passed. The M2 frontend artifact recorded `frontend_tests=PASS`,
+`frontend_production_build=PASS`, `frontend_entrypoint=PASS`, all three provider-neutral
+classifications as `PASS`, `known_provider_specific_visible_copy=0`,
+`first_confirmed_gap=none`, and `browser_e2e_required_for_m2=false`. The portable backend
+user-flow job also passed unchanged.
 
-**Validation.** Run the existing frontend regression suite, production build, built-entrypoint check,
-and the focused provider-visible UX classifier under the same conditions. The classifier must move
-all three detailed fields to `PASS` and `known_provider_specific_visible_copy` to `0`. Existing
-backend runtime evidence from the authoritative baseline remains the M2-5 behavioral reference; rerun
-the backend Kind matrix only if the frontend-only fix unexpectedly touches backend/runtime contracts.
-
-**Completion evidence.** Record the before/after user-visible copy, exact changed frontend files,
-frontend tests/build result, focused classifier result, and confirmation that no production
-provider/product was selected. M2-5 becomes **DONE** only after this same-condition revalidation.
+**Completion evidence.** M2-5 is complete with repeatable backend HTTP evidence for project,
+visibility, Terraform read/update, tree, canonical/compatibility comments, attribution, and
+deletion; repeatable frontend regression/build evidence; and same-condition before/after evidence
+that the active generic UI no longer presents Cognito, Bedrock, or S3 as the active provider.
+No browser E2E framework or frontend runtime workload was added because no browser-only M2
+requirement was identified.
 
 ### M2-6 — Runtime parity closure
 

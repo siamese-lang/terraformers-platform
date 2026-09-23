@@ -14,12 +14,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M2 — Runtime Parity**
 - Status: **ACTIVE**
-- Phase: user, project, comment, and frontend experience parity
+- Phase: runtime parity closure
 - Active plan: [M2 — Runtime Parity](plans/active/M2-runtime-parity.md)
-- Current implementation task: **M2-5 — User/project/comment and frontend experience parity**
+- Current implementation task: **M2-6 — Runtime parity closure**
 
 M0 and M1 are complete. M1-1 through M1-8 have closure evidence. M2 is active through its
-repository-owned plan; M2-1 through M2-4 are complete and M2-5 is the first remaining task.
+repository-owned plan; M2-1 through M2-5 are complete and M2-6 is the first remaining task.
 
 ## Completed
 
@@ -84,6 +84,10 @@ repository-owned plan; M2-1 through M2-4 are complete and M2-5 is the first rema
   - PR #24 first reproduced the current metadata-only limitation under an authenticated runtime: upload, analysis, Terraform validation, and inline result read-back passed, while source/result object bytes were not persisted and source reads returned 409;
   - added a JDK-only `filesystem` implementation behind the existing neutral `ObjectReader`/`ObjectWriter` ports and enabled it only in the `portable-object-store` test overlay, without selecting a production storage product; and
   - M2 Object Byte Storage Verification — **PASS** at `99fa2864ae3ef86536332172c4a3e50be612e686`: the same 68-byte source input round-tripped exactly, source/result rows recorded `binary_persisted=1`, source endpoints returned 200, the analysis job reached `SUCCEEDED`, and generated Terraform filesystem bytes matched the database/API checksum. The fixture is single-runtime evidence only and makes no restart/shared-storage durability claim.
+- M2-5 User/project/comment and frontend experience parity — **COMPLETE**
+  - the authoritative portable runtime matrix passed project list/get, private/public authorization, Terraform read/update/read-back, project tree, canonical and frontend-compatible comments, authenticated attribution, and deletion;
+  - frontend Jest regression, production build, and built entrypoint passed, while the baseline isolated three provider-specific user-visible strings and classified browser E2E as not required for M2; and
+  - the frontend-only follow-up at `7d8cdf357cb16a9073c86c6eb5140e617219180d` removed the Cognito/Bedrock/`s3://` presentation leakage without changing APIs or provider selection. M2 User Experience Baseline Verification run #5 then passed with all three provider-neutral classifications `PASS`, `known_provider_specific_visible_copy=0`, and `first_confirmed_gap=none`.
 
 ## Verified architectural direction
 
@@ -109,11 +113,11 @@ implementations or product selections:
   Terraform result plus exact source/result byte persistence/read-back in the deterministic
   `portable-object-store` fixture. That filesystem mechanism is test-runtime-only and does not
   select production storage; and
-- M2-5 baseline now proves the portable backend user/project/comment HTTP matrix and frontend
-  Jest/build contracts end-to-end enough for this milestone; `browser_e2e_required_for_m2=false`.
-  The remaining confirmed M2-5 gap is three provider-specific user-visible strings in active generic
-  frontend UI: Cognito identity copy, Bedrock waiting copy, and an `s3://` locator synthesized from
-  historical logical bucket/key fields.
+- M2-5 now proves the portable backend user/project/comment HTTP matrix plus frontend Jest/build
+  contracts, with `browser_e2e_required_for_m2=false`; the three previously observed
+  provider-specific visible strings were removed by a frontend-only change and same-condition
+  revalidation now reports `known_provider_specific_visible_copy=0` and
+  `first_confirmed_gap=none`.
 
 ## Historical AWS implementation
 
@@ -152,19 +156,14 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M2-5 — provider-neutral frontend presentation fix:** authoritative M2-5 baseline at
-`a756c46efe88124528b5c0467c5e8c1e4ac461fb` passed the full portable backend user/project/comment
-matrix plus frontend tests/build. Apply only the smallest frontend-only fix for the three confirmed
-provider-specific visible strings:
-
-- replace Cognito-specific signed-in-user copy with provider-neutral authenticated-user wording;
-- replace Bedrock-specific analysis waiting copy with provider-neutral analysis/model wording; and
-- stop rendering historical bucket/key fields as an `s3://` locator in the generic project tree.
-
-Preserve API contracts and compatibility adapters. Do not change backend/runtime/provider selection,
-and do not add browser E2E tooling because the baseline classified
-`browser_e2e_required_for_m2=false`. Re-run the frontend suite, production build, built-entrypoint
-check, and focused UX classifier. M2-5 remains TODO until all three focused classifications pass.
+**M2-6 — Runtime parity closure:** consolidate M2-1 through M2-5 into one closure record and verify
+the M2 exit criteria against repository-owned evidence. Do not add new architecture or features in
+the closure task. Confirm that portable startup, MariaDB/Flyway persistence, authenticated identity
+and ownership, upload/analysis/Terraform result flow, object-byte persistence/read-back,
+user/project/comment behavior, and frontend regression/build evidence are all repeatable; preserve
+runtime/config identity and explicit limitations; and confirm that no arbitrary GCP product,
+production IdP/storage/model, browser framework, or historical AWS runtime was selected as part of
+M2.
 
 ## Do not revisit
 

@@ -1,0 +1,488 @@
+{
+  "schemaVersion": "m3-evaluation-v1",
+  "datasetVersion": "terraformers-eval-v1",
+  "description": "Repository-owned fixed baseline cases for architecture classification, fact extraction, project-decision retrieval, grounded Terraform generation, and validation.",
+  "cases": [
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-v1",
+      "caseId": "arch-vpc-three-tier",
+      "input": {
+        "path": "fixtures/case-01-vpc-three-tier.webp",
+        "sha256": "a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "Application Load Balancer",
+          "Application Service",
+          "RDS Database"
+        ],
+        "acceptable": [
+          "Internet",
+          "VPC"
+        ],
+        "forbidden": [
+          "CloudFront",
+          "OpenSearch Serverless"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "Internet -> Application Load Balancer",
+          "Application Load Balancer -> Application Service",
+          "Application Service -> RDS Database"
+        ],
+        "acceptable": [
+          "VPC contains Application Load Balancer",
+          "VPC contains Application Service",
+          "VPC contains RDS Database"
+        ],
+        "forbidden": [
+          "Application Load Balancer -> OpenSearch Serverless"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_vpc",
+          "aws_lb",
+          "aws_db_instance",
+          "aws_security_group"
+        ],
+        "acceptable": [
+          "aws_subnet",
+          "aws_lb_listener",
+          "aws_lb_target_group",
+          "aws_db_subnet_group"
+        ],
+        "forbidden": [
+          "aws_cloudfront_distribution",
+          "aws_opensearchserverless_collection"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION",
+          "PROJECT_DECISION"
+        ],
+        "requiredResourceTypes": [
+          "aws_vpc",
+          "aws_lb",
+          "aws_db_instance",
+          "aws_security_group"
+        ],
+        "requiredProjectDecisionIds": [
+          "tfref-v2-sg-relations"
+        ],
+        "forbiddenRiskTags": [
+          "public-cidr"
+        ]
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_vpc",
+            "aws_lb",
+            "aws_db_instance",
+            "aws_security_group"
+          ],
+          "acceptable": [
+            "aws_subnet",
+            "aws_lb_listener",
+            "aws_lb_target_group",
+            "aws_db_subnet_group"
+          ],
+          "forbidden": [
+            "aws_cloudfront_distribution",
+            "aws_opensearchserverless_collection"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Three-tier positive architecture case.",
+        "Security-group note makes the project decision on service-to-service security-group relationships relevant."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-v1",
+      "caseId": "arch-cloudfront-private-alb",
+      "input": {
+        "path": "fixtures/case-02-cloudfront-private-alb.webp",
+        "sha256": "2eea1601b1d15e8c9ffedd41c0d5fedc064acf909d20ab40becc1de2a04ee6b1",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "CloudFront",
+          "Private ALB",
+          "EKS Service"
+        ],
+        "acceptable": [
+          "Users",
+          "VPC"
+        ],
+        "forbidden": [
+          "RDS Database",
+          "OpenSearch Serverless"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "Users -> CloudFront",
+          "CloudFront -> Private ALB",
+          "Private ALB -> EKS Service"
+        ],
+        "acceptable": [
+          "VPC contains Private ALB",
+          "VPC contains EKS Service"
+        ],
+        "forbidden": [
+          "Users -> Private ALB"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_cloudfront_distribution",
+          "aws_lb",
+          "aws_eks_cluster"
+        ],
+        "acceptable": [
+          "aws_lb_listener",
+          "aws_lb_target_group",
+          "aws_security_group",
+          "aws_eks_node_group"
+        ],
+        "forbidden": [
+          "aws_db_instance",
+          "aws_opensearchserverless_collection"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION",
+          "PROJECT_DECISION"
+        ],
+        "requiredResourceTypes": [
+          "aws_cloudfront_distribution",
+          "aws_lb"
+        ],
+        "requiredProjectDecisionIds": [
+          "tfref-v2-alb-private-origin"
+        ],
+        "forbiddenRiskTags": [
+          "public-cidr"
+        ]
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_cloudfront_distribution",
+            "aws_lb",
+            "aws_eks_cluster"
+          ],
+          "acceptable": [
+            "aws_lb_listener",
+            "aws_lb_target_group",
+            "aws_security_group",
+            "aws_eks_node_group"
+          ],
+          "forbidden": [
+            "aws_db_instance",
+            "aws_opensearchserverless_collection"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Positive project-decision retrieval case.",
+        "CloudFront must remain the public entry and the ALB must not be modeled as a separate public entry."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-v1",
+      "caseId": "arch-private-aoss",
+      "input": {
+        "path": "fixtures/case-03-private-aoss.webp",
+        "sha256": "160b8c0ecfae277b74f85dfd5d25ba4da1a33f7006a4df6a94554b75a16ebeed",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "Backend Reader",
+          "OIDC Corpus Ingester",
+          "VPC Endpoint",
+          "OpenSearch Serverless VECTORSEARCH"
+        ],
+        "acceptable": [
+          "VPC"
+        ],
+        "forbidden": [
+          "CloudFront",
+          "RDS Database"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "Backend Reader -> VPC Endpoint",
+          "OIDC Corpus Ingester -> VPC Endpoint",
+          "VPC Endpoint -> OpenSearch Serverless VECTORSEARCH"
+        ],
+        "acceptable": [
+          "Backend Reader reads through VPC Endpoint",
+          "OIDC Corpus Ingester writes through VPC Endpoint"
+        ],
+        "forbidden": [
+          "Internet -> OpenSearch Serverless VECTORSEARCH"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_opensearchserverless_collection",
+          "aws_opensearchserverless_vpc_endpoint",
+          "aws_opensearchserverless_access_policy",
+          "aws_opensearchserverless_security_policy"
+        ],
+        "acceptable": [
+          "aws_iam_policy"
+        ],
+        "forbidden": [
+          "aws_cloudfront_distribution",
+          "aws_db_instance"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION",
+          "PROJECT_DECISION"
+        ],
+        "requiredResourceTypes": [
+          "aws_opensearchserverless_collection",
+          "aws_opensearchserverless_access_policy"
+        ],
+        "requiredProjectDecisionIds": [
+          "tfref-v2-aoss-private",
+          "tfref-v2-aoss-access"
+        ],
+        "forbiddenRiskTags": [
+          "public-cidr"
+        ]
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_opensearchserverless_collection",
+            "aws_opensearchserverless_vpc_endpoint",
+            "aws_opensearchserverless_access_policy",
+            "aws_opensearchserverless_security_policy"
+          ],
+          "acceptable": [
+            "aws_iam_policy"
+          ],
+          "forbidden": [
+            "aws_cloudfront_distribution",
+            "aws_db_instance"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Positive project-decision retrieval case for private AOSS networking and reader/ingester separation.",
+        "Public or Dashboards access is intentionally unsupported by the diagram."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-v1",
+      "caseId": "arch-s3-metadata-split",
+      "input": {
+        "path": "fixtures/case-04-s3-metadata-split.webp",
+        "sha256": "a55a8bcf1e9d36491921275e4eedfd3058afd5a1c24a104cd0b33bbeab0ff3b0",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "User Upload",
+          "Spring Boot API",
+          "MariaDB",
+          "S3 Bucket"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "CloudFront",
+          "OpenSearch Serverless"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "User Upload -> Spring Boot API",
+          "Spring Boot API -> MariaDB",
+          "Spring Boot API -> S3 Bucket"
+        ],
+        "acceptable": [
+          "MariaDB owns metadata",
+          "S3 Bucket owns content bytes"
+        ],
+        "forbidden": [
+          "S3 Bucket -> MariaDB"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_s3_bucket",
+          "aws_db_instance"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "aws_cloudfront_distribution",
+          "aws_opensearchserverless_collection"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION",
+          "PROJECT_DECISION"
+        ],
+        "requiredResourceTypes": [
+          "aws_s3_bucket",
+          "aws_db_instance"
+        ],
+        "requiredProjectDecisionIds": [
+          "tfref-v2-s3-content-metadata"
+        ],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_s3_bucket",
+            "aws_db_instance"
+          ],
+          "acceptable": [],
+          "forbidden": [
+            "aws_cloudfront_distribution",
+            "aws_opensearchserverless_collection"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Positive project-decision retrieval case for object-content versus relational-metadata ownership.",
+        "The current v2 corpus is AWS-oriented historical baseline; this case does not select AWS as the modernization deployment target."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-v1",
+      "caseId": "ambiguous-cropped-service-sketch",
+      "input": {
+        "path": "fixtures/case-05-ambiguous-cropped.webp",
+        "sha256": "c3c1cd89444b6f9fdf5a34366ab5a36d5e025ecf967280f69e79945ce16ca738",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "AMBIGUOUS",
+      "components": {
+        "required": [],
+        "acceptable": [
+          "API",
+          "Cache"
+        ],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [],
+        "requiredResourceTypes": [],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": false,
+        "terraformResourceTypes": {
+          "required": [],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "NOT_APPLICABLE",
+      "notes": [
+        "Intentionally cropped sketch with uncertain labels and no complete system flow.",
+        "Terraform generation should remain empty for an ambiguous input."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-v1",
+      "caseId": "non-architecture-deployment-dashboard",
+      "input": {
+        "path": "fixtures/case-06-non-architecture-dashboard.webp",
+        "sha256": "12eb8590b89eaea0988d5038c7a9862eebc584039d88084fe91433848a53d36d",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "NON_ARCHITECTURE_IMAGE",
+      "components": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [],
+        "requiredResourceTypes": [],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": false,
+        "terraformResourceTypes": {
+          "required": [],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "NOT_APPLICABLE",
+      "notes": [
+        "Deployment status dashboard, not an architecture diagram.",
+        "Visible service names and metrics must not be treated as deployable topology evidence."
+      ]
+    }
+  ]
+}

@@ -195,22 +195,27 @@ results, and normalized failure localization. No evaluator framework or new work
 
 ### M3-2 — Fixed/versioned evaluation dataset
 
-**Status: TODO**
+**Status: DONE**
 
-**Problem / gap.** There is no fixed set of inputs with stage-level expectations.
+**Problem / gap.** There was no fixed set of inputs with stage-level expectations.
 
-**Change boundary.** Add the smallest representative dataset that covers current product behavior:
-valid architecture diagrams across the current corpus domain, ambiguous/non-architecture inputs, and
-cases that exercise project-decision/reference retrieval. Each case uses the M3-1 contract.
+**Change boundary.** Added repository-owned `terraformers-eval-v1` with six fixed WebP fixtures:
+four positive architecture cases, one cropped/ambiguous case, and one non-architecture dashboard.
+The positive cases cover VPC three-tier, CloudFront/private-ALB, private AOSS, and S3/RDB metadata
+split behavior and require the relevant versioned `PROJECT_DECISION` evidence where applicable.
+No prompt, corpus, retrieval algorithm, model, or production orchestration behavior changed.
 
-Do not tune the current prompt, corpus, retrieval algorithm, or model against individual cases while
-building the baseline.
+Added `EvaluationDataset` and `EvaluationDatasetLoader` as dataset-loading contracts only. The
+loader verifies case/schema identity, unique case IDs, safe relative fixture paths, fixture
+existence, and exact fixture SHA-256 before exposing bytes to the later runner.
 
-**Validation.** Validate dataset schema, file/hash identity, referenced fixture existence, and that
-each case has enough gold/acceptable expectations to localize at least extraction, retrieval, and
-generation/validation outcomes.
+**Validation.** `EvaluationDatasetLoaderTest` loads all six cases, verifies the WebP fixture bytes
+through their recorded hashes, confirms four architecture / one ambiguous / one non-architecture
+classification mix, checks positive versus negative stage expectations, and confirms every required
+project-decision ID exists in `terraformers-reference-v2`.
 
-**Completion evidence.** Versioned cases and fixtures can be loaded deterministically by one runner.
+**Completion evidence.** [Terraformers Evaluation Dataset v1](../../../evaluation/terraformers-eval-v1/README.md)
+is fixed and loadable deterministically by one reusable loader using the M3-1 contract.
 
 ### M3-3 — Reusable evaluation runner and provenance capture
 

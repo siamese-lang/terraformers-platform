@@ -87,8 +87,8 @@ implementation until that plan is the repository source of truth.
 ## M3 — AI Evaluation Baseline
 
 **Status.** **ACTIVE.** The [active M3 plan](active/M3-ai-evaluation-baseline.md) defines the
-evaluation-first sequence. The first implementation task is **M3-1 — Evaluation contract and
-stage-provenance schema**.
+evaluation-first sequence. M3-1 and M3-2 are complete; the current implementation task is
+**M3-3 — Reusable evaluation runner and provenance capture**.
 
 **Problem.** Fixed evaluation data and stage-level provenance do not yet exist, so a bad final
 Terraform result cannot be reliably localized to architecture-fact extraction, retrieval, grounding,
@@ -108,8 +108,9 @@ failure where evidence permits.
 specific pipeline stages, and M4 receives evidence-backed failure classes. LangChain, LangGraph, or
 other framework adoption remains evidence-gated rather than being an M3 prerequisite.
 
-**Immediate next single task.** Execute **M3-2 — Fixed/versioned evaluation dataset** using the
-completed M3 Evaluation Contract v1. Do not tune production AI behavior while constructing cases.
+**Immediate next single task.** Execute **M3-3 — Reusable evaluation runner and provenance capture**
+against the fixed `terraformers-eval-v1` dataset. Reuse current application boundaries and do not
+tune production AI behavior to the cases.
 
 ## M4 — AI Targeted Improvement
 

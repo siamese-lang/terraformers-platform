@@ -14,12 +14,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M2 — Runtime Parity**
 - Status: **ACTIVE**
-- Phase: portable runtime baseline / parity verification
+- Phase: portable persistent runtime substrate
 - Active plan: [M2 — Runtime Parity](plans/active/M2-runtime-parity.md)
-- Current implementation task: **M2-1 — Portable runtime baseline and parity gap inventory**
+- Current implementation task: **M2-2 — Portable persistent runtime substrate**
 
 M0 and M1 are complete. M1-1 through M1-8 have closure evidence. M2 is active through its
-repository-owned plan; no M2 implementation task is complete yet.
+repository-owned plan; M2-1 is complete and M2-2 is the first remaining task.
 
 ## Completed
 
@@ -68,6 +68,10 @@ repository-owned plan; no M2 implementation task is complete yet.
   - dedicated closure verification passed provider-neutral boundary inspection plus full backend, MariaDB/Flyway/repository, frontend, and runtime-contract regressions;
   - closure inspection removed provider-specific failure types from the generic analysis lifecycle and preserved failure-message plus observability-category semantics through provider-neutral failure signals; and
   - M1 Cloud Decoupling Closure Verification, Backend Local Verification, Terraform Static Verification, and AWS Deployment Contract Inventory Verification — **PASS** at `d843fb9f08cd6255c1a4738ac220a40b5e760d75`.
+- M2-1 Portable runtime baseline and parity gap inventory — **COMPLETE**
+  - backend regression, MariaDB 11.4 + Flyway/schema/repository validation, frontend tests/build, and deterministic runtime-contract verification were **PASS** as distinct runtime identities;
+  - Kind cluster creation and backend image build/load reached workload application, which then **FAIL**ed because namespace `terraformers-local` did not exist; downstream rollout/HTTP/auth/object-byte/active-provider paths remain **NOT COVERED** rather than inferred; and
+  - M2 Runtime Parity Baseline evidence collection — **PASS** at `2623303347e15e580d83f583262c51d2573edbbd`, with the target Kind runtime failure preserved in the uploaded evidence.
 
 ## Verified architectural direction
 
@@ -86,8 +90,9 @@ implementations or product selections:
   disabled embedding/retrieval, and logging progress, so it cannot alone prove MariaDB/Flyway,
   object-byte, active provider, or production-like authenticated parity;
 - metadata-only object stubs do not persist or read uploaded/result bytes;
-- the Kind smoke calls protected upload without a bearer JWT, while current identity resolution
-  rejects a null JWT; its actual current-main result must be executed and classified in M2-1; and
+- the first confirmed Kind runtime gap is earlier than authentication: the local-stub workload
+  cannot be applied because namespace `terraformers-local` is absent; rollout and HTTP paths are
+  therefore not yet reached. The no-bearer-JWT upload remains an unconfirmed downstream hypothesis; and
 - frontend unit/build regression exists, but portable browser E2E and coverage criteria remain
   `UNKNOWN/TBD`.
 
@@ -128,11 +133,11 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M2-1 — Portable runtime baseline and parity gap inventory:** current portable/local runtime을
-변경 없이 실행하고 backend regression, MariaDB/Flyway repository validation, frontend
-test/build, runtime-contract verification, Kind startup/health/upload/project-tree/Terraform-read를
-`PASS`, `FAIL`, `NOT COVERED`로 분류한다. 확인된 failure를 이 baseline 작업에서 대규모로
-수정하지 않는다.
+**M2-2 — Portable persistent runtime substrate:** M2-1에서 확인된 evidence를 기준으로
+canonical provider-neutral configuration과 MariaDB + Flyway를 사용하는 최소 deterministic
+runtime fixture를 정하고, backend startup/readiness와 repository persistence를 반복 가능하게
+검증한다. Kind namespace/apply gap은 이 task의 persistent-runtime fixture에 직접 필요한 범위에서만
+최소 수정하고, authenticated identity·object-byte persistence·active provider 문제를 선행 해결하지 않는다.
 
 ## Do not revisit
 

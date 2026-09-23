@@ -6,7 +6,7 @@
 
 M0 and M1 are complete. M2 proves the existing cloud-neutral application contracts in a portable,
 deterministic runtime; it is not a new-feature or GCP-deployment milestone. The first incomplete
-task is **M2-3 — Authenticated identity and ownership parity**.
+task is **M2-4 — Upload → analysis → Terraform result parity**.
 
 ## Objective
 
@@ -146,7 +146,7 @@ schema/repository validation still passed.
 
 ### M2-3 — Authenticated identity and ownership parity
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / gap.** The local smoke does not yet prove the authenticated application path from an
 external identity through internal user and ownership semantics.
@@ -163,8 +163,22 @@ not a production IdP. Do not restore Cognito as the active target or select a ne
 paths in the portable persistent runtime, preserving provider-plus-subject and internal numeric user
 semantics.
 
-**Completion evidence.** Record repeatable authenticated-runtime commands/tests, identity/config
-fingerprints without secrets, ownership assertions, and rejection results.
+**Completion evidence.** At validated head `eda4b9469f258b71aae8e28a0b3ec1a226c4412a`,
+the dedicated **M2 Authenticated Identity Parity Verification** workflow passed on GitHub Actions.
+The `portable-authenticated` Kind fixture used an ephemeral RSA-2048 key and in-cluster JWKS
+endpoint to exercise the real Spring Security JWT decoder and existing Cognito compatibility
+validator without a live IdP or cloud credential. The authoritative artifact recorded **PASS** for
+runtime/JWKS readiness, owner token acceptance, provider-plus-subject persistence, numeric internal
+user creation, same-identity reuse, second-identity separation, anonymous 401 rejection, invalid
+client-token 401 rejection, owner private-project access, non-owner private-project 403 rejection,
+non-owner modification 403 rejection, owner modification, display-name update, and display-name
+preservation. The observed HTTP sequence included anonymous 401, invalid-token 401, owner 200,
+non-owner 403, owner modification 200, and display-name update 204. MariaDB evidence showed owner
+and second user as distinct numeric IDs while neutral lookup remained
+`external_identity_provider + external_identity_subject`. The fixture makes no claim about a
+production IdP, authenticated upload/analysis, object-byte persistence, active model/retrieval,
+comments, or browser E2E. Historical run #1 exposed a fixture namespace composition bug and run #2
+exposed a shell-harness initialization bug; both were fixed and rerun before acceptance.
 
 ### M2-4 — Upload → analysis → Terraform result parity
 

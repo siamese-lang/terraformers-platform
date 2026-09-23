@@ -10,6 +10,16 @@
 - Authoritative result: the dedicated GitHub Actions workflow must pass before this document or M2-3
   can be marked complete.
 
+### Historical run #1
+
+The first workflow run stopped at `rollout restart deployment/terraformers-jwks` because the outer
+Kustomization had no namespace. The composed persistent resources landed in `terraformers-portable`,
+while the outer JWKS resources landed in `default`. Fixture application therefore only partially
+succeeded, and the authenticated runtime was **NOT REACHED**. This is fixture namespace evidence,
+not a JWT parity failure. The outer overlay now assigns all composed resources to
+`terraformers-portable`, and the verifier asserts that the JWKS ConfigMap, Deployment, and Service
+exist there immediately after apply.
+
 The `portable-authenticated` overlay composes the already verified `portable-persistent` fixture and
 adds a BusyBox static HTTP server for JWKS. The verifier generates an ephemeral RSA-2048 key with
 public exponent 65537, publishes only its public JWK (`kid=terraformers-m2-test-key`), and signs

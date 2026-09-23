@@ -82,6 +82,11 @@ docker build -t "${IMAGE_NAME}" "${REPO_ROOT}/backend"
 kind load docker-image "${IMAGE_NAME}" --name "${CLUSTER_NAME}"
 kubectl delete namespace "${NAMESPACE}" --ignore-not-found --wait=true
 kubectl apply -k "${OVERLAY_DIR}"
+# Fail at the fixture boundary with a direct diagnostic if a composed resource
+# is ever rendered outside the target namespace again.
+kubectl -n "${NAMESPACE}" get configmap terraformers-jwks
+kubectl -n "${NAMESPACE}" get deployment terraformers-jwks
+kubectl -n "${NAMESPACE}" get service terraformers-jwks
 kubectl -n "${NAMESPACE}" create configmap terraformers-jwks --from-file=jwks.json="${TEMP_DIR}/jwks.json" --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "${NAMESPACE}" rollout restart deployment/terraformers-jwks
 kubectl -n "${NAMESPACE}" rollout status deployment/terraformers-mariadb --timeout=240s

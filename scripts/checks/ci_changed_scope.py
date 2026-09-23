@@ -98,7 +98,6 @@ def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
             or path in {
                 "scripts/checks/kind-portable-authenticated-smoke.sh",
                 ".github/workflows/m2-authenticated-identity-parity-verification.yml",
-                "docs/verification/m2-authenticated-identity-parity.md",
             }
         )
         result["terraform-static"]["terraform_static_verification"] |= (

@@ -47,7 +47,7 @@ Each task records evidence using **Problem / coupling**, **Current evidence**, *
 
 ### M1-1 — Backend external identity neutralization
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / coupling.** The persistent user identity and application lookup use Cognito-specific names: `users.cognito_sub`, `UserEntity.cognitoSub`, and `UserRepository.findByCognitoSub`. `AuthenticatedUserService` consumes the JWT `sub` directly, includes Cognito-specific messages and fallback claim interpretation, and maps it to the application user.
 
@@ -57,7 +57,7 @@ Each task records evidence using **Problem / coupling**, **Current evidence**, *
 
 **Validation.** Add focused repository/service and migration compatibility coverage, then run the relevant identity and business regression checks. Verify existing Cognito subjects still resolve to their existing internal users without ownership or attribution changes.
 
-**Completion evidence.** Pending. Record completion SHA or PR, tests/checks, compatibility evidence, and remaining task here.
+**Completion evidence.** At validated head `edc9eb87e9bb1105c4f5d94f117356768190db92`, the application persistence and lookup boundary uses the composite `external_identity_provider + external_identity_subject` identity. Additive migration `V20260923_005__neutralize_external_user_identity.sql` backfills existing users as provider `cognito` and subject `cognito_sub`, preserves `cognito_sub` as a compatibility mirror and retains the same numeric `user_id`; project/file/board/comment ownership and attribution relations are unchanged. Concurrent-create retry now re-queries the neutral identity. Backend Local Verification was **SUCCESS**: both **Backend local smoke baseline** and **MariaDB schema and repository validation** passed, including Flyway, schema validation, and repository smoke against MariaDB 11.4.
 
 This is a narrowly scoped persistence/application lookup change. It does not include frontend auth changes, IdP selection, GCP auth integration, a full JWT/security rewrite, storage, OpenSearch, or model changes.
 
@@ -188,11 +188,11 @@ The following GCP/runtime choices also remain **GATED**: GKE topology, node/VM s
 
 ## Immediate next work
 
-**M1-1 — Backend external identity neutralization**
+**M1-2 — Backend JWT / Resource Server boundary**
 
-현재 Cognito-specific external subject persistence/lookup semantics를 provider-neutral external identity mapping으로 전환하되 internal `user_id`와 기존 Cognito data compatibility를 보존한다.
+JWT validation과 claim mapping의 Cognito-specific assumptions를 provider boundary 뒤로 이동하고 M1-1의 neutral persistence semantics를 재사용한다. Exact IdP는 선택하지 않으며 frontend authentication은 M1-3에서 다룬다.
 
-This is the single next atomic implementation task after this plan merges. It does not yet implement IdP/JWT/frontend changes.
+This task is limited to the backend JWT/resource-server boundary; it does not select an IdP or implement the M1-3 frontend auth boundary.
 
 ## Evidence and references
 

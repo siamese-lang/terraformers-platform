@@ -2,6 +2,15 @@ name: Backend Local Verification
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "scripts/checks/backend-local-verification.sh"
+      - "scripts/checks/mariadb-schema-validation.sh"
+      - "scripts/checks/flyway-migration-uniqueness.sh"
+      - ".github/workflows/backend-local-verification.yml"
 
 permissions:
   contents: read

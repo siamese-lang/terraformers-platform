@@ -16,9 +16,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Status: **ACTIVE**
 - Phase: provider boundary decoupling
 - Active plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
-- First implementation task: **M1-1 — Backend external identity neutralization**
+- Current implementation task: **M1-2 — Backend JWT / Resource Server boundary**
 
-M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order and has not started in the plan-activation change.
+M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 complete and M1-2 next.
 
 ## Completed
 
@@ -35,6 +35,10 @@ M0 remains complete; its closure evidence is preserved below. M1 implementation 
 - [AI project state](AI_PROJECT_STATE.md)
 - M0 final cross-document consistency validation — **PASS**
 - M0 closure evidence SHA — `3ccf17582ae91ad131d3efe8ce1a38492c401c72`
+- M1-1 Backend external identity neutralization — **COMPLETE**
+  - neutral provider-plus-subject persistence and lookup with an additive compatibility migration;
+  - existing Cognito user linkage and internal numeric `user_id` preserved; and
+  - Backend Local Verification and MariaDB schema/repository validation — **PASS** at `edc9eb87e9bb1105c4f5d94f117356768190db92`.
 
 ## Verified architectural direction
 
@@ -47,7 +51,6 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 The following are **NEW**, **MODIFY**, or planned gaps—not completed implementations:
 
 - provider-neutral frontend auth/session boundary;
-- provider-neutral backend external identity mapping;
 - portable OpenSearch transport/authentication;
 - provider-neutralization of current object, model, and identity provider adapters;
 - fixed AI/RAG evaluation dataset, harness, and report;
@@ -88,11 +91,11 @@ No remaining M0 work.
 
 ## Remaining M1 work
 
-M1-1 backend external identity neutralization; M1-2 backend JWT/resource-server boundary; M1-3 frontend auth/session boundary; M1-4 object storage decoupling completion; M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
+M1-2 backend JWT/resource-server boundary; M1-3 frontend auth/session boundary; M1-4 object storage decoupling completion; M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
 
 ## Immediate next work
 
-**M1-1 — Backend external identity neutralization:** 현재 Cognito-specific external subject persistence/lookup semantics를 provider-neutral external identity mapping으로 전환하되 internal `user_id`와 기존 Cognito data compatibility를 보존한다. 이 atomic implementation task는 IdP 선택, full JWT/security rewrite 또는 frontend auth rewrite를 포함하지 않는다.
+**M1-2 — Backend JWT / Resource Server boundary:** JWT validation과 claim mapping의 Cognito-specific assumptions를 provider boundary 뒤로 이동하고 M1-1의 neutral persistence semantics를 재사용한다. Exact IdP는 선택하지 않으며 frontend authentication은 M1-3에서 다룬다.
 
 ## Do not revisit
 

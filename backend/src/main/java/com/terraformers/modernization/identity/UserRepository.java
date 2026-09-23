@@ -5,7 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-    Optional<UserEntity> findByCognitoSub(String cognitoSub);
+    Optional<UserEntity> findByExternalIdentityProviderAndExternalIdentitySubject(
+            String externalIdentityProvider,
+            String externalIdentitySubject
+    );
 
     Optional<UserEntity> findByEmail(String email);
 }

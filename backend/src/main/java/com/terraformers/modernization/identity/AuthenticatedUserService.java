@@ -2,6 +2,7 @@ package com.terraformers.modernization.identity;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -10,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthenticatedUserService {
+
+    private static final String CURRENT_IDENTITY_PROVIDER = "cognito";
 
     private final UserRepository userRepository;
 
@@ -23,19 +26,19 @@ public class AuthenticatedUserService {
             throw new AuthenticationCredentialsNotFoundException("authenticated Cognito JWT is required");
         }
 
-        String cognitoSub = requiredClaim(jwt, "sub", 128);
+        String externalIdentitySubject = requiredClaim(jwt, "sub", 128);
         String email = optionalClaim(jwt, "email", 320);
         if (email != null) {
             email = email.toLowerCase(Locale.ROOT);
         }
         String explicitDisplayName = explicitDisplayName(jwt);
         String displayName = explicitDisplayName != null
-                ? explicitDisplayName : fallbackDisplayName(jwt, email, cognitoSub);
+                ? explicitDisplayName : fallbackDisplayName(jwt, email, externalIdentitySubject);
 
         String resolvedEmail = email;
-        return userRepository.findByCognitoSub(cognitoSub)
+        return findByExternalIdentity(externalIdentitySubject)
                 .map(existing -> synchronize(existing, resolvedEmail, explicitDisplayName))
-                .orElseGet(() -> createWithRetry(cognitoSub, resolvedEmail, displayName));
+                .orElseGet(() -> createWithRetry(externalIdentitySubject, resolvedEmail, displayName));
     }
 
     private UserEntity synchronize(UserEntity existing, String email, String explicitDisplayName) {
@@ -64,15 +67,15 @@ public class AuthenticatedUserService {
         return changed ? userRepository.save(existing) : existing;
     }
 
-    private UserEntity createWithRetry(String cognitoSub, String email, String displayName) {
+    private UserEntity createWithRetry(String externalIdentitySubject, String email, String displayName) {
         if (email != null) {
             userRepository.findByEmail(email).ifPresent(existing -> {
-                throw new IllegalStateException("authenticated email is already linked to another Cognito subject");
+                throw new IllegalStateException("authenticated email is already linked to another external identity");
             });
         }
 
         UserEntity user = new UserEntity();
-        user.setCognitoSub(cognitoSub);
+        user.setExternalIdentity(CURRENT_IDENTITY_PROVIDER, externalIdentitySubject);
         user.setEmail(email);
         user.setDisplayName(displayName);
         user.setRole(UserRole.USER);
@@ -81,10 +84,17 @@ public class AuthenticatedUserService {
         try {
             return userRepository.save(user);
         } catch (DataIntegrityViolationException exception) {
-            return userRepository.findByCognitoSub(cognitoSub)
+            return findByExternalIdentity(externalIdentitySubject)
                     .map(existing -> synchronize(existing, email, null))
                     .orElseThrow(() -> exception);
         }
+    }
+
+    private Optional<UserEntity> findByExternalIdentity(String externalIdentitySubject) {
+        return userRepository.findByExternalIdentityProviderAndExternalIdentitySubject(
+                CURRENT_IDENTITY_PROVIDER,
+                externalIdentitySubject
+        );
     }
 
     @Transactional
@@ -107,11 +117,11 @@ public class AuthenticatedUserService {
         return displayName == null ? null : normalizeDisplayName(displayName);
     }
 
-    private String fallbackDisplayName(Jwt jwt, String email, String cognitoSub) {
+    private String fallbackDisplayName(Jwt jwt, String email, String externalIdentitySubject) {
         String displayName = firstNonBlank(
                 email,
                 jwt.getClaimAsString("cognito:username"),
-                cognitoSub
+                externalIdentitySubject
         );
         return displayName.length() <= 100 ? displayName : displayName.substring(0, 100);
     }

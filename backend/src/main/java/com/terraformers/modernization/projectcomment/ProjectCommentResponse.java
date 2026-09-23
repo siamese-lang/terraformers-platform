@@ -35,7 +35,7 @@ public record ProjectCommentResponse(
     private static boolean isSafeDisplayName(UserEntity author) {
         String displayName = author.getDisplayName();
         return displayName != null && !displayName.isBlank()
-                && !displayName.strip().equals(author.getCognitoSub())
+                && !displayName.strip().equals(author.getExternalIdentitySubject())
                 && (author.getEmail() == null || !displayName.strip().equalsIgnoreCase(author.getEmail().strip()))
                 && !displayName.strip().matches(UUID_PATTERN);
     }

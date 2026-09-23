@@ -17,7 +17,10 @@ import java.time.Instant;
 @Table(
         name = "users",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_users_cognito_sub", columnNames = "cognito_sub"),
+                @UniqueConstraint(
+                        name = "uk_users_external_identity",
+                        columnNames = {"external_identity_provider", "external_identity_subject"}
+                ),
                 @UniqueConstraint(name = "uk_users_email", columnNames = "email")
         }
 )
@@ -28,8 +31,16 @@ public class UserEntity {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "cognito_sub", nullable = false, length = 128)
-    private String cognitoSub;
+    @Column(name = "external_identity_provider", nullable = false, length = 64)
+    private String externalIdentityProvider;
+
+    @Column(name = "external_identity_subject", nullable = false, length = 128)
+    private String externalIdentitySubject;
+
+    // Retained only as a rollback-compatible mirror for users created through
+    // the current Cognito adapter. Neutral lookup never uses this column.
+    @Column(name = "cognito_sub", length = 128)
+    private String legacyCognitoSub;
 
     @Column(length = 320)
     private String email;
@@ -73,12 +84,18 @@ public class UserEntity {
         return userId;
     }
 
-    public String getCognitoSub() {
-        return cognitoSub;
+    public String getExternalIdentityProvider() {
+        return externalIdentityProvider;
     }
 
-    public void setCognitoSub(String cognitoSub) {
-        this.cognitoSub = cognitoSub;
+    public String getExternalIdentitySubject() {
+        return externalIdentitySubject;
+    }
+
+    public void setExternalIdentity(String provider, String subject) {
+        this.externalIdentityProvider = provider;
+        this.externalIdentitySubject = subject;
+        this.legacyCognitoSub = "cognito".equals(provider) ? subject : null;
     }
 
     public String getEmail() {

@@ -7,7 +7,7 @@
 M0 through M2 are complete. M3 establishes a repeatable, explainable AI/RAG quality baseline before
 any prompt, retrieval, model, framework, or orchestration change is treated as an improvement.
 
-The first incomplete task is **M3-1 — Evaluation contract and stage-provenance schema**.
+The current task is **M3-4 — Current live/provider baseline**, which is **BLOCKED** by the absence of a live RAG substrate.
 
 ## Objective
 
@@ -252,23 +252,49 @@ evaluator or per-stage script/workflow.
 
 ### M3-4 — Current live/provider baseline
 
-**Status: TODO**
+**Status: BLOCKED**
 
-**Problem / gap.** There is still no measured quality baseline for the current AI/RAG implementation.
+**Problem / gap.** There is still no measured live quality baseline for the current AI/RAG
+implementation.
 
-**Change boundary.** Execute the M3 dataset against the currently selected real AI/retrieval path
-when the required credentials/resources and cost approval are available. Record exact model,
-embedding, corpus, retrieval, and configuration identity. Do not change behavior during the run.
+**Observed execution boundary.** The last committed real AWS compatibility configuration is
+`prod,aws-compat` with `ANALYSIS_PROVIDER=bedrock`, `EMBEDDING_PROVIDER=bedrock`,
+`RETRIEVAL_MODE=REQUIRED`, generation model
+`global.anthropic.claude-sonnet-4-6`, embedding model
+`amazon.titan-embed-text-v2:0`, corpus `terraformers-reference-v2`, AWS Provider
+`5.100.0`, index `terraformers-reference-v1`, vector field `embedding`, content field
+`content`, vector dimension 1024, top-K 8, signing service `aoss`, and region
+`ap-northeast-2`.
 
-If a required live dependency is unavailable, record the exact blocker rather than silently
-substituting another provider/model or fabricating scores.
+Repository lifecycle evidence also proves that this runtime no longer exists. The final
+project-scoped AWS closure records zero OpenSearch Serverless collections and zero Terraformers
+runtime resources, and records the state bucket, project GitHub OIDC provider, and live roles as
+deleted. Retained GitHub environment/variable/secret configuration contains stale AWS resource
+identifiers and is not a usable live identity.
 
-**Validation.** Re-run the same dataset/configuration sufficiently to distinguish deterministic
-contract failures from provider variability. Preserve each run identity; do not average away
-case-level failures before classification.
+**Execution result.** No M3 evaluation case was executed against a live provider. All six
+`terraformers-eval-v1` cases are **BLOCKED**, not failed. The canonical machine-readable status is
+[`m3-live-baseline-status.json`](../../../evaluation/baselines/m3-live-baseline-status.json), and
+the human-readable evidence is [M3 Live Baseline Blocker](../../evaluation/m3-live-baseline-blocker.md).
 
-**Completion evidence.** Machine-readable baseline results exist for every executable case, with
-blocked/not-covered cases explicitly distinguished from failures.
+No stub, local retriever, alternate model, or different vector store was substituted because doing
+so would no longer measure the current implemented RAG path. No AWS resource was recreated because
+that would require explicit infrastructure/cost approval and would expand M3-4 into a live
+redeployment task.
+
+**Validation.** The blocker was established from current repository configuration plus the final
+AWS zero-resource proof. The six case IDs in the blocker record are the complete
+`terraformers-eval-v1` dataset. This is a readiness result, not an AI quality result.
+
+**Completion evidence.** **NOT MET.** Machine-readable quality traces do not exist because there is
+no executable live retrieval substrate. M3-5 must not start until this blocker is resolved and at
+least one faithful live run is captured.
+
+**Unblock condition.** Provide an approved live execution substrate that preserves the measured
+path rather than substituting a different implementation: valid provider identity/model access,
+the versioned corpus indexed into a compatible live retrieval service with the expected mapping,
+and the endpoint/access/network configuration required by `ReferenceRetriever`. Any paid resource
+creation or AWS redeployment requires explicit approval before execution.
 
 ### M3-5 — Baseline metrics, provenance review, and failure taxonomy
 

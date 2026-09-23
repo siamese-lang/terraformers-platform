@@ -14,14 +14,13 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: current live/provider baseline execution
+- Phase: current live/provider baseline blocked
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Current implementation task: **M3-4 — Current live/provider baseline**
 
 M0, M1, and M2 are complete. M3 is now the active milestone. M3-1 defined the stage-provenance
 contract, M3-2 fixed the first repository-owned evaluation dataset, and M3-3 added one reusable
-runner that shares the current extraction/retrieval/generation/validation boundaries. M3-4 now runs
-that fixed dataset against the current live/provider path without tuning AI/RAG behavior.
+runner that shares the current extraction/retrieval/generation/validation boundaries. M3-4 is currently blocked because the repository's last real Bedrock+AOSS compatibility runtime was intentionally torn down and the live AWS identity/state bootstrap was also removed. No substitute provider has been used.
 
 ## Completed
 
@@ -113,6 +112,11 @@ that fixed dataset against the current live/provider path without tuning AI/RAG 
   - extracted Bedrock generation into a shared `AnalysisGenerationStage` so production and evaluation use the same model-call/retry path; and
   - full backend regression and deterministic runner cases passed, including retrieval provenance, input classification, validation, and first-divergence localization.
 
+- M3-4 Current live/provider baseline — **BLOCKED**
+  - current committed AWS compatibility identity is Bedrock generation + Bedrock embedding + REQUIRED AOSS retrieval against `terraformers-reference-v2`;
+  - final lifecycle evidence proves the project AOSS collection/runtime, state bucket, GitHub OIDC provider, and live roles were deleted; and
+  - all six `terraformers-eval-v1` cases are recorded as blocked with no substitute provider or fabricated quality score.
+
 ## Verified architectural direction
 
 This project is **not** a greenfield rewrite, a simple AWS-to-GCP migration, or a technology-count expansion exercise. It **is** modernization of the existing Terraformers system through reuse of existing domain/business flows, a provider-neutral logical architecture, a current GCP deployment target, reproduced-failure-based backend reliability work, fixed-evaluation-based AI/RAG work, actual-RCA-based observability, and cloud portability. The Spring Boot application remains the logical center.
@@ -176,13 +180,14 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M3-4 — Current live/provider baseline.** Wire the current selected live analysis/retrieval
-configuration into the completed `EvaluationRunner`, execute `terraformers-eval-v1` without
-changing prompts, ranking, corpus, or model choice, and preserve exact provider/model/corpus/config
-identity plus machine-readable results.
+**Resolve M3-4 live baseline substrate.** Do not start M3-5 yet. The current repository proves that
+the historical Bedrock + REQUIRED AOSS runtime was fully torn down, including the AOSS collection,
+state bucket, project GitHub OIDC provider, and live roles. All six fixed evaluation cases are
+therefore **BLOCKED**, not failed.
 
-If required live credentials/resources or cost approval are unavailable, record the exact blocker
-instead of substituting a different provider/model or fabricating baseline results.
+The next action that can produce AI quality evidence requires explicit approval for a faithful live
+evaluation substrate and its cost exposure. Do not substitute the stub provider, a local retriever,
+another model, or another vector store and call that the current baseline.
 
 ## Do not revisit
 

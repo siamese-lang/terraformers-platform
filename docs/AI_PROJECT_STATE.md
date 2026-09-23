@@ -18,9 +18,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Current implementation task: **M3-3 — Reusable evaluation runner and provenance capture**
 
-M0, M1, and M2 are complete. M3 is now the active milestone. Its first task defines the
-fixed-evaluation contract needed to explain what the RAG pipeline used and where an observable
-failure first occurred; it does not change prompt/retrieval/model behavior.
+M0, M1, and M2 are complete. M3 is now the active milestone. M3-1 defined the
+stage-provenance contract and M3-2 fixed the first repository-owned evaluation dataset. M3-3 is the
+current task: execute those fixed cases through one reusable runner without tuning production
+AI/RAG behavior.
 
 ## Completed
 

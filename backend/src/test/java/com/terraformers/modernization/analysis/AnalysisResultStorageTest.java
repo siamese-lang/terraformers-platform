@@ -36,7 +36,9 @@ class AnalysisResultStorageTest {
         assertThat(writeResult.bucket()).isEqualTo("result-bucket");
         assertThat(writeResult.key()).startsWith("custom-prefix/101/");
         assertThat(writeResult.key()).endsWith("/" + job.getId() + "/main.tf");
-        assertThat(writeResult.eTag()).isEqualTo("stub-etag");
+        assertThat(writeResult.provider()).isEqualTo("metadata-only");
+        assertThat(writeResult.persisted()).isFalse();
+        assertThat(writeResult.eTag()).isNull();
     }
 
     @Test

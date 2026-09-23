@@ -65,7 +65,7 @@ class AnalysisJobOrchestratorTest {
         verify(artifactService).registerGeneratedTerraform(
                 101L,
                 "resource \"aws_s3_bucket\" \"accepted\" { bucket_prefix = \"accepted-\" }",
-                new ObjectWriteResult("s3", true, "result-bucket", job.getResultObjectKey(), "stub-etag")
+                new ObjectWriteResult("metadata-only", false, "result-bucket", job.getResultObjectKey(), null)
         );
         assertThat(progressPublisher.statuses()).containsExactly(
                 AnalysisJobStatus.RUNNING,

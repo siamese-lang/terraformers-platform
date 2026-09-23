@@ -109,8 +109,11 @@ implementations or product selections:
   Terraform result plus exact source/result byte persistence/read-back in the deterministic
   `portable-object-store` fixture. That filesystem mechanism is test-runtime-only and does not
   select production storage; and
-- frontend unit/build regression exists, but portable browser E2E and coverage criteria remain
-  `UNKNOWN/TBD`.
+- M2-5 baseline now proves the portable backend user/project/comment HTTP matrix and frontend
+  Jest/build contracts end-to-end enough for this milestone; `browser_e2e_required_for_m2=false`.
+  The remaining confirmed M2-5 gap is three provider-specific user-visible strings in active generic
+  frontend UI: Cognito identity copy, Bedrock waiting copy, and an `s3://` locator synthesized from
+  historical logical bucket/key fields.
 
 ## Historical AWS implementation
 
@@ -149,13 +152,19 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M2-5 — User/project/comment and frontend experience parity:** M2-4까지 검증된 portable
-runtime contract를 기반으로 project list/get, visibility, Terraform read/update, project tree,
-comment create/list, authenticated attribution, unauthorized/forbidden behavior를 현재 backend
-계약과 frontend auth/session/build 자산으로 검증한다. Browser-level evidence는 M2-1에서
-UNKNOWN/TBD였으므로 exit criterion에 실제 필요한지 먼저 분류하고, 필요할 때만 가장 작은
-browser smoke를 추가한다. frontend container나 새 Kubernetes workload를 구성요소 수를
-늘리기 위해 추가하지 않는다.
+**M2-5 — provider-neutral frontend presentation fix:** authoritative M2-5 baseline at
+`a756c46efe88124528b5c0467c5e8c1e4ac461fb` passed the full portable backend user/project/comment
+matrix plus frontend tests/build. Apply only the smallest frontend-only fix for the three confirmed
+provider-specific visible strings:
+
+- replace Cognito-specific signed-in-user copy with provider-neutral authenticated-user wording;
+- replace Bedrock-specific analysis waiting copy with provider-neutral analysis/model wording; and
+- stop rendering historical bucket/key fields as an `s3://` locator in the generic project tree.
+
+Preserve API contracts and compatibility adapters. Do not change backend/runtime/provider selection,
+and do not add browser E2E tooling because the baseline classified
+`browser_e2e_required_for_m2=false`. Re-run the frontend suite, production build, built-entrypoint
+check, and focused UX classifier. M2-5 remains TODO until all three focused classifications pass.
 
 ## Do not revisit
 

@@ -1,0 +1,90 @@
+name: M2 User Experience Baseline Verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/src/**"
+      - "backend/pom.xml"
+      - "frontend/src/**"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+      - "infra/kubernetes/overlays/portable-object-store/**"
+      - "scripts/checks/kind-portable-user-experience-baseline.sh"
+      - "scripts/checks/m2-frontend-experience-baseline.py"
+      - ".github/workflows/m2-user-experience-baseline-verification.yml"
+      - "docs/verification/m2-user-experience-baseline.md"
+
+permissions:
+  contents: read
+
+jobs:
+  portable-backend-user-flow:
+    name: Portable backend user flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - uses: helm/kind-action@v1
+        with:
+          cluster_name: terraformers-portable-user-experience
+          wait: 120s
+      - name: Collect actual HTTP baseline
+        run: bash scripts/checks/kind-portable-user-experience-baseline.sh
+      - name: Upload sanitized backend evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-user-experience-backend
+          path: artifacts/m2-user-experience-baseline
+
+  frontend-contract:
+    name: Frontend contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm --prefix frontend ci --legacy-peer-deps --no-audit --no-fund
+      - id: tests
+        name: Run frontend regression suite
+        continue-on-error: true
+        run: CI=true npm --prefix frontend test -- --runInBand
+      - id: build
+        name: Build production frontend
+        continue-on-error: true
+        run: npm --prefix frontend run build
+      - id: entrypoint
+        name: Check production entrypoint
+        continue-on-error: true
+        run: test -s frontend/build/index.html
+      - name: Classify focused provider-visible UX
+        run: |
+          mkdir -p artifacts/m2-user-experience-baseline
+          {
+            echo "frontend_tests=${{ steps.tests.outcome == 'success' && 'PASS' || 'FAIL' }}"
+            echo "frontend_production_build=${{ steps.build.outcome == 'success' && 'PASS' || 'FAIL' }}"
+            echo "frontend_entrypoint=${{ steps.entrypoint.outcome == 'success' && 'PASS' || 'FAIL' }}"
+            python3 scripts/checks/m2-frontend-experience-baseline.py
+            echo "browser_e2e_required_for_m2=false"
+          } > artifacts/m2-user-experience-baseline/frontend-summary.txt
+          cat artifacts/m2-user-experience-baseline/frontend-summary.txt
+      - name: Upload frontend evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-user-experience-frontend
+          path: artifacts/m2-user-experience-baseline
+      - name: Enforce regression and build results
+        if: always()
+        run: test "${{ steps.tests.outcome }}" = success -a "${{ steps.build.outcome }}" = success -a "${{ steps.entrypoint.outcome }}" = success

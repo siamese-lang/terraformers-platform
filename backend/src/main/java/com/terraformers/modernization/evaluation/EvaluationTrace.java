@@ -109,8 +109,10 @@ public record EvaluationTrace(
             if (status == EvaluationStageStatus.PASS && !failures.isEmpty()) {
                 throw new IllegalArgumentException("passed stage must not contain failures");
             }
-            if (failures.stream().anyMatch(failure -> failure.stage() != stage)) {
-                throw new IllegalArgumentException("failure stage must match StageTrace stage");
+            for (EvaluationFailure failure : failures) {
+                if (failure.stage() != stage) {
+                    throw new IllegalArgumentException("failure stage must match StageTrace stage");
+                }
             }
         }
 

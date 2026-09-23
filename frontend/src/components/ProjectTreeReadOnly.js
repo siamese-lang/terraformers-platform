@@ -19,8 +19,8 @@ function nodeSubtitle(node) {
   if (node.resultObjectKey) {
     return node.resultObjectKey;
   }
-  if (node.sourceBucket && node.sourceKey) {
-    return `s3://${node.sourceBucket}/${node.sourceKey}`;
+  if (node.sourceKey) {
+    return node.sourceKey;
   }
   if (node.apiPath) {
     return node.apiPath;

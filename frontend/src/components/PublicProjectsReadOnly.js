@@ -122,7 +122,7 @@ function PublicProjectsReadOnly({ selectedProjectId, onSelectProject }) {
       </div>
 
       <p className="muted-copy">
-        공개 프로젝트는 누구나 조회할 수 있으며, 댓글 작성자는 Cognito 로그인 사용자로 확인됩니다.
+        공개 프로젝트는 누구나 조회할 수 있으며, 댓글 작성자는 로그인한 사용자 계정으로 확인됩니다.
         좋아요, 공유 편집, 삭제는 아직 연결하지 않았습니다.
       </p>
 

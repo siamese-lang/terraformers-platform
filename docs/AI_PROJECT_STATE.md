@@ -16,9 +16,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Status: **ACTIVE**
 - Phase: provider boundary decoupling
 - Active plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
-- Current implementation task: **M1-4 — Object storage decoupling completion**
+- Current implementation task: **M1-5 — OpenSearch transport/auth boundary**
 
-M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-3 complete and M1-4 next.
+M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-4 complete and M1-5 next.
 
 ## Completed
 
@@ -47,6 +47,10 @@ M0 remains complete; its closure evidence is preserved below. M1 implementation 
   - application/UI auth calls now use a provider-neutral frontend auth client;
   - Cognito/Amplify configuration, guest-error normalization, user attributes, token objects, and provider calls are isolated in the compatibility adapter while existing session/routing/API/auth-flow semantics are preserved; and
   - Frontend CI and Frontend Delivery Contract Verification — **PASS** at `1e72c4d9320f3e4af82aeede8fb4c63366e80de9`.
+- M1-4 Object storage decoupling completion — **COMPLETE**
+  - source reads and upload/result writes now flow through provider-neutral `ObjectReader`/`ObjectWriter` contracts;
+  - AWS S3 SDK types are isolated to compatibility adapters, while explicit provider/persistence semantics eliminate eTag-based false-S3 classification; and
+  - Backend Local Verification and MariaDB schema/repository validation — **PASS** at `ca7f60382143a25a010ec49131075011c76c7c1f`.
 
 ## Verified architectural direction
 
@@ -59,7 +63,7 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 The following are **NEW**, **MODIFY**, or planned gaps—not completed implementations:
 
 - portable OpenSearch transport/authentication;
-- provider-neutralization of current object, model, and identity provider adapters;
+- provider-neutralization of current model provider adapters;
 - fixed AI/RAG evaluation dataset, harness, and report;
 - backend reliability/failure-injection harness;
 - trace propagation, export, and end-to-end validation; and
@@ -98,11 +102,11 @@ No remaining M0 work.
 
 ## Remaining M1 work
 
-M1-4 object storage decoupling completion; M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
+M1-5 OpenSearch transport/auth boundary; M1-6 model/embedding provider configuration; M1-7 runtime configuration neutralization; and M1-8 contract/regression verification and closure.
 
 ## Immediate next work
 
-**M1-4 — Object storage decoupling completion:** 기존 `ObjectReader`/`ObjectWriter` application contract를 유지하면서 S3 adapter selection/configuration과 bucket/key/provider naming이 application/service/DTO 경계에 누출되는지 검증하고, 확인된 provider coupling만 최소 수정한다. GCS를 자동 선택하거나 storage를 재설계하지 않는다.
+**M1-5 — OpenSearch transport/auth boundary:** 기존 `ReferenceRetriever`, OpenSearch query builder/response parser, corpus/index contract를 유지하면서 AWS SigV4/AOSS transport/authentication을 provider-neutral OpenSearch transport boundary 뒤로 이동한다. OpenSearch 자체를 교체하거나 retrieval semantics를 변경하지 않는다.
 
 ## Do not revisit
 

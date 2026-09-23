@@ -10,9 +10,16 @@ public class StubObjectWriter implements ObjectWriter {
     @Override
     public ObjectWriteResult writeText(ObjectWriteRequest request) {
         return new ObjectWriteResult(
+                "metadata-only",
+                false,
                 request.bucket(),
                 request.key(),
-                "stub-etag"
+                null
         );
+    }
+
+    @Override
+    public ObjectWriteResult writeBytes(ObjectBinaryWriteRequest request) {
+        return new ObjectWriteResult("metadata-only", false, request.bucket(), request.key(), null);
     }
 }

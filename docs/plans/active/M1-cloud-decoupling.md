@@ -91,7 +91,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 ### M1-4 — Object storage decoupling completion
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / coupling.** Provider-neutral `ObjectReader` and `ObjectWriter` already exist, but S3 adapter selection/configuration and bucket/key/provider naming must be inspected for leakage into application services and DTOs.
 
@@ -101,7 +101,7 @@ This is a narrowly scoped persistence/application lookup change. It does not inc
 
 **Validation.** Inspect application/service signatures for vendor types and run relevant upload, source-read, result-storage, and project/file regressions with adapter selection coverage.
 
-**Completion evidence.** Pending. Record completion SHA or PR, tests/checks, and remaining task here.
+**Completion evidence.** At validated head `ca7f60382143a25a010ec49131075011c76c7c1f`, application services use the provider-neutral `ObjectReader`/`ObjectWriter` boundary for source metadata/content reads and upload/result writes. `UploadObjectStorageService` and `SourceObjectReaderService` no longer depend on AWS S3 SDK types; `AwsS3ObjectReader`/`AwsS3ObjectWriter` remain compatibility adapters. `ObjectWriteResult` now carries explicit provider and persistence semantics, removing eTag-based provider inference and the neutral-contract `s3://` URI. `StubObjectWriter` now reports `provider=metadata-only`, `persisted=false`, and `eTag=null`, preventing false S3 persistence classification. Neutral storage errors preserve source-object HTTP behavior (404/503/502), historical DB/API naming remains compatible, and no GCS implementation or storage redesign was introduced. Backend Local Verification was **SUCCESS** at this head: both **Backend local smoke baseline** and **MariaDB schema and repository validation** passed.
 
 ### M1-5 — OpenSearch transport/auth boundary
 

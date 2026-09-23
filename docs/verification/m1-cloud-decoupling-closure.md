@@ -1,24 +1,24 @@
 # M1 cloud-decoupling closure verification
 
-**Status: PENDING**
+**Status: PASS**
 
-This is the first M1-8 closure PR. `PENDING` remains authoritative until every job in
-`m1-cloud-decoupling-closure-verification.yml` passes on GitHub; a local pass does not mark M1-8 or
-M1 complete. The inspected base is `de5f6661b6b371f9a58311151c2f569d6bca757e`. The checkout had
-no configured Git remote, so that SHA was confirmed from the local branch/commit and matched the
-requested expected main SHA; GitHub Actions will validate the resulting PR against current `main`.
+Authoritative GitHub Actions validation passed at head `d843fb9f08cd6255c1a4738ac220a40b5e760d75`.
+The inspected base was `de5f6661b6b371f9a58311151c2f569d6bca757e`. All five dedicated
+closure jobs passed, together with Backend Local Verification, Terraform Static Verification, and
+AWS Deployment Contract Inventory Verification. This report is the consolidated M1-8 closure
+evidence used to mark M1 complete.
 
 ## Boundary evidence matrix
 
 | Boundary | M1 task | Provider-neutral contract | Provider-specific compatibility adapter | Preserved business behavior | Exact validation/test | Residual limitation | Final result |
 |---|---|---|---|---|---|---|---|
-| Backend external identity | M1-1 | `JwtExternalIdentityMapper`, `AuthenticatedExternalIdentity`, and provider-plus-subject repository lookup | `CognitoJwtExternalIdentityMapper`; historical `cognito_sub` mirror | Internal user ID, profile/status/role, ownership, and attribution | Static closure verifier; `AuthenticatedUserServiceTest`; full backend suite; MariaDB repository smoke | A replacement IdP and subject migration are not selected | **PENDING CI** |
-| Backend JWT/resource server | M1-2 | Generic resource-server wiring delegates additional validation to `JwtProviderTokenValidator` | `CognitoAccessTokenValidator` owns `token_use`/`client_id`; Cognito mapper owns claim interpretation | Existing authorization and Cognito token/user compatibility | Static closure verifier; security/validator tests; full backend suite | Cognito remains the compatibility provider | **PENDING CI** |
-| Frontend auth/session | M1-3 | `authClient` and `AuthSessionContext` separate application/UI state from the provider SDK | `cognitoAmplifyAuthClient.js` and provider configuration | checking/authenticated/guest, protected routes, login/logout, signup/confirmation/reset, access/ID tokens, missing-token redirect, once-only 401 retry, and auth-expired event | Static import inspection; `CI=true npm --prefix frontend test -- --runInBand`; production build | Amplify and `REACT_APP_AWS_*` configuration remain; no new IdP is selected | **PENDING CI** |
-| Object storage | M1-4 | `ObjectReader`, `ObjectWriter`, `ObjectReference`, and explicit provider/persisted write results | `AwsS3ObjectReader`, `AwsS3ObjectWriter` | Source upload/read and generated artifact/file metadata behavior; metadata-only stub semantics | Static core import/eTag inspection; storage and `ProjectArtifactService` tests; full backend suite | Historical `s3_bucket`/`s3_key` schema names remain | **PENDING CI** |
-| OpenSearch transport/auth | M1-5 | `OpenSearchReferenceRetriever` depends on `OpenSearchTransport`; query/parser/filter contracts remain | `SignedOpenSearchHttpClient` owns credentials, region, SigV4, and `aoss`/`es` | Endpoint/query, corpus/provider filters, ranked parsing, disabled/optional/required retrieval | Static dependency inspection; OpenSearch query/parser/transport tests; full backend suite | Batch ingestion remains AWS-bound | **PENDING CI** |
-| Analysis/embedding provider | M1-6 | `AnalysisProvider`, `EmbeddingProvider`, and neutral selectors | Bedrock generation, embedding, facts extraction, and properties adapters | Analysis job lifecycle, retrieval/model orchestration, Terraform validation and result persistence | Static properties/import inspection; provider/retrieval tests; full backend suite | Exact target models/providers are gated | **PENDING CI** |
-| Runtime configuration | M1-7 | `application-prod.yml` neutral selectors and neutral Kubernetes/runtime-secret contract | `application-aws-compat.yml` contains Cognito/S3/Bedrock/SQS/SigV4 settings | Deterministic local/stub runtime and optional historical AWS compatibility runtime | Static key inspection; `bash scripts/checks/runtime-contract-verification.sh` | GCP product and topology choices remain gated | **PENDING CI** |
+| Backend external identity | M1-1 | `JwtExternalIdentityMapper`, `AuthenticatedExternalIdentity`, and provider-plus-subject repository lookup | `CognitoJwtExternalIdentityMapper`; historical `cognito_sub` mirror | Internal user ID, profile/status/role, ownership, and attribution | Static closure verifier; `AuthenticatedUserServiceTest`; full backend suite; MariaDB repository smoke | A replacement IdP and subject migration are not selected | **PASS** |
+| Backend JWT/resource server | M1-2 | Generic resource-server wiring delegates additional validation to `JwtProviderTokenValidator` | `CognitoAccessTokenValidator` owns `token_use`/`client_id`; Cognito mapper owns claim interpretation | Existing authorization and Cognito token/user compatibility | Static closure verifier; security/validator tests; full backend suite | Cognito remains the compatibility provider | **PASS** |
+| Frontend auth/session | M1-3 | `authClient` and `AuthSessionContext` separate application/UI state from the provider SDK | `cognitoAmplifyAuthClient.js` and provider configuration | checking/authenticated/guest, protected routes, login/logout, signup/confirmation/reset, access/ID tokens, missing-token redirect, once-only 401 retry, and auth-expired event | Static import inspection; `CI=true npm --prefix frontend test -- --runInBand`; production build | Amplify and `REACT_APP_AWS_*` configuration remain; no new IdP is selected | **PASS** |
+| Object storage | M1-4 | `ObjectReader`, `ObjectWriter`, `ObjectReference`, and explicit provider/persisted write results | `AwsS3ObjectReader`, `AwsS3ObjectWriter` | Source upload/read and generated artifact/file metadata behavior; metadata-only stub semantics | Static core import/eTag inspection; storage and `ProjectArtifactService` tests; full backend suite | Historical `s3_bucket`/`s3_key` schema names remain | **PASS** |
+| OpenSearch transport/auth | M1-5 | `OpenSearchReferenceRetriever` depends on `OpenSearchTransport`; query/parser/filter contracts remain | `SignedOpenSearchHttpClient` owns credentials, region, SigV4, and `aoss`/`es` | Endpoint/query, corpus/provider filters, ranked parsing, disabled/optional/required retrieval | Static dependency inspection; OpenSearch query/parser/transport tests; full backend suite | Batch ingestion remains AWS-bound | **PASS** |
+| Analysis/embedding provider | M1-6 | `AnalysisProvider`, `EmbeddingProvider`, and neutral selectors | Bedrock generation, embedding, facts extraction, and properties adapters | Analysis job lifecycle, retrieval/model orchestration, Terraform validation and result persistence | Static properties/import inspection; provider/retrieval tests; full backend suite | Exact target models/providers are gated | **PASS** |
+| Runtime configuration | M1-7 | `application-prod.yml` neutral selectors and neutral Kubernetes/runtime-secret contract | `application-aws-compat.yml` contains Cognito/S3/Bedrock/SQS/SigV4 settings | Deterministic local/stub runtime and optional historical AWS compatibility runtime | Static key inspection; `bash scripts/checks/runtime-contract-verification.sh` | GCP product and topology choices remain gated | **PASS** |
 
 The verifier writes `boundary-summary.json`, `boundary-summary.md`, and
 `verification-summary.txt` under `artifacts/m1-cloud-decoupling-closure/`. Results are calculated
@@ -100,7 +100,9 @@ and user/project/comment parity. M1-8 does not implement that flow or activate M
 next single task after an authoritative CI pass is to write the M2 active plan from current
 repository evidence—not to begin M2 implementation in this PR.
 
-## Closure rule
+## Closure result
 
-M1-8 remains **TODO**, M1 remains **ACTIVE**, and M2 remains **PLANNED**. A separate status-only
-update may record closure after this workflow passes on the PR/head intended for merge.
+M1-8 is **DONE** and M1 is **COMPLETE** at validated head
+`d843fb9f08cd6255c1a4738ac220a40b5e760d75`. M2 remains **PLANNED**. The immediate next single
+task is to write and merge the M2 — Runtime Parity active plan from current repository evidence
+before any M2 implementation begins.

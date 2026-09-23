@@ -1,10 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
-import { fetchUserAttributes, getCurrentUser, signOut } from 'aws-amplify/auth';
+import { getCurrentUser, signOut } from './auth/authClient';
 
-jest.mock('aws-amplify/auth', () => ({
-  fetchUserAttributes: jest.fn(),
+jest.mock('./auth/authClient', () => ({
   getCurrentUser: jest.fn(),
   signOut: jest.fn(),
 }));
@@ -30,12 +29,16 @@ jest.mock('./pages/CommunityPage', () => function CommunityPage() {
 });
 
 const unauthenticated = () => {
-  getCurrentUser.mockRejectedValue({ name: 'UserUnAuthenticatedException' });
+  getCurrentUser.mockResolvedValue(null);
 };
 
 const authenticated = (attributes = {}) => {
-  getCurrentUser.mockResolvedValue({ userId: 'user-1', username: 'testuser' });
-  fetchUserAttributes.mockResolvedValue(attributes);
+  getCurrentUser.mockResolvedValue({
+    userId: 'user-1',
+    username: 'testuser',
+    email: attributes.email || '',
+    nickname: attributes.nickname || '',
+  });
 };
 
 const renderAt = (path) => {
@@ -110,7 +113,7 @@ describe('routed frontend auth contracts', () => {
     await waitFor(() => expect(screen.getAllByText('testuser').length).toBeGreaterThan(0));
   });
 
-  test('logout calls Amplify signOut, moves to community, and clears private route access', async () => {
+  test('logout calls the auth client, moves to community, and clears private route access', async () => {
     authenticated({ email: 'dev@example.com' });
     signOut.mockResolvedValue(undefined);
     const view = renderAt('/generate');

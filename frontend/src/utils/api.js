@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { fetchAuthSession } from 'aws-amplify/auth';
+import { getToken as getAuthToken } from '../auth/authClient';
 
 const envApiBaseUrl = process.env.REACT_APP_API_BASE_URL?.trim();
 const API_BASE_URL = envApiBaseUrl || '';
@@ -63,15 +63,9 @@ const api = axios.create({
 
 const getToken = async (tokenType) => {
   try {
-    const session = await fetchAuthSession();
-    if (tokenType === 'access') {
-      return session.tokens?.accessToken?.toString() || null;
-    }
-    if (tokenType === 'id') {
-      return session.tokens?.idToken?.toString() || null;
-    }
+    return await getAuthToken(tokenType);
   } catch (sessionError) {
-    console.error('[api] Failed to fetch auth session. Check Cognito configuration and sign-in state.', {
+    console.error('[api] Failed to fetch auth session. Check auth configuration and sign-in state.', {
       name: sessionError?.name,
       message: sessionError?.message,
     });

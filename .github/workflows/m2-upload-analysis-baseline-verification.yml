@@ -1,0 +1,40 @@
+name: M2 Upload Analysis Baseline Verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m2-upload-analysis-baseline-verification.yml"
+      - "scripts/checks/kind-portable-upload-analysis-baseline.sh"
+
+permissions:
+  contents: read
+
+jobs:
+  upload-analysis-baseline:
+    name: Upload analysis baseline evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Setup Kind
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: terraformers-portable-authenticated
+          wait: 120s
+      - name: Collect upload analysis baseline
+        run: bash scripts/checks/kind-portable-upload-analysis-baseline.sh
+      - name: Upload sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-upload-analysis-baseline
+          path: artifacts/m2-upload-analysis-baseline

@@ -143,7 +143,7 @@ flowchart LR
     Corpus --> Retrieve
     Embed --> Retrieve
 
-    Evaluation[Fixed Evaluation Dataset and Harness<br/>NEW, runtime-external]
+    Evaluation[Fixed Evaluation Dataset and Runner<br/>IMPLEMENTED M3, runtime-external]
     Baseline[Baseline and Failure Taxonomy]
     Change[Targeted Change]
     Reevaluate[Same-condition Re-evaluation]
@@ -152,7 +152,7 @@ flowchart LR
 
 **Diagram legend:** solid arrows describe the existing/reused runtime responsibility chain. The
 facts → retrieval → generation → validation ordering is the target pipeline principle. The dotted
-evaluation chain is a **NEW**, evidence-required engineering capability outside the serving
+evaluation chain is the **IMPLEMENTED M3-1~M3-3** evaluation capability outside the serving
 runtime; it does not introduce an orchestration framework or service.
 
 The current code maps this flow as follows:

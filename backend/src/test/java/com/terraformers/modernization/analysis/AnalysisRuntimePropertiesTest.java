@@ -27,23 +27,14 @@ class AnalysisRuntimePropertiesTest {
     }
 
     @Test
-    void resolvesExplicitAnalysisProviderBeforeLegacyCompatibilitySwitch() {
+    void resolvesExplicitAnalysisAndEmbeddingProviders() {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setBedrockProviderEnabled(true);
         properties.setProvider(" stub ");
         assertThat(properties.resolvedProvider()).isEqualTo(AnalysisProviderType.STUB);
 
-        properties.setBedrockProviderEnabled(false);
         properties.setProvider("BEDROCK");
         assertThat(properties.resolvedProvider()).isEqualTo(AnalysisProviderType.BEDROCK);
-    }
-
-    @Test
-    void fallsBackToLegacyBedrockEnablementOnlyWhenGenericSelectorIsAbsent() {
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        assertThat(properties.resolvedProvider()).isEqualTo(AnalysisProviderType.STUB);
-        properties.setBedrockProviderEnabled(true);
-        assertThat(properties.resolvedProvider()).isEqualTo(AnalysisProviderType.BEDROCK);
+        assertThat(new AnalysisRuntimeProperties().resolvedEmbeddingProvider()).isEqualTo(EmbeddingProviderType.DISABLED);
     }
 
     @Test
@@ -54,5 +45,8 @@ class AnalysisRuntimePropertiesTest {
         properties.setEmbeddingProvider("unknown");
         assertThatThrownBy(properties::resolvedEmbeddingProvider)
                 .hasMessageContaining("Unsupported terraformers.analysis.embedding-provider");
+        properties.setProgressPublisher("unknown");
+        assertThatThrownBy(properties::resolvedProgressPublisher)
+                .hasMessageContaining("Unsupported terraformers.analysis.progress-publisher");
     }
 }

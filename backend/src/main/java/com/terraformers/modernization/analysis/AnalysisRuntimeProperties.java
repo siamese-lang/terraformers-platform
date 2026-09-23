@@ -8,8 +8,9 @@ public class AnalysisRuntimeProperties {
 
     private AnalysisMode mode = AnalysisMode.INTEGRATED_JAVA;
     private RetrievalMode retrievalMode = RetrievalMode.DISABLED;
-    private String provider;
-    private String embeddingProvider = "bedrock";
+    private String provider = "stub";
+    private String embeddingProvider = "disabled";
+    private String progressPublisher = "logging";
     private String opensearchEndpoint;
     private String indexName;
     private String vectorFieldName;
@@ -17,14 +18,9 @@ public class AnalysisRuntimeProperties {
     private String corpusVersion = "terraformers-reference-v1";
     private String providerVersion = "5.100.0";
     private Integer expectedVectorDimension;
-    private boolean bedrockProviderEnabled;
     private int opensearchTopK = 3;
-    private String opensearchServiceName = "aoss";
     private String resultBucketName;
     private String resultKeyPrefix = "analysis-results";
-    private boolean sqsPublisherEnabled;
-    private String progressQueueUrl;
-    private String resultQueueUrl;
 
     public AnalysisMode getMode() {
         return mode;
@@ -43,9 +39,6 @@ public class AnalysisRuntimeProperties {
     public void setEmbeddingProvider(String embeddingProvider) { this.embeddingProvider = embeddingProvider; }
 
     public AnalysisProviderType resolvedProvider() {
-        if (provider == null || provider.isBlank()) {
-            return bedrockProviderEnabled ? AnalysisProviderType.BEDROCK : AnalysisProviderType.STUB;
-        }
         return AnalysisProviderType.from(provider);
     }
 
@@ -104,28 +97,12 @@ public class AnalysisRuntimeProperties {
     public Integer getExpectedVectorDimension() { return expectedVectorDimension; }
     public void setExpectedVectorDimension(Integer expectedVectorDimension) { this.expectedVectorDimension = expectedVectorDimension; }
 
-    public boolean isBedrockProviderEnabled() {
-        return bedrockProviderEnabled;
-    }
-
-    public void setBedrockProviderEnabled(boolean bedrockProviderEnabled) {
-        this.bedrockProviderEnabled = bedrockProviderEnabled;
-    }
-
     public int getOpensearchTopK() {
         return opensearchTopK;
     }
 
     public void setOpensearchTopK(int opensearchTopK) {
         this.opensearchTopK = opensearchTopK;
-    }
-
-    public String getOpensearchServiceName() {
-        return opensearchServiceName;
-    }
-
-    public void setOpensearchServiceName(String opensearchServiceName) {
-        this.opensearchServiceName = opensearchServiceName;
     }
 
     public String getResultBucketName() {
@@ -144,27 +121,7 @@ public class AnalysisRuntimeProperties {
         this.resultKeyPrefix = resultKeyPrefix;
     }
 
-    public boolean isSqsPublisherEnabled() {
-        return sqsPublisherEnabled;
-    }
-
-    public void setSqsPublisherEnabled(boolean sqsPublisherEnabled) {
-        this.sqsPublisherEnabled = sqsPublisherEnabled;
-    }
-
-    public String getProgressQueueUrl() {
-        return progressQueueUrl;
-    }
-
-    public void setProgressQueueUrl(String progressQueueUrl) {
-        this.progressQueueUrl = progressQueueUrl;
-    }
-
-    public String getResultQueueUrl() {
-        return resultQueueUrl;
-    }
-
-    public void setResultQueueUrl(String resultQueueUrl) {
-        this.resultQueueUrl = resultQueueUrl;
-    }
+    public String getProgressPublisher() { return progressPublisher; }
+    public void setProgressPublisher(String progressPublisher) { this.progressPublisher = progressPublisher; }
+    public ProgressPublisherType resolvedProgressPublisher() { return ProgressPublisherType.from(progressPublisher); }
 }

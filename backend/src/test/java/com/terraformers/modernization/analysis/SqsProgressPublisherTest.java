@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.terraformers.modernization.analysis.sqs.SqsRuntimeProperties;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,7 +26,7 @@ class SqsProgressPublisherTest {
         SqsClient sqsClient = mock(SqsClient.class);
         when(sqsClient.sendMessage(any(SendMessageRequest.class)))
                 .thenReturn(SendMessageResponse.builder().messageId("message-1").build());
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        SqsRuntimeProperties properties = new SqsRuntimeProperties();
         properties.setProgressQueueUrl(QUEUE_URL);
         SqsProgressPublisher publisher = new SqsProgressPublisher(
                 () -> sqsClient,
@@ -47,7 +48,7 @@ class SqsProgressPublisherTest {
     @Test
     void missingQueueUrlDoesNotFailAnalysisFlow() {
         SqsClient sqsClient = mock(SqsClient.class);
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        SqsRuntimeProperties properties = new SqsRuntimeProperties();
         SqsProgressPublisher publisher = new SqsProgressPublisher(
                 () -> sqsClient,
                 new ObjectMapper().findAndRegisterModules(),
@@ -64,7 +65,7 @@ class SqsProgressPublisherTest {
         SqsClient sqsClient = mock(SqsClient.class);
         when(sqsClient.sendMessage(any(SendMessageRequest.class)))
                 .thenThrow(SqsException.builder().message("queue unavailable").build());
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        SqsRuntimeProperties properties = new SqsRuntimeProperties();
         properties.setProgressQueueUrl(QUEUE_URL);
         SqsProgressPublisher publisher = new SqsProgressPublisher(
                 () -> sqsClient,

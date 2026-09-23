@@ -53,36 +53,28 @@ terraformers:
       - SPRING_DATASOURCE_URL
       - SPRING_DATASOURCE_USERNAME
       - SPRING_DATASOURCE_PASSWORD
-      - COGNITO_REGION
-      - COGNITO_USER_POOL_ID
-      - COGNITO_USER_POOL_CLIENT_ID
-      - COGNITO_JWKS_URL
-      - S3_BUCKET_NAME
+      - JWT_ISSUER_URI
+      - JWT_JWK_SET_URI
+      - UPLOAD_SOURCE_BUCKET
   security:
     jwt:
       enabled: true
-      issuer-uri: https://cognito-idp.${COGNITO_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}
-      jwk-set-uri: ${COGNITO_JWKS_URL}
-      client-id: ${COGNITO_USER_POOL_CLIENT_ID}
+      provider: ${JWT_PROVIDER:cognito}
+      issuer-uri: ${JWT_ISSUER_URI}
+      jwk-set-uri: ${JWT_JWK_SET_URI}
   upload:
-    source-bucket: ${S3_BUCKET_NAME}
+    source-bucket: ${UPLOAD_SOURCE_BUCKET}
     source-prefix: browser-uploads
   storage:
-    s3-reader-enabled: ${S3_READER_ENABLED:false}
-    s3-writer-enabled: ${S3_WRITER_ENABLED:false}
+    reader-provider: ${OBJECT_READER_PROVIDER:disabled}
+    writer-provider: ${OBJECT_WRITER_PROVIDER:metadata-only}
   analysis:
     mode: integrated-java
-    # Generic selection wins when ANALYSIS_PROVIDER is set. The legacy switch remains an M1-7 compatibility fallback.
-    provider: ${ANALYSIS_PROVIDER:}
-    embedding-provider: ${EMBEDDING_PROVIDER:bedrock}
-    bedrock-provider-enabled: ${BEDROCK_PROVIDER_ENABLED:false}
+    provider: ${ANALYSIS_PROVIDER:stub}
+    embedding-provider: ${EMBEDDING_PROVIDER:disabled}
+    progress-publisher: ${PROGRESS_PUBLISHER:logging}
     retrieval-mode: ${RETRIEVAL_MODE:DISABLED}
-    bedrock:
-      model-id: ${BEDROCK_MODEL_ID:}
-      embedding-model-id: ${BEDROCK_EMBEDDING_MODEL_ID:}
-      max-tokens: ${BEDROCK_MAX_TOKENS:8192}
     opensearch-endpoint: ${OPENSEARCH_ENDPOINT:}
-    opensearch-service-name: ${OPENSEARCH_SERVICE_NAME:aoss}
     opensearch-top-k: ${OPENSEARCH_TOP_K:3}
     index-name: ${INDEX_NAME:}
     vector-field-name: ${VECTOR_FIELD_NAME:}
@@ -90,11 +82,8 @@ terraformers:
     corpus-version: ${CORPUS_VERSION:terraformers-reference-v1}
     provider-version: ${PROVIDER_VERSION:5.100.0}
     expected-vector-dimension: ${EXPECTED_VECTOR_DIMENSION:}
-    result-bucket-name: ${ANALYSIS_RESULT_BUCKET_NAME:${S3_BUCKET_NAME}}
+    result-bucket-name: ${ANALYSIS_RESULT_BUCKET_NAME:${UPLOAD_SOURCE_BUCKET}}
     result-key-prefix: ${ANALYSIS_RESULT_KEY_PREFIX:analysis-results}
-    sqs-publisher-enabled: ${ANALYSIS_SQS_PUBLISHER_ENABLED:false}
-    progress-queue-url: ${AI_LOG_QUEUE_URL:}
-    result-queue-url: ${TERRAFORM_LOG_QUEUE_URL:}
 
 info:
   build:

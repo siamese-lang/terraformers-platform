@@ -105,14 +105,13 @@ done
 
 cat >"${EVIDENCE_DIR}/expected-secret-keys.txt" <<'EOF'
 ANALYSIS_RESULT_BUCKET_NAME
-COGNITO_JWKS_URL
-COGNITO_REGION
 COGNITO_USER_POOL_CLIENT_ID
-COGNITO_USER_POOL_ID
-S3_BUCKET_NAME
+JWT_ISSUER_URI
+JWT_JWK_SET_URI
 SPRING_DATASOURCE_PASSWORD
 SPRING_DATASOURCE_URL
 SPRING_DATASOURCE_USERNAME
+UPLOAD_SOURCE_BUCKET
 EOF
 
 cut -d= -f1 "${SECRET_ENV}" | sort >"${EVIDENCE_DIR}/actual-secret-keys.txt"
@@ -142,7 +141,7 @@ if grep -q 'fixture-private-password' "${SOURCE_MAP}"; then
   exit 1
 fi
 
-grep -qx 'base_required_key_count=8' "${BUNDLE_SUMMARY}"
+grep -qx 'base_required_key_count=7' "${BUNDLE_SUMMARY}"
 grep -qx 'runtime_secret_key_count=9' "${BUNDLE_SUMMARY}"
 grep -qx 'optional_adapter_setting_count=0' "${BUNDLE_SUMMARY}"
 grep -qx 'backend_image_repository_match=true' "${BUNDLE_SUMMARY}"
@@ -183,7 +182,7 @@ grep -q 'must belong to Terraform output backend_image_repository_url' \
 
 printf '%s\n' \
   'aws_runtime_input_bundle_contract=passed' \
-  'base_required_key_count=8' \
+  'base_required_key_count=7' \
   'runtime_secret_key_count=9' \
   'optional_adapter_setting_count=0' \
   'backend_image_repository_match=true' \

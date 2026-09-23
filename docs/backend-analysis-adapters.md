@@ -1,5 +1,10 @@
 # Backend Analysis Adapter Design
 
+Runtime selection uses `ANALYSIS_PROVIDER=stub|bedrock`,
+`EMBEDDING_PROVIDER=disabled|bedrock`, and
+`PROGRESS_PUBLISHER=logging|sqs`. Canonical safe defaults are `stub`,
+`disabled`, and `logging`; Bedrock and SQS settings remain in `aws-compat`.
+
 ## 1. Purpose
 
 This document explains how the public modernization baseline replaces the original Python analysis runtime with Spring Boot backend-owned orchestration.

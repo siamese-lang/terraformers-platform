@@ -13,7 +13,6 @@ import java.time.Duration;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -32,11 +31,10 @@ public class SignedOpenSearchHttpClient implements OpenSearchTransport {
     private final Region region;
     private final String serviceName;
 
-    public SignedOpenSearchHttpClient(
-            @Value("${terraformers.analysis.opensearch-service-name:aoss}") String serviceName
-    ) {
+    public SignedOpenSearchHttpClient(AwsOpenSearchRuntimeProperties properties) {
+        String serviceName = properties.getSigningServiceName();
         if (serviceName == null || serviceName.isBlank()) {
-            throw new IllegalArgumentException("terraformers.analysis.opensearch-service-name must not be blank for AWS SigV4 signing");
+            throw new IllegalArgumentException("terraformers.aws.opensearch.signing-service-name must not be blank for AWS SigV4 signing");
         }
         this.serviceName = serviceName;
         this.httpClient = HttpClient.newBuilder()

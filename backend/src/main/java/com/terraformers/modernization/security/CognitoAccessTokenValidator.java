@@ -1,6 +1,5 @@
 package com.terraformers.modernization.security;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -11,8 +10,8 @@ public class CognitoAccessTokenValidator implements JwtProviderTokenValidator {
 
     private final String clientId;
 
-    public CognitoAccessTokenValidator(@Value("${terraformers.security.jwt.client-id:}") String clientId) {
-        this.clientId = clientId;
+    public CognitoAccessTokenValidator(CognitoJwtRuntimeProperties properties) {
+        this.clientId = properties.getClientId();
     }
 
     @Override

@@ -5,7 +5,12 @@ import com.terraformers.modernization.analysis.AnalysisMode;
 import com.terraformers.modernization.analysis.AnalysisProviderType;
 import com.terraformers.modernization.analysis.EmbeddingProviderType;
 import com.terraformers.modernization.analysis.bedrock.BedrockRuntimeProperties;
+import com.terraformers.modernization.analysis.ProgressPublisherType;
+import com.terraformers.modernization.analysis.sqs.SqsRuntimeProperties;
 import com.terraformers.modernization.reference.RetrievalMode;
+import com.terraformers.modernization.security.CognitoJwtRuntimeProperties;
+import com.terraformers.modernization.security.JwtRuntimeProperties;
+import com.terraformers.modernization.storage.StorageRuntimeProperties;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.ApplicationArguments;
@@ -19,10 +24,20 @@ public class RuntimeAdapterContractValidator implements ApplicationRunner {
 
     private final AnalysisRuntimeProperties properties;
     private final BedrockRuntimeProperties bedrockProperties;
+    private final SqsRuntimeProperties sqsProperties;
+    private final JwtRuntimeProperties jwtProperties;
+    private final CognitoJwtRuntimeProperties cognitoProperties;
+    private final StorageRuntimeProperties storageProperties;
 
-    public RuntimeAdapterContractValidator(AnalysisRuntimeProperties properties, BedrockRuntimeProperties bedrockProperties) {
+    public RuntimeAdapterContractValidator(AnalysisRuntimeProperties properties, BedrockRuntimeProperties bedrockProperties,
+            SqsRuntimeProperties sqsProperties, JwtRuntimeProperties jwtProperties,
+            CognitoJwtRuntimeProperties cognitoProperties, StorageRuntimeProperties storageProperties) {
         this.properties = properties;
         this.bedrockProperties = bedrockProperties;
+        this.sqsProperties = sqsProperties;
+        this.jwtProperties = jwtProperties;
+        this.cognitoProperties = cognitoProperties;
+        this.storageProperties = storageProperties;
     }
 
     @Override
@@ -41,6 +56,9 @@ public class RuntimeAdapterContractValidator implements ApplicationRunner {
         if (properties.getMode() == AnalysisMode.EXTERNAL_PYTHON_LEGACY) {
             missing.add("ANALYSIS_MODE_INTEGRATED_JAVA");
         }
+        if (jwtProperties.isCognito()) {
+            requireText(missing, "COGNITO_USER_POOL_CLIENT_ID", cognitoProperties.getClientId());
+        }
 
         if (properties.resolvedProvider() == AnalysisProviderType.BEDROCK) {
             requireText(missing, "BEDROCK_MODEL_ID", bedrockProperties.getModelId());
@@ -57,9 +75,9 @@ public class RuntimeAdapterContractValidator implements ApplicationRunner {
             requireText(missing, "VECTOR_FIELD_NAME", properties.getVectorFieldName());
             requireText(missing, "CONTENT_FIELD_NAME", properties.getContentFieldName());
         }
-        if (properties.isSqsPublisherEnabled()) {
-            requireText(missing, "AI_LOG_QUEUE_URL", properties.getProgressQueueUrl());
-            requireText(missing, "TERRAFORM_LOG_QUEUE_URL", properties.getResultQueueUrl());
+        if (properties.resolvedProgressPublisher() == ProgressPublisherType.SQS) {
+            requireText(missing, "AI_LOG_QUEUE_URL", sqsProperties.getProgressQueueUrl());
+            requireText(missing, "TERRAFORM_LOG_QUEUE_URL", sqsProperties.getResultQueueUrl());
         }
 
         return List.copyOf(missing);

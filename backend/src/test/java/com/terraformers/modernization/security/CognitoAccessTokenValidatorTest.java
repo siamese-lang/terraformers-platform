@@ -9,7 +9,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 class CognitoAccessTokenValidatorTest {
 
-    private final CognitoAccessTokenValidator validator = new CognitoAccessTokenValidator("expected-client");
+    private final CognitoAccessTokenValidator validator = validator();
+
+    private CognitoAccessTokenValidator validator() {
+        CognitoJwtRuntimeProperties properties = new CognitoJwtRuntimeProperties();
+        properties.setClientId("expected-client");
+        return new CognitoAccessTokenValidator(properties);
+    }
 
     @Test
     void acceptsAccessTokenForConfiguredClient() {

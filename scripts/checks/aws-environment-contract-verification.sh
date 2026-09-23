@@ -71,14 +71,13 @@ base_required = [
     "SPRING_DATASOURCE_URL",
     "SPRING_DATASOURCE_USERNAME",
     "SPRING_DATASOURCE_PASSWORD",
-    "COGNITO_REGION",
-    "COGNITO_USER_POOL_ID",
-    "COGNITO_USER_POOL_CLIENT_ID",
-    "COGNITO_JWKS_URL",
-    "S3_BUCKET_NAME",
+    "JWT_ISSUER_URI",
+    "JWT_JWK_SET_URI",
+    "UPLOAD_SOURCE_BUCKET",
 ]
 optional_secret_keys = [
     "ANALYSIS_RESULT_BUCKET_NAME",
+    "COGNITO_USER_POOL_CLIENT_ID",
     "BEDROCK_MODEL_ID",
     "BEDROCK_EMBEDDING_MODEL_ID",
     "OPENSEARCH_ENDPOINT",
@@ -88,14 +87,14 @@ optional_secret_keys = [
     "AI_LOG_QUEUE_URL",
     "TERRAFORM_LOG_QUEUE_URL",
 ]
-adapter_switches = [
-    "S3_READER_ENABLED",
-    "S3_WRITER_ENABLED",
-    "BEDROCK_PROVIDER_ENABLED",
-    "BEDROCK_EMBEDDING_ENABLED",
-    "OPENSEARCH_RETRIEVER_ENABLED",
-    "ANALYSIS_SQS_PUBLISHER_ENABLED",
-]
+adapter_selectors = {
+    "OBJECT_READER_PROVIDER": "disabled",
+    "OBJECT_WRITER_PROVIDER": "metadata-only",
+    "ANALYSIS_PROVIDER": "stub",
+    "EMBEDDING_PROVIDER": "disabled",
+    "RETRIEVAL_MODE": "DISABLED",
+    "PROGRESS_PUBLISHER": "logging",
+}
 frontend_expected = [
     "REACT_APP_API_BASE_URL",
     "REACT_APP_AWS_REGION",
@@ -148,9 +147,9 @@ config_values = dict(
 )
 if config_values.get("SPRING_PROFILES_ACTIVE") != "prod":
     errors.append("Base ConfigMap must use SPRING_PROFILES_ACTIVE=prod")
-for switch in adapter_switches:
-    if config_values.get(switch) != "false":
-        errors.append(f"Base ConfigMap adapter switch must remain false: {switch}")
+for selector, expected in adapter_selectors.items():
+    if config_values.get(selector) != expected:
+        errors.append(f"Base ConfigMap selector must be {expected}: {selector}")
 
 for required_literal in [
     'requireText(missing, "BEDROCK_MODEL_ID"',
@@ -180,7 +179,7 @@ for required_rendered in [
     "serviceAccountName: terraformers-backend",
     "name: terraformers-backend-runtime-config",
     "name: terraformers-backend-runtime-secrets",
-    "SPRING_PROFILES_ACTIVE: prod",
+    "SPRING_PROFILES_ACTIVE: prod,aws-compat",
     "image: registry.example.com/terraformers-backend:immutable-tag",
 ]:
     if required_rendered not in rendered:

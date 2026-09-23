@@ -9,15 +9,14 @@ data:
   SPRING_PROFILES_ACTIVE: "prod"
 
   # Runtime defaults. Local and base deployments keep external adapters disabled.
-  S3_READER_ENABLED: "false"
-  S3_WRITER_ENABLED: "false"
-  BEDROCK_PROVIDER_ENABLED: "false"
+  OBJECT_READER_PROVIDER: "disabled"
+  OBJECT_WRITER_PROVIDER: "metadata-only"
+  ANALYSIS_PROVIDER: "stub"
+  EMBEDDING_PROVIDER: "disabled"
   RETRIEVAL_MODE: "DISABLED"
-  ANALYSIS_SQS_PUBLISHER_ENABLED: "false"
+  PROGRESS_PUBLISHER: "logging"
 
   # Non-secret runtime defaults.
-  BEDROCK_MAX_TOKENS: "8192"
-  OPENSEARCH_SERVICE_NAME: "aoss"
   OPENSEARCH_TOP_K: "3"
   CORPUS_VERSION: "terraformers-reference-v1"
   PROVIDER_VERSION: "5.100.0"

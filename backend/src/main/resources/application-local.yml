@@ -15,12 +15,12 @@ spring:
 
 terraformers:
   storage:
-    s3-reader-enabled: false
-    s3-writer-enabled: false
+    reader-provider: disabled
+    writer-provider: metadata-only
   analysis:
     mode: integrated-java
     provider: stub
-    embedding-provider: bedrock
+    embedding-provider: disabled
     retrieval-mode: disabled
     result-key-prefix: analysis-results
-    sqs-publisher-enabled: false
+    progress-publisher: logging

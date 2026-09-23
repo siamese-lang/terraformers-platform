@@ -1,5 +1,10 @@
 # Bedrock Provider Integration
 
+Bedrock is selected explicitly through `ANALYSIS_PROVIDER=bedrock` and, for
+active retrieval, `EMBEDDING_PROVIDER=bedrock`. The legacy
+`BEDROCK_PROVIDER_ENABLED` fallback is removed; model settings remain in the
+adapter-specific `BedrockRuntimeProperties` populated by `aws-compat`.
+
 ## 1. Purpose
 
 This document explains how the Spring Boot backend integrates the Bedrock vision model without keeping the original Python Flask service as a required runtime.

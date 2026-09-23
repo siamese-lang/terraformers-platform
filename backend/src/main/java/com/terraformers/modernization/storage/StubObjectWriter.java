@@ -4,7 +4,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(prefix = "terraformers.storage", name = "s3-writer-enabled", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "terraformers.storage", name = "writer-provider", havingValue = "metadata-only", matchIfMissing = true)
 public class StubObjectWriter implements ObjectWriter {
 
     @Override

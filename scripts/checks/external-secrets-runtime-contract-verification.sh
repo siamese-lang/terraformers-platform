@@ -71,11 +71,10 @@ payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 expected = [
     "SPRING_DATASOURCE_URL",
     "SPRING_DATASOURCE_USERNAME",
-    "COGNITO_REGION",
-    "COGNITO_USER_POOL_ID",
+    "JWT_ISSUER_URI",
+    "JWT_JWK_SET_URI",
+    "UPLOAD_SOURCE_BUCKET",
     "COGNITO_USER_POOL_CLIENT_ID",
-    "COGNITO_JWKS_URL",
-    "S3_BUCKET_NAME",
     "ANALYSIS_RESULT_BUCKET_NAME",
 ]
 if list(payload) != expected:

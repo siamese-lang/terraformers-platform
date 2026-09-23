@@ -1,5 +1,17 @@
 # Backend Deployment Runtime Contract
 
+## Canonical configuration and historical AWS compatibility
+
+`application-prod.yml` is provider-neutral. It uses `JWT_PROVIDER`,
+`OBJECT_READER_PROVIDER`, `OBJECT_WRITER_PROVIDER`, `ANALYSIS_PROVIDER`,
+`EMBEDDING_PROVIDER`, `RETRIEVAL_MODE`, and `PROGRESS_PUBLISHER`, with neutral
+issuer, JWK, upload-source, and result-bucket inputs.
+
+`application-aws-compat.yml` retains adapter-owned Cognito, S3, Bedrock,
+SigV4/OpenSearch, and SQS settings for historical runtime compatibility. Those
+manifests use `SPRING_PROFILES_ACTIVE=prod,aws-compat`; this does not make AWS
+the active deployment target.
+
 ## 1. Purpose
 
 This document explains how backend runtime values are delivered to the Spring Boot modernization baseline.

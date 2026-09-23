@@ -1,5 +1,10 @@
 # OpenSearch Reference Retriever
 
+Endpoint, index, fields, versions, top-K, and dimension form the neutral
+retrieval contract. AWS region, SigV4 credentials, and the `aoss`/`es` signing
+name are owned only by `SignedOpenSearchHttpClient` through
+`terraformers.aws.opensearch`.
+
 ## 1. Purpose
 
 This document explains the OpenSearch/AOSS reference retrieval boundary used by the backend-owned analysis flow.

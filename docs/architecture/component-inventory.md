@@ -142,15 +142,19 @@
 
 ### 18. Confirmed NEW gaps
 
-아래 항목은 현재 repository의 application source, infrastructure, workflow, test에서 구현을 찾지 못했다. 이는 필요한 capability의 공백만 확정하는 판정이며 구체 product/service/framework 선정은 아니다.
+이 inventory 작성 이후 M1과 M3에서 일부 gap이 닫혔다. Provider-neutral auth/session boundary와
+runtime OpenSearch transport/auth boundary는 M1에서 구현되었고, fixed AI/RAG evaluation
+dataset·stage-provenance contract·reusable runner는 M3-1~M3-3에서 구현되었다. 이들은 더 이상
+NEW gap이 아니다.
+
+아래 표는 현재도 남아 있는 capability gap만 기록한다. 구체 product/service/framework
+선정은 별도 evidence와 decision gate 없이 자동 승인되지 않는다.
 
 | Gap | Absence evidence checked | Decision | Decision rationale | Expected target state | Future validation |
 |---|---|---|---|---|---|
-| AI/RAG fixed evaluation dataset + evaluation harness/reporting | `corpus/`, `scripts/rag/`, `tests/rag/`, `.github/workflows/` | **NEW** | versioned retrieval corpus와 ingestion tests는 있으나 고정 input/expected-output 평가 dataset, quality scoring harness, 비교 report는 없다. | versioned evaluation cases, repeatable quality/grounding metrics와 machine-readable report; evaluator 기술은 **TBD** | 동일 model/config 반복 실행, baseline 비교, threshold와 report artifact 검증 |
 | Backend reliability/failure-injection experiment harness | `backend/src/test/`, `scripts/checks/`, `.github/workflows/` | **NEW** | exception/rejection unit tests는 있으나 timeout, dependency outage, restart/concurrency를 주입·관찰하는 experiment harness는 없다. | 기존 analysis lifecycle을 대상으로 재현 가능한 failure scenarios와 recovery/result report 제공; 도구는 **TBD** | deterministic scenario execution, state/object invariants, repeatable failure report |
 | GCP runtime/IaC | `infra/terraform/`, `infra/kubernetes/`, `.github/workflows/`, `scripts/deploy/` | **NEW** | Google/GCP provider, GCP runtime resources, GCP deployment workflow 또는 active GCP overlay를 찾지 못했다. | 현재 GCP deployment target을 위한 최소 runtime/IaC와 delivery validation; 구체 managed services는 **TBD** | format/validate/plan, isolated state, least-privilege identity, deploy/smoke/rollback evidence |
-| Provider-neutral auth implementation path | `backend/src/main/java/com/terraformers/modernization/identity/`, `backend/src/main/java/com/terraformers/modernization/security/`, `frontend/src/auth/`, `frontend/src/awsConfig.js` | **NEW** | 재사용할 session/user semantics는 있으나 backend external-subject/claim mapper와 frontend auth client가 provider-neutral interface로 구현되어 있지 않다. | internal user/session behavior와 provider adapter를 잇는 neutral contracts; target IdP/SDK는 **TBD** | Cognito compatibility, alternate fake adapter contract, subject migration 및 sign-in/token/expiry E2E |
-| Portable OpenSearch transport/auth implementation | `backend/src/main/java/com/terraformers/modernization/reference/opensearch/`, `scripts/rag/ingest-corpus.py` | **NEW** | query/parser는 재사용 가능하지만 runtime과 ingestion transport/auth는 SigV4, `AWS4Auth`, `aoss`에 결합되어 있다. | endpoint/search request contract와 pluggable transport/auth boundary; target authentication 방식은 **TBD** | fake transport contract, TLS/auth failure tests, target endpoint k-NN/corpus-filter smoke |
+| Batch-ingestion transport portability | `scripts/rag/ingest-corpus.py`, `tests/rag/` | **NEW** | runtime query transport/auth는 M1에서 provider-neutral `OpenSearchTransport` boundary로 분리되었지만 corpus ingestion은 여전히 boto3/S3 receipt/AWS4Auth/AOSS/Bedrock embedding에 결합되어 있다. | versioned corpus/index contract를 유지하면서 target runtime의 embedding/index/auth path로 재사용 가능한 ingestion implementation | deterministic corpus contract, target endpoint ingestion/query smoke, embedding dimension/version consistency |
 | Trace-level observability | `backend/pom.xml`, `backend/src/main/resources/application.yml`, `infra/kubernetes/gitops/backend-runtime/backend-deployment-patch.yaml`, `infra/terraform/envs/eks-runtime/main.tf` | **NEW** | trace/span log placeholders, OpenTelemetry injection annotation, X-Ray permission은 있으나 repository-owned tracing dependency/configuration, exporter pipeline 및 end-to-end trace validation은 없다. | request→analysis→provider/storage 구간의 trace context propagation/export와 검증 가능한 trace evidence; SDK/backend는 **TBD** | trace ID propagation, async executor context, exporter failure behavior 및 end-to-end trace query |
 
 ## 경계 요약

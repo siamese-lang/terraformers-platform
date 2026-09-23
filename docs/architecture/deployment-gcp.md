@@ -17,6 +17,23 @@ This is not a Terraform implementation, resource-creation guide, final capacity 
 - Release and operations require immutable image/release identity, least privilege, reproducible configuration, deterministic validation, and deployment, rollback, teardown, and closure evidence.
 - These requirements are capabilities and principles, not selections of particular GCP products.
 
+## Single target runtime lifecycle
+
+GCP/open-source live infrastructure is built once and reused across milestones. There is no
+evaluation-only cloud environment followed by a separately implemented final environment.
+
+- M3-R1 decides target capabilities from actual quota/cost/contract evidence.
+- M3-R2/R3 create the reusable target AI/RAG foundation and corpus/index path.
+- M3-4 measures that same runtime.
+- M4 changes and re-evaluates that same runtime.
+- M7/M8 add diagnosis/failure evidence against the same runtime where applicable.
+- M9 completes delivery, rollback, teardown and cost/resource closure for that runtime rather than
+  rebuilding it.
+
+Different parameter sets may be introduced later only when justified, and they must reuse the same
+IaC/application artifacts. Local/CI/Kind environments are deterministic verification paths, not
+additional live cloud deployments.
+
 ## Status vocabulary
 
 | Status | Meaning |
@@ -137,11 +154,16 @@ AWS ECR, OIDC federation, and deploy/teardown workflows are **HISTORICAL** imple
 
 Terraform is an existing repository asset and the IaC approach is reused; OpenTofu is not substituted. The AWS Terraform stacks will not be ported line by line. Future GCP IaC is a new provider-specific deployment implementation behind the unchanged logical architecture.
 
+The first live target IaC introduced before M3-4 becomes the canonical deployment implementation
+for later milestones. Evaluation does not get a parallel IaC tree. If multiple parameterized
+environments are ever justified, they reuse the same modules, application image, and runtime
+contracts.
+
 Required principles are environment/state separation, minimal privilege, reproducible plan/apply, explicit outputs, destructive-operation awareness, and teardown evidence. The exact resource tree, state backend, and resources are **GATED** and absent from this document.
 
 ## Capacity and quota gate
 
-Before a GCP product or topology is selected, a capacity-discovery task must record evidence from the actual Cloud project. The repository currently supplies no actual values, so every value below is `UNKNOWN/TBD`; no value should be guessed. This table is the checklist for a future Cloud Shell capacity discovery task.
+Before a GCP product or topology is selected, a capacity-discovery task must record evidence from the actual Cloud project. This is now the immediate **M3-R1** dependency task. The repository currently supplies no actual values, so every value below is `UNKNOWN/TBD`; no value should be guessed. This table is the checklist for the target-runtime decision, not a separate evaluation environment.
 
 | Evidence to collect | Current evidence | Why it gates selection |
 | --- | --- | --- |

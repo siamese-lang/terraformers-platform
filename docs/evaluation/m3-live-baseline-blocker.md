@@ -2,7 +2,9 @@
 
 ## Status
 
-**BLOCKED — no live quality run executed**
+**Historical readiness result: BLOCKED — no live quality run executed**
+
+Current planning disposition: **WAITING_FOR_TARGET_RUNTIME**
 
 Recorded against main SHA: `3e706f97c94a051432de9ce576a820d8672a5b4f`
 
@@ -73,9 +75,9 @@ dependency.
 
 No such substitution was performed and no quality score was fabricated.
 
-## Unblock boundary
+## Target-runtime resume boundary
 
-A faithful live run requires all of the following:
+A faithful live run still requires all of the following:
 
 1. a valid provider identity with access to the selected generation and embedding models;
 2. a live retrieval service compatible with the current `ReferenceRetriever` contract;
@@ -85,11 +87,19 @@ A faithful live run requires all of the following:
 5. explicit approval for any paid resource creation or redeployment.
 
 The repository's existing AWS redeployment runbook is intentionally broader than M3 and must not be
-executed automatically just to make this baseline green. If a smaller faithful evaluation substrate
-is proposed, it still requires cost approval and must not change the measured AI/RAG behavior.
+executed just to make this baseline green. A separate temporary evaluation cloud stack is also not
+an accepted unblock path.
+
+The dependency is resolved through the project's actual target runtime sequence:
+
+`M3-R1 target runtime decision → M3-R2 single target runtime foundation → M3-R3 corpus/serving smoke → M3-4 live baseline`
+
+The runtime created in M3-R2/R3 is retained and reused by M3-4, M4, later observability/failure
+verification, and M9 closure. It is not discarded after evaluation.
 
 ## Consequence for M3
 
-M3-4 remains **BLOCKED** rather than DONE. M3-5 and M4 must not use this no-run status as quality
-evidence. Once an approved live substrate exists, execute the existing `EvaluationRunner` against
-the unchanged `terraformers-eval-v1` dataset and preserve each live run identity.
+The historical AWS attempt remains **BLOCKED** evidence, while the active M3-4 task is now
+**WAITING_FOR_TARGET_RUNTIME**. M3-5 and M4 must not use this no-run status as quality evidence.
+After M3-R3 proves the single target runtime is usable, execute the existing `EvaluationRunner`
+against the unchanged `terraformers-eval-v1` dataset and preserve each live run identity.

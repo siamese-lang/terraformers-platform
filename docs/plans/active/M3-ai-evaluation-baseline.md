@@ -7,7 +7,9 @@
 M0 through M2 are complete. M3 establishes a repeatable, explainable AI/RAG quality baseline before
 any prompt, retrieval, model, framework, or orchestration change is treated as an improvement.
 
-The current task is **M3-4 — Current live/provider baseline**, which is **BLOCKED** by the absence of a live RAG substrate.
+The current task is **M3-R1 — Target runtime evidence and capability decision**. M3-4 is
+**WAITING_FOR_TARGET_RUNTIME** and resumes only after M3-R1 through M3-R3 establish the project's
+single reusable target AI/RAG runtime.
 
 ## Objective
 
@@ -170,6 +172,23 @@ M3-1 may refine names, but the baseline must be able to distinguish at least the
 A downstream failure can record contributing stages, but the report must identify the **first
 observable divergence** whenever evidence supports that conclusion.
 
+## Dependency-driven sequencing rule
+
+M3-4 exposed a real dependency: the historical AWS live RAG runtime was intentionally deleted, while
+the project target is GCP/open-source-oriented. Recreating AWS solely for evaluation, or creating a
+throwaway GCP evaluation stack and later building the "real" deployment again, would duplicate
+infrastructure and distort the modernization direction.
+
+Therefore M3 uses this order:
+
+`M3-1 → M3-2 → M3-3 → M3-R1 → M3-R2 → M3-R3 → M3-4 → M3-5 → M3-6`
+
+M3-R2/R3 create the **actual target AI/RAG runtime foundation**. It is not disposable test
+infrastructure. The same IaC, adapters, corpus/index, runtime identity, and provider configuration
+are reused for M3-4 baseline, M4 improvements, later observability/failure verification, and M9
+runtime closure. Local/CI/stub/Kind checks remain separate deterministic verification mechanisms
+without becoming a second live environment.
+
 ## Work sequence
 
 ### M3-1 — Evaluation contract and stage-provenance schema
@@ -250,9 +269,71 @@ dataset. Deterministic execution is covered by
 live/provider configuration into these existing stage boundaries; it does not need a second
 evaluator or per-stage script/workflow.
 
+### M3-R1 — Target runtime evidence and capability decision
+
+**Status: TODO**
+
+**Problem / gap.** The project has no active target AI/RAG runtime, and the GCP deployment document
+still correctly leaves product/topology choices gated. A faithful live baseline cannot precede the
+runtime it is supposed to measure.
+
+**Change boundary.** Collect actual project/region/billing/quota constraints and derive the minimum
+capability contract from existing `AnalysisProvider`, `EmbeddingProvider`,
+`ReferenceRetriever`, corpus/index, and runtime identity boundaries. Compare viable
+GCP/open-source-oriented candidates for generation, embeddings, OpenSearch-compatible retrieval,
+corpus ingestion, identity/authentication, network reachability, persistence, and cost.
+
+Do not select technology because it is fashionable, and do not deploy paid resources in this task.
+
+**Validation.** Every selected capability must map to an existing application port or confirmed
+target-runtime requirement, have an explicit cost/operational boundary, and preserve the single
+target runtime rule.
+
+**Completion evidence.** One evidence-backed target runtime decision and an explicit list of
+remaining gated/unknown items sufficient for M3-R2 implementation.
+
+### M3-R2 — Single target AI/RAG runtime foundation
+
+**Status: TODO**
+
+**Problem / gap.** The selected target capabilities do not yet exist as deployable GCP/open-source
+infrastructure/adapters.
+
+**Change boundary.** Implement only the minimum target AI/RAG runtime needed by the serving
+application: reusable IaC/configuration, runtime identity/networking, generation/embedding adapter
+selection, OpenSearch-compatible retrieval/index persistence, and provider-neutral integration.
+This is the project's actual target runtime foundation, not evaluation infrastructure.
+
+The implementation must be reusable by later backend serving and M9 closure; no second "real"
+runtime is created later.
+
+**Validation.** Static IaC/application checks plus the smallest live readiness checks required to
+prove the selected services/endpoints/identity are reachable. Do not run the M3 quality dataset yet.
+
+**Completion evidence.** Reusable target IaC/adapters/configuration exist and can be applied without
+a parallel evaluation-only cloud stack.
+
+### M3-R3 — Corpus ingestion and serving-path smoke
+
+**Status: TODO**
+
+**Problem / gap.** A deployed runtime is not useful for RAG until the versioned corpus/index
+contract and application-facing retrieval/model path work together.
+
+**Change boundary.** Ingest the versioned corpus with the selected embedding/index contract and
+connect the existing Spring Boot-facing ports to the same target runtime. Preserve corpus/version
+identity and any embedding-dimension rebuild decision explicitly.
+
+**Validation.** Prove a small serving-path smoke through the existing extraction/retrieval/generation
+boundaries, including retrieval metadata/provenance. This smoke establishes runtime readiness; it
+does not replace M3-4 quality evaluation.
+
+**Completion evidence.** The single target runtime is ready for the unchanged
+`terraformers-eval-v1` dataset.
+
 ### M3-4 — Current live/provider baseline
 
-**Status: BLOCKED**
+**Status: WAITING_FOR_TARGET_RUNTIME**
 
 **Problem / gap.** There is still no measured live quality baseline for the current AI/RAG
 implementation.
@@ -290,11 +371,9 @@ AWS zero-resource proof. The six case IDs in the blocker record are the complete
 no executable live retrieval substrate. M3-5 must not start until this blocker is resolved and at
 least one faithful live run is captured.
 
-**Unblock condition.** Provide an approved live execution substrate that preserves the measured
-path rather than substituting a different implementation: valid provider identity/model access,
-the versioned corpus indexed into a compatible live retrieval service with the expected mapping,
-and the endpoint/access/network configuration required by `ReferenceRetriever`. Any paid resource
-creation or AWS redeployment requires explicit approval before execution.
+**Resume condition.** Complete M3-R1 through M3-R3 so the project's actual target runtime supplies
+valid model/embedding access, the versioned corpus/index, and endpoint/identity/network configuration
+required by the existing application ports. Historical AWS redeployment is not an unblock path.
 
 ### M3-5 — Baseline metrics, provenance review, and failure taxonomy
 

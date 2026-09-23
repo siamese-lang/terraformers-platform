@@ -29,6 +29,29 @@
   3. Observability based on real failure diagnosis
   4. Cloud portability
 
+## Single live target runtime rule
+
+Live cloud runtime은 평가용과 최종 배포용으로 별도 구축하지 않는다. 기본 원칙은 **하나의
+target runtime을 한 번 구축하고 계속 확장·재사용하는 것**이다.
+
+- M3 live AI/RAG baseline, M4 targeted improvement, M7 observability, M8 failure/load verification,
+  M9 GCP runtime closure는 가능한 한 동일한 target runtime과 동일한 IaC/runtime contract를
+  사용한다.
+- M3 평가만을 위해 historical AWS runtime, 임시 AOSS/Bedrock stack, 별도 GCP evaluation
+  cluster, 별도 vector store를 만들지 않는다.
+- local/CI stub, deterministic test, Kind smoke는 빠른 회귀검증 수단이며 별도의 live cloud
+  environment로 간주하지 않는다.
+- 여러 cloud environment가 실제로 필요하다는 evidence가 생기면 동일 IaC와 application
+  artifact를 parameterized configuration으로 재사용한다. 별도의 두 번째 architecture나
+  수작업으로 복제한 stack을 만들지 않는다.
+- live dependency가 없어 milestone이 막히면 임시 호환환경을 복구하지 말고, 실제 target
+  runtime의 선행 foundation 작업을 앞으로 당긴다.
+- M9는 target runtime을 처음부터 다시 구축하는 milestone이 아니다. 앞선 milestone에서
+  만들어 사용한 동일 runtime의 delivery, rollback, teardown, cost/resource closure를
+  완성하는 단계다.
+- 이 원칙을 변경하려면 중복 환경이 필요한 실제 문제와 비용/운영 trade-off를
+  repository evidence로 남기고 ADR-004 change gate를 통과해야 한다.
+
 ## Working rules
 
 - completed milestone을 임의로 재설계하거나 다시 열지 않는다.

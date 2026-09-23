@@ -60,5 +60,12 @@
     "used": false,
     "reason": "A stub provider, local retriever, alternate model, or alternate vector store would not measure the current implemented real provider path."
   },
-  "nextRequiredAction": "Approve and provide a faithful live evaluation substrate, then execute terraformers-eval-v1 through EvaluationRunner."
+  "nextRequiredAction": "Execute M3-R1 target runtime evidence and capability decision; then build the single reusable target runtime in M3-R2/R3 before resuming M3-4.",
+  "planningDisposition": {
+    "currentStatus": "WAITING_FOR_TARGET_RUNTIME",
+    "sequencing": "M3-R1 -> M3-R2 -> M3-R3 -> M3-4",
+    "temporaryEvaluationEnvironmentAllowed": false,
+    "historicalAwsRedeploymentIsUnblockPath": false,
+    "runtimeReuse": "The target AI/RAG runtime created before M3-4 is reused by M3-4, M4, later observability/failure work, and M9 closure."
+  }
 }

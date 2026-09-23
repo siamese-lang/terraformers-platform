@@ -14,12 +14,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M2 — Runtime Parity**
 - Status: **ACTIVE**
-- Phase: upload to analysis to Terraform result parity
+- Phase: user, project, comment, and frontend experience parity
 - Active plan: [M2 — Runtime Parity](plans/active/M2-runtime-parity.md)
-- Current implementation task: **M2-4 — Upload → analysis → Terraform result parity**
+- Current implementation task: **M2-5 — User/project/comment and frontend experience parity**
 
 M0 and M1 are complete. M1-1 through M1-8 have closure evidence. M2 is active through its
-repository-owned plan; M2-1 through M2-3 are complete and M2-4 is the first remaining task.
+repository-owned plan; M2-1 through M2-4 are complete and M2-5 is the first remaining task.
 
 ## Completed
 
@@ -80,6 +80,10 @@ repository-owned plan; M2-1 through M2-3 are complete and M2-4 is the first rema
   - added a separate `portable-authenticated` Kind fixture with ephemeral RSA signing material and an in-cluster JWKS server, exercising the real JWT decoder/provider validator and existing external-identity mapping without a live IdP or cloud credential;
   - provider-plus-subject persistence, numeric internal user creation/reuse, distinct second identity, anonymous and invalid-token 401 rejection, owner/private access, non-owner 403 rejection, ownership modification checks, and display-name preservation all passed against the same portable MariaDB runtime; and
   - M2 Authenticated Identity Parity Verification — **PASS** at `eda4b9469f258b71aae8e28a0b3ec1a226c4412a`. Historical fixture/harness failures were fixed and rerun before closure.
+- M2-4 Upload → analysis → Terraform result parity — **COMPLETE**
+  - PR #24 first reproduced the current metadata-only limitation under an authenticated runtime: upload, analysis, Terraform validation, and inline result read-back passed, while source/result object bytes were not persisted and source reads returned 409;
+  - added a JDK-only `filesystem` implementation behind the existing neutral `ObjectReader`/`ObjectWriter` ports and enabled it only in the `portable-object-store` test overlay, without selecting a production storage product; and
+  - M2 Object Byte Storage Verification — **PASS** at `99fa2864ae3ef86536332172c4a3e50be612e686`: the same 68-byte source input round-tripped exactly, source/result rows recorded `binary_persisted=1`, source endpoints returned 200, the analysis job reached `SUCCEEDED`, and generated Terraform filesystem bytes matched the database/API checksum. The fixture is single-runtime evidence only and makes no restart/shared-storage durability claim.
 
 ## Verified architectural direction
 
@@ -99,10 +103,12 @@ implementations or product selections:
   object-byte, active provider, or production-like authenticated parity;
 - metadata-only object stubs do not persist or read uploaded/result bytes;
 - M2-2 provides a self-contained portable Kind runtime where namespace/apply, MariaDB 11.4 +
-  Flyway, prod backend rollout/readiness, health, and repository semantics pass, and M2-3 now proves
-  signed-JWT authentication through neutral external identity to internal numeric users plus
-  project ownership/authorization. Authenticated upload/analysis and object-byte persistence remain
-  M2-4 scope; and
+  Flyway, prod backend rollout/readiness, health, and repository semantics pass; M2-3 proves
+  signed-JWT authentication through neutral external identity to internal numeric users plus project
+  ownership/authorization; and M2-4 now proves authenticated upload → source file → analysis →
+  Terraform result plus exact source/result byte persistence/read-back in the deterministic
+  `portable-object-store` fixture. That filesystem mechanism is test-runtime-only and does not
+  select production storage; and
 - frontend unit/build regression exists, but portable browser E2E and coverage criteria remain
   `UNKNOWN/TBD`.
 
@@ -143,12 +149,13 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M2-4 — Upload → analysis → Terraform result parity:** M2-3의 authenticated portable runtime을
-기반으로 authenticated image upload → project/source-file → analysis job → deterministic
-provider invocation → Terraform draft validation → result registration/read-back chain을 실제
-runtime에서 검증한다. 현재 metadata-only storage가 byte persistence/read-back을 막는지 먼저
-재현하고, 실제 gap이 확인될 때만 ADR-004에 따라 가장 작은 deterministic test-runtime
-storage mechanism을 추가한다. GCS/S3/MinIO 같은 production product를 선행 선택하지 않는다.
+**M2-5 — User/project/comment and frontend experience parity:** M2-4까지 검증된 portable
+runtime contract를 기반으로 project list/get, visibility, Terraform read/update, project tree,
+comment create/list, authenticated attribution, unauthorized/forbidden behavior를 현재 backend
+계약과 frontend auth/session/build 자산으로 검증한다. Browser-level evidence는 M2-1에서
+UNKNOWN/TBD였으므로 exit criterion에 실제 필요한지 먼저 분류하고, 필요할 때만 가장 작은
+browser smoke를 추가한다. frontend container나 새 Kubernetes workload를 구성요소 수를
+늘리기 위해 추가하지 않는다.
 
 ## Do not revisit
 

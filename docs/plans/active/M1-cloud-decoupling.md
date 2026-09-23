@@ -188,11 +188,11 @@ The following GCP/runtime choices also remain **GATED**: GKE topology, node/VM s
 
 ## Immediate next work
 
-**M1-4 — Object storage decoupling completion**
+**M1-5 — OpenSearch transport/auth boundary**
 
-기존 `ObjectReader`/`ObjectWriter` application contract를 유지하면서 S3 adapter 선택/configuration과 bucket/key/provider naming이 application/service/DTO 경계에 누출되는지 검증하고, 확인된 provider coupling만 최소 수정한다.
+`OpenSearchReferenceRetriever`가 URI와 JSON body만 provider-neutral `OpenSearchTransport`에 전달하도록 하고, AWS SigV4 및 `aoss`/`es` signing service-name semantics는 current compatibility adapter 내부로 이동한다.
 
-This task does not select GCS or redesign storage; the current S3 implementation may remain as a compatibility adapter.
+This task does not select future OpenSearch hosting/auth topology or rewrite the AWS-bound batch ingestion implementation.
 
 ## Evidence and references
 

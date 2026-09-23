@@ -14,20 +14,20 @@ public class OpenSearchReferenceRetriever {
     private final EmbeddingProvider embeddingProvider;
     private final OpenSearchKnnQueryBuilder queryBuilder;
     private final OpenSearchResponseParser responseParser;
-    private final SignedOpenSearchHttpClient httpClient;
+    private final OpenSearchTransport transport;
     private final AnalysisRuntimeProperties properties;
 
     public OpenSearchReferenceRetriever(
             EmbeddingProvider embeddingProvider,
             OpenSearchKnnQueryBuilder queryBuilder,
             OpenSearchResponseParser responseParser,
-            SignedOpenSearchHttpClient httpClient,
+            OpenSearchTransport transport,
             AnalysisRuntimeProperties properties
     ) {
         this.embeddingProvider = embeddingProvider;
         this.queryBuilder = queryBuilder;
         this.responseParser = responseParser;
-        this.httpClient = httpClient;
+        this.transport = transport;
         this.properties = properties;
     }
 
@@ -46,7 +46,7 @@ public class OpenSearchReferenceRetriever {
                 query.resourceTypes()
         );
         URI uri = OpenSearchEndpoint.searchUri(properties.getOpensearchEndpoint(), properties.getIndexName());
-        String response = httpClient.post(uri, body, properties.getOpensearchServiceName());
+        String response = transport.post(uri, body);
         return responseParser.parse(response, properties.getContentFieldName());
     }
 
@@ -71,9 +71,6 @@ public class OpenSearchReferenceRetriever {
         }
         if (isBlank(properties.getBedrockEmbeddingModelId())) {
             throw new IllegalStateException("terraformers.analysis.bedrock-embedding-model-id must be set for active retrieval");
-        }
-        if (isBlank(properties.getOpensearchServiceName())) {
-            throw new IllegalStateException("terraformers.analysis.opensearch-service-name must be set for active retrieval");
         }
         if (properties.getOpensearchTopK() <= 0) {
             throw new IllegalStateException("terraformers.analysis.opensearch-top-k must be positive for active retrieval");

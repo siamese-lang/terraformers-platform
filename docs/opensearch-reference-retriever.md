@@ -22,8 +22,10 @@ This path does not require AWS credentials and exists so Maven tests, Docker bui
 ```text
 BedrockEmbeddingProvider
   -> OpenSearchReferenceRetriever
-      -> SignedOpenSearchHttpClient
-      -> OpenSearch / AOSS k-NN query
+      -> OpenSearchTransport
+          -> SignedOpenSearchHttpClient
+          -> AWS SigV4 / current AOSS compatibility
+          -> OpenSearch / AOSS k-NN query
 ```
 
 This path is enabled only when runtime flags are explicitly set.
@@ -42,18 +44,22 @@ CONTENT_FIELD_NAME=<reference content field>
 BEDROCK_EMBEDDING_MODEL_ID=<embedding model id>
 ```
 
-The default value for `OPENSEARCH_SERVICE_NAME` is `aoss` because the original service used AOSS-style reference retrieval. If the deployment uses a classic Amazon OpenSearch Service domain, the service name may need to be `es`.
+The default value for `OPENSEARCH_SERVICE_NAME` is `aoss` because the original service used AOSS-style reference retrieval. If the deployment uses a classic Amazon OpenSearch Service domain, the service name may need to be `es`. This setting is owned by the current AWS compatibility adapter and is not part of the provider-neutral transport call.
 
 ## 4. Backend responsibilities
 
-`OpenSearchReferenceRetriever` is responsible for:
+The provider-neutral retrieval side (`OpenSearchReferenceRetriever`, query builder, response parser, and `OpenSearchTransport`) is responsible for:
 
 - building embedding input text from project/source object context;
 - requesting an embedding through `EmbeddingProvider`;
 - building a k-NN query body;
-- sending a signed query to the configured index;
+- sending the URI and JSON request body through the transport contract;
 - parsing ranked reference documents;
 - failing clearly when endpoint, index, vector field, content field, access policy, or timeout is wrong.
+
+`SignedOpenSearchHttpClient` is the current AWS compatibility adapter. It owns AWS credentials, region resolution, SigV4 signing, and the `aoss`/`es` signing service name. The exact future OpenSearch hosting and authentication topology remains **GATED**; this boundary does not select a GCP product or a replacement authentication mechanism.
+
+The batch ingestion concept and its corpus version, checksum, mapping, idempotency, and k-NN validation contracts remain reusable. The current live ingestion script is still an AWS compatibility implementation coupled to boto3, S3 receipts, AWS4Auth/AOSS, Bedrock embeddings, and CodeBuild. Its provider/runtime rewrite is deliberately deferred rather than mixed into this backend transport change.
 
 ## 5. Failure classification
 

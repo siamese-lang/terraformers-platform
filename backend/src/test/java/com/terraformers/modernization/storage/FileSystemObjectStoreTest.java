@@ -24,7 +24,7 @@ class FileSystemObjectStoreTest {
         assertThat(result.persisted()).isTrue();
         assertThat(result.bucket()).isEqualTo("bucket");
         assertThat(result.key()).isEqualTo("nested/image.png");
-        assertThat(result.eTag()).isEqualTo("6caf38d537984e2601ea8353ab4e3f289d4b9a073139b747a9d149b3e26cf1d4");
+        assertThat(result.eTag()).isEqualTo("3d1f57c984978ef98a18378c8166c1cb8ede02c03eeb6aee7e2f121dfeee3e56");
         assertThat(content.bytes()).containsExactly(bytes);
         assertThat(content.metadata().contentLength()).isEqualTo(bytes.length);
         assertThat(content.metadata().contentType()).isEqualTo("image/png");

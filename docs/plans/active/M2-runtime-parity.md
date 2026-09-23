@@ -6,7 +6,7 @@
 
 M0 and M1 are complete. M2 proves the existing cloud-neutral application contracts in a portable,
 deterministic runtime; it is not a new-feature or GCP-deployment milestone. The first incomplete
-task is **M2-1 — Portable runtime baseline and parity gap inventory**.
+task is **M2-2 — Portable persistent runtime substrate**.
 
 ## Objective
 
@@ -79,7 +79,7 @@ particular replacement technology is required:
 
 ### M2-1 — Portable runtime baseline and parity gap inventory
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / gap.** The repository has deterministic checks and a local-stub runtime, but there is no
 single current-main record distinguishing working runtime paths, failures, and uncovered parity
@@ -97,9 +97,17 @@ upload, project tree, and Terraform read separately. Do not fold broad fixes int
 **Validation.** Run each applicable repository-owned command from a clean checkout at the recorded
 SHA and classify each relevant path as `PASS`, `FAIL`, or `NOT COVERED`.
 
-**Completion evidence.** Create `docs/verification/m2-runtime-parity-baseline.md` containing exact
-commands, environment/runtime identity, base/head SHA, first errors, and a parity gap inventory that
-determines the smallest subsequent work without selecting products.
+**Completion evidence.** At validated head `2623303347e15e580d83f583262c51d2573edbbd`,
+authoritative evidence collection completed successfully. The M1 closure jobs reused for distinct
+runtime identities showed **PASS** for backend regression, MariaDB 11.4 + Flyway/schema/repository
+validation, frontend tests/build, and deterministic runtime-contract verification. M2 baseline run
+#2 showed that Kind cluster creation plus backend image build/load reached the workload boundary,
+then `kubectl apply -k infra/kubernetes/overlays/local-stub` failed because namespace
+`terraformers-local` did not exist. Therefore workload startup is **FAIL** and backend rollout,
+health, upload, project-tree, Terraform read, authenticated portable runtime, object-byte
+persistence, browser E2E, and active retrieval/model evidence remain **NOT COVERED** as applicable.
+The evidence harness itself is **PASS** and preserves the target runtime failure rather than treating
+it as a harness error. No runtime/product fix was made in M2-1.
 
 ### M2-2 — Portable persistent runtime substrate
 

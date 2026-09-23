@@ -18,8 +18,9 @@ It deliberately does not capture or require hidden model chain-of-thought.
 - Java result contract: `EvaluationTrace`
 - Stage wrapper: `EvaluationTrace.StageTrace<T>`
 
-M3-2 will assign the first concrete dataset version. Dataset version and schema version are separate
-so the same result contract can compare multiple fixed datasets.
+The first concrete dataset is `terraformers-eval-v1` under
+[`evaluation/terraformers-eval-v1/`](../../evaluation/terraformers-eval-v1/). Dataset version
+and schema version are separate so the same result contract can compare multiple fixed datasets.
 
 ## EvaluationCase
 
@@ -185,8 +186,14 @@ The failure object therefore stores both stage and category.
 This test protects the evaluation contract itself; it is not a new milestone workflow and does not
 test document status strings.
 
-## M3-2 handoff
+## Fixed dataset
 
-M3-2 should add only fixed/versioned cases and fixtures that conform to this contract. It must not
-change prompts, retrieval ranking, corpus contents, model selection, or production orchestration in
-order to make those cases pass.
+M3-2 added `terraformers-eval-v1`: four positive architecture diagrams, one ambiguous/cropped
+diagram, and one non-architecture dashboard. `EvaluationDatasetLoader` verifies the repository
+fixture path and SHA-256 before exposing input bytes.
+
+## M3-3 handoff
+
+M3-3 should load `terraformers-eval-v1` through the shared loader and emit `EvaluationTrace`
+records from the existing application stages. It must not change prompts, retrieval ranking, corpus
+contents, model selection, or production orchestration in order to make those cases pass.

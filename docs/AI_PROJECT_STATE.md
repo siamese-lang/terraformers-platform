@@ -14,13 +14,14 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: fixed evaluation dataset construction
+- Phase: reusable evaluation runner and provenance capture
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Current implementation task: **M3-2 — Fixed/versioned evaluation dataset**
+- Current implementation task: **M3-3 — Reusable evaluation runner and provenance capture**
 
-M0, M1, and M2 are complete. M3 is now the active milestone. Its first task defines the
-fixed-evaluation contract needed to explain what the RAG pipeline used and where an observable
-failure first occurred; it does not change prompt/retrieval/model behavior.
+M0, M1, and M2 are complete. M3 is now the active milestone. M3-1 defined the
+stage-provenance contract and M3-2 fixed the first repository-owned evaluation dataset. M3-3 is the
+current task: execute those fixed cases through one reusable runner without tuning production
+AI/RAG behavior.
 
 ## Completed
 
@@ -97,6 +98,11 @@ failure first occurred; it does not change prompt/retrieval/model behavior.
   - added one provider-neutral case/result contract for extraction, retrieval, generation, and validation provenance;
   - retained retrieved document score/source/authority/risk metadata and explicit first-observable-divergence classification; and
   - [M3 Evaluation Contract v1](evaluation/m3-evaluation-contract-v1.md) plus `EvaluationContractTest` cover success and four representative failure locations without changing production AI behavior.
+- M3-2 Fixed/versioned evaluation dataset — **COMPLETE**
+  - added `terraformers-eval-v1` with four positive architecture cases, one ambiguous case, and one non-architecture case;
+  - fixed input identity with repository-owned WebP fixtures and SHA-256, plus stage-level extraction/retrieval/generation/validation expectations;
+  - required five existing `PROJECT_DECISION` documents across positive cases so retrieval quality can be distinguished from generic vector hits; and
+  - `EvaluationDatasetLoaderTest` validates deterministic loading, fixture identity, case composition, expectation completeness, and corpus-reference existence.
 
 ## Verified architectural direction
 
@@ -161,13 +167,13 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M3-2 — Fixed/versioned evaluation dataset.** Add the smallest representative set of architecture,
-ambiguous, and non-architecture fixtures using [M3 Evaluation Contract v1](evaluation/m3-evaluation-contract-v1.md).
-Each case must carry stable input identity and enough expectations to localize extraction, retrieval,
-generation, and validation outcomes.
+**M3-3 — Reusable evaluation runner and provenance capture.** Build one runner that loads
+`terraformers-eval-v1` through `EvaluationDatasetLoader` and records the M3-1 `EvaluationTrace`
+stages for each case. Reuse the existing extraction, retrieval, generation, and Terraform validation
+boundaries rather than implementing a parallel AI service.
 
-Do not tune prompts, retrieval ranking, corpus contents, model choice, or production orchestration
-while creating the dataset.
+Do not change prompt content, retrieval ranking, corpus contents, model choice, or production
+orchestration merely to make dataset cases pass. Do not add one workflow/script per evaluation stage.
 
 ## Do not revisit
 

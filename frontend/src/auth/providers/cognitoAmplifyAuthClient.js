@@ -29,10 +29,8 @@ export const cognitoAmplifyAuthClient = {
 
   async getCurrentUser() {
     try {
-      const [currentUser, attributes] = await Promise.all([
-        amplifyGetCurrentUser(),
-        fetchUserAttributes(),
-      ]);
+      const currentUser = await amplifyGetCurrentUser();
+      const attributes = await fetchUserAttributes();
       return {
         userId: currentUser.userId,
         username: currentUser.username,

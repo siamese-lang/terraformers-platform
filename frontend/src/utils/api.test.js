@@ -23,7 +23,8 @@ test('uses the requested id token type', async () => {
 
 test('retries a 401 only once with a refreshed token', async () => {
   getToken.mockResolvedValueOnce('initial').mockResolvedValueOnce('refreshed').mockResolvedValueOnce('refreshed');
-  const adapter = jest.fn()
+  const adapter = jest.fn();
+  adapter
     .mockRejectedValueOnce({ response: { status: 401 }, config: { url: '/api/private', method: 'get', headers: {}, adapter } })
     .mockResolvedValueOnce({ data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config: {} });
   await expect(api.get('/api/private', { adapter })).resolves.toMatchObject({ data: { ok: true } });
@@ -35,7 +36,8 @@ test('emits auth expiration when token refresh is missing after 401', async () =
   const listener = jest.fn();
   window.addEventListener('terraformers:auth-expired', listener);
   getToken.mockResolvedValueOnce('initial').mockResolvedValueOnce(null);
-  const adapter = jest.fn().mockRejectedValue({ response: { status: 401 }, config: { url: '/api/private', method: 'get', headers: {}, adapter } });
+  const adapter = jest.fn();
+  adapter.mockRejectedValue({ response: { status: 401 }, config: { url: '/api/private', method: 'get', headers: {}, adapter } });
   await expect(api.get('/api/private', { adapter })).rejects.toBeTruthy();
   expect(adapter).toHaveBeenCalledTimes(1);
   expect(listener).toHaveBeenCalledTimes(1);
@@ -46,7 +48,8 @@ test('emits auth expiration when retry also returns 401', async () => {
   const listener = jest.fn();
   window.addEventListener('terraformers:auth-expired', listener);
   getToken.mockResolvedValueOnce('initial').mockResolvedValueOnce('refreshed').mockResolvedValueOnce('refreshed');
-  const adapter = jest.fn()
+  const adapter = jest.fn();
+  adapter
     .mockRejectedValueOnce({ response: { status: 401 }, config: { url: '/api/private', method: 'get', headers: {}, adapter } })
     .mockRejectedValueOnce({ response: { status: 401 }, config: { url: '/api/private', method: 'get', headers: {}, _retry: true, adapter } });
   await expect(api.get('/api/private', { adapter })).rejects.toBeTruthy();

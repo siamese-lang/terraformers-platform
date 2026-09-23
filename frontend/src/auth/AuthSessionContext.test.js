@@ -23,6 +23,7 @@ const user = { userId: 'user-1', username: 'user', email: 'user@example.com', ni
 beforeEach(() => {
   jest.clearAllMocks();
   getCurrentUser.mockResolvedValue(user);
+  api.patch.mockResolvedValue({});
 });
 
 test('resolves initial checking state to an authenticated neutral user and syncs nickname', async () => {

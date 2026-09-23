@@ -43,8 +43,8 @@ test('returns the neutral current-user shape', async () => {
 test.each(['UserUnAuthenticatedException', 'NotAuthorizedException'])(
   'normalizes %s as an unauthenticated result', async (name) => {
     getCurrentUser.mockRejectedValue({ name });
-    fetchUserAttributes.mockResolvedValue({});
     await expect(cognitoAmplifyAuthClient.getCurrentUser()).resolves.toBeNull();
+    expect(fetchUserAttributes).not.toHaveBeenCalled();
   },
 );
 

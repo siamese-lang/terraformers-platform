@@ -1,6 +1,6 @@
 # M2 Portable Persistent Runtime
 
-**Status: PENDING**
+**Status: PASS**
 
 ## Evidence identity
 
@@ -9,11 +9,9 @@
 - Authoritative runner: `.github/workflows/m2-portable-persistent-runtime-verification.yml`
 - Evidence directory: `artifacts/m2-portable-persistent-runtime/`
 
-The expected base SHA matched the checked-out repository. Direct GitHub-main lookup was attempted
-before implementation, but this environment had neither an `origin` remote nor authenticated GitHub
-CLI access; authoritative CI will check out current GitHub `main`/the PR merge commit. This report
-must remain `PENDING`, and M2-2 remains `TODO`, until that workflow succeeds and the evidence is
-reviewed.
+The expected base SHA matched the implementation base. Authoritative GitHub Actions validation
+passed at head `02a00efec167a92c8170e8787b68e28ce6dc2339`. M2-2 is therefore complete and
+M2-3 is the first remaining task.
 
 ## Gap and smallest directly related fixture
 
@@ -65,7 +63,7 @@ MariaDB and runs the existing `MariaDbRepositorySmokeTest` under the prod profil
 `@Transactional`, so it proves repository read/write/query semantics while rolling back its test
 data; Flyway schema existence is established separately after backend startup.
 
-Expected machine-readable `summary.txt` after authoritative success:
+Authoritative machine-readable `summary.txt`:
 
 ```text
 namespace_apply=PASS
@@ -81,13 +79,21 @@ Artifacts include redacted rendered manifests, pod/service inventories, backend 
 MariaDB logs, successful Flyway history, repository smoke output, port-forward diagnostics, and the
 summary. Rendered Secret values are redacted.
 
-## Same-condition comparison and pending results
+## Same-condition comparison and results
 
 Before (M2-1): cluster/image **PASS** → namespace/workload apply **FAIL**.
 
-After (M2-2 target): namespace/apply → MariaDB readiness → prod backend rollout → health →
-Flyway/schema → repository smoke. Results remain **PENDING** until authoritative CI executes the
-fixture; this initial PR does not claim those runtime stages as passed.
+After (M2-2): namespace/apply **PASS** → MariaDB readiness **PASS** → prod backend rollout
+**PASS** → health **PASS** → Flyway/schema **PASS** → repository smoke **PASS**.
+
+The backend ran with the `prod` profile against MariaDB 11.4. `/actuator/health` returned
+`{"status":"UP","groups":["liveness","readiness"]}`. The Flyway history contained five successful
+migrations through `20260923.005`, and `MariaDbRepositorySmokeTest` passed against the same
+in-cluster MariaDB instance. GitHub Actions also uploaded the redacted runtime evidence artifact.
+
+Flyway emitted a non-blocking warning that MariaDB 11.4 is newer than the bundled Flyway version's
+latest tested MariaDB release (11.2). No migration, schema-validation, or repository failure occurred;
+this warning is recorded rather than treated as a portability failure.
 
 ## Explicit limitations
 

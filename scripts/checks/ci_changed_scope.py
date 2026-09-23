@@ -21,6 +21,17 @@ def under(path: str, prefix: str) -> bool:
     return path.startswith(prefix.rstrip("/") + "/")
 
 
+def changed_paths(base: str, head: str, cwd: Path | None = None) -> list[str]:
+    """Return paths changed by the PR branch since its merge base."""
+    return subprocess.run(
+        ["git", "diff", "--name-only", "--no-renames", f"{base}...{head}", "--"],
+        check=True,
+        cwd=cwd,
+        text=True,
+        stdout=subprocess.PIPE,
+    ).stdout.splitlines()
+
+
 def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
     result = {workflow: {name: False for name in outputs} for workflow, outputs in WORKFLOW_OUTPUTS.items()}
     for path in paths:
@@ -47,6 +58,7 @@ def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
             under(path, "backend/src/main/resources/db/migration")
             or (backend_main and (filename.endswith("Entity.java") or filename.endswith("Repository.java")))
             or path in {
+                "backend/pom.xml",
                 "backend/src/main/resources/application-prod.yml",
                 "scripts/checks/mariadb-schema-validation.sh",
                 ".github/workflows/m1-cloud-decoupling-closure-verification.yml",
@@ -128,12 +140,7 @@ def main() -> None:
     else:
         if not args.base or not args.head:
             parser.error("--base and --head are required unless --all is used")
-        changed = subprocess.run(
-            ["git", "diff", "--name-only", "--diff-filter=ACMRT", args.base, args.head, "--"],
-            check=True,
-            text=True,
-            stdout=subprocess.PIPE,
-        ).stdout.splitlines()
+        changed = changed_paths(args.base, args.head)
         selected = classify(changed)[args.workflow]
     output = "".join(f"{name}={'true' if run else 'false'}\n" for name, run in selected.items())
     if args.github_output:

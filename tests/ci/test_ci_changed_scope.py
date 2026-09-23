@@ -1,4 +1,6 @@
 import importlib.util
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -48,6 +50,40 @@ class ChangedScopeTest(unittest.TestCase):
     def test_unrelated_backend_test_skips_persistent_runtime(self):
         flags = self.flags("backend/src/test/java/example/UnrelatedTest.java")
         self.assertFalse(flags["m2-persistent"]["portable_persistent_runtime"])
+
+    def test_backend_pom_runs_backend_mariadb_and_persistent_runtime(self):
+        flags = self.flags("backend/pom.xml")
+        self.assertTrue(flags["m1"]["backend_regression"])
+        self.assertTrue(flags["m1"]["mariadb_regression"])
+        self.assertTrue(flags["m2-persistent"]["portable_persistent_runtime"])
+
+    def test_deleted_base_manifest_is_collected_and_classified(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "CI Scope Test"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "ci-scope@example.test"], cwd=repository, check=True)
+            manifest = repository / "infra/kubernetes/base/backend-deployment.yaml"
+            manifest.parent.mkdir(parents=True)
+            manifest.write_text("kind: Deployment\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-qm", "add base manifest"], cwd=repository, check=True)
+            base = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, text=True, stdout=subprocess.PIPE
+            ).stdout.strip()
+            manifest.unlink()
+            subprocess.run(["git", "add", "-u"], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-qm", "delete base manifest"], cwd=repository, check=True)
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, text=True, stdout=subprocess.PIPE
+            ).stdout.strip()
+
+            changed = MODULE.changed_paths(base, head, cwd=repository)
+            self.assertEqual(changed, ["infra/kubernetes/base/backend-deployment.yaml"])
+            flags = MODULE.classify(changed)
+            self.assertTrue(flags["m1"]["runtime_contract"])
+            self.assertTrue(flags["m2-persistent"]["portable_persistent_runtime"])
+            self.assertTrue(flags["aws-runtime-package"]["aws_runtime_deployment_package"])
 
 
 if __name__ == "__main__":

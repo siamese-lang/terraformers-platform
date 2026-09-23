@@ -15,7 +15,7 @@ import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
 
 /** Bounded vision stage used only to derive retrieval facts, never Terraform. */
 @Component
-public class BedrockArchitectureFactsExtractor {
+public class BedrockArchitectureFactsExtractor implements ArchitectureFactsExtractor {
     private static final int MAX_FACT_TOKENS = 800;
     private static final String FACTS_PROMPT = "Return one compact JSON object only with keys summary,components,relationships,resourceTypes. "
             + "Keep summary under 160 characters. Keep each array to at most 8 strings and each string under 60 characters. "
@@ -32,6 +32,7 @@ public class BedrockArchitectureFactsExtractor {
         this.properties = properties;
     }
 
+    @Override
     public ArchitectureRetrievalFacts extract(ObjectContent source) {
         try {
             String mediaType = source.metadata().contentType();

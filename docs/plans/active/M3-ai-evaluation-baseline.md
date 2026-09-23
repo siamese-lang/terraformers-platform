@@ -174,21 +174,24 @@ observable divergence** whenever evidence supports that conclusion.
 
 ### M3-1 — Evaluation contract and stage-provenance schema
 
-**Status: TODO**
+**Status: DONE**
 
-**Problem / gap.** There is no stable contract describing what an evaluation case contains or what
+**Problem / gap.** There was no stable contract describing what an evaluation case contains or what
 evidence must be captured to explain a result.
 
-**Change boundary.** Define the smallest versioned case/result schema and failure categories needed
-to represent the stages above. Reuse current records and metadata where practical. Do not change
-production AI behavior.
+**Change boundary.** Added provider-neutral `EvaluationCase`, `EvaluationTrace`, shared
+`StageTrace<T>`, normalized stage/status/failure enums, and
+[Evaluation Contract v1](../../evaluation/m3-evaluation-contract-v1.md). Production AI behavior,
+prompt content, retrieval ranking, corpus contents, and model selection are unchanged.
 
-**Validation.** Prove with representative in-memory examples that the schema can represent a normal
-success, an extraction error, a retrieval error, an ungrounded generation, and a Terraform
-validation failure without stage-specific ad-hoc fields.
+**Validation.** `EvaluationContractTest` covers a normal success, fact-extraction failure, retrieval
+relevance failure, ungrounded generation with structurally valid Terraform, and Terraform validation
+failure. The common trace contract enforces that `firstDivergence` identifies the earliest failed
+stage and a category present in that stage.
 
-**Completion evidence.** One documented schema/contract is sufficient for the dataset and runner.
-No evaluator framework or new workflow is required for this task.
+**Completion evidence.** One machine-readable contract now preserves input/config identity,
+extracted facts, retrieval query, ordered reference provenance, generation evidence, validation
+results, and normalized failure localization. No evaluator framework or new workflow was added.
 
 ### M3-2 — Fixed/versioned evaluation dataset
 

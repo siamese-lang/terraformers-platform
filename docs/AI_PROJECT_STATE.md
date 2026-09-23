@@ -14,9 +14,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: evaluation contract and provenance baseline
+- Phase: fixed evaluation dataset construction
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Current implementation task: **M3-1 — Evaluation contract and stage-provenance schema**
+- Current implementation task: **M3-2 — Fixed/versioned evaluation dataset**
 
 M0, M1, and M2 are complete. M3 is now the active milestone. Its first task defines the
 fixed-evaluation contract needed to explain what the RAG pipeline used and where an observable
@@ -93,6 +93,10 @@ failure first occurred; it does not change prompt/retrieval/model behavior.
   - reviewed the accepted M2-1 through M2-5 evidence against all 14 M2 exit criteria without adding a closure-specific verifier or workflow;
   - confirmed no subsequent production/runtime change invalidated the latest successful M2-5 claims; and
   - [M2 Runtime Parity Closure](verification/m2-runtime-parity-closure.md) records **PASS** with explicit residual limitations.
+- M3-1 Evaluation contract and stage-provenance schema — **COMPLETE**
+  - added one provider-neutral case/result contract for extraction, retrieval, generation, and validation provenance;
+  - retained retrieved document score/source/authority/risk metadata and explicit first-observable-divergence classification; and
+  - [M3 Evaluation Contract v1](evaluation/m3-evaluation-contract-v1.md) plus `EvaluationContractTest` cover success and four representative failure locations without changing production AI behavior.
 
 ## Verified architectural direction
 
@@ -157,14 +161,13 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M3-1 — Evaluation contract and stage-provenance schema.** Define the fixed evaluation case and
-machine-readable result contract needed to preserve input/config identity, extracted architecture
-facts, retrieval query, ordered reference hits with scores/source metadata, references supplied to
-generation, generated components/relationships/Terraform resource types, validation result, stage
-latency, and normalized failure stage.
+**M3-2 — Fixed/versioned evaluation dataset.** Add the smallest representative set of architecture,
+ambiguous, and non-architecture fixtures using [M3 Evaluation Contract v1](evaluation/m3-evaluation-contract-v1.md).
+Each case must carry stable input identity and enough expectations to localize extraction, retrieval,
+generation, and validation outcomes.
 
-Do not change prompt content, retrieval ranking, corpus contents, model choice, or production
-orchestration in M3-1. Do not introduce LangChain/LangGraph merely to implement the schema.
+Do not tune prompts, retrieval ranking, corpus contents, model choice, or production orchestration
+while creating the dataset.
 
 ## Do not revisit
 

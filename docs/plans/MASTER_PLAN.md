@@ -108,8 +108,8 @@ failure where evidence permits.
 specific pipeline stages, and M4 receives evidence-backed failure classes. LangChain, LangGraph, or
 other framework adoption remains evidence-gated rather than being an M3 prerequisite.
 
-**Immediate next single task.** Execute M3-1 only. Define the evaluation case/result contract and
-stage-provenance schema without changing production AI behavior.
+**Immediate next single task.** Execute **M3-2 — Fixed/versioned evaluation dataset** using the
+completed M3 Evaluation Contract v1. Do not tune production AI behavior while constructing cases.
 
 ## M4 — AI Targeted Improvement
 

@@ -55,7 +55,7 @@ Each run/case result records exact input and configuration identity plus the fol
 
 Evidence:
 
-- classification;
+- classification when the extraction boundary actually exposes one; `null` means the current extraction stage does not classify input;
 - summary;
 - components;
 - relationships;
@@ -88,6 +88,7 @@ This is the minimum evidence needed to answer **which data the RAG path actually
 Evidence:
 
 - reference IDs actually supplied to generation;
+- observed input classification and available classification confidence;
 - returned summary/components/relationships/warnings;
 - exact generated Terraform;
 - generated resource types and module sources;

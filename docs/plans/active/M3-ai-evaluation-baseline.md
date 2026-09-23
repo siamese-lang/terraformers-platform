@@ -219,23 +219,36 @@ is fixed and loadable deterministically by one reusable loader using the M3-1 co
 
 ### M3-3 — Reusable evaluation runner and provenance capture
 
-**Status: TODO**
+**Status: DONE**
 
-**Problem / gap.** The current pipeline cannot emit a complete per-case provenance record.
+**Problem / gap.** The fixed dataset existed, but the current pipeline could not emit one complete
+per-case provenance record and the generation step was private inside `BedrockAnalysisProvider`.
 
-**Change boundary.** Implement one reusable evaluation runner and the minimum instrumentation/hooks
-needed to capture the stage-provenance record. Reuse `AnalysisProvider`, `EmbeddingProvider`,
-`ReferenceRetriever`, corpus contracts, prompt builder, and Terraform validator rather than
-reimplementing the application in a second service.
+**Change boundary.** Added one reusable `EvaluationRunner`, `EvaluationRunResult`, and
+`EvaluationResultWriter`. The runner consumes the M3-2 dataset and records fact extraction,
+retrieval query/hits, generation classification/output, generated Terraform resource/module types,
+and Terraform validation through the M3-1 `EvaluationTrace` contract.
 
-The evaluation path may add evaluation-only data structures or adapters, but it must not make a
-persistent Python AI service a runtime dependency.
+To avoid a parallel AI implementation, the existing Bedrock model-call/retry/parse logic was
+extracted into `AnalysisGenerationStage` / `BedrockGenerationStage`, and
+`BedrockAnalysisProvider` now uses that same generation stage. `BedrockArchitectureFactsExtractor`
+implements the small `ArchitectureFactsExtractor` boundary so the runner can reuse the same
+extraction implementation. Prompt text, retrieval ranking, corpus contents, model selection, and
+production business behavior are unchanged.
 
-**Validation.** Run deterministic fixture/stub cases proving that the runner records stage inputs and
-outputs in order and assigns a failure to the correct first observable stage.
+**Validation.** `EvaluationRunnerTest` executes all six `terraformers-eval-v1` cases with
+deterministic stage doubles and writes one machine-readable run result. It proves retrieved document
+metadata reaches generation provenance, matching ambiguous/non-architecture classifications skip
+Terraform validation, and required-retrieval/classification failures are localized to the first
+failed stage. Existing Bedrock provider/parser tests and the full backend regression suite passed
+after the generation refactor. The existing M1 boundary check was minimally extended to classify
+`BedrockGenerationStage` as an AWS-specific adapter; no new verifier or workflow was added.
 
-**Completion evidence.** One command can execute the fixed dataset and emit one machine-readable
-result set using the selected configuration.
+**Completion evidence.** One runner API now produces one machine-readable result set for the fixed
+dataset. Deterministic execution is covered by
+`mvn -q -f backend/pom.xml -Dtest=EvaluationRunnerTest test`. M3-4 only needs to wire the current
+live/provider configuration into these existing stage boundaries; it does not need a second
+evaluator or per-stage script/workflow.
 
 ### M3-4 — Current live/provider baseline
 

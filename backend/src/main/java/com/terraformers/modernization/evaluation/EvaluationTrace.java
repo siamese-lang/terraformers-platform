@@ -152,7 +152,6 @@ public record EvaluationTrace(
             List<String> resourceTypes
     ) {
         public FactExtractionEvidence {
-            classification = Objects.requireNonNull(classification, "classification");
             summary = normalize(summary);
             components = immutable(components);
             relationships = immutable(relationships);
@@ -208,6 +207,8 @@ public record EvaluationTrace(
 
     public record GenerationEvidence(
             List<String> suppliedReferenceIds,
+            EvaluationCase.InputClassification observedClassification,
+            Double classificationConfidence,
             String summary,
             List<String> components,
             List<String> relationships,
@@ -221,6 +222,12 @@ public record EvaluationTrace(
     ) {
         public GenerationEvidence {
             suppliedReferenceIds = immutable(suppliedReferenceIds);
+            if (classificationConfidence != null
+                    && (!Double.isFinite(classificationConfidence)
+                    || classificationConfidence < 0
+                    || classificationConfidence > 1)) {
+                throw new IllegalArgumentException("classificationConfidence must be between 0 and 1");
+            }
             summary = normalize(summary);
             components = immutable(components);
             relationships = immutable(relationships);

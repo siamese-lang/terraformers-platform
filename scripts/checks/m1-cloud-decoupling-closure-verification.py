@@ -159,6 +159,7 @@ def main() -> int:
     allowed_aws_import_files = {
         "backend/src/main/java/com/terraformers/modernization/analysis/SqsProgressPublisher.java",
         "backend/src/main/java/com/terraformers/modernization/analysis/bedrock/BedrockAnalysisProvider.java",
+        "backend/src/main/java/com/terraformers/modernization/analysis/bedrock/BedrockGenerationStage.java",
         "backend/src/main/java/com/terraformers/modernization/analysis/bedrock/BedrockRuntimeConfiguration.java",
         "backend/src/main/java/com/terraformers/modernization/config/CloudWatchMetricsConfiguration.java",
         "backend/src/main/java/com/terraformers/modernization/reference/BedrockArchitectureFactsExtractor.java",

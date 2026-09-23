@@ -1,9 +1,9 @@
 # M2 Object Byte Storage Parity
 
-**Status: PENDING**
+**Status: PASS**
 
-This implementation awaits authoritative CI and evidence review. M2-4 remains **TODO** and M2
-remains **ACTIVE** until that review succeeds.
+The authoritative CI and artifact review passed. M2-4 is **DONE** and M2 remains **ACTIVE** with
+M2-5 as the first incomplete task.
 
 ## Observed baseline gap and change gate
 
@@ -47,13 +47,13 @@ parent traversal, absolute escape, and mixed nested traversal are rejected.
 
 | Check | Before — PR #24 baseline | After — filesystem fixture (pending authoritative CI) |
 |---|---|---|
-| Source binary persisted | FAIL | Expected PASS |
-| Source byte read-back | FAIL | Expected PASS, exact 68-byte SHA-256 match |
-| `source-image` | HTTP 409 | Expected HTTP 200 |
-| `source-object` | HTTP 409 | Expected HTTP 200 with filesystem provider, persisted flag, length, type, and logical location |
-| Result binary persisted | FAIL | Expected PASS |
-| Terraform inline read-back | PASS | Expected PASS |
-| Result integrity | Not externally stored | Expected filesystem SHA-256 = database checksum = API-content SHA-256 |
+| Source binary persisted | FAIL | PASS |
+| Source byte read-back | FAIL | PASS — exact 68-byte SHA-256 match |
+| `source-image` | HTTP 409 | HTTP 200 |
+| `source-object` | HTTP 409 | HTTP 200 with `filesystem`, persisted flag, 68-byte length, and `image/png` |
+| Result binary persisted | FAIL | PASS |
+| Terraform inline read-back | PASS | PASS |
+| Result integrity | Not externally stored | PASS — filesystem SHA-256 = database checksum = API-content SHA-256 |
 
 The verifier also checks project and project-tree HTTP linkage, source and generated-file database
 classification, the successful `stub-integrated-java` lifecycle, and direct object files inside the
@@ -70,5 +70,56 @@ criteria.
 
 ## Authoritative result
 
-Pending the **M2 Object Byte Storage Verification** workflow and artifact review. No after-state
-PASS or checksum is claimed before that run. M2-4 remains **TODO**.
+**M2 Object Byte Storage Verification** run #2 passed at validated head
+`99fa2864ae3ef86536332172c4a3e50be612e686`. The first run stopped before Kind because the
+unit test contained an incorrect expected SHA-256 constant for byte sequence `00 01 02 FF`; the
+implementation returned the correct digest, the test vector was corrected, and all regression plus
+runtime verification was rerun.
+
+The authoritative summary recorded:
+
+```text
+runtime_ready=PASS
+authenticated_upload=PASS
+project_created=PASS
+source_file_registered=PASS
+source_binary_persisted=PASS
+source_byte_readback=PASS
+source_byte_checksum_match=PASS
+source_object_metadata=PASS
+analysis_job_created=PASS
+analysis_terminal=PASS
+analysis_status=SUCCEEDED
+analysis_provider=stub-integrated-java
+terraform_validation=PASS
+result_file_registered=PASS
+result_binary_persisted=PASS
+result_object_exists=PASS
+terraform_inline_readback=PASS
+terraform_checksum_match=PASS
+result_object_checksum_match=PASS
+project_linkage=PASS
+project_tree_linkage=PASS
+source_storage_provider=filesystem
+result_storage_provider=filesystem
+source_image_http_status=200
+source_object_http_status=200
+first_confirmed_gap=none
+cloud_credentials_required=false
+```
+
+The source database row recorded `storage_provider=filesystem`, `binary_persisted=1`, and
+`size_bytes=68`. The HTTP source read-back SHA-256 and the directly inspected filesystem source
+object both matched the fixed input SHA-256
+`431ced6916a2a21a156e38701afe55bbd7f88969fbbfc56d7fe099d47f265460`.
+
+The generated Terraform row recorded `storage_provider=filesystem`, `binary_persisted=1`, and
+non-empty inline content. The directly inspected filesystem result SHA-256
+`6d1090d8c6dab2944a745322324a3646bfdc933f4bb0a267d847493c6e5d448c`
+matched both the database checksum and API-content SHA-256. Project metadata and project-tree
+linkage also passed.
+
+The filesystem implementation remains a deterministic **test-runtime adapter only**. It does not
+select production storage and does not claim persistence across pod/container recreation, node
+failure, multiple replicas, backup/restore, HA, or production retention. Those concerns remain
+outside M2-4.

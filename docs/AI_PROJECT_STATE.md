@@ -13,12 +13,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current milestone
 
 - Milestone: **M1 — Cloud Decoupling**
-- Status: **ACTIVE**
-- Phase: provider boundary decoupling
-- Active plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
-- Current implementation task: **M1-8 — Contract/regression verification and closure**
+- Status: **COMPLETE**
+- Phase: closure complete; M2 planning next
+- Completed plan: [M1 — Cloud Decoupling](plans/active/M1-cloud-decoupling.md)
+- Current implementation task: **none — create the M2 Runtime Parity active plan before implementation**
 
-M0 remains complete; its closure evidence is preserved below. M1 implementation proceeds in the active plan's order, with M1-1 through M1-7 complete and M1-8 next.
+M0 and M1 are complete. M1-1 through M1-8 have closure evidence. M2 remains PLANNED until an M2 active plan is written and merged.
 
 ## Completed
 
@@ -63,6 +63,10 @@ M0 remains complete; its closure evidence is preserved below. M1 implementation 
   - canonical production/runtime configuration now uses provider-neutral JWT, storage, analysis, embedding, retrieval, and progress-publisher selectors, while Cognito/S3/Bedrock/SQS/AWS OpenSearch signing values are isolated in the explicit `aws-compat` profile;
   - canonical Kubernetes/runtime-secret/deployment contracts were updated to neutral base keys, legacy Bedrock/S3/SQS enable switches were removed from the canonical selection contract, and historical AWS compatibility remains explicitly preserved; and
   - Backend Local Verification, MariaDB schema/repository validation, AWS Deployment Contract Inventory Verification, AWS Runtime Deployment Package Verification, and Terraform Static Verification — **PASS** at `b4e3c4cb0cf42e64904111447395f7a1435ca9aa`.
+- M1-8 Contract/regression verification and closure — **COMPLETE**
+  - dedicated closure verification passed provider-neutral boundary inspection plus full backend, MariaDB/Flyway/repository, frontend, and runtime-contract regressions;
+  - closure inspection removed provider-specific failure types from the generic analysis lifecycle and preserved failure-message plus observability-category semantics through provider-neutral failure signals; and
+  - M1 Cloud Decoupling Closure Verification, Backend Local Verification, Terraform Static Verification, and AWS Deployment Contract Inventory Verification — **PASS** at `d843fb9f08cd6255c1a4738ac220a40b5e760d75`.
 
 ## Verified architectural direction
 
@@ -112,11 +116,11 @@ No remaining M0 work.
 
 ## Remaining M1 work
 
-M1-8 contract/regression verification and closure.
+No remaining M1 work.
 
 ## Immediate next work
 
-**M1-8 — Contract/regression verification and closure:** M1-1~M1-7의 provider-neutral boundary와 canonical runtime contract를 consolidated regression/contract evidence로 검증하고, 기존 business behavior·MariaDB/Flyway compatibility·AWS compatibility adapter isolation을 확인한다. 확인된 regression만 최소 수정하고 M1 범위를 확장하지 않는다.
+**Create the M2 — Runtime Parity active plan:** M1 closure evidence와 current main의 portable/runtime contracts를 기준으로 M2의 atomic work sequence, validation evidence, exit criteria를 source of truth로 작성한다. M2 plan merge 전에는 runtime-parity implementation을 시작하지 않는다.
 
 ## Do not revisit
 

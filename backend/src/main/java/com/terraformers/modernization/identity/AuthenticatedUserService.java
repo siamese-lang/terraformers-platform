@@ -1,6 +1,5 @@
 package com.terraformers.modernization.identity;
 
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -12,33 +11,28 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthenticatedUserService {
 
-    private static final String CURRENT_IDENTITY_PROVIDER = "cognito";
-
     private final UserRepository userRepository;
+    private final JwtExternalIdentityMapper externalIdentityMapper;
 
-    public AuthenticatedUserService(UserRepository userRepository) {
+    public AuthenticatedUserService(UserRepository userRepository, JwtExternalIdentityMapper externalIdentityMapper) {
         this.userRepository = userRepository;
+        this.externalIdentityMapper = externalIdentityMapper;
     }
 
     @Transactional
     public UserEntity getOrCreate(Jwt jwt) {
         if (jwt == null) {
-            throw new AuthenticationCredentialsNotFoundException("authenticated Cognito JWT is required");
+            throw new AuthenticationCredentialsNotFoundException("authenticated JWT is required");
         }
 
-        String externalIdentitySubject = requiredClaim(jwt, "sub", 128);
-        String email = optionalClaim(jwt, "email", 320);
-        if (email != null) {
-            email = email.toLowerCase(Locale.ROOT);
-        }
-        String explicitDisplayName = explicitDisplayName(jwt);
+        AuthenticatedExternalIdentity identity = externalIdentityMapper.map(jwt);
+        String explicitDisplayName = identity.explicitDisplayName() == null
+                ? null : normalizeDisplayName(identity.explicitDisplayName());
         String displayName = explicitDisplayName != null
-                ? explicitDisplayName : fallbackDisplayName(jwt, email, externalIdentitySubject);
-
-        String resolvedEmail = email;
-        return findByExternalIdentity(externalIdentitySubject)
-                .map(existing -> synchronize(existing, resolvedEmail, explicitDisplayName))
-                .orElseGet(() -> createWithRetry(externalIdentitySubject, resolvedEmail, displayName));
+                ? explicitDisplayName : normalizeDisplayName(identity.fallbackDisplayName());
+        return findByExternalIdentity(identity)
+                .map(existing -> synchronize(existing, identity.email(), explicitDisplayName))
+                .orElseGet(() -> createWithRetry(identity, displayName));
     }
 
     private UserEntity synchronize(UserEntity existing, String email, String explicitDisplayName) {
@@ -55,8 +49,7 @@ public class AuthenticatedUserService {
             existing.setEmail(email);
             changed = true;
         }
-        // Access tokens commonly provide only a UUID-like cognito:username. Do not
-        // let that fallback erase a nickname explicitly saved by the user.
+        // A provider fallback must not erase a display name explicitly saved by the user.
         if (explicitDisplayName != null && !Objects.equals(explicitDisplayName, existing.getDisplayName())) {
             existing.setDisplayName(explicitDisplayName);
             changed = true;
@@ -67,7 +60,8 @@ public class AuthenticatedUserService {
         return changed ? userRepository.save(existing) : existing;
     }
 
-    private UserEntity createWithRetry(String externalIdentitySubject, String email, String displayName) {
+    private UserEntity createWithRetry(AuthenticatedExternalIdentity identity, String displayName) {
+        String email = identity.email();
         if (email != null) {
             userRepository.findByEmail(email).ifPresent(existing -> {
                 throw new IllegalStateException("authenticated email is already linked to another external identity");
@@ -75,7 +69,7 @@ public class AuthenticatedUserService {
         }
 
         UserEntity user = new UserEntity();
-        user.setExternalIdentity(CURRENT_IDENTITY_PROVIDER, externalIdentitySubject);
+        user.setExternalIdentity(identity.provider(), identity.subject());
         user.setEmail(email);
         user.setDisplayName(displayName);
         user.setRole(UserRole.USER);
@@ -84,16 +78,16 @@ public class AuthenticatedUserService {
         try {
             return userRepository.save(user);
         } catch (DataIntegrityViolationException exception) {
-            return findByExternalIdentity(externalIdentitySubject)
+            return findByExternalIdentity(identity)
                     .map(existing -> synchronize(existing, email, null))
                     .orElseThrow(() -> exception);
         }
     }
 
-    private Optional<UserEntity> findByExternalIdentity(String externalIdentitySubject) {
+    private Optional<UserEntity> findByExternalIdentity(AuthenticatedExternalIdentity identity) {
         return userRepository.findByExternalIdentityProviderAndExternalIdentitySubject(
-                CURRENT_IDENTITY_PROVIDER,
-                externalIdentitySubject
+                identity.provider(),
+                identity.subject()
         );
     }
 
@@ -106,64 +100,6 @@ public class AuthenticatedUserService {
             return userRepository.save(user);
         }
         return user;
-    }
-
-    private String explicitDisplayName(Jwt jwt) {
-        String displayName = firstNonBlankOrNull(
-                jwt.getClaimAsString("name"),
-                jwt.getClaimAsString("preferred_username"),
-                jwt.getClaimAsString("nickname")
-        );
-        return displayName == null ? null : normalizeDisplayName(displayName);
-    }
-
-    private String fallbackDisplayName(Jwt jwt, String email, String externalIdentitySubject) {
-        String displayName = firstNonBlank(
-                email,
-                jwt.getClaimAsString("cognito:username"),
-                externalIdentitySubject
-        );
-        return displayName.length() <= 100 ? displayName : displayName.substring(0, 100);
-    }
-
-    private String requiredClaim(Jwt jwt, String claimName, int maxLength) {
-        String value = optionalClaim(jwt, claimName, maxLength);
-        if (value == null) {
-            throw new AuthenticationCredentialsNotFoundException(
-                    "authenticated Cognito JWT is missing required claim: " + claimName
-            );
-        }
-        return value;
-    }
-
-    private String optionalClaim(Jwt jwt, String claimName, int maxLength) {
-        String value = jwt.getClaimAsString(claimName);
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        String normalized = value.strip();
-        if (normalized.length() > maxLength) {
-            throw new IllegalArgumentException(claimName + " exceeds maximum length " + maxLength);
-        }
-        return normalized;
-    }
-
-    private String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value.strip();
-            }
-        }
-        throw new IllegalStateException("display name could not be resolved");
-    }
-
-    private String firstNonBlankOrNull(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value.strip();
-            }
-        }
-        return null;
     }
 
     private String normalizeDisplayName(String displayName) {

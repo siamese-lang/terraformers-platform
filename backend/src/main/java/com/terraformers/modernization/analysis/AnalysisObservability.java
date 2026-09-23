@@ -33,6 +33,14 @@ public class AnalysisObservability {
         finally { sample.stop(Timer.builder(prefix + ".duration").register(meterRegistry)); }
     }
     public String category(Throwable exception) {
+        if (exception instanceof AnalysisProviderFailureException providerFailure) {
+            return switch (providerFailure.reason()) {
+                case OUTPUT_TRUNCATED -> "truncated_output";
+                case INPUT_REJECTED -> "rejected_input";
+                case RESPONSE_FORMAT -> "response_format";
+            };
+        }
+        if (exception instanceof AnalysisProviderTimeoutException) return "timeout";
         if (exception instanceof RejectedExecutionException) return "executor_rejected";
         String simple = exception == null ? "" : exception.getClass().getSimpleName().toLowerCase(Locale.ROOT);
         if (simple.contains("timeout")) return "timeout";

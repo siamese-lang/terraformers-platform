@@ -47,9 +47,14 @@ Bedrock truncation, rejected-input, and response-format exceptions. The follow-u
 small provider-neutral failure reasons and translates final Bedrock failures at the provider
 boundary. The runner now knows only neutral failure signals and retains the same user-facing
 messages. Bedrock's standard-to-compact truncation retry occurs before translation, so its retry
-count, parser/prompt behavior, state transitions, and observability semantics remain unchanged.
-The strengthened verifier and focused runner/provider tests provide same-condition regression
-coverage. No other production behavior or architecture was changed.
+count, parser/prompt behavior, state transitions, and user-facing failure messages remain unchanged.
+Review of the neutral wrapper then found that `AnalysisObservability` classified its simple class
+name as `other`, regressing the established `truncated_output`, `rejected_input`, and
+`response_format` category tags. `AnalysisObservability` now classifies the neutral failure reason
+directly and recognizes the neutral timeout signal, without learning Bedrock exception types. The
+strengthened verifier and focused observability/runner/provider tests plus the full closure suite
+provide same-condition regression coverage. No other production behavior or architecture was
+changed.
 
 ## Accepted residual limitations
 

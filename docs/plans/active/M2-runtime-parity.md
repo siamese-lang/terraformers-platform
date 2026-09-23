@@ -6,7 +6,7 @@
 
 M0 and M1 are complete. M2 proves the existing cloud-neutral application contracts in a portable,
 deterministic runtime; it is not a new-feature or GCP-deployment milestone. The first incomplete
-task is **M2-2 — Portable persistent runtime substrate**.
+task is **M2-3 — Authenticated identity and ownership parity**.
 
 ## Objective
 
@@ -111,7 +111,7 @@ it as a harness error. No runtime/product fix was made in M2-1.
 
 ### M2-2 — Portable persistent runtime substrate
 
-**Status: TODO**
+**Status: DONE**
 
 **Problem / gap.** H2 with Flyway disabled cannot by itself prove the reusable MariaDB + Flyway
 persistence contract in a portable runtime.
@@ -129,8 +129,20 @@ database or production topology. Restart/in-flight recovery remains M5 scope.
 **Validation.** Reproduce startup/readiness, migration application, and repository persistence from
 a clean state and rerun under the same documented conditions.
 
-**Completion evidence.** Preserve the chosen fixture's rationale, exact runtime/config identity,
-migration/schema result, persistence proof, and repeatable commands, tied to the M2-1 observed gap.
+**Completion evidence.** At validated head `02a00efec167a92c8170e8787b68e28ce6dc2339`,
+the dedicated **M2 Portable Persistent Runtime Verification** workflow passed on GitHub Actions.
+The new self-contained `terraformers-portable` Kind fixture applied successfully, MariaDB 11.4
+became ready, the backend ran with the canonical `prod` profile and reached rollout/readiness,
+`/actuator/health` returned `UP`, Flyway created and validated five successful migration rows,
+and the existing transactional `MariaDbRepositorySmokeTest` passed against that same in-cluster
+MariaDB instance through a port-forward. The uploaded machine-readable summary recorded
+`namespace_apply=PASS`, `mariadb_ready=PASS`, `backend_rollout=PASS`,
+`backend_health=PASS`, `flyway_schema=PASS`, `repository_smoke=PASS`, and
+`cloud_credentials_required=false`. The fixture uses `emptyDir` deliberately and does not claim
+restart durability, object-byte persistence, authenticated user-flow parity, active retrieval/model
+behavior, or production topology. Flyway emitted a non-blocking compatibility warning that MariaDB
+11.4 is newer than the bundled Flyway version's latest tested MariaDB release (11.2); migrations and
+schema/repository validation still passed.
 
 ### M2-3 — Authenticated identity and ownership parity
 

@@ -53,6 +53,8 @@ public class BedrockResponseParser {
                 throw new BedrockResponseFormatException("Bedrock response format is invalid: terraform_hcl section is empty");
             }
             return new ParsedBedrockAnalysis(
+                    inputType,
+                    classificationConfidence,
                     terraform,
                     summary,
                     textArray(structured, "components"),

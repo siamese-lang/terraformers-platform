@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: terraformers-backend-runtime-config
+data:
+  OBJECT_READER_PROVIDER: "filesystem"
+  OBJECT_WRITER_PROVIDER: "filesystem"
+  TERRAFORMERS_STORAGE_FILESYSTEM_ROOT_PATH: "/tmp/terraformers-object-store"
+  ANALYSIS_PROVIDER: "stub"
+  EMBEDDING_PROVIDER: "disabled"
+  RETRIEVAL_MODE: "DISABLED"

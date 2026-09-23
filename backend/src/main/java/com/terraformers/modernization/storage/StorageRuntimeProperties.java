@@ -12,8 +12,8 @@ public class StorageRuntimeProperties {
     public void setReaderProvider(String readerProvider) { this.readerProvider = readerProvider; }
     public String getWriterProvider() { return writerProvider; }
     public void setWriterProvider(String writerProvider) { this.writerProvider = writerProvider; }
-    public String resolvedReaderProvider() { return normalize(readerProvider, "reader-provider", "disabled", "s3"); }
-    public String resolvedWriterProvider() { return normalize(writerProvider, "writer-provider", "metadata-only", "s3"); }
+    public String resolvedReaderProvider() { return normalize(readerProvider, "reader-provider", "disabled", "filesystem", "s3"); }
+    public String resolvedWriterProvider() { return normalize(writerProvider, "writer-provider", "filesystem", "metadata-only", "s3"); }
 
     private String normalize(String value, String property, String... supported) {
         String normalized = value == null ? "" : value.strip().toLowerCase(Locale.ROOT);

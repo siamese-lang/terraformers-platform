@@ -17,6 +17,11 @@ class StorageRuntimePropertiesTest {
         properties.setWriterProvider("s3");
         assertThat(properties.resolvedReaderProvider()).isEqualTo("s3");
         assertThat(properties.resolvedWriterProvider()).isEqualTo("s3");
+
+        properties.setReaderProvider("filesystem");
+        properties.setWriterProvider("filesystem");
+        assertThat(properties.resolvedReaderProvider()).isEqualTo("filesystem");
+        assertThat(properties.resolvedWriterProvider()).isEqualTo("filesystem");
     }
 
     @Test

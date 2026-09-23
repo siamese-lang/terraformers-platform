@@ -14,6 +14,9 @@ KEY_ID="terraformers-m2-test-key"
 BACKEND_FORWARD_PID=""
 TEMP_DIR=""
 
+# shellcheck source=lib/http-status.sh
+source "${REPO_ROOT}/scripts/checks/lib/http-status.sh"
+
 for check in runtime_ready jwks_ready owner_token_accepted owner_user_created provider_subject_persisted numeric_user_id same_identity_reused second_identity_distinct anonymous_protected_rejected invalid_token_rejected owner_private_access non_owner_private_forbidden non_owner_modification_forbidden owner_modification_allowed display_name_update display_name_preserved; do
   printf -v "${check}" FAIL
 done
@@ -40,13 +43,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-http_status() {
-  local method="$1" path="$2" token="${3:-}" body="${4:-}" args=(-sS -o /dev/null -w '%{http_code}' -X "${method}")
-  [[ -z "${token}" ]] || args+=(-H "Authorization: Bearer ${token}")
-  [[ -z "${body}" ]] || args+=(-H 'Content-Type: application/json' --data "${body}")
-  curl "${args[@]}" "http://127.0.0.1:${BACKEND_PORT}${path}"
-}
-assert_status() { local expected="$1"; shift; local actual; actual="$(http_status "$@")"; echo "$2 $1=$actual" >>"${OUTPUT_DIR}/http-status-summary.txt"; [[ "${actual}" == "${expected}" ]]; }
 db_query() {
   kubectl -n "${NAMESPACE}" exec deployment/terraformers-mariadb -- sh -c \
     'mariadb -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" --batch --skip-column-names -e "$1"' -- "$1"

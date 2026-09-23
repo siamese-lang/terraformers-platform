@@ -96,6 +96,8 @@ def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
             or under(path, "infra/kubernetes/overlays/portable-persistent")
             or under(path, "infra/kubernetes/overlays/portable-authenticated")
             or path in {
+                "scripts/checks/http-status-helper-verification.sh",
+                "scripts/checks/lib/http-status.sh",
                 "scripts/checks/kind-portable-authenticated-smoke.sh",
                 ".github/workflows/m2-authenticated-identity-parity-verification.yml",
             }

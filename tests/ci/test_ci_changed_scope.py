@@ -47,6 +47,10 @@ class ChangedScopeTest(unittest.TestCase):
         flags = self.flags("docs/verification/m2-authenticated-identity-parity.md")
         self.assertFalse(flags["m2-authenticated"]["authenticated_identity_parity"])
 
+    def test_authenticated_http_helper_runs_authenticated_runtime(self):
+        flags = self.flags("scripts/checks/lib/http-status.sh")
+        self.assertTrue(flags["m2-authenticated"]["authenticated_identity_parity"])
+
     def test_base_manifest_runs_all_runtime_dependents(self):
         flags = self.flags("infra/kubernetes/base/backend-deployment.yaml")
         self.assertTrue(flags["m2-persistent"]["portable_persistent_runtime"])

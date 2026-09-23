@@ -50,6 +50,8 @@ jobs:
         with:
           cluster_name: terraformers-portable-authenticated
           wait: 120s
+      - name: Verify HTTP status helper
+        run: bash scripts/checks/http-status-helper-verification.sh
       - name: Verify authenticated identity parity
         run: bash scripts/checks/kind-portable-authenticated-smoke.sh
       - name: Upload sanitized evidence

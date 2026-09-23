@@ -20,6 +20,14 @@ not a JWT parity failure. The outer overlay now assigns all composed resources t
 `terraformers-portable`, and the verifier asserts that the JWKS ConfigMap, Deployment, and Service
 exist there immediately after apply.
 
+### Historical run #2
+
+The second workflow run confirmed `runtime_ready=PASS` and `jwks_ready=PASS`: MariaDB, the JWKS
+fixture, and the backend were Ready, and backend health was `UP`. It then stopped immediately before
+the first HTTP authentication request because the verifier expanded `method` in the same `local`
+statement that initialized it under `set -u`. Authentication requests were therefore **NOT REACHED**;
+this was a shell harness initialization failure, not an authentication-parity failure.
+
 The `portable-authenticated` overlay composes the already verified `portable-persistent` fixture and
 adds a BusyBox static HTTP server for JWKS. The verifier generates an ephemeral RSA-2048 key with
 public exponent 65537, publishes only its public JWK (`kid=terraformers-m2-test-key`), and signs

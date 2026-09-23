@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: terraformers-portable
+
+resources:
+  - namespace.yaml
+  - ../../base
+  - mariadb.yaml
+  - backend-secret.yaml
+
+images:
+  - name: public.ecr.aws/example/terraformers-backend
+    newName: terraformers-backend
+    newTag: portable-persistent
+
+patches:
+  - path: backend-configmap-patch.yaml
+  - path: backend-deployment-patch.yaml

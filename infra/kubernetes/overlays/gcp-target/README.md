@@ -15,8 +15,11 @@ OpenSearch 3.8.0 StatefulSet. It is not an evaluation-only overlay.
   delivery is not selected in M3-R2.
 - `GOOGLE_CLOUD_PROJECT` and the backend runtime Secret are intentionally not committed. Deployment
   tooling supplies them from the approved project/runtime configuration.
-- The initial 15 GiB OpenSearch PVC and resource requests are pre-apply values; refresh quota and
-  node headroom before live creation.
+- The initial 15 GiB OpenSearch PVC is explicitly bound to the repository-owned
+  `terraformers-pd-standard` StorageClass using the GCE PD CSI driver, rather than relying on
+  GKE's default balanced disk class.
+- The initial PVC size and resource requests are pre-apply values; refresh quota and node headroom
+  before live creation.
 - The canonical cluster may remain applied with its node pool at 0 while idle. Live verification
   raises the same node pool to 1 and returns it to 0 afterward; this is not a second environment.
 

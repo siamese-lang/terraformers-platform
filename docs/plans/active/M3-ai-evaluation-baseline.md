@@ -298,24 +298,45 @@ variables are explicit enough for M3-R2 implementation. No resource was created 
 
 ### M3-R2 — Single target AI/RAG runtime foundation
 
-**Status: TODO**
+**Status: IN PROGRESS — STATIC FOUNDATION COMPLETE / LIVE PRE-APPLY GATE PENDING**
 
-**Problem / gap.** The selected target capabilities do not yet exist as deployable GCP/open-source
-infrastructure/adapters.
+**Problem / gap.** ADR-005 selected the target products, but the project still needed deployable
+provider adapters and reusable GCP/OpenSearch infrastructure before the same runtime could serve
+M3-4 and later milestones.
 
-**Change boundary.** Implement only the minimum target AI/RAG runtime needed by the serving
-application: reusable IaC/configuration, runtime identity/networking, generation/embedding adapter
-selection, OpenSearch-compatible retrieval/index persistence, and provider-neutral integration.
-This is the project's actual target runtime foundation, not evaluation infrastructure.
+**Implemented static foundation.**
 
-The implementation must be reusable by later backend serving and M9 closure; no second "real"
-runtime is created later.
+- added Vertex AI generation, architecture-facts, and query-embedding adapters behind the existing
+  `AnalysisGenerationStage` / `AnalysisProvider`, `ArchitectureFactsExtractor`, and
+  `EmbeddingProvider` boundaries;
+- added explicit `VERTEX` provider selection while preserving the historical Bedrock adapters;
+- added a provider-neutral HTTP `OpenSearchTransport` and explicit `HTTP` versus
+  `AWS_SIGV4` transport selection, leaving the historical SigV4 implementation lazy and isolated;
+- added the `prod,gcp-target` runtime profile for Vertex + REQUIRED OpenSearch retrieval and the
+  reserved `terraformers-reference-v3` / 1024-dimensional embedding identity;
+- added reusable Terraform for one zonal GKE Standard cluster, dedicated VPC/subnet, node
+  `vm.max_map_count=262144`, Workload Identity Federation for GKE, and least-privilege Vertex AI
+  project access for the backend Kubernetes ServiceAccount; and
+- added one internal-only OpenSearch 3.8.0 StatefulSet/ClusterIP overlay in the same target cluster.
+  It is single-node portfolio/runtime foundation, not an HA/SLA claim and not a separate evaluation
+  environment.
 
-**Validation.** Static IaC/application checks plus the smallest live readiness checks required to
-prove the selected services/endpoints/identity are reachable. Do not run the M3 quality dataset yet.
+**Validation.** Existing Backend Local Verification compiles/packages the Google Gen AI SDK and
+runs the backend regression suite. Existing Terraform Static Verification now includes
+`infra/terraform/envs/gcp-target-runtime`. Existing runtime-contract verification renders the
+`gcp-target` overlay and checks target provider selection, v3 identity, internal-only OpenSearch,
+and absence of AWS region leakage. No new workflow or standalone verifier was added.
 
-**Completion evidence.** Reusable target IaC/adapters/configuration exist and can be applied without
-a parallel evaluation-only cloud stack.
+**Live boundary.** **No GCP resource has been created.** The first resource-creating Terraform
+apply remains gated on a fresh, non-destructive observation of the active project/billing state,
+CPU/instance/disk quota, exact zonal GKE availability, Vertex model access, and current cost. The
+account values retained from prior work are dated planning evidence, not a substitute for this
+pre-apply check.
+
+**Completion evidence.** Static reusable target code/IaC is present, but M3-R2 remains incomplete
+until the approved target runtime is applied and its minimum live readiness is proven. If the fresh
+account evidence invalidates ADR-005's one-cluster shape, stop before creation and amend ADR-005;
+do not create a second fallback environment.
 
 ### M3-R3 — Corpus ingestion and serving-path smoke
 

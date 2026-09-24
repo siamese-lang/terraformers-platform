@@ -2,6 +2,7 @@ package com.terraformers.modernization.analysis;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import com.terraformers.modernization.reference.RetrievalMode;
+import com.terraformers.modernization.reference.opensearch.OpenSearchTransportType;
 
 @ConfigurationProperties(prefix = "terraformers.analysis")
 public class AnalysisRuntimeProperties {
@@ -12,6 +13,7 @@ public class AnalysisRuntimeProperties {
     private String embeddingProvider = "disabled";
     private String progressPublisher = "logging";
     private String opensearchEndpoint;
+    private String opensearchTransport = "http";
     private String indexName;
     private String vectorFieldName;
     private String contentFieldName;
@@ -52,6 +54,18 @@ public class AnalysisRuntimeProperties {
 
     public void setOpensearchEndpoint(String opensearchEndpoint) {
         this.opensearchEndpoint = opensearchEndpoint;
+    }
+
+    public String getOpensearchTransport() {
+        return opensearchTransport;
+    }
+
+    public void setOpensearchTransport(String opensearchTransport) {
+        this.opensearchTransport = opensearchTransport;
+    }
+
+    public OpenSearchTransportType resolvedOpenSearchTransport() {
+        return OpenSearchTransportType.from(opensearchTransport);
     }
 
     public String getIndexName() {

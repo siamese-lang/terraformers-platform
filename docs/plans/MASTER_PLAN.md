@@ -90,8 +90,8 @@ implementation until that plan is the repository source of truth.
 
 **Status.** **ACTIVE — DEPENDENCY RESEQUENCED.** The
 [active M3 plan](active/M3-ai-evaluation-baseline.md) records M3-1 through M3-3 as complete.
-M3-4 live evaluation is **WAITING_FOR_TARGET_RUNTIME**. The current task is
-**M3-R1 — Target runtime evidence and capability decision**.
+M3-4 live evaluation is **WAITING_FOR_TARGET_RUNTIME**. M3-R1 is complete. The current task is
+**M3-R2 — Single target AI/RAG runtime foundation**.
 
 **Problem.** The evaluation contract, fixed dataset, and reusable provenance runner exist, but the
 historical AWS live runtime was intentionally removed. Recreating an AWS evaluation stack or

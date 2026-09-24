@@ -2,14 +2,14 @@ package com.terraformers.modernization.evaluation;
 
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisGenerationStage;
+import com.terraformers.modernization.analysis.AnalysisGenerationOutputTruncatedException;
+import com.terraformers.modernization.analysis.AnalysisGenerationResponseFormatException;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisMode;
 import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.TerraformDraftValidation;
 import com.terraformers.modernization.analysis.TerraformDraftValidator;
-import com.terraformers.modernization.analysis.bedrock.BedrockOutputTruncatedException;
-import com.terraformers.modernization.analysis.bedrock.BedrockResponseFormatException;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationCase;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationDataset;
 import com.terraformers.modernization.evaluation.EvaluationTrace.ConfigurationIdentity;
@@ -535,10 +535,10 @@ public class EvaluationRunner {
     }
 
     private EvaluationFailureCategory generationFailureCategory(RuntimeException exception) {
-        if (exception instanceof BedrockOutputTruncatedException) {
+        if (exception instanceof AnalysisGenerationOutputTruncatedException) {
             return EvaluationFailureCategory.OUTPUT_TRUNCATED;
         }
-        if (exception instanceof BedrockResponseFormatException) {
+        if (exception instanceof AnalysisGenerationResponseFormatException) {
             return EvaluationFailureCategory.RESPONSE_FORMAT;
         }
         if (exception instanceof AnalysisProviderTimeoutException) {

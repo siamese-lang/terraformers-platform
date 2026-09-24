@@ -24,21 +24,27 @@ The GKE free-tier credit covers the zonal Standard cluster management fee only. 
 nodes, persistent disks, networking, and Vertex AI usage remain separately billable or consume Free
 Trial credit.
 
+## Diagnostic-shell safety
+
+Do not enable `set -euo pipefail` in the interactive Cloud Shell for this diagnostic runbook.
+A missing/disabled API or permission is itself useful readiness evidence and should produce a
+`[WARN]` line rather than terminating the shell flow.
+
+Quota fields are repeated values in the Compute API response, so quota commands must use
+`--flatten='quotas[]'` before formatting `metric,limit,usage`.
+
 ## 1. Resolve active project and account
 
 Run in Cloud Shell:
 
 ```bash
-set -euo pipefail
-
 PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
-ACCOUNT="$(gcloud config get-value account 2>/dev/null)"
 
 printf 'PROJECT_ID=%s\n' "$PROJECT_ID"
-printf 'ACCOUNT=%s\n' "$ACCOUNT"
 
-test -n "$PROJECT_ID"
-gcloud projects describe "$PROJECT_ID"   --format='yaml(projectId,projectNumber,name,lifecycleState)'
+gcloud projects describe "$PROJECT_ID" \
+  --format='yaml(projectId,name,lifecycleState)' \
+  || echo "[WARN] project describe failed"
 ```
 
 Do not continue if the selected project is not the intended Terraformers target project.
@@ -46,7 +52,9 @@ Do not continue if the selected project is not the intended Terraformers target 
 ## 2. Verify billing link
 
 ```bash
-gcloud billing projects describe "$PROJECT_ID"   --format='yaml(projectId,billingAccountName,billingEnabled)'
+gcloud billing projects describe "$PROJECT_ID" \
+  --format='yaml(projectId,billingEnabled)' \
+  || echo "[WARN] billing status query failed"
 ```
 
 This proves that billing is linked/enabled. It does **not** prove the remaining Free Trial credit.
@@ -58,7 +66,12 @@ payment information in the repository.
 ## 3. Inspect global Compute Engine quota
 
 ```bash
-gcloud compute project-info describe   --project="$PROJECT_ID"   --format='table(quotas.metric,quotas.limit,quotas.usage)'   | grep -E 'CPUS|IN_USE_ADDRESSES|INSTANCES|SSD_TOTAL_GB|DISKS_TOTAL_GB' || true
+gcloud compute project-info describe \
+  --project="$PROJECT_ID" \
+  --flatten='quotas[]' \
+  --format='csv[no-heading](quotas.metric,quotas.limit,quotas.usage)' \
+  | grep -E '^(CPUS_ALL_REGIONS|IN_USE_ADDRESSES),' \
+  || echo "[WARN] global quota query returned no matching data"
 ```
 
 The expected live shape needs only one 2-vCPU node, but use current quota/usage rather than the
@@ -67,7 +80,12 @@ historical 2026-09-16 values.
 ## 4. Inspect Seoul regional quota
 
 ```bash
-gcloud compute regions describe asia-northeast3   --project="$PROJECT_ID"   --format='table(quotas.metric,quotas.limit,quotas.usage)'   | grep -E 'CPUS|INSTANCES|SSD_TOTAL_GB|DISKS_TOTAL_GB|IN_USE_ADDRESSES' || true
+gcloud compute regions describe asia-northeast3 \
+  --project="$PROJECT_ID" \
+  --flatten='quotas[]' \
+  --format='csv[no-heading](quotas.metric,quotas.limit,quotas.usage)' \
+  | grep -E '^(CPUS|E2_CPUS|INSTANCES|DISKS_TOTAL_GB|SSD_TOTAL_GB|IN_USE_ADDRESSES),' \
+  || echo "[WARN] Seoul quota query returned no matching data"
 ```
 
 Record enough free CPU and disk quota for the one-node session and the initial 15 GiB OpenSearch
@@ -76,7 +94,11 @@ persistent volume.
 ## 5. Confirm selected zone and machine type are advertised
 
 ```bash
-gcloud compute machine-types describe e2-standard-2   --zone=asia-northeast3-a   --project="$PROJECT_ID"   --format='yaml(name,guestCpus,memoryMb,zone)'
+gcloud compute machine-types describe e2-standard-2 \
+  --zone=asia-northeast3-a \
+  --project="$PROJECT_ID" \
+  --format='yaml(name,guestCpus,memoryMb,zone)' \
+  || echo "[WARN] e2-standard-2 query failed"
 ```
 
 This confirms the machine type exists in the zone. It does not guarantee moment-to-moment capacity;
@@ -88,7 +110,11 @@ against ADR-005 rather than creating a second cluster.
 ## 6. Check GKE server availability
 
 ```bash
-gcloud container get-server-config   --zone=asia-northeast3-a   --project="$PROJECT_ID"   --format='yaml(defaultClusterVersion,validMasterVersions,validNodeVersions)'
+gcloud container get-server-config \
+  --zone=asia-northeast3-a \
+  --project="$PROJECT_ID" \
+  --format='yaml(defaultClusterVersion)' \
+  || echo "[WARN] GKE server config query failed"
 ```
 
 Do not pin a Kubernetes version unless a compatibility problem requires it; the Terraform root uses
@@ -97,7 +123,12 @@ the regular release channel.
 ## 7. Check required APIs
 
 ```bash
-gcloud services list   --enabled   --project="$PROJECT_ID"   --filter='config.name:(aiplatform.googleapis.com OR compute.googleapis.com OR container.googleapis.com OR iamcredentials.googleapis.com)'   --format='table(config.name,state)'
+gcloud services list \
+  --enabled \
+  --project="$PROJECT_ID" \
+  --filter='config.name:(aiplatform.googleapis.com OR compute.googleapis.com OR container.googleapis.com OR iamcredentials.googleapis.com)' \
+  --format='table(config.name,state)' \
+  || echo "[WARN] API list query failed"
 ```
 
 The Terraform root can enable the required services. This check is only to detect the current state
@@ -106,9 +137,16 @@ before apply.
 ## 8. Confirm no duplicate target runtime exists
 
 ```bash
-gcloud container clusters list   --project="$PROJECT_ID"   --format='table(name,location,status,currentMasterVersion,currentNodeCount)'
+gcloud container clusters list \
+  --project="$PROJECT_ID" \
+  --format='table(name,location,status,currentNodeCount)' \
+  || echo "[WARN] GKE cluster list failed"
 
-gcloud compute instances list   --project="$PROJECT_ID"   --filter='labels.terraformers-runtime=target'   --format='table(name,zone,status,machineType)'
+gcloud compute instances list \
+  --project="$PROJECT_ID" \
+  --filter='labels.terraformers-runtime=target' \
+  --format='table(name,zone,status,machineType)' \
+  || echo "[WARN] target VM list failed"
 ```
 
 There must not be a second Terraformers target cluster created just for evaluation.

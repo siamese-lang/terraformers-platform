@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis.vertex;
 
-public class VertexResponseFormatException extends RuntimeException {
+import com.terraformers.modernization.analysis.AnalysisGenerationResponseFormatException;
+
+public class VertexResponseFormatException extends AnalysisGenerationResponseFormatException {
 
     public VertexResponseFormatException(String message) {
         super(message);

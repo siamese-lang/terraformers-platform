@@ -125,20 +125,19 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 ## Current gaps
 
-Current M3 gaps after M3-1 through M3-3:
+Current M3 gaps after M3-R1:
 
-- no active target AI/RAG runtime exists yet;
-- GCP/open-source generation, embedding, OpenSearch-compatible retrieval hosting, corpus ingestion,
-  runtime identity/authentication, networking, quota and cost choices remain evidence-gated;
-- the fixed `terraformers-eval-v1` dataset, stage-provenance contract, reusable runner, and
-  machine-readable result writer are already implemented and must be reused;
-- M3-4 live quality evidence is **WAITING_FOR_TARGET_RUNTIME**; the historical AWS blocker record is
-  readiness evidence only and must not be treated as a failed AI baseline;
-- the versioned `terraformers-reference-v2` corpus remains reusable, but its embedding/index
-  contract must be reconciled with the selected target embedding model and retrieval runtime before
-  ingestion;
-- LangChain/LangGraph remain evidence-gated. M3-R1 through M3-R3 establish the target runtime first;
-  framework adoption is considered only after M3-4/M3-5 expose a concrete failure class.
+- the target products are selected but no GCP target runtime/IaC exists yet;
+- current project/billing/CPU/disk/GKE/model-access values must be refreshed before the first M3-R2
+  resource-creating apply because the retained account observations are dated 2026-09-16;
+- the Vertex generation/embedding adapters, GKE/OpenSearch deployment, private OpenSearch transport
+  and Workload Identity IAM bindings are not implemented yet;
+- `terraformers-reference-v2` remains immutable historical corpus identity; M3-R3 must create
+  `terraformers-reference-v3` and re-embed the stable documents with
+  `gemini-embedding-001` at 1024 dimensions;
+- the AWS-bound batch-ingestion implementation must be replaced for the selected target path;
+- M3-4 live quality evidence remains **WAITING_FOR_TARGET_RUNTIME** until M3-R2/R3 complete;
+- LangChain/LangGraph remain evidence-gated and are not part of the selected runtime foundation.
 
 ## Historical AWS implementation
 

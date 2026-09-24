@@ -212,6 +212,7 @@ For M3-R2 readiness, create only the namespace and the internal OpenSearch workl
 
 ```bash
 kubectl apply -f infra/kubernetes/overlays/gcp-target/namespace.yaml
+kubectl apply -f infra/kubernetes/overlays/gcp-target/opensearch-storageclass.yaml
 
 kubectl -n terraformers-target apply \
   -f infra/kubernetes/overlays/gcp-target/opensearch-service.yaml \
@@ -220,6 +221,10 @@ kubectl -n terraformers-target apply \
 kubectl -n terraformers-target rollout status statefulset/terraformers-opensearch --timeout=10m
 kubectl -n terraformers-target get pods,pvc,svc
 ```
+
+The custom StorageClass explicitly provisions zonal `pd-standard` through
+`pd.csi.storage.gke.io`; the target Terraform enables the GCE PD CSI driver. This avoids silently
+using GKE's default balanced disk class.
 
 This proves the GKE/OpenSearch substrate without creating unrelated database, object storage,
 identity, ingress, or a second environment. M3-R3 owns corpus/index creation and the first

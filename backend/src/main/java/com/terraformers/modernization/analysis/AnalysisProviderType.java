@@ -3,7 +3,7 @@ package com.terraformers.modernization.analysis;
 import java.util.Locale;
 
 public enum AnalysisProviderType {
-    STUB, BEDROCK;
+    STUB, BEDROCK, VERTEX;
 
     static AnalysisProviderType from(String value) {
         try {

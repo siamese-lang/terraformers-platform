@@ -1,10 +1,12 @@
 project_id  = "example-project-id"
 subnet_cidr = "10.40.0.0/20"
 
-# Refresh project billing/quota/zonal capacity before using these initial values in a live apply.
+# Cost-safe default: node_count=0 keeps the canonical cluster idle.
+# Refresh project billing/quota/zonal capacity before a live session, then set node_count=1.
+# After collecting evidence, return node_count to 0 with the same Terraform root.
 region            = "asia-northeast3"
 zone              = "asia-northeast3-a"
-node_machine_type = "e2-standard-4"
-node_count        = 1
-node_disk_type    = "pd-balanced"
-node_disk_size_gb = 50
+node_machine_type = "e2-standard-2"
+node_count        = 0
+node_disk_type    = "pd-standard"
+node_disk_size_gb = 30

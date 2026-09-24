@@ -14,9 +14,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 live pre-apply gate
+- Phase: M3-R2 Terraform plan/review gate
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Current implementation task: **M3-R2 — Refresh live GCP pre-apply evidence and apply the single target runtime**
+- Current implementation task: **M3-R2 — Generate and review the first single-target Terraform plan**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. Historical AWS live
@@ -125,13 +125,16 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 ## Current gaps
 
-Current M3 gaps after M3-R1:
+Current M3 gaps after the fresh M3-R2 readiness check:
 
-- the target products are selected but no GCP target runtime/IaC exists yet;
-- current project/billing/CPU/disk/GKE/model-access values must be refreshed before the first M3-R2
-  resource-creating apply because the retained account observations are dated 2026-09-16;
-- the Vertex generation/embedding adapters, GKE/OpenSearch deployment, private OpenSearch transport
-  and Workload Identity IAM bindings are not implemented yet;
+- the reusable Vertex generation/embedding adapters, GKE/OpenSearch Terraform, private OpenSearch
+  transport, Workload Identity IAM, and Free Trial operating profile are implemented;
+- 2026-09-24 live evidence confirms billing + remaining Free Trial credit, sufficient CPU/instance/
+  disk quota, Seoul `e2-standard-2` availability, GKE server availability, and successful minimal
+  calls to both selected Vertex models;
+- one final read-only duplicate-runtime check remains before Terraform plan/apply;
+- the target cluster/OpenSearch disk has not yet been created, so M3-R2 live readiness is not
+  complete;
 - `terraformers-reference-v2` remains immutable historical corpus identity; M3-R3 must create
   `terraformers-reference-v3` and re-embed the stable documents with
   `gemini-embedding-001` at 1024 dimensions;
@@ -176,31 +179,23 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Continue M3-R2 at the Free Trial live pre-apply gate.** The reusable
-Vertex/OpenSearch/GKE code and IaC now exist. The canonical cost profile is:
+**Generate and review the first M3-R2 Terraform plan with `node_count=1`.**
 
-- idle: the same target GKE cluster with node pool size 0;
-- live evidence session: 1 × `e2-standard-2` node;
-- after evidence: return the same node pool to 0;
-- initial OpenSearch data claim: 15 GiB;
-- no GPU or self-hosted model server;
-- bounded Vertex AI calls only.
+All read-only pre-apply gates now pass:
 
-Before any resource-creating Terraform apply, collect a fresh non-destructive snapshot of:
+- Free Trial credit remains and billing is enabled;
+- quota/headroom supports the one-node `e2-standard-2` session;
+- GKE/Vertex/Compute/IAM APIs are enabled;
+- GKE server config is reachable;
+- both selected Vertex models respond successfully; and
+- no existing GKE cluster or Terraformers target VM exists.
 
-1. active GCP project and billing/Free Trial state;
-2. remaining Free Trial credit or equivalent no-charge coverage for the intended session;
-3. all-regions and Seoul CPU/instance quota plus current usage;
-4. Seoul persistent-disk quota plus current usage;
-5. GKE availability for the selected Seoul zone;
-6. access to `gemini-3.8-flash` and `gemini-embedding-001`;
-7. current node/disk list-price boundary; and
-8. absence of a conflicting live Terraformers target runtime.
+The target storage path is explicitly `pd-standard` through the GCE PD CSI driver.
 
-If Free Trial coverage is unavailable, stop before paid apply unless explicit cost approval is
-provided. If the observations support ADR-005, activate this **same** target runtime with
-`node_count=1`, collect M3-R2 readiness evidence, and return the node pool to 0. Do not create
-another environment, restore AWS, or ingest the full v3 corpus until M3-R3.
+Create a real `terraform.tfvars` locally in Cloud Shell from the committed example, use the
+approved project/Seoul settings and a non-conflicting subnet CIDR, then run `terraform init` and
+`terraform plan` with `node_count=1`. Review the resource list before any apply. Do not use
+`-auto-approve`, create another environment, restore AWS, or begin full corpus ingestion.
 
 ## Do not revisit
 

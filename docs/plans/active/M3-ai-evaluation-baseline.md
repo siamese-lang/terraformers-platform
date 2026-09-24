@@ -7,9 +7,9 @@
 M0 through M2 are complete. M3 establishes a repeatable, explainable AI/RAG quality baseline before
 any prompt, retrieval, model, framework, or orchestration change is treated as an improvement.
 
-The current task is **M3-R1 — Target runtime evidence and capability decision**. M3-4 is
-**WAITING_FOR_TARGET_RUNTIME** and resumes only after M3-R1 through M3-R3 establish the project's
-single reusable target AI/RAG runtime.
+The current task is **M3-R2 — Single target AI/RAG runtime foundation**. Static implementation is
+complete and the live account/model pre-apply gate has passed except for one final duplicate-runtime
+read-only check. M3-4 remains **WAITING_FOR_TARGET_RUNTIME** until M3-R2 and M3-R3 complete.
 
 ## Objective
 
@@ -298,7 +298,7 @@ variables are explicit enough for M3-R2 implementation. No resource was created 
 
 ### M3-R2 — Single target AI/RAG runtime foundation
 
-**Status: IN PROGRESS — STATIC FOUNDATION COMPLETE / LIVE PRE-APPLY GATE PENDING**
+**Status: IN PROGRESS — STATIC FOUNDATION COMPLETE / LIVE PLAN PENDING**
 
 **Problem / gap.** ADR-005 selected the target products, but the project still needed deployable
 provider adapters and reusable GCP/OpenSearch infrastructure before the same runtime could serve
@@ -329,17 +329,26 @@ runs the backend regression suite. Existing Terraform Static Verification now in
 `gcp-target` overlay and checks target provider selection, v3 identity, internal-only OpenSearch,
 and absence of AWS region leakage. No new workflow or standalone verifier was added.
 
-**Live boundary.** **No GCP resource has been created.** The first resource-creating Terraform
-apply remains gated on a fresh, non-destructive observation of the active project/billing state,
-remaining Free Trial credit, CPU/instance/disk quota, exact zonal GKE availability, Vertex model
-access, and current cost. The account values retained from prior work are dated planning evidence,
-not a substitute for this pre-apply check. If Free Trial credit is unavailable or expired, paid
-resource creation requires explicit approval.
+**Live pre-apply evidence.** [M3-R2 Live Readiness Evidence](../../evaluation/m3-r2-live-readiness-evidence.md)
+records the 2026-09-24 fresh account check: Free Trial credit remains, billing is enabled,
+`CPUS_ALL_REGIONS=12/0`, Seoul `E2_CPUS=8/0`, `INSTANCES=8/0`,
+`DISKS_TOTAL_GB=2048/0`, `SSD_TOTAL_GB=250/0`, `e2-standard-2` is advertised in
+`asia-northeast3-a`, GKE server config is reachable, required APIs are enabled, and minimal real
+calls to both `gemini-3.8-flash` and `gemini-embedding-001` succeed. The evidence supports the
+existing one-cluster Free Trial profile without a quota increase.
 
-**Completion evidence.** Static reusable target code/IaC is present, but M3-R2 remains incomplete
-until the approved target runtime is applied and its minimum live readiness is proven. If the fresh
-account evidence invalidates ADR-005's one-cluster shape, stop before creation and amend ADR-005;
-do not create a second fallback environment.
+The readiness review also found that an unspecified PVC StorageClass could silently use GKE's
+default balanced disk. The target now explicitly enables the GCE PD CSI driver and binds the
+OpenSearch 15 GiB PVC to a repository-owned `pd-standard` StorageClass.
+
+**Remaining live boundary.** **No GKE cluster/node/OpenSearch disk has been created.** The final
+read-only duplicate-runtime check passed: no GKE cluster and no target-labeled VM exists. The next
+step is to generate and review the Terraform plan with `node_count=1` before the first apply. Do
+not use `-auto-approve`, a second environment, or full v3 corpus ingestion.
+
+**Completion evidence.** Static reusable target code/IaC and fresh account/model readiness evidence
+are present, but M3-R2 remains incomplete until the approved target runtime is applied and its
+minimum GKE/OpenSearch/Vertex live readiness is proven.
 
 ### M3-R3 — Corpus ingestion and serving-path smoke
 

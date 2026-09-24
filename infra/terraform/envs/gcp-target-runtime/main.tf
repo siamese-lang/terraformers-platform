@@ -69,6 +69,12 @@ resource "google_container_cluster" "target" {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
 
+  addons_config {
+    gce_persistent_disk_csi_driver_config {
+      enabled = true
+    }
+  }
+
   ip_allocation_policy {}
 
   release_channel {

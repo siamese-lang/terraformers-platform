@@ -5,6 +5,7 @@ namespace: terraformers-target
 resources:
   - ../../base
   - namespace.yaml
+  - opensearch-storageclass.yaml
   - opensearch-service.yaml
   - opensearch-statefulset.yaml
 

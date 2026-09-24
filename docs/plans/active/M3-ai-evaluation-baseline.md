@@ -319,7 +319,9 @@ M3-4 and later milestones.
   project access for the backend Kubernetes ServiceAccount; and
 - added one internal-only OpenSearch 3.8.0 StatefulSet/ClusterIP overlay in the same target cluster.
   It is single-node portfolio/runtime foundation, not an HA/SLA claim and not a separate evaluation
-  environment.
+  environment; and
+- changed the Free Trial operating default to an idle node pool size of 0, with
+  `1 × e2-standard-2` activated only for live evidence sessions and returned to 0 afterward.
 
 **Validation.** Existing Backend Local Verification compiles/packages the Google Gen AI SDK and
 runs the backend regression suite. Existing Terraform Static Verification now includes
@@ -329,9 +331,10 @@ and absence of AWS region leakage. No new workflow or standalone verifier was ad
 
 **Live boundary.** **No GCP resource has been created.** The first resource-creating Terraform
 apply remains gated on a fresh, non-destructive observation of the active project/billing state,
-CPU/instance/disk quota, exact zonal GKE availability, Vertex model access, and current cost. The
-account values retained from prior work are dated planning evidence, not a substitute for this
-pre-apply check.
+remaining Free Trial credit, CPU/instance/disk quota, exact zonal GKE availability, Vertex model
+access, and current cost. The account values retained from prior work are dated planning evidence,
+not a substitute for this pre-apply check. If Free Trial credit is unavailable or expired, paid
+resource creation requires explicit approval.
 
 **Completion evidence.** Static reusable target code/IaC is present, but M3-R2 remains incomplete
 until the approved target runtime is applied and its minimum live readiness is proven. If the fresh

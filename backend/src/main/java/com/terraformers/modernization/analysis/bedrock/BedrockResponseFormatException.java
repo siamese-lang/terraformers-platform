@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis.bedrock;
 
-public class BedrockResponseFormatException extends RuntimeException {
+import com.terraformers.modernization.analysis.AnalysisGenerationResponseFormatException;
+
+public class BedrockResponseFormatException extends AnalysisGenerationResponseFormatException {
 
     public BedrockResponseFormatException(String message) {
         super(message);

@@ -271,10 +271,12 @@ reusable part of that target runtime rather than disposable evaluation infrastru
 milestones extend and close it instead of rebuilding a separate production stack. Local/CI/Kind
 fixtures are deterministic verification paths and do not count as additional live environments.
 
-This document does not determine GKE use or topology, nodes, VM sizes, autoscaling, ingress,
-network/subnets/IPs, load balancers, or concrete database/object-storage hosting. GCP runtime/IaC
-is a confirmed **NEW** repository gap, but its design belongs to a separate evidence-based
-deployment decision.
+ADR-005 now selects a zonal GKE Standard cluster as the initial provider-specific target runtime for
+the AI/RAG foundation, while the logical Kubernetes-compatible workload contract remains unchanged.
+It also selects Vertex AI generation/embedding and OpenSearch OSS inside that cluster. Exact final
+node count, autoscaling, disk sizing, ingress, broader network topology, database hosting and object
+storage remain deployment concerns rather than logical-architecture choices. GCP runtime/IaC is
+still a **NEW implementation gap** until M3-R2 creates it.
 
 ## Reuse / modify / new / deferred map
 
@@ -306,22 +308,24 @@ live AWS state.
 
 ## Explicitly deferred decisions
 
-The following are not selected or included as target components without evidence and a separate
-decision:
+The following remain deferred or gated after ADR-005:
 
 - RabbitMQ, Transactional Outbox, Kafka, or any other queue/broker/durable handoff design;
 - LangGraph, agent/multi-agent architecture, persistent Python AI service/worker, or service
   decomposition;
-- Keycloak, Redis, or a concrete GCP identity provider;
-- a concrete GCP managed database or other managed-service product;
-- GKE topology, node count, VM size, autoscaling, ingress, networking, or load balancing;
-- exact OpenSearch hosting topology or authentication/credential mechanism;
-- a specific generation model, embedding model, evaluator, or arbitrary performance/quality
-  target;
+- Keycloak, Redis, or a concrete external user identity provider;
+- a concrete managed database product or final database hosting topology;
+- final GKE node count, autoscaling, ingress and broader network/load-balancing topology;
+- OpenSearch HA/multi-node topology and exact image/disk sizing;
 - an exact observability backend, SDK/exporter, dashboard, or deployment topology;
 - restart recovery, executor saturation, durable handoff, and orphan-object policy until
   reliability experiments establish the failure and required invariants;
-- cost/quota sizing and all other deployment-capacity decisions.
+- arbitrary performance/quality thresholds and final capacity beyond the M3-R2 pre-apply evidence.
+
+ADR-005 has already selected the initial GKE Standard runtime mode, Vertex AI
+`gemini-3.8-flash`, `gemini-embedding-001` at 1024 dimensions, OpenSearch OSS single-node
+retrieval, and Workload Identity Federation for GKE. Those choices are no longer DEFER items, but
+they remain unimplemented until M3-R2.
 
 ## Evidence and references
 
@@ -334,6 +338,7 @@ historical project-direction document:
 - [ADR-002: Preserve cloud-neutral application boundaries](decisions/ADR-002-cloud-neutral-boundaries.md)
 - [ADR-003: Require evaluation before AI/RAG complexity](decisions/ADR-003-evaluation-before-complexity.md)
 - [ADR-004: Gate architectural changes on reproducible evidence](decisions/ADR-004-change-gates.md)
+- [ADR-005: Select one reusable GCP/open-source AI/RAG target runtime](decisions/ADR-005-target-ai-rag-runtime.md)
 
 Current implementation mappings referenced above are rooted in:
 

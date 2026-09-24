@@ -49,6 +49,10 @@ target runtime을 한 번 구축하고 계속 확장·재사용하는 것**이�
 - M9는 target runtime을 처음부터 다시 구축하는 milestone이 아니다. 앞선 milestone에서
   만들어 사용한 동일 runtime의 delivery, rollback, teardown, cost/resource closure를
   완성하는 단계다.
+- GCP target runtime은 Free Trial 계정에서도 실습·검증 가능한 비용 경계를 유지한다.
+  Always Free라고 과장하지 않으며, 기본 node pool은 idle 시 0으로 축소하고 live evidence를
+  수집하는 동안만 필요한 최소 node를 활성화한다. Free Trial credit이 없거나 종료된 경우
+  명시적 비용 승인 없이 paid live apply를 진행하지 않는다.
 - 이 원칙을 변경하려면 중복 환경이 필요한 실제 문제와 비용/운영 trade-off를
   repository evidence로 남기고 ADR-004 change gate를 통과해야 한다.
 

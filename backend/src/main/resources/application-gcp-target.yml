@@ -1,0 +1,29 @@
+# Active GCP/open-source target adapters selected by ADR-005.
+# Combine with the canonical prod profile. Resource creation and corpus ingestion are separate steps.
+management:
+  cloudwatch:
+    metrics:
+      export:
+        enabled: false
+
+terraformers:
+  analysis:
+    provider: ${ANALYSIS_PROVIDER:vertex}
+    embedding-provider: ${EMBEDDING_PROVIDER:vertex}
+    retrieval-mode: ${RETRIEVAL_MODE:REQUIRED}
+    opensearch-transport: ${OPENSEARCH_TRANSPORT:http}
+    opensearch-endpoint: ${OPENSEARCH_ENDPOINT:http://terraformers-opensearch:9200}
+    opensearch-top-k: ${OPENSEARCH_TOP_K:8}
+    index-name: ${INDEX_NAME:terraformers-reference-v3}
+    vector-field-name: ${VECTOR_FIELD_NAME:embedding}
+    content-field-name: ${CONTENT_FIELD_NAME:content}
+    corpus-version: ${CORPUS_VERSION:terraformers-reference-v3}
+    provider-version: ${PROVIDER_VERSION:5.100.0}
+    expected-vector-dimension: ${EXPECTED_VECTOR_DIMENSION:1024}
+    vertex:
+      project-id: ${GOOGLE_CLOUD_PROJECT:}
+      location: ${GOOGLE_CLOUD_LOCATION:global}
+      generation-model-id: ${VERTEX_GENERATION_MODEL_ID:gemini-3.8-flash}
+      embedding-model-id: ${VERTEX_EMBEDDING_MODEL_ID:gemini-embedding-001}
+      embedding-dimension: ${VERTEX_EMBEDDING_DIMENSION:1024}
+      max-output-tokens: ${VERTEX_MAX_OUTPUT_TOKENS:8192}

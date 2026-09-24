@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis.bedrock;
 
-public class BedrockOutputTruncatedException extends RuntimeException {
+import com.terraformers.modernization.analysis.AnalysisGenerationOutputTruncatedException;
+
+public class BedrockOutputTruncatedException extends AnalysisGenerationOutputTruncatedException {
 
     private final String stopReason;
     private final Integer outputTokens;

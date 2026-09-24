@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis.vertex;
 
-public class VertexOutputTruncatedException extends RuntimeException {
+import com.terraformers.modernization.analysis.AnalysisGenerationOutputTruncatedException;
+
+public class VertexOutputTruncatedException extends AnalysisGenerationOutputTruncatedException {
 
     private final Integer outputTokens;
 

@@ -2,6 +2,7 @@ package com.terraformers.modernization;
 
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.bedrock.BedrockRuntimeProperties;
+import com.terraformers.modernization.analysis.vertex.VertexRuntimeProperties;
 import com.terraformers.modernization.analysis.sqs.SqsRuntimeProperties;
 import com.terraformers.modernization.config.RuntimeContractProperties;
 import com.terraformers.modernization.reference.opensearch.AwsOpenSearchRuntimeProperties;
@@ -14,6 +15,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 @SpringBootApplication
 @EnableConfigurationProperties({RuntimeContractProperties.class, AnalysisRuntimeProperties.class, BedrockRuntimeProperties.class,
+        VertexRuntimeProperties.class,
         SqsRuntimeProperties.class, AwsOpenSearchRuntimeProperties.class, JwtRuntimeProperties.class,
         CognitoJwtRuntimeProperties.class, StorageRuntimeProperties.class})
 public class TerraformersBackendApplication {

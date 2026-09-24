@@ -50,7 +50,7 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
             ReferenceRetriever referenceRetriever,
             AnalysisRuntimeProperties properties,
             BedrockRuntimeProperties bedrockProperties,
-            ArchitectureFactsExtractor factsExtractor,
+            BedrockArchitectureFactsExtractor factsExtractor,
             RetrievalQueryTextBuilder queryTextBuilder,
             AnalysisObservability observability,
             BedrockGenerationStage generationStage

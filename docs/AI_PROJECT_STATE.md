@@ -14,9 +14,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: single target AI/RAG runtime implementation
+- Phase: M3-R2 live pre-apply gate
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Current implementation task: **M3-R2 — Single target AI/RAG runtime foundation**
+- Current implementation task: **M3-R2 — Refresh live GCP pre-apply evidence and apply the single target runtime**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. Historical AWS live
@@ -176,19 +176,31 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M3-R2 — Single target AI/RAG runtime foundation.** Implement the target selected by
-[ADR-005](architecture/decisions/ADR-005-target-ai-rag-runtime.md):
+**Continue M3-R2 at the Free Trial live pre-apply gate.** The reusable
+Vertex/OpenSearch/GKE code and IaC now exist. The canonical cost profile is:
 
-- one zonal GKE Standard target cluster in Seoul;
-- Vertex AI `gemini-3.8-flash` generation adapter;
-- Vertex AI `gemini-embedding-001` query embedding adapter at 1024 dimensions;
-- one private OpenSearch OSS StatefulSet in the same cluster;
-- Workload Identity Federation for GKE;
-- reusable Terraform/Kubernetes configuration that later milestones continue to use.
+- idle: the same target GKE cluster with node pool size 0;
+- live evidence session: 1 × `e2-standard-2` node;
+- after evidence: return the same node pool to 0;
+- initial OpenSearch data claim: 15 GiB;
+- no GPU or self-hosted model server;
+- bounded Vertex AI calls only.
 
-Before the first resource-creating apply, refresh current project/billing/quota/model-access values.
-Do not deploy an AWS compatibility stack or a separate evaluation cluster. Do not ingest the full
-corpus or run M3 quality evaluation until M3-R3/M3-4 respectively.
+Before any resource-creating Terraform apply, collect a fresh non-destructive snapshot of:
+
+1. active GCP project and billing/Free Trial state;
+2. remaining Free Trial credit or equivalent no-charge coverage for the intended session;
+3. all-regions and Seoul CPU/instance quota plus current usage;
+4. Seoul persistent-disk quota plus current usage;
+5. GKE availability for the selected Seoul zone;
+6. access to `gemini-3.8-flash` and `gemini-embedding-001`;
+7. current node/disk list-price boundary; and
+8. absence of a conflicting live Terraformers target runtime.
+
+If Free Trial coverage is unavailable, stop before paid apply unless explicit cost approval is
+provided. If the observations support ADR-005, activate this **same** target runtime with
+`node_count=1`, collect M3-R2 readiness evidence, and return the node pool to 0. Do not create
+another environment, restore AWS, or ingest the full v3 corpus until M3-R3.
 
 ## Do not revisit
 

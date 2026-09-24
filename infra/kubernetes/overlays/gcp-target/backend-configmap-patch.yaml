@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: terraformers-backend-runtime-config
+data:
+  SPRING_PROFILES_ACTIVE: "prod,gcp-target"
+  ANALYSIS_PROVIDER: "vertex"
+  EMBEDDING_PROVIDER: "vertex"
+  RETRIEVAL_MODE: "REQUIRED"
+  OPENSEARCH_TRANSPORT: "http"
+  OPENSEARCH_ENDPOINT: "http://terraformers-opensearch:9200"
+  OPENSEARCH_TOP_K: "8"
+  INDEX_NAME: "terraformers-reference-v3"
+  VECTOR_FIELD_NAME: "embedding"
+  CONTENT_FIELD_NAME: "content"
+  CORPUS_VERSION: "terraformers-reference-v3"
+  PROVIDER_VERSION: "5.100.0"
+  EXPECTED_VECTOR_DIMENSION: "1024"
+  GOOGLE_CLOUD_LOCATION: "global"
+  VERTEX_GENERATION_MODEL_ID: "gemini-3.8-flash"
+  VERTEX_EMBEDDING_MODEL_ID: "gemini-embedding-001"
+  VERTEX_EMBEDDING_DIMENSION: "1024"

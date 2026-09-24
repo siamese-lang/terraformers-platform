@@ -7,6 +7,7 @@ SUMMARY="${EVIDENCE_DIR}/verification-summary.txt"
 STATEFUL_IDENTIFIER_CHECK="${REPO_ROOT}/scripts/checks/stateful-dependencies-identifier-contract-verification.sh"
 TERRAFORM_DIRS=(
   "${REPO_ROOT}/infra/terraform/runtime-contract"
+  "${REPO_ROOT}/infra/terraform/envs/gcp-target-runtime"
   "${REPO_ROOT}/infra/terraform/bootstrap/aws-live-foundation"
   "${REPO_ROOT}/infra/terraform/envs/aws-runtime-network"
   "${REPO_ROOT}/infra/terraform/envs/backend-runtime-dependencies"

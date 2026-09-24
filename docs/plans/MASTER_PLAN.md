@@ -90,8 +90,8 @@ implementation until that plan is the repository source of truth.
 
 **Status.** **ACTIVE — DEPENDENCY RESEQUENCED.** The
 [active M3 plan](active/M3-ai-evaluation-baseline.md) records M3-1 through M3-3 as complete.
-M3-4 live evaluation is **WAITING_FOR_TARGET_RUNTIME**. The current task is
-**M3-R1 — Target runtime evidence and capability decision**.
+M3-4 live evaluation is **WAITING_FOR_TARGET_RUNTIME**. M3-R1 is complete. The current task is
+**M3-R2 — Single target AI/RAG runtime foundation**.
 
 **Problem.** The evaluation contract, fixed dataset, and reusable provenance runner exist, but the
 historical AWS live runtime was intentionally removed. Recreating an AWS evaluation stack or
@@ -122,10 +122,13 @@ traces from the fixed `terraformers-eval-v1` dataset.
 stage provenance, and provide failure classes for M4. No AWS compatibility recreation or temporary
 parallel cloud environment is part of the exit condition.
 
-**Immediate next single task.** Execute **M3-R2 — Single target AI/RAG runtime foundation** using
-ADR-005. Refresh mutable project/billing/quota/model-access values before the first resource-creating
-apply, then implement the selected reusable GKE Standard + Vertex AI + OpenSearch target. Do not
-create a parallel evaluation environment and do not start full corpus ingestion yet.
+**Immediate next single task.** Continue **M3-R2** at its Free Trial live pre-apply gate. The
+selected GKE Standard + Vertex AI + OpenSearch static foundation now exists with an idle
+`node_count=0` default and a one-node `e2-standard-2` live-session profile. Refresh project,
+billing/remaining Free Trial credit, quota, zonal capacity and model access before creation. If the
+account is no longer covered by Free Trial credit, stop before paid apply unless explicit cost
+approval is provided. Use this same runtime for readiness evidence, return it to node 0 afterward,
+and do not start full corpus ingestion yet.
 
 ## M4 — AI Targeted Improvement
 

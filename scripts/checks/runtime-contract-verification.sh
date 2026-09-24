@@ -7,14 +7,16 @@ BACKEND_MAIN_DIR="${BACKEND_DIR}/src/main"
 K8S_BASE_DIR="${REPO_ROOT}/infra/kubernetes/base"
 K8S_LOCAL_STUB_OVERLAY_DIR="${REPO_ROOT}/infra/kubernetes/overlays/local-stub"
 K8S_AWS_RUNTIME_TEMPLATE_DIR="${REPO_ROOT}/infra/kubernetes/overlays/aws-runtime-template"
+K8S_GCP_TARGET_OVERLAY_DIR="${REPO_ROOT}/infra/kubernetes/overlays/gcp-target"
 TERRAFORM_CONTRACT_DIR="${REPO_ROOT}/infra/terraform/runtime-contract"
 RENDERED_MANIFEST="$(mktemp)"
 RENDERED_LOCAL_STUB_MANIFEST="$(mktemp)"
 RENDERED_AWS_RUNTIME_TEMPLATE_MANIFEST="$(mktemp)"
+RENDERED_GCP_TARGET_MANIFEST="$(mktemp)"
 PLAN_FILE="$(mktemp)"
 
 cleanup() {
-  rm -f "${RENDERED_MANIFEST}" "${RENDERED_LOCAL_STUB_MANIFEST}" "${RENDERED_AWS_RUNTIME_TEMPLATE_MANIFEST}" "${PLAN_FILE}"
+  rm -f "${RENDERED_MANIFEST}" "${RENDERED_LOCAL_STUB_MANIFEST}" "${RENDERED_AWS_RUNTIME_TEMPLATE_MANIFEST}" "${RENDERED_GCP_TARGET_MANIFEST}" "${PLAN_FILE}"
 }
 trap cleanup EXIT
 
@@ -128,6 +130,23 @@ assert_contains 'terraformers-backend-runtime-secrets' "${RENDERED_AWS_RUNTIME_T
 assert_not_contains '^kind: Secret$' "${RENDERED_AWS_RUNTIME_TEMPLATE_MANIFEST}" "AWS runtime template must not render placeholder Secret resources."
 assert_not_contains 'arn:aws:iam::[0-9]{12}:' "${RENDERED_AWS_RUNTIME_TEMPLATE_MANIFEST}" "AWS runtime template must not contain account-specific IAM ARNs."
 assert_not_contains '[0-9]{12}' "${RENDERED_AWS_RUNTIME_TEMPLATE_MANIFEST}" "AWS runtime template must not contain 12-digit account-like identifiers."
+
+echo "[runtime-contract] rendering Kubernetes GCP target overlay"
+kubectl kustomize "${K8S_GCP_TARGET_OVERLAY_DIR}" > "${RENDERED_GCP_TARGET_MANIFEST}"
+
+assert_contains 'namespace: terraformers-target' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must render into terraformers-target namespace."
+assert_contains 'SPRING_PROFILES_ACTIVE: prod,gcp-target' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must combine canonical prod and gcp-target profiles."
+assert_contains 'ANALYSIS_PROVIDER: vertex' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must select Vertex generation."
+assert_contains 'EMBEDDING_PROVIDER: vertex' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must select Vertex embeddings."
+assert_contains 'OPENSEARCH_TRANSPORT: http' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must select provider-neutral HTTP OpenSearch transport."
+assert_contains 'CORPUS_VERSION: terraformers-reference-v3' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must reserve the v3 target embedding identity."
+assert_contains '^kind: StatefulSet$' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must contain the OpenSearch StatefulSet."
+assert_contains 'image: opensearchproject/opensearch:3.8.0' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must pin OpenSearch 3.8.0."
+assert_contains 'DISABLE_SECURITY_PLUGIN' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must make its internal-only OpenSearch security boundary explicit."
+assert_contains 'type: ClusterIP' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target OpenSearch must remain cluster-internal."
+assert_not_contains 'type: LoadBalancer' "${RENDERED_GCP_TARGET_MANIFEST}" "M3-R2 must not expose target workloads through a public LoadBalancer."
+assert_not_contains 'type: NodePort' "${RENDERED_GCP_TARGET_MANIFEST}" "M3-R2 must not expose target workloads through a NodePort."
+assert_not_contains 'AWS_REGION:' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must not carry AWS runtime region configuration."
 
 echo "[runtime-contract] checking committed example files for public-safe placeholders"
 assert_not_contains '[0-9]{12}' "${K8S_BASE_DIR}/backend-secret.example.yaml" "Secret example must not contain 12-digit account-like identifiers."

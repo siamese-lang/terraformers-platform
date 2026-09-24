@@ -41,30 +41,30 @@ variable "subnet_cidr" {
 variable "node_machine_type" {
   description = "Initial GKE node machine type; sizing remains a deployment variable."
   type        = string
-  default     = "e2-standard-4"
+  default     = "e2-standard-2"
 }
 
 variable "node_count" {
-  description = "Initial node count for the reusable target cluster."
+  description = "Target node count. Keep 0 while idle; set 1 only for approved live verification sessions."
   type        = number
-  default     = 1
+  default     = 0
 
   validation {
-    condition     = var.node_count >= 1
-    error_message = "node_count must be at least 1."
+    condition     = var.node_count >= 0 && var.node_count <= 1
+    error_message = "Free Trial target node_count must be 0 (idle) or 1 (live verification)."
   }
 }
 
 variable "node_disk_type" {
   description = "GKE node boot disk type."
   type        = string
-  default     = "pd-balanced"
+  default     = "pd-standard"
 }
 
 variable "node_disk_size_gb" {
   description = "GKE node boot disk size."
   type        = number
-  default     = 50
+  default     = 30
 }
 
 variable "backend_namespace" {

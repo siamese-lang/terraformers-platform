@@ -341,10 +341,10 @@ The readiness review also found that an unspecified PVC StorageClass could silen
 default balanced disk. The target now explicitly enables the GCE PD CSI driver and binds the
 OpenSearch 15 GiB PVC to a repository-owned `pd-standard` StorageClass.
 
-**Remaining live boundary.** **No GKE cluster/node/OpenSearch disk has been created.** One final
-read-only duplicate-runtime check remains after enabling the GKE API. Then review the Terraform
-plan with `node_count=1` before the first apply. Do not use a second environment or begin full v3
-corpus ingestion.
+**Remaining live boundary.** **No GKE cluster/node/OpenSearch disk has been created.** The final
+read-only duplicate-runtime check passed: no GKE cluster and no target-labeled VM exists. The next
+step is to generate and review the Terraform plan with `node_count=1` before the first apply. Do
+not use `-auto-approve`, a second environment, or full v3 corpus ingestion.
 
 **Completion evidence.** Static reusable target code/IaC and fresh account/model readiness evidence
 are present, but M3-R2 remains incomplete until the approved target runtime is applied and its

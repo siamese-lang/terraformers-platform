@@ -1,0 +1,10 @@
+project_id  = "example-project-id"
+subnet_cidr = "10.40.0.0/20"
+
+# Refresh project billing/quota/zonal capacity before using these initial values in a live apply.
+region            = "asia-northeast3"
+zone              = "asia-northeast3-a"
+node_machine_type = "e2-standard-4"
+node_count        = 1
+node_disk_type    = "pd-balanced"
+node_disk_size_gb = 50

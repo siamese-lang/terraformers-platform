@@ -76,6 +76,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: terraformers-pd-standard
         resources:
           requests:
             storage: 15Gi

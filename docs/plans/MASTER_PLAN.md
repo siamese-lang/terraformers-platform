@@ -122,11 +122,13 @@ traces from the fixed `terraformers-eval-v1` dataset.
 stage provenance, and provide failure classes for M4. No AWS compatibility recreation or temporary
 parallel cloud environment is part of the exit condition.
 
-**Immediate next single task.** Continue **M3-R2** at its live pre-apply gate. The selected
-GKE Standard + Vertex AI + OpenSearch static foundation now exists; refresh mutable
-project/billing/quota/model-access values before the first resource-creating apply. If those values
-still support ADR-005, apply this same target foundation and prove minimum live readiness. Do not
-create a parallel evaluation environment and do not start full corpus ingestion yet.
+**Immediate next single task.** Continue **M3-R2** at its Free Trial live pre-apply gate. The
+selected GKE Standard + Vertex AI + OpenSearch static foundation now exists with an idle
+`node_count=0` default and a one-node `e2-standard-2` live-session profile. Refresh project,
+billing/remaining Free Trial credit, quota, zonal capacity and model access before creation. If the
+account is no longer covered by Free Trial credit, stop before paid apply unless explicit cost
+approval is provided. Use this same runtime for readiness evidence, return it to node 0 afterward,
+and do not start full corpus ingestion yet.
 
 ## M4 — AI Targeted Improvement
 

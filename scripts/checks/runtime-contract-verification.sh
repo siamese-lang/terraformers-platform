@@ -140,24 +140,7 @@ assert_contains 'ANALYSIS_PROVIDER: vertex' "${RENDERED_GCP_TARGET_MANIFEST}" "G
 assert_contains 'EMBEDDING_PROVIDER: vertex' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must select Vertex embeddings."
 assert_contains 'OPENSEARCH_TRANSPORT: http' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must select provider-neutral HTTP OpenSearch transport."
 assert_contains 'CORPUS_VERSION: terraformers-reference-v3' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must reserve the v3 target embedding identity."
-assert_contains '^kind: StatefulSetecho "[runtime-contract] checking committed example files for public-safe placeholders"
-assert_not_contains '[0-9]{12}' "${K8S_BASE_DIR}/backend-secret.example.yaml" "Secret example must not contain 12-digit account-like identifiers."
-assert_not_contains '[0-9]{12}' "${TERRAFORM_CONTRACT_DIR}/terraform.tfvars.example" "Terraform tfvars example must not contain 12-digit account-like identifiers."
-assert_not_contains 'arn:aws:iam::[0-9]{12}:' "${K8S_BASE_DIR}/backend-serviceaccount.yaml" "ServiceAccount base must not contain account-specific IAM ARN."
-
-echo "[runtime-contract] verifying canonical backend API contract flow"
-cd "${BACKEND_DIR}"
-mvn -q -Dtest=AnalysisUploadControllerTest,AnalysisJobControllerIntegrationTest,ProjectMetadataControllerTest,ProjectTreeControllerTest,TerraformDraftControllerTest,ProjectCommentControllerTest,SourceObjectReaderServiceTest test
-
-echo "[runtime-contract] validating Terraform runtime contract"
-cd "${TERRAFORM_CONTRACT_DIR}"
-terraform init -backend=false -input=false >/dev/null
-terraform fmt -check
-terraform validate
-terraform plan -input=false -lock=false -var-file=terraform.tfvars.example -out="${PLAN_FILE}" >/dev/null
-
-echo "[runtime-contract] verification completed"
- "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must contain the OpenSearch StatefulSet."
+assert_contains '^kind: StatefulSet$' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must contain the OpenSearch StatefulSet."
 assert_contains 'image: opensearchproject/opensearch:3.8.0' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must pin OpenSearch 3.8.0."
 assert_contains 'DISABLE_SECURITY_PLUGIN' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target overlay must make its internal-only OpenSearch security boundary explicit."
 assert_contains 'type: ClusterIP' "${RENDERED_GCP_TARGET_MANIFEST}" "GCP target OpenSearch must remain cluster-internal."

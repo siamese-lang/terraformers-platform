@@ -108,22 +108,33 @@ target runtime now explicitly:
 This keeps the 15 GiB OpenSearch data claim aligned with the Free Trial cost boundary instead of
 silently provisioning the default balanced disk class.
 
-## Remaining pre-apply item
+## Duplicate-runtime check
 
-Before the first Terraform plan/apply that creates resources, perform one final read-only duplicate
-runtime check after GKE API enablement:
+After enabling the GKE API, the operator performed the final read-only duplicate-runtime check.
 
-- list GKE clusters in the project;
-- list Compute Engine instances carrying the Terraformers target label.
+Observed:
 
-Expected result: no existing conflicting Terraformers target runtime.
+- GKE cluster list: **empty**;
+- Terraformers target VM query: **no matching instances**;
+- `gcloud` emitted a warning that the requested label key was not present in any resource. Because
+  the VM result set is empty, this is consistent with there being no existing target-labeled VM.
 
-If a conflicting runtime exists, stop and reconcile it. Do not create a second cluster.
+Interpretation: there is no conflicting Terraformers target runtime to reconcile. Creating the first
+target cluster will not duplicate an existing environment.
 
 ## Decision
 
-Current observed Free Trial, quota, API, zone, generation-model, and embedding-model evidence
-supports continuing M3-R2 with the existing single-target design.
+The full pre-apply readiness gate is now satisfied:
 
-The next action is **Terraform plan review**, not a second architecture decision and not a separate
-test environment.
+- Free Trial credit/billing: PASS;
+- global/Seoul CPU, instance, and disk quota: PASS;
+- Seoul machine type/GKE API/server configuration: PASS;
+- Vertex generation model access: PASS;
+- Vertex embedding model access: PASS;
+- duplicate target runtime check: PASS;
+- explicit low-cost `pd-standard` storage path: implemented.
+
+No GKE cluster, node VM, or OpenSearch persistent disk has been created yet.
+
+The next action is **Terraform plan review with `node_count=1`**, not another architecture
+decision and not a separate test environment.

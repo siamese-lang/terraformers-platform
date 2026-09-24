@@ -14,9 +14,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 live plan/review gate
+- Phase: M3-R2 Terraform plan/review gate
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Current implementation task: **M3-R2 — Final duplicate-runtime check, Terraform plan review, then single target runtime apply**
+- Current implementation task: **M3-R2 — Generate and review the first single-target Terraform plan**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. Historical AWS live
@@ -179,24 +179,23 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Continue M3-R2 with the final read-only duplicate-runtime check, then Terraform plan review.**
+**Generate and review the first M3-R2 Terraform plan with `node_count=1`.**
 
-Fresh 2026-09-24 evidence already confirms:
+All read-only pre-apply gates now pass:
 
 - Free Trial credit remains and billing is enabled;
-- global CPU quota: 12 limit / 0 usage;
-- Seoul E2 CPU quota: 8 / 0;
-- Seoul instance quota: 8 / 0;
-- Seoul persistent-disk quota: 2048 GiB / 0;
-- `e2-standard-2` is advertised in `asia-northeast3-a`;
-- Kubernetes Engine, Vertex AI, Compute and IAM Credentials APIs are enabled;
-- GKE server config is reachable; and
-- minimal real `gemini-3.8-flash` generation and `gemini-embedding-001` embedding calls succeed.
+- quota/headroom supports the one-node `e2-standard-2` session;
+- GKE/Vertex/Compute/IAM APIs are enabled;
+- GKE server config is reachable;
+- both selected Vertex models respond successfully; and
+- no existing GKE cluster or Terraformers target VM exists.
 
-Before resource creation, list existing GKE clusters and Terraformers target VMs one final time.
-If no conflicting runtime exists, generate and review the M3-R2 Terraform plan with
-`node_count=1`. Do not use `-auto-approve`. After reviewed apply/readiness evidence, return the
-same node pool to 0 and continue to M3-R3. Do not create another environment or restore AWS.
+The target storage path is explicitly `pd-standard` through the GCE PD CSI driver.
+
+Create a real `terraform.tfvars` locally in Cloud Shell from the committed example, use the
+approved project/Seoul settings and a non-conflicting subnet CIDR, then run `terraform init` and
+`terraform plan` with `node_count=1`. Review the resource list before any apply. Do not use
+`-auto-approve`, create another environment, restore AWS, or begin full corpus ingestion.
 
 ## Do not revisit
 

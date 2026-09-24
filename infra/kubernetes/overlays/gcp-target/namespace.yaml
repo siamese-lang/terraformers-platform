@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: terraformers-target
+  labels:
+    app.kubernetes.io/part-of: terraformers-modernization
+    terraformers.io/runtime: target

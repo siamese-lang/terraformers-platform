@@ -164,6 +164,32 @@ terraform -chdir=infra/terraform/envs/gcp-target-runtime plan \
 Apply that reviewed plan to stop node compute while retaining the single canonical target-runtime
 identity.
 
+## M3-R2 live workload scope
+
+After the GKE Terraform apply succeeds, do **not** apply the complete `gcp-target` overlay yet.
+The canonical overlay also contains the backend base, whose database/object-storage/JWT runtime
+dependencies belong to later integration work.
+
+For M3-R2 readiness, create only the namespace and the internal OpenSearch workload:
+
+```bash
+kubectl apply -f infra/kubernetes/overlays/gcp-target/namespace.yaml
+
+kubectl -n terraformers-target apply \
+  -f infra/kubernetes/overlays/gcp-target/opensearch-service.yaml \
+  -f infra/kubernetes/overlays/gcp-target/opensearch-statefulset.yaml
+
+kubectl -n terraformers-target rollout status statefulset/terraformers-opensearch --timeout=10m
+kubectl -n terraformers-target get pods,pvc,svc
+```
+
+This proves the GKE/OpenSearch substrate without creating unrelated database, object storage,
+identity, ingress, or a second environment. M3-R3 owns corpus/index creation and the first
+Spring-facing target-adapter smoke.
+
+Before returning `node_count` to 0, preserve the required readiness evidence. The OpenSearch PVC
+remains part of the same canonical cluster while nodes are paused.
+
 ## Public references checked 2026-09-24
 
 - Google Cloud Free Program: https://docs.cloud.google.com/free/docs/free-cloud-features

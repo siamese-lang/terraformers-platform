@@ -3,7 +3,7 @@ package com.terraformers.modernization.analysis;
 import java.util.Locale;
 
 public enum EmbeddingProviderType {
-    BEDROCK, DISABLED;
+    BEDROCK, VERTEX, DISABLED;
 
     static EmbeddingProviderType from(String value) {
         if (value == null || value.isBlank()) {

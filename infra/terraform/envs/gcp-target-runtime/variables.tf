@@ -50,8 +50,8 @@ variable "node_count" {
   default     = 0
 
   validation {
-    condition     = var.node_count >= 0 && var.node_count <= 1
-    error_message = "Free Trial target node_count must be 0 (idle) or 1 (live verification)."
+    condition     = var.node_count >= 0
+    error_message = "node_count must be non-negative."
   }
 }
 

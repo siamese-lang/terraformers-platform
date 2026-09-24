@@ -12,7 +12,7 @@ terraformers:
   analysis:
     provider: ${ANALYSIS_PROVIDER:bedrock}
     embedding-provider: ${EMBEDDING_PROVIDER:bedrock}
-    progress-publisher: ${PROGRESS_PUBLISHER:logging}
+    progress-publisher: ${PROGRESS_PUBLISHER:logging}\n    opensearch-transport: ${OPENSEARCH_TRANSPORT:aws-sigv4}
     bedrock:
       model-id: ${BEDROCK_MODEL_ID:}
       embedding-model-id: ${BEDROCK_EMBEDDING_MODEL_ID:}

@@ -37,9 +37,11 @@ billing and quota state before any resource creation and abort if those assumpti
 Use **one zonal GKE Standard cluster** in `asia-northeast3` as the target runtime foundation.
 `asia-northeast3-a` is the preferred initial zone, subject to the M3-R2 pre-apply capacity refresh.
 
-The initial planning node shape is one `e2-standard-4` node (4 vCPU / 16 GiB), expressed as an IaC
-variable rather than a hard-coded architecture limit. Later milestones may resize or add nodes in
-the same cluster; they must not create a second production architecture.
+The Free Trial planning shape uses one `e2-standard-2` node (2 vCPU / 8 GiB) only while live
+evidence is being collected. The canonical idle value is `node_count=0`; an approved live session
+uses `node_count=1` and returns to 0 afterward. This is the same cluster/IaC, not a second
+environment. Later milestones may resize or add nodes only if measured resource evidence justifies
+it.
 
 Reasons:
 
@@ -142,20 +144,35 @@ would directly address.
 
 ## Cost boundary
 
-This project does not claim an Always Free target runtime.
+The target is **Google Cloud Free Trial compatible**, not an Always Free claim.
 
-Current public pricing used only as a planning reference:
+Public program facts checked on 2026-09-24:
 
-- GKE charges a $0.10/cluster-hour management fee; the GKE free tier provides $74.40/month in
-  credits applicable to one zonal Standard or Autopilot cluster. Compute, storage and network
-  remain separately billable.
-- The current public E2 table lists `e2-standard-4` at $0.13402284/hour on-demand in the selectable
-  region table that includes Seoul.
-- Gemini 3.8 Flash global Standard PayGo is currently listed at $0.75 per 1M input tokens and $3.75
-  per 1M text output tokens through 2026-12-31.
+- a new Free Trial account receives $300 credit for 90 days and is not automatically billed during
+  the trial;
+- the GKE free tier supplies $74.40/month of billing-account credit for one Autopilot or zonal
+  Standard cluster's **cluster management fee only**;
+- Standard node Compute Engine instances, persistent disks, networking and Vertex AI usage are not
+  covered by that GKE cluster-management credit;
+- Compute Engine Always Free provides one `e2-micro` only in specified US regions, so it does not
+  make the Seoul GKE/OpenSearch target free;
+- Vertex AI Gemini generation is usage-priced, so the project invokes it for bounded ingestion,
+  smoke and evaluation work rather than leaving a model server running.
 
-These prices are not budget guarantees. M3-R2 rechecks current pricing and quota before apply and
-keeps the deployment inside the same target cluster rather than funding a parallel environment.
+The cost-safe runtime profile is therefore:
+
+1. retain one zonal Standard cluster and one target architecture;
+2. keep the node pool at `0` when no live evidence is being collected;
+3. raise the same node pool to `1 × e2-standard-2` for a live session;
+4. use 30 GiB `pd-standard` for the node boot disk and an initial 15 GiB OpenSearch data claim;
+5. make only the bounded Vertex calls required by M3-R3/M3-4;
+6. return the node pool to `0` after the session;
+7. if Free Trial credit is unavailable or expired, stop before paid live apply unless explicit cost
+   approval is provided.
+
+GKE Standard supports manually scaling a node pool to zero, so this cost lifecycle does not require
+a second environment or a second implementation. Exact Seoul VM/disk price and remaining trial
+credit are mutable account facts and must be refreshed immediately before apply.
 
 ## M3-R2 pre-apply gates
 
@@ -167,8 +184,9 @@ Before the first Terraform apply, record a fresh observation of:
 4. persistent-disk quota in Seoul;
 5. GKE API availability and zonal server configuration;
 6. Vertex AI API/model access for `gemini-3.8-flash` and `gemini-embedding-001`;
-7. current list-price estimate for the selected node and disk;
-8. no conflicting live runtime already occupying the single-target namespace/resource boundary.
+7. current list-price estimate for the selected node and disk plus remaining Free Trial credit;
+8. confirmation that paid billing is not required for the intended session, unless explicitly approved; and
+9. no conflicting live runtime already occupying the single-target namespace/resource boundary.
 
 If any gate materially invalidates this decision, stop before resource creation and amend this ADR
 rather than silently selecting a second environment.

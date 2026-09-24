@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.terraformers.modernization.analysis.AnalysisGenerationOutputTruncatedException;
+import com.terraformers.modernization.analysis.AnalysisGenerationResponseFormatException;
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisGenerationStage;
 import com.terraformers.modernization.analysis.AnalysisInputClassification;
@@ -86,6 +88,40 @@ class EvaluationRunnerTest {
         assertThat(trace.generation().status()).isEqualTo(EvaluationStageStatus.NOT_RUN);
         assertThat(trace.firstDivergence().stage()).isEqualTo(EvaluationStage.RETRIEVAL);
         assertThat(trace.firstDivergence().category()).isEqualTo(EvaluationFailureCategory.RETRIEVAL_FAILURE);
+    }
+
+    @Test
+    void classifiesProviderNeutralGenerationTruncation() {
+        LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
+        AnalysisGenerationStage truncatedGenerator = (context, source, references) -> {
+            throw new AnalysisGenerationOutputTruncatedException("output limit reached");
+        };
+
+        EvaluationRunResult result = runner(retriever(), truncatedGenerator)
+                .run(dataset, "generation-truncated");
+        EvaluationTrace trace = trace(result, "arch-vpc-three-tier");
+
+        assertThat(trace.generation().status()).isEqualTo(EvaluationStageStatus.FAIL);
+        assertThat(trace.firstDivergence().stage()).isEqualTo(EvaluationStage.GENERATION);
+        assertThat(trace.firstDivergence().category())
+                .isEqualTo(EvaluationFailureCategory.OUTPUT_TRUNCATED);
+    }
+
+    @Test
+    void classifiesProviderNeutralGenerationResponseFormatFailure() {
+        LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
+        AnalysisGenerationStage invalidGenerator = (context, source, references) -> {
+            throw new AnalysisGenerationResponseFormatException("invalid structured output");
+        };
+
+        EvaluationRunResult result = runner(retriever(), invalidGenerator)
+                .run(dataset, "generation-format");
+        EvaluationTrace trace = trace(result, "arch-vpc-three-tier");
+
+        assertThat(trace.generation().status()).isEqualTo(EvaluationStageStatus.FAIL);
+        assertThat(trace.firstDivergence().stage()).isEqualTo(EvaluationStage.GENERATION);
+        assertThat(trace.firstDivergence().category())
+                .isEqualTo(EvaluationFailureCategory.RESPONSE_FORMAT);
     }
 
     @Test

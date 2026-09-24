@@ -176,21 +176,31 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Continue M3-R2 at the live pre-apply gate.** The reusable Vertex/OpenSearch/GKE code and IaC now
-exist. Before any resource-creating Terraform apply, collect a fresh non-destructive snapshot of:
+**Continue M3-R2 at the Free Trial live pre-apply gate.** The reusable
+Vertex/OpenSearch/GKE code and IaC now exist. The canonical cost profile is:
+
+- idle: the same target GKE cluster with node pool size 0;
+- live evidence session: 1 × `e2-standard-2` node;
+- after evidence: return the same node pool to 0;
+- initial OpenSearch data claim: 15 GiB;
+- no GPU or self-hosted model server;
+- bounded Vertex AI calls only.
+
+Before any resource-creating Terraform apply, collect a fresh non-destructive snapshot of:
 
 1. active GCP project and billing/Free Trial state;
-2. all-regions and Seoul CPU/instance quota plus current usage;
-3. Seoul persistent-disk quota plus current usage;
-4. GKE availability for the selected Seoul zone;
-5. access to `gemini-3.8-flash` and `gemini-embedding-001`;
-6. current node/disk list-price boundary; and
-7. absence of a conflicting live Terraformers target runtime.
+2. remaining Free Trial credit or equivalent no-charge coverage for the intended session;
+3. all-regions and Seoul CPU/instance quota plus current usage;
+4. Seoul persistent-disk quota plus current usage;
+5. GKE availability for the selected Seoul zone;
+6. access to `gemini-3.8-flash` and `gemini-embedding-001`;
+7. current node/disk list-price boundary; and
+8. absence of a conflicting live Terraformers target runtime.
 
-If those observations still support ADR-005, apply the **same**
-`infra/terraform/envs/gcp-target-runtime` foundation and deploy the
-`infra/kubernetes/overlays/gcp-target` workloads. Do not create another environment, do not
-restore AWS, and do not ingest the full v3 corpus until M3-R3.
+If Free Trial coverage is unavailable, stop before paid apply unless explicit cost approval is
+provided. If the observations support ADR-005, activate this **same** target runtime with
+`node_count=1`, collect M3-R2 readiness evidence, and return the node pool to 0. Do not create
+another environment, restore AWS, or ingest the full v3 corpus until M3-R3.
 
 ## Do not revisit
 

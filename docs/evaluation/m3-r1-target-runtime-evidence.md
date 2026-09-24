@@ -63,18 +63,22 @@ with a fresh non-destructive observation and records the project/region context 
 
 ## Cost/operational boundary
 
-Initial M3-R2 planning shape:
+Initial M3-R2 Free Trial operating shape:
 
 - one zonal GKE Standard cluster;
-- one 4-vCPU / 16-GiB E2 node as the starting variable value;
-- one single-node OpenSearch StatefulSet with persistent storage;
-- Vertex AI generation/embedding usage on demand;
+- idle default: node pool size 0;
+- live verification: one `e2-standard-2` node (2 vCPU / 8 GiB);
+- 30 GiB `pd-standard` node boot disk and initial 15 GiB OpenSearch PVC;
+- one single-node OpenSearch StatefulSet;
+- Vertex AI generation/embedding calls only when ingestion/smoke/evaluation needs them;
 - no public OpenSearch endpoint;
 - no second evaluation cluster;
 - no GPU node and no self-hosted LLM.
 
-The node may later be resized or the same cluster extended when backend/observability components are
-added. That is expansion of one environment, not a second environment.
+The node pool returns to 0 after a live evidence session. The same cluster, IaC, corpus identity and
+Kubernetes overlay are reused; this is pause/resume of one environment, not repeated environment
+development. If later measured workload evidence requires more capacity, the same target may be
+resized through the change gate.
 
 ## Explicitly deferred
 
@@ -91,5 +95,7 @@ added. That is expansion of one environment, not a second environment.
 ## M3-R2 entry conditions
 
 M3-R2 may implement the selected target, but its first live action must refresh the mutable account
-facts listed in ADR-005. If the fresh values do not support the one-cluster shape, stop before apply
-and revise the decision; do not create a parallel fallback environment.
+facts listed in ADR-005, including remaining Free Trial credit. If the account is no longer covered
+by Free Trial credit, stop before paid resource creation unless explicit cost approval is provided.
+If the fresh values do not support the one-cluster shape, revise the decision; do not create a
+parallel fallback environment.

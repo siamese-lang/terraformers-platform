@@ -271,26 +271,30 @@ evaluator or per-stage script/workflow.
 
 ### M3-R1 — Target runtime evidence and capability decision
 
-**Status: TODO**
+**Status: DONE**
 
-**Problem / gap.** The project has no active target AI/RAG runtime, and the GCP deployment document
-still correctly leaves product/topology choices gated. A faithful live baseline cannot precede the
-runtime it is supposed to measure.
+**Problem / gap.** The project had no active target AI/RAG runtime, while M3-4 requires the runtime
+that the project will actually keep using rather than an AWS reconstruction or disposable
+evaluation stack.
 
-**Change boundary.** Collect actual project/region/billing/quota constraints and derive the minimum
-capability contract from existing `AnalysisProvider`, `EmbeddingProvider`,
-`ReferenceRetriever`, corpus/index, and runtime identity boundaries. Compare viable
-GCP/open-source-oriented candidates for generation, embeddings, OpenSearch-compatible retrieval,
-corpus ingestion, identity/authentication, network reachability, persistence, and cost.
+**Decision.** [ADR-005](../../architecture/decisions/ADR-005-target-ai-rag-runtime.md) selects one
+zonal GKE Standard target cluster, Vertex AI `gemini-3.8-flash` generation,
+`gemini-embedding-001` at 1024 dimensions, OpenSearch OSS in the same cluster, and Workload
+Identity Federation for GKE. M3-R3 will derive `terraformers-reference-v3` because the embedding
+model identity changes while the curated document/provider content remains the same.
 
-Do not select technology because it is fashionable, and do not deploy paid resources in this task.
+**Evidence.** [M3-R1 Target Runtime Evidence](../../evaluation/m3-r1-target-runtime-evidence.md)
+maps every selected capability to an existing application port or runtime requirement, records the
+last operator-observed Free Trial/quota constraints with their observation dates, compares rejected
+and deferred alternatives, and records current public cost/compatibility evidence.
 
-**Validation.** Every selected capability must map to an existing application port or confirmed
-target-runtime requirement, have an explicit cost/operational boundary, and preserve the single
-target runtime rule.
+**Mutable-account gate.** M3-R1 does not claim that 2026-09-16 quota values are current forever.
+M3-R2 must refresh project, billing, CPU/disk/GKE quota and Vertex model access before the first
+resource-creating Terraform apply. If the refreshed values invalidate the accepted one-cluster
+shape, amend ADR-005 before provisioning rather than creating a second environment.
 
-**Completion evidence.** One evidence-backed target runtime decision and an explicit list of
-remaining gated/unknown items sufficient for M3-R2 implementation.
+**Completion evidence.** The target capability/product decisions and remaining mutable deployment
+variables are explicit enough for M3-R2 implementation. No resource was created in M3-R1.
 
 ### M3-R2 — Single target AI/RAG runtime foundation
 

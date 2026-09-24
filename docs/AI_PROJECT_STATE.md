@@ -14,9 +14,9 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: target AI/RAG runtime foundation
+- Phase: single target AI/RAG runtime implementation
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Current implementation task: **M3-R1 — Target runtime evidence and capability decision**
+- Current implementation task: **M3-R2 — Single target AI/RAG runtime foundation**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. Historical AWS live
@@ -33,6 +33,7 @@ closure.
 - [ADR-002: Cloud-neutral boundaries](architecture/decisions/ADR-002-cloud-neutral-boundaries.md)
 - [ADR-003: Evaluation before complexity](architecture/decisions/ADR-003-evaluation-before-complexity.md)
 - [ADR-004: Evidence-based change gates](architecture/decisions/ADR-004-change-gates.md)
+- [ADR-005: Target AI/RAG runtime](architecture/decisions/ADR-005-target-ai-rag-runtime.md)
 - [Provider-neutral target architecture](architecture/target-architecture.md)
 - [GCP deployment architecture and capability mapping](architecture/deployment-gcp.md)
 - [Modernization master plan](plans/MASTER_PLAN.md)
@@ -110,6 +111,11 @@ closure.
   - added one runner/result/writer path that emits M3-1 stage provenance for the fixed dataset;
   - extracted Bedrock generation into a shared `AnalysisGenerationStage` so production and evaluation use the same model-call/retry path; and
   - full backend regression and deterministic runner cases passed, including retrieval provenance, input classification, validation, and first-divergence localization.
+- M3-R1 Target runtime evidence and capability decision — **COMPLETE**
+  - selected one reusable GKE Standard + Vertex AI + OpenSearch OSS target runtime rather than an evaluation-only cloud stack;
+  - retained the existing 1024-dimensional retrieval contract with `gemini-embedding-001` and required a new immutable `terraformers-reference-v3` embedding identity; and
+  - recorded a mandatory fresh billing/quota/model-access check before M3-R2 creates resources.
+
 
 ## Verified architectural direction
 
@@ -171,20 +177,19 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**M3-R1 — Target runtime evidence and capability decision.** Collect the actual GCP project,
-region, billing/quota/cost constraints and the minimum capability requirements imposed by the
-existing provider-neutral ports. Compare only viable GCP/open-source-oriented candidates for:
+**M3-R2 — Single target AI/RAG runtime foundation.** Implement the target selected by
+[ADR-005](architecture/decisions/ADR-005-target-ai-rag-runtime.md):
 
-- generation model access;
-- embedding model access and dimension/versioning;
-- OpenSearch-compatible retrieval/index persistence;
-- corpus ingestion;
-- runtime identity/authentication and network access.
+- one zonal GKE Standard target cluster in Seoul;
+- Vertex AI `gemini-3.8-flash` generation adapter;
+- Vertex AI `gemini-embedding-001` query embedding adapter at 1024 dimensions;
+- one private OpenSearch OSS StatefulSet in the same cluster;
+- Workload Identity Federation for GKE;
+- reusable Terraform/Kubernetes configuration that later milestones continue to use.
 
-This is **not** an evaluation-only environment design. The selected components become the project's
-single live target AI/RAG runtime and must be reusable by the serving backend and later M4/M7/M8/M9
-work. Do not deploy resources in M3-R1 before the candidate decision and cost boundary are recorded.
-Do not resume M3-4 until M3-R3 confirms the target runtime is usable.
+Before the first resource-creating apply, refresh current project/billing/quota/model-access values.
+Do not deploy an AWS compatibility stack or a separate evaluation cluster. Do not ingest the full
+corpus or run M3 quality evaluation until M3-R3/M3-4 respectively.
 
 ## Do not revisit
 

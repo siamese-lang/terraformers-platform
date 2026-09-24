@@ -96,9 +96,19 @@ Legend: **CONFIRMED** is fixed repository evidence; **REQUIRED** is a capability
 
 ## Runtime and compute
 
-The current decision is limited to: **a GCP runtime capable of executing the existing Kubernetes-compatible workload contract is REQUIRED**. GKE itself, GKE Standard, GKE Autopilot, self-managed Kubernetes on Compute Engine, node count, machine type, and zone/region topology are not selected.
+**M3-R1 decision:** use one **zonal GKE Standard** cluster in `asia-northeast3` as the reusable
+target runtime foundation. `asia-northeast3-a` is preferred for the initial apply, subject to a
+fresh capacity check. The planning start value is one `e2-standard-4` node; node count and exact
+disk sizing remain Terraform variables and are not HA/SLA claims.
 
-The runtime choice remains **GATED** until the actual project supplies project/regional CPU quota, GKE-related availability/quota if considered, persistent disk quota, internal/external IP and load-balancer constraints, resource headroom, billing/Free Trial constraints, and measured workload resource requirements. No values are inferred here.
+GKE Standard is selected instead of Autopilot because the retained OpenSearch deployment requires
+host `vm.max_map_count=262144`, while Standard supports node-level sysctl configuration and
+Autopilot restricts unsafe/node-level sysctls. The cluster is reused by M3-4, M4 and later runtime
+work rather than replaced.
+
+M3-R2 must refresh project billing, CPU/instance/disk quota, GKE availability and current pricing
+before creating resources. A quota mismatch reopens the deployment shape; it does not authorize a
+second environment.
 
 ## Database
 
@@ -112,9 +122,17 @@ The application depends on the **CONFIRMED** `ObjectReader`/`ObjectWriter` bound
 
 ## Retrieval
 
-OpenSearch-compatible retrieval remains the required logical capability behind `ReferenceRetriever`. Deployment must provide an OpenSearch-compatible endpoint/runtime, index persistence, runtime query access, batch ingestion access, an authentication/credential boundary, and embedding/index compatibility.
+**M3-R1 decision:** run **OpenSearch OSS as a single-node StatefulSet** in the same GKE Standard
+cluster for the initial target runtime. It uses persistent disk and an internal Kubernetes Service;
+OpenSearch is not exposed as a public endpoint.
 
-Self-hosted versus managed-compatible service, node count/specification, persistence topology, authentication mechanism, and endpoint/network topology are **GATED**. AWS AOSS and SigV4 are **HISTORICAL**. No different vector database is selected.
+This choice preserves `ReferenceRetriever`, `OpenSearchReferenceRetriever`, the k-NN query
+builder, response parser and provenance metadata while replacing only provider-specific
+transport/auth and deployment pieces. Exact OpenSearch image version and disk class/size are pinned
+in M3-R2 after compatibility/quota checks.
+
+AWS AOSS/SigV4 remains **HISTORICAL**. Vertex AI Vector Search and third-party managed search remain
+**DEFER** because no measured failure requires replacing the existing OpenSearch contract.
 
 ## Identity
 
@@ -122,9 +140,18 @@ The deployment requires browser authentication, token issuance, Spring Resource 
 
 ## Model and embedding access
 
-Deployment requires multimodal/text generation compatible with `AnalysisProvider`, embeddings compatible with `EmbeddingProvider`, runtime credential access, and measurable latency, cost, and error behavior. Provider, generation model, embedding model, exact quota, and model region/endpoint are **GATED**; Vertex AI or any other service is not automatically selected.
+**M3-R1 decision:** use Vertex AI `gemini-3.8-flash` for multimodal generation and
+`gemini-embedding-001` for embeddings. Generation uses the model's `global` endpoint and
+structured output. Query embeddings use `RETRIEVAL_QUERY`; corpus embeddings use
+`RETRIEVAL_DOCUMENT`; output dimensionality is fixed at **1024** to retain the current vector
+field shape.
 
-Changing the embedding model requires explicit review of compatibility with existing corpus/index embeddings and any necessary rebuild and corpus/index versioning.
+GKE workloads authenticate to Google APIs with **Workload Identity Federation for GKE**, not
+service-account key files.
+
+Because `terraformers-reference-v2` names the historical Titan embedding model, M3-R3 creates a
+new immutable `terraformers-reference-v3` embedding/index identity rather than mutating v2. Stable
+document IDs and AWS Terraform provider 5.100.0 content remain reusable.
 
 ## Observability
 

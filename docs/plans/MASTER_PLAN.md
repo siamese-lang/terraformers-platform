@@ -122,9 +122,10 @@ traces from the fixed `terraformers-eval-v1` dataset.
 stage provenance, and provide failure classes for M4. No AWS compatibility recreation or temporary
 parallel cloud environment is part of the exit condition.
 
-**Immediate next single task.** Execute **M3-R1** only. Gather actual GCP project/quota/billing
-constraints plus model/embedding/retrieval/corpus-ingestion capability requirements, then compare
-candidate target shapes. Do not deploy paid resources before that decision is recorded.
+**Immediate next single task.** Execute **M3-R2 — Single target AI/RAG runtime foundation** using
+ADR-005. Refresh mutable project/billing/quota/model-access values before the first resource-creating
+apply, then implement the selected reusable GKE Standard + Vertex AI + OpenSearch target. Do not
+create a parallel evaluation environment and do not start full corpus ingestion yet.
 
 ## M4 — AI Targeted Improvement
 

@@ -14,10 +14,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 protected apply automation / first-apply gate
+- Phase: M3-R2 node-IAM correction + protected apply automation
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R2 — Implement the protected apply identity/environment workflow before first creation**
+- Current implementation task: **M3-R2 — Correct the GKE node identity contract and implement the protected apply path before first creation**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a successful
@@ -175,19 +175,19 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Bootstrap and prove the separate M3-R2 protected apply identity/environment path.**
+**Merge the node-IAM correction and protected apply automation, then regenerate the target plan.**
 
-The plan/review prerequisite is complete: GitHub run `36332217168` succeeded, the secure full
-plan matched exactly 14 create-only managed resources, and the immediately refreshed billing,
-Free Trial credit, quota, Seoul machine/GKE availability, required APIs and duplicate-runtime
-checks passed. No GKE/OpenSearch target resource has been applied.
+Run `36332217168` and its secure digest proved the prior 14-create shape, but apply-IAM review
+against current GKE documentation found that the custom node service account should use
+`roles/container.defaultNodeServiceAccount`. The branch therefore replaces the three manual
+logging/monitoring node roles with that documented least-privilege role and changes the fail-closed
+foundation contract to **12 creates**. The prior 14-create plan must not be applied.
 
-The repository now owns a fail-closed apply contract and manual-only protected apply workflow.
-Before any resource-creating dispatch, configure `gcp-target-apply`, create the dedicated
-`terraformers-apply` identity with the reviewed role matrix, and run only its
-`identity-check` mode. The plan identity must remain non-mutating. Do not use `-auto-approve`,
-reuse the plan service account for apply, create another runtime environment, restore AWS, or begin
-full corpus ingestion.
+The same change adds the manual-only protected apply workflow, exact-SHA/confirmation gates,
+separate `terraformers-apply` bootstrap runbook, foundation/idle plan contracts, and a continuous
+check that `terraformers-plan` remains non-mutating. After merge, first regenerate/review the
+main-branch plan; then configure/bootstrap `gcp-target-apply` and run only `identity-check`.
+No GKE/OpenSearch target resource has been applied.
 
 ## Do not revisit
 

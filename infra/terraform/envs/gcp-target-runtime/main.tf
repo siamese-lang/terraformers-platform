@@ -63,6 +63,14 @@ resource "google_container_cluster" "target" {
   initial_node_count       = 1
   deletion_protection      = false
 
+  # GKE must create a temporary default node pool before removing it. Use the
+  # same least-privilege custom node identity so cluster creation never depends
+  # on permissions of the Compute Engine default service account.
+  node_config {
+    service_account = google_service_account.gke_nodes.email
+    oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+  }
+
   workload_identity_config {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
@@ -79,7 +87,10 @@ resource "google_container_cluster" "target" {
     channel = "REGULAR"
   }
 
-  depends_on = [google_project_service.required["container.googleapis.com"]]
+  depends_on = [
+    google_project_service.required["container.googleapis.com"],
+    google_project_iam_member.gke_node_roles,
+  ]
 }
 
 resource "google_container_node_pool" "target" {

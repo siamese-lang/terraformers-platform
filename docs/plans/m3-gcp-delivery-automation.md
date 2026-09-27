@@ -43,8 +43,11 @@ The operator ran the A-stage commands in the `terraformers-platform` GCP project
 - Seoul subnet list: only `default` (`10.178.0.0/20`) returned. Check the proposed target CIDR against this and any other VPC/subnet allocation before apply.
 - Project GCS bucket list: no rows returned. This does not prove the absence of state in a different account/project or backend.
 - Home-directory search for `terraform.tfstate` and `.backup`: results were under the **separate** `application-review-platform` and `arp-m12-closeout` OpenTofu trees; none was under a `terraformers-platform` target root. Paths inside `.terraform/` may describe backend configuration rather than managed-resource state. Do not move, delete or import any of these other-project files.
+- External Workload Identity pool list: no rows returned. This query does not inventory GKE's built-in workload identity pool.
+- Service account list: only the Compute Engine default service account was returned; no dedicated GitHub delivery service account appears.
+- GitHub repository Rulesets page: “You haven't created any rulesets.” Legacy branch protection under Settings → Branches remains unverified.
 
-This narrows the first-target-state risk but is not an exhaustive cloud inventory. WIF pools, service accounts, GitHub branch rules/environment gates and any state outside the searched home directory remain unverified. No creation or apply was performed.
+This narrows the first-target-state risk but is not an exhaustive cloud inventory. Existing external federation and a dedicated delivery identity were not listed; legacy GitHub branch protection, environment gates and any state outside the searched home directory remain unverified. No creation or apply was performed.
 
 ## Target responsibility split
 

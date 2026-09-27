@@ -1,6 +1,6 @@
 # M3 GCP Delivery Automation — Implementation Plan
 
-Status: **A-C COMPLETE; protected apply automation implementation in progress; no runtime apply authorized**
+Status: **A-B COMPLETE; C replan required after node-IAM correction; protected apply automation in progress; no runtime apply authorized**
 Baseline: `main` `d3eb25f12548414954c0331fa57576f114c10588` (2026-09-24)  
 Owner milestone: M3-R2; the first incomplete delivery task is the protected apply identity/environment proof.
 
@@ -148,17 +148,21 @@ A through C are complete:
 - the dedicated plan service account successfully authenticates and plans against canonical state;
 - the first live plan on commit `1d453895c32f5bbd5543b04bed320e116d601107` succeeded and was
   separately reviewed as exactly 14 create actions with no update/delete/replacement;
-- the refreshed pre-apply account gate passed; and
+- apply-IAM review then found that the custom GKE node service account should use Google's current
+  documented `roles/container.defaultNodeServiceAccount` minimum role. That pre-apply correction
+  supersedes the 14-create plan and reduces the next expected foundation shape to 12 creates;
+- the refreshed pre-apply account gate passed for the previous SHA and remains dated evidence; and
 - the plan identity is now continuously checked for absence of the target mutation permissions.
 
 D preparation adds a separate manual-only `gcp-target-apply` workflow with an exact-SHA input,
 protected environment, dedicated apply identity, exact saved-plan application and fail-closed
-foundation/idle contracts. Foundation permits only the reviewed 14 creates and critical values;
-idle permits only the canonical node pool 1→0 in-place update.
+foundation/idle contracts. Foundation will permit only the corrected reviewed 12 creates and
+critical values; idle permits only the canonical node pool 1→0 in-place update.
 
 ## Immediate single task
 
-Bootstrap **only the apply trust boundary**: configure the protected `gcp-target-apply` GitHub
-environment, create/bind `terraformers-apply` with the reviewed minimum role matrix, and run the
-workflow in `identity-check` mode. Do not dispatch `foundation` until that identity proof,
-a same-SHA plan review and a fresh mutable-account gate are all present.
+Merge the node-IAM/apply-automation change, regenerate and review the corrected main-branch plan,
+then bootstrap **only the apply trust boundary**: configure `gcp-target-apply`, create/bind
+`terraformers-apply` with the reviewed role matrix, and run `identity-check`. Do not dispatch
+`foundation` until the corrected same-SHA plan, identity proof and fresh mutable-account gate are
+all present.

@@ -1,6 +1,6 @@
 # M3 GCP Delivery Automation — Implementation Plan
 
-Status: **PROPOSED; no cloud mutation authorized by this document**  
+Status: **ADR-006 design accepted; no cloud mutation authorized by this document**
 Baseline: `main` `d3eb25f12548414954c0331fa57576f114c10588` (2026-09-24)  
 Owner milestone: M3-R2; the first incomplete product task remains the first target Terraform plan.
 
@@ -16,7 +16,7 @@ evaluation goal.
 `AGENTS.md`, the [active M3 plan](active/M3-ai-evaluation-baseline.md),
 [ADR-005](../architecture/decisions/ADR-005-target-ai-rag-runtime.md), and
 [2026-09-24 readiness evidence](../evaluation/m3-r2-live-readiness-evidence.md) govern the runtime.
-The [proposed ADR-006](../architecture/decisions/ADR-006-gcp-delivery-state-and-identity.md) specifies the state and identity trust boundaries for review.
+The [accepted ADR-006](../architecture/decisions/ADR-006-gcp-delivery-state-and-identity.md) specifies the state and identity trust boundaries.
 The root README and historical AWS workflows are references, not current GCP state. The active IaC
 tool is **Terraform 1.15.x**, not OpenTofu. Workload Identity Federation for **GKE workloads** is
 already implemented; GitHub Actions federation is a separate decision.

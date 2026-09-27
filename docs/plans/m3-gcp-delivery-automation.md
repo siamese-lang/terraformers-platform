@@ -16,6 +16,7 @@ evaluation goal.
 `AGENTS.md`, the [active M3 plan](active/M3-ai-evaluation-baseline.md),
 [ADR-005](../architecture/decisions/ADR-005-target-ai-rag-runtime.md), and
 [2026-09-24 readiness evidence](../evaluation/m3-r2-live-readiness-evidence.md) govern the runtime.
+The [proposed ADR-006](../architecture/decisions/ADR-006-gcp-delivery-state-and-identity.md) specifies the state and identity trust boundaries for review.
 The root README and historical AWS workflows are references, not current GCP state. The active IaC
 tool is **Terraform 1.15.x**, not OpenTofu. Workload Identity Federation for **GKE workloads** is
 already implemented; GitHub Actions federation is a separate decision.

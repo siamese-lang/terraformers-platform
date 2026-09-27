@@ -6,7 +6,7 @@ Proposed — requires review before bootstrap or live apply. This proposal does 
 
 ## Context
 
-M3-R2 has one target Terraform root, but its default backend is local and its live plan/apply is performed from Cloud Shell. The target root has never been applied according to the 2026-09-24 readiness evidence. On 2026-09-27 the operator found no target GKE cluster, no bucket in the terraformers-platform project, no external Workload Identity pool in the queried project and no delivery service account; only the Compute Engine default service account appeared. Home-directory state files belonged to the separate application-review-platform project. GitHub Rulesets are absent; legacy Branches protection and deployment environments remain unverified.
+M3-R2 has one target Terraform root, but its default backend is local and its live plan/apply procedure is specified for Cloud Shell. The target root has never been applied according to the 2026-09-24 readiness evidence. On 2026-09-27 the operator found no target GKE cluster, no bucket in the terraformers-platform project, no external Workload Identity pool in the queried project and no delivery service account; only the Compute Engine default service account appeared. Home-directory state files belonged to the separate application-review-platform project. GitHub Rulesets are absent; legacy Branches protection and deployment environments remain unverified.
 
 The GKE Workload Identity Federation selected in ADR-005 authenticates workloads running in GKE. It does not authenticate GitHub Actions.
 

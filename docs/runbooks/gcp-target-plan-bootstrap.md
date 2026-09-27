@@ -5,12 +5,11 @@ The associated GitHub workflow **only plans** the existing target runtime. Creat
 identity pool, or IAM binding changes GCP resources; review these commands and current billing
 before running them. No cluster or node is created by this procedure.
 
-Operator screenshots show the GitHub `main` Ruleset active, requiring PRs and blocking force
-pushes/deletion with no bypass. Before granting cloud permissions to CI, check the collapsed PR
-additional settings, enable **Require status checks to pass** with the observed
-`terraform-static-verification` GitHub Actions job, and restrict the `gcp-target-plan`
-environment to `main`. Review ADR-006 and the draft workflow PR first. The manual GCP plan
-workflow is not a PR status check and must not be selected as a required PR check.
+Operator screenshots show the GitHub `main` Ruleset active, requiring PRs, blocking force
+pushes/deletion with no bypass, and requiring the `terraform-static-verification` GitHub Actions
+check. PR approvals are set to 0 for the sole operator. Before granting cloud permissions to CI,
+restrict the `gcp-target-plan` environment to `main` and review ADR-006 and the draft workflow PR.
+The manual GCP plan workflow is not a PR status check.
 
 ## 1. Verify the target and choose a globally unique bucket name
 

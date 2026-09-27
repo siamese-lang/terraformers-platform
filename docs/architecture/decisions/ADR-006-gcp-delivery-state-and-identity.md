@@ -6,7 +6,7 @@ Proposed — requires review before bootstrap or live apply. This proposal does 
 
 ## Context
 
-M3-R2 has one target Terraform root, but its default backend is local and its live plan/apply procedure is specified for Cloud Shell. The target root has never been applied according to the 2026-09-24 readiness evidence. On 2026-09-27 the operator found no target GKE cluster, no bucket in the terraformers-platform project, no external Workload Identity pool in the queried project and no delivery service account; only the Compute Engine default service account appeared. Home-directory state files belonged to the separate application-review-platform and arp-m12-closeout repositories. At the initial GitHub settings inspection, both Rulesets and Classic branch protection were absent. The operator subsequently reported creating a branch Ruleset; its exact scope, enforcement, bypass and required checks remain unverified, as do deployment environments.
+M3-R2 has one target Terraform root, but its default backend is local and its live plan/apply procedure is specified for Cloud Shell. The target root has never been applied according to the 2026-09-24 readiness evidence. On 2026-09-27 the operator found no target GKE cluster, no bucket in the terraformers-platform project, no external Workload Identity pool in the queried project and no delivery service account; only the Compute Engine default service account appeared. Home-directory state files belonged to the separate application-review-platform and arp-m12-closeout repositories. At the initial GitHub settings inspection, both Rulesets and Classic branch protection were absent. Subsequent operator screenshots show the `protect-main-for-delivery` Ruleset active and applying to `main` only, with an empty bypass list, PR requirement, restricted deletions and blocked force pushes. Required status checks are off; the collapsed PR additional settings and deployment environments remain unverified.
 
 The GKE Workload Identity Federation selected in ADR-005 authenticates workloads running in GKE. It does not authenticate GitHub Actions.
 
@@ -21,7 +21,7 @@ The GKE Workload Identity Federation selected in ADR-005 authenticates workloads
 
 ## Required implementation proof before acceptance
 
-- Verify the newly reported main Ruleset requires PRs and blocks force pushes/deletion, with no unintended bypass; inspect GitHub environment settings and configure the apply-approval gate without blocking the repository's sole operator. Add required check contexts after verifying their stable names.
+- The supplied Ruleset screenshots establish active `main` targeting, PR requirement, deletion/force-push protection and empty bypass. Inspect the collapsed PR additional settings and GitHub deployment environments; configure the apply-approval gate without blocking the repository's sole operator. Add required check contexts after verifying their stable names.
 - Inventory state outside the searched Cloud Shell home directory as far as the selected GCP project and repository allow. Record the exact bucket/prefix and any migration result.
 - Review the bucket policy, version retention/cost and the plan/apply IAM matrix against Google provider actions in the first real plan. Test that plan identity cannot create a resource.
 - Verify GCS state locking/concurrency and that raw plan/state are not published as unrestricted PR or workflow artifacts.

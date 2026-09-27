@@ -26,7 +26,7 @@ already implemented; GitHub Actions federation is a separate decision.
 | Item | Verified from repository | Must be checked live before use |
 | --- | --- | --- |
 | `infra/terraform/envs/gcp-target-runtime` | GKE/VPC/node pool and GKE workload identity exist; no remote backend | Any existing local or remote state, unmanaged target resources, subnet CIDR conflict |
-| `.github/workflows/terraform-static-verification.yml` | Includes the GCP root via `-backend=false` | Required checks and branch/ruleset protection in GitHub settings |
+| `.github/workflows/terraform-static-verification.yml` | Includes the GCP root via `-backend=false`; user screenshots show an active `main` Ruleset | PR additional settings and deployment environments; select required check contexts after confirming stable names |
 | AWS delivery workflows | OIDC, review and plan-summary patterns exist | No AWS role, backend, or apply permissions transfer to GCP |
 | `scripts/deploy/summarize-terraform-plan.py` | General action counts and deletion detection; high-cost/public-exposure checks are AWS-specific | GCP-specific plan safety tests before using it as a gate |
 | GCP account | Operator recorded billing, Free Trial credit, quota and no cluster on 2026-09-24 | Fresh credit, resource/state inventory, IAM rights and CI federation feasibility |
@@ -46,9 +46,9 @@ The operator ran the A-stage commands in the `terraformers-platform` GCP project
 - Home-directory search for `terraform.tfstate` and `.backup`: results were under the **separate** `application-review-platform` and `arp-m12-closeout` OpenTofu trees; none was under a `terraformers-platform` target root. Paths inside `.terraform/` may describe backend configuration rather than managed-resource state. Do not move, delete or import any of these other-project files.
 - External Workload Identity pool list: no rows returned. This query does not inventory GKE's built-in workload identity pool.
 - Service account list: only the Compute Engine default service account was returned; no dedicated GitHub delivery service account appears.
-- At the initial GitHub repository inspection, the Rulesets page showed “You haven't created any rulesets,” and Settings → Branches showed no Classic branch protection. The operator subsequently reported creating a branch Ruleset; the exact target, enforcement, bypass list and required checks have not been verified through repository settings.
+- At the initial GitHub repository inspection, the Rulesets page showed “You haven't created any rulesets,” and Settings → Branches showed no Classic branch protection. Subsequent operator screenshots show `protect-main-for-delivery` **Active**, applying to one target (`main`), with an empty bypass list. Require a pull request before merging, restrict deletions and block force pushes are checked. Require status checks to pass is unchecked. The PR additional settings are collapsed in the screenshot, so reviewer-count and other nested options are unverified.
 
-This narrows the first-target-state risk but is not an exhaustive cloud inventory. Existing external federation and a dedicated delivery identity were not listed; the newly reported main protection settings require verification. Deployment environment gates and any state outside the searched home directory remain unverified. No GCP creation or apply was performed.
+This narrows the first-target-state risk but is not an exhaustive cloud inventory. Existing external federation and a dedicated delivery identity were not listed; the displayed main protection settings are verified from the operator screenshots. Deployment environment gates, nested PR settings and any state outside the searched home directory remain unverified. No GCP creation or apply was performed.
 
 ## Target responsibility split
 
@@ -72,7 +72,7 @@ This narrows the first-target-state risk but is not an exhaustive cloud inventor
 
 ### A. Inventory and GitHub governance (no GCP mutation)
 
-- Verify the operator-created GitHub branch Ruleset is active and targets exactly `main`, requires changes through a PR, blocks force pushes and deletion, and has no unintended bypass. In this one-person repository, do not require a second PR approver who does not exist. Select required CI check contexts only after observing their stable names on an actual PR so routine changes are not deadlocked. Confirm the rule's settings in GitHub rather than trying a direct push to `main`.
+- The operator's screenshots verify an active Ruleset targeting `main` with PR requirement, deletion/force-push protection and no bypass. Check the collapsed PR additional settings; in this one-person repository, do not require a second PR approver who does not exist. Required status checks remain off; add stable CI check contexts only after observing them on actual PRs so routine changes are not deadlocked. Do not test the rule by trying a direct push to `main`.
 - Inspect GitHub deployment environments separately. Before any apply credentials are added, configure an apply environment restricted to `main` with the operator as required reviewer. Verify whether preventing self-review would deadlock a deployment the same operator initiated; do not enable that option without a second reviewer.
 - In Cloud Shell, perform read-only checks for project/account, existing GKE/VM/VPC/subnet/bucket,
   Workload Identity pools/providers/service accounts and Terraform state files. Record resource

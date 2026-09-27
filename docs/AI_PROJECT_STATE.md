@@ -14,10 +14,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 live plan review / first-apply gate
+- Phase: M3-R2 node-IAM correction + protected apply automation
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R2 — Review the successful single-target Terraform plan before the first apply decision**
+- Current implementation task: **M3-R2 — Correct the GKE node identity contract and implement the protected apply path before first creation**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a successful
@@ -175,23 +175,19 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Generate and review the first M3-R2 Terraform plan with `node_count=1`.**
+**Merge the node-IAM correction and protected apply automation, then regenerate the target plan.**
 
-All read-only pre-apply gates now pass:
+Run `36332217168` and its secure digest proved the prior 14-create shape, but apply-IAM review
+against current GKE documentation found that the custom node service account should use
+`roles/container.defaultNodeServiceAccount`. The branch therefore replaces the three manual
+logging/monitoring node roles with that documented least-privilege role and changes the fail-closed
+foundation contract to **12 creates**. The prior 14-create plan must not be applied.
 
-- Free Trial credit remains and billing is enabled;
-- quota/headroom supports the one-node `e2-standard-2` session;
-- GKE/Vertex/Compute/IAM APIs are enabled;
-- GKE server config is reachable;
-- both selected Vertex models respond successfully; and
-- no existing GKE cluster or Terraformers target VM exists.
-
-The target storage path is explicitly `pd-standard` through the GCE PD CSI driver.
-
-Create a real `terraform.tfvars` locally in Cloud Shell from the committed example, use the
-approved project/Seoul settings and a non-conflicting subnet CIDR, then run `terraform init` and
-`terraform plan` with `node_count=1`. Review the resource list before any apply. Do not use
-`-auto-approve`, create another environment, restore AWS, or begin full corpus ingestion.
+The same change adds the manual-only protected apply workflow, exact-SHA/confirmation gates,
+separate `terraformers-apply` bootstrap runbook, foundation/idle plan contracts, and a continuous
+check that `terraformers-plan` remains non-mutating. After merge, first regenerate/review the
+main-branch plan; then configure/bootstrap `gcp-target-apply` and run only `identity-check`.
+No GKE/OpenSearch target resource has been applied.
 
 ## Do not revisit
 

@@ -74,6 +74,20 @@ jobs:
           gcloud auth print-access-token > /dev/null
           echo 'GitHub OIDC exchange and service account impersonation succeeded.' >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Assert plan identity has no target mutation permissions
+        run: |
+          set -euo pipefail
+          access_token="$(gcloud auth print-access-token)"
+          response="$(
+            curl -fsS -X POST               -H "Authorization: Bearer ${access_token}"               -H 'Content-Type: application/json'               -d '{"permissions":["compute.networks.create","compute.subnetworks.create","container.clusters.create","container.clusters.update","iam.serviceAccounts.create","iam.serviceAccounts.actAs","resourcemanager.projects.setIamPolicy","serviceusage.services.enable"]}'               "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
+          )"
+          granted="$(jq -r '.permissions // [] | join(",")' <<< "$response")"
+          [[ -z "$granted" ]] || {
+            echo "Plan identity unexpectedly has target mutation permissions: $granted" >&2
+            exit 1
+          }
+          echo 'Plan identity mutation-permission check: PASS.' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Check state bucket protection
         if: inputs.mode == 'plan'
         env:

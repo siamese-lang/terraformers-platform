@@ -53,6 +53,12 @@ jobs:
             tests/rag/test_curate_corpus_v2.py \
             tests/rag/test_ingest_corpus.py
 
+      - name: Verify GCP target apply plan gate
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/deploy/gcp_target_plan_gate.py
+          python3 -m unittest tests/deploy/test_gcp_target_plan_gate.py
+
       - name: Verify destroy-plan summary contract
         run: |
           set -euo pipefail

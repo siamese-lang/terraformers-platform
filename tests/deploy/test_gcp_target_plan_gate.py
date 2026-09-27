@@ -98,29 +98,11 @@ def foundation_plan() -> dict:
             {"role": "roles/aiplatform.user", "member": BACKEND_PRINCIPAL},
         ),
         resource(
-            'google_project_iam_member.gke_node_roles["roles/logging.logWriter"]',
+            'google_project_iam_member.gke_node_roles["roles/container.defaultNodeServiceAccount"]',
             "google_project_iam_member",
             ["create"],
             {
-                "role": "roles/logging.logWriter",
-                "member": "serviceAccount:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
-            },
-        ),
-        resource(
-            'google_project_iam_member.gke_node_roles["roles/monitoring.metricWriter"]',
-            "google_project_iam_member",
-            ["create"],
-            {
-                "role": "roles/monitoring.metricWriter",
-                "member": "serviceAccount:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
-            },
-        ),
-        resource(
-            'google_project_iam_member.gke_node_roles["roles/monitoring.viewer"]',
-            "google_project_iam_member",
-            ["create"],
-            {
-                "role": "roles/monitoring.viewer",
+                "role": "roles/container.defaultNodeServiceAccount",
                 "member": "serviceAccount:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
             },
         ),
@@ -161,7 +143,7 @@ def foundation_plan() -> dict:
 class GcpTargetPlanGateTest(unittest.TestCase):
     def test_foundation_accepts_reviewed_contract(self) -> None:
         result = gate.validate_plan(foundation_plan(), "foundation")
-        self.assertEqual(result["resource_change_count"], 14)
+        self.assertEqual(result["resource_change_count"], 12)
 
     def test_foundation_rejects_unreviewed_resource(self) -> None:
         plan = foundation_plan()

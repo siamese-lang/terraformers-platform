@@ -24,6 +24,8 @@ GCP_BUCKET=terraformers-platform-tfstate-REPLACE_WITH_UNIQUE_SUFFIX
 GCP_POOL=terraformers-github
 GCP_PROVIDER=terraformers-main
 GCP_PLAN_SA=terraformers-plan@${GCP_PROJECT}.iam.gserviceaccount.com
+GITHUB_OWNER_ID=174786754
+GITHUB_REPOSITORY_ID=1374031315
 
 gcloud config get-value project
 gcloud projects describe "$GCP_PROJECT" --format='value(projectNumber)'
@@ -100,9 +102,12 @@ remote plan. The local OpenTofu states from other repositories must never be mig
 
 ## 3. Create GitHub OIDC federation and a plan identity
 
-The provider accepts only this repository on `main`, and the service account binding matches
-only the GitHub job's `gcp-target-plan` environment subject. The environment's deployment branch
-restriction must also permit only `main`. Run once after checking existing pool/provider names.
+The provider accepts only this repository on `main`, using the immutable GitHub owner ID
+`174786754` and repository ID `1374031315` in addition to the branch claim. The service account
+binding matches only the GitHub job's `gcp-target-plan` environment subject. The environment's
+deployment branch restriction must also permit only `main`. Run once after checking existing
+pool/provider names. Claims used by the provider condition are explicitly included in the
+attribute mapping.
 
 ```bash
 GCP_NUMBER="$(gcloud projects describe "$GCP_PROJECT" --format='value(projectNumber)')"
@@ -114,8 +119,8 @@ gcloud iam workload-identity-pools providers create-oidc "$GCP_PROVIDER" \
   --project="$GCP_PROJECT" --location=global \
   --workload-identity-pool="$GCP_POOL" \
   --issuer-uri='https://token.actions.githubusercontent.com' \
-  --attribute-mapping='google.subject=assertion.sub' \
-  --attribute-condition="assertion.repository_owner=='siamese-lang' && assertion.repository=='siamese-lang/terraformers-platform' && assertion.ref=='refs/heads/main'"
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository_owner_id=assertion.repository_owner_id,attribute.repository_id=assertion.repository_id,attribute.ref=assertion.ref" \
+  --attribute-condition="assertion.repository_owner_id=='${GITHUB_OWNER_ID}' && assertion.repository_id=='${GITHUB_REPOSITORY_ID}' && assertion.ref=='refs/heads/main'"
 
 gcloud iam service-accounts create terraformers-plan \
   --project="$GCP_PROJECT" --display-name='Terraformers Terraform plan only'

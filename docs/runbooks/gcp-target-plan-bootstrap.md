@@ -30,12 +30,29 @@ gcloud projects describe "$GCP_PROJECT" --format='value(projectNumber)'
 gcloud storage buckets list --project="$GCP_PROJECT" --format='value(name)'
 gcloud iam workload-identity-pools list --project="$GCP_PROJECT" \
   --location=global --format='value(name)'
+
+# Read-only project permission preflight; the response lists granted permissions only.
+curl -fsS -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H 'Content-Type: application/json' \
+  -d '{"permissions":["storage.buckets.create","storage.buckets.update","storage.buckets.get","storage.buckets.setIamPolicy","iam.workloadIdentityPools.create","iam.workloadIdentityPoolProviders.create","iam.serviceAccounts.create","iam.serviceAccounts.setIamPolicy","resourcemanager.projects.setIamPolicy","serviceusage.services.enable"]}' \
+  "https://cloudresourcemanager.googleapis.com/v1/projects/${GCP_PROJECT}:testIamPermissions"
 ```
 
 Stop if the active project differs, or if a suitable state bucket / provider already exists;
 inspect existing settings and reuse it with the same access restrictions rather than creating
 a duplicate. There was no GCS state bucket or GitHub WIF pool in the initial inventory. The
 Compute Engine default service account is not the GitHub plan identity.
+
+The 2026-09-27 operator preflight confirmed bucket creation, identity creation, project IAM
+binding and API enablement permissions, but **did not return `storage.buckets.update`** at
+project scope. Stop before creating a bucket: enabling Object Versioning in section 2 needs
+that permission. Arrange an approved, narrowly scoped grant or have an authorized operator
+create and configure the bucket, then verify its protection before continuing. Also check
+`storage.buckets.setIamPolicy` on the eventual bucket and `iam.serviceAccounts.setIamPolicy`
+on the eventual plan service account before their IAM-binding steps; a project-level test does
+not prove access on those not-yet-created resources. Never assume that creating a resource
+automatically grants these permissions. None of these checks authorizes a cloud change.
 
 ## 2. Create the state bucket
 

@@ -69,6 +69,12 @@ def foundation_plan() -> dict:
                 "remove_default_node_pool": True,
                 "initial_node_count": 1,
                 "deletion_protection": False,
+                "node_config": [
+                    {
+                        "service_account": "terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
+                        "oauth_scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+                    }
+                ],
                 "workload_identity_config": [{"workload_pool": "terraformers-platform.svc.id.goog"}],
                 "addons_config": [{"gce_persistent_disk_csi_driver_config": [{"enabled": True}]}],
                 "release_channel": [{"channel": "REGULAR"}],
@@ -156,6 +162,16 @@ class GcpTargetPlanGateTest(unittest.TestCase):
     def test_foundation_rejects_destructive_action(self) -> None:
         plan = foundation_plan()
         plan["resource_changes"][0]["change"]["actions"] = ["delete", "create"]
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "foundation")
+
+    def test_foundation_rejects_default_compute_service_account_for_temporary_pool(self) -> None:
+        plan = foundation_plan()
+        cluster = next(
+            item for item in plan["resource_changes"]
+            if item["address"] == "google_container_cluster.target"
+        )
+        cluster["change"]["after"]["node_config"][0]["service_account"] = "default"
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "foundation")
 

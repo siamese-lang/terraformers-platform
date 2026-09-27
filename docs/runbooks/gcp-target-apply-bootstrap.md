@@ -53,9 +53,14 @@ The existing WIF provider is reused, but the service-account binding is restrict
 
 ## 3. Grant only the current target-root mutation roles
 
-The current reviewed foundation plan creates a custom VPC/subnet, one GKE cluster/node pool, one
-node service account, three project IAM bindings and four project-service resources. The apply
-identity therefore needs mutation permissions that the plan identity intentionally does not have.
+The corrected foundation plan creates a custom VPC/subnet, one GKE cluster/node pool, one
+node service account, three project IAM bindings and four project-service resources. The node
+service account uses Google's documented least-privilege
+`roles/container.defaultNodeServiceAccount` role. Because GKE must briefly create a default node
+pool before Terraform removes it, the cluster resource also pins that temporary pool to the same
+custom node service account rather than depending on the Compute Engine default service account.
+The apply identity therefore needs mutation permissions that the plan identity intentionally does
+not have.
 
 ```bash
 for GCP_ROLE in   roles/compute.networkAdmin   roles/container.clusterAdmin   roles/iam.serviceAccountCreator   roles/iam.serviceAccountUser   roles/resourcemanager.projectIamAdmin   roles/serviceusage.serviceUsageAdmin
@@ -78,7 +83,7 @@ Why these roles exist:
 - `roles/iam.serviceAccountUser`: provides `iam.serviceAccounts.actAs` needed to attach that
   custom node identity. It is project-scoped for first creation because the node account does not
   exist before Terraform creates it.
-- `roles/resourcemanager.projectIamAdmin`: provides project policy get/set required by the five
+- `roles/resourcemanager.projectIamAdmin`: provides project policy get/set required by the three
   `google_project_iam_member` resources. This is the most sensitive grant and is why the apply
   identity is environment-gated and the plan contract permits only the reviewed IAM bindings.
 - `roles/serviceusage.serviceUsageAdmin`: the Terraform root owns four

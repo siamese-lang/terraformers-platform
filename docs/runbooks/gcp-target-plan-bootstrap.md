@@ -26,6 +26,7 @@ GCP_PROVIDER=terraformers-main
 GCP_PLAN_SA=terraformers-plan@${GCP_PROJECT}.iam.gserviceaccount.com
 GITHUB_OWNER_ID=174786754
 GITHUB_REPOSITORY_ID=1374031315
+GITHUB_OIDC_SUBJECT=repo:siamese-lang@174786754/terraformers-platform@1374031315:environment:gcp-target-plan
 
 gcloud config get-value project
 gcloud projects describe "$GCP_PROJECT" --format='value(projectNumber)'
@@ -103,11 +104,14 @@ remote plan. The local OpenTofu states from other repositories must never be mig
 ## 3. Create GitHub OIDC federation and a plan identity
 
 The provider accepts only this repository on `main`, using the immutable GitHub owner ID
-`174786754` and repository ID `1374031315` in addition to the branch claim. The service account
-binding matches only the GitHub job's `gcp-target-plan` environment subject. The environment's
-deployment branch restriction must also permit only `main`. Run once after checking existing
-pool/provider names. Claims used by the provider condition are explicitly included in the
-attribute mapping.
+`174786754` and repository ID `1374031315` in addition to the branch claim. This repository was
+created on 2026-09-17, after GitHub's 2026-07-15 immutable-subject rollout boundary, so the default
+OIDC `sub` includes both immutable IDs. The service account binding therefore matches the exact
+GitHub job subject
+`repo:siamese-lang@174786754/terraformers-platform@1374031315:environment:gcp-target-plan`.
+The environment's deployment branch restriction must also permit only `main`. Run once after
+checking existing pool/provider names. Claims used by the provider condition are explicitly
+included in the attribute mapping.
 
 ```bash
 GCP_NUMBER="$(gcloud projects describe "$GCP_PROJECT" --format='value(projectNumber)')"
@@ -127,7 +131,7 @@ gcloud iam service-accounts create terraformers-plan \
 
 gcloud iam service-accounts add-iam-policy-binding "$GCP_PLAN_SA" \
   --project="$GCP_PROJECT" --role='roles/iam.workloadIdentityUser' \
-  --member="principal://iam.googleapis.com/projects/${GCP_NUMBER}/locations/global/workloadIdentityPools/${GCP_POOL}/subject/repo:siamese-lang/terraformers-platform:environment:gcp-target-plan"
+  --member="principal://iam.googleapis.com/projects/${GCP_NUMBER}/locations/global/workloadIdentityPools/${GCP_POOL}/subject/${GITHUB_OIDC_SUBJECT}"
 ```
 
 ## 4. Verify federation, then grant plan permissions

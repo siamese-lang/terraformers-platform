@@ -159,7 +159,7 @@ needs object create/delete to write and remove its state lock; grant object admi
 ```bash
 for GCP_ROLE in roles/browser roles/compute.viewer roles/container.viewer \
   roles/iam.serviceAccountViewer roles/iam.securityReviewer \
-  roles/serviceusage.serviceUsageViewer; do
+  roles/serviceusage.serviceUsageConsumer; do
   gcloud projects add-iam-policy-binding "$GCP_PROJECT" \
     --member="serviceAccount:${GCP_PLAN_SA}" --role="$GCP_ROLE" --quiet
 done

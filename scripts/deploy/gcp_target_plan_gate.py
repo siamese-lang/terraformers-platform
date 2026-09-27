@@ -104,6 +104,17 @@ def validate_foundation(changes: dict[str, dict[str, Any]]) -> None:
     require(cluster.get("remove_default_node_pool") is True, "default GKE node pool must be removed")
     require(cluster.get("initial_node_count") == 1, "bootstrap default node count must remain 1")
     require(cluster.get("deletion_protection") is False, "unexpected deletion_protection value")
+    bootstrap_node_config = single_block(cluster, "node_config")
+    require(
+        bootstrap_node_config.get("service_account")
+        == "terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
+        "temporary default node pool uses an unexpected service account",
+    )
+    require(
+        bootstrap_node_config.get("oauth_scopes")
+        == ["https://www.googleapis.com/auth/cloud-platform"],
+        "temporary default node pool OAuth scopes changed",
+    )
     workload_identity = single_block(cluster, "workload_identity_config")
     require(workload_identity.get("workload_pool") == "terraformers-platform.svc.id.goog", "unexpected workload identity pool")
     addons = single_block(cluster, "addons_config")

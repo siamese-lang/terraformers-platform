@@ -16,7 +16,7 @@ on:
         required: true
         type: string
       confirmation:
-        description: Use IDENTITY_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_14, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
+        description: Use IDENTITY_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_12, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
         required: true
         type: string
 
@@ -85,8 +85,8 @@ jobs:
               }
               ;;
             foundation)
-              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_FOUNDATION_14 ]] || {
-                echo 'foundation requires confirmation APPLY_REVIEWED_GCP_FOUNDATION_14.' >&2
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_FOUNDATION_12 ]] || {
+                echo 'foundation requires confirmation APPLY_REVIEWED_GCP_FOUNDATION_12.' >&2
                 exit 1
               }
               [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1

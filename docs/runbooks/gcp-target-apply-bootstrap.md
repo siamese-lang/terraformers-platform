@@ -54,7 +54,7 @@ The existing WIF provider is reused, but the service-account binding is restrict
 ## 3. Grant only the current target-root mutation roles
 
 The current reviewed foundation plan creates a custom VPC/subnet, one GKE cluster/node pool, one
-node service account, five project IAM bindings and four project-service resources. The apply
+node service account, three project IAM bindings and four project-service resources. The apply
 identity therefore needs mutation permissions that the plan identity intentionally does not have.
 
 ```bash
@@ -111,14 +111,14 @@ The first foundation dispatch uses:
 
 - operation: `foundation`
 - expected_sha: the exact reviewed current `main` SHA
-- confirmation: `APPLY_REVIEWED_GCP_FOUNDATION_14`
+- confirmation: `APPLY_REVIEWED_GCP_FOUNDATION_12`
 
 The workflow then:
 
 1. verifies the protected identity and state bucket;
 2. requires empty canonical runtime state and no unmanaged target cluster/network/subnet/node SA;
 3. creates a saved Terraform plan with `node_count=1`;
-4. requires the exact reviewed 14-resource create-only contract and critical values;
+4. requires the exact reviewed 12-resource create-only contract and critical values;
 5. rejects any delete, replacement, additional resource, IAM role/member change, CIDR/zone/machine
    size/disk/runtime-identity drift;
 6. applies that exact saved plan without `-auto-approve`; and

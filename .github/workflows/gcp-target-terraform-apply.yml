@@ -242,9 +242,9 @@ jobs:
           {
             echo '## GCP target apply result'
             echo
-            echo "- Operation: `$OPERATION`"
-            echo "- Commit: `$GITHUB_SHA`"
-            echo "- Cluster status: `$status`"
-            echo "- Current node count: `$current_nodes`"
+            printf -- '- Operation: `%s`\n' "$OPERATION"
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Cluster status: `%s`\n' "$status"
+            printf -- '- Current node count: `%s`\n' "$current_nodes"
             echo '- Raw Terraform plan/state were not uploaded.'
           } >> "$GITHUB_STEP_SUMMARY"

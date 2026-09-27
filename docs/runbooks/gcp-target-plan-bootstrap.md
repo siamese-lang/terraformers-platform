@@ -63,10 +63,14 @@ other constraints can still block an operation. These checks do not authorize cl
 
 The bucket and its object versions can incur storage charges. Restrict its use to this Terraform
 root; object versioning protects recovery, and public access prevention blocks public grants.
+The first live GitHub plan showed that the plan identity also needs the Cloud Resource Manager API
+enabled before the Google provider can read project metadata, so bootstrap enables that API here
+rather than treating the resulting 403 as an IAM-role failure.
 
 ```bash
 gcloud services enable storage.googleapis.com iam.googleapis.com \
-  iamcredentials.googleapis.com sts.googleapis.com --project="$GCP_PROJECT"
+  iamcredentials.googleapis.com sts.googleapis.com \
+  cloudresourcemanager.googleapis.com --project="$GCP_PROJECT"
 
 gcloud storage buckets create "gs://${GCP_BUCKET}" \
   --project="$GCP_PROJECT" --location=asia-northeast3 \

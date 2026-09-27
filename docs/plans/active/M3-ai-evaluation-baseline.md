@@ -7,9 +7,11 @@
 M0 through M2 are complete. M3 establishes a repeatable, explainable AI/RAG quality baseline before
 any prompt, retrieval, model, framework, or orchestration change is treated as an improvement.
 
-The current task is **M3-R2 — Single target AI/RAG runtime foundation**. Static implementation is
-complete and the live account/model pre-apply gate has passed except for one final duplicate-runtime
-read-only check. M3-4 remains **WAITING_FOR_TARGET_RUNTIME** until M3-R2 and M3-R3 complete.
+The current task is **M3-R2 — Single target AI/RAG runtime foundation**. Static implementation,
+live account/model readiness, the duplicate-runtime check, remote-state/OIDC bootstrap, and the
+first GitHub Terraform plan are complete. The live plan still requires action-count/full-plan review
+before a separate first-apply decision. M3-4 remains **WAITING_FOR_TARGET_RUNTIME** until M3-R2 and
+M3-R3 complete.
 
 ## Objective
 
@@ -298,7 +300,7 @@ variables are explicit enough for M3-R2 implementation. No resource was created 
 
 ### M3-R2 — Single target AI/RAG runtime foundation
 
-**Status: IN PROGRESS — STATIC FOUNDATION COMPLETE / LIVE PLAN PENDING**
+**Status: IN PROGRESS — LIVE PLAN GENERATED / REVIEW PENDING**
 
 **Problem / gap.** ADR-005 selected the target products, but the project still needed deployable
 provider adapters and reusable GCP/OpenSearch infrastructure before the same runtime could serve
@@ -342,14 +344,21 @@ default balanced disk. The target now explicitly enables the GCE PD CSI driver a
 OpenSearch 15 GiB PVC to a repository-owned `pd-standard` StorageClass.
 
 **Remaining live boundary.** **No GKE cluster/node/OpenSearch disk has been created.** The final
-read-only duplicate-runtime check passed: no GKE cluster and no target-labeled VM exists. The next
-step is to generate and review the Terraform plan with `node_count=1` before the first apply. Do
-not use `-auto-approve`, a second environment, or full v3 corpus ingestion.
+read-only duplicate-runtime check passed: no GKE cluster and no target-labeled VM exists. The
+remote-state/OIDC bootstrap is now live: the dedicated GCS state bucket is versioned with uniform
+bucket-level access and public access prevention, the GitHub environment exchanges OIDC only from
+the immutable repository identity on `main`, and the plan identity remains separate from any apply
+identity.
 
-Before transferring this manual plan/apply procedure to GitHub Actions, use the
-[GCP delivery automation plan](../m3-gcp-delivery-automation.md) to inventory any existing local
-state, protect the trusted branch, and decide remote state and CI identity. That preliminary work
-does not authorize an apply or change the M3-R2 product completion criteria.
+The first successful GitHub Terraform plan is workflow run
+[`36332217168`](https://github.com/siamese-lang/terraformers-platform/actions/runs/36332217168)
+against commit `1d453895c32f5bbd5543b04bed320e116d601107` with `node_count=1`. The run passed
+OIDC exchange, bucket-protection checks, remote-state init, Terraform plan, and publication of the
+bounded action-count summary. An earlier live attempt exposed a bootstrap dependency on
+`cloudresourcemanager.googleapis.com`; enabling that API resolved the provider project-read 403.
+The next gate is to inspect the published action counts and reproduce/review the full plan securely
+before a separate first-apply decision. Do not use `-auto-approve`, a second environment, or full
+v3 corpus ingestion.
 
 **Completion evidence.** Static reusable target code/IaC and fresh account/model readiness evidence
 are present, but M3-R2 remains incomplete until the approved target runtime is applied and its

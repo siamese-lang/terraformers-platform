@@ -42,6 +42,14 @@ remains the same across M3 and later milestones.
 
 ## Pre-apply gate
 
+The canonical state for this root uses a versioned GCS bucket and the
+`gcp-target-runtime` prefix. Bootstrap the bucket and the GitHub plan identity using
+[`gcp-target-plan-bootstrap.md`](../../../../docs/runbooks/gcp-target-plan-bootstrap.md)
+before `terraform init`. The bucket name is supplied with
+`-backend-config="bucket=BUCKET_NAME"`; the prefix is supplied with
+`-backend-config='prefix=gcp-target-runtime'`. Never initialize this root with a local backend
+for a live plan. The GitHub workflow can run a plan only; no apply identity has been created.
+
 Do not run a resource-creating apply until the current project/billing/quota evidence required by
 ADR-005 has been refreshed. In particular verify CPU/instance/disk quota, exact zonal capacity,
 Vertex model access, and current cost.

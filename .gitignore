@@ -54,6 +54,7 @@ crash.*.log
 *.tfplan
 *.plan
 terraform-plan.log
+gha-creds-*.json
 
 # Kubernetes / Helm generated or sensitive files
 secrets.yaml

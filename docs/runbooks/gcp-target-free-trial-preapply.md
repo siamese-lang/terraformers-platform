@@ -183,11 +183,19 @@ Proceed to resource creation only when all are true:
 For the first live session:
 
 ```bash
-terraform -chdir=infra/terraform/envs/gcp-target-runtime init
+GCP_BUCKET=REPLACE_WITH_APPROVED_TF_STATE_BUCKET
+terraform -chdir=infra/terraform/envs/gcp-target-runtime init \
+  -backend-config="bucket=${GCP_BUCKET}" \
+  -backend-config='prefix=gcp-target-runtime'
 terraform -chdir=infra/terraform/envs/gcp-target-runtime plan \
   -var-file=terraform.tfvars \
   -var='node_count=1'
 ```
+
+Use the same approved bucket and prefix as the GitHub plan workflow. Follow
+[`gcp-target-plan-bootstrap.md`](gcp-target-plan-bootstrap.md) first; do not initialize a
+second local state or use any state file from another repository. The Cloud Shell account
+must have authorized state access and GCP read permissions.
 
 Review the plan before apply. Do not use `-auto-approve` for the first live creation.
 

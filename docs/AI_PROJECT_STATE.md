@@ -14,10 +14,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 live plan review / first-apply gate
+- Phase: M3-R2 protected apply automation / first-apply gate
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R2 — Review the successful single-target Terraform plan before the first apply decision**
+- Current implementation task: **M3-R2 — Implement the protected apply identity/environment workflow before first creation**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a successful
@@ -175,23 +175,19 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Generate and review the first M3-R2 Terraform plan with `node_count=1`.**
+**Bootstrap and prove the separate M3-R2 protected apply identity/environment path.**
 
-All read-only pre-apply gates now pass:
+The plan/review prerequisite is complete: GitHub run `36332217168` succeeded, the secure full
+plan matched exactly 14 create-only managed resources, and the immediately refreshed billing,
+Free Trial credit, quota, Seoul machine/GKE availability, required APIs and duplicate-runtime
+checks passed. No GKE/OpenSearch target resource has been applied.
 
-- Free Trial credit remains and billing is enabled;
-- quota/headroom supports the one-node `e2-standard-2` session;
-- GKE/Vertex/Compute/IAM APIs are enabled;
-- GKE server config is reachable;
-- both selected Vertex models respond successfully; and
-- no existing GKE cluster or Terraformers target VM exists.
-
-The target storage path is explicitly `pd-standard` through the GCE PD CSI driver.
-
-Create a real `terraform.tfvars` locally in Cloud Shell from the committed example, use the
-approved project/Seoul settings and a non-conflicting subnet CIDR, then run `terraform init` and
-`terraform plan` with `node_count=1`. Review the resource list before any apply. Do not use
-`-auto-approve`, create another environment, restore AWS, or begin full corpus ingestion.
+The repository now owns a fail-closed apply contract and manual-only protected apply workflow.
+Before any resource-creating dispatch, configure `gcp-target-apply`, create the dedicated
+`terraformers-apply` identity with the reviewed role matrix, and run only its
+`identity-check` mode. The plan identity must remain non-mutating. Do not use `-auto-approve`,
+reuse the plan service account for apply, create another runtime environment, restore AWS, or begin
+full corpus ingestion.
 
 ## Do not revisit
 

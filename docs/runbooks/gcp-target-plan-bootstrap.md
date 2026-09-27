@@ -47,14 +47,14 @@ Compute Engine default service account is not the GitHub plan identity.
 The 2026-09-27 operator preflight returned all six project-resource permissions above. A
 separate test against the **project** did not return `storage.buckets.get`,
 `storage.buckets.update` or `storage.buckets.setIamPolicy`; that result does **not** establish
-whether the operator can manage a particular bucket. The project API tests project access,
-while Cloud Storage exposes its own permission test for an existing bucket. No state bucket
-exists yet, so check the account's direct and inherited project roles and determine who can
-finish the bucket setup before creating it. Object Versioning needs `storage.buckets.update`
-on the bucket, and the plan identity binding needs `storage.buckets.setIamPolicy` there.
-Some basic project roles receive bucket permissions through convenience values; bucket
-creation alone does not prove them. Test the actual bucket and plan service account before
-their IAM-binding steps. None of these checks authorizes a cloud change.
+whether the operator can manage a particular bucket. The operator's direct, unconditional
+project role was confirmed as `roles/owner`. Google documents that a project Owner receives
+`roles/storage.legacyBucketOwner` on a new uniform-access bucket through convenience values;
+that bucket role includes get, update and IAM-policy permissions. No extra project IAM grant
+is indicated by this evidence. After approved creation, verify permissions on the actual
+bucket before enabling Object Versioning or granting plan access. Also verify the plan
+service account's IAM policy before binding the GitHub principal. Organization policy and
+other constraints can still block an operation. These checks do not authorize cloud changes.
 
 ## 2. Create the state bucket
 
@@ -68,6 +68,26 @@ gcloud services enable storage.googleapis.com iam.googleapis.com \
 gcloud storage buckets create "gs://${GCP_BUCKET}" \
   --project="$GCP_PROJECT" --location=asia-northeast3 \
   --uniform-bucket-level-access --public-access-prevention
+```
+
+Before changing bucket settings, run the Cloud Storage permission test **on that bucket**.
+Each response must list the permission requested; stop if any does not. This check is read-only.
+
+```bash
+for GCP_PERMISSION in storage.buckets.get storage.buckets.update \
+  storage.buckets.getIamPolicy storage.buckets.setIamPolicy; do
+  printf '%s: ' "$GCP_PERMISSION"
+  curl -fsS -G \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    --data-urlencode "permissions=${GCP_PERMISSION}" \
+    "https://storage.googleapis.com/storage/v1/b/${GCP_BUCKET}/iam/testPermissions"
+  printf '\n'
+done
+```
+
+Only after all four permissions are confirmed, enable versioning and verify metadata:
+
+```bash
 gcloud storage buckets update "gs://${GCP_BUCKET}" --versioning
 gcloud storage buckets describe "gs://${GCP_BUCKET}" \
   --format='default(name,location,versioning_enabled,uniform_bucket_level_access)'

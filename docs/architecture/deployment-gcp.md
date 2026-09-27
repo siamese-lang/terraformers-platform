@@ -4,18 +4,21 @@
 
 This planning document maps the provider-neutral [target architecture](target-architecture.md) to capabilities that can be deployed on the current target, GCP. GCP migration is not itself the project goal: the goals remain backend reliability, evaluated AI/RAG improvement, failure-diagnosis observability, and cloud portability. The logical/application architecture stays cloud-provider-neutral, while provider-specific details are confined to adapter and deployment layers.
 
-This is not a Terraform implementation, resource-creation guide, final capacity or cost plan, or production runbook. It creates no GCP resources and selects no unverified product or topology. Product and topology choices lacking quota, capacity, cost, runtime, and operational evidence remain **GATED** or `UNKNOWN/TBD`.
+This is a deployment architecture map, not an apply guide or final cost plan. ADR-005 and M3-R2
+have since selected and implemented the target AI/RAG foundation in Terraform and Kubernetes
+manifests. No target runtime resources have been created as of the 2026-09-24 evidence. Other
+product/topology choices lacking evidence remain **GATED** or `UNKNOWN/TBD`.
 
 ## Deployment principles
 
 - GCP is the current deployment target; choosing a GCP resource does not change the logical architecture.
 - Existing Spring Boot, domain/business flows, `AnalysisJob` lifecycle, and provider-neutral ports are retained.
-- The existing container and Kubernetes-compatible base/workload contract is reused. This requires a compatible runtime, but does not select GKE or another compute topology.
+- The existing container and Kubernetes-compatible base/workload contract is reused; ADR-005 selects one zonal GKE Standard target runtime for M3.
 - MariaDB with Flyway remains the relational contract. Hosting is a separate gated choice.
 - Provider-specific identity, object storage, retrieval transport, model access, credentials, and telemetry belong behind application ports or in the deployment layer.
 - Historical AWS runtime, infrastructure, and delivery assets are compatibility/baseline references, not the active deployment target and not a template for one-to-one product substitution.
 - Release and operations require immutable image/release identity, least privilege, reproducible configuration, deterministic validation, and deployment, rollback, teardown, and closure evidence.
-- These requirements are capabilities and principles, not selections of particular GCP products.
+- The remaining requirements do not by themselves select additional GCP products.
 
 ## Single target runtime lifecycle
 
@@ -67,7 +70,8 @@ additional live cloud deployments.
 
 ## Candidate deployment shape
 
-This is a capability-level candidate shape, not a selected final topology. Product names are deliberately omitted.
+This map includes the M3-R1 selections and still-gated capabilities. It is not a complete deployed
+application topology.
 
 ```mermaid
 flowchart LR
@@ -99,8 +103,8 @@ Legend: **CONFIRMED** is fixed repository evidence; **SELECTED** is an accepted 
 
 **M3-R1 decision:** use one **zonal GKE Standard** cluster in `asia-northeast3` as the reusable
 target runtime foundation. `asia-northeast3-a` is preferred for the initial apply, subject to a
-fresh capacity check. The planning start value is one `e2-standard-4` node; node count and exact
-disk sizing remain Terraform variables and are not HA/SLA claims.
+fresh capacity check. M3-R2 pins an idle node count of 0 and an initial live session of one
+`e2-standard-2` node with a 30 GiB `pd-standard` boot disk; these are not HA/SLA claims.
 
 GKE Standard is selected instead of Autopilot because the retained OpenSearch deployment requires
 host `vm.max_map_count=262144`, while Standard supports node-level sysctl configuration and
@@ -129,8 +133,8 @@ OpenSearch is not exposed as a public endpoint.
 
 This choice preserves `ReferenceRetriever`, `OpenSearchReferenceRetriever`, the k-NN query
 builder, response parser and provenance metadata while replacing only provider-specific
-transport/auth and deployment pieces. Exact OpenSearch image version and disk class/size are pinned
-in M3-R2 after compatibility/quota checks.
+transport/auth and deployment pieces. M3-R2 pins OpenSearch OSS 3.8.0 and an internal-only
+StatefulSet with a 15 GiB `pd-standard` PVC.
 
 AWS AOSS/SigV4 remains **HISTORICAL**. Vertex AI Vector Search and third-party managed search remain
 **DEFER** because no measured failure requires replacing the existing OpenSearch contract.
@@ -164,13 +168,17 @@ Exact Prometheus, Loki, Tempo, or Grafana hosting, a cloud-native monitoring pro
 
 The logical access path is `Internet/client → HTTPS entry → frontend/backend access path`. Backend egress may be required for identity metadata/JWK or provider endpoints, object storage, retrieval, model/embedding access, and package/image/runtime dependencies where applicable. Database, retrieval, and internal telemetry are not required to be publicly exposed where private access is feasible.
 
-Exact VPC topology, subnet CIDRs, NAT, firewall rules, load-balancer product, and public/private IP allocation are **GATED**. No CIDR or IP allocation is invented here.
+The M3-R2 Terraform root implements a dedicated VPC/subnet; its CIDR remains a variable that must
+be checked for conflicts before apply. NAT, ingress, load-balancer product and later public/private
+IP allocation remain **GATED**.
 
 ## Secrets and runtime identity
 
 Long-lived static cloud credentials must not be embedded in application images or the repository. The deployment requires runtime identity, least privilege, and secret/configuration lifecycle separation from application code.
 
-An exact secrets product, workload identity mechanism, and Kubernetes secret-integration product are **GATED**. This requirement does not select Secret Manager, Workload Identity, or any equivalent product.
+M3-R2 selects Workload Identity Federation for **GKE workloads calling Vertex AI**. An exact
+secrets product and Kubernetes secret-integration product remain **GATED**; the GKE choice does not
+select GitHub Actions-to-GCP identity or a deployment service account.
 
 ## CI/CD and GitOps
 
@@ -180,33 +188,40 @@ AWS ECR, OIDC federation, and deploy/teardown workflows are **HISTORICAL** imple
 
 ## Infrastructure as code
 
-Terraform is an existing repository asset and the IaC approach is reused; OpenTofu is not substituted. The AWS Terraform stacks will not be ported line by line. Future GCP IaC is a new provider-specific deployment implementation behind the unchanged logical architecture.
+Terraform is the active IaC tool; OpenTofu is not substituted. The AWS Terraform stacks are not
+ported line by line. M3-R2 implements the selected GCP target root behind the unchanged logical
+architecture; its first live plan and apply remain pending.
 
 The first live target IaC introduced before M3-4 becomes the canonical deployment implementation
 for later milestones. Evaluation does not get a parallel IaC tree. If multiple parameterized
 environments are ever justified, they reuse the same modules, application image, and runtime
 contracts.
 
-Required principles are environment/state separation, minimal privilege, reproducible plan/apply, explicit outputs, destructive-operation awareness, and teardown evidence. The exact resource tree, state backend, and resources are **GATED** and absent from this document.
+Required principles are state separation, minimal privilege, reproducible plan/apply, explicit
+outputs, destructive-operation awareness, and teardown evidence. The target resource tree exists;
+its remote state backend and CI delivery identity remain undecided. See the
+[M3 delivery automation plan](../plans/m3-gcp-delivery-automation.md).
 
 ## Capacity and quota gate
 
-Before a GCP product or topology is selected, a capacity-discovery task must record evidence from the actual Cloud project. This is now the immediate **M3-R1** dependency task. The repository currently supplies no actual values, so every value below is `UNKNOWN/TBD`; no value should be guessed. This table is the checklist for the target-runtime decision, not a separate evaluation environment.
+M3-R1/M3-R2 have recorded the 2026-09-24 target-account measurements in the
+[live readiness evidence](../evaluation/m3-r2-live-readiness-evidence.md). Refresh changing values
+before apply. The table distinguishes observed M3 facts from later application-delivery unknowns.
 
 | Evidence to collect | Current evidence | Why it gates selection |
 | --- | --- | --- |
-| Billing / Free Trial status and account constraints | `UNKNOWN/TBD` | Establishes services that can be enabled and sustainable resource/cost boundaries |
-| Project identity and candidate region(s) | `UNKNOWN/TBD` | Establishes the scope in which availability, quota and locality must be checked |
-| Compute Engine regional/project CPU quota | `UNKNOWN/TBD` | Gates feasible workload capacity and headroom |
-| Persistent disk quota/availability | `UNKNOWN/TBD` | Gates persistent runtime, retrieval and telemetry shapes |
-| External IP quota/availability and internal IP constraints | `UNKNOWN/TBD` | Gates ingress, egress and endpoint design |
+| Billing / Free Trial status and account constraints | Enabled / credit confirmed present by operator, 2026-09-24 | Refresh credit before paid resource creation |
+| Project identity and candidate region(s) | `terraformers-platform` / `asia-northeast3-a` | Confirm target project on each live run |
+| Compute Engine regional/project CPU quota | Global `12/0`, Seoul `E2_CPUS=8/0`, 2026-09-24 | Refresh before a one-node session |
+| Persistent disk quota/availability | Seoul `DISKS_TOTAL_GB=2048/0`; initial 30 GiB boot + 15 GiB PVC | Refresh quota and assess continuing disk cost |
+| External IP quota/availability and internal IP constraints | Global `IN_USE_ADDRESSES=4/0`; later topology `UNKNOWN/TBD` | Gates future ingress and egress design |
 | Load-balancer and networking constraints | `UNKNOWN/TBD` | Gates HTTPS entry and private connectivity |
-| GKE availability and related quota, if considered | `UNKNOWN/TBD` | Gates whether and how GKE can be evaluated; it does not presume selection |
+| GKE availability and related quota | Server config reachable; `e2-standard-2` advertised; `INSTANCES=8/0`, 2026-09-24 | Actual allocation is proven only at apply |
 | Database hosting feasibility | `UNKNOWN/TBD` | Requires MariaDB compatibility, persistence, backup/restore, network and operational evidence |
-| OpenSearch CPU/RAM/storage and persistence requirements | `UNKNOWN/TBD` | Gates managed-compatible versus self-hosted feasibility and topology |
+| OpenSearch CPU/RAM/storage and persistence requirements | Single-node internal StatefulSet with a 15 GiB `pd-standard` PVC selected; live fit unproven | Validate readiness and PVC behavior in M3-R2 |
 | Observability CPU/RAM/storage/retention requirements | `UNKNOWN/TBD` | Prevents an unbudgeted telemetry topology |
-| Model API access, region and quota | `UNKNOWN/TBD` | Gates provider/model feasibility and measurable runtime behavior |
-| Total workload CPU, RAM and storage estimate | `UNKNOWN/TBD` | Establishes aggregate capacity and safety headroom |
+| Model API access, region and quota | Minimal generation and embedding calls succeeded, 2026-09-24; sustained quota unproven | Live quality/latency/cost measured later |
+| Total workload CPU, RAM and storage estimate | Initial M3 substrate fits quota; complete application profile `UNKNOWN/TBD` | Gates later backend/database/observability deployment |
 
 The output must record commands, project/region context, observation time, raw results where safe, and constraints—not merely a proposed topology.
 

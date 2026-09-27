@@ -7,8 +7,10 @@ before running them. No cluster or node is created by this procedure.
 
 Operator screenshots show the GitHub `main` Ruleset active, requiring PRs and blocking force
 pushes/deletion with no bypass. Before granting cloud permissions to CI, check the collapsed PR
-additional settings and restrict the `gcp-target-plan` environment to `main`. Review ADR-006
-and the draft workflow PR first.
+additional settings, enable **Require status checks to pass** with the observed
+`terraform-static-verification` GitHub Actions job, and restrict the `gcp-target-plan`
+environment to `main`. Review ADR-006 and the draft workflow PR first. The manual GCP plan
+workflow is not a PR status check and must not be selected as a required PR check.
 
 ## 1. Verify the target and choose a globally unique bucket name
 

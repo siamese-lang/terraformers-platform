@@ -2,6 +2,14 @@ name: GCP Target Terraform Plan
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Authenticate only before granting cloud resource-read permissions, or run the plan.
+        required: true
+        type: choice
+        options:
+          - identity-check
+          - plan
 
 permissions:
   contents: read
@@ -32,6 +40,7 @@ jobs:
 
       - name: Check identity and state configuration
         env:
+          RUN_MODE: ${{ inputs.mode }}
           STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
           WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
           PLAN_SERVICE_ACCOUNT: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
@@ -39,14 +48,17 @@ jobs:
           set -euo pipefail
           [[ "$GITHUB_REF" == refs/heads/main ]] || exit 1
           [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]] || exit 1
-          [[ -n "$STATE_BUCKET" && -n "$WIF_PROVIDER" && -n "$PLAN_SERVICE_ACCOUNT" ]] || {
-            echo 'Configure GCP_TF_STATE_BUCKET, GCP_WIF_PROVIDER, and GCP_TF_PLAN_SERVICE_ACCOUNT in the gcp-target-plan environment.' >&2
+          [[ "$RUN_MODE" == identity-check || "$RUN_MODE" == plan ]] || exit 1
+          [[ -n "$WIF_PROVIDER" && -n "$PLAN_SERVICE_ACCOUNT" ]] || {
+            echo 'Configure GCP_WIF_PROVIDER and GCP_TF_PLAN_SERVICE_ACCOUNT in the gcp-target-plan environment.' >&2
             exit 1
           }
           [[ "$WIF_PROVIDER" == projects/*/locations/global/workloadIdentityPools/*/providers/* ]] || exit 1
           [[ "$PLAN_SERVICE_ACCOUNT" == *@terraformers-platform.iam.gserviceaccount.com ]] || exit 1
-          [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
-          [[ "$STATE_BUCKET" != *..* ]] || exit 1
+          if [[ "$RUN_MODE" == plan ]]; then
+            [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
+            [[ "$STATE_BUCKET" != *..* ]] || exit 1
+          fi
 
       - uses: google-github-actions/auth@v3
         with:
@@ -56,7 +68,14 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v3
 
+      - name: Check OIDC exchange without resource access
+        run: |
+          set -euo pipefail
+          gcloud auth print-access-token > /dev/null
+          echo 'GitHub OIDC exchange and service account impersonation succeeded.' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Check state bucket protection
+        if: inputs.mode == 'plan'
         env:
           STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
         run: |
@@ -75,11 +94,13 @@ jobs:
           }
 
       - uses: hashicorp/setup-terraform@v3
+        if: inputs.mode == 'plan'
         with:
           terraform_version: 1.15.8
           terraform_wrapper: false
 
       - name: Plan against the canonical remote state
+        if: inputs.mode == 'plan'
         env:
           STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
         run: |
@@ -101,6 +122,7 @@ jobs:
             > "${RUNNER_TEMP}/gcp-target-plan.json"
 
       - name: Publish resource action counts
+        if: inputs.mode == 'plan'
         env:
           PLAN_JSON: ${{ runner.temp }}/gcp-target-plan.json
         run: |

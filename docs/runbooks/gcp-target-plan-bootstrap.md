@@ -5,11 +5,16 @@ The associated GitHub workflow **only plans** the existing target runtime. Creat
 identity pool, or IAM binding changes GCP resources; review these commands and current billing
 before running them. No cluster or node is created by this procedure.
 
+Before granting cloud permissions to CI, confirm the reported GitHub `main` Ruleset is active,
+requires PRs and blocks force pushes/deletion with no unintended bypass. Review ADR-006 and the
+draft workflow PR first; the initial Ruleset settings have not been independently verified.
+
 ## 1. Verify the target and choose a globally unique bucket name
 
 Run in an authenticated Cloud Shell with permissions to manage project IAM, Workload Identity
-Federation, and Storage buckets. Keep the bucket name in your Cloud Shell session; do not put
-credentials, state objects, or a downloaded service account key into GitHub.
+Federation, and Storage buckets. Run each block in order and stop at the first error. Keep the
+bucket name in your Cloud Shell session; do not put credentials, state objects, or a downloaded
+service account key into GitHub.
 
 ```bash
 GCP_PROJECT=terraformers-platform
@@ -79,6 +84,24 @@ gcloud iam service-accounts add-iam-policy-binding "$GCP_PLAN_SA" \
   --member="principal://iam.googleapis.com/projects/${GCP_NUMBER}/locations/global/workloadIdentityPools/${GCP_POOL}/subject/repo:siamese-lang/terraformers-platform:environment:gcp-target-plan"
 ```
 
+## 4. Verify federation, then grant plan permissions
+
+In the GitHub repository create an environment named **`gcp-target-plan`**, allow deployment
+from `main` only, and set these environment variables (not secrets):
+
+| Variable | Value |
+| --- | --- |
+| `GCP_TF_STATE_BUCKET` | Chosen globally unique bucket name without `gs://` |
+| `GCP_WIF_PROVIDER` | `projects/<GCP_NUMBER>/locations/global/workloadIdentityPools/terraformers-github/providers/terraformers-main` |
+| `GCP_TF_PLAN_SERVICE_ACCOUNT` | `terraformers-plan@terraformers-platform.iam.gserviceaccount.com` |
+
+Set optional environment reviewers according to your actual reviewer availability; a sole
+maintainer must not enable a rule that blocks their own review. No GitHub service-account key
+secret is required. After the workflow PR merges to `main`, run **GCP Target Terraform Plan**
+manually on `main`, choosing **`identity-check`**. This mode exchanges the GitHub OIDC token for
+the dedicated service account and stops before any state or target-resource query. Confirm it
+passes before granting the following roles.
+
 Give the plan identity only read permissions for managed resource refresh. The backend also
 needs object create/delete to write and remove its state lock; grant object administration on
 **this one dedicated bucket**, never on the project. Do not reuse this identity for apply.
@@ -97,28 +120,14 @@ for GCP_ROLE in roles/storage.objectAdmin roles/storage.bucketViewer; do
 done
 ```
 
-The exact provider read calls are verified by the first live plan. If a 403 occurs, inspect the
-specific missing permission and add only the narrowest required read role before retrying.
-
-## 4. Configure GitHub and run once
-
-In the GitHub repository create an environment named **`gcp-target-plan`**, allow deployment
-from `main` only, and set these environment variables (not secrets):
-
-| Variable | Value |
-| --- | --- |
-| `GCP_TF_STATE_BUCKET` | Chosen globally unique bucket name without `gs://` |
-| `GCP_WIF_PROVIDER` | `projects/<GCP_NUMBER>/locations/global/workloadIdentityPools/terraformers-github/providers/terraformers-main` |
-| `GCP_TF_PLAN_SERVICE_ACCOUNT` | `terraformers-plan@terraformers-platform.iam.gserviceaccount.com` |
-
-Set optional environment reviewers according to your actual reviewer availability; a sole
-maintainer must not enable a rule that blocks their own review. No GitHub service-account key
-secret is required. After the workflow PR merges to `main`, run **GCP Target Terraform Plan**
-manually, selecting `main`. Inspect the action counts and full plan securely before a separate
+Now run the same workflow manually on `main`, choosing **`plan`**. Inspect the action counts and
+full plan securely before a separate
 apply decision by running the equivalent plan in an authorized Cloud Shell with the same bucket,
 prefix and variables. The workflow never uploads the raw plan. `node_count=1` here only describes
-the intended evidence session; the workflow
-cannot apply it. The default branch ruleset protects edits to this workflow.
+the intended evidence session; the workflow cannot apply it.
+
+The exact provider read calls are verified by the first live plan. If a 403 occurs, inspect the
+specific missing permission and add only the narrowest required read role before retrying.
 
 The first successful plan, including its run URL, commit SHA, bucket metadata check and
 resource action counts, is the evidence for the next M3-R2 decision. A plan alone does not

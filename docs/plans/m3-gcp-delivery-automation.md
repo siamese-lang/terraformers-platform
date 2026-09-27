@@ -1,8 +1,8 @@
 # M3 GCP Delivery Automation — Implementation Plan
 
-Status: **ADR-006 design accepted; no cloud mutation authorized by this document**
+Status: **A-C COMPLETE; protected apply automation implementation in progress; no runtime apply authorized**
 Baseline: `main` `d3eb25f12548414954c0331fa57576f114c10588` (2026-09-24)  
-Owner milestone: M3-R2; the first incomplete product task remains the first target Terraform plan.
+Owner milestone: M3-R2; the first incomplete delivery task is the protected apply identity/environment proof.
 
 ## Why this is a prerequisite
 
@@ -139,8 +139,26 @@ cloud change; this plan does not execute it.
 reviewable, and the node pool is returned to zero. Then resume M3-R3; application registry, full
 backend deployment, corpus ingestion and agent issue orchestration remain later gated work.
 
+## 2026-09-27 implementation checkpoint
+
+A through C are complete:
+
+- target/state inventory and `main` governance are verified;
+- the versioned GCS backend and repository/main-restricted GitHub WIF provider exist;
+- the dedicated plan service account successfully authenticates and plans against canonical state;
+- the first live plan on commit `1d453895c32f5bbd5543b04bed320e116d601107` succeeded and was
+  separately reviewed as exactly 14 create actions with no update/delete/replacement;
+- the refreshed pre-apply account gate passed; and
+- the plan identity is now continuously checked for absence of the target mutation permissions.
+
+D preparation adds a separate manual-only `gcp-target-apply` workflow with an exact-SHA input,
+protected environment, dedicated apply identity, exact saved-plan application and fail-closed
+foundation/idle contracts. Foundation permits only the reviewed 14 creates and critical values;
+idle permits only the canonical node pool 1→0 in-place update.
+
 ## Immediate single task
 
-Complete **A's read-only inventory**, especially Cloud Shell Terraform state and GitHub
-branch/environment settings. Then decide the state and identity design in B. Do not replace the
-existing M3-R2 goal with a broad automation milestone or trigger a live apply from this plan.
+Bootstrap **only the apply trust boundary**: configure the protected `gcp-target-apply` GitHub
+environment, create/bind `terraformers-apply` with the reviewed minimum role matrix, and run the
+workflow in `identity-check` mode. Do not dispatch `foundation` until that identity proof,
+a same-SHA plan review and a fresh mutable-account gate are all present.

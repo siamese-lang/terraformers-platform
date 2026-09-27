@@ -1,0 +1,250 @@
+name: GCP Target Terraform Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Authenticate only, create the reviewed foundation, or return the existing node pool to zero.
+        required: true
+        type: choice
+        options:
+          - identity-check
+          - foundation
+          - idle
+      expected_sha:
+        description: Exact trusted main commit SHA being approved.
+        required: true
+        type: string
+      confirmation:
+        description: Use IDENTITY_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_14, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: gcp-target-terraform-state
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 60
+    env:
+      TF_IN_AUTOMATION: 'true'
+      TF_INPUT: 'false'
+      TF_VAR_project_id: terraformers-platform
+      TF_VAR_subnet_cidr: 10.40.0.0/20
+    defaults:
+      run:
+        shell: bash
+        working-directory: infra/terraform/envs/gcp-target-runtime
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted apply request
+        env:
+          OPERATION: ${{ inputs.operation }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]] || exit 1
+          [[ "$GITHUB_REF" == refs/heads/main ]] || exit 1
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'expected_sha must be a full 40-character commit SHA.' >&2
+            exit 1
+          }
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match the checked-out main commit.' >&2
+            exit 1
+          }
+          [[ -n "$WIF_PROVIDER" && -n "$APPLY_SERVICE_ACCOUNT" ]] || {
+            echo 'Configure GCP_WIF_PROVIDER and GCP_TF_APPLY_SERVICE_ACCOUNT in gcp-target-apply.' >&2
+            exit 1
+          }
+          [[ "$WIF_PROVIDER" == projects/*/locations/global/workloadIdentityPools/*/providers/* ]] || exit 1
+          [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]] || {
+            echo 'The apply workflow only accepts the dedicated terraformers-apply identity.' >&2
+            exit 1
+          }
+
+          case "$OPERATION" in
+            identity-check)
+              [[ "$CONFIRMATION" == IDENTITY_CHECK ]] || {
+                echo 'identity-check requires confirmation IDENTITY_CHECK.' >&2
+                exit 1
+              }
+              ;;
+            foundation)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_FOUNDATION_14 ]] || {
+                echo 'foundation requires confirmation APPLY_REVIEWED_GCP_FOUNDATION_14.' >&2
+                exit 1
+              }
+              [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
+              [[ "$STATE_BUCKET" != *..* ]] || exit 1
+              echo 'TF_VAR_node_count=1' >> "$GITHUB_ENV"
+              ;;
+            idle)
+              [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_ZERO ]] || {
+                echo 'idle requires confirmation SCALE_GCP_TARGET_TO_ZERO.' >&2
+                exit 1
+              }
+              [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
+              [[ "$STATE_BUCKET" != *..* ]] || exit 1
+              echo 'TF_VAR_node_count=0' >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "Unsupported operation: $OPERATION" >&2
+              exit 1
+              ;;
+          esac
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Verify apply identity
+        run: |
+          set -euo pipefail
+          gcloud auth print-access-token > /dev/null
+          echo 'Dedicated GCP apply identity authenticated through GitHub OIDC.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop after identity check
+        if: inputs.operation == 'identity-check'
+        run: |
+          echo 'Identity check only; no state or target resource operation was attempted.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check canonical state bucket protection
+        if: inputs.operation != 'identity-check'
+        env:
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+          versioning="$(gcloud storage buckets describe "gs://${STATE_BUCKET}" --format='value(versioning_enabled)')"
+          ubla="$(gcloud storage buckets describe "gs://${STATE_BUCKET}" --format='value(uniform_bucket_level_access)')"
+          [[ "$versioning" == True ]] || {
+            echo 'State bucket object versioning must be enabled.' >&2
+            exit 1
+          }
+          [[ "$ubla" == True ]] || {
+            echo 'State bucket uniform bucket-level access must be enabled.' >&2
+            exit 1
+          }
+
+      - uses: hashicorp/setup-terraform@v3
+        if: inputs.operation != 'identity-check'
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: Initialize canonical remote state
+        if: inputs.operation != 'identity-check'
+        env:
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+          terraform init -no-color -reconfigure -input=false             -backend-config="bucket=${STATE_BUCKET}"             -backend-config='prefix=gcp-target-runtime'
+
+      - name: Check operation state boundary
+        if: inputs.operation != 'identity-check'
+        env:
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          mapfile -t managed_state < <(terraform state list)
+
+          if [[ "$OPERATION" == foundation ]]; then
+            if (( ${#managed_state[@]} != 0 )); then
+              printf 'Foundation apply requires empty canonical runtime state; found:\n' >&2
+              printf '  %s\n' "${managed_state[@]}" >&2
+              exit 1
+            fi
+
+            for existing in               "$(gcloud container clusters list --project=terraformers-platform --filter='name=terraformers-target' --format='value(name)')"               "$(gcloud compute networks list --project=terraformers-platform --filter='name=terraformers-target' --format='value(name)')"               "$(gcloud compute networks subnets list --project=terraformers-platform --regions=asia-northeast3 --filter='name=terraformers-target' --format='value(name)')"               "$(gcloud iam service-accounts list --project=terraformers-platform --filter='email:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com' --format='value(email)')"
+            do
+              [[ -z "$existing" ]] || {
+                echo "Unmanaged target resource already exists: $existing" >&2
+                exit 1
+              }
+            done
+          else
+            printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target' || {
+              echo 'Idle operation requires the canonical GKE cluster in remote state.' >&2
+              exit 1
+            }
+            printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target' || {
+              echo 'Idle operation requires the canonical node pool in remote state.' >&2
+              exit 1
+            }
+          fi
+
+      - name: Create saved plan
+        if: inputs.operation != 'identity-check'
+        run: |
+          set -euo pipefail
+          terraform plan -no-color -input=false -lock-timeout=5m             -out="${RUNNER_TEMP}/gcp-target.tfplan"
+          terraform show -json "${RUNNER_TEMP}/gcp-target.tfplan"             > "${RUNNER_TEMP}/gcp-target-plan.json"
+
+      - name: Enforce reviewed plan contract
+        if: inputs.operation != 'identity-check'
+        env:
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_target_plan_gate.py"             --plan-json "${RUNNER_TEMP}/gcp-target-plan.json"             --operation "$OPERATION"
+          printf '%s  %s\n'             "$(sha256sum "${RUNNER_TEMP}/gcp-target.tfplan" | awk '{print $1}')"             'saved Terraform plan' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply exact saved plan
+        if: inputs.operation != 'identity-check'
+        run: |
+          set -euo pipefail
+          terraform apply -no-color -input=false "${RUNNER_TEMP}/gcp-target.tfplan"
+
+      - name: Verify resulting runtime boundary
+        if: inputs.operation != 'identity-check'
+        env:
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          status="$(gcloud container clusters describe terraformers-target             --zone=asia-northeast3-a             --project=terraformers-platform             --format='value(status)')"
+          [[ "$status" == RUNNING ]] || {
+            echo "GKE cluster status is $status, expected RUNNING." >&2
+            exit 1
+          }
+
+          current_nodes="$(gcloud container clusters describe terraformers-target             --zone=asia-northeast3-a             --project=terraformers-platform             --format='value(currentNodeCount)')"
+
+          if [[ "$OPERATION" == foundation ]]; then
+            [[ "$current_nodes" == 1 ]] || {
+              echo "Foundation apply expected currentNodeCount=1, got $current_nodes." >&2
+              exit 1
+            }
+          else
+            [[ "$current_nodes" == 0 ]] || {
+              echo "Idle apply expected currentNodeCount=0, got $current_nodes." >&2
+              exit 1
+            }
+          fi
+
+          {
+            echo '## GCP target apply result'
+            echo
+            echo "- Operation: `$OPERATION`"
+            echo "- Commit: `$GITHUB_SHA`"
+            echo "- Cluster status: `$status`"
+            echo "- Current node count: `$current_nodes`"
+            echo '- Raw Terraform plan/state were not uploaded.'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -55,8 +55,11 @@ This narrows the first-target-state risk but is not an exhaustive cloud inventor
    destructive decisions. An agent may edit code, Terraform, tests and docs and open a PR.
 2. PR CI performs static checks without cloud credentials. PRs and forks never receive a deployment
    identity. Protect `main` with required PR/check rules before granting CI cloud access.
-3. A trusted `main` workflow requests a **plan-only** GCP identity, uses a locked/versioned state,
-   and publishes a sanitized resource/action summary. Only authorized operators see raw plan/state.
+3. A trusted `main` workflow requests a **plan-only** GCP identity for target resources,
+   uses a locked/versioned state, and publishes a sanitized resource/action summary. Terraform
+   state locking can require narrowly scoped writes to the GCS backend even during plan; this
+   identity must not have target-resource mutation rights. Only authorized operators see raw
+   plan/state.
 4. A separately gated apply job verifies the exact commit, input values and reviewed plan identity;
    it fails on unexpected delete/replace or IAM/network/cost changes. Human approval is required
    for first creation and sensitive changes. Avoid automatic apply on every merge.

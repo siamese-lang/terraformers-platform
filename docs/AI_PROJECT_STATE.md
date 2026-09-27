@@ -14,13 +14,15 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 Terraform plan/review gate
+- Phase: M3-R2 live plan review / first-apply gate
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R2 — Generate and review the first single-target Terraform plan**
+- Current implementation task: **M3-R2 — Review the successful single-target Terraform plan before the first apply decision**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
-repository-owned evaluation dataset, and M3-3 added one reusable runner. Historical AWS live
+repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a successful
+main-branch GitHub Terraform plan (run `36332217168`, commit
+`1d453895c32f5bbd5543b04bed320e116d601107`); no target runtime resource has been applied yet. Historical AWS live
 infrastructure is intentionally absent, so M3-4 is **WAITING_FOR_TARGET_RUNTIME**, not a request to
 recreate AWS. M3-R1 through M3-R3 now establish the actual GCP/open-source-oriented target AI/RAG
 runtime once; that same runtime is reused by M3-4, M4, later observability/failure work, and M9

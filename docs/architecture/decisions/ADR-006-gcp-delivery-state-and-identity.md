@@ -21,7 +21,7 @@ The GKE Workload Identity Federation selected in ADR-005 authenticates workloads
 
 ## Required implementation proof before acceptance
 
-- The supplied Ruleset screenshots establish active `main` targeting, PR requirement, deletion/force-push protection and empty bypass. Inspect the collapsed PR additional settings and GitHub deployment environments; configure the apply-approval gate without blocking the repository's sole operator. Add required check contexts after verifying their stable names.
+- The supplied Ruleset screenshots establish active `main` targeting, PR requirement, deletion/force-push protection and empty bypass. Inspect the collapsed PR additional settings and GitHub deployment environments; configure the apply-approval gate without blocking the repository's sole operator. `terraform-static-verification` is an observed job on the Terraform PR; require that stable GitHub Actions check before CI receives GCP resource permissions.
 - Inventory state outside the searched Cloud Shell home directory as far as the selected GCP project and repository allow. Record the exact bucket/prefix and any migration result.
 - Review the bucket policy, version retention/cost and the plan/apply IAM matrix against Google provider actions in the first real plan. Test that plan identity cannot create a resource.
 - Verify GCS state locking/concurrency and that raw plan/state are not published as unrestricted PR or workflow artifacts.

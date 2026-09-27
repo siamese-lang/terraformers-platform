@@ -1,8 +1,8 @@
-# ADR-006: GCP target delivery state and GitHub identity (proposal)
+# ADR-006: GCP target delivery state and GitHub identity
 
 ## Status
 
-Proposed — requires review before bootstrap or live apply. This proposal does not approve cloud resource creation, IAM grants or a Terraform apply.
+Accepted on 2026-09-27 for the delivery state and identity design. This decision does not authorize cloud resource creation, IAM grants or a Terraform apply; those require separate review and authorization.
 
 ## Context
 
@@ -10,7 +10,7 @@ M3-R2 has one target Terraform root, but its default backend is local and its li
 
 The GKE Workload Identity Federation selected in ADR-005 authenticates workloads running in GKE. It does not authenticate GitHub Actions.
 
-## Proposed decision
+## Decision
 
 1. Use one GCS bucket with Object Versioning as the remote backend for the single gcp-target-runtime root, with a dedicated prefix and state locking. Check bucket location, lifecycle retention and account cost before creation. The bucket is a delivery foundation, not a second application runtime.
 2. Bootstrap the bucket from the authorized GCP account using a reviewed, repeatable procedure. Record bootstrap ownership and recovery. If actual target state is discovered elsewhere, migrate and verify it before any CI plan against the new backend.
@@ -19,7 +19,7 @@ The GKE Workload Identity Federation selected in ADR-005 authenticates workloads
 5. Require pull-request checks and trusted-branch protection before CI gets GCP credentials. Allow cloud authentication only from a checked-out trusted commit, never an untrusted PR or fork. First creation, deletion/replacement, IAM broadening and cost-sensitive changes need separate plan review and operator approval. An environment reviewer gate is distinct from protecting main.
 6. Keep Kubernetes OpenSearch deployment and the node-count 1-to-0 lifecycle as separate, bounded jobs after the initial Terraform plan/apply succeeds. Test GKE API reachability from the runner before automating kubectl. Preserve a recovery runbook for failure during node scale-down and account for charges remaining at zero nodes.
 
-## Required implementation proof before acceptance
+## Required implementation proof before cloud bootstrap and first apply
 
 - The supplied Ruleset screenshots establish active `main` targeting, PR requirement, deletion/force-push protection, empty bypass, 0 required approvals and the `terraform-static-verification` GitHub Actions required check. Inspect GitHub deployment environments separately; configure the apply-approval gate without blocking the repository's sole operator.
 - Inventory state outside the searched Cloud Shell home directory as far as the selected GCP project and repository allow. Record the exact bucket/prefix and any migration result.

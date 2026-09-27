@@ -31,11 +31,11 @@ gcloud storage buckets list --project="$GCP_PROJECT" --format='value(name)'
 gcloud iam workload-identity-pools list --project="$GCP_PROJECT" \
   --location=global --format='value(name)'
 
-# Read-only project permission preflight; the response lists granted permissions only.
+# Read-only project-resource permission preflight; this does not test a bucket.
 curl -fsS -X POST \
   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H 'Content-Type: application/json' \
-  -d '{"permissions":["storage.buckets.create","storage.buckets.update","storage.buckets.get","storage.buckets.setIamPolicy","iam.workloadIdentityPools.create","iam.workloadIdentityPoolProviders.create","iam.serviceAccounts.create","iam.serviceAccounts.setIamPolicy","resourcemanager.projects.setIamPolicy","serviceusage.services.enable"]}' \
+  -d '{"permissions":["storage.buckets.create","iam.workloadIdentityPools.create","iam.workloadIdentityPoolProviders.create","iam.serviceAccounts.create","resourcemanager.projects.setIamPolicy","serviceusage.services.enable"]}' \
   "https://cloudresourcemanager.googleapis.com/v1/projects/${GCP_PROJECT}:testIamPermissions"
 ```
 
@@ -44,15 +44,17 @@ inspect existing settings and reuse it with the same access restrictions rather 
 a duplicate. There was no GCS state bucket or GitHub WIF pool in the initial inventory. The
 Compute Engine default service account is not the GitHub plan identity.
 
-The 2026-09-27 operator preflight confirmed bucket creation, identity creation, project IAM
-binding and API enablement permissions, but **did not return `storage.buckets.update`** at
-project scope. Stop before creating a bucket: enabling Object Versioning in section 2 needs
-that permission. Arrange an approved, narrowly scoped grant or have an authorized operator
-create and configure the bucket, then verify its protection before continuing. Also check
-`storage.buckets.setIamPolicy` on the eventual bucket and `iam.serviceAccounts.setIamPolicy`
-on the eventual plan service account before their IAM-binding steps; a project-level test does
-not prove access on those not-yet-created resources. Never assume that creating a resource
-automatically grants these permissions. None of these checks authorizes a cloud change.
+The 2026-09-27 operator preflight returned all six project-resource permissions above. A
+separate test against the **project** did not return `storage.buckets.get`,
+`storage.buckets.update` or `storage.buckets.setIamPolicy`; that result does **not** establish
+whether the operator can manage a particular bucket. The project API tests project access,
+while Cloud Storage exposes its own permission test for an existing bucket. No state bucket
+exists yet, so check the account's direct and inherited project roles and determine who can
+finish the bucket setup before creating it. Object Versioning needs `storage.buckets.update`
+on the bucket, and the plan identity binding needs `storage.buckets.setIamPolicy` there.
+Some basic project roles receive bucket permissions through convenience values; bucket
+creation alone does not prove them. Test the actual bucket and plan service account before
+their IAM-binding steps. None of these checks authorizes a cloud change.
 
 ## 2. Create the state bucket
 

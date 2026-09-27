@@ -16,6 +16,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Status: **ACTIVE**
 - Phase: M3-R2 Terraform plan/review gate
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
+- Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Current implementation task: **M3-R2 — Generate and review the first single-target Terraform plan**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
@@ -132,7 +133,7 @@ Current M3 gaps after the fresh M3-R2 readiness check:
 - 2026-09-24 live evidence confirms billing + remaining Free Trial credit, sufficient CPU/instance/
   disk quota, Seoul `e2-standard-2` availability, GKE server availability, and successful minimal
   calls to both selected Vertex models;
-- one final read-only duplicate-runtime check remains before Terraform plan/apply;
+- the final read-only duplicate-runtime check passed on 2026-09-24 (no GKE cluster or target VM);
 - the target cluster/OpenSearch disk has not yet been created, so M3-R2 live readiness is not
   complete;
 - `terraformers-reference-v2` remains immutable historical corpus identity; M3-R3 must create
@@ -152,22 +153,15 @@ Reusable patterns include provider abstraction, immutable image/SHA identity, le
 
 **DEFER — evidence required:** RabbitMQ, Transactional Outbox, LangGraph, a persistent Python AI worker/service, Keycloak, Redis, Kafka, and multi-agent architecture.
 
-**GCP deployment GATED:** GKE use and mode/topology, node count, VM type/size, concrete managed database hosting, object storage implementation, exact identity provider, OpenSearch hosting/auth/network topology, generation and embedding model/providers, exact observability deployment topology, ingress/load-balancer product, exact secret/runtime identity product, and exact CI federation/registry implementation.
+**GCP target selected/implemented for M3-R2:** one zonal GKE Standard cluster with an idle `node_count=0` and a bounded `1 × e2-standard-2` live session; internal single-node OpenSearch OSS with a 15 GiB `pd-standard` PVC; Vertex AI `gemini-3.8-flash` and `gemini-embedding-001` at 1024 dimensions; Workload Identity Federation for GKE. Static code exists, but no target resources have been applied.
 
-Do not invent TPS or latency targets, AI quality-improvement percentages, or node/resource counts. None of these deferred or gated decisions is selected by this state document.
+**Still GATED:** database hosting, object storage implementation, external identity provider, frontend/ingress, broader secrets and observability topology, image registry, GitHub Actions-to-GCP identity and delivery method, and Terraform remote backend. The GKE workload identity decision does not select GitHub Actions federation.
+
+Do not invent TPS or latency targets, AI quality-improvement percentages, or additional node/resource counts. Remaining gated decisions are not selected by this state document.
 
 ## Capacity and quota status
 
-Repository evidence contains no actual values, so each deployment gate remains `UNKNOWN/TBD`:
-
-- GCP billing / Free Trial status and project/region;
-- CPU and persistent-disk quotas;
-- IP and load-balancer constraints;
-- GKE feasibility/quota;
-- OpenSearch and observability resource budgets; and
-- model API availability/quota.
-
-Do not infer the user's account state.
+The [2026-09-24 live readiness evidence](evaluation/m3-r2-live-readiness-evidence.md) records project `terraformers-platform`, enabled billing and remaining Free Trial credit confirmed by the operator, global CPU limit/usage `12/0`, Seoul `E2_CPUS=8/0`, `INSTANCES=8/0`, `DISKS_TOTAL_GB=2048/0`, GKE server availability, and successful minimal requests to both selected Vertex models. It also records an empty GKE cluster list and no matching target VM. These are dated observations, not a live account connection or permission to create resources. Refresh billing, quota and duplicate-runtime checks before apply. Other deployment capacity/choices remain gated as listed above.
 
 ## Remaining M0 work
 

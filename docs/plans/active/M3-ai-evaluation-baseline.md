@@ -346,6 +346,11 @@ read-only duplicate-runtime check passed: no GKE cluster and no target-labeled V
 step is to generate and review the Terraform plan with `node_count=1` before the first apply. Do
 not use `-auto-approve`, a second environment, or full v3 corpus ingestion.
 
+Before transferring this manual plan/apply procedure to GitHub Actions, use the
+[GCP delivery automation plan](../m3-gcp-delivery-automation.md) to inventory any existing local
+state, protect the trusted branch, and decide remote state and CI identity. That preliminary work
+does not authorize an apply or change the M3-R2 product completion criteria.
+
 **Completion evidence.** Static reusable target code/IaC and fresh account/model readiness evidence
 are present, but M3-R2 remains incomplete until the approved target runtime is applied and its
 minimum GKE/OpenSearch/Vertex live readiness is proven.

@@ -7,7 +7,7 @@ Owner milestone: M3-R2; the first incomplete product task remains the first targ
 ## Why this is a prerequisite
 
 M3-R2 has a reusable target Terraform root and static verification, but the live procedure still
-depends on one Cloud Shell session with local Terraform state, private `terraform.tfvars`, manual
+would use one Cloud Shell session and default to local Terraform state, private `terraform.tfvars`, manual
 `kubectl`, and manual scale-down. A lost session/state, an unreviewed apply, or a forgotten live node
 would undermine the single-target Free Trial operating rule. Delivery work here is limited to making
 that existing runtime reproducible and reviewable; it does not add an environment or change M3's AI
@@ -34,6 +34,17 @@ already implemented; GitHub Actions federation is a separate decision.
 Never interpret the repository's absence of a backend as proof that no local state exists in Cloud
 Shell. A `terraform.tfstate` found there must be backed up securely and migrated to the one remote
 backend; do not initialize a new empty state over already managed resources.
+
+## 2026-09-27 operator inventory (read-only, partial)
+
+The operator ran the A-stage commands in the `terraformers-platform` GCP project:
+
+- GKE cluster list: no rows returned.
+- Seoul subnet list: only `default` (`10.178.0.0/20`) returned. Check the proposed target CIDR against this and any other VPC/subnet allocation before apply.
+- Project GCS bucket list: no rows returned. This does not prove the absence of state in a different account/project or backend.
+- Home-directory search for `terraform.tfstate` and `.backup`: results were under the **separate** `application-review-platform` and `arp-m12-closeout` OpenTofu trees; none was under a `terraformers-platform` target root. Paths inside `.terraform/` may describe backend configuration rather than managed-resource state. Do not move, delete or import any of these other-project files.
+
+This narrows the first-target-state risk but is not an exhaustive cloud inventory. WIF pools, service accounts, GitHub branch rules/environment gates and any state outside the searched home directory remain unverified. No creation or apply was performed.
 
 ## Target responsibility split
 

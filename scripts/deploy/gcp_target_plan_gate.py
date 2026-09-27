@@ -16,9 +16,7 @@ FOUNDATION_ACTIONS = {
     "google_container_node_pool.target": ("google_container_node_pool", ["create"]),
     "google_project_iam_member.backend_service_usage": ("google_project_iam_member", ["create"]),
     "google_project_iam_member.backend_vertex": ("google_project_iam_member", ["create"]),
-    'google_project_iam_member.gke_node_roles["roles/logging.logWriter"]': ("google_project_iam_member", ["create"]),
-    'google_project_iam_member.gke_node_roles["roles/monitoring.metricWriter"]': ("google_project_iam_member", ["create"]),
-    'google_project_iam_member.gke_node_roles["roles/monitoring.viewer"]': ("google_project_iam_member", ["create"]),
+    'google_project_iam_member.gke_node_roles["roles/container.defaultNodeServiceAccount"]': ("google_project_iam_member", ["create"]),
     'google_project_service.required["aiplatform.googleapis.com"]': ("google_project_service", ["create"]),
     'google_project_service.required["compute.googleapis.com"]': ("google_project_service", ["create"]),
     'google_project_service.required["container.googleapis.com"]': ("google_project_service", ["create"]),
@@ -45,15 +43,7 @@ EXPECTED_IAM = {
         "terraformers-platform.svc.id.goog/subject/ns/terraformers-target/sa/terraformers-backend",
     ),
     (
-        "roles/logging.logWriter",
-        "serviceAccount:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
-    ),
-    (
-        "roles/monitoring.metricWriter",
-        "serviceAccount:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
-    ),
-    (
-        "roles/monitoring.viewer",
+        "roles/container.defaultNodeServiceAccount",
         "serviceAccount:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
     ),
 }
@@ -91,7 +81,7 @@ def single_block(after: dict[str, Any], key: str) -> dict[str, Any]:
 
 
 def validate_foundation(changes: dict[str, dict[str, Any]]) -> None:
-    require(set(changes) == set(FOUNDATION_ACTIONS), "foundation plan does not match the reviewed 14-resource address set")
+    require(set(changes) == set(FOUNDATION_ACTIONS), "foundation plan does not match the reviewed 12-resource address set")
 
     for address, (expected_type, expected_actions) in FOUNDATION_ACTIONS.items():
         resource = changes[address]

@@ -9,9 +9,7 @@ locals {
   backend_workload_principal = "principal://iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${var.project_id}.svc.id.goog/subject/ns/${var.backend_namespace}/sa/${var.backend_service_account}"
 
   node_roles = toset([
-    "roles/logging.logWriter",
-    "roles/monitoring.metricWriter",
-    "roles/monitoring.viewer",
+    "roles/container.defaultNodeServiceAccount",
   ])
 }
 

@@ -5,9 +5,10 @@ The associated GitHub workflow **only plans** the existing target runtime. Creat
 identity pool, or IAM binding changes GCP resources; review these commands and current billing
 before running them. No cluster or node is created by this procedure.
 
-Before granting cloud permissions to CI, confirm the reported GitHub `main` Ruleset is active,
-requires PRs and blocks force pushes/deletion with no unintended bypass. Review ADR-006 and the
-draft workflow PR first; the initial Ruleset settings have not been independently verified.
+Operator screenshots show the GitHub `main` Ruleset active, requiring PRs and blocking force
+pushes/deletion with no bypass. Before granting cloud permissions to CI, check the collapsed PR
+additional settings and restrict the `gcp-target-plan` environment to `main`. Review ADR-006
+and the draft workflow PR first.
 
 ## 1. Verify the target and choose a globally unique bucket name
 

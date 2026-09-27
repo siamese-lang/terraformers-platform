@@ -46,9 +46,9 @@ The operator ran the A-stage commands in the `terraformers-platform` GCP project
 - Home-directory search for `terraform.tfstate` and `.backup`: results were under the **separate** `application-review-platform` and `arp-m12-closeout` OpenTofu trees; none was under a `terraformers-platform` target root. Paths inside `.terraform/` may describe backend configuration rather than managed-resource state. Do not move, delete or import any of these other-project files.
 - External Workload Identity pool list: no rows returned. This query does not inventory GKE's built-in workload identity pool.
 - Service account list: only the Compute Engine default service account was returned; no dedicated GitHub delivery service account appears.
-- GitHub repository Rulesets page: “You haven't created any rulesets.” Settings → Branches also shows no Classic branch protection. Therefore main currently has neither protection mechanism.
+- At the initial GitHub repository inspection, the Rulesets page showed “You haven't created any rulesets,” and Settings → Branches showed no Classic branch protection. The operator subsequently reported creating a branch Ruleset; the exact target, enforcement, bypass list and required checks have not been verified through repository settings.
 
-This narrows the first-target-state risk but is not an exhaustive cloud inventory. Existing external federation and a dedicated delivery identity were not listed; main protection is confirmed absent. Deployment environment gates and any state outside the searched home directory remain unverified. No creation or apply was performed.
+This narrows the first-target-state risk but is not an exhaustive cloud inventory. Existing external federation and a dedicated delivery identity were not listed; the newly reported main protection settings require verification. Deployment environment gates and any state outside the searched home directory remain unverified. No GCP creation or apply was performed.
 
 ## Target responsibility split
 
@@ -72,7 +72,7 @@ This narrows the first-target-state risk but is not an exhaustive cloud inventor
 
 ### A. Inventory and GitHub governance (no GCP mutation)
 
-- Protect GitHub `main`: the 2026-09-27 inspection confirms **no Ruleset and no Classic branch protection**. Create one active branch Ruleset targeting exactly `main`, require changes through a PR, block force pushes and deletion, and leave the bypass list empty. In this one-person repository, do not require a second PR approver who does not exist. Select required CI check contexts only after observing their stable names on an actual PR so routine changes are not deadlocked. Verify the resulting rule is active and direct pushes to `main` are rejected.
+- Verify the operator-created GitHub branch Ruleset is active and targets exactly `main`, requires changes through a PR, blocks force pushes and deletion, and has no unintended bypass. In this one-person repository, do not require a second PR approver who does not exist. Select required CI check contexts only after observing their stable names on an actual PR so routine changes are not deadlocked. Confirm the rule's settings in GitHub rather than trying a direct push to `main`.
 - Inspect GitHub deployment environments separately. Before any apply credentials are added, configure an apply environment restricted to `main` with the operator as required reviewer. Verify whether preventing self-review would deadlock a deployment the same operator initiated; do not enable that option without a second reviewer.
 - In Cloud Shell, perform read-only checks for project/account, existing GKE/VM/VPC/subnet/bucket,
   Workload Identity pools/providers/service accounts and Terraform state files. Record resource

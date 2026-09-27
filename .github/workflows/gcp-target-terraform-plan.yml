@@ -105,17 +105,43 @@ jobs:
           STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
         run: |
           set -euo pipefail
-          terraform init -reconfigure -input=false \
+
+          show_terraform_errors() {
+            python3 - "$1" <<'PY'
+          import sys
+
+          path = sys.argv[1]
+          with open(path, encoding='utf-8', errors='replace') as stream:
+              lines = stream.read().splitlines()
+
+          emitted = 0
+          for index, line in enumerate(lines):
+              if not line.startswith('Error:'):
+                  continue
+              for item in lines[index:index + 12]:
+                  print(item)
+                  emitted += 1
+                  if emitted >= 80:
+                      raise SystemExit(0)
+
+          if emitted == 0:
+              print('Terraform failed without a structured Error: block; reproduce in an authorized Cloud Shell.')
+          PY
+          }
+
+          terraform init -no-color -reconfigure -input=false \
             -backend-config="bucket=${STATE_BUCKET}" \
             -backend-config='prefix=gcp-target-runtime' \
             > "${RUNNER_TEMP}/terraform-init.log" 2>&1 || {
-              echo 'Terraform init failed; use the same backend in an authorized Cloud Shell to diagnose the error.' >&2
+              echo 'Terraform init failed.' >&2
+              show_terraform_errors "${RUNNER_TEMP}/terraform-init.log" >&2
               exit 1
             }
-          terraform plan -input=false -lock-timeout=5m \
+          terraform plan -no-color -input=false -lock-timeout=5m \
             -out="${RUNNER_TEMP}/gcp-target.tfplan" \
             > "${RUNNER_TEMP}/terraform-plan.log" 2>&1 || {
-              echo 'Terraform plan failed; use the same backend in an authorized Cloud Shell to diagnose the error.' >&2
+              echo 'Terraform plan failed.' >&2
+              show_terraform_errors "${RUNNER_TEMP}/terraform-plan.log" >&2
               exit 1
             }
           terraform show -json "${RUNNER_TEMP}/gcp-target.tfplan" \

@@ -365,7 +365,9 @@ The published summary and secure Cloud Shell digest for run `36332217168` were r
 evidence but is **not applyable now**: the later apply-IAM review found the node identity contract
 did not match Google's current documented minimum for custom GKE node service accounts. The target
 Terraform now uses one `roles/container.defaultNodeServiceAccount` binding instead of
-`logging.logWriter`, `monitoring.metricWriter` and `monitoring.viewer`, so the next merged-SHA
+`logging.logWriter`, `monitoring.metricWriter` and `monitoring.viewer`. The temporary default
+node pool required while GKE creates the cluster is also pinned to that custom node identity, so
+cluster creation does not depend on the Compute Engine default service account. The next merged-SHA
 plan is expected to contain **12 creates**. The refreshed billing/credit/quota/duplicate-runtime
 evidence remains dated readiness evidence and must be refreshed immediately before the eventual
 apply. The next gate is merge → new plan/review → protected apply identity/environment

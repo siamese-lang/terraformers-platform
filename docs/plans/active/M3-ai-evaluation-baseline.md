@@ -7,12 +7,15 @@
 M0 through M2 are complete. M3 establishes a repeatable, explainable AI/RAG quality baseline before
 any prompt, retrieval, model, framework, or orchestration change is treated as an improvement.
 
-The current task is **M3-R2 — Single target AI/RAG runtime foundation**. Static implementation,
-live account/model readiness, the duplicate-runtime check, remote-state/OIDC plan bootstrap, the
-first GitHub Terraform plan, secure full-plan review, and the refreshed pre-apply account gate are
-complete. The next prerequisite is the separate protected apply identity/environment/workflow
-selected by ADR-006; no target runtime resource has been applied. M3-4 remains
-**WAITING_FOR_TARGET_RUNTIME** until M3-R2 and M3-R3 complete.
+The current task is **M3-R2 — Single target AI/RAG runtime foundation**. Live account/model
+readiness, duplicate-runtime checks, remote state and plan-only OIDC are complete. The first
+14-create plan was successfully reviewed but is now **superseded before apply**: apply-IAM review
+against current GKE documentation found that the custom node service account should use the
+documented least-privilege `roles/container.defaultNodeServiceAccount` role instead of three
+hand-assembled logging/monitoring roles. The correction reduces the expected foundation contract to
+12 creates and must be replanned on the merged SHA. In parallel, ADR-006's separate protected apply
+identity/environment/workflow is being implemented. No target runtime resource has been applied.
+M3-4 remains **WAITING_FOR_TARGET_RUNTIME** until M3-R2 and M3-R3 complete.
 
 ## Objective
 
@@ -301,7 +304,7 @@ variables are explicit enough for M3-R2 implementation. No resource was created 
 
 ### M3-R2 — Single target AI/RAG runtime foundation
 
-**Status: IN PROGRESS — LIVE PLAN REVIEW COMPLETE / APPLY AUTOMATION PENDING**
+**Status: IN PROGRESS — NODE IAM CORRECTION / APPLY AUTOMATION PENDING**
 
 **Problem / gap.** ADR-005 selected the target products, but the project still needed deployable
 provider adapters and reusable GCP/OpenSearch infrastructure before the same runtime could serve
@@ -357,15 +360,17 @@ against commit `1d453895c32f5bbd5543b04bed320e116d601107` with `node_count=1`. T
 OIDC exchange, bucket-protection checks, remote-state init, Terraform plan, and publication of the
 bounded action-count summary. An earlier live attempt exposed a bootstrap dependency on
 `cloudresourcemanager.googleapis.com`; enabling that API resolved the provider project-read 403.
-The published summary and secure Cloud Shell digest were reviewed: the plan contains exactly
-`14 create` actions and no update, delete or replacement. The resource set is one custom
-VPC/subnet, one zonal GKE cluster/node pool, one GKE node service account, five project IAM
-bindings and four required project-service resources. The refreshed pre-apply gate also reconfirmed
-billing, remaining Free Trial credit, CPU/instance/disk quota, Seoul `e2-standard-2`, GKE server
-availability, required APIs and no duplicate target runtime. The next gate is to implement and
-bootstrap the **separate protected apply identity/environment/workflow** from ADR-006, then prove
-its identity-only path before any resource-creating dispatch. Do not use `-auto-approve`, a second
-runtime environment, or full v3 corpus ingestion.
+The published summary and secure Cloud Shell digest for run `36332217168` were reviewed as
+`14 create` with no update/delete/replacement. That plan is retained as historical delivery
+evidence but is **not applyable now**: the later apply-IAM review found the node identity contract
+did not match Google's current documented minimum for custom GKE node service accounts. The target
+Terraform now uses one `roles/container.defaultNodeServiceAccount` binding instead of
+`logging.logWriter`, `monitoring.metricWriter` and `monitoring.viewer`, so the next merged-SHA
+plan is expected to contain **12 creates**. The refreshed billing/credit/quota/duplicate-runtime
+evidence remains dated readiness evidence and must be refreshed immediately before the eventual
+apply. The next gate is merge → new plan/review → protected apply identity/environment
+identity-check. Do not use `-auto-approve`, a second runtime environment, or full v3 corpus
+ingestion.
 
 **Completion evidence.** Static reusable target code/IaC and fresh account/model readiness evidence
 are present, but M3-R2 remains incomplete until the approved target runtime is applied and its

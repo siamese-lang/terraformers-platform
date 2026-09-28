@@ -158,17 +158,21 @@ A through C are complete:
   protection; and
 - identity-check run `36363635464` at `334dc611dd44eccb286739d95c193dd3ffeedbb3` succeeded,
   proving exact-SHA validation and OIDC authentication while all Terraform/runtime steps were
-  skipped.
+  skipped; and
+- automated preflight run `36365247935` at
+  `40750799aba5bf531ee939e0c50fe2b8042c1dd3` passed the plan-identity non-mutation check,
+  mutable quota/API/machine/duplicate-runtime checks, state-bucket protection, empty canonical
+  runtime state and the exact corrected 12-create foundation contract; its apply job was skipped.
 
 D is therefore complete through the pre-apply trust boundary. Foundation permits only the corrected
 reviewed 12 creates and critical values; idle permits only the canonical node pool 1→0 in-place
-update. The refreshed billing/quota/duplicate-runtime evidence remains mutable and must be checked
-immediately before first creation.
+update. Cloud Billing API is intentionally not enabled for preflight and no billing-account role is
+added to the read identity, so billing-enabled status and remaining Free Trial credit are confirmed
+once at the protected foundation approval.
 
 ## Immediate single task
 
-Refresh only the mutable pre-apply account checks (billing/remaining credit, relevant quota/headroom
-and duplicate target runtime), then make the **single separate approval decision** for the first
-`foundation` dispatch. Do not repeat the completed bootstrap or identity-check. Do not dispatch
-`foundation` unless the refreshed mutable checks still pass and the 12-create contract remains
-the reviewed target shape.
+Make the **single separate approval decision** for the first `foundation` dispatch. Automated
+preflight already reconfirmed all project-scoped mutable checks and the 12-create contract. At that
+approval, confirm only that billing remains enabled and sufficient Free Trial promotional credit
+remains. Do not repeat the completed bootstrap, identity-check or standalone preflight.

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -125,9 +126,9 @@ class AnalysisJobRunnerTest {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
         ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
-        @SuppressWarnings("unchecked") ScheduledFuture<Object> future = mock(ScheduledFuture.class);
+        ScheduledFuture<?> future = mock(ScheduledFuture.class);
         ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
-        when(scheduler.scheduleAtFixedRate(heartbeat.capture(), anyLong(), anyLong(), any())).thenReturn(future);
+        doReturn(future).when(scheduler).scheduleAtFixedRate(heartbeat.capture(), anyLong(), anyLong(), any());
         AnalysisJobRunner runner = new AnalysisJobRunner(orchestrator, state,
                 new AnalysisObservability(registry), properties, scheduler,
                 Clock.fixed(NOW, ZoneOffset.UTC));

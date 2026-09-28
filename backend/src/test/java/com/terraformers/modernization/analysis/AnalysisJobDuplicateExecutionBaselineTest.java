@@ -87,10 +87,8 @@ class AnalysisJobDuplicateExecutionBaselineTest {
         );
 
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        AnalysisJobRunner runner = new AnalysisJobRunner(
-                orchestrator,
-                stateService,
-                new AnalysisObservability(registry)
+        AnalysisJobRunner runner = TestAnalysisJobRunnerFactory.create(
+                orchestrator, stateService, new AnalysisObservability(registry)
         );
 
         runner.run(jobId);

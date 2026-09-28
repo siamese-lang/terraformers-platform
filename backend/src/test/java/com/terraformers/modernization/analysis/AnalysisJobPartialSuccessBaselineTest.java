@@ -83,10 +83,8 @@ class AnalysisJobPartialSuccessBaselineTest {
         String jobId = repository.saveAndFlush(job).getId();
 
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        new AnalysisJobRunner(
-                orchestrator,
-                stateService,
-                new AnalysisObservability(registry)
+        TestAnalysisJobRunnerFactory.create(
+                orchestrator, stateService, new AnalysisObservability(registry)
         ).run(jobId);
 
         AnalysisJobEntity persisted = repository.findById(jobId).orElseThrow();
@@ -163,7 +161,7 @@ class AnalysisJobPartialSuccessBaselineTest {
         String jobId = repository.saveAndFlush(job).getId();
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
-        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(registry)).run(jobId);
+        TestAnalysisJobRunnerFactory.create(orchestrator, stateService, new AnalysisObservability(registry)).run(jobId);
 
         AnalysisJobEntity persisted = repository.findById(jobId).orElseThrow();
         ObjectWriteRequest write = objectWriter.writes().get(0);

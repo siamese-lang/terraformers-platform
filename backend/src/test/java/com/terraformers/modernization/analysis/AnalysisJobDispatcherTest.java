@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 class AnalysisJobDispatcherTest {
@@ -47,8 +48,15 @@ class AnalysisJobDispatcherTest {
         AnalysisJobStateService state = mock(AnalysisJobStateService.class);
         AnalysisJobRunner runner = mock(AnalysisJobRunner.class);
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        AnalysisJobDispatcher rejected = dispatcher(state, runner,
-                task -> { throw new RejectedExecutionException("full"); }, registry);
+        AtomicBoolean rejectFirst = new AtomicBoolean(true);
+        AtomicReference<Runnable> accepted = new AtomicReference<>();
+        Executor capacityChanges = task -> {
+            if (rejectFirst.getAndSet(false)) {
+                throw new RejectedExecutionException("full");
+            }
+            accepted.set(task);
+        };
+        AnalysisJobDispatcher rejected = dispatcher(state, runner, capacityChanges, registry);
 
         assertThat(rejected.submit("job-1")).isFalse();
         assertThat(rejected.isLocallySubmitted("job-1")).isFalse();
@@ -57,6 +65,10 @@ class AnalysisJobDispatcherTest {
         assertThat(registry.find("terraformers.analysis.jobs").counter()).isNull();
         assertThat(registry.find("terraformers.analysis.dispatch")
                 .tags("outcome", "executor_rejected").counter().count()).isEqualTo(1);
+
+        assertThat(rejected.submit("job-1")).isTrue();
+        accepted.get().run();
+        verify(runner).run("job-1");
     }
 
     @Test

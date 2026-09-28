@@ -6,7 +6,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
@@ -23,12 +22,6 @@ public class AnalysisJobRunner {
     static final String REJECTED_INPUT_FAILURE_REASON = "아키텍처 구성요소와 연결 관계를 확인할 수 없습니다. 시스템 구성도, 네트워크 구조도 또는 서비스 간 흐름이 표시된 이미지를 업로드해 주세요.";
     static final String GENERIC_FAILURE_REASON = "분석을 완료하지 못했습니다. 잠시 후 새 분석을 시작해 주세요.";
     private static final Logger log = LoggerFactory.getLogger(AnalysisJobRunner.class);
-    private static final ScheduledExecutorService COMPATIBILITY_TEST_SCHEDULER =
-            Executors.newSingleThreadScheduledExecutor(runnable -> {
-                Thread thread = new Thread(runnable, "analysis-test-lease-heartbeat");
-                thread.setDaemon(true);
-                return thread;
-            });
 
     private final AnalysisJobOrchestrator orchestrator;
     private final AnalysisJobStateService stateService;
@@ -47,12 +40,6 @@ public class AnalysisJobRunner {
         this.properties = properties;
         this.leaseScheduler = leaseScheduler;
         this.clock = clock;
-    }
-
-    AnalysisJobRunner(AnalysisJobOrchestrator orchestrator, AnalysisJobStateService stateService,
-            AnalysisObservability observability) {
-        this(orchestrator, stateService, observability, new AnalysisRuntimeProperties(),
-                COMPATIBILITY_TEST_SCHEDULER, Clock.systemUTC());
     }
 
     public void run(String jobId) {
@@ -85,6 +72,7 @@ public class AnalysisJobRunner {
             ScheduledFuture<?> heartbeat = startHeartbeat(jobId, generation, leaseLost);
             io.micrometer.core.instrument.Timer.Sample sample = observability.startAnalysis();
             observability.jobStarted();
+            log.info("Analysis job execution started");
             AnalysisJobExecution execution = null;
             try {
                 execution = observability.recordStage(AnalysisTelemetryStage.ANALYSIS_EXECUTION,

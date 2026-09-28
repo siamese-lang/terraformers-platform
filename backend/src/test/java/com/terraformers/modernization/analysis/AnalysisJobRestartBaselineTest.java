@@ -14,7 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -24,6 +30,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
 class AnalysisJobRestartBaselineTest {
+
+    private static final Instant START = Instant.parse("2026-09-28T00:00:00Z");
+    private static final MutableClock TEST_CLOCK = new MutableClock(START);
+
+    @BeforeEach
+    void resetClock() {
+        TEST_CLOCK.set(START);
+    }
 
     @Test
     void acceptedButNotStartedJobIsRecoveredByDurableScanAfterRestart() {
@@ -54,6 +68,15 @@ class AnalysisJobRestartBaselineTest {
     }
 
     @Test
+    void applicationStartsWithTwoSecondDispatchDuration() {
+        try (ConfigurableApplicationContext context = start(datasourceUrl(), "create", "2s")) {
+            assertThat(context.isActive()).isTrue();
+            assertThat(context.getBean(AnalysisRuntimeProperties.class).getDispatchPollInterval())
+                    .isEqualTo(java.time.Duration.ofSeconds(2));
+        }
+    }
+
+    @Test
     void applicationStartupDoesNotFailRecoverableOrChangeTerminalJobs() {
         String datasourceUrl = datasourceUrl();
         String pendingId;
@@ -73,12 +96,82 @@ class AnalysisJobRestartBaselineTest {
         }
     }
 
+    @Test
+    void claimedRunningJobIsNotStolenBeforeLeaseExpiryAndIsReclaimedAfterExpiry() {
+        String datasourceUrl = datasourceUrl();
+        String jobId;
+        Instant firstLease = START.plusSeconds(60);
+        try (ConfigurableApplicationContext first = start(datasourceUrl, "create")) {
+            UserEntity owner = owner(first);
+            OwnedProjectEntity project = project(first, owner);
+            ProjectFileEntity source = source(first, owner, project);
+            AnalysisJobEntity pending = jobForSource(project, source, "claimed-process-loss");
+            jobId = first.getBean(AnalysisJobRepository.class).saveAndFlush(pending).getId();
+            assertThat(first.getBean(AnalysisJobStateService.class)
+                    .claimEligible(jobId, START, firstLease)).isPresent();
+        }
+
+        try (ConfigurableApplicationContext restarted = start(datasourceUrl, "none")) {
+            AnalysisJobRepository repository = restarted.getBean(AnalysisJobRepository.class);
+            AnalysisJobDispatcher dispatcher = restarted.getBean(AnalysisJobDispatcher.class);
+            CapturingExecutor executor = restarted.getBean(CapturingExecutor.class);
+
+            dispatcher.dispatchEligible();
+            assertThat(executor.tasks()).isEmpty();
+            AnalysisJobEntity active = repository.findById(jobId).orElseThrow();
+            assertThat(active.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
+            assertThat(active.getAttemptCount()).isEqualTo(1);
+            assertThat(active.getClaimGeneration()).isEqualTo(1);
+
+            TEST_CLOCK.set(firstLease.plusSeconds(1));
+            dispatcher.dispatchEligible();
+            assertThat(executor.tasks()).hasSize(1);
+            executor.runAll();
+
+            AnalysisJobEntity recovered = repository.findById(jobId).orElseThrow();
+            assertThat(recovered.getId()).isEqualTo(jobId);
+            assertThat(recovered.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
+            assertThat(recovered.getAttemptCount()).isEqualTo(2);
+            assertThat(recovered.getClaimGeneration()).isEqualTo(2);
+        }
+    }
+
+    @Test
+    void legacyRunningWithoutLeaseIsRecoveredThroughDispatcherAndRunner() {
+        String datasourceUrl = datasourceUrl();
+        try (ConfigurableApplicationContext context = start(datasourceUrl, "create")) {
+            UserEntity owner = owner(context);
+            OwnedProjectEntity project = project(context, owner);
+            ProjectFileEntity source = source(context, owner, project);
+            AnalysisJobEntity legacy = jobForSource(project, source, "legacy-null-lease");
+            legacy.setStatus(AnalysisJobStatus.RUNNING);
+            String jobId = context.getBean(AnalysisJobRepository.class).saveAndFlush(legacy).getId();
+
+            AnalysisJobDispatcher dispatcher = context.getBean(AnalysisJobDispatcher.class);
+            CapturingExecutor executor = context.getBean(CapturingExecutor.class);
+            dispatcher.dispatchEligible();
+            assertThat(executor.tasks()).hasSize(1);
+            executor.runAll();
+
+            AnalysisJobEntity recovered = context.getBean(AnalysisJobRepository.class).findById(jobId).orElseThrow();
+            assertThat(recovered.getId()).isEqualTo(jobId);
+            assertThat(recovered.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
+            assertThat(recovered.getAttemptCount()).isEqualTo(1);
+            assertThat(recovered.getClaimGeneration()).isEqualTo(1);
+        }
+    }
+
     private ConfigurableApplicationContext start(String url, String ddl) {
+        return start(url, ddl, "1h");
+    }
+
+    private ConfigurableApplicationContext start(String url, String ddl, String pollInterval) {
         return new SpringApplicationBuilder(TerraformersBackendApplication.class, CapturingExecutorConfig.class)
                 .profiles("test").web(WebApplicationType.SERVLET).run("--server.port=0",
                         "--spring.datasource.url=" + url, "--spring.jpa.hibernate.ddl-auto=" + ddl,
                         "--spring.flyway.enabled=false", "--terraformers.security.jwt.enabled=false",
-                        "--terraformers.analysis.dispatch-enabled=true", "--terraformers.analysis.dispatch-poll-interval=1h");
+                        "--terraformers.analysis.dispatch-enabled=true",
+                        "--terraformers.analysis.dispatch-poll-interval=" + pollInterval);
     }
 
     private String datasourceUrl() {
@@ -117,10 +210,27 @@ class AnalysisJobRestartBaselineTest {
         return entity;
     }
 
+    private AnalysisJobEntity jobForSource(OwnedProjectEntity project, ProjectFileEntity source,
+            String correlationId) {
+        AnalysisJobEntity entity = new AnalysisJobEntity();
+        entity.setProjectId(project.getProjectId());
+        entity.setSourceFileId(source.getFileId());
+        entity.setSourceBucket(source.getS3Bucket());
+        entity.setSourceKey(source.getS3Key());
+        entity.setCorrelationId(correlationId);
+        entity.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
+        entity.setStatus(AnalysisJobStatus.PENDING);
+        return entity;
+    }
+
     @TestConfiguration
     static class CapturingExecutorConfig {
         @Bean @Primary @Qualifier("analysisJobExecutor")
         CapturingExecutor capturingExecutor() { return new CapturingExecutor(); }
+
+        @Bean
+        @Primary
+        Clock testClock() { return TEST_CLOCK; }
     }
 
     static class CapturingExecutor implements Executor {
@@ -132,5 +242,15 @@ class AnalysisJobRestartBaselineTest {
             synchronized (this) { copy = List.copyOf(tasks); tasks.clear(); }
             copy.forEach(Runnable::run);
         }
+    }
+
+    static final class MutableClock extends Clock {
+        private final AtomicReference<Instant> current;
+
+        MutableClock(Instant initial) { this.current = new AtomicReference<>(initial); }
+        void set(Instant instant) { current.set(instant); }
+        @Override public ZoneId getZone() { return ZoneOffset.UTC; }
+        @Override public Clock withZone(ZoneId zone) { return this; }
+        @Override public Instant instant() { return current.get(); }
     }
 }

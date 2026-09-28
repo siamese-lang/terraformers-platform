@@ -73,34 +73,60 @@ class MariaDbRepositorySmokeTest {
     @Test
     void durableEligibilityDiscoveryExecutesAgainstMariaDb() {
         Instant now = Instant.parse("2026-09-28T00:00:00Z");
-        AnalysisJobEntity due = saveEligibilityJob("mariadb-due", AnalysisJobStatus.PENDING);
-        AnalysisJobEntity future = saveEligibilityJob("mariadb-future", AnalysisJobStatus.PENDING);
+        String suffix = UUID.randomUUID().toString();
+        UserEntity owner = new UserEntity();
+        owner.setExternalIdentity("cognito", "mariadb-eligibility-" + suffix);
+        owner.setEmail("mariadb-eligibility-" + suffix + "@example.com");
+        owner.setDisplayName("MariaDB Eligibility User");
+        owner = userRepository.saveAndFlush(owner);
+        OwnedProjectEntity project = new OwnedProjectEntity();
+        project.setOwner(owner);
+        project.setName("MariaDB Eligibility");
+        project.setVisibility(ProjectVisibility.PRIVATE);
+        project.setStatus(ProjectStatus.ACTIVE);
+        project = projectRepository.saveAndFlush(project);
+        ProjectFileEntity source = new ProjectFileEntity();
+        source.setProject(project);
+        source.setUploadedBy(owner);
+        source.setNodeType("FILE");
+        source.setFileType("ARCHITECTURE_IMAGE");
+        source.setPath("source/eligibility.png");
+        source.setS3Bucket("mariadb-eligibility");
+        source.setS3Key("source/eligibility.png");
+        source.setContentType("image/png");
+        source.setSizeBytes(1L);
+        source = projectFileRepository.saveAndFlush(source);
+
+        AnalysisJobEntity due = saveEligibilityJob(project, source, "mariadb-due", AnalysisJobStatus.PENDING);
+        AnalysisJobEntity future = saveEligibilityJob(project, source, "mariadb-future", AnalysisJobStatus.PENDING);
         future.setNextAttemptAt(now.plusSeconds(30));
         analysisJobRepository.saveAndFlush(future);
-        AnalysisJobEntity expired = saveEligibilityJob("mariadb-expired", AnalysisJobStatus.PENDING);
+        AnalysisJobEntity expired = saveEligibilityJob(project, source, "mariadb-expired", AnalysisJobStatus.PENDING);
         analysisJobRepository.claimEligible(expired.getId(), AnalysisJobStatus.PENDING,
                 AnalysisJobStatus.RUNNING, now.minusSeconds(120), now.minusSeconds(60));
-        AnalysisJobEntity active = saveEligibilityJob("mariadb-active", AnalysisJobStatus.PENDING);
+        AnalysisJobEntity active = saveEligibilityJob(project, source, "mariadb-active", AnalysisJobStatus.PENDING);
         analysisJobRepository.claimEligible(active.getId(), AnalysisJobStatus.PENDING,
                 AnalysisJobStatus.RUNNING, now.minusSeconds(1), now.plusSeconds(60));
-        AnalysisJobEntity legacy = saveEligibilityJob("mariadb-legacy", AnalysisJobStatus.PENDING);
+        AnalysisJobEntity legacy = saveEligibilityJob(project, source, "mariadb-legacy", AnalysisJobStatus.PENDING);
         analysisJobRepository.claimPending(legacy.getId(), AnalysisJobStatus.PENDING,
                 AnalysisJobStatus.RUNNING, now.minusSeconds(60));
-        AnalysisJobEntity terminal = saveEligibilityJob("mariadb-terminal", AnalysisJobStatus.SUCCEEDED);
+        AnalysisJobEntity succeeded = saveEligibilityJob(project, source, "mariadb-succeeded", AnalysisJobStatus.SUCCEEDED);
+        AnalysisJobEntity failed = saveEligibilityJob(project, source, "mariadb-failed", AnalysisJobStatus.FAILED);
 
         List<String> eligible = analysisJobRepository.findEligibleJobIds(
                 AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, now, PageRequest.of(0, 10));
 
         assertThat(eligible).contains(due.getId(), expired.getId(), legacy.getId());
-        assertThat(eligible).doesNotContain(future.getId(), active.getId(), terminal.getId());
+        assertThat(eligible).doesNotContain(future.getId(), active.getId(), succeeded.getId(), failed.getId());
     }
 
-    private AnalysisJobEntity saveEligibilityJob(String correlationId, AnalysisJobStatus status) {
+    private AnalysisJobEntity saveEligibilityJob(OwnedProjectEntity project, ProjectFileEntity source,
+            String correlationId, AnalysisJobStatus status) {
         AnalysisJobEntity job = new AnalysisJobEntity();
-        job.setProjectId(999_001L);
-        job.setSourceFileId(999_002L);
-        job.setSourceBucket("mariadb-eligibility");
-        job.setSourceKey("source/eligibility.png");
+        job.setProjectId(project.getProjectId());
+        job.setSourceFileId(source.getFileId());
+        job.setSourceBucket(source.getS3Bucket());
+        job.setSourceKey(source.getS3Key());
         job.setCorrelationId(correlationId);
         job.setStatus(status);
         job.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);

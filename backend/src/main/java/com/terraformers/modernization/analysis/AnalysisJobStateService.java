@@ -50,8 +50,12 @@ public class AnalysisJobStateService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean markFailedOwned(String jobId, long generation, Instant now, String failureReason) {
-        return repository.markFailedOwned(jobId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED,
+        boolean transitioned = repository.markFailedOwned(jobId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED,
                 generation, now, failureReason) == 1;
+        if (transitioned) {
+            repository.findById(jobId).ifPresent(orchestrator::publishFailedProgress);
+        }
+        return transitioned;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

@@ -9,7 +9,6 @@ import java.util.concurrent.RejectedExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
@@ -45,7 +44,6 @@ public class AnalysisJobDispatcher {
         this.clock = clock;
     }
 
-    @Scheduled(fixedDelayString = "${terraformers.analysis.dispatch-poll-interval:2s}")
     public void dispatchEligible() {
         if (!properties.isDispatchEnabled()) {
             return;

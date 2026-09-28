@@ -53,7 +53,7 @@ jobs:
             tests/rag/test_curate_corpus_v2.py \
             tests/rag/test_ingest_corpus.py
 
-      - name: Verify GCP target delivery gates
+      - name: Verify GCP target delivery and billing fallback gates
         run: |
           set -euo pipefail
           python3 -m py_compile \

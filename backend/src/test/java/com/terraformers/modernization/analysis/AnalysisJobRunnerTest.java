@@ -1,204 +1,158 @@
 package com.terraformers.modernization.analysis;
 
-import static org.mockito.Mockito.inOrder;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.terraformers.modernization.storage.ObjectWriteResult;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.net.SocketTimeoutException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
-import java.net.SocketTimeoutException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
-import org.mockito.InOrder;
+import org.mockito.ArgumentCaptor;
 
 class AnalysisJobRunnerTest {
 
+    private static final Instant NOW = Instant.parse("2026-01-01T00:00:00Z");
+
     @Test
-    void committedPendingJobRunsOutsideCreateRequestAndReachesTerminalStatus() {
-        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
-        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
-        AnalysisJobEntity running = new AnalysisJobEntity();
-        running.setProjectId(42L);
-        running.setSourceFileId(101L);
-        running.setSourceBucket("source-bucket");
-        running.setSourceKey("source/key.png");
-        running.prePersist();
-        AnalysisJobExecution execution = new AnalysisJobExecution(
-                new AnalysisResult(
-                        "stub",
-                        "resource \"aws_s3_bucket\" \"accepted\" {}",
-                        "summary",
-                        List.of("S3"),
-                        List.of(),
-                        List.of(),
-                        List.of()
-                ),
-                new ObjectWriteResult("s3", true, "result-bucket", "analysis/main.tf", "etag")
-        );
-        when(stateService.claimPending("job-1")).thenReturn(Optional.of(running));
-        when(orchestrator.executeProviderAndStoreDraft(running)).thenReturn(execution);
-        AnalysisJobRunner runner = new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(new SimpleMeterRegistry()));
+    void claimsWithLeaseInsideRunAndFinalizesWithAcquiredGeneration() {
+        Fixture fixture = fixture();
+        AnalysisJobEntity running = runningJob(1, 7);
+        AnalysisJobExecution execution = execution();
+        when(fixture.state.claimEligible("job-1", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
+        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenReturn(execution);
+        when(fixture.state.markSucceededOwned("job-1", 7, NOW, execution)).thenReturn(true);
 
-        runner.run("job-1");
+        fixture.runner.run("job-1");
 
-        InOrder inOrder = inOrder(stateService, orchestrator);
-        inOrder.verify(stateService).claimPending("job-1");
-        inOrder.verify(orchestrator).executeProviderAndStoreDraft(running);
-        inOrder.verify(stateService).markSucceeded("job-1", execution);
+        verify(fixture.state).claimEligible("job-1", NOW, NOW.plusSeconds(60));
+        verify(fixture.state).markSucceededOwned("job-1", 7, NOW, execution);
+        assertThat(fixture.registry.find("terraformers.analysis.claims")
+                .tags("outcome", "initial_claim").counter().count()).isEqualTo(1);
     }
 
     @Test
-    void readTimeoutMarksJobFailedWithSafeTimeoutMessage() {
-        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
-        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
-        AnalysisJobEntity running = new AnalysisJobEntity();
-        when(stateService.claimPending("job-1")).thenReturn(Optional.of(running));
-        when(orchestrator.executeProviderAndStoreDraft(running))
-                .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("Read timed out")));
+    void notEligibleDeliveryDoesNotExecuteProvider() {
+        Fixture fixture = fixture();
+        when(fixture.state.claimEligible("job-terminal", NOW, NOW.plusSeconds(60))).thenReturn(Optional.empty());
 
-        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(new SimpleMeterRegistry())).run("job-1");
+        fixture.runner.run("job-terminal");
 
-        verify(stateService).markFailed("job-1", AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
-    }
-
-    @Test
-    void generalFailureDoesNotExposeInternalExceptionDetails() {
-        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
-        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
-        AnalysisJobEntity running = new AnalysisJobEntity();
-        when(stateService.claimPending("job-1")).thenReturn(Optional.of(running));
-        when(orchestrator.executeProviderAndStoreDraft(running))
-                .thenThrow(new IllegalStateException("secret request body and stack details"));
-
-        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(new SimpleMeterRegistry())).run("job-1");
-
-        verify(stateService).markFailed("job-1", AnalysisJobRunner.GENERIC_FAILURE_REASON);
-    }
-
-    @Test
-    void apiCallAttemptTimeoutMarksJobFailedWithSafeTimeoutMessage() {
-        assertFailureReason(new AnalysisProviderTimeoutException(new RuntimeException("attempt timed out")),
-                AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
-    }
-
-    @Test
-    void apiCallTimeoutMarksJobFailedWithSafeTimeoutMessage() {
-        assertFailureReason(new AnalysisProviderTimeoutException(new RuntimeException("call timed out")),
-                AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
-    }
-
-    @Test
-    void generalProviderExceptionMarksJobFailedWithGenericMessage() {
-        assertFailureReason(new IllegalStateException("connection reset"),
-                AnalysisJobRunner.GENERIC_FAILURE_REASON);
-    }
-
-    @Test
-    void truncatedBedrockOutputMarksJobFailedWithSafeMessage() {
-        assertFailureReason(providerFailure(AnalysisProviderFailureReason.OUTPUT_TRUNCATED),
-                AnalysisJobRunner.TRUNCATED_FAILURE_REASON);
-    }
-
-    @Test
-    void invalidBedrockFormatMarksJobFailedWithSafeMessage() {
-        assertFailureReason(providerFailure(AnalysisProviderFailureReason.RESPONSE_FORMAT),
-                AnalysisJobRunner.FORMAT_FAILURE_REASON);
-    }
-
-    @Test
-    void rejectedArchitectureInputMarksJobFailedWithDedicatedMessage() {
-        assertFailureReason(providerFailure(AnalysisProviderFailureReason.INPUT_REJECTED),
-                AnalysisJobRunner.REJECTED_INPUT_FAILURE_REASON);
-    }
-
-    private AnalysisProviderFailureException providerFailure(AnalysisProviderFailureReason reason) {
-        return new AnalysisProviderFailureException(reason, new RuntimeException("provider detail"));
-    }
-
-    private void assertFailureReason(RuntimeException exception, String expectedReason) {
-        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
-        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
-        AnalysisJobEntity running = new AnalysisJobEntity();
-        when(stateService.claimPending("job-1")).thenReturn(Optional.of(running));
-        when(orchestrator.executeProviderAndStoreDraft(running)).thenThrow(exception);
-
-        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(new SimpleMeterRegistry())).run("job-1");
-
-        verify(stateService).markFailed("job-1", expectedReason);
-    }
-    @Test
-    void claimFailureIsNotReclassifiedAsJobFailure() {
-        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
-        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
-        org.mockito.Mockito.doThrow(new IllegalStateException("transition failed")).when(stateService).claimPending("job-transition");
-
-        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-                new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(new SimpleMeterRegistry())).run("job-transition"))
-                .isInstanceOf(IllegalStateException.class);
-        verify(stateService, org.mockito.Mockito.never()).markFailed(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
-    }
-
-    @Test
-    void nonPendingJobIsSkippedWithoutStartingOrchestration() {
-        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
-        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        when(stateService.claimPending("job-terminal")).thenReturn(Optional.empty());
-
-        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(registry)).run("job-terminal");
-
-        verify(orchestrator, org.mockito.Mockito.never())
-                .executeProviderAndStoreDraft(org.mockito.ArgumentMatchers.any());
-        org.assertj.core.api.Assertions.assertThat(
-                registry.find("terraformers.analysis.jobs").tags("outcome", "started").counter()
-        ).isNull();
-        org.assertj.core.api.Assertions.assertThat(registry.find("terraformers.analysis.claims")
+        verify(fixture.orchestrator, never()).executeProviderAndStoreDraft(any());
+        assertThat(fixture.registry.find("terraformers.analysis.claims")
                 .tags("outcome", "not_claimed").counter().count()).isEqualTo(1);
     }
 
     @Test
-    void beforeStateTransientProviderFailureIsNotRetriedAndJobBecomesTerminal() {
-        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
-        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
-        AnalysisJobEntity running = new AnalysisJobEntity();
-        running.prePersist();
+    void transientProviderFailureIsFencedFailedOnceAndNeverSchedulesRetry() {
+        Fixture fixture = fixture();
+        AnalysisJobEntity running = runningJob(1, 3);
         AtomicInteger invocations = new AtomicInteger();
-        when(stateService.claimPending("job-transient")).thenReturn(Optional.of(running));
-        when(orchestrator.executeProviderAndStoreDraft(running)).thenAnswer(ignored -> {
-            if (invocations.incrementAndGet() == 1) {
-                throw new AnalysisProviderTimeoutException(new SocketTimeoutException("temporary timeout"));
-            }
-            return mock(AnalysisJobExecution.class);
+        when(fixture.state.claimEligible("job-transient", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
+        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenAnswer(ignored -> {
+            invocations.incrementAndGet();
+            throw new AnalysisProviderTimeoutException(new SocketTimeoutException("temporary timeout"));
         });
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        when(fixture.state.markFailedOwned("job-transient", 3, NOW,
+                AnalysisJobRunner.TIMEOUT_FAILURE_REASON)).thenReturn(true);
 
-        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(registry)).run("job-transient");
+        fixture.runner.run("job-transient");
 
-        org.assertj.core.api.Assertions.assertThat(invocations).hasValue(1);
-        verify(stateService).markFailed("job-transient", AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
-        org.assertj.core.api.Assertions.assertThat(registry.find("terraformers.analysis.claims")
-                .tags("outcome", "claimed").counter().count()).isEqualTo(1);
-        org.assertj.core.api.Assertions.assertThat(registry.find("terraformers.analysis.queue.wait")
-                .timer().count()).isEqualTo(1);
+        assertThat(invocations).hasValue(1);
+        verify(fixture.state).markFailedOwned("job-transient", 3, NOW,
+                AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
+        verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
     }
 
     @Test
-    void orchestrationFailureAfterRunningRecordsStartedAndFailedMetrics() {
-        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
-        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
-        AnalysisJobEntity running = new AnalysisJobEntity();
-        when(stateService.claimPending("job-observed")).thenReturn(Optional.of(running));
-        when(orchestrator.executeProviderAndStoreDraft(running)).thenThrow(new IllegalStateException("sensitive detail"));
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+    void failedHeartbeatBlocksStaleSuccessAndFailureFinalization() {
+        Fixture fixture = fixture();
+        AnalysisJobEntity running = runningJob(2, 9);
+        when(fixture.state.claimEligible("job-stale", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
+        when(fixture.state.renewLease("job-stale", 9, NOW, NOW.plusSeconds(60))).thenReturn(false);
+        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenAnswer(ignored -> {
+            fixture.heartbeat.getValue().run();
+            return execution();
+        });
 
-        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(registry)).run("job-observed");
+        fixture.runner.run("job-stale");
 
-        verify(stateService).markFailed(org.mockito.ArgumentMatchers.eq("job-observed"), org.mockito.ArgumentMatchers.anyString());
-        org.assertj.core.api.Assertions.assertThat(registry.find("terraformers.analysis.jobs").tags("outcome", "started").counter().count()).isEqualTo(1);
-        org.assertj.core.api.Assertions.assertThat(registry.find("terraformers.analysis.jobs").tags("outcome", "failed").counter().count()).isEqualTo(1);
+        verify(fixture.state, never()).markSucceededOwned(eq("job-stale"), anyLong(), any(), any());
+        verify(fixture.state, never()).markFailedOwned(eq("job-stale"), anyLong(), any(), any());
+        assertThat(fixture.registry.find("terraformers.analysis.lease.renewals")
+                .tags("outcome", "lost").counter().count()).isEqualTo(1);
     }
 
+    @Test
+    void heartbeatRenewsSameGenerationWithoutCreatingAnotherAttempt() {
+        Fixture fixture = fixture();
+        AnalysisJobEntity running = runningJob(1, 4);
+        AnalysisJobExecution execution = execution();
+        when(fixture.state.claimEligible("job-long", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
+        when(fixture.state.renewLease("job-long", 4, NOW, NOW.plusSeconds(60))).thenReturn(true);
+        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenAnswer(ignored -> {
+            fixture.heartbeat.getValue().run();
+            return execution;
+        });
+        when(fixture.state.markSucceededOwned("job-long", 4, NOW, execution)).thenReturn(true);
+
+        fixture.runner.run("job-long");
+
+        verify(fixture.state).renewLease("job-long", 4, NOW, NOW.plusSeconds(60));
+        verify(fixture.state).claimEligible("job-long", NOW, NOW.plusSeconds(60));
+        assertThat(running.getAttemptCount()).isEqualTo(1);
+        assertThat(running.getClaimGeneration()).isEqualTo(4);
+        assertThat(fixture.registry.find("terraformers.analysis.lease.renewals")
+                .tags("outcome", "renewed").counter().count()).isEqualTo(1);
+    }
+
+    private Fixture fixture() {
+        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
+        AnalysisJobStateService state = mock(AnalysisJobStateService.class);
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+        ScheduledFuture<?> future = mock(ScheduledFuture.class);
+        ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
+        doReturn(future).when(scheduler).scheduleAtFixedRate(heartbeat.capture(), anyLong(), anyLong(), any());
+        AnalysisJobRunner runner = new AnalysisJobRunner(orchestrator, state,
+                new AnalysisObservability(registry), properties, scheduler,
+                Clock.fixed(NOW, ZoneOffset.UTC));
+        return new Fixture(orchestrator, state, registry, runner, heartbeat);
+    }
+
+    private AnalysisJobEntity runningJob(int attempt, long generation) {
+        AnalysisJobEntity entity = new AnalysisJobEntity();
+        entity.setProjectId(42L);
+        entity.setSourceFileId(101L);
+        entity.setSourceBucket("source-bucket");
+        entity.setSourceKey("source/key.png");
+        entity.setAttemptCount(attempt);
+        entity.setClaimGeneration(generation);
+        entity.prePersist();
+        return entity;
+    }
+
+    private AnalysisJobExecution execution() {
+        return new AnalysisJobExecution(
+                new AnalysisResult("stub", "resource {}", "summary", List.of(), List.of(), List.of(), List.of()),
+                new ObjectWriteResult("s3", true, "result-bucket", "analysis/main.tf", "etag"));
+    }
+
+    private record Fixture(AnalysisJobOrchestrator orchestrator, AnalysisJobStateService state,
+            SimpleMeterRegistry registry, AnalysisJobRunner runner, ArgumentCaptor<Runnable> heartbeat) {}
 }

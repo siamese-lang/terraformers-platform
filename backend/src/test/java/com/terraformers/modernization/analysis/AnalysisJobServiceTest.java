@@ -12,21 +12,15 @@ import com.terraformers.modernization.projectcore.ProjectDomainService;
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
 import com.terraformers.modernization.projectcore.ProjectFileRepository;
 import java.util.Optional;
-import java.util.concurrent.Executor;
-import java.util.concurrent.RejectedExecutionException;
 import org.junit.jupiter.api.Test;
 
 class AnalysisJobServiceTest {
 
     @Test
-    void executorRejectionMarksPersistedPendingJobFailed() {
+    void committedJobGetsBestEffortDispatcherNudgeAndRemainsPending() {
         AnalysisJobRepository repository = mock(AnalysisJobRepository.class);
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        AnalysisJobRunner runner = mock(AnalysisJobRunner.class);
-        AnalysisObservability observability = mock(AnalysisObservability.class);
-        Executor rejectingExecutor = task -> {
-            throw new RejectedExecutionException("queue full");
-        };
+        AnalysisJobDispatcher dispatcher = mock(AnalysisJobDispatcher.class);
         ProjectDomainService projectDomainService = mock(ProjectDomainService.class);
         ProjectFileRepository projectFileRepository = mock(ProjectFileRepository.class);
         UserEntity requester = mock(UserEntity.class);
@@ -47,20 +41,14 @@ class AnalysisJobServiceTest {
         AnalysisJobService service = new AnalysisJobService(
                 repository,
                 properties,
-                runner,
-                rejectingExecutor,
+                dispatcher,
                 projectDomainService,
-                projectFileRepository,
-                observability
+                projectFileRepository
         );
 
         AnalysisJobResponse response = service.create(new AnalysisJobRequest(42L, 101L, "reject-test"), requester);
 
         assertThat(response.status()).isEqualTo(AnalysisJobStatus.PENDING);
-        verify(observability).jobRejected();
-        verify(runner).markFailed(
-                response.id(),
-                "analysis job could not be scheduled because the executor rejected the task"
-        );
+        verify(dispatcher).submit(response.id());
     }
 }

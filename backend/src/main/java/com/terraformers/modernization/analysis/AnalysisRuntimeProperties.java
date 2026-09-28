@@ -1,5 +1,7 @@
 package com.terraformers.modernization.analysis;
 
+import jakarta.annotation.PostConstruct;
+import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import com.terraformers.modernization.reference.RetrievalMode;
 import com.terraformers.modernization.reference.opensearch.OpenSearchTransportType;
@@ -23,6 +25,30 @@ public class AnalysisRuntimeProperties {
     private int opensearchTopK = 3;
     private String resultBucketName;
     private String resultKeyPrefix = "analysis-results";
+    private boolean dispatchEnabled = true;
+    private Duration dispatchPollInterval = Duration.ofSeconds(2);
+    private int dispatchBatchSize = 4;
+    private Duration leaseDuration = Duration.ofSeconds(60);
+    private Duration leaseRenewInterval = Duration.ofSeconds(20);
+
+    @PostConstruct
+    void validateDurableDispatch() {
+        if (dispatchPollInterval == null || dispatchPollInterval.isZero() || dispatchPollInterval.isNegative()) {
+            throw new IllegalStateException("terraformers.analysis.dispatch-poll-interval must be positive");
+        }
+        if (dispatchBatchSize <= 0) {
+            throw new IllegalStateException("terraformers.analysis.dispatch-batch-size must be positive");
+        }
+        if (leaseDuration == null || leaseDuration.isZero() || leaseDuration.isNegative()) {
+            throw new IllegalStateException("terraformers.analysis.lease-duration must be positive");
+        }
+        if (leaseRenewInterval == null || leaseRenewInterval.isZero() || leaseRenewInterval.isNegative()) {
+            throw new IllegalStateException("terraformers.analysis.lease-renew-interval must be positive");
+        }
+        if (leaseRenewInterval.compareTo(leaseDuration) >= 0) {
+            throw new IllegalStateException("terraformers.analysis.lease-renew-interval must be shorter than lease-duration");
+        }
+    }
 
     public AnalysisMode getMode() {
         return mode;
@@ -138,4 +164,14 @@ public class AnalysisRuntimeProperties {
     public String getProgressPublisher() { return progressPublisher; }
     public void setProgressPublisher(String progressPublisher) { this.progressPublisher = progressPublisher; }
     public ProgressPublisherType resolvedProgressPublisher() { return ProgressPublisherType.from(progressPublisher); }
+    public boolean isDispatchEnabled() { return dispatchEnabled; }
+    public void setDispatchEnabled(boolean dispatchEnabled) { this.dispatchEnabled = dispatchEnabled; }
+    public Duration getDispatchPollInterval() { return dispatchPollInterval; }
+    public void setDispatchPollInterval(Duration dispatchPollInterval) { this.dispatchPollInterval = dispatchPollInterval; }
+    public int getDispatchBatchSize() { return dispatchBatchSize; }
+    public void setDispatchBatchSize(int dispatchBatchSize) { this.dispatchBatchSize = dispatchBatchSize; }
+    public Duration getLeaseDuration() { return leaseDuration; }
+    public void setLeaseDuration(Duration leaseDuration) { this.leaseDuration = leaseDuration; }
+    public Duration getLeaseRenewInterval() { return leaseRenewInterval; }
+    public void setLeaseRenewInterval(Duration leaseRenewInterval) { this.leaseRenewInterval = leaseRenewInterval; }
 }

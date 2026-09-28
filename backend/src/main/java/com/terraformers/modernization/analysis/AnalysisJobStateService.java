@@ -1,7 +1,8 @@
 package com.terraformers.modernization.analysis;
 
 import java.time.Instant;
-import java.util.NoSuchElementException;
+import java.util.List;
+import org.springframework.data.domain.PageRequest;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,39 +20,21 @@ public class AnalysisJobStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public int reconcileInterrupted(String failureReason) {
-        return repository.failInterrupted(
-                AnalysisJobStatus.PENDING,
-                AnalysisJobStatus.RUNNING,
-                AnalysisJobStatus.FAILED,
-                failureReason,
-                Instant.now()
-        );
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Optional<AnalysisJobEntity> claimPending(String jobId) {
-        int claimed = repository.claimPending(
-                jobId,
-                AnalysisJobStatus.PENDING,
-                AnalysisJobStatus.RUNNING,
-                Instant.now()
-        );
-        if (claimed == 0) {
-            requireJob(jobId);
-            return Optional.empty();
-        }
-
-        AnalysisJobEntity entity = requireJob(jobId);
-        orchestrator.markRunning(entity);
-        return Optional.of(entity);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<AnalysisJobEntity> claimEligible(String jobId, Instant now, Instant leaseExpiresAt) {
         int claimed = repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
                 now, leaseExpiresAt);
         return claimed == 0 ? Optional.empty() : repository.findById(jobId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> findEligibleJobIds(Instant now, int batchSize) {
+        return repository.findEligibleJobIds(AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, now,
+                PageRequest.of(0, batchSize));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<AnalysisJobEntity> findForDispatchEvidence(String jobId) {
+        return repository.findById(jobId);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -67,8 +50,12 @@ public class AnalysisJobStateService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean markFailedOwned(String jobId, long generation, Instant now, String failureReason) {
-        return repository.markFailedOwned(jobId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED,
+        boolean transitioned = repository.markFailedOwned(jobId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED,
                 generation, now, failureReason) == 1;
+        if (transitioned) {
+            repository.findById(jobId).ifPresent(orchestrator::publishFailedProgress);
+        }
+        return transitioned;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -85,31 +72,26 @@ public class AnalysisJobStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markSucceeded(String jobId, AnalysisJobExecution execution) {
+    public boolean markSucceededOwned(String jobId, long generation, Instant now, AnalysisJobExecution execution) {
         try {
-            AnalysisJobEntity entity = requireJob(jobId);
+            Optional<AnalysisJobEntity> owned = repository.lockOwned(
+                    jobId, AnalysisJobStatus.RUNNING, generation, now);
+            if (owned.isEmpty()) {
+                return false;
+            }
+            AnalysisJobEntity entity = owned.get();
             orchestrator.markSucceeded(
                     entity,
                     execution.result(),
                     execution.writeResult(),
                     orchestrator.registerGeneratedTerraform(entity.getProjectId(), execution)
             );
+            entity.clearLease();
             repository.save(entity);
             repository.flush();
+            return true;
         } catch (RuntimeException exception) {
             throw new AnalysisResultFinalizationException(exception);
         }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markFailed(String jobId, String failureReason) {
-        AnalysisJobEntity entity = requireJob(jobId);
-        orchestrator.markFailed(entity, failureReason);
-        repository.save(entity);
-    }
-
-    private AnalysisJobEntity requireJob(String jobId) {
-        return repository.findById(jobId)
-                .orElseThrow(() -> new NoSuchElementException("analysis job not found: " + jobId));
     }
 }

@@ -92,6 +92,10 @@ public class AnalysisJobOrchestrator {
     public void markFailed(AnalysisJobEntity entity, String failureReason) {
         entity.setStatus(AnalysisJobStatus.FAILED);
         entity.setFailureReason(safeFailureReason(failureReason));
+        publishFailedProgress(entity);
+    }
+
+    public void publishFailedProgress(AnalysisJobEntity entity) {
         progressPublisher.publish(ProgressEvent.of(entity, AnalysisJobStatus.FAILED, "analysis job failed"));
     }
 

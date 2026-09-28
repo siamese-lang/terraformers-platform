@@ -8,6 +8,7 @@ import com.terraformers.modernization.analysis.bedrock.BedrockRuntimeProperties;
 import com.terraformers.modernization.reference.RetrievalMode;
 
 import org.junit.jupiter.api.Test;
+import java.time.Duration;
 
 class AnalysisRuntimePropertiesTest {
 
@@ -23,7 +24,26 @@ class AnalysisRuntimePropertiesTest {
 
     @Test
     void defaultsRetrievalToDisabled() {
-        assertThat(new AnalysisRuntimeProperties().getRetrievalMode()).isEqualTo(RetrievalMode.DISABLED);
+        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        assertThat(properties.getRetrievalMode()).isEqualTo(RetrievalMode.DISABLED);
+        assertThat(properties.isDispatchEnabled()).isTrue();
+        assertThat(properties.getDispatchPollInterval()).isEqualTo(Duration.ofSeconds(2));
+        assertThat(properties.getDispatchBatchSize()).isEqualTo(4);
+        assertThat(properties.getLeaseDuration()).isEqualTo(Duration.ofSeconds(60));
+        assertThat(properties.getLeaseRenewInterval()).isEqualTo(Duration.ofSeconds(20));
+    }
+
+    @Test
+    void rejectsInvalidDurableDispatchTimingRelationships() {
+        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        properties.setLeaseRenewInterval(Duration.ofSeconds(60));
+        assertThatThrownBy(properties::validateDurableDispatch)
+                .hasMessageContaining("lease-renew-interval must be shorter");
+
+        properties = new AnalysisRuntimeProperties();
+        properties.setDispatchBatchSize(0);
+        assertThatThrownBy(properties::validateDurableDispatch)
+                .hasMessageContaining("dispatch-batch-size must be positive");
     }
 
     @Test

@@ -6,9 +6,6 @@ import com.terraformers.modernization.projectcore.ProjectDomainService;
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
 import com.terraformers.modernization.projectcore.ProjectFileRepository;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.RejectedExecutionException;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -19,28 +16,22 @@ public class AnalysisJobService {
 
     private final AnalysisJobRepository repository;
     private final AnalysisRuntimeProperties properties;
-    private final AnalysisJobRunner jobRunner;
-    private final Executor analysisJobExecutor;
+    private final AnalysisJobDispatcher dispatcher;
     private final ProjectDomainService projectDomainService;
     private final ProjectFileRepository projectFileRepository;
-    private final AnalysisObservability observability;
 
     public AnalysisJobService(
             AnalysisJobRepository repository,
             AnalysisRuntimeProperties properties,
-            AnalysisJobRunner jobRunner,
-            @Qualifier("analysisJobExecutor") Executor analysisJobExecutor,
+            AnalysisJobDispatcher dispatcher,
             ProjectDomainService projectDomainService,
-            ProjectFileRepository projectFileRepository,
-            AnalysisObservability observability
+            ProjectFileRepository projectFileRepository
     ) {
         this.repository = repository;
         this.properties = properties;
-        this.jobRunner = jobRunner;
-        this.analysisJobExecutor = analysisJobExecutor;
+        this.dispatcher = dispatcher;
         this.projectDomainService = projectDomainService;
         this.projectFileRepository = projectFileRepository;
-        this.observability = observability;
     }
 
     @Transactional
@@ -77,26 +68,16 @@ public class AnalysisJobService {
     }
 
     private void schedule(String jobId) {
-        Runnable task = () -> jobRunner.run(jobId);
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    executeOrMarkFailed(jobId, task);
+                    dispatcher.submit(jobId);
                 }
             });
             return;
         }
-        executeOrMarkFailed(jobId, task);
-    }
-
-    private void executeOrMarkFailed(String jobId, Runnable task) {
-        try {
-            analysisJobExecutor.execute(task);
-        } catch (RejectedExecutionException exception) {
-            observability.jobRejected();
-            jobRunner.markFailed(jobId, "analysis job could not be scheduled because the executor rejected the task");
-        }
+        dispatcher.submit(jobId);
     }
 
     @Transactional(readOnly = true)

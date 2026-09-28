@@ -243,4 +243,9 @@ public class AnalysisJobEntity {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    void clearLease() {
+        leaseExpiresAt = null;
+        nextAttemptAt = null;
+    }
 }

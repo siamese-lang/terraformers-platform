@@ -14,10 +14,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 node-IAM correction + protected apply automation
+- Phase: M3-R2 protected apply bootstrap / identity proof
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R2 — Correct the GKE node identity contract and implement the protected apply path before first creation**
+- Current implementation task: **M3-R2 — Bootstrap and prove the protected apply identity/environment before first creation**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a successful
@@ -175,19 +175,17 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Merge the node-IAM correction and protected apply automation, then regenerate the target plan.**
+**Bootstrap and prove the M3-R2 protected apply trust boundary.**
 
-Run `36332217168` and its secure digest proved the prior 14-create shape, but apply-IAM review
-against current GKE documentation found that the custom node service account should use
-`roles/container.defaultNodeServiceAccount`. The branch therefore replaces the three manual
-logging/monitoring node roles with that documented least-privilege role and changes the fail-closed
-foundation contract to **12 creates**. The prior 14-create plan must not be applied.
+The corrected main-branch plan is now verified: GitHub run `36335535056` at
+`fc95a7f54d375dce900bac573dcd79ea0215750f` produced exactly **12 create** actions with no
+update/delete/replacement, and the plan-only identity mutation-permission check passed.
 
-The same change adds the manual-only protected apply workflow, exact-SHA/confirmation gates,
-separate `terraformers-apply` bootstrap runbook, foundation/idle plan contracts, and a continuous
-check that `terraformers-plan` remains non-mutating. After merge, first regenerate/review the
-main-branch plan; then configure/bootstrap `gcp-target-apply` and run only `identity-check`.
-No GKE/OpenSearch target resource has been applied.
+Use the repository-owned idempotent bootstrap scripts to create/verify the dedicated
+`terraformers-apply` identity and configure/verify the `gcp-target-apply` GitHub environment,
+then run only the apply workflow's `identity-check` mode. No Terraform apply, GKE/OpenSearch
+creation or corpus ingestion belongs to this bootstrap. The first `foundation` apply remains a
+separate cost/resource-creation approval boundary.
 
 ## Do not revisit
 

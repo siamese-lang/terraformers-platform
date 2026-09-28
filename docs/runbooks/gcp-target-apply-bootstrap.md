@@ -10,6 +10,43 @@ The normal delivery path after this bootstrap is:
 
 Cloud Shell remains a recovery/raw-plan path rather than the normal apply path.
 
+
+## Preferred bootstrap path
+
+Use the two repository-owned idempotent bootstrap scripts instead of replaying the GCP IAM and
+GitHub environment steps by hand.
+
+```bash
+cd ~/terraformers-platform
+git switch main
+git pull --ff-only
+
+bash scripts/deploy/bootstrap_gcp_target_apply.sh apply
+bash scripts/deploy/bootstrap_github_target_apply_environment.sh apply
+```
+
+The GCP script verifies the active project/project number and canonical state bucket, creates the
+apply service account only when missing, adds only missing reviewed bindings, verifies the exact
+GitHub environment OIDC subject, and fails if Owner, Editor, Service Account Key Admin or Service
+Account Token Creator is bound directly to the apply identity.
+
+The GitHub script requires an authenticated `gh` CLI session with repository administration/
+environment write access. It creates or updates `gcp-target-apply`, configures the sole operator
+as required reviewer with self-review allowed, restricts deployment to exactly `main`, and upserts
+the three environment variables consumed by the workflow. GitHub documents these operations through
+the environment, deployment-branch-policy and environment-variable REST APIs.
+
+Re-running either command is safe: existing service accounts, IAM bindings, environment settings,
+branch policy and variables are verified or converged to the reviewed values. Neither script runs
+Terraform, creates GKE/OpenSearch, or dispatches the apply workflow.
+
+The apply identity also receives `roles/browser` because the Google provider's project metadata
+read is part of plan/refresh; the first plan-only workflow already demonstrated this read
+dependency. The remaining roles are the mutation roles explained below.
+
+Use the detailed commands later in this runbook only as a recovery/audit reference if one of the
+scripts cannot be used.
+
 ## 1. GitHub environment
 
 Create a GitHub environment named **`gcp-target-apply`** before dispatching the apply workflow.
@@ -63,7 +100,7 @@ The apply identity therefore needs mutation permissions that the plan identity i
 not have.
 
 ```bash
-for GCP_ROLE in   roles/compute.networkAdmin   roles/container.clusterAdmin   roles/iam.serviceAccountCreator   roles/iam.serviceAccountUser   roles/resourcemanager.projectIamAdmin   roles/serviceusage.serviceUsageAdmin
+for GCP_ROLE in   roles/browser   roles/compute.networkAdmin   roles/container.clusterAdmin   roles/iam.serviceAccountCreator   roles/iam.serviceAccountUser   roles/resourcemanager.projectIamAdmin   roles/serviceusage.serviceUsageAdmin
 do
   gcloud projects add-iam-policy-binding "$GCP_PROJECT"     --member="serviceAccount:${GCP_APPLY_SA}"     --role="$GCP_ROLE"     --quiet
 done

@@ -125,33 +125,32 @@ M4 change until that plan is the repository source of truth.
 [`active/M4-ai-targeted-improvement.md`](active/M4-ai-targeted-improvement.md).
 
 **Problem.** M3 identified a concrete first-divergence class:
-`FACT_EXTRACTION / PROVIDER_RUNTIME`. Two positive architecture cases failed before retrieval,
-while the same VPC case had succeeded in the preceding serving smoke. The evaluation trace currently
-preserves only `IllegalStateException`, which is not enough to identify the provider root cause.
+`FACT_EXTRACTION / PROVIDER_RUNTIME`. M4-1 added safe diagnostics, and M4-2 then reproduced the VPC
+failure as `FACT_EXTRACTION / OUTPUT_TRUNCATED` with `reason=RESPONSE_TRUNCATED`; the second
+affected AOSS case passed end to end under the unchanged configuration.
 
 **Work.** Follow
 `baseline failure → root cause → minimal targeted change → same-dataset re-evaluation`.
-M4-1 is complete: PR #69 preserved sanitized Vertex fact-extraction failure evidence without
-changing successful behavior. Before M4-2 live reproduction, the existing target runtime must be
-resumed from node count 0 to 1 through the repository-owned protected apply workflow. A retry/backoff
-change remains conditional on live evidence proving a transient provider failure. LangGraph,
-LangChain, rerankers, judge-model expansion, prompt/model/corpus changes, and a persistent Python
-worker remain DEFER.
+M4-1 diagnostics and M4-2 bounded live reproduction are complete. M4-3 is now limited to the
+reproduced truncation path; generic retry/backoff is not justified by the captured evidence.
+LangGraph, LangChain, rerankers, judge-model expansion, unrelated prompt/model/corpus changes, and a
+persistent Python worker remain DEFER.
 
 **Evidence.** Reuse M3 canonical baseline run `36379633596` and configuration fingerprint
 `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
-After any targeted change, rerun the same six fixed cases on the same target runtime/configuration
-and compare first-divergence count/category, latency, retries, and regressions.
+M4-2 runs `36385950712` and `36386233526` classify the two affected cases; detailed evidence is
+in [M4-2 live reproduction evidence](../evaluation/m4-r2-live-reproduction-evidence.md). After the
+targeted M4-3 change, rerun the same six fixed cases on the same target runtime/configuration and
+compare first-divergence count/category, latency, retries, and regressions.
 
 **Exit condition.** The selected M3 failure class has a reproduced root cause, the smallest justified
 change is implemented, and the same-dataset/configuration comparison shows the failure reduced or
 controlled without regressing previously successful behavior.
 
-**Immediate next single task.** Run M4-2 bounded live reproduction for
-`arch-vpc-three-tier` and `arch-private-aoss` on the active canonical target runtime using the
-same dataset/configuration fingerprint as M3. Preserve the new sanitized fact-extraction detail,
-classify a reproduced failure or record `not reproduced`, and return the node pool to zero after
-the evidence session. Do not add retry/backoff before this evidence exists.
+**Immediate next single task.** Return the canonical target node pool to zero using the protected
+`idle` operation. Then begin M4-3 by inspecting the Vertex fact-extraction truncation path and
+implementing only the smallest change justified by `RESPONSE_TRUNCATED` evidence. Do not add
+generic retry/backoff.
 
 ## M5 — Backend Reliability Baseline
 

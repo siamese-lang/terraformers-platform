@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — M4-1 COMPLETE / M4-2 PREPARATION**
+**ACTIVE — M4-2 COMPLETE / M4-3 PREPARATION**
 
 M3 is complete. M4 changes only failure classes that were observed in the canonical M3 baseline.
 
@@ -31,9 +31,9 @@ Affected canonical cases:
 - `arch-vpc-three-tier`
 - `arch-private-aoss`
 
-The same VPC case passed the preceding M3-R3c smoke and failed in the six-case baseline. M4 must
-therefore treat the failure as live provider/runtime variability until stronger evidence proves a
-different cause.
+The same VPC case passed the preceding M3-R3c smoke and failed in the six-case baseline. M4-2 later
+reproduced that VPC failure as explicit output truncation while the second affected AOSS case passed
+end to end under the unchanged configuration.
 
 ## Non-goals
 
@@ -142,7 +142,7 @@ Completion evidence:
 
 ## M4-2 — Reproduce the root cause on the same target runtime
 
-**Status: NEXT — BOUNDED LIVE REPRODUCTION**
+**Status: COMPLETE — runs `36385950712` and `36386233526`**
 
 ### Problem
 
@@ -176,27 +176,42 @@ Examples:
 
 ### Completion evidence
 
-The root cause is either reproduced with sanitized evidence or explicitly classified as not
-reproduced under the same runtime/configuration.
+Detailed evidence is recorded in
+[`m4-r2-live-reproduction-evidence.md`](../../evaluation/m4-r2-live-reproduction-evidence.md).
+
+- `arch-vpc-three-tier`, run `36385950712`: fact extraction **FAIL** at
+  `FACT_EXTRACTION / OUTPUT_TRUNCATED`, detail `reason=RESPONSE_TRUNCATED`, 9556 ms; downstream
+  stages did not run.
+- `arch-private-aoss`, run `36386233526`: fact extraction **PASS** 9392 ms, retrieval **PASS**
+  3787 ms, generation **PASS** 17204 ms with `retryOccurred=false`, validation **PASS** 3 ms, and
+  no first divergence.
+- both runs used configuration fingerprint
+  `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
+
+The reproduced evidence does not support generic retry/backoff. It supports a truncation-targeted
+M4-3 change; the AOSS baseline failure is explicitly recorded as not reproduced in this bounded
+attempt.
 
 ## M4-3 — Minimal targeted behavior change
 
-**Status: CONDITIONAL**
+**Status: NEXT — TRUNCATION-TARGETED**
 
-Implement only the remedy justified by M4-2.
+M4-2 reproduced `arch-vpc-three-tier` as `RESPONSE_TRUNCATED` and did not capture a transient
+HTTP/provider error. M4-3 must therefore address only the demonstrated truncation path.
 
-For a proven transient provider error, an acceptable candidate is bounded retry/backoff isolated to
-Vertex fact extraction. It must:
+Before changing behavior, inspect the existing Vertex fact-extraction request/response contract and
+determine the smallest remedy. The implementation must:
 
-- retry only demonstrably transient categories;
-- have a strict attempt/time bound;
-- preserve the same prompt/model and structured response contract;
-- avoid retrying deterministic format/application failures;
-- record retry occurrence in evaluation evidence;
-- add deterministic tests for retryable and non-retryable paths.
+- preserve the same fixed dataset and generation/embedding model identities;
+- preserve successful fact-extraction semantics and structured response parsing;
+- avoid generic retry/backoff because no retryable provider status was observed;
+- avoid prompt/corpus/retrieval/top-K/validator changes unless a separate evidence gate justifies
+  them;
+- add deterministic tests that reproduce truncation handling and protect non-truncated success;
+- rerun the affected VPC case before moving to the M4-4 full six-case comparison.
 
-If M4-2 identifies a different root cause, this step must be amended before implementation rather
-than applying a generic retry.
+If investigation shows that a proposed truncation remedy would materially change prompt/model/corpus
+identity rather than only response handling, amend this plan through ADR-004 before implementation.
 
 ## M4-4 — Same-dataset before/after comparison
 
@@ -262,7 +277,6 @@ return it to 0 afterward.
 
 ## Immediate next single task
 
-Run the two bounded M4-2 affected-case reproductions on the active canonical runtime, preserve the
-machine-readable traces, classify any fact-extraction failure from the new sanitized detail, and
-then return the node pool to `node_count=0`. Do not add retry/backoff unless those runs provide
-explicit transient-provider evidence.
+Return the canonical target node pool to `node_count=0` using the protected `idle` operation.
+Then inspect the Vertex fact-extraction truncation path and implement only the smallest
+M4-3 truncation-targeted change justified by run `36385950712`. Do not add generic retry/backoff.

@@ -246,7 +246,13 @@ jobs:
 
           terraform init -no-color -reconfigure -input=false             -backend-config="bucket=${STATE_BUCKET}"             -backend-config='prefix=gcp-target-runtime'
 
-          mapfile -t managed_state < <(terraform state list)
+          mapfile -t state_addresses < <(terraform state list)
+          managed_state=()
+          for address in "${state_addresses[@]}"; do
+            [[ "$address" == data.* ]] && continue
+            managed_state+=("$address")
+          done
+
           [[ "${#managed_state[@]}" -eq 12 ]] || {
             echo "Runtime check expected 12 managed resources, found ${#managed_state[@]}." >&2
             printf '  %s\n' "${managed_state[@]}" >&2

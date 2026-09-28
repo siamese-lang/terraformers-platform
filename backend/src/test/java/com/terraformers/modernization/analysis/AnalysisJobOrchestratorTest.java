@@ -46,7 +46,22 @@ class AnalysisJobOrchestratorTest {
         AnalysisJobOrchestrator orchestrator = orchestrator(provider, storage);
 
         assertThatThrownBy(() -> orchestrator.executeProviderAndStoreDraft(sampleEntity(100L)))
-                .isSameAs(storageTimeout);
+                .isSameAs(storageTimeout)
+                .isNotInstanceOf(AnalysisProviderTimeoutException.class);
+        verify(storage).storeTerraformDraft(any(), any());
+    }
+
+    @Test
+    void preservesExplicitProviderSemanticFailureWithNestedNetworkTimeout() {
+        AnalysisProviderFailureException semanticFailure = new AnalysisProviderFailureException(
+                AnalysisProviderFailureReason.OUTPUT_TRUNCATED,
+                new SocketTimeoutException("nested timeout"));
+        AnalysisJobOrchestrator orchestrator = orchestrator(context -> { throw semanticFailure; },
+                mock(AnalysisResultStorage.class));
+
+        assertThatThrownBy(() -> orchestrator.executeProviderAndStoreDraft(sampleEntity(100L)))
+                .isSameAs(semanticFailure)
+                .isNotInstanceOf(AnalysisProviderTimeoutException.class);
     }
 
     @Test
@@ -197,7 +212,14 @@ class AnalysisJobOrchestratorTest {
     }
 
     private AnalysisResult validResult() {
-        return new AnalysisResult("test", "resource \"null_resource\" \"valid\" {}", "summary",
+        String terraform = """
+                resource "null_resource" "valid" {
+                  triggers = {
+                    source = "storage-boundary-test"
+                  }
+                }
+                """;
+        return new AnalysisResult("test", terraform, "summary",
                 List.of(), List.of(), List.of(), List.of());
     }
 

@@ -246,6 +246,7 @@ class AnalysisJobRestartBaselineTest {
                 .profiles("test").web(WebApplicationType.SERVLET).run("--server.port=0",
                         "--spring.datasource.url=" + url, "--spring.jpa.hibernate.ddl-auto=" + ddl,
                         "--spring.flyway.enabled=false", "--terraformers.security.jwt.enabled=false",
+                        "--spring.main.allow-bean-definition-overriding=true",
                         "--terraformers.analysis.dispatch-enabled=true",
                         "--terraformers.analysis.dispatch-poll-interval=" + pollInterval);
     }
@@ -308,14 +309,21 @@ class AnalysisJobRestartBaselineTest {
         @Primary
         Clock testClock() { return TEST_CLOCK; }
 
-        @Bean @Primary
-        AnalysisProvider deterministicAnalysisProvider() {
+        @Bean(name = "selectedAnalysisProvider") @Primary
+        AnalysisProvider selectedAnalysisProvider() {
             return context -> {
                 PROVIDER_INVOCATIONS.incrementAndGet();
                 if (TIMEOUTS_REMAINING.getAndUpdate(value -> value > 0 ? value - 1 : 0) > 0) {
                     throw new AnalysisProviderTimeoutException(new java.net.SocketTimeoutException("test timeout"));
                 }
-                return new AnalysisResult("test", "resource \"null_resource\" \"generated\" {}", "summary",
+                String terraform = """
+                        resource "null_resource" "generated" {
+                          triggers = {
+                            source = "retry-test"
+                          }
+                        }
+                        """;
+                return new AnalysisResult("test", terraform, "summary",
                         List.of(), List.of(), List.of(), List.of());
             };
         }

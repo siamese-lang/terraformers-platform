@@ -47,6 +47,8 @@ public class AnalysisJobOrchestrator {
             result = analysisProvider.analyze(toContext(entity));
         } catch (AnalysisProviderTimeoutException exception) {
             throw exception;
+        } catch (AnalysisProviderFailureException exception) {
+            throw exception;
         } catch (RuntimeException exception) {
             if (hasStandardNetworkTimeout(exception)) {
                 throw new AnalysisProviderTimeoutException(exception);

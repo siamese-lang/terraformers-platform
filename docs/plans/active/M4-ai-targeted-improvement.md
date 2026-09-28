@@ -108,7 +108,7 @@ A failed fact-extraction trace can identify a safe, actionable failure subtype r
 
 ## Delivery prerequisite — Resume the existing target runtime
 
-**Status: NEXT**
+**Status: COMPLETE — PR #71 / activate run `36384234371`**
 
 The canonical target runtime is intentionally idle with Terraform `node_count=0`. M4-2 requires
 one existing workload node, but the protected apply workflow currently has no operation for
@@ -130,9 +130,19 @@ Add one repository-owned `activate`/resume operation with this contract:
 This is delivery lifecycle support for the already-approved single target runtime, not a second
 runtime and not an M4 quality change.
 
+Completion evidence:
+
+- PR #71 merged the `activate` operation as `64dbaae156906e3705e4bfeb161fb11bacd79f52`;
+- protected run `36384234371` completed successfully;
+- plan gate recorded `operation=activate`, `resource_change_count=1`, plan JSON SHA-256
+  `49055c3593910e55d3a7f68a18a8502f09ef18d06523203817c9439e35942b22`;
+- apply result was `0 added, 1 changed, 0 destroyed`;
+- the changed resource was the canonical `google_container_node_pool.target`;
+- cluster and node pool were verified `RUNNING`, with Terraform `node_count=1`.
+
 ## M4-2 — Reproduce the root cause on the same target runtime
 
-**Status: BLOCKED ON EXISTING-RUNTIME RESUME PREREQUISITE**
+**Status: NEXT — BOUNDED LIVE REPRODUCTION**
 
 ### Problem
 
@@ -144,8 +154,15 @@ Use the same GKE/Vertex/OpenSearch runtime, KSA/Workload Identity, model, datase
 identity. Do not rebuild the runtime or change the fixed dataset.
 
 First rerun only enough evidence to reproduce the affected fact-extraction failure with the new
-diagnostics. A bounded targeted reproduction may use the two affected case IDs before a full
-six-case comparison.
+diagnostics. Use the existing GCP target evaluation workflow in single-case mode, once for each
+affected case:
+
+- `m4-arch-vpc-three-tier`;
+- `m4-arch-private-aoss`.
+
+Both runs must use confirmation `RUN_M4_2_REPRODUCTION` and the exact current `main` SHA. A PASS
+means the original fact-extraction failure was not reproduced in that bounded attempt; it is not a
+reason to invent a fix or to rerun until a failure appears.
 
 ### Decision gate
 
@@ -245,6 +262,7 @@ return it to 0 afterward.
 
 ## Immediate next single task
 
-Implement the existing-runtime `activate`/resume operation described above, validate it in CI,
-merge it, and then use the protected workflow to move the canonical target node pool from 0 to 1.
-Do not add retry/backoff before M4-2 live reproduction classifies the failure.
+Run the two bounded M4-2 affected-case reproductions on the active canonical runtime, preserve the
+machine-readable traces, classify any fact-extraction failure from the new sanitized detail, and
+then return the node pool to `node_count=0`. Do not add retry/backoff unless those runs provide
+explicit transient-provider evidence.

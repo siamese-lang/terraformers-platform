@@ -135,6 +135,35 @@ class MariaDbRepositorySmokeTest {
         job.setResultPreview("terraform {}");
         job = analysisJobRepository.saveAndFlush(job);
 
+        AnalysisJobEntity claimJob = new AnalysisJobEntity();
+        claimJob.setProjectId(project.getProjectId());
+        claimJob.setSourceFileId(sourceFile.getFileId());
+        claimJob.setSourceBucket(sourceFile.getS3Bucket());
+        claimJob.setSourceKey(sourceFile.getS3Key());
+        claimJob.setCorrelationId("repository-smoke-claim");
+        claimJob.setStatus(AnalysisJobStatus.PENDING);
+        claimJob.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
+        claimJob = analysisJobRepository.saveAndFlush(claimJob);
+
+        assertThat(analysisJobRepository.claimPending(
+                claimJob.getId(),
+                AnalysisJobStatus.PENDING,
+                AnalysisJobStatus.RUNNING,
+                Instant.now()
+        )).isEqualTo(1);
+        assertThat(analysisJobRepository.claimPending(
+                claimJob.getId(),
+                AnalysisJobStatus.PENDING,
+                AnalysisJobStatus.RUNNING,
+                Instant.now()
+        )).isZero();
+        assertThat(analysisJobRepository.findById(claimJob.getId()))
+                .get()
+                .extracting(AnalysisJobEntity::getStatus)
+                .isEqualTo(AnalysisJobStatus.RUNNING);
+        analysisJobRepository.deleteById(claimJob.getId());
+        analysisJobRepository.flush();
+
         BoardEntity board = new BoardEntity();
         board.setProject(project);
         board.setAuthor(owner);

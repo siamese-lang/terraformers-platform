@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis;
 
+import java.time.Instant;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,10 +19,21 @@ public class AnalysisJobStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public AnalysisJobEntity markRunning(String jobId) {
+    public Optional<AnalysisJobEntity> claimPending(String jobId) {
+        int claimed = repository.claimPending(
+                jobId,
+                AnalysisJobStatus.PENDING,
+                AnalysisJobStatus.RUNNING,
+                Instant.now()
+        );
+        if (claimed == 0) {
+            requireJob(jobId);
+            return Optional.empty();
+        }
+
         AnalysisJobEntity entity = requireJob(jobId);
         orchestrator.markRunning(entity);
-        return repository.save(entity);
+        return Optional.of(entity);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

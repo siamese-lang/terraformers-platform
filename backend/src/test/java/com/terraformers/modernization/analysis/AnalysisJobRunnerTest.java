@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 
 import com.terraformers.modernization.storage.ObjectWriteResult;
 import java.util.List;
+import java.util.Optional;
 import java.net.SocketTimeoutException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -36,14 +37,14 @@ class AnalysisJobRunnerTest {
                 ),
                 new ObjectWriteResult("s3", true, "result-bucket", "analysis/main.tf", "etag")
         );
-        when(stateService.markRunning("job-1")).thenReturn(running);
+        when(stateService.claimPending("job-1")).thenReturn(Optional.of(running));
         when(orchestrator.executeProviderAndStoreDraft(running)).thenReturn(execution);
         AnalysisJobRunner runner = new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(new SimpleMeterRegistry()));
 
         runner.run("job-1");
 
         InOrder inOrder = inOrder(stateService, orchestrator);
-        inOrder.verify(stateService).markRunning("job-1");
+        inOrder.verify(stateService).claimPending("job-1");
         inOrder.verify(orchestrator).executeProviderAndStoreDraft(running);
         inOrder.verify(stateService).markSucceeded("job-1", execution);
     }
@@ -53,7 +54,7 @@ class AnalysisJobRunnerTest {
         AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
         AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
         AnalysisJobEntity running = new AnalysisJobEntity();
-        when(stateService.markRunning("job-1")).thenReturn(running);
+        when(stateService.claimPending("job-1")).thenReturn(Optional.of(running));
         when(orchestrator.executeProviderAndStoreDraft(running))
                 .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("Read timed out")));
 
@@ -67,7 +68,7 @@ class AnalysisJobRunnerTest {
         AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
         AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
         AnalysisJobEntity running = new AnalysisJobEntity();
-        when(stateService.markRunning("job-1")).thenReturn(running);
+        when(stateService.claimPending("job-1")).thenReturn(Optional.of(running));
         when(orchestrator.executeProviderAndStoreDraft(running))
                 .thenThrow(new IllegalStateException("secret request body and stack details"));
 
@@ -120,7 +121,7 @@ class AnalysisJobRunnerTest {
         AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
         AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
         AnalysisJobEntity running = new AnalysisJobEntity();
-        when(stateService.markRunning("job-1")).thenReturn(running);
+        when(stateService.claimPending("job-1")).thenReturn(Optional.of(running));
         when(orchestrator.executeProviderAndStoreDraft(running)).thenThrow(exception);
 
         new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(new SimpleMeterRegistry())).run("job-1");
@@ -128,10 +129,10 @@ class AnalysisJobRunnerTest {
         verify(stateService).markFailed("job-1", expectedReason);
     }
     @Test
-    void markRunningFailureIsNotReclassifiedAsJobFailure() {
+    void claimFailureIsNotReclassifiedAsJobFailure() {
         AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
         AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
-        org.mockito.Mockito.doThrow(new IllegalStateException("transition failed")).when(stateService).markRunning("job-transition");
+        org.mockito.Mockito.doThrow(new IllegalStateException("transition failed")).when(stateService).claimPending("job-transition");
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() ->
                 new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(new SimpleMeterRegistry())).run("job-transition"))
@@ -140,11 +141,27 @@ class AnalysisJobRunnerTest {
     }
 
     @Test
+    void nonPendingJobIsSkippedWithoutStartingOrchestration() {
+        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
+        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        when(stateService.claimPending("job-terminal")).thenReturn(Optional.empty());
+
+        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(registry)).run("job-terminal");
+
+        verify(orchestrator, org.mockito.Mockito.never())
+                .executeProviderAndStoreDraft(org.mockito.ArgumentMatchers.any());
+        org.assertj.core.api.Assertions.assertThat(
+                registry.find("terraformers.analysis.jobs").tags("outcome", "started").counter()
+        ).isNull();
+    }
+
+    @Test
     void orchestrationFailureAfterRunningRecordsStartedAndFailedMetrics() {
         AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
         AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
         AnalysisJobEntity running = new AnalysisJobEntity();
-        when(stateService.markRunning("job-observed")).thenReturn(running);
+        when(stateService.claimPending("job-observed")).thenReturn(Optional.of(running));
         when(orchestrator.executeProviderAndStoreDraft(running)).thenThrow(new IllegalStateException("sensitive detail"));
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 

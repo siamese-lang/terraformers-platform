@@ -41,6 +41,7 @@ jobs:
       TF_VAR_project_id: terraformers-platform
       TF_VAR_subnet_cidr: 10.40.0.0/20
       TF_VAR_node_count: '1'
+      CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
     defaults:
       run:
         shell: bash
@@ -135,7 +136,12 @@ jobs:
 
           gcloud projects describe terraformers-platform --format=json             > "${RUNNER_TEMP}/project.json"
 
-          gcloud billing projects describe terraformers-platform --format=json             > "${RUNNER_TEMP}/billing.json"
+          if gcloud billing projects describe terraformers-platform --quiet --format=json             > "${RUNNER_TEMP}/billing-query.json" 2> "${RUNNER_TEMP}/billing-query.err"; then
+            jq '. + {verificationStatus: "verified"}'               "${RUNNER_TEMP}/billing-query.json" > "${RUNNER_TEMP}/billing.json"
+          else
+            jq -n               --arg projectId terraformers-platform               '{projectId: $projectId, billingEnabled: null, verificationStatus: "unavailable"}'               > "${RUNNER_TEMP}/billing.json"
+            echo 'Cloud Billing status query unavailable; billing/credit remain a single manual approval item.'               >> "$GITHUB_STEP_SUMMARY"
+          fi
 
           gcloud compute project-info describe             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/global-quota.json"
 

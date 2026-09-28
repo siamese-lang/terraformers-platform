@@ -4,11 +4,20 @@ on:
   workflow_dispatch:
     inputs:
       expected_sha:
-        description: Exact trusted main commit SHA used for the six-case baseline.
+        description: Exact trusted main commit SHA used for the live evaluation.
         required: true
         type: string
+      evaluation_scope:
+        description: Run the unchanged M3 full baseline or one bounded M4-2 affected-case reproduction.
+        required: true
+        type: choice
+        default: m3-full-baseline
+        options:
+          - m3-full-baseline
+          - m4-arch-vpc-three-tier
+          - m4-arch-private-aoss
       confirmation:
-        description: Use RUN_M3_4_BASELINE.
+        description: Use RUN_M3_4_BASELINE for the full baseline or RUN_M4_2_REPRODUCTION for an M4 affected case.
         required: true
         type: string
 
@@ -43,6 +52,7 @@ jobs:
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
           CONFIRMATION: ${{ inputs.confirmation }}
+          EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
           WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
           APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
         run: |
@@ -57,10 +67,32 @@ jobs:
             echo 'Approved SHA does not match the checked-out main commit.' >&2
             exit 1
           }
-          [[ "$CONFIRMATION" == RUN_M3_4_BASELINE ]] || {
-            echo 'M3-4 baseline requires confirmation RUN_M3_4_BASELINE.' >&2
-            exit 1
-          }
+          case "$EVALUATION_SCOPE" in
+            m3-full-baseline)
+              [[ "$CONFIRMATION" == RUN_M3_4_BASELINE ]] || {
+                echo 'M3-4 baseline requires confirmation RUN_M3_4_BASELINE.' >&2
+                exit 1
+              }
+              ;;
+            m4-arch-vpc-three-tier)
+              [[ "$CONFIRMATION" == RUN_M4_2_REPRODUCTION ]] || {
+                echo 'M4-2 reproduction requires confirmation RUN_M4_2_REPRODUCTION.' >&2
+                exit 1
+              }
+              echo 'M4_CASE_ID=arch-vpc-three-tier' >> "$GITHUB_ENV"
+              ;;
+            m4-arch-private-aoss)
+              [[ "$CONFIRMATION" == RUN_M4_2_REPRODUCTION ]] || {
+                echo 'M4-2 reproduction requires confirmation RUN_M4_2_REPRODUCTION.' >&2
+                exit 1
+              }
+              echo 'M4_CASE_ID=arch-private-aoss' >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "Unsupported evaluation scope: $EVALUATION_SCOPE" >&2
+              exit 1
+              ;;
+          esac
           [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]] || {
             echo 'Unexpected Kubernetes deployment identity.' >&2
             exit 1
@@ -227,6 +259,7 @@ jobs:
           kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" --             /bin/sh -c 'rm -rf /tmp/workspace && mkdir -p /tmp/workspace && cd /tmp/workspace && jar xf /tmp/live-baseline.zip'
 
       - name: Run unchanged six-case M3 baseline
+        if: inputs.evaluation_scope == 'm3-full-baseline'
         run: |
           set -euo pipefail
           run_id="m3-baseline-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
@@ -236,6 +269,7 @@ jobs:
           kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" --             cat /tmp/m3-live-baseline.json             > "${RUNNER_TEMP}/m3-live-baseline.json"
 
       - name: Verify baseline identity and completeness
+        if: inputs.evaluation_scope == 'm3-full-baseline'
         run: |
           set -euo pipefail
           result="${RUNNER_TEMP}/m3-live-baseline.json"
@@ -289,11 +323,81 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload machine-readable baseline
-        if: always()
+        if: always() && inputs.evaluation_scope == 'm3-full-baseline'
         uses: actions/upload-artifact@v4
         with:
           name: m3-live-baseline-${{ github.run_id }}
           path: ${{ runner.temp }}/m3-live-baseline.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Run one bounded M4-2 affected-case reproduction
+        if: inputs.evaluation_scope != 'm3-full-baseline'
+        run: |
+          set -euo pipefail
+          [[ "$M4_CASE_ID" == arch-vpc-three-tier || "$M4_CASE_ID" == arch-private-aoss ]]
+          run_id="m4-r2-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${M4_CASE_ID}"
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" --             env               EVALUATION_DATASET=/tmp/workspace/evaluation/terraformers-eval-v1/dataset.json               EVALUATION_OUTPUT=/tmp/m4-live-reproduction.json               EVALUATION_RUN_ID="$run_id"               EVALUATION_MODE=single               EVALUATION_CASE_ID="$M4_CASE_ID"               GOOGLE_CLOUD_PROJECT=terraformers-platform               GOOGLE_CLOUD_LOCATION=global               ANALYSIS_PROVIDER=vertex               EMBEDDING_PROVIDER=vertex               RETRIEVAL_MODE=REQUIRED               VERTEX_GENERATION_MODEL_ID=gemini-3.8-flash               VERTEX_EMBEDDING_MODEL_ID=gemini-embedding-001               OPENSEARCH_ENDPOINT="http://${OPENSEARCH_SERVICE}:9200"               INDEX_NAME=terraformers-reference-v3               VECTOR_FIELD_NAME=embedding               CONTENT_FIELD_NAME=content               CORPUS_VERSION=terraformers-reference-v3               PROVIDER_VERSION=5.100.0               EXPECTED_VECTOR_DIMENSION=1024               OPENSEARCH_TOP_K=8               VERTEX_MAX_OUTPUT_TOKENS=8192               java -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*'                 com.terraformers.modernization.evaluation.LiveEvaluationLauncher
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" --             cat /tmp/m4-live-reproduction.json             > "${RUNNER_TEMP}/m4-live-reproduction.json"
+
+      - name: Verify M4-2 identity and preserve diagnostic outcome
+        if: inputs.evaluation_scope != 'm3-full-baseline'
+        run: |
+          set -euo pipefail
+          result="${RUNNER_TEMP}/m4-live-reproduction.json"
+
+          jq -e --arg case_id "$M4_CASE_ID" '
+            . as $root
+            | .traces[0] as $trace
+            | (
+              .schemaVersion == "m3-evaluation-v1"
+              and .datasetVersion == "terraformers-eval-v1"
+              and (.traces | length == 1)
+              and $trace.caseId == $case_id
+              and .configuration.corpusVersion == "terraformers-reference-v3"
+              and .configuration.providerVersion == "5.100.0"
+              and .configuration.analysisProvider == "vertex"
+              and .configuration.embeddingProvider == "vertex"
+              and .configuration.retrievalMode == "REQUIRED"
+              and .configuration.topK == 8
+              and .configuration.generationModelId == "gemini-3.8-flash"
+              and .configuration.embeddingModelId == "gemini-embedding-001"
+              and .configuration.configurationFingerprint
+                == "sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66"
+              and $trace.configuration == $root.configuration
+              and (
+                if $trace.factExtraction.status == "FAIL" then
+                  $trace.firstDivergence.stage == "FACT_EXTRACTION"
+                  and ($trace.factExtraction.failures | length) > 0
+                  and ($trace.factExtraction.failures[0].detail | startswith("reason="))
+                else
+                  $trace.factExtraction.status == "PASS"
+                end
+              )
+            )
+          ' "$result" >/dev/null
+
+          {
+            echo '## M4-2 bounded live reproduction'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Run ID: `%s`\n' "$(jq -r '.runId' "$result")"
+            printf -- '- Case: `%s`\n' "$M4_CASE_ID"
+            printf -- '- Configuration fingerprint: `%s`\n' "$(jq -r '.configuration.configurationFingerprint' "$result")"
+            printf -- '- Fact extraction: `%s`\n' "$(jq -r '.traces[0].factExtraction.status' "$result")"
+            printf -- '- First divergence: `%s`\n' "$(jq -r 'if .traces[0].firstDivergence == null then "none" else (.traces[0].firstDivergence.stage + ":" + .traces[0].firstDivergence.category) end' "$result")"
+            printf -- '- Fact failure detail: `%s`\n' "$(jq -r 'if (.traces[0].factExtraction.failures | length) == 0 then "none" else .traces[0].factExtraction.failures[0].detail end' "$result")"
+            echo '- A PASS is recorded as not reproduced for this bounded attempt; no retry or tuning is introduced.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload M4-2 machine-readable reproduction
+        if: always() && inputs.evaluation_scope != 'm3-full-baseline'
+        uses: actions/upload-artifact@v4
+        with:
+          name: m4-r2-reproduction-${{ github.run_id }}
+          path: ${{ runner.temp }}/m4-live-reproduction.json
           if-no-files-found: warn
           retention-days: 90
 

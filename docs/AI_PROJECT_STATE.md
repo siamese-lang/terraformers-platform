@@ -14,12 +14,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M4 — AI Targeted Improvement**
 - Status: **ACTIVE**
-- Phase: M4-2 live root-cause reproduction preparation
+- Phase: M4-2 bounded live root-cause reproduction
 - Active plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **add an existing-runtime `activate`/resume operation before M4-2 live reproduction**
+- Current implementation task: **run the two affected M4-2 cases on the active canonical runtime**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -28,10 +28,13 @@ prompt/model/dataset/corpus/retrieval/validator contract. The PR head was
 successfully before merge. The implementation was merged as
 `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`.
 
-The target GKE node pool remains intentionally idle at Terraform `node_count=0`. Before M4-2, the
-repository-owned protected GCP apply workflow needs a resume operation that changes only
-`google_container_node_pool.target` from 0 to 1 using an exact saved plan; `foundation` must not
-be reused because it is restricted to an empty canonical runtime state.
+The existing target runtime is active for the bounded M4-2 evidence session. PR #71 added the
+protected `activate` operation and merged as
+`64dbaae156906e3705e4bfeb161fb11bacd79f52`. Protected run `36384234371` passed its contract
+gate with exactly one managed-resource change, updated only
+`google_container_node_pool.target`, applied `0 added, 1 changed, 0 destroyed`, and verified the
+cluster/node pool `RUNNING` with Terraform `node_count=1`. The saved plan JSON SHA-256 was
+`49055c3593910e55d3a7f68a18a8502f09ef18d06523203817c9439e35942b22`.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -220,24 +223,17 @@ M4 is active under
 The canonical before-state remains M3 baseline run `36379633596` with configuration fingerprint
 `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
 
-The first implementation task is **M4-1 — Preserve root-cause evidence at Vertex fact extraction**.
+M4-1 is complete and the canonical runtime is active. The immediate task is M4-2 bounded live
+reproduction of `arch-vpc-three-tier` and `arch-private-aoss` with the unchanged
+`terraformers-eval-v1` identity and canonical configuration fingerprint
+`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
 
-Scope:
+Use the existing GCP target evaluation workflow's M4 scopes, preserve both machine-readable traces,
+and classify each fact-extraction outcome from the new sanitized diagnostics. A PASS is evidence that
+the failure was not reproduced in that attempt; do not rerun merely to manufacture a failure. Do not
+implement retry/backoff until a transient provider status is actually observed.
 
-- keep `ArchitectureFactsExtractor` provider-neutral;
-- add only provider-specific sanitized failure classification/evidence around the existing Vertex
-  fact-extraction call;
-- distinguish provider-call failures from output/format validation failures;
-- add deterministic offline tests;
-- do not change the facts prompt, generation prompt, model IDs, corpus, retrieval ranking, top-K,
-  validator, or dataset;
-- do not add retry/backoff yet.
-
-Only after M4-1 is merged should a bounded live reproduction determine whether the observed
-`FACT_EXTRACTION / PROVIDER_RUNTIME` failures are transient provider errors, response-format
-failures, or another runtime cause.
-
-When no live evidence session is running, keep the target GKE node pool at idle size 0.
+After the bounded live evidence session, return the target GKE node pool to idle size 0.
 
 ## Do not revisit
 

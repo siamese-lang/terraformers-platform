@@ -1,11 +1,13 @@
 # M3-R3b — GCP target corpus ingestion adapter
 
-**Status: STATIC IMPLEMENTATION COMPLETE — LIVE EXECUTION PENDING**
+**Status: COMPLETE — STATIC IMPLEMENTATION AND LIVE INGESTION VERIFIED**
 
 ## Execution authorization
 
-The static implementation from this task is complete. M3-R2 OpenSearch live readiness is also
-complete. The remaining work is the separately protected live execution on the same target runtime.
+The static implementation and live execution are both complete. Protected run `36375171823`
+successfully ingested `terraformers-reference-v3` on the same target runtime and emitted the
+validated 128-document receipt. The next task is M3-R3c serving-path smoke; do not rerun ingestion
+unless validating idempotency or recovering the same version after a documented runtime event.
 
 Do not wait for, inspect, approve, or perform protected GCP deployment work. Do not require GitHub
 CLI authentication, live GCP credentials, billing access, a running GKE cluster, or a reachable

@@ -164,6 +164,56 @@ class MariaDbRepositorySmokeTest {
         analysisJobRepository.deleteById(claimJob.getId());
         analysisJobRepository.flush();
 
+        AnalysisJobEntity interruptedPending = new AnalysisJobEntity();
+        interruptedPending.setProjectId(project.getProjectId());
+        interruptedPending.setSourceFileId(sourceFile.getFileId());
+        interruptedPending.setSourceBucket(sourceFile.getS3Bucket());
+        interruptedPending.setSourceKey(sourceFile.getS3Key());
+        interruptedPending.setCorrelationId("repository-smoke-interrupted-pending");
+        interruptedPending.setStatus(AnalysisJobStatus.PENDING);
+        interruptedPending.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
+        interruptedPending = analysisJobRepository.saveAndFlush(interruptedPending);
+
+        AnalysisJobEntity interruptedRunning = new AnalysisJobEntity();
+        interruptedRunning.setProjectId(project.getProjectId());
+        interruptedRunning.setSourceFileId(sourceFile.getFileId());
+        interruptedRunning.setSourceBucket(sourceFile.getS3Bucket());
+        interruptedRunning.setSourceKey(sourceFile.getS3Key());
+        interruptedRunning.setCorrelationId("repository-smoke-interrupted-running");
+        interruptedRunning.setStatus(AnalysisJobStatus.RUNNING);
+        interruptedRunning.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
+        interruptedRunning = analysisJobRepository.saveAndFlush(interruptedRunning);
+
+        String interruptedReason = "repository smoke interruption";
+        assertThat(analysisJobRepository.failInterrupted(
+                AnalysisJobStatus.PENDING,
+                AnalysisJobStatus.RUNNING,
+                AnalysisJobStatus.FAILED,
+                interruptedReason,
+                Instant.now()
+        )).isEqualTo(2);
+
+        assertThat(analysisJobRepository.findById(interruptedPending.getId()))
+                .get()
+                .satisfies(found -> {
+                    assertThat(found.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+                    assertThat(found.getFailureReason()).isEqualTo(interruptedReason);
+                });
+        assertThat(analysisJobRepository.findById(interruptedRunning.getId()))
+                .get()
+                .satisfies(found -> {
+                    assertThat(found.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+                    assertThat(found.getFailureReason()).isEqualTo(interruptedReason);
+                });
+        assertThat(analysisJobRepository.findById(job.getId()))
+                .get()
+                .extracting(AnalysisJobEntity::getStatus)
+                .isEqualTo(AnalysisJobStatus.SUCCEEDED);
+
+        analysisJobRepository.deleteById(interruptedPending.getId());
+        analysisJobRepository.deleteById(interruptedRunning.getId());
+        analysisJobRepository.flush();
+
         BoardEntity board = new BoardEntity();
         board.setProject(project);
         board.setAuthor(owner);

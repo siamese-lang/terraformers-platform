@@ -5,12 +5,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 @Component
 @ConditionalOnProperty(prefix = "terraformers.storage", name = "writer-provider", havingValue = "s3")
-public class AwsS3ObjectWriter implements ObjectWriter {
+public class AwsS3ObjectWriter implements ObjectWriter, ObjectRemover {
 
     private final S3Client s3Client;
 
@@ -20,6 +21,14 @@ public class AwsS3ObjectWriter implements ObjectWriter {
 
     AwsS3ObjectWriter(S3Client s3Client) {
         this.s3Client = s3Client;
+    }
+
+    @Override
+    public void remove(ObjectReference reference) {
+        s3Client.deleteObject(DeleteObjectRequest.builder()
+                .bucket(reference.bucket())
+                .key(reference.key())
+                .build());
     }
 
     @Override

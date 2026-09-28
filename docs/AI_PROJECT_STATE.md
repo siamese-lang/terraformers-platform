@@ -10,19 +10,44 @@ This checkpoint lets a new conversation or agent resume from repository evidence
 
 M0 closure was validated against this main SHA. Current `main` may differ after merge, so every new task must verify GitHub `main` again rather than treating this SHA as permanently current. It is not this PR's head SHA or a predicted merge SHA.
 
-## Current milestone
+## Current execution mode
 
-- Milestone: **M7 — Observability and Failure RCA**
-- Status: **ACTIVE**
-- Phase: M7-1 current signal baseline
-- Active plan: [M7 — Observability and Failure RCA](plans/active/M7-observability.md)
-- Completed M6 plan: [M6 — Backend Reliability Improvement](plans/active/M6-backend-reliability-improvement.md)
-- Completed M5 plan: [M5 — Backend Reliability Baseline](plans/active/M5-backend-reliability-baseline.md)
-- Completed M4 plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
-- Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **M7-1 — capture current logs/metrics for the existing M6-3 finalization failure and identify the smallest missing signal**
+- Mode: **Portfolio Case Reassessment**
+- Status: **FEATURE/MILESTONE PROGRESSION PAUSED**
+- Active reassessment plan:
+  [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
+- Current single task: **lightweight M0/M1 foundation audit**
+- M2: **PROVISIONALLY RETAIN**
+- M3: **PROVISIONALLY RETAIN**
+- M4: **REASSESS**
+- M5: **EVIDENCE RETAINED**
+- M6: **REASSESS / NOT ACCEPTED AS FINAL RELIABILITY DESIGN**
+- M7/M8/M9: **PAUSED**
+
+Historical `COMPLETE` or `ACTIVE` labels later in this file are evidence history only and do not
+authorize automatic progression while this reassessment is active.
+
+The project success criterion is now explicit: produce 2–3 technically defensible engineering cases
+with repository-backed technical decisions, not merely a sequence of completed milestones.
+
+Candidate Case A — AI/RAG:
+- retain M3 fixed baseline/provenance and M4 failure evidence;
+- do not treat M4 as portfolio-closed;
+- require an approved decision brief covering the strongest measured AI/RAG problem, credible
+  alternatives, repeated same-condition experiment, latency/token/quality trade-off, and residual
+  risk before new AI implementation.
+
+Candidate Case B — Backend durable asynchronous processing:
+- retain M5 failure evidence and useful M6 primitives such as atomic claim;
+- do not accept restart-to-`FAILED` as the final durability solution by default;
+- explicitly decide whether an accepted analysis request must survive process restart;
+- compare current executor containment, MariaDB-backed durable queue/lease, RabbitMQ, and
+  Transactional Outbox + broker as real alternatives;
+- do not exclude RabbitMQ/Outbox merely because they were previously DEFER-listed.
+
+Observability and failure/load work may continue later only when it deepens an approved Case A or
+Case B. PR #86/#88 evidence is retained but is not independent permission to advance M7.
+
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the

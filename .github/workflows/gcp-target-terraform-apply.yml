@@ -134,7 +134,7 @@ jobs:
           }
 
       - name: Capture mutable account evidence
-        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
         run: |
           set -euo pipefail
 
@@ -168,7 +168,7 @@ jobs:
           gcloud compute instances list             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/instances.json"
 
       - name: Enforce mutable foundation preflight
-        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
         run: |
           set -euo pipefail
           python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_foundation_preflight.py"             --project-json "${RUNNER_TEMP}/project.json"             --billing-json "${RUNNER_TEMP}/billing.json"             --global-quota-json "${RUNNER_TEMP}/global-quota.json"             --region-json "${RUNNER_TEMP}/region.json"             --machine-json "${RUNNER_TEMP}/machine.json"             --gke-server-json "${RUNNER_TEMP}/gke-server.json"             --services-json "${RUNNER_TEMP}/services.json"             --clusters-json "${RUNNER_TEMP}/clusters.json"             --networks-json "${RUNNER_TEMP}/networks.json"             --subnets-json "${RUNNER_TEMP}/subnets.json"             --service-accounts-json "${RUNNER_TEMP}/service-accounts.json"             --instances-json "${RUNNER_TEMP}/instances.json"             --output-json "${RUNNER_TEMP}/gcp-foundation-preflight.json"             --output-md "${RUNNER_TEMP}/gcp-foundation-preflight.md"

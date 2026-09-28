@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
         prefix = "terraformers.storage",
         name = {"reader-provider", "writer-provider"},
         havingValue = "filesystem")
-public class FileSystemObjectStore implements ObjectReader, ObjectWriter {
+public class FileSystemObjectStore implements ObjectReader, ObjectWriter, ObjectRemover {
 
     private static final String PROVIDER = "filesystem";
     private static final String METADATA_SUFFIX = ".terraformers-meta";
@@ -27,6 +27,17 @@ public class FileSystemObjectStore implements ObjectReader, ObjectWriter {
     public FileSystemObjectStore(
             @Value("${terraformers.storage.filesystem.root-path:/tmp/terraformers-object-store}") String rootPath) {
         this.root = Path.of(rootPath).toAbsolutePath().normalize();
+    }
+
+    @Override
+    public void remove(ObjectReference reference) {
+        Path objectPath = resolve(reference.bucket(), reference.key());
+        try {
+            Files.deleteIfExists(objectPath);
+            Files.deleteIfExists(metadataPath(objectPath));
+        } catch (IOException e) {
+            throw failure(ObjectStorageException.Reason.UPSTREAM_FAILURE, "Could not remove object", e);
+        }
     }
 
     @Override

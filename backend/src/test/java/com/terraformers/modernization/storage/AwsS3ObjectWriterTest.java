@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
@@ -22,6 +23,7 @@ class AwsS3ObjectWriterTest {
         AwsS3ObjectWriter writer = new AwsS3ObjectWriter(client);
         ObjectWriteResult text = writer.writeText(new ObjectWriteRequest("bucket", "main.tf", "abc", "text/plain"));
         ObjectWriteResult binary = writer.writeBytes(new ObjectBinaryWriteRequest("bucket", "image.png", new byte[] {1, 2}, "image/png"));
+        writer.remove(new ObjectReference("bucket", "main.tf"));
         assertPersisted(text, "main.tf");
         assertPersisted(binary, "image.png");
         ArgumentCaptor<PutObjectRequest> requests = ArgumentCaptor.forClass(PutObjectRequest.class);
@@ -29,6 +31,11 @@ class AwsS3ObjectWriterTest {
         assertThat(requests.getAllValues().get(0).contentLength()).isEqualTo(3);
         assertThat(requests.getAllValues().get(1).contentLength()).isEqualTo(2);
         assertThat(requests.getAllValues().get(1).contentType()).isEqualTo("image/png");
+
+        ArgumentCaptor<DeleteObjectRequest> deletes = ArgumentCaptor.forClass(DeleteObjectRequest.class);
+        verify(client).deleteObject(deletes.capture());
+        assertThat(deletes.getValue().bucket()).isEqualTo("bucket");
+        assertThat(deletes.getValue().key()).isEqualTo("main.tf");
     }
 
     private void assertPersisted(ObjectWriteResult result, String key) {

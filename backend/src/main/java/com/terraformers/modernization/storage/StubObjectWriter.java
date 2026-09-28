@@ -5,7 +5,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(prefix = "terraformers.storage", name = "writer-provider", havingValue = "metadata-only", matchIfMissing = true)
-public class StubObjectWriter implements ObjectWriter {
+public class StubObjectWriter implements ObjectWriter, ObjectRemover {
+
+    @Override
+    public void remove(ObjectReference reference) {
+        // Metadata-only writes persist no object bytes, so compensation is intentionally a no-op.
+    }
 
     @Override
     public ObjectWriteResult writeText(ObjectWriteRequest request) {

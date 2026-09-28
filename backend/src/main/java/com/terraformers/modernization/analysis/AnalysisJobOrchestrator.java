@@ -50,6 +50,10 @@ public class AnalysisJobOrchestrator {
         return new AnalysisJobExecution(sanitizedResult, writeResult);
     }
 
+    public void removeStoredDraft(ObjectWriteResult writeResult) {
+        resultStorage.removeStoredDraft(writeResult);
+    }
+
     public ProjectFileEntity registerGeneratedTerraform(Long projectId, AnalysisJobExecution execution) {
         return projectArtifactService.registerGeneratedTerraform(
                 projectId,

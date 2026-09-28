@@ -1,5 +1,6 @@
 package com.terraformers.modernization.analysis;
 
+import com.terraformers.modernization.storage.ObjectRemover;
 import com.terraformers.modernization.storage.ObjectWriteRequest;
 import com.terraformers.modernization.storage.ObjectWriteResult;
 import com.terraformers.modernization.storage.ObjectWriter;
@@ -20,6 +21,18 @@ public class AnalysisResultStorage {
     public AnalysisResultStorage(ObjectWriter objectWriter, AnalysisRuntimeProperties properties) {
         this.objectWriter = objectWriter;
         this.properties = properties;
+    }
+
+    public void removeStoredDraft(ObjectWriteResult writeResult) {
+        if (writeResult == null || !writeResult.persisted()) {
+            return;
+        }
+        if (!(objectWriter instanceof ObjectRemover remover)) {
+            throw new IllegalStateException(
+                    "persistent object writer does not support compensation: " + writeResult.provider()
+            );
+        }
+        remover.remove(writeResult.reference());
     }
 
     public ObjectWriteResult storeTerraformDraft(AnalysisJobEntity job, AnalysisResult result) {

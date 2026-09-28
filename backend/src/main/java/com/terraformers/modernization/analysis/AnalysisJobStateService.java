@@ -49,14 +49,19 @@ public class AnalysisJobStateService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markSucceeded(String jobId, AnalysisJobExecution execution) {
-        AnalysisJobEntity entity = requireJob(jobId);
-        orchestrator.markSucceeded(
-                entity,
-                execution.result(),
-                execution.writeResult(),
-                orchestrator.registerGeneratedTerraform(entity.getProjectId(), execution)
-        );
-        repository.save(entity);
+        try {
+            AnalysisJobEntity entity = requireJob(jobId);
+            orchestrator.markSucceeded(
+                    entity,
+                    execution.result(),
+                    execution.writeResult(),
+                    orchestrator.registerGeneratedTerraform(entity.getProjectId(), execution)
+            );
+            repository.save(entity);
+            repository.flush();
+        } catch (RuntimeException exception) {
+            throw new AnalysisResultFinalizationException(exception);
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

@@ -1,11 +1,11 @@
 # M3-R3b — GCP target corpus ingestion adapter
 
-**Status: READY FOR STATIC IMPLEMENTATION — live execution is a later operator step**
+**Status: STATIC IMPLEMENTATION COMPLETE — LIVE EXECUTION PENDING**
 
 ## Execution authorization
 
-This is an explicitly authorized **non-live repository development task**. It may proceed while
-M3-R2 OpenSearch live readiness is being deployed or verified.
+The static implementation from this task is complete. M3-R2 OpenSearch live readiness is also
+complete. The remaining work is the separately protected live execution on the same target runtime.
 
 Do not wait for, inspect, approve, or perform protected GCP deployment work. Do not require GitHub
 CLI authentication, live GCP credentials, billing access, a running GKE cluster, or a reachable

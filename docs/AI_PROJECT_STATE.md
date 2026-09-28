@@ -14,10 +14,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 GKE foundation proven / OpenSearch live readiness
+- Phase: M3-R3 live corpus ingestion and serving-path smoke
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R2 — Deploy and prove the minimal internal OpenSearch runtime**
+- Current implementation task: **M3-R3b — Live ingest terraformers-reference-v3 on the proven target runtime**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -40,8 +40,15 @@ cluster and node pool had already been created. The verification was corrected w
 resources. Read-only runtime-check run `36369764529` on
 `d47c85526f2b2a290b394084cbb19e0356883a0c` passed with the canonical 12 managed Terraform
 resources, GKE cluster/node-pool runtime checks, Terraform `node_count=1`, and a zero-drift refresh
-plan; its apply job was skipped. The remaining M3-R2 live boundary is the repository-defined
-internal OpenSearch StatefulSet/PVC readiness proof. Historical AWS live
+plan; its apply job was skipped.
+
+The first OpenSearch readiness run `36370511427` then exposed the missing Kubernetes-object
+permission before mutation. After the separately approved `roles/container.developer` addition,
+readiness run `36371424659` on `31785eb0f9f1afc83584412c1e1ad8c011fc3b74` completed
+successfully: the namespace/StorageClass/Service/StatefulSet were applied, the single replica became
+Ready, the 15 GiB PVC was Bound to `terraformers-pd-standard`, the Service remained
+`ClusterIP`, and the OpenSearch 3.8.0 API reached yellow/green health. M3-R2 is therefore
+complete on the single target runtime. Historical AWS live
 infrastructure is intentionally absent, so M3-4 is **WAITING_FOR_TARGET_RUNTIME**, not a request to
 recreate AWS. M3-R1 through M3-R3 now establish the actual GCP/open-source-oriented target AI/RAG
 runtime once; that same runtime is reused by M3-4, M4, later observability/failure work, and M9
@@ -194,21 +201,25 @@ No remaining M1 work.
 
 ## Immediate next work
 
-M3-R3a is complete and the repository-local next Codex task is
-[`docs/tasks/active/M3-R3b-gcp-target-corpus-ingestion.md`](tasks/active/M3-R3b-gcp-target-corpus-ingestion.md).
-That static implementation is explicitly allowed to proceed in parallel with the remaining M3-R2
-live-readiness work and does not require live GCP access.
+M3-R2 is complete. Do not repeat the foundation Terraform apply or OpenSearch readiness deployment.
 
-For the live-runtime track, deploy **only** the existing M3-R2 OpenSearch resources to the already
-proven GKE cluster: namespace, repository-owned `pd-standard` StorageClass, internal ClusterIP
-Service, and one OpenSearch 3.8.0 StatefulSet with its 15 GiB PVC. Do not apply the full
-`gcp-target` overlay or deploy the backend yet. The protected
-`GCP Target OpenSearch Readiness` workflow must prove the StatefulSet is ready, the PVC is Bound
-to `terraformers-pd-standard`, the service remains internal-only, and the OpenSearch API reports
-version 3.8.0 with yellow/green cluster health.
+M3-R3a static corpus derivation and the M3-R3b one-shot GCP ingestion adapter are both implemented.
+The next single live task is the protected
+`GCP Target Corpus Ingestion` workflow. It must reuse the existing
+`terraformers-backend` Kubernetes ServiceAccount / GKE Workload Identity principal that Terraform
+already granted `roles/aiplatform.user` and
+`roles/serviceusage.serviceUsageConsumer`. The GitHub apply identity is limited to bounded
+Kubernetes object operations and must not receive Vertex permissions.
 
-After that live proof, M3-R2 can close and M3-R3b can perform the separately bounded live corpus
-ingestion handoff. Do not repeat foundation Terraform apply.
+The live ingestion path must validate the committed v3 checksum, create or validate the
+`terraformers-reference-v3` OpenSearch index, generate 128
+`gemini-embedding-001` `RETRIEVAL_DOCUMENT` embeddings at 1024 dimensions, preserve stable
+document/provenance identity, verify exact document count and a representative k-NN hit, emit only
+a sanitized receipt, and delete its ephemeral ingestion pod afterward.
+
+After successful ingestion, proceed to the M3-R3 serving-path smoke through the existing Spring
+Boot extraction/retrieval/generation/validation boundaries. Do not tune prompts, retrieval, corpus,
+or models before M3-4 baseline evidence exists.
 
 ## Do not revisit
 

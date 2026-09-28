@@ -1,0 +1,272 @@
+name: GCP Target Corpus Ingestion
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact trusted main commit SHA being used for live ingestion.
+        required: true
+        type: string
+      confirmation:
+        description: Use INGEST_M3_R3B_REFERENCE_V3.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: gcp-target-terraform-state
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 30
+    env:
+      CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
+      TARGET_NAMESPACE: terraformers-target
+      TARGET_CLUSTER: terraformers-target
+      TARGET_ZONE: asia-northeast3-a
+      TARGET_PROJECT: terraformers-platform
+      TARGET_KSA: terraformers-backend
+      INGESTION_POD: terraformers-rag-ingestion
+      OPENSEARCH_SERVICE: terraformers-opensearch
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted ingestion request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'expected_sha must be a full 40-character commit SHA.' >&2
+            exit 1
+          }
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match the checked-out main commit.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == INGEST_M3_R3B_REFERENCE_V3 ]] || {
+            echo 'Live v3 ingestion requires confirmation INGEST_M3_R3B_REFERENCE_V3.' >&2
+            exit 1
+          }
+          [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]] || {
+            echo 'Unexpected Kubernetes deployment identity.' >&2
+            exit 1
+          }
+          [[ -n "$WIF_PROVIDER" ]] || {
+            echo 'Missing GCP_WIF_PROVIDER environment variable.' >&2
+            exit 1
+          }
+
+      - name: Verify committed v3 contract
+        run: |
+          set -euo pipefail
+          python3 scripts/checks/rag-corpus-contract-verification.py             --corpus-dir corpus/terraformers-reference/v3             --summary-json "${RUNNER_TEMP}/v3-contract.json"
+
+          jq -e '
+            .corpusVersion == "terraformers-reference-v3"
+            and .documentCount == 128
+            and (.sha256 | type == "string" and length == 64)
+          ' "${RUNNER_TEMP}/v3-contract.json" >/dev/null
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - name: Verify GKE and OpenSearch live substrate
+        run: |
+          set -euo pipefail
+          cluster_status="$(
+            gcloud container clusters describe "$TARGET_CLUSTER"               --zone="$TARGET_ZONE"               --project="$TARGET_PROJECT"               --format='value(status)'
+          )"
+          node_pool_status="$(
+            gcloud container node-pools describe "${TARGET_CLUSTER}-primary"               --cluster="$TARGET_CLUSTER"               --zone="$TARGET_ZONE"               --project="$TARGET_PROJECT"               --format='value(status)'
+          )"
+          [[ "$cluster_status" == RUNNING ]]
+          [[ "$node_pool_status" == RUNNING ]]
+
+      - name: Configure GKE credentials
+        uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify bounded Kubernetes permissions
+        run: |
+          set -euo pipefail
+          for permission in             'create serviceaccounts'             'create pods'             'create pods/exec'             'get pods'             'delete pods'; do
+            verb="${permission%% *}"
+            resource="${permission#* }"
+            kubectl auth can-i "$verb" "$resource" -n "$TARGET_NAMESPACE" | grep -Fxq yes || {
+              echo "Apply identity lacks Kubernetes permission: $verb $resource" >&2
+              exit 1
+            }
+          done
+
+      - name: Verify backend Workload Identity IAM bindings
+        run: |
+          set -euo pipefail
+          project_number="$(
+            gcloud projects describe "$TARGET_PROJECT" --format='value(projectNumber)'
+          )"
+          principal="principal://iam.googleapis.com/projects/${project_number}/locations/global/workloadIdentityPools/${TARGET_PROJECT}.svc.id.goog/subject/ns/${TARGET_NAMESPACE}/sa/${TARGET_KSA}"
+
+          policy="${RUNNER_TEMP}/project-iam.json"
+          gcloud projects get-iam-policy "$TARGET_PROJECT" --format=json > "$policy"
+
+          for role in roles/aiplatform.user roles/serviceusage.serviceUsageConsumer; do
+            jq -e --arg role "$role" --arg principal "$principal" '
+              any(.bindings[]?;
+                .role == $role and any(.members[]?; . == $principal)
+              )
+            ' "$policy" >/dev/null || {
+              echo "Missing backend Workload Identity binding: $role" >&2
+              exit 1
+            }
+          done
+
+      - name: Apply only the backend Kubernetes ServiceAccount
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" apply             -f infra/kubernetes/base/backend-serviceaccount.yaml
+
+      - name: Verify OpenSearch readiness before ingestion
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" rollout status             statefulset/terraformers-opensearch             --timeout=2m
+
+          service_type="$(
+            kubectl -n "$TARGET_NAMESPACE" get service "$OPENSEARCH_SERVICE"               -o jsonpath='{.spec.type}'
+          )"
+          [[ "$service_type" == ClusterIP ]] || {
+            echo "OpenSearch service must remain ClusterIP, got $service_type." >&2
+            exit 1
+          }
+
+      - name: Start ephemeral Workload Identity ingestion pod
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" delete pod "$INGESTION_POD"             --ignore-not-found=true --wait=true
+
+          cat > "${RUNNER_TEMP}/ingestion-pod.yaml" <<'EOF'
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: terraformers-rag-ingestion
+            labels:
+              app.kubernetes.io/name: terraformers-rag-ingestion
+              app.kubernetes.io/part-of: terraformers-modernization
+          spec:
+            serviceAccountName: terraformers-backend
+            restartPolicy: Never
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 10001
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+              - name: ingestion
+                image: python:3.13-slim
+                imagePullPolicy: IfNotPresent
+                command: ["python", "-c", "import time; time.sleep(1800)"]
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop: ["ALL"]
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 128Mi
+                  limits:
+                    cpu: "1"
+                    memory: 768Mi
+          EOF
+
+          kubectl -n "$TARGET_NAMESPACE" apply             -f "${RUNNER_TEMP}/ingestion-pod.yaml"
+
+          kubectl -n "$TARGET_NAMESPACE" wait             --for=condition=Ready "pod/${INGESTION_POD}"             --timeout=5m
+
+      - name: Transfer exact ingestion bundle
+        run: |
+          set -euo pipefail
+          tar -czf "${RUNNER_TEMP}/rag-ingestion-bundle.tgz"             scripts/rag/ingest-gcp-target-corpus.py             scripts/rag/requirements-gcp.txt             scripts/checks/rag-corpus-contract-verification.py             corpus/terraformers-reference/v3             docs/source-rag-gitops-reuse-plan.md             infra/terraform/envs/eks-runtime/main.tf             infra/terraform/envs/rag-runtime/main.tf             infra/terraform/envs/rag-runtime/outputs.tf
+
+          kubectl -n "$TARGET_NAMESPACE" exec -i "$INGESTION_POD" --             python -c '
+          import sys
+          import tarfile
+          from pathlib import Path
+
+          root = Path("/tmp/workspace")
+          root.mkdir(parents=True, exist_ok=True)
+          with tarfile.open(fileobj=sys.stdin.buffer, mode="r|gz") as archive:
+              archive.extractall(root, filter="data")
+          ' < "${RUNNER_TEMP}/rag-ingestion-bundle.tgz"
+
+      - name: Install isolated ingestion dependencies
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             python -m pip install               --disable-pip-version-check               --no-cache-dir               --target /tmp/terraformers-ingestion-deps               -r /tmp/workspace/scripts/rag/requirements-gcp.txt
+
+      - name: Ingest terraformers-reference-v3
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             env PYTHONPATH=/tmp/terraformers-ingestion-deps             python /tmp/workspace/scripts/rag/ingest-gcp-target-corpus.py               --project terraformers-platform               --location global               --opensearch-endpoint "http://${OPENSEARCH_SERVICE}:9200"               --receipt /tmp/terraformers-reference-v3-receipt.json
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             cat /tmp/terraformers-reference-v3-receipt.json             > "${RUNNER_TEMP}/ingestion-receipt.json"
+
+      - name: Verify ingestion receipt
+        run: |
+          set -euo pipefail
+          expected_checksum="$(
+            jq -r '.sha256' "${RUNNER_TEMP}/v3-contract.json"
+          )"
+
+          jq -e --arg checksum "$expected_checksum" '
+            .corpus_version == "terraformers-reference-v3"
+            and .checksum == $checksum
+            and .document_count == 128
+            and .index_name == "terraformers-reference-v3"
+            and .embedding_model_id == "gemini-embedding-001"
+            and .vector_dimension == 1024
+            and (.representative_hit_ids | type == "array" and length > 0)
+            and (.outcome == "ingested" or .outcome == "already-ingested")
+          ' "${RUNNER_TEMP}/ingestion-receipt.json" >/dev/null
+
+          {
+            echo '## M3-R3b live corpus ingestion'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            echo '- Corpus: `terraformers-reference-v3`'
+            echo '- Documents: `128`'
+            echo '- Embedding model: `gemini-embedding-001`'
+            echo '- Embedding task: `RETRIEVAL_DOCUMENT`'
+            echo '- Vector dimension: `1024`'
+            echo '- OpenSearch index: `terraformers-reference-v3`'
+            printf -- '- Outcome: `%s`\n' "$(jq -r '.outcome' "${RUNNER_TEMP}/ingestion-receipt.json")"
+            printf -- '- Representative hit IDs: `%s`\n' "$(jq -r '.representative_hit_ids | join(",")' "${RUNNER_TEMP}/ingestion-receipt.json")"
+            echo '- Receipt contains no document content or credentials.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Delete ephemeral ingestion pod
+        if: always()
+        run: |
+          kubectl -n "$TARGET_NAMESPACE" delete pod "$INGESTION_POD"             --ignore-not-found=true --wait=false || true

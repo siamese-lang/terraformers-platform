@@ -184,7 +184,11 @@ once at the protected foundation approval.
 
 ## Immediate single task
 
-Review and approve the single IAM-matrix addition
-`roles/container.developer` for `terraformers-apply`, then rerun the idempotent GCP apply
-bootstrap and the protected OpenSearch readiness workflow. Do not repeat the foundation Terraform
-apply. No OpenSearch/PVC resource was created by failed readiness run `36370511427`.
+M3-R2 delivery is complete. OpenSearch readiness run `36371424659` succeeded after the separately
+approved `roles/container.developer` addition, proving the internal single-node OpenSearch
+StatefulSet/PVC/API boundary on the same target GKE runtime.
+
+Do not repeat foundation or OpenSearch creation. The next delivery action belongs to M3-R3:
+run the protected repository-owned corpus-ingestion workflow on the same live runtime, then proceed
+to the Spring-facing serving-path smoke. Keep the node pool at 1 only for this evidence session and
+return the same runtime to idle after M3 live evidence is captured.

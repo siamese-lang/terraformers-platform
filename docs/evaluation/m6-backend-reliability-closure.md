@@ -2,10 +2,15 @@
 
 ## Status
 
-**COMPLETE**
+**REOPENED — IMPLEMENTATION EVIDENCE RETAINED, FINAL CLOSURE WITHDRAWN**
 
 M6 applies only the three reliability controls justified by M5 and reuses the same M5 scenarios as
 before/after evidence.
+
+This document was originally written as final closure in PR #85. That closure decision is withdrawn:
+the implementation evidence remains valid, but M6 must pass an integrated case-depth review before
+the project advances. The reopened case is tracked in
+[`backend-reliability-analysis-job-lifecycle-case.md`](backend-reliability-analysis-job-lifecycle-case.md).
 
 ## Before state
 
@@ -162,9 +167,9 @@ M5/M6 evidence did **not** justify:
 The measured current-runtime problems were controlled with database state transitions, startup
 reconciliation, and a provider-neutral storage compensation port.
 
-## Exit decision
+## Previous exit decision — superseded
 
-M6 exit criteria are **MET**:
+PR #85 recorded the following criteria as met, but that final decision is **superseded** pending the integrated case review:
 
 1. only one caller can claim a `PENDING` job;
 2. terminal jobs do not re-enter execution;
@@ -175,4 +180,4 @@ M6 exit criteria are **MET**:
 7. executor rejection remains controlled;
 8. no broker/outbox/distributed system was added.
 
-The next milestone is M7 — Observability.
+Do not treat this historical closure statement as permission to advance. M6 remains active until the MariaDB restart-query gap is directly closed and the compensation-delete failure trade-off is explicitly decided.

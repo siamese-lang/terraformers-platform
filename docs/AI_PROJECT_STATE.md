@@ -12,12 +12,13 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current milestone
 
-- Milestone: **M4 — AI Targeted Improvement (planning next)**
-- Status: **M3 COMPLETE / M4 PLAN NOT YET CREATED**
-- Phase: M3 closure complete; create active M4 plan before implementation
+- Milestone: **M4 — AI Targeted Improvement**
+- Status: **ACTIVE**
+- Phase: M4-1 fact-extraction provider error evidence
+- Active plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **Create docs/plans/active/M4-ai-targeted-improvement.md from the M3 failure taxonomy**
+- Current implementation task: **M4-1 — Preserve root-cause evidence at Vertex fact extraction**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -200,29 +201,30 @@ No remaining M1 work.
 
 ## Immediate next work
 
-M3 is complete. Closure evidence:
-`docs/verification/m3-ai-evaluation-closure.md`.
+M4 is active under
+`docs/plans/active/M4-ai-targeted-improvement.md`.
 
-All 15 M3 exit criteria are PASS. Framework decisions remain:
+The canonical before-state remains M3 baseline run `36379633596` with configuration fingerprint
+`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
 
-- LangGraph — DEFER;
-- LangChain — DEFER;
-- reranker — DEFER;
-- additional judge/model call — DEFER;
-- persistent Python AI worker/service — DEFER.
+The first implementation task is **M4-1 — Preserve root-cause evidence at Vertex fact extraction**.
 
-The evidence-backed M4 handoff is the first-divergence class
-`FACT_EXTRACTION / PROVIDER_RUNTIME`, paired with provider-error diagnostic loss in the current
-Vertex fact-extraction path.
+Scope:
 
-The next single repository task is to create
-`docs/plans/active/M4-ai-targeted-improvement.md`. That plan must preserve the same
-`terraformers-eval-v1` dataset and configuration fingerprint as the before-state, require root-cause
-evidence before behavior change, and target the smallest change that addresses the confirmed
-fact-extraction runtime failure.
+- keep `ArchitectureFactsExtractor` provider-neutral;
+- add only provider-specific sanitized failure classification/evidence around the existing Vertex
+  fact-extraction call;
+- distinguish provider-call failures from output/format validation failures;
+- add deterministic offline tests;
+- do not change the facts prompt, generation prompt, model IDs, corpus, retrieval ranking, top-K,
+  validator, or dataset;
+- do not add retry/backoff yet.
 
-Do not implement retries, prompt changes, model changes, retrieval changes, or framework adoption
-before the M4 plan is merged.
+Only after M4-1 is merged should a bounded live reproduction determine whether the observed
+`FACT_EXTRACTION / PROVIDER_RUNTIME` failures are transient provider errors, response-format
+failures, or another runtime cause.
+
+When no live evidence session is running, keep the target GKE node pool at idle size 0.
 
 ## Do not revisit
 

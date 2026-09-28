@@ -12,17 +12,17 @@ stages in one change or automatically progressing between stages.
 Case B requires an accepted analysis request to survive application-process restart without forcing
 the user to submit a new job.
 
-The measured current flow is:
+The measured pre-B2 flow was:
 
 `API → analysis_jobs(PENDING) commit → afterCommit callback → in-memory executor → claim → analysis`
 
 PR #94 and
 [Case B Measurement Readiness Evidence](../../evaluation/case-b-measurement-readiness.md)
-established that:
+established that, before the ADR-007 implementation:
 
 - the committed MariaDB job outlives the in-memory delivery mechanism;
-- an accepted-but-not-started job is currently marked `FAILED` after restart;
-- a claimed `RUNNING` job is currently marked `FAILED` after restart rather than reclaimed;
+- an accepted-but-not-started job was marked `FAILED` after restart;
+- a claimed `RUNNING` job was marked `FAILED` after restart rather than reclaimed;
 - terminal duplicate execution is already controlled by an atomic conditional claim;
 - two real MariaDB transactions contending for one PENDING job admit exactly one winner;
 - transient provider failure currently has no retry;
@@ -34,7 +34,7 @@ recovery for the measured AnalysisJob lifecycle.
 
 ## Decision gate alternatives
 
-### 1. Current in-process executor + restart-to-FAILED reconciliation
+### 1. Pre-B2 in-process executor + restart-to-FAILED reconciliation
 
 **Decision: REJECT as final Case B design**
 

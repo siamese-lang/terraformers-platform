@@ -162,7 +162,7 @@ NEW gap이 아니다.
 ### KEEP 핵심 자산
 
 1. `projectcore`, `project`, `identity`, `projectcomment`, `projecttree`의 domain/business flow와 JPA model.
-2. AnalysisJob의 domain/status/ownership contract와 `AnalysisProvider`/`ReferenceRetriever`/`EmbeddingProvider`/object storage ports는 KEEP한다. 현재 in-process executor 기반 async execution과 restart/durability semantics는 **REASSESS**다.
+2. AnalysisJob의 domain/status/ownership contract와 `AnalysisProvider`/`ReferenceRetriever`/`EmbeddingProvider`/object storage ports는 KEEP한다. MariaDB durable eligibility와 lease/fencing이 active restart/durability contract이며 executor는 durable delivery source가 아닌 bounded local concurrency pool이다. B3 retry와 B4 cross-resource result/cleanup safety는 아직 남아 있다.
 3. Flyway schema와 MariaDB system-of-record 계약.
 4. versioned RAG corpus, ingestion utilities, backend/frontend/RAG tests와 executable checks.
 5. cloud-neutral Docker image 및 Kubernetes base/local overlay, runtime contract.
@@ -179,7 +179,6 @@ NEW gap이 아니다.
 - 현재 AWS resources, Terraform state, Argo CD application, GitHub environments/secrets/required checks가 실제로 적용·동작 중인지 여부.
 - Bedrock analysis/embedding model ID, vector dimension, OpenSearch endpoint/index와 corpus version의 실제 운영 값 및 상호 일치 여부.
 - SQS progress event를 소비하는 component의 repository 내/외 존재와 운영 필요성.
-- process restart 이후 accepted analysis job을 자동 복구해야 하는 최종 운영 requirement와 그 구현 방식. M5에서 stranded-state 문제 자체는 이미 확인되었다.
 - compensation 자체가 실패했을 때 residue accountability를 어떤 durable mechanism으로 보장할지.
 - RDS/AWS historical backup/restore/failover 및 alert notification/on-call 정책의 현재 live relevance.
 - 독립 board API의 사용 여부, browser E2E/coverage 기준, Docker Compose 또는 frontend container의 필요성.

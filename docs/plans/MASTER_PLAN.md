@@ -147,12 +147,11 @@ and compare first-divergence count/category, latency, retries, and regressions.
 change is implemented, and the same-dataset/configuration comparison shows the failure reduced or
 controlled without regressing previously successful behavior.
 
-**Immediate next single task.** Add an existing-runtime `activate`/resume operation to
-`.github/workflows/gcp-target-terraform-apply.yml`. It must require the canonical cluster/node pool
-to exist in remote state, set `TF_VAR_node_count=1`, allow exactly one
-`google_container_node_pool.target` update and no create/delete/replacement, apply the exact saved
-plan in protected `gcp-target-apply`, and reuse the existing OIDC/apply identity. Do not reuse
-`foundation` and do not add retry/backoff.
+**Immediate next single task.** Run M4-2 bounded live reproduction for
+`arch-vpc-three-tier` and `arch-private-aoss` on the active canonical target runtime using the
+same dataset/configuration fingerprint as M3. Preserve the new sanitized fact-extraction detail,
+classify a reproduced failure or record `not reproduced`, and return the node pool to zero after
+the evidence session. Do not add retry/backoff before this evidence exists.
 
 ## M5 — Backend Reliability Baseline
 

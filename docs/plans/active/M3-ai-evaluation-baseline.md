@@ -423,49 +423,56 @@ output. This is preserved as evidence and is not changed before M3-4.
 
 ### M3-4 — Current live/provider baseline
 
-**Status: READY_FOR_LIVE_EXECUTION**
+**Status: DONE — SIX-CASE LIVE BASELINE CAPTURED**
 
-**Problem / gap.** The target runtime is now executable, but the project still lacks one
-machine-readable live quality baseline across all six fixed cases.
+**Problem / gap.** The target runtime needed one unchanged, machine-readable live quality baseline
+across all six fixed cases.
 
-**Current measured configuration.** The baseline must use the proven target runtime and the exact
-configuration already exercised by M3-R3c:
+**Measured configuration.** Run `36379633596` used the proven target runtime with:
 
-- analysis provider: `vertex`
-- embedding provider: `vertex`
-- retrieval mode: `REQUIRED`
-- generation model: `gemini-3.8-flash`
-- embedding model: `gemini-embedding-001`
-- corpus/index: `terraformers-reference-v3`
-- provider knowledge version: `5.100.0`
-- vector field/content field: `embedding` / `content`
-- vector dimension: 1024
-- top-K: 8
-- OpenSearch transport: internal HTTP
-- dataset: unchanged `terraformers-eval-v1`
+- analysis provider `vertex`;
+- embedding provider `vertex`;
+- retrieval mode `REQUIRED`;
+- generation model `gemini-3.8-flash`;
+- embedding model `gemini-embedding-001`;
+- corpus/index `terraformers-reference-v3`;
+- provider knowledge version `5.100.0`;
+- 1024-dimensional vectors;
+- top-K 8; and
+- configuration fingerprint
+  `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
 
-The historical AWS BLOCKED record remains useful lifecycle evidence, but its missing-runtime
-conditions are resolved by M3-R1 through M3-R3 and must not be treated as the current execution
-state.
+**Execution evidence.** The `Run unchanged six-case M3 baseline` step completed successfully and
+wrote one six-trace `EvaluationRunResult`. Artifact
+`m3-live-baseline-36379633596` (ID `10952207994`) was uploaded and the ephemeral evaluation pod
+was deleted. The workflow's final conclusion was failure only because the subsequent identity
+verification jq expression referenced `$.configuration`, which is invalid jq syntax. That
+post-execution verifier defect does not invalidate the already-written traces and is fixed
+separately.
 
-**Execution boundary.** Use the existing `LiveEvaluationLauncher` in FULL mode so all six cases
-flow through the same `EvaluationRunner` and production Vertex/OpenSearch components. Persist one
-`EvaluationRunResult` artifact. Do not require every case/stage to PASS: observed quality failures
-are the baseline data. Workflow failure should mean the live run/identity/artifact could not be
-executed or validated, not merely that a case has a first divergence.
+The observed first-divergence distribution is:
 
-**Validation.** Require the fixed six case IDs, one configuration identity/fingerprint, target
-provider/model/corpus identity, and a machine-readable trace for each case. Preserve extracted facts,
-ordered retrieval provenance, generated resource evidence, validator outcome, latency, usage fields,
-and first divergence as emitted by the existing runner.
+- 2 cases: `FACT_EXTRACTION / PROVIDER_RUNTIME`;
+- 4 cases: no first divergence.
 
-**Completion evidence.** One protected six-case live artifact is captured without modifying the
-dataset, prompt, retrieval ranking, corpus, model choice, or current validator behavior. That
-artifact becomes the sole input to M3-5 metrics/failure taxonomy.
+Four cases reached generation. Two positive architecture cases also passed
+`TerraformDraftValidator`; the ambiguous and non-architecture cases correctly skipped validation.
+The complete run-1 summary is committed at
+`evaluation/baselines/m3-live-baseline-run-36379633596-summary.json`; the full trace remains in the
+workflow artifact.
+
+**Interpretation boundary.** Do not rerun to obtain a cleaner result before M3-5. In particular,
+`arch-vpc-three-tier` passed the preceding M3-R3c smoke but failed fact extraction in this full
+baseline. That difference is evidence of live provider/runtime variability and belongs in the
+failure taxonomy.
+
+**Completion evidence.** The fixed dataset, current production Java path, target
+Vertex/OpenSearch runtime, and immutable configuration identity now have one captured six-case
+baseline suitable for M3-5 analysis.
 
 ### M3-5 — Baseline metrics, provenance review, and failure taxonomy
 
-**Status: TODO**
+**Status: READY — ANALYZE CAPTURED RUN 36379633596**
 
 **Problem / gap.** Raw results alone do not explain which AI/RAG stage needs improvement.
 

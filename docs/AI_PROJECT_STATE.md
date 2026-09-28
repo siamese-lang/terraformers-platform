@@ -14,10 +14,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-4 current live/provider baseline
+- Phase: M3-5 baseline metrics, provenance review, and failure taxonomy
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-4 — Execute the unchanged six-case live baseline on the proven target runtime**
+- Current implementation task: **M3-5 — Analyze the captured six-case live baseline without tuning**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -200,38 +200,37 @@ No remaining M1 work.
 
 ## Immediate next work
 
-M3-R1, M3-R2, and M3-R3 are complete.
+M3-R1 through M3-R3 are complete. M3-4 has a captured six-case live baseline.
 
-Protected serving-path smoke run `36378589888` at
-`ed5c6e424473ce3f6201f54ecca2c75e558481be` proved the existing production Java path on the
-single target runtime without deploying the full Spring web/JPA/security application.
+Protected baseline run `36379633596` at
+`8bb03ff6074246159d1007f572de454ed3a14df9` executed all six unchanged
+`terraformers-eval-v1` cases successfully and uploaded artifact
+`m3-live-baseline-36379633596` (artifact ID `10952207994`). The workflow's final conclusion was
+failure only because the post-execution jq verifier used invalid `$.configuration` syntax. The
+baseline JSON itself is complete, the artifact upload succeeded, and the ephemeral evaluation pod
+was deleted.
 
-The machine-readable trace recorded:
+The captured run is canonical M3-4 evidence and must not be replaced by a rerun before analysis.
+Its durable summary is
+`evaluation/baselines/m3-live-baseline-run-36379633596-summary.json`.
 
-- case `arch-vpc-three-tier`;
-- configuration fingerprint
-  `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`;
-- fact extraction PASS (8920 ms);
-- retrieval PASS (2608 ms) with 8 ordered `terraformers-reference-v3` hits;
-- generation PASS (18726 ms);
-- `TerraformDraftValidator` execution;
-- validation FAIL with first divergence
-  `VALIDATION / TERRAFORM_STRUCTURAL_VALIDATION`.
+Observed stage outcomes:
 
-The observed validation failure is baseline evidence, not a reason to tune before M3-4. The generated
-Terraform contains the comment `Placeholder EC2 instance`, and the current validator classifies the
-whole draft as placeholder/example output. Preserve this behavior until the unchanged six-case
-baseline is captured.
+- `arch-vpc-three-tier`: FACT_EXTRACTION FAIL,
+  first divergence `FACT_EXTRACTION / PROVIDER_RUNTIME`;
+- `arch-cloudfront-private-alb`: facts/retrieval/generation/validation PASS;
+- `arch-private-aoss`: FACT_EXTRACTION FAIL,
+  first divergence `FACT_EXTRACTION / PROVIDER_RUNTIME`;
+- `arch-s3-metadata-split`: facts/retrieval/generation/validation PASS;
+- `ambiguous-cropped-service-sketch`: facts/retrieval/generation PASS with
+  `AMBIGUOUS`; validation correctly not run;
+- `non-architecture-deployment-dashboard`: facts/retrieval/generation PASS with
+  `NON_ARCHITECTURE_IMAGE`; validation correctly not run.
 
-The next live action is the protected `GCP Target Evaluation Baseline` workflow. It must run the
-same `LiveEvaluationLauncher` in FULL mode over all six unchanged
-`terraformers-eval-v1` cases with the same provider/model/corpus/retrieval configuration. Quality
-failures must remain in the machine-readable traces rather than being converted into workflow
-infrastructure failures.
-
-After the six-case artifact is captured, M3-5 may compute baseline metrics, provenance findings, and
-the first-divergence failure taxonomy. Do not change prompts, retrieval ranking, corpus content,
-models, validator behavior, or dataset expectations before that artifact exists.
+M3-5 must analyze this exact run before any prompt, model, corpus, retrieval, validator, retry, or
+dataset change. The fact that `arch-vpc-three-tier` passed the earlier M3-R3c serving smoke but
+failed fact extraction in the full baseline is itself evidence of provider/runtime variability and
+must be treated as a candidate failure class rather than erased by rerunning.
 
 ## Do not revisit
 

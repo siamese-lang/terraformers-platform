@@ -1,9 +1,9 @@
 {
-  "recordVersion": "m3-live-baseline-status-v2",
-  "recordedAgainstMainSha": "ed5c6e424473ce3f6201f54ecca2c75e558481be",
+  "recordVersion": "m3-live-baseline-status-v3",
+  "recordedAgainstMainSha": "8bb03ff6074246159d1007f572de454ed3a14df9",
   "datasetVersion": "terraformers-eval-v1",
   "evaluationSchemaVersion": "m3-evaluation-v1",
-  "status": "READY_FOR_LIVE_EXECUTION",
+  "status": "CAPTURED",
   "baselineType": "TARGET_RUNTIME_CURRENT_IMPLEMENTED_REAL_PROVIDER_PATH",
   "targetConfiguration": {
     "analysisProvider": "vertex",
@@ -19,31 +19,41 @@
     "expectedVectorDimension": 1024,
     "topK": 8,
     "opensearchTransport": "http",
-    "vertexLocation": "global"
+    "vertexLocation": "global",
+    "configurationFingerprint": "sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66"
   },
   "execution": {
-    "executableCaseCount": 6,
-    "executedCaseCount": 0,
+    "workflowRunId": 36379633596,
+    "workflowConclusion": "failure",
+    "baselineExecutionStep": "success",
+    "postExecutionVerifierStep": "failure",
+    "verifierFailure": "jq compile error from invalid $.configuration root reference",
+    "artifactUpload": "success",
+    "ephemeralPodCleanup": "success",
+    "executedCaseCount": 6,
     "blockedCaseCount": 0,
-    "caseIds": [
-      "arch-vpc-three-tier",
-      "arch-cloudfront-private-alb",
-      "arch-private-aoss",
-      "arch-s3-metadata-split",
-      "ambiguous-cropped-service-sketch",
-      "non-architecture-deployment-dashboard"
-    ]
+    "artifactId": 10952207994,
+    "artifactName": "m3-live-baseline-36379633596",
+    "evaluationRunId": "m3-baseline-36379633596-1",
+    "durableSummary": "evaluation/baselines/m3-live-baseline-run-36379633596-summary.json"
   },
-  "readinessEvidence": {
-    "openSearchRun": 36371424659,
-    "ingestionRun": 36375171823,
-    "servingSmokeRun": 36378589888,
-    "servingSmokeConfigurationFingerprint": "sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66",
-    "servingSmokeFirstDivergence": "VALIDATION:TERRAFORM_STRUCTURAL_VALIDATION"
+  "aggregate": {
+    "factExtractionPass": 4,
+    "factExtractionFail": 2,
+    "retrievalPass": 4,
+    "retrievalNotRun": 2,
+    "generationPass": 4,
+    "generationNotRun": 2,
+    "validationPass": 2,
+    "validationNotRun": 4,
+    "firstDivergenceCounts": {
+      "FACT_EXTRACTION:PROVIDER_RUNTIME": 2,
+      "none": 4
+    }
   },
   "historicalAwsBlocker": {
     "resolvedForCurrentTargetRuntime": true,
     "evidence": "docs/evaluation/m3-live-baseline-blocker.md"
   },
-  "nextRequiredAction": "Run the protected GCP Target Evaluation Baseline workflow over all six unchanged cases and preserve the machine-readable artifact."
+  "nextRequiredAction": "Perform M3-5 metrics, provenance review, and failure taxonomy from the captured run-1 artifact and durable summary. Do not rerun or tune before analysis."
 }

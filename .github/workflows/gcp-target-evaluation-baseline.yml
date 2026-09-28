@@ -241,6 +241,8 @@ jobs:
           result="${RUNNER_TEMP}/m3-live-baseline.json"
 
           jq -e '
+            . as $root
+            | (
             .schemaVersion == "m3-evaluation-v1"
             and .datasetVersion == "terraformers-eval-v1"
             and (.traces | length == 6)
@@ -261,7 +263,8 @@ jobs:
             and .configuration.generationModelId == "gemini-3.8-flash"
             and .configuration.embeddingModelId == "gemini-embedding-001"
             and (.configuration.configurationFingerprint | startswith("sha256:"))
-            and all(.traces[]; .configuration == $.configuration)
+            and all(.traces[]; .configuration == $root.configuration)
+            )
           ' "$result" >/dev/null
 
           {
@@ -277,8 +280,8 @@ jobs:
             echo '|---|---|---|---|---|---|'
             jq -r '
               .traces[] |
-              "| (.caseId) | (.factExtraction.status) | (.retrieval.status) | (.generation.status) | (.validation.status) | " +
-              (if .firstDivergence == null then "none" else "(.firstDivergence.stage):(.firstDivergence.category)" end) +
+              "| \(.caseId) | \(.factExtraction.status) | \(.retrieval.status) | \(.generation.status) | \(.validation.status) | " +
+              (if .firstDivergence == null then "none" else "\(.firstDivergence.stage):\(.firstDivergence.category)" end) +
               " |"
             ' "$result"
             echo

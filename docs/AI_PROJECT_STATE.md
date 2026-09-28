@@ -87,7 +87,7 @@ corpus, retrieval/top-K, validator, and no-retry behavior. Targeted VPC validati
 `36388548679` passed fact extraction, retrieval, generation, and validation with no first
 divergence and `retryOccurred=false`.
 
-M4-4/M4-5 are complete. Full six-case run `36391698161` on commit
+Historical M4 implementation checkpoint: M4-4/M4-5 had been marked complete before the current reassessment. Full six-case run `36391698161` on commit
 `2526f85b4bef781976126f99e5ed0c25344d0f94` used the unchanged dataset and canonical
 configuration fingerprint
 `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
@@ -149,7 +149,7 @@ same-job re-execution, and untracked object residue after DB finalization failur
 remains `CONTROLLED_CURRENT_BEHAVIOR` because it is already observed and terminates the job as
 `FAILED`.
 
-M6 is complete. PR #82 merged as
+Historical M6 implementation checkpoint before reassessment: M6 had been marked complete. That portfolio/final-design conclusion is withdrawn; the following implementation evidence remains valid. PR #82 merged as
 `d36a36148353027118f0c5eb1c86543fffa00dad`; Backend Local Verification run `36399415255`
 passed. The repository now claims `PENDING → RUNNING` atomically, and duplicate delivery of an
 already-terminal job no longer re-enters provider/storage execution.
@@ -167,7 +167,7 @@ Commit-phase ambiguous errors are intentionally outside that compensation classi
 before/after evidence is in
 [`m6-backend-reliability-closure.md`](evaluation/m6-backend-reliability-closure.md).
 
-M7 is active. Existing observability assets are Actuator/Prometheus metrics, job-level Micrometer
+Historical state before reassessment: M7 had been marked active. That progression is now superseded and PAUSED. Existing observability assets are Actuator/Prometheus metrics, job-level Micrometer
 counters/timers, the `analysisJobId` MDC scope, and source revision in logs. The console pattern
 contains `trace_id`/`span_id`, but the backend currently has no Micrometer tracing bridge/exporter
 dependency proving those fields are populated. Historical Bedrock/AOSS external metrics also do not

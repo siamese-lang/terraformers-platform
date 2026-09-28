@@ -148,7 +148,7 @@ M4 change until that plan is the repository source of truth.
 
 ## M4 — AI Targeted Improvement
 
-**Status.** **COMPLETE.** The source-of-truth plan is
+**Status.** **REASSESS — historical implementation evidence retained; portfolio-case closure withdrawn.** The source-of-truth plan is
 [`active/M4-ai-targeted-improvement.md`](active/M4-ai-targeted-improvement.md), and closure evidence
 is recorded in
 [`m4-targeted-improvement-closure.md`](../evaluation/m4-targeted-improvement-closure.md).
@@ -188,7 +188,7 @@ reliability mechanism.
 
 ## M5 — Backend Reliability Baseline
 
-**Status.** **COMPLETE.** The completed plan is
+**Status.** **EVIDENCE RETAINED — failure baseline remains valid input to Case B.** The completed plan is
 [`active/M5-backend-reliability-baseline.md`](active/M5-backend-reliability-baseline.md), and
 classification evidence is recorded in
 [`m5-backend-reliability-baseline.md`](../evaluation/m5-backend-reliability-baseline.md).
@@ -218,7 +218,7 @@ terminal or duplicate-delivered job cannot re-enter execution.
 
 ## M6 — Backend Reliability Improvement
 
-**Status.** **COMPLETE.** The completed plan is
+**Status.** **REASSESS — existing implementation is provisional evidence, not the accepted final reliability design.** The completed plan is
 [`active/M6-backend-reliability-improvement.md`](active/M6-backend-reliability-improvement.md), and
 closure evidence is recorded in
 [`m6-backend-reliability-closure.md`](../evaluation/m6-backend-reliability-closure.md).
@@ -249,7 +249,7 @@ controlled. No broker, outbox, distributed lock, retry loop, or second worker wa
 
 ## M7 — Observability
 
-**Status.** **ACTIVE.** The source-of-truth plan is
+**Status.** **PAUSED — prior observability implementation evidence is retained, but independent milestone progression is stopped.** The source-of-truth plan is
 [`active/M7-observability.md`](active/M7-observability.md).
 
 **Problem.** The repository already exposes Actuator/Prometheus metrics and job-correlated logs, but

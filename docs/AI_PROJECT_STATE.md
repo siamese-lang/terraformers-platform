@@ -14,10 +14,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-5 baseline metrics, provenance review, and failure taxonomy
+- Phase: M3-6 framework decision checkpoint and M3 closure
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-5 — Analyze the captured six-case live baseline without tuning**
+- Current implementation task: **M3-6 — Review framework decisions and close M3 from evidence**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -153,22 +153,22 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 ## Current gaps
 
-Current M3 gaps after the fresh M3-R2 readiness check:
+Current M3 evidence leaves these concrete gaps:
 
-- the reusable Vertex generation/embedding adapters, GKE/OpenSearch Terraform, private OpenSearch
-  transport, Workload Identity IAM, and Free Trial operating profile are implemented;
-- 2026-09-24 live evidence confirms billing + remaining Free Trial credit, sufficient CPU/instance/
-  disk quota, Seoul `e2-standard-2` availability, GKE server availability, and successful minimal
-  calls to both selected Vertex models;
-- the final read-only duplicate-runtime check passed on 2026-09-24 (no GKE cluster or target VM);
-- the target cluster/OpenSearch disk has not yet been created, so M3-R2 live readiness is not
-  complete;
-- `terraformers-reference-v2` remains immutable historical corpus identity; M3-R3 must create
-  `terraformers-reference-v3` and re-embed the stable documents with
-  `gemini-embedding-001` at 1024 dimensions;
-- the AWS-bound batch-ingestion implementation must be replaced for the selected target path;
-- M3-4 live quality evidence remains **WAITING_FOR_TARGET_RUNTIME** until M3-R2/R3 complete;
-- LangChain/LangGraph remain evidence-gated and are not part of the selected runtime foundation.
+- `VertexArchitectureFactsExtractor` live reliability is not yet demonstrated across the fixed
+  dataset: 2 of 6 baseline cases failed at `FACT_EXTRACTION / PROVIDER_RUNTIME`;
+- provider runtime failures lose actionable detail in evaluation traces, preserving only
+  `IllegalStateException` rather than a sanitized provider status/category and retry metadata;
+- provider usage telemetry is incomplete: output-token counts exist for successful architecture
+  generation, but input tokens and cost are unavailable;
+- the earlier one-case serving smoke exposed a validator false-positive candidate around the phrase
+  `Placeholder EC2 instance`, but that behavior was not reproduced in the canonical six-case
+  baseline and is secondary evidence rather than the primary M4 target;
+- M3-6 still needs to record framework decisions and close the milestone.
+
+The target GKE/OpenSearch/Vertex runtime, v3 corpus ingestion, Java serving path, six-case baseline,
+retrieval provenance, generation evidence, and Terraform validation evidence are all available.
+LangChain/LangGraph remain evidence-gated.
 
 ## Historical AWS implementation
 
@@ -200,37 +200,36 @@ No remaining M1 work.
 
 ## Immediate next work
 
-M3-R1 through M3-R3 are complete. M3-4 has a captured six-case live baseline.
+M3-5 is complete. The captured run `36379633596` has reproducible metrics and a failure taxonomy
+in:
 
-Protected baseline run `36379633596` at
-`8bb03ff6074246159d1007f572de454ed3a14df9` executed all six unchanged
-`terraformers-eval-v1` cases successfully and uploaded artifact
-`m3-live-baseline-36379633596` (artifact ID `10952207994`). The workflow's final conclusion was
-failure only because the post-execution jq verifier used invalid `$.configuration` syntax. The
-baseline JSON itself is complete, the artifact upload succeeded, and the ephemeral evaluation pod
-was deleted.
+- `evaluation/baselines/m3-live-baseline-metrics.json`; and
+- `docs/evaluation/m3-live-baseline-analysis.md`.
 
-The captured run is canonical M3-4 evidence and must not be replaced by a rerun before analysis.
-Its durable summary is
-`evaluation/baselines/m3-live-baseline-run-36379633596-summary.json`.
+The primary baseline finding is **fact-extraction provider/runtime instability**: two positive
+architecture cases stopped at `FACT_EXTRACTION / PROVIDER_RUNTIME`. The same
+`arch-vpc-three-tier` case had passed the immediately preceding serving smoke, so this is evidence
+of live variability rather than a deterministic bad fixture.
 
-Observed stage outcomes:
+A second finding is **provider error diagnostic loss**: the machine-readable trace preserves only
+`IllegalStateException`, while the current `VertexArchitectureFactsExtractor` performs a direct
+model call with no bounded retry/backoff and exposes no provider status/retry metadata in the trace.
+The baseline alone therefore cannot distinguish throttling, transient transport/capacity, or another
+runtime exception.
 
-- `arch-vpc-three-tier`: FACT_EXTRACTION FAIL,
-  first divergence `FACT_EXTRACTION / PROVIDER_RUNTIME`;
-- `arch-cloudfront-private-alb`: facts/retrieval/generation/validation PASS;
-- `arch-private-aoss`: FACT_EXTRACTION FAIL,
-  first divergence `FACT_EXTRACTION / PROVIDER_RUNTIME`;
-- `arch-s3-metadata-split`: facts/retrieval/generation/validation PASS;
-- `ambiguous-cropped-service-sketch`: facts/retrieval/generation PASS with
-  `AMBIGUOUS`; validation correctly not run;
-- `non-architecture-deployment-dashboard`: facts/retrieval/generation PASS with
-  `NON_ARCHITECTURE_IMAGE`; validation correctly not run.
+Where the pipeline reached retrieval/generation, the evidence is strong:
 
-M3-5 must analyze this exact run before any prompt, model, corpus, retrieval, validator, retry, or
-dataset change. The fact that `arch-vpc-three-tier` passed the earlier M3-R3c serving smoke but
-failed fact extraction in the full baseline is itself evidence of provider/runtime variability and
-must be treated as a candidate failure class rather than erased by rerunning.
+- required project-decision documents were rank 1 in both executed positive cases;
+- required retrieval resource-type coverage was complete;
+- required generated Terraform resource-type coverage was complete;
+- no checked forbidden resource type was generated;
+- both executed positive cases passed `TerraformDraftValidator`;
+- ambiguous and non-architecture controls were classified correctly and emitted no Terraform.
+
+M3-6 must now review ADR-004 framework gates. Current evidence does not justify LangGraph,
+LangChain, a reranker, or a model/corpus change: the first observed bottleneck is one provider-call
+reliability/diagnostic boundary in an otherwise linear Java pipeline. M3-6 should close M3 and hand
+M4 the evidence-backed first investigation target without implementing the fix yet.
 
 ## Do not revisit
 

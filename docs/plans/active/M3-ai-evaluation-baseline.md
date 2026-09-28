@@ -472,7 +472,7 @@ baseline suitable for M3-5 analysis.
 
 ### M3-5 — Baseline metrics, provenance review, and failure taxonomy
 
-**Status: READY — ANALYZE CAPTURED RUN 36379633596**
+**Status: DONE — RUN 36379633596 ANALYZED**
 
 **Problem / gap.** Raw results alone do not explain which AI/RAG stage needs improvement.
 
@@ -488,12 +488,19 @@ validation result.
 **Validation.** Every reported failure category must trace back to machine-readable case evidence.
 Aggregate numbers must be reproducible from the result file.
 
-**Completion evidence.** A baseline report identifies concrete failure classes that M4 can target,
-without yet choosing the remedy.
+**Completion evidence.** [M3 Live Baseline Analysis and Failure Taxonomy](../../evaluation/m3-live-baseline-analysis.md)
+and `evaluation/baselines/m3-live-baseline-metrics.json` reproduce the captured run's aggregate
+metrics and provenance findings. The primary class is fact-extraction provider/runtime instability
+(2/6 cases), paired with provider-error diagnostic loss that prevents the artifact from identifying
+the underlying live provider cause. Retrieval/project-decision coverage and grounded generation are
+healthy where execution reaches those stages; usage/cost telemetry remains incomplete.
+
+This is sufficient to hand M4 an evidence-backed first investigation target without changing
+prompt, corpus, retrieval ranking, model, or validator behavior in M3.
 
 ### M3-6 — Framework decision checkpoint and M3 closure
 
-**Status: TODO**
+**Status: READY — REVIEW M3 EVIDENCE AND CLOSE**
 
 **Problem / gap.** LangChain, LangGraph, rerankers, judge frameworks, or other AI tooling should not
 be adopted merely because they are common.

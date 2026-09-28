@@ -1,0 +1,138 @@
+{
+  "recordVersion": "m3-live-baseline-metrics-v1",
+  "source": {
+    "workflowRunId": 36379633596,
+    "artifactId": 10952207994,
+    "sourceCommit": "8bb03ff6074246159d1007f572de454ed3a14df9",
+    "evaluationRunId": "m3-baseline-36379633596-1",
+    "datasetVersion": "terraformers-eval-v1",
+    "configurationFingerprint": "sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66"
+  },
+  "execution": {
+    "caseCount": 6,
+    "factExtractionPass": 4,
+    "factExtractionFail": 2,
+    "retrievalPass": 4,
+    "generationPass": 4,
+    "validationPass": 2,
+    "validationNotRun": 4
+  },
+  "deterministicQuality": {
+    "generationReachedCaseCount": 4,
+    "classificationMatchesExpected": {
+      "matched": 4,
+      "total": 4
+    },
+    "executedPositiveArchitectureCases": 2,
+    "requiredProjectDecisionHits": {
+      "matched": 2,
+      "total": 2,
+      "ranks": [
+        1,
+        1
+      ]
+    },
+    "requiredRetrievalResourceTypes": {
+      "matched": 4,
+      "total": 4
+    },
+    "requiredGeneratedTerraformResourceTypes": {
+      "matched": 5,
+      "total": 5
+    },
+    "forbiddenGeneratedTerraformResourceTypes": {
+      "observed": 0,
+      "checked": 4
+    },
+    "executedPositiveValidation": {
+      "passed": 2,
+      "total": 2
+    },
+    "negativeControlClassification": {
+      "matched": 2,
+      "total": 2
+    },
+    "negativeControlGeneratedTerraformResourceCount": 0
+  },
+  "latencyMs": {
+    "factExtraction": {
+      "meanAllCases": 7041.8,
+      "medianAllCases": 7183,
+      "meanPassCases": 6629.5,
+      "meanFailCases": 7866.5
+    },
+    "retrieval": {
+      "meanExecuted": 1200
+    },
+    "generation": {
+      "meanExecuted": 11324,
+      "meanArchitecture": 17809,
+      "meanNegativeControl": 4839
+    },
+    "endToEndObserved": {
+      "arch-vpc-three-tier": 8545,
+      "arch-cloudfront-private-alb": 26095,
+      "arch-private-aoss": 7188,
+      "arch-s3-metadata-split": 24264,
+      "ambiguous-cropped-service-sketch": 13636,
+      "non-architecture-deployment-dashboard": 12620
+    }
+  },
+  "usage": {
+    "availableOutputTokens": {
+      "arch-cloudfront-private-alb": 2252,
+      "arch-s3-metadata-split": 1724,
+      "total": 3976
+    },
+    "inputTokensAvailable": false,
+    "providerCostAvailable": false
+  },
+  "failureTaxonomy": [
+    {
+      "id": "F1",
+      "category": "FACT_EXTRACTION_PROVIDER_RUNTIME",
+      "severity": "PRIMARY",
+      "affectedCases": [
+        "arch-vpc-three-tier",
+        "arch-private-aoss"
+      ],
+      "count": 2,
+      "evidence": "Both traces stop at FACT_EXTRACTION with PROVIDER_RUNTIME / IllegalStateException. The same VPC case passed the preceding M3-R3c smoke, so the failure is not deterministic input rejection."
+    },
+    {
+      "id": "F2",
+      "category": "PROVIDER_ERROR_DIAGNOSTIC_LOSS",
+      "severity": "BLOCKS_ROOT_CAUSE",
+      "affectedCases": [
+        "arch-vpc-three-tier",
+        "arch-private-aoss"
+      ],
+      "count": 2,
+      "evidence": "The machine-readable trace preserves only IllegalStateException and no provider status/message/retry metadata, so the underlying live provider failure cannot be distinguished from the baseline artifact alone."
+    },
+    {
+      "id": "F3",
+      "category": "USAGE_COST_TELEMETRY_GAP",
+      "severity": "SECONDARY",
+      "affectedCases": [
+        "arch-cloudfront-private-alb",
+        "arch-s3-metadata-split"
+      ],
+      "count": 2,
+      "evidence": "Output token counts are present, but input token counts and provider cost are null; precise per-case cost cannot be reproduced."
+    }
+  ],
+  "nonFailureFindings": [
+    "Where retrieval executed for positive architecture cases, the required project-decision document was rank 1 in both cases.",
+    "Where positive generation executed, every required Terraform resource type was present and no checked forbidden resource type was generated.",
+    "Both negative-control cases were classified correctly and emitted no Terraform.",
+    "No evidence in run 36379633596 points to retrieval ranking or generation grounding as the first failure class."
+  ],
+  "humanReviewBoundary": {
+    "note": "Component and relationship wording is semantic rather than exact-string aligned, so these findings are reviewed separately from deterministic counters.",
+    "findings": [
+      "arch-cloudfront-private-alb contains all required components and relationships semantically and omits the forbidden public-ALB path.",
+      "arch-s3-metadata-split contains all required components and relationships semantically and preserves the metadata/content split."
+    ]
+  }
+}

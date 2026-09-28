@@ -19,8 +19,13 @@ also passed. ADR-006's separate protected apply identity/environment/workflow is
 proven live: the reviewed `terraformers-apply` identity/environment bootstrap completed, and
 identity-check run `36363635464` on
 `334dc611dd44eccb286739d95c193dd3ffeedbb3` succeeded without touching Terraform state or
-runtime resources. The next gate is the separately approved first foundation apply after refreshing
-mutable billing/quota/duplicate-runtime checks. No target runtime resource has been applied.
+runtime resources. Automated preflight run `36365247935` on
+`40750799aba5bf531ee939e0c50fe2b8042c1dd3` then passed the mutable quota/API/machine/
+duplicate-runtime checks, state-bucket protection, empty canonical runtime state, and exact
+12-create foundation contract while skipping the apply job. Cloud Billing API remains disabled, so
+billing status and remaining Free Trial credit stay as the single manual approval item rather than
+expanding the read identity. The next gate is the separately approved first foundation apply. No
+target runtime resource has been applied.
 M3-4 remains **WAITING_FOR_TARGET_RUNTIME** until M3-R2 and M3-R3 complete.
 
 ## Objective
@@ -310,7 +315,7 @@ variables are explicit enough for M3-R2 implementation. No resource was created 
 
 ### M3-R2 — Single target AI/RAG runtime foundation
 
-**Status: IN PROGRESS — APPLY IDENTITY PROVEN / FIRST FOUNDATION APPLY PENDING**
+**Status: IN PROGRESS — AUTOMATED PREFLIGHT PASSED / FIRST FOUNDATION APPLY PENDING**
 
 **Problem / gap.** ADR-005 selected the target products, but the project still needed deployable
 provider adapters and reusable GCP/OpenSearch infrastructure before the same runtime could serve

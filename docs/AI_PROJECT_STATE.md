@@ -17,7 +17,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Phase: M3-R2 first foundation apply gate
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R2 — Refresh mutable account checks and authorize the first protected foundation apply**
+- Current implementation task: **M3-R2 — Authorize the first protected 12-create foundation apply**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -26,7 +26,13 @@ main-branch GitHub Terraform plan (run `36335535056`, commit
 update/delete/replacement. The separate apply trust boundary is also proven: `terraformers-apply`
 was bootstrapped with the reviewed role matrix, `gcp-target-apply` is protected and main-only, and
 identity-check run `36363635464` completed successfully on
-`334dc611dd44eccb286739d95c193dd3ffeedbb3`. No target runtime resource has been applied yet. Historical AWS live
+`334dc611dd44eccb286739d95c193dd3ffeedbb3`. The automated mutable preflight is also now proven:
+run `36365247935` on `40750799aba5bf531ee939e0c50fe2b8042c1dd3` passed the plan-identity
+non-mutation check, mutable quota/API/machine/duplicate-runtime checks, state-bucket protection,
+empty canonical runtime state, and the corrected exact 12-create foundation contract; its apply job
+was skipped. Cloud Billing API remains disabled, so billing status and remaining Free Trial credit
+are intentionally one manual approval item rather than a reason to broaden the plan identity. No
+target runtime resource has been applied yet. Historical AWS live
 infrastructure is intentionally absent, so M3-4 is **WAITING_FOR_TARGET_RUNTIME**, not a request to
 recreate AWS. M3-R1 through M3-R3 now establish the actual GCP/open-source-oriented target AI/RAG
 runtime once; that same runtime is reused by M3-4, M4, later observability/failure work, and M9
@@ -179,17 +185,19 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Refresh the mutable pre-apply account gate, then make the separate first-foundation-apply decision.**
+**Make the single separate approval decision for the first protected 12-create foundation apply.**
 
-The apply trust boundary is complete. Identity-check run `36363635464` succeeded on
-`334dc611dd44eccb286739d95c193dd3ffeedbb3`: exact SHA/confirmation validation, GitHub OIDC
-authentication as `terraformers-apply`, and access-token verification all passed, while Terraform
-init/plan/apply and all runtime resource steps were skipped.
+Automated preflight run `36365247935` succeeded on
+`40750799aba5bf531ee939e0c50fe2b8042c1dd3`. It reconfirmed the non-mutating plan identity,
+required quota/headroom, Seoul machine/GKE availability, required APIs, absence of an unmanaged
+target runtime, protected state bucket, empty canonical runtime state, and the fail-closed exact
+12-create Terraform foundation contract. The apply job was skipped.
 
-Before the first resource-creating `foundation` dispatch, refresh only the mutable checks that can
-change since the prior review: billing/Free Trial credit, relevant quota/headroom, and absence of an
-unmanaged target runtime. Then require one explicit approval for the 12-create foundation apply.
-Do not re-run the already-proven bootstrap or add another approval gate for read-only checks.
+Cloud Billing API is intentionally not enabled for this check and no billing-account role is added
+to `terraformers-plan`. Therefore the operator confirms only two remaining facts at the one
+protected approval: billing remains enabled and sufficient Free Trial promotional credit remains.
+After that explicit approval, dispatch `foundation`; do not repeat the completed bootstrap,
+identity-check or standalone preflight.
 
 ## Do not revisit
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — PLAN ONLY / IMPLEMENTATION NOT STARTED**
+**ACTIVE — M4-1 COMPLETE / M4-2 PREPARATION**
 
 M3 is complete. M4 changes only failure classes that were observed in the canonical M3 baseline.
 
@@ -57,7 +57,7 @@ Do not create a second live evaluation/runtime environment.
 
 ## M4-1 — Preserve root-cause evidence at Vertex fact extraction
 
-**Status: NEXT**
+**Status: COMPLETE — PR #69 / merge `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`**
 
 ### Problem
 
@@ -106,9 +106,33 @@ Requirements:
 A failed fact-extraction trace can identify a safe, actionable failure subtype rather than only
 `IllegalStateException`.
 
+## Delivery prerequisite — Resume the existing target runtime
+
+**Status: NEXT**
+
+The canonical target runtime is intentionally idle with Terraform `node_count=0`. M4-2 requires
+one existing workload node, but the protected apply workflow currently has no operation for
+0 → 1 on an already-created runtime. The `foundation` operation must not be reused because it is
+restricted to an empty canonical runtime state.
+
+Add one repository-owned `activate`/resume operation with this contract:
+
+- the canonical GKE cluster and node pool must already exist in remote state;
+- set `TF_VAR_node_count=1`;
+- the saved plan must contain exactly one update:
+  `google_container_node_pool.target`;
+- create, delete, replacement, and any other managed-resource update are forbidden;
+- apply the exact saved plan through protected `gcp-target-apply`;
+- reuse the existing GitHub OIDC/apply identity;
+- create no new GCP resource or IAM privilege;
+- after apply, prove cluster `RUNNING`, node pool `RUNNING`, and Terraform `node_count=1`.
+
+This is delivery lifecycle support for the already-approved single target runtime, not a second
+runtime and not an M4 quality change.
+
 ## M4-2 — Reproduce the root cause on the same target runtime
 
-**Status: BLOCKED ON M4-1**
+**Status: BLOCKED ON EXISTING-RUNTIME RESUME PREREQUISITE**
 
 ### Problem
 
@@ -221,5 +245,6 @@ return it to 0 afterward.
 
 ## Immediate next single task
 
-Implement **M4-1 — Preserve root-cause evidence at Vertex fact extraction** as a non-live,
-repository-only code/test change. Do not add retry behavior yet.
+Implement the existing-runtime `activate`/resume operation described above, validate it in CI,
+merge it, and then use the protected workflow to move the canonical target node pool from 0 to 1.
+Do not add retry/backoff before M4-2 live reproduction classifies the failure.

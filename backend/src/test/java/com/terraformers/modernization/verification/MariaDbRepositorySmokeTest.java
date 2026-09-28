@@ -99,6 +99,23 @@ class MariaDbRepositorySmokeTest {
         }
     }
 
+    private int durableClaimInIndependentTransaction(
+            String jobId, Instant now, Instant leaseExpiry, CyclicBarrier contendersReady
+    ) {
+        return new TransactionTemplate(transactionManager).execute(status -> {
+            try {
+                contendersReady.await(BARRIER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("durable claim barrier was interrupted", exception);
+            } catch (BrokenBarrierException | TimeoutException exception) {
+                throw new IllegalStateException("durable claim barrier failed", exception);
+            }
+            return analysisJobRepository.claimEligible(jobId, AnalysisJobStatus.PENDING,
+                    AnalysisJobStatus.RUNNING, now, leaseExpiry);
+        });
+    }
+
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void canonicalRepositoryQueriesAndConcurrentClaimExecuteAgainstMariaDb() {
@@ -110,6 +127,8 @@ class MariaDbRepositorySmokeTest {
         ProjectFileEntity resultFile = null;
         AnalysisJobEntity job = null;
         AnalysisJobEntity claimJob = null;
+        AnalysisJobEntity durableInitialJob = null;
+        AnalysisJobEntity durableReclaimJob = null;
         BoardEntity board = null;
         CommentEntity comment = null;
 
@@ -223,6 +242,35 @@ class MariaDbRepositorySmokeTest {
             analysisJobRepository.deleteById(claimJobId);
             analysisJobRepository.flush();
 
+            AnalysisJobEntity latestJob = analysisJobRepository
+                    .findFirstByProjectIdOrderByCreatedAtDesc(project.getProjectId())
+                    .orElseThrow();
+            assertThat(latestJob.getId()).isEqualTo(job.getId());
+            assertThat(latestJob.getSourceFileId()).isEqualTo(sourceFile.getFileId());
+            assertThat(latestJob.getResultFileId()).isEqualTo(resultFile.getFileId());
+
+            Instant durableNow = Instant.parse("2026-09-28T00:00:00Z");
+            Instant durableLease = Instant.parse("2026-09-28T00:05:00Z");
+            durableInitialJob = newClaimJob(project, sourceFile, "repository-smoke-durable-initial");
+            durableInitialJob = analysisJobRepository.saveAndFlush(durableInitialJob);
+            assertConcurrentDurableClaim(durableInitialJob.getId(), durableNow, durableLease);
+            AnalysisJobEntity claimed = analysisJobRepository.findById(durableInitialJob.getId()).orElseThrow();
+            assertThat(claimed.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
+            assertThat(claimed.getAttemptCount()).isEqualTo(1);
+            assertThat(claimed.getClaimGeneration()).isEqualTo(1);
+
+            durableReclaimJob = newClaimJob(project, sourceFile, "repository-smoke-durable-reclaim");
+            durableReclaimJob.setStatus(AnalysisJobStatus.RUNNING);
+            durableReclaimJob.setAttemptCount(1);
+            durableReclaimJob.setClaimGeneration(1);
+            durableReclaimJob.setLeaseExpiresAt(durableNow.minusSeconds(1));
+            durableReclaimJob = analysisJobRepository.saveAndFlush(durableReclaimJob);
+            assertConcurrentDurableClaim(durableReclaimJob.getId(), durableNow, durableLease);
+            AnalysisJobEntity reclaimed = analysisJobRepository.findById(durableReclaimJob.getId()).orElseThrow();
+            assertThat(reclaimed.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
+            assertThat(reclaimed.getAttemptCount()).isEqualTo(2);
+            assertThat(reclaimed.getClaimGeneration()).isEqualTo(2);
+
             board = new BoardEntity();
             board.setProject(project);
             board.setAuthor(owner);
@@ -241,7 +289,6 @@ class MariaDbRepositorySmokeTest {
             Long projectId = project.getProjectId();
             Long sourceFileId = sourceFile.getFileId();
             Long resultFileId = resultFile.getFileId();
-            String jobId = job.getId();
             Long boardId = board.getBoardId();
             Long commentId = comment.getCommentId();
 
@@ -269,13 +316,6 @@ class MariaDbRepositorySmokeTest {
                     .extracting(ProjectFileEntity::getFileId)
                     .containsExactly(sourceFileId, resultFileId);
 
-            assertThat(analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(projectId))
-                    .get()
-                    .satisfies(found -> {
-                        assertThat(found.getId()).isEqualTo(jobId);
-                        assertThat(found.getSourceFileId()).isEqualTo(sourceFileId);
-                        assertThat(found.getResultFileId()).isEqualTo(resultFileId);
-                    });
             assertThat(boardRepository.findFirstByProject_ProjectIdAndCategoryAndDeletedAtIsNullOrderByCreatedAtAsc(
                     projectId,
                     BoardEntity.PUBLIC_DISCUSSION_CATEGORY
@@ -284,12 +324,15 @@ class MariaDbRepositorySmokeTest {
                     .extracting(CommentEntity::getCommentId)
                     .containsExactly(commentId);
         } finally {
-            cleanupCreatedRows(comment, board, claimJob, job, resultFile, deletedDraft, sourceFile, project, owner);
+            cleanupCreatedRows(comment, board, durableReclaimJob, durableInitialJob, claimJob, job,
+                    resultFile, deletedDraft, sourceFile, project, owner);
         }
 
         assertThat(commentRepository.existsById(comment.getCommentId())).isFalse();
         assertThat(boardRepository.existsById(board.getBoardId())).isFalse();
         assertThat(analysisJobRepository.existsById(claimJob.getId())).isFalse();
+        assertThat(analysisJobRepository.existsById(durableInitialJob.getId())).isFalse();
+        assertThat(analysisJobRepository.existsById(durableReclaimJob.getId())).isFalse();
         assertThat(analysisJobRepository.existsById(job.getId())).isFalse();
         assertThat(projectFileRepository.existsById(resultFile.getFileId())).isFalse();
         assertThat(projectFileRepository.existsById(deletedDraft.getFileId())).isFalse();
@@ -301,6 +344,8 @@ class MariaDbRepositorySmokeTest {
     private void cleanupCreatedRows(
             CommentEntity comment,
             BoardEntity board,
+            AnalysisJobEntity durableReclaimJob,
+            AnalysisJobEntity durableInitialJob,
             AnalysisJobEntity claimJob,
             AnalysisJobEntity job,
             ProjectFileEntity resultFile,
@@ -314,6 +359,10 @@ class MariaDbRepositorySmokeTest {
                 () -> commentRepository.deleteById(comment.getCommentId()));
         failure = cleanup("board", board, failure,
                 () -> boardRepository.deleteById(board.getBoardId()));
+        failure = cleanup("durable reclaim job", durableReclaimJob, failure,
+                () -> analysisJobRepository.deleteById(durableReclaimJob.getId()));
+        failure = cleanup("durable initial job", durableInitialJob, failure,
+                () -> analysisJobRepository.deleteById(durableInitialJob.getId()));
         failure = cleanup("concurrent claim job", claimJob, failure,
                 () -> analysisJobRepository.deleteById(claimJob.getId()));
         failure = cleanup("analysis job", job, failure,
@@ -330,6 +379,33 @@ class MariaDbRepositorySmokeTest {
                 () -> userRepository.deleteById(owner.getUserId()));
         if (failure != null) {
             throw failure;
+        }
+    }
+
+    private AnalysisJobEntity newClaimJob(OwnedProjectEntity project, ProjectFileEntity sourceFile,
+            String correlationId) {
+        AnalysisJobEntity job = new AnalysisJobEntity();
+        job.setProjectId(project.getProjectId());
+        job.setSourceFileId(sourceFile.getFileId());
+        job.setSourceBucket(sourceFile.getS3Bucket());
+        job.setSourceKey(sourceFile.getS3Key());
+        job.setCorrelationId(correlationId);
+        job.setStatus(AnalysisJobStatus.PENDING);
+        job.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
+        return job;
+    }
+
+    private void assertConcurrentDurableClaim(String jobId, Instant now, Instant leaseExpiry) {
+        CyclicBarrier contendersReady = new CyclicBarrier(2);
+        ExecutorService contenders = Executors.newFixedThreadPool(2);
+        try {
+            Future<Integer> first = contenders.submit(
+                    () -> durableClaimInIndependentTransaction(jobId, now, leaseExpiry, contendersReady));
+            Future<Integer> second = contenders.submit(
+                    () -> durableClaimInIndependentTransaction(jobId, now, leaseExpiry, contendersReady));
+            assertThat(List.of(awaitClaim(first), awaitClaim(second))).containsExactlyInAnyOrder(0, 1);
+        } finally {
+            contenders.shutdownNow();
         }
     }
 

@@ -69,6 +69,28 @@ public class AnalysisJobEntity {
     @Column(name = "failure_reason", length = 2000)
     private String failureReason;
 
+    @Column(name = "attempt_count", nullable = false)
+    private int attemptCount;
+
+    @Column(name = "next_attempt_at")
+    private Instant nextAttemptAt;
+
+    @Column(name = "lease_expires_at")
+    private Instant leaseExpiresAt;
+
+    @Column(name = "claim_generation", nullable = false)
+    private long claimGeneration;
+
+    @Column(name = "result_object_intent_bucket", length = 255)
+    private String resultObjectIntentBucket;
+
+    @Column(name = "result_object_intent_key", length = 1024)
+    private String resultObjectIntentKey;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "result_cleanup_status", nullable = false, length = 32)
+    private AnalysisResultCleanupStatus resultCleanupStatus = AnalysisResultCleanupStatus.NOT_REQUIRED;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -198,6 +220,21 @@ public class AnalysisJobEntity {
     public void setFailureReason(String failureReason) {
         this.failureReason = failureReason;
     }
+
+    public int getAttemptCount() { return attemptCount; }
+    public void setAttemptCount(int attemptCount) { this.attemptCount = attemptCount; }
+    public Instant getNextAttemptAt() { return nextAttemptAt; }
+    public void setNextAttemptAt(Instant nextAttemptAt) { this.nextAttemptAt = nextAttemptAt; }
+    public Instant getLeaseExpiresAt() { return leaseExpiresAt; }
+    public void setLeaseExpiresAt(Instant leaseExpiresAt) { this.leaseExpiresAt = leaseExpiresAt; }
+    public long getClaimGeneration() { return claimGeneration; }
+    public void setClaimGeneration(long claimGeneration) { this.claimGeneration = claimGeneration; }
+    public String getResultObjectIntentBucket() { return resultObjectIntentBucket; }
+    public void setResultObjectIntentBucket(String resultObjectIntentBucket) { this.resultObjectIntentBucket = resultObjectIntentBucket; }
+    public String getResultObjectIntentKey() { return resultObjectIntentKey; }
+    public void setResultObjectIntentKey(String resultObjectIntentKey) { this.resultObjectIntentKey = resultObjectIntentKey; }
+    public AnalysisResultCleanupStatus getResultCleanupStatus() { return resultCleanupStatus; }
+    public void setResultCleanupStatus(AnalysisResultCleanupStatus resultCleanupStatus) { this.resultCleanupStatus = resultCleanupStatus; }
 
     public Instant getCreatedAt() {
         return createdAt;

@@ -48,6 +48,43 @@ public class AnalysisJobStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Optional<AnalysisJobEntity> claimEligible(String jobId, Instant now, Instant leaseExpiresAt) {
+        int claimed = repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                now, leaseExpiresAt);
+        return claimed == 0 ? Optional.empty() : repository.findById(jobId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean renewLease(String jobId, long generation, Instant now, Instant newLeaseExpiry) {
+        return repository.renewLease(jobId, AnalysisJobStatus.RUNNING, generation, now, newLeaseExpiry) == 1;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean scheduleRetryOwned(String jobId, long generation, Instant now, Instant nextAttemptAt) {
+        return repository.scheduleRetryOwned(jobId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.PENDING,
+                generation, now, nextAttemptAt) == 1;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean markFailedOwned(String jobId, long generation, Instant now, String failureReason) {
+        return repository.markFailedOwned(jobId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED,
+                generation, now, failureReason) == 1;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean recordResultObjectIntentOwned(String jobId, long generation, Instant now,
+            String bucket, String key) {
+        return repository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING, generation, now,
+                bucket, key, AnalysisResultCleanupStatus.PENDING) == 1;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean markResultCleanupCompleted(String jobId, String bucket, String key, Instant now) {
+        return repository.markResultCleanupCompleted(jobId, bucket, key, AnalysisResultCleanupStatus.PENDING,
+                AnalysisResultCleanupStatus.COMPLETED, now) == 1;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markSucceeded(String jobId, AnalysisJobExecution execution) {
         try {
             AnalysisJobEntity entity = requireJob(jobId);

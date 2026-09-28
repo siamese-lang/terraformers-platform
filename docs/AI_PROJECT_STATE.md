@@ -12,12 +12,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current milestone
 
-- Milestone: **M3 — AI Evaluation Baseline**
-- Status: **ACTIVE**
-- Phase: M3-6 framework decision checkpoint and M3 closure
-- Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
+- Milestone: **M4 — AI Targeted Improvement (planning next)**
+- Status: **M3 COMPLETE / M4 PLAN NOT YET CREATED**
+- Phase: M3 closure complete; create active M4 plan before implementation
+- Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-6 — Review framework decisions and close M3 from evidence**
+- Current implementation task: **Create docs/plans/active/M4-ai-targeted-improvement.md from the M3 failure taxonomy**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -200,36 +200,29 @@ No remaining M1 work.
 
 ## Immediate next work
 
-M3-5 is complete. The captured run `36379633596` has reproducible metrics and a failure taxonomy
-in:
+M3 is complete. Closure evidence:
+`docs/verification/m3-ai-evaluation-closure.md`.
 
-- `evaluation/baselines/m3-live-baseline-metrics.json`; and
-- `docs/evaluation/m3-live-baseline-analysis.md`.
+All 15 M3 exit criteria are PASS. Framework decisions remain:
 
-The primary baseline finding is **fact-extraction provider/runtime instability**: two positive
-architecture cases stopped at `FACT_EXTRACTION / PROVIDER_RUNTIME`. The same
-`arch-vpc-three-tier` case had passed the immediately preceding serving smoke, so this is evidence
-of live variability rather than a deterministic bad fixture.
+- LangGraph — DEFER;
+- LangChain — DEFER;
+- reranker — DEFER;
+- additional judge/model call — DEFER;
+- persistent Python AI worker/service — DEFER.
 
-A second finding is **provider error diagnostic loss**: the machine-readable trace preserves only
-`IllegalStateException`, while the current `VertexArchitectureFactsExtractor` performs a direct
-model call with no bounded retry/backoff and exposes no provider status/retry metadata in the trace.
-The baseline alone therefore cannot distinguish throttling, transient transport/capacity, or another
-runtime exception.
+The evidence-backed M4 handoff is the first-divergence class
+`FACT_EXTRACTION / PROVIDER_RUNTIME`, paired with provider-error diagnostic loss in the current
+Vertex fact-extraction path.
 
-Where the pipeline reached retrieval/generation, the evidence is strong:
+The next single repository task is to create
+`docs/plans/active/M4-ai-targeted-improvement.md`. That plan must preserve the same
+`terraformers-eval-v1` dataset and configuration fingerprint as the before-state, require root-cause
+evidence before behavior change, and target the smallest change that addresses the confirmed
+fact-extraction runtime failure.
 
-- required project-decision documents were rank 1 in both executed positive cases;
-- required retrieval resource-type coverage was complete;
-- required generated Terraform resource-type coverage was complete;
-- no checked forbidden resource type was generated;
-- both executed positive cases passed `TerraformDraftValidator`;
-- ambiguous and non-architecture controls were classified correctly and emitted no Terraform.
-
-M3-6 must now review ADR-004 framework gates. Current evidence does not justify LangGraph,
-LangChain, a reranker, or a model/corpus change: the first observed bottleneck is one provider-call
-reliability/diagnostic boundary in an otherwise linear Java pipeline. M3-6 should close M3 and hand
-M4 the evidence-backed first investigation target without implementing the fix yet.
+Do not implement retries, prompt changes, model changes, retrieval changes, or framework adoption
+before the M4 plan is merged.
 
 ## Do not revisit
 

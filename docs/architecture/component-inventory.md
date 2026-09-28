@@ -140,20 +140,20 @@
 | `tests/rag/` | corpus build/curation/ingestion utility unit tests | **KEEP** | version/checksum/filter/index behavior를 검증하는 실제 ingestion 안전망이다. | offline deterministic tests와 별도의 승인된 live smoke 유지 | `python3 -m unittest discover -s tests/rag` |
 | `scripts/checks/` | Flyway/MariaDB, Terraform, Kubernetes, runtime contracts, AWS packaging/deployment guard 검증 | **KEEP** | CI workflow가 재사용하는 executable contract tests이다. | 문서가 아니라 실행 가능한 검증 자산으로 유지 | 각 연결 workflow와 script exit status 확인; 전체를 묶는 단일 local command는 발견되지 않아 **UNKNOWN/TBD** |
 
-### 18. Confirmed NEW gaps
+### 18. Current gaps and reassessment items
 
 이 inventory 작성 이후 M1과 M3에서 일부 gap이 닫혔다. Provider-neutral auth/session boundary와
 runtime OpenSearch transport/auth boundary는 M1에서 구현되었고, fixed AI/RAG evaluation
 dataset·stage-provenance contract·reusable runner는 M3-1~M3-3에서 구현되었다. 이들은 더 이상
 NEW gap이 아니다.
 
-아래 표는 현재도 남아 있는 capability gap만 기록한다. 구체 product/service/framework
-선정은 별도 evidence와 decision gate 없이 자동 승인되지 않는다.
+아래 표는 현재 남아 있는 capability gap, 재평가 항목, 이미 구현되어 재사용 중인 foundation의 상태를
+함께 기록한다. 구체 product/service/framework 선정은 별도 evidence와 decision gate 없이 자동 승인되지 않는다.
 
 | Gap | Absence evidence checked | Decision | Decision rationale | Expected target state | Future validation |
 |---|---|---|---|---|---|
 | Backend reliability decision depth | M5 restart/duplicate/partial-success tests, M6 implementations | **REASSESS** | failure-injection evidence는 이미 존재한다. 현재 gap은 harness 부재가 아니라 durable async operating requirement와 final architecture decision이 충분히 깊지 않다는 점이다. | Case B decision brief와 selected design implementation/validation | same M5 scenarios + process restart/delivery/retry/idempotency before/after evidence |
-| GCP runtime/IaC | `infra/terraform/envs/gcp-target-runtime/`, `infra/kubernetes/overlays/gcp-target/`, Vertex/OpenSearch target adapters | **IMPLEMENTED / REUSED TARGET RUNTIME** | 동일 GKE Standard + Workload Identity + Vertex AI + in-cluster OpenSearch runtime이 M3 live baseline과 M4 targeted evaluation에 실제 사용되었고 idle node_count=0으로 재사용 중이다. | 동일 target IaC/runtime을 approved later cases와 M9 closure까지 재사용; 별도 evaluation cloud 금지 | 필요 시 fresh quota/billing/model-access 확인 후 same-runtime activate→evidence→idle; 새 환경 생성 금지 |
+| GCP runtime/IaC | `infra/terraform/envs/gcp-target-runtime/`, `infra/kubernetes/overlays/gcp-target/`, Vertex/OpenSearch target adapters | **IMPLEMENTED / REUSED TARGET RUNTIME** | 동일 GKE Standard + Workload Identity + Vertex AI + in-cluster OpenSearch runtime이 M3 live baseline과 M4 targeted evaluation에 실제 사용되었고, latest accepted M4 closure evidence에서 target node pool을 `node_count=0`으로 반환했다. | 동일 target IaC/runtime을 approved later cases와 M9 closure까지 재사용; 별도 evaluation cloud 금지 | 필요 시 fresh quota/billing/model-access 확인 후 same-runtime activate→evidence→idle; 새 환경 생성 금지 |
 | Batch-ingestion transport portability | `scripts/rag/ingest-corpus.py`, `tests/rag/` | **NEW** | runtime query transport/auth는 M1에서 provider-neutral `OpenSearchTransport` boundary로 분리되었지만 corpus ingestion은 여전히 boto3/S3 receipt/AWS4Auth/AOSS/Bedrock embedding에 결합되어 있다. | versioned corpus/index contract를 유지하면서 target runtime의 embedding/index/auth path로 재사용 가능한 ingestion implementation | deterministic corpus contract, target endpoint ingestion/query smoke, embedding dimension/version consistency |
 | Observability depth for representative cases | `AnalysisObservability.java`, `AnalysisLogCorrelation.java`, stage telemetry from PR #88 | **PAUSED / SUPPORTING CASES** | metrics, job-correlation logs, bounded stage telemetry가 이미 존재한다. 독립적인 tracing stack 도입 자체는 목표가 아니며 M7은 reassessment 동안 paused다. | Case A/B의 실제 RCA에 필요한 최소 signal만 추가하고 별도 observability project로 확장하지 않음 | approved failure scenario에서 metric/log/stage correlation로 cause→result→recovery 설명 가능 여부 |
 
@@ -162,15 +162,15 @@ NEW gap이 아니다.
 ### KEEP 핵심 자산
 
 1. `projectcore`, `project`, `identity`, `projectcomment`, `projecttree`의 domain/business flow와 JPA model.
-2. integrated Java analysis job lifecycle, `AnalysisProvider`/`ReferenceRetriever`/`EmbeddingProvider`/object storage ports.
+2. AnalysisJob의 domain/status/ownership contract와 `AnalysisProvider`/`ReferenceRetriever`/`EmbeddingProvider`/object storage ports는 KEEP한다. 현재 in-process executor 기반 async execution과 restart/durability semantics는 **REASSESS**다.
 3. Flyway schema와 MariaDB system-of-record 계약.
 4. versioned RAG corpus, ingestion utilities, backend/frontend/RAG tests와 executable checks.
 5. cloud-neutral Docker image 및 Kubernetes base/local overlay, runtime contract.
 
 ### MODIFY / ARCHIVE 핵심 경계
 
-1. Cognito, Bedrock, S3, SQS, SigV4 OpenSearch adapter는 삭제 대상이 아니라 AWS-specific integration으로 분명히 유지·격리한다.
-2. Cognito/Amplify identity binding, Bedrock/S3/SQS/SigV4 adapter와 AWS batch-ingestion binding은 provider-neutral port/behavior에서 분리한다.
+1. Cognito/Amplify, Bedrock, S3, SQS, SigV4 OpenSearch 구현은 삭제 대상이 아니라 provider-specific adapter/historical compatibility 자산으로 유지하고, 이미 형성된 provider-neutral boundary를 보존한다.
+2. AWS-bound batch ingestion처럼 아직 provider-specific 실행/transport가 직접 결합된 부분만 별도 **MODIFY** 대상으로 남긴다.
 3. 기존 AWS Terraform live stacks, AWS Kubernetes overlay, Argo CD runtime, CloudWatch 및 AWS live deployment/teardown workflow는 **ARCHIVE** historical baseline/reference이며 새 프로젝트의 active target으로 유지한다고 가정하지 않는다.
 4. historical delivery에서 확인된 approval gate, immutable SHA, expected-account check, state separation, plan/apply separation, ordered teardown 및 validation/evidence pattern은 provider-neutral 설계 원칙으로 재사용한다.
 

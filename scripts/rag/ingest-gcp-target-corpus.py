@@ -26,6 +26,9 @@ EXPECTED_CONTRACT = {
     "documentCount": 128,
 }
 CHECKSUM_META_KEY = "terraformers_corpus"
+VERTEX_RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
+VERTEX_BACKOFF_SECONDS = (1, 2, 4, 8, 16, 32)
+VERTEX_PACING_SECONDS = 0.5
 
 
 def fail(message: str) -> None:
@@ -73,6 +76,42 @@ def validate_embedding(response: object, dimension: int = 1024) -> list[float]:
     return [float(value) for value in values]
 
 
+class HttpRequestError(RuntimeError):
+    def __init__(self, method: str, path: str, status_code: int, detail: str | None = None):
+        self.status_code = status_code
+        message = f"HTTP {method} {path} failed with {status_code}"
+        if detail:
+            message += f": {detail}"
+        super().__init__(message)
+
+
+def sanitized_google_error(payload: object) -> str | None:
+    if not isinstance(payload, dict):
+        return None
+    error = payload.get("error")
+    if not isinstance(error, dict):
+        return None
+    parts: list[str] = []
+    status = error.get("status")
+    message = error.get("message")
+    if isinstance(status, str) and status:
+        parts.append(status)
+    if isinstance(message, str) and message:
+        parts.append(message[:500])
+    for detail in error.get("details", []):
+        if not isinstance(detail, dict):
+            continue
+        reason = detail.get("reason")
+        if isinstance(reason, str) and reason:
+            parts.append(f"reason={reason}")
+        metadata = detail.get("metadata")
+        if isinstance(metadata, dict):
+            quota_metric = metadata.get("quota_metric")
+            if isinstance(quota_metric, str) and quota_metric:
+                parts.append(f"quota_metric={quota_metric}")
+    return " | ".join(dict.fromkeys(parts)) or None
+
+
 class JsonHttpClient:
     def __init__(self, endpoint: str, headers: Callable[[], dict[str, str]] = lambda: {}):
         self.endpoint = endpoint.rstrip("/")
@@ -88,27 +127,49 @@ class JsonHttpClient:
                 payload = response.read()
                 return response.status, json.loads(payload) if payload else {}
         except urllib.error.HTTPError as exc:
+            payload = exc.read()
+            parsed: object = {}
+            if payload:
+                try:
+                    parsed = json.loads(payload)
+                except json.JSONDecodeError:
+                    parsed = {}
             if exc.code in accepted:
-                payload = exc.read()
-                return exc.code, json.loads(payload) if payload else {}
-            raise RuntimeError(f"HTTP {method} {path} failed with {exc.code}") from exc
+                return exc.code, parsed
+            raise HttpRequestError(
+                method, path, exc.code, sanitized_google_error(parsed)
+            ) from exc
 
 
 class VertexDocumentEmbedder:
     def __init__(self, project: str, location: str, model: str, token: Callable[[], str],
-                 transport: JsonHttpClient | None = None):
+                 transport: JsonHttpClient | None = None,
+                 sleeper: Callable[[float], None] = time.sleep,
+                 pacing_seconds: float = VERTEX_PACING_SECONDS):
         host = "aiplatform.googleapis.com" if location == "global" else f"{location}-aiplatform.googleapis.com"
         self.path = (f"/v1/projects/{urllib.parse.quote(project, safe='')}/locations/{location}"
                      f"/publishers/google/models/{model}:predict")
         self.transport = transport or JsonHttpClient(f"https://{host}", lambda: {"Authorization": f"Bearer {token()}"})
+        self.sleeper = sleeper
+        self.pacing_seconds = pacing_seconds
 
     def embed(self, text: str) -> list[float]:
         body = {
             "instances": [{"content": text, "task_type": "RETRIEVAL_DOCUMENT"}],
             "parameters": {"outputDimensionality": 1024},
         }
-        _, response = self.transport.request("POST", self.path, body)
-        return validate_embedding(response)
+        for attempt in range(len(VERTEX_BACKOFF_SECONDS) + 1):
+            try:
+                _, response = self.transport.request("POST", self.path, body)
+                vector = validate_embedding(response)
+                if self.pacing_seconds > 0:
+                    self.sleeper(self.pacing_seconds)
+                return vector
+            except HttpRequestError as exc:
+                if exc.status_code not in VERTEX_RETRYABLE_STATUS or attempt >= len(VERTEX_BACKOFF_SECONDS):
+                    raise
+                self.sleeper(float(VERTEX_BACKOFF_SECONDS[attempt]))
+        raise AssertionError("unreachable")
 
 
 def properties(schema: dict[str, object]) -> dict[str, object]:

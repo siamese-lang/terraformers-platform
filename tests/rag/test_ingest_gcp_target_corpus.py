@@ -85,7 +85,8 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
     def test_vertex_request_uses_document_semantics_and_1024_dimensions(self):
         transport = RecordingTransport()
         embedder = gcp_ingest.VertexDocumentEmbedder(
-            "project", "global", "gemini-embedding-001", lambda: "token", transport
+            "project", "global", "gemini-embedding-001", lambda: "token", transport,
+            sleeper=lambda _: None, pacing_seconds=0,
         )
 
         vector = embedder.embed("document text")
@@ -94,6 +95,60 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
         body = transport.calls[0][2]
         self.assertEqual("RETRIEVAL_DOCUMENT", body["instances"][0]["task_type"])
         self.assertEqual(1024, body["parameters"]["outputDimensionality"])
+
+    def test_vertex_retries_transient_429_with_bounded_backoff(self):
+        class FlakyTransport:
+            def __init__(self):
+                self.calls = 0
+
+            def request(self, method, path, body=None, accepted=(200,)):
+                self.calls += 1
+                if self.calls <= 2:
+                    raise gcp_ingest.HttpRequestError(method, path, 429, "RESOURCE_EXHAUSTED")
+                return 200, {"predictions": [{"embeddings": {"values": [0.25] * 1024}}]}
+
+        transport = FlakyTransport()
+        sleeps = []
+        embedder = gcp_ingest.VertexDocumentEmbedder(
+            "project", "global", "gemini-embedding-001", lambda: "token", transport,
+            sleeper=sleeps.append, pacing_seconds=0.5,
+        )
+
+        vector = embedder.embed("document text")
+
+        self.assertEqual(1024, len(vector))
+        self.assertEqual(3, transport.calls)
+        self.assertEqual([1.0, 2.0, 0.5], sleeps)
+
+    def test_vertex_does_not_retry_nontransient_http_error(self):
+        class FailingTransport:
+            def request(self, method, path, body=None, accepted=(200,)):
+                raise gcp_ingest.HttpRequestError(method, path, 400, "INVALID_ARGUMENT")
+
+        sleeps = []
+        embedder = gcp_ingest.VertexDocumentEmbedder(
+            "project", "global", "gemini-embedding-001", lambda: "token", FailingTransport(),
+            sleeper=sleeps.append, pacing_seconds=0,
+        )
+
+        with self.assertRaisesRegex(gcp_ingest.HttpRequestError, "400"):
+            embedder.embed("document text")
+        self.assertEqual([], sleeps)
+
+    def test_sanitized_google_error_keeps_quota_signal(self):
+        detail = gcp_ingest.sanitized_google_error({
+            "error": {
+                "status": "RESOURCE_EXHAUSTED",
+                "message": "Quota exceeded.",
+                "details": [{
+                    "reason": "RATE_LIMIT_EXCEEDED",
+                    "metadata": {"quota_metric": "aiplatform.googleapis.com/test_metric"},
+                }],
+            }
+        })
+        self.assertIn("RESOURCE_EXHAUSTED", detail)
+        self.assertIn("RATE_LIMIT_EXCEEDED", detail)
+        self.assertIn("quota_metric=aiplatform.googleapis.com/test_metric", detail)
 
     def test_malformed_nonfinite_and_wrong_dimension_embeddings_fail(self):
         invalid = [

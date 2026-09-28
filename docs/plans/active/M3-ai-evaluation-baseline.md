@@ -374,7 +374,7 @@ minimum GKE/OpenSearch/Vertex live-readiness boundary on the single target runti
 
 ### M3-R3 — Corpus ingestion and serving-path smoke
 
-**Status: IN PROGRESS — static v3 + ingestion adapter complete; live ingestion/smoke pending**
+**Status: IN PROGRESS — v3 live ingestion complete; serving-path smoke pending**
 
 **Problem / gap.** A deployed runtime is not useful for RAG until the versioned corpus/index
 contract and application-facing retrieval/model path work together.
@@ -391,11 +391,17 @@ references that identify the new corpus. The existing 1024-dimensional FAISS/HNS
 is retained. The repository-local task
 [`M3-R3b-gcp-target-corpus-ingestion.md`](../../tasks/active/M3-R3b-gcp-target-corpus-ingestion.md)
 defined the non-live implementation boundary for Vertex retrieval-document embeddings and
-plain-HTTP OpenSearch ingestion. PR #55 completed that adapter and its offline regression coverage.
-The live target runtime is now ready, so the protected `GCP Target Corpus Ingestion` workflow is
-the next execution boundary. It runs the adapter from an ephemeral pod using the existing
-`terraformers-backend` Workload Identity principal; it does not grant Vertex access to the GitHub
-apply identity or create another runtime.
+plain-HTTP OpenSearch ingestion. PR #55 completed that adapter and its offline regression coverage. Protected live ingestion run
+`36375171823` then completed successfully at
+`155b7293a7d7a8cbd6c2e69eb6b45d86c08b25e8`. The receipt proved the immutable v3 checksum,
+exact 128-document count, `gemini-embedding-001`, 1024-dimensional vectors, stable
+`terraformers-reference-v3` index identity, and representative k-NN hits. The ephemeral ingestion
+pod was deleted after the run.
+
+The remaining M3-R3 boundary is the existing Java serving path. The repository-local task
+[`M3-R3c-live-serving-path-smoke.md`](../../tasks/active/M3-R3c-live-serving-path-smoke.md)
+defines the next static implementation: wire the current production Vertex/OpenSearch components
+into the existing `EvaluationRunner` without deploying the full web/JPA/security application.
 
 **Validation.** Prove a small serving-path smoke through the existing extraction/retrieval/generation
 boundaries, including retrieval metadata/provenance. This smoke establishes runtime readiness; it

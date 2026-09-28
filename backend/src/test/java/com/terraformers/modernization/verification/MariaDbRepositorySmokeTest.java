@@ -242,13 +242,12 @@ class MariaDbRepositorySmokeTest {
             analysisJobRepository.deleteById(claimJobId);
             analysisJobRepository.flush();
 
-            assertThat(analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(project.getProjectId()))
-                    .get()
-                    .satisfies(found -> {
-                        assertThat(found.getId()).isEqualTo(job.getId());
-                        assertThat(found.getSourceFileId()).isEqualTo(sourceFile.getFileId());
-                        assertThat(found.getResultFileId()).isEqualTo(resultFile.getFileId());
-                    });
+            AnalysisJobEntity latestJob = analysisJobRepository
+                    .findFirstByProjectIdOrderByCreatedAtDesc(project.getProjectId())
+                    .orElseThrow();
+            assertThat(latestJob.getId()).isEqualTo(job.getId());
+            assertThat(latestJob.getSourceFileId()).isEqualTo(sourceFile.getFileId());
+            assertThat(latestJob.getResultFileId()).isEqualTo(resultFile.getFileId());
 
             Instant durableNow = Instant.parse("2026-09-28T00:00:00Z");
             Instant durableLease = Instant.parse("2026-09-28T00:05:00Z");

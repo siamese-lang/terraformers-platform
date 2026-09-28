@@ -299,11 +299,12 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload machine-readable smoke trace
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: m3-r3c-serving-smoke-${{ github.run_id }}
           path: ${{ runner.temp }}/live-smoke-result.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Delete ephemeral serving smoke pod

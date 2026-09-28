@@ -100,7 +100,7 @@ The apply identity therefore needs mutation permissions that the plan identity i
 not have.
 
 ```bash
-for GCP_ROLE in   roles/browser   roles/compute.networkAdmin   roles/container.clusterAdmin   roles/iam.serviceAccountCreator   roles/iam.serviceAccountUser   roles/resourcemanager.projectIamAdmin   roles/serviceusage.serviceUsageAdmin
+for GCP_ROLE in   roles/browser   roles/compute.networkAdmin   roles/container.clusterAdmin   roles/container.developer   roles/iam.serviceAccountCreator   roles/iam.serviceAccountUser   roles/resourcemanager.projectIamAdmin   roles/serviceusage.serviceUsageAdmin
 do
   gcloud projects add-iam-policy-binding "$GCP_PROJECT"     --member="serviceAccount:${GCP_APPLY_SA}"     --role="$GCP_ROLE"     --quiet
 done
@@ -113,7 +113,12 @@ done
 Why these roles exist:
 
 - `roles/compute.networkAdmin`: create/read the target VPC and subnet, without general VM admin.
-- `roles/container.clusterAdmin`: create/update the GKE cluster and node pool. GKE requires
+- `roles/container.clusterAdmin`: create/update the GKE cluster and node pool. This role manages
+  the cluster resource but does not grant Kubernetes API object mutation inside the cluster.
+- `roles/container.developer`: create/update the bounded Kubernetes API objects used by the target
+  runtime readiness path, including Namespace, StorageClass, Service, StatefulSet and PVC-related
+  objects. The first OpenSearch readiness run proved this role was missing when
+  `kubectl auth can-i create namespaces` returned `no`. GKE requires
   `iam.serviceAccounts.actAs` separately when a custom node service account is attached.
 - `roles/iam.serviceAccountCreator`: create/read the Terraform-managed
   `terraformers-gke-nodes` account without granting key administration.

@@ -21,6 +21,7 @@ PROJECT_ROLES=(
   roles/browser
   roles/compute.networkAdmin
   roles/container.clusterAdmin
+  roles/container.developer
   roles/iam.serviceAccountCreator
   roles/iam.serviceAccountUser
   roles/resourcemanager.projectIamAdmin

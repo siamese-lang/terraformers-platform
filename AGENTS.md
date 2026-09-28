@@ -119,7 +119,10 @@ ChatGPT의 기본 역할은 **read/analysis/review**다.
 - 승인된 결정을 Codex가 구현할 수 있는 bounded implementation spec으로 변환한다.
 - Codex 결과를 원래 decision/acceptance criteria와 대조해 review한다.
 - portfolio case depth와 residual risk를 판정한다.
-- GitHub write는 예외이며, 현재 GitHub app permission은 read는 허용하되 **write마다 사용자 승인**을 요구하는 모드로 유지한다.
+- GitHub write는 반드시 명시적 사용자 승인을 요구한다. 가능한 경우 ChatGPT GitHub 연결은
+  read를 허용하되 write마다 사용자 승인을 요구하는 `ask_before_writes` 모드로 유지한다.
+- 이 문서만으로 실제 connector permission 상태를 추정하지 않는다. 권한 설정은 외부 enforcement layer이며
+  작업 시작 시 필요한 경우 실제 연결 상태를 확인한다.
 - 사용자 승인 없이 branch 생성, source 수정, PR 생성/수정, merge를 수행하지 않는다.
 
 ### Codex — bounded implementation agent

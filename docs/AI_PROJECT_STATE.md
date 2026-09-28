@@ -14,15 +14,19 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 protected apply bootstrap / identity proof
+- Phase: M3-R2 first foundation apply gate
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R2 — Bootstrap and prove the protected apply identity/environment before first creation**
+- Current implementation task: **M3-R2 — Refresh mutable account checks and authorize the first protected foundation apply**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
-repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a successful
-main-branch GitHub Terraform plan (run `36332217168`, commit
-`1d453895c32f5bbd5543b04bed320e116d601107`); no target runtime resource has been applied yet. Historical AWS live
+repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
+main-branch GitHub Terraform plan (run `36335535056`, commit
+`fc95a7f54d375dce900bac573dcd79ea0215750f`) with exactly 12 creates and no
+update/delete/replacement. The separate apply trust boundary is also proven: `terraformers-apply`
+was bootstrapped with the reviewed role matrix, `gcp-target-apply` is protected and main-only, and
+identity-check run `36363635464` completed successfully on
+`334dc611dd44eccb286739d95c193dd3ffeedbb3`. No target runtime resource has been applied yet. Historical AWS live
 infrastructure is intentionally absent, so M3-4 is **WAITING_FOR_TARGET_RUNTIME**, not a request to
 recreate AWS. M3-R1 through M3-R3 now establish the actual GCP/open-source-oriented target AI/RAG
 runtime once; that same runtime is reused by M3-4, M4, later observability/failure work, and M9
@@ -175,17 +179,17 @@ No remaining M1 work.
 
 ## Immediate next work
 
-**Bootstrap and prove the M3-R2 protected apply trust boundary.**
+**Refresh the mutable pre-apply account gate, then make the separate first-foundation-apply decision.**
 
-The corrected main-branch plan is now verified: GitHub run `36335535056` at
-`fc95a7f54d375dce900bac573dcd79ea0215750f` produced exactly **12 create** actions with no
-update/delete/replacement, and the plan-only identity mutation-permission check passed.
+The apply trust boundary is complete. Identity-check run `36363635464` succeeded on
+`334dc611dd44eccb286739d95c193dd3ffeedbb3`: exact SHA/confirmation validation, GitHub OIDC
+authentication as `terraformers-apply`, and access-token verification all passed, while Terraform
+init/plan/apply and all runtime resource steps were skipped.
 
-Use the repository-owned idempotent bootstrap scripts to create/verify the dedicated
-`terraformers-apply` identity and configure/verify the `gcp-target-apply` GitHub environment,
-then run only the apply workflow's `identity-check` mode. No Terraform apply, GKE/OpenSearch
-creation or corpus ingestion belongs to this bootstrap. The first `foundation` apply remains a
-separate cost/resource-creation approval boundary.
+Before the first resource-creating `foundation` dispatch, refresh only the mutable checks that can
+change since the prior review: billing/Free Trial credit, relevant quota/headroom, and absence of an
+unmanaged target runtime. Then require one explicit approval for the 12-create foundation apply.
+Do not re-run the already-proven bootstrap or add another approval gate for read-only checks.
 
 ## Do not revisit
 

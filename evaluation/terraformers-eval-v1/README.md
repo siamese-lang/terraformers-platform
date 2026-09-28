@@ -81,7 +81,44 @@ covered by:
 
 `mvn -q -f backend/pom.xml -Dtest=EvaluationRunnerTest test`
 
+## GCP target live serving-path launcher
+
+`LiveEvaluationLauncher` is a plain Java entry point; it does not start Spring Boot or a web,
+JPA, security, database, identity, or object-storage context. A protected workflow can run it in an
+ephemeral pod under the existing backend Workload Identity principal. Every runtime value is an
+explicit `--name=value` option or the corresponding environment variable; none of the target
+identity values silently fall back to another configuration source.
+
+The first bounded smoke uses `EVALUATION_MODE=single` and
+`EVALUATION_CASE_ID=arch-vpc-three-tier`. Set `EVALUATION_MODE=full` and omit
+`EVALUATION_CASE_ID` to run the same launcher and `EvaluationRunner` over all six cases. Required
+inputs are:
+
+- `EVALUATION_DATASET`, `EVALUATION_OUTPUT`, `EVALUATION_RUN_ID`, and `EVALUATION_MODE`;
+- `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `OPENSEARCH_ENDPOINT`,
+  `VECTOR_FIELD_NAME`, `CONTENT_FIELD_NAME`, and `VERTEX_MAX_OUTPUT_TOKENS`;
+- `ANALYSIS_PROVIDER=vertex`, `EMBEDDING_PROVIDER=vertex`, `RETRIEVAL_MODE=REQUIRED`,
+  `VERTEX_GENERATION_MODEL_ID=gemini-3.8-flash`,
+  `VERTEX_EMBEDDING_MODEL_ID=gemini-embedding-001`;
+- `INDEX_NAME=terraformers-reference-v3`, `CORPUS_VERSION=terraformers-reference-v3`,
+  `PROVIDER_VERSION=5.100.0`, `EXPECTED_VECTOR_DIMENSION=1024`, and
+  `OPENSEARCH_TOP_K=8`.
+
+From the repository root, package and invoke the launcher with:
+
+```bash
+mvn -q -f backend/pom.xml -DskipTests package dependency:build-classpath \
+  -Dmdep.outputFile=target/runtime-classpath.txt
+java -cp "backend/target/classes:$(cat backend/target/runtime-classpath.txt)" \
+  com.terraformers.modernization.evaluation.LiveEvaluationLauncher
+```
+
+The command writes the existing
+`EvaluationRunResult` JSON schema to `EVALUATION_OUTPUT`. Its fingerprint covers the effective
+provider, model, retrieval, OpenSearch, corpus, vector, and generation settings, while deliberately
+excluding run IDs and filesystem paths. Application Default Credentials are used by the Google
+GenAI client; do not mount a service-account key.
+
 M3-4 should wire the current selected live/provider configuration into the same runner, preserve the
 exact provider/model/corpus/configuration identity, and persist the resulting machine-readable run
 without changing prompt, retrieval ranking, corpus content, or model choice.
-

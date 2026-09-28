@@ -1,6 +1,6 @@
 # M3-R3c — Live Spring serving-path smoke on the GCP target runtime
 
-**Status: READY FOR STATIC IMPLEMENTATION — live execution is a later protected workflow step**
+**Status: STATIC IMPLEMENTATION COMPLETE — live execution is the next protected workflow step**
 
 ## Execution authorization
 

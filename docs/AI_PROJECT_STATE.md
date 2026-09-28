@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case B Architecture Decision Gate**
+- Current single task: **Case B B1 bounded implementation specification**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -41,17 +41,19 @@ Case A — AI/RAG quality, performance and reliability:
   risk before new AI implementation.
 
 Case B — Backend durable asynchronous processing:
-- retain M5 failure evidence and useful M6 primitives such as atomic claim;
-- do not accept restart-to-`FAILED` as the final durability solution by default;
+- retain M5 failure evidence and useful M6 primitives such as atomic claim and rollback-safe compensation;
 - measurement-readiness evidence after PR #94 is recorded in
   [Case B Measurement Readiness Evidence](evaluation/case-b-measurement-readiness.md);
-- deterministic before-state now covers accepted-but-not-started restart, claimed-RUNNING restart,
-  duplicate delivery, transient failure/no retry, relational finalization compensation, cleanup
-  failure residue, and real MariaDB concurrent claim;
-- Case B is ready for the Architecture Decision Gate, not production implementation;
-- compare current executor containment, MariaDB-backed durable queue/lease/bounded retry,
-  RabbitMQ durable delivery, and Transactional Outbox + broker as real alternatives;
-- do not exclude RabbitMQ/Outbox merely because they were previously DEFER-listed.
+- ADR-007 accepts MariaDB as the durable AnalysisJob ownership/work source with lease/fencing,
+  bounded selective retry, deterministic result identity, and durable cleanup accountability;
+- current in-process executor remains a bounded local execution pool rather than the durable delivery source;
+- RabbitMQ alone is rejected for the current requirement because it introduces a DB-commit→publish
+  gap; Transactional Outbox + RabbitMQ is deferred until measured scale/fan-out/service-boundary
+  evidence justifies the added operational layer;
+- implementation is split into B1 durable state/fencing, B2 dispatcher/recovery, B3 bounded retry,
+  B4 result/cleanup safety, and B5 integrated closure;
+- production implementation must proceed one bounded stage at a time; the immediate next task is the
+  B1 implementation specification, not implementation of all Case B stages.
 
 Case C — Cloud runtime capacity and safe delivery:
 - use the existing GKE/Vertex/OpenSearch target runtime as the baseline;

@@ -14,14 +14,14 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M6 — Backend Reliability Improvement**
 - Status: **ACTIVE**
-- Phase: M6-1 atomic PENDING claim / terminal-state guard
+- Phase: M6 integrated AnalysisJob reliability case review; M6-2 direct MariaDB validation gap being closed
 - Active plan: [M6 — Backend Reliability Improvement](plans/active/M6-backend-reliability-improvement.md)
 - Completed M5 plan: [M5 — Backend Reliability Baseline](plans/active/M5-backend-reliability-baseline.md)
 - Completed M4 plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **M6-1 — atomic PENDING-to-RUNNING claim and terminal-state guard only**
+- Current implementation task: **close the M6-2 MariaDB validation gap and review the integrated backend reliability case; do not start a new milestone**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -129,6 +129,31 @@ provider/storage execution. The current canonical backend Deployment remains a s
 `maxSurge: 0`; restart reconciliation in M6-2 is scoped to that current runtime contract and is not
 claimed as a future multi-replica design. Partial-success residue control remains M6-3 and requires
 storage-capability inspection before choosing compensation versus durable residue accountability.
+
+M6 implementation has advanced beyond that checkpoint and is now held for integrated case review:
+
+- **M6-1 / PR #82 / merge `d36a36148353027118f0c5eb1c86543fffa00dad`** — MariaDB
+  compare-and-set claim allows only `PENDING → RUNNING`; duplicate/terminal delivery is skipped.
+  Backend Local and MariaDB verification passed.
+- **M6-2 / PR #83 / merge `3385114b365859aaa8d688621f33176d411d3ab6`** — startup
+  reconciliation marks prior-process `PENDING`/`RUNNING` jobs `FAILED` under the current
+  single-replica / `maxSurge:0` runtime. The application restart test passed, but PR #83 did not
+  directly execute the new `failInterrupted(...)` JPQL update against MariaDB. The current gap-fix
+  branch adds that missing direct MariaDB evidence before M6 closure.
+- **M6-3 / PR #84 / merge `bb25229da188f690bc88f9abce5248911db3514f`** — when persisted
+  result-object write is followed by relational success-finalization failure, the runner attempts
+  provider-neutral object compensation. S3/filesystem removal and metadata-only no-op behavior have
+  deterministic coverage.
+
+M6 is **not closed**. PR #84 compensation is best-effort: if the delete itself fails, cleanup failure
+is logged and an object may remain without durable cleanup tracking. That residual risk must be
+explicitly accepted or addressed in M6-4 rather than hidden behind a green happy-path test.
+
+M5+M6 are now treated as one representative engineering case:
+[`AnalysisJob durable lifecycle reliability case`](evaluation/backend-reliability-analysis-job-lifecycle-case.md).
+The common problem is not a sequence of unrelated small bugs; it is the lack of one coherent durable
+lifecycle across execution ownership, process restart, and DB/object-storage finalization. Do not
+advance to M7 until this case has an integrated before/after and residual-risk decision.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected

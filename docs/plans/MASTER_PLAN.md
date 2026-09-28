@@ -29,7 +29,7 @@
 | M1 — Cloud Decoupling | **COMPLETE** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
 | M2 — Runtime Parity | **COMPLETE** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
 | M3 — AI Evaluation Baseline | **COMPLETE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
-| M4 — AI Targeted Improvement | PLANNED | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
+| M4 — AI Targeted Improvement | **ACTIVE** | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
 | M5 — Backend Reliability Baseline | PLANNED | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
 | M6 — Backend Reliability Improvement | PLANNED | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
 | M7 — Observability | PLANNED | 실제 장애를 signal 간 연결로 RCA하고 recovery 확인 | 하나 이상의 실제 failure에 대한 metric/log/trace 기반 원인 및 recovery evidence |
@@ -121,13 +121,32 @@ M4 change until that plan is the repository source of truth.
 
 ## M4 — AI Targeted Improvement
 
-**Problem.** AI architecture complexity가 실제 failure와 무관하게 증가하면 개선을 검증할 수 없다.
+**Status.** **ACTIVE.** The source-of-truth plan is
+[`active/M4-ai-targeted-improvement.md`](active/M4-ai-targeted-improvement.md).
 
-**Work.** `baseline failure → root cause → minimal targeted change → same-dataset re-evaluation` 순서를 따른다. LangGraph, reranker, additional model call, Python service 등은 자동 포함하지 않는다.
+**Problem.** M3 identified a concrete first-divergence class:
+`FACT_EXTRACTION / PROVIDER_RUNTIME`. Two positive architecture cases failed before retrieval,
+while the same VPC case had succeeded in the preceding serving smoke. The evaluation trace currently
+preserves only `IllegalStateException`, which is not enough to identify the provider root cause.
 
-**Evidence.** 동일 조건 before/after 결과, 개선 대상으로 삼은 failure class, root cause, trade-off와 regression 결과를 기록한다.
+**Work.** Follow
+`baseline failure → root cause → minimal targeted change → same-dataset re-evaluation`.
+The first task preserves sanitized Vertex fact-extraction failure evidence without changing behavior.
+A retry/backoff change is conditional on live evidence proving a transient provider failure.
+LangGraph, LangChain, rerankers, judge-model expansion, prompt/model/corpus changes, and a persistent
+Python worker remain DEFER.
 
-**Exit condition.** 선택한 failure class의 개선이 동일 dataset/configuration comparison으로 입증되고 regression과 trade-off가 문서화된다.
+**Evidence.** Reuse M3 canonical baseline run `36379633596` and configuration fingerprint
+`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
+After any targeted change, rerun the same six fixed cases on the same target runtime/configuration
+and compare first-divergence count/category, latency, retries, and regressions.
+
+**Exit condition.** The selected M3 failure class has a reproduced root cause, the smallest justified
+change is implemented, and the same-dataset/configuration comparison shows the failure reduced or
+controlled without regressing previously successful behavior.
+
+**Immediate next single task.** Implement **M4-1 — Preserve root-cause evidence at Vertex fact
+extraction** as a repository-only code/test change. Do not add retry behavior yet.
 
 ## M5 — Backend Reliability Baseline
 

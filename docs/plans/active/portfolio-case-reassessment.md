@@ -182,6 +182,27 @@ Case B is therefore **ready for the Architecture Decision Gate**, but production
 remains unauthorized until the user approves the selected direction and before/after acceptance
 experiment.
 
+## Case B architecture decision checkpoint
+
+The Case B Architecture Decision Gate is complete and recorded in
+[ADR-007: Use MariaDB as the durable source of truth for AnalysisJob execution](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md).
+
+Decision:
+
+- **ACCEPT:** MariaDB-backed durable eligibility + lease/fencing + bounded selective retry;
+- **REJECT as final design:** current process-memory executor/restart-to-FAILED containment;
+- **REJECT as current final design:** RabbitMQ without an Outbox because DB commit and broker publish
+  are not atomic;
+- **DEFER:** Transactional Outbox + RabbitMQ until measured requirements justify an independent
+  broker/outbox layer.
+
+The existing executor remains a bounded local execution pool. Existing REST result retrieval and
+frontend polling remain unchanged.
+
+Implementation is governed by
+[Case B Durable Processing — Bounded Implementation Plan](case-b-durable-processing-implementation.md)
+and is split into B1 through B5. No stage authorizes automatic progression to the next.
+
 ## Observability and failure/load work
 
 M7/M8 are **PAUSED AS INDEPENDENT MILESTONES**.
@@ -217,12 +238,10 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-Perform the **Case B Architecture Decision Gate** using
-[Case B Measurement Readiness Evidence](../../evaluation/case-b-measurement-readiness.md) and the
-[Portfolio Case Measurement & Acceptance Contract](portfolio-case-measurement-contract.md).
+Prepare the bounded **Case B B1 implementation specification** from
+[ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md) and
+[Case B Durable Processing — Bounded Implementation Plan](case-b-durable-processing-implementation.md).
 
-Compare the current executor containment, MariaDB durable queue/claim/lease/bounded-retry,
-RabbitMQ durable delivery, and Transactional Outbox + RabbitMQ alternatives against the measured
-failure matrix. Select a proposed direction and define the minimum before/after acceptance
-experiment, but do not implement production architecture until the user explicitly approves that
-decision.
+B1 is limited to durable schema/state representation and fenced repository/state transitions.
+Do not add polling, restart recovery, provider retry, RabbitMQ, Outbox, or object-cleanup execution
+as part of B1.

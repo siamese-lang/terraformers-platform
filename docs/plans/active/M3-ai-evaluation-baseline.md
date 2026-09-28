@@ -2,31 +2,24 @@
 
 ## Status
 
-**ACTIVE**
+**COMPLETE**
 
-M0 through M2 are complete. M3 establishes a repeatable, explainable AI/RAG quality baseline before
-any prompt, retrieval, model, framework, or orchestration change is treated as an improvement.
+M3 established the fixed evaluation contract/dataset/runner, the reusable GCP target AI/RAG
+runtime, the immutable v3 corpus/index, one production Java serving-path smoke, the canonical
+six-case live baseline, reproducible metrics/failure taxonomy, and the framework-decision
+checkpoint.
 
-The current task is **M3-R2 — Single target AI/RAG runtime foundation**. Live account/model
-readiness, duplicate-runtime checks, remote state and plan-only OIDC are complete. The first
-14-create plan was successfully reviewed but is now **superseded before apply**: apply-IAM review
-against current GKE documentation found that the custom node service account should use the
-documented least-privilege `roles/container.defaultNodeServiceAccount` role instead of three
-hand-assembled logging/monitoring roles. The correction reduces the foundation contract to 12 creates. After merge, GitHub plan run
-`36335535056` on commit `fc95a7f54d375dce900bac573dcd79ea0215750f` succeeded with exactly
-12 create actions and no update/delete/replacement; the plan-only identity mutation-permission check
-also passed. ADR-006's separate protected apply identity/environment/workflow is implemented and
-proven live: the reviewed `terraformers-apply` identity/environment bootstrap completed, and
-identity-check run `36363635464` on
-`334dc611dd44eccb286739d95c193dd3ffeedbb3` succeeded without touching Terraform state or
-runtime resources. Automated preflight run `36365247935` on
-`40750799aba5bf531ee939e0c50fe2b8042c1dd3` then passed the mutable quota/API/machine/
-duplicate-runtime checks, state-bucket protection, empty canonical runtime state, and exact
-12-create foundation contract while skipping the apply job. Cloud Billing API remains disabled, so
-billing status and remaining Free Trial credit stay as the single manual approval item rather than
-expanding the read identity. The next gate is the separately approved first foundation apply. No
-target runtime resource has been applied.
-M3-4 remains **WAITING_FOR_TARGET_RUNTIME** until M3-R2 and M3-R3 complete.
+Canonical baseline run: `36379633596`.
+
+Primary M4 handoff:
+
+`FACT_EXTRACTION / PROVIDER_RUNTIME`
+
+Closure evidence:
+[`docs/verification/m3-ai-evaluation-closure.md`](../../verification/m3-ai-evaluation-closure.md)
+
+The next repository task is to create the active M4 — AI Targeted Improvement plan. Do not
+implement an M4 fix before that plan is source of truth.
 
 ## Objective
 
@@ -500,7 +493,7 @@ prompt, corpus, retrieval ranking, model, or validator behavior in M3.
 
 ### M3-6 — Framework decision checkpoint and M3 closure
 
-**Status: READY — REVIEW M3 EVIDENCE AND CLOSE**
+**Status: DONE**
 
 **Problem / gap.** LangChain, LangGraph, rerankers, judge frameworks, or other AI tooling should not
 be adopted merely because they are common.
@@ -522,9 +515,11 @@ be adopted merely because they are common.
 **Validation.** Confirm the dataset, runner, machine-readable results, baseline report, and failure
 taxonomy satisfy the M3 exit criteria. Do not build a closure-specific verifier.
 
-**Completion evidence.** M3 is complete when current quality is repeatably measurable and at least
-one meaningful failure class (or an evidence-backed finding that a suspected failure is not present)
-is ready for M4 decision-making.
+**Completion evidence.** [M3 AI Evaluation Baseline Closure](../../verification/m3-ai-evaluation-closure.md)
+records all 15 exit criteria as PASS. LangGraph, LangChain, rerankers, judge-model expansion, and a
+persistent Python AI service remain DEFER because the measured first divergence is a provider-call
+reliability/diagnostic problem inside the existing linear Java pipeline. M4 receives
+`FACT_EXTRACTION / PROVIDER_RUNTIME` as its first investigation target.
 
 ## Metrics and scoring boundary
 

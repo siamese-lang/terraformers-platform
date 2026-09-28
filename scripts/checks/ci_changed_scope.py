@@ -123,6 +123,7 @@ def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
                 "tests/deploy/test_gcp_foundation_preflight.py",
                 ".github/workflows/gcp-target-terraform-plan.yml",
                 ".github/workflows/gcp-target-terraform-apply.yml",
+                ".github/workflows/gcp-target-opensearch-readiness.yml",
                 ".github/workflows/aws-live-terraform-apply.yml",
                 ".github/workflows/aws-terraform-destroy-plan.yml",
                 ".github/workflows/aws-runtime-teardown.yml",

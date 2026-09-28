@@ -1,0 +1,220 @@
+name: GCP Target OpenSearch Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact trusted main commit SHA being deployed.
+        required: true
+        type: string
+      confirmation:
+        description: Use DEPLOY_M3_R2_OPENSEARCH.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: gcp-target-terraform-state
+  cancel-in-progress: false
+
+jobs:
+  deploy-opensearch:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 30
+    env:
+      CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted runtime request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'expected_sha must be a full 40-character commit SHA.' >&2
+            exit 1
+          }
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match the checked-out main commit.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == DEPLOY_M3_R2_OPENSEARCH ]] || {
+            echo 'OpenSearch readiness deployment requires confirmation DEPLOY_M3_R2_OPENSEARCH.' >&2
+            exit 1
+          }
+          [[ -n "$WIF_PROVIDER" && -n "$APPLY_SERVICE_ACCOUNT" ]] || {
+            echo 'gcp-target-apply environment variables are incomplete.' >&2
+            exit 1
+          }
+          [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]] || {
+            echo 'Runtime deployment only accepts the dedicated terraformers-apply identity.' >&2
+            exit 1
+          }
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - name: Verify target GKE foundation
+        run: |
+          set -euo pipefail
+          cluster_status="$(
+            gcloud container clusters describe terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform               --format='value(status)'
+          )"
+          node_pool_status="$(
+            gcloud container node-pools describe terraformers-target-primary               --cluster=terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform               --format='value(status)'
+          )"
+          [[ "$cluster_status" == RUNNING ]] || {
+            echo "GKE cluster status is $cluster_status, expected RUNNING." >&2
+            exit 1
+          }
+          [[ "$node_pool_status" == RUNNING ]] || {
+            echo "GKE node pool status is $node_pool_status, expected RUNNING." >&2
+            exit 1
+          }
+
+      - name: Configure GKE credentials
+        uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify Kubernetes mutation boundary
+        run: |
+          set -euo pipefail
+          kubectl auth can-i create namespaces | grep -Fxq yes || {
+            echo 'Apply identity cannot create the target namespace through the Kubernetes API.' >&2
+            exit 1
+          }
+          kubectl auth can-i create storageclasses.storage.k8s.io | grep -Fxq yes || {
+            echo 'Apply identity cannot create the target StorageClass through the Kubernetes API.' >&2
+            exit 1
+          }
+
+      - name: Apply only M3-R2 OpenSearch resources
+        run: |
+          set -euo pipefail
+          kubectl apply -f infra/kubernetes/overlays/gcp-target/namespace.yaml
+          kubectl apply -f infra/kubernetes/overlays/gcp-target/opensearch-storageclass.yaml
+          kubectl -n terraformers-target apply             -f infra/kubernetes/overlays/gcp-target/opensearch-service.yaml             -f infra/kubernetes/overlays/gcp-target/opensearch-statefulset.yaml
+
+      - name: Wait for OpenSearch readiness
+        run: |
+          set -euo pipefail
+          kubectl -n terraformers-target rollout status             statefulset/terraformers-opensearch             --timeout=10m
+
+          ready_replicas="$(
+            kubectl -n terraformers-target get statefulset terraformers-opensearch               -o jsonpath='{.status.readyReplicas}'
+          )"
+          [[ "$ready_replicas" == 1 ]] || {
+            echo "Expected one ready OpenSearch replica, got $ready_replicas." >&2
+            exit 1
+          }
+
+          pvc_phase="$(
+            kubectl -n terraformers-target get pvc data-terraformers-opensearch-0               -o jsonpath='{.status.phase}'
+          )"
+          pvc_class="$(
+            kubectl -n terraformers-target get pvc data-terraformers-opensearch-0               -o jsonpath='{.spec.storageClassName}'
+          )"
+          pvc_request="$(
+            kubectl -n terraformers-target get pvc data-terraformers-opensearch-0               -o jsonpath='{.spec.resources.requests.storage}'
+          )"
+          [[ "$pvc_phase" == Bound ]] || {
+            echo "OpenSearch PVC phase is $pvc_phase, expected Bound." >&2
+            exit 1
+          }
+          [[ "$pvc_class" == terraformers-pd-standard ]] || {
+            echo "OpenSearch PVC storageClassName is $pvc_class, expected terraformers-pd-standard." >&2
+            exit 1
+          }
+          [[ "$pvc_request" == 15Gi ]] || {
+            echo "OpenSearch PVC request is $pvc_request, expected 15Gi." >&2
+            exit 1
+          }
+
+      - name: Verify internal-only OpenSearch service and API
+        run: |
+          set -euo pipefail
+          service_type="$(
+            kubectl -n terraformers-target get service terraformers-opensearch               -o jsonpath='{.spec.type}'
+          )"
+          [[ "$service_type" == ClusterIP ]] || {
+            echo "OpenSearch service type is $service_type, expected ClusterIP." >&2
+            exit 1
+          }
+
+          port_forward_log="${RUNNER_TEMP}/opensearch-port-forward.log"
+          kubectl -n terraformers-target port-forward             service/terraformers-opensearch 19200:9200             >"$port_forward_log" 2>&1 &
+          port_forward_pid=$!
+          cleanup() {
+            kill "$port_forward_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          root_json="${RUNNER_TEMP}/opensearch-root.json"
+          ready=false
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:19200/ > "$root_json"; then
+              ready=true
+              break
+            fi
+            if ! kill -0 "$port_forward_pid" 2>/dev/null; then
+              cat "$port_forward_log" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          [[ "$ready" == true ]] || {
+            cat "$port_forward_log" >&2
+            echo 'OpenSearch API did not become reachable through kubectl port-forward.' >&2
+            exit 1
+          }
+
+          version="$(jq -r '.version.number' "$root_json")"
+          [[ "$version" == 3.8.0 ]] || {
+            echo "OpenSearch version is $version, expected 3.8.0." >&2
+            exit 1
+          }
+
+          health_json="${RUNNER_TEMP}/opensearch-health.json"
+          curl -fsS             'http://127.0.0.1:19200/_cluster/health?wait_for_status=yellow&timeout=60s'             > "$health_json"
+          health="$(jq -r '.status' "$health_json")"
+          [[ "$health" == yellow || "$health" == green ]] || {
+            cat "$health_json" >&2
+            echo "OpenSearch health is $health, expected yellow or green." >&2
+            exit 1
+          }
+
+          {
+            echo '## M3-R2 OpenSearch readiness'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            echo '- GKE cluster: `RUNNING`'
+            echo '- GKE node pool: `RUNNING`'
+            echo '- OpenSearch StatefulSet ready replicas: `1`'
+            echo '- OpenSearch PVC: `Bound`, `terraformers-pd-standard`, `15Gi`'
+            echo '- OpenSearch Service: `ClusterIP`'
+            printf -- '- OpenSearch version: `%s`\n' "$version"
+            printf -- '- OpenSearch health: `%s`\n' "$health"
+            echo '- Full backend overlay was not applied.'
+          } >> "$GITHUB_STEP_SUMMARY"

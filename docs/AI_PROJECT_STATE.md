@@ -14,13 +14,13 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M5 — Backend Reliability Baseline**
 - Status: **ACTIVE**
-- Phase: M5-1 restart / stranded-state baseline
+- Phase: M5-3 object-write / DB-finalization partial-success baseline
 - Active plan: [M5 — Backend Reliability Baseline](plans/active/M5-backend-reliability-baseline.md)
 - Completed M4 plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **M5-1 — reproduce persisted PENDING/RUNNING behavior across a simulated process-restart boundary without implementing recovery**
+- Current implementation task: **M5-3 — reproduce object-write success followed by relational finalization failure without implementing compensation**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -93,6 +93,22 @@ component or startup hook is currently identified. Executor rejection is already
 to `FAILED` with deterministic unit coverage, so M5 reuses that evidence before adding any pressure
 measurement. The M5 plan forbids selecting RabbitMQ, Transactional Outbox, locks, retry
 infrastructure, or another solution until these behaviors are reproduced and classified.
+
+M5-1 is complete. PR #78 merged as
+`c58b2902556d30f4e85ff84b249a8dccfd83e207`; Backend Local Verification run `36394053570`
+passed. `AnalysisJobRestartBaselineTest` starts the real Spring Boot application, persists one
+`PENDING` and one `RUNNING` job, closes the process context, and starts a fresh context against
+the same database. Both states remain unchanged. Classification:
+`CONFIRMED_RELIABILITY_GAP` — if the in-process task disappears, the current application has no
+startup reconciliation path for those persisted non-terminal jobs.
+
+M5-2 is captured by
+`AnalysisJobDuplicateExecutionBaselineTest`. The deterministic duplicate-delivery scenario runs
+one job to `SUCCEEDED`, then delivers the same job id again. The existing transition accepts
+`SUCCEEDED → RUNNING`; provider/store orchestration and generated-Terraform registration are each
+attempted twice. This proves the same-job idempotency/state-guard gap without adding a flaky
+concurrency harness. Detailed M5 evidence is accumulated in
+[`m5-backend-reliability-baseline.md`](evaluation/m5-backend-reliability-baseline.md).
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected

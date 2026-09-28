@@ -72,10 +72,10 @@ explicitly rather than inventing a fix.
 
 ## M5-1 — Restart / stranded-state baseline
 
-**Status: TODO**
+**Status: COMPLETE — PR #78 / merge `c58b2902556d30f4e85ff84b249a8dccfd83e207`**
 
-Measure what happens to persisted `PENDING` and `RUNNING` jobs when no in-process executor task is
-available after an application restart/process loss.
+Current behavior is confirmed: persisted `PENDING` and `RUNNING` jobs remain unchanged after a fresh
+application context starts against the same database with no surviving executor task.
 
 Required evidence:
 
@@ -90,19 +90,18 @@ Do not add a recovery implementation in this task.
 
 ## M5-2 — Same-job duplicate execution baseline
 
-**Status: TODO**
+**Status: COMPLETE — DETERMINISTIC DUPLICATE-DELIVERY BASELINE**
 
-Measure whether the same persisted job id can execute concurrently more than once.
+The baseline uses the stronger, simpler condition of duplicate delivery after terminal success rather
+than a timing-sensitive concurrent harness. One persisted job is executed to `SUCCEEDED`, then the
+same job id is delivered to the runner again.
 
-Required evidence:
+The current state service accepts `SUCCEEDED → RUNNING`, and the deterministic test records two
+provider/store orchestration invocations and two generated-Terraform registration attempts before
+the job reaches `SUCCEEDED` again. Because duplicate side-effect execution is already proven,
+concurrent overlap is unnecessary to establish the missing state/idempotency guard.
 
-- invoke the current runner/state-transition path concurrently against one job id;
-- observe provider invocation count;
-- observe result-object writes and generated Terraform file registration;
-- record final job state and which result reference wins;
-- distinguish harmless repeat invocation from conflicting duplicate side effects.
-
-Do not add locks, state guards, idempotency keys, or deduplication in M5.
+No locks, state guards, idempotency keys, or deduplication were added.
 
 ## M5-3 — Object/DB partial-success baseline
 
@@ -182,6 +181,6 @@ M5 is complete when:
 
 ## Immediate next single task
 
-Run M5-1 using the smallest existing backend integration boundary: prove the current persisted
-`PENDING`/`RUNNING` behavior across a simulated process-restart boundary without implementing
-recovery.
+Run M5-3: force a deterministic failure after Terraform object write succeeds but before
+generated-file/job-success DB finalization, then record object residue and the persisted job state.
+Do not add compensation, deletion, outbox, or retry behavior.

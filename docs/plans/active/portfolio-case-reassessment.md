@@ -9,7 +9,10 @@ project to its actual success criterion: creating a small number of technically 
 repository-backed engineering cases rather than consuming milestone TODOs.
 
 No new product feature, architecture change, live GCP activation, or milestone advancement starts
-until this reassessment produces an approved case direction.
+outside the approved representative-case process.
+
+The measurement and acceptance source of truth for all three cases is
+[Portfolio Case Measurement & Acceptance Contract](portfolio-case-measurement-contract.md).
 
 ## Why this reassessment exists
 
@@ -29,14 +32,14 @@ A green test or cloud connection is supporting evidence, not the case itself.
 
 ### M0 — Baseline / governance
 
-**REVIEW LIGHTLY**
+**AUDITED — RETAIN**
 
 Check only whether current scope, target architecture, source-of-truth ordering, and decision rules
 still match the current project. Do not rebuild M0 verification infrastructure.
 
 ### M1 — Cloud decoupling
 
-**REVIEW LIGHTLY**
+**AUDITED — RETAIN**
 
 Check whether provider-neutral application boundaries still exist in current main and whether later
 changes reintroduced vendor coupling. Do not rerun historical closure workflows unless current code
@@ -44,26 +47,28 @@ inspection identifies a concrete reason.
 
 ### M2 — Runtime parity
 
-**PROVISIONALLY RETAIN**
+**RETAIN — FOUNDATION ONLY**
 
 Current evidence is appropriate for a foundation milestone: portable Spring Boot/MariaDB/Flyway,
 identity/ownership, upload→analysis→result flow, byte persistence/read-back, and frontend/business
 regression were validated with explicit limitations. M2 is not a portfolio case and does not need to
 be one.
 
-Reopen only if the M0/M1 review finds a contradiction that invalidates its runtime claims.
+The completed M0/M1 audit found no contradiction that invalidates these runtime-parity claims.
+M2 remains foundation evidence and is not itself a representative portfolio case.
 
 ### M3 — AI evaluation baseline
 
-**PROVISIONALLY RETAIN**
+**RETAIN — IMMUTABLE CASE A BEFORE-STATE**
 
 The fixed six-case dataset, stage provenance, live Vertex/OpenSearch serving path, configuration
 identity, and preserved failing baseline are valuable baseline assets. M3 is measurement
 infrastructure for an AI/RAG case, not the case completion itself.
 
-Reopen only if dataset/config/provenance integrity is found invalid.
+The reassessment confirmed that the canonical dataset/config/provenance identity remains usable.
+Later runner diagnostics do not overwrite the canonical M3 source commit or baseline result.
 
-## Case A candidate — AI/RAG quality and reliability
+## Case A — AI/RAG quality, performance and reliability
 
 ### Existing evidence worth retaining
 
@@ -97,7 +102,7 @@ fact-extraction truncation/reasoning-budget behavior, retrieval grounding, or an
 failure. Compare credible alternatives and define the repeated same-condition experiment before
 changing production behavior.
 
-## Case B candidate — durable asynchronous AnalysisJob processing
+## Case B — durable asynchronous AnalysisJob processing
 
 ### Existing evidence worth retaining
 
@@ -146,13 +151,30 @@ The comparison must include:
 RabbitMQ or Outbox may not be excluded merely because they were previously DEFER-listed.
 Likewise they may not be selected merely for portfolio technology breadth.
 
+## Case C — cloud runtime capacity and safe delivery
+
+Case C is the independent cloud/operations representative case.
+
+It must measure the integrated GKE/Vertex/OpenSearch/backend system under representative workload,
+identify the first saturation bottleneck, and validate healthy rollout plus faulty-release rollback
+without inventing arbitrary capacity targets.
+
+Current implementation facts such as one backend replica, executor sizing, OpenSearch single-node
+resources, and the current rolling-update strategy are baseline inputs, not defects by declaration.
+
+Capacity tuning, replica changes, HPA, node sizing, OpenSearch sizing, or rollout-strategy changes
+require a measured bottleneck and the Case Decision Gate.
+
+Case C begins only after Cases B and A are sufficiently settled for its load results to represent the
+integrated system rather than unresolved durability or AI-behavior ambiguity.
+
 ## Observability and failure/load work
 
 M7/M8 are **PAUSED AS INDEPENDENT MILESTONES**.
 
-Existing PR #86/#88 evidence is retained, but future observability/load work should primarily deepen
-an approved Case A or Case B. Do not create an unrelated dashboard, tracing stack, load test, or
-failure demo just to consume the milestone.
+Existing PR #86/#88 evidence is retained, but future observability/load work must deepen Case A,
+Case B, or Case C according to the Measurement & Acceptance Contract. Do not create an unrelated
+dashboard, tracing stack, load test, or failure demo just to consume a milestone.
 
 ## Execution protocol
 
@@ -172,13 +194,19 @@ failure demo just to consume the milestone.
 This reassessment is complete only when:
 
 1. M0/M1 lightweight foundation audit is complete;
-2. M2/M3 are either retained with clear limitations or explicitly reopened for a concrete reason;
+2. M2/M3 are retained with explicit limitations;
 3. M4/M5/M6 claims are reclassified without relying on historical COMPLETE labels;
-4. exactly 2–3 candidate portfolio cases are identified;
-5. each candidate has a technical decision gap rather than merely a list of fixes;
-6. the user approves which case is implemented first and its decision/validation approach.
+4. exactly three representative cases are fixed: AI/RAG, durable async backend, and cloud runtime capacity/safe delivery;
+5. each case has a technical decision gap rather than merely a list of fixes;
+6. the Measurement & Acceptance Contract governs before/after evidence and acceptance;
+7. implementation starts only after the selected case passes Measurement Readiness and Case Decision gates.
 
 ## Immediate next single task
 
-Perform the lightweight M0/M1 foundation audit and return a concise keep/reopen judgment. Do not
-change production code or start either case implementation as part of that audit.
+Perform the **Case B Measurement Readiness Audit** against
+[Portfolio Case Measurement & Acceptance Contract](portfolio-case-measurement-contract.md).
+
+Identify which required Case B failure-matrix scenarios and measurements are already covered by
+current M5/M6 tests and observability, and which minimum test/signal gaps must be closed before
+comparing durable-processing architectures. Do not select or implement the production architecture
+as part of that audit.

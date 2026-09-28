@@ -128,6 +128,28 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "mapping differs"):
             gcp_ingest.ingest(client, FakeEmbedder(), self.manifest, self.schema, [], self.checksum)
 
+    def test_existing_vector_method_contract_mismatch_fails(self):
+        cases = (
+            ("engine", "lucene"),
+            ("name", "ivf"),
+            ("space_type", "l2"),
+        )
+        for field, value in cases:
+            schema = json.loads(json.dumps(self.schema))
+            schema["mappings"]["properties"]["embedding"]["method"][field] = value
+            client = FakeOpenSearch(schema, checksum=self.checksum)
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(
+                RuntimeError, "mapping differs"
+            ):
+                gcp_ingest.ingest(
+                    client,
+                    FakeEmbedder(),
+                    self.manifest,
+                    self.schema,
+                    [],
+                    self.checksum,
+                )
+
     def test_same_version_checksum_mismatch_fails(self):
         client = FakeOpenSearch(self.schema, checksum="different")
         with self.assertRaisesRegex(RuntimeError, "checksum changed"):

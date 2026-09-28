@@ -14,6 +14,7 @@ import com.terraformers.modernization.analysis.TerraformDraftValidator;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationDataset;
 import com.terraformers.modernization.evaluation.EvaluationTrace.ConfigurationIdentity;
 import com.terraformers.modernization.reference.ArchitectureFactsExtractor;
+import com.terraformers.modernization.reference.ArchitectureFactsExtractionException;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceRetriever;
@@ -22,6 +23,7 @@ import com.terraformers.modernization.reference.RetrievalQueryTextBuilder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -91,6 +93,61 @@ class EvaluationRunnerTest {
     }
 
     @Test
+    void recordsSanitizedFactFailureAndStopsRequiredPipelineAtFactExtraction() {
+        LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
+        String sensitive = "Bearer secret-token prompt image-base64";
+        ArchitectureFactsExtractor failingFacts = source -> {
+            throw ArchitectureFactsExtractionException.providerRuntime(
+                    "429", "ClientException", true, new IllegalStateException(sensitive));
+        };
+        AtomicInteger retrievalCalls = new AtomicInteger();
+        AtomicInteger generationCalls = new AtomicInteger();
+        ReferenceRetriever retriever = query -> {
+            retrievalCalls.incrementAndGet();
+            return List.of();
+        };
+        AnalysisGenerationStage generator = (context, source, references) -> {
+            generationCalls.incrementAndGet();
+            throw new AssertionError("generation must not execute");
+        };
+
+        EvaluationRunResult result = runner(failingFacts, retriever, generator)
+                .run(dataset, "fact-provider-failure");
+        EvaluationTrace trace = trace(result, "arch-vpc-three-tier");
+
+        assertThat(trace.factExtraction().status()).isEqualTo(EvaluationStageStatus.FAIL);
+        assertThat(trace.factExtraction().failures().get(0).detail())
+                .isEqualTo("reason=PROVIDER_RUNTIME;providerStatus=429;providerErrorType=ClientException;transient=true")
+                .doesNotContain("secret-token", "prompt", "image", "base64");
+        assertThat(trace.firstDivergence().stage()).isEqualTo(EvaluationStage.FACT_EXTRACTION);
+        assertThat(trace.firstDivergence().category()).isEqualTo(EvaluationFailureCategory.PROVIDER_RUNTIME);
+        assertThat(trace.retrieval().status()).isEqualTo(EvaluationStageStatus.NOT_RUN);
+        assertThat(trace.generation().status()).isEqualTo(EvaluationStageStatus.NOT_RUN);
+        assertThat(trace.validation().status()).isEqualTo(EvaluationStageStatus.NOT_RUN);
+        assertThat(retrievalCalls).hasValue(0);
+        assertThat(generationCalls).hasValue(0);
+    }
+
+    @Test
+    void mapsFactResponseFailuresToExistingCategoriesWithStableSubtypeDetail() {
+        LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
+        ArchitectureFactsExtractor truncatedFacts = source -> {
+            throw ArchitectureFactsExtractionException.response(
+                    ArchitectureFactsExtractionException.Reason.RESPONSE_TRUNCATED, null);
+        };
+
+        EvaluationTrace trace = trace(
+                runner(truncatedFacts, retriever(), generator()).run(dataset, "fact-truncated"),
+                "arch-vpc-three-tier"
+        );
+
+        assertThat(trace.firstDivergence().stage()).isEqualTo(EvaluationStage.FACT_EXTRACTION);
+        assertThat(trace.firstDivergence().category()).isEqualTo(EvaluationFailureCategory.OUTPUT_TRUNCATED);
+        assertThat(trace.factExtraction().failures().get(0).detail())
+                .isEqualTo("reason=RESPONSE_TRUNCATED");
+    }
+
+    @Test
     void classifiesProviderNeutralGenerationTruncation() {
         LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
         AnalysisGenerationStage truncatedGenerator = (context, source, references) -> {
@@ -149,6 +206,14 @@ class EvaluationRunnerTest {
 
     private EvaluationRunner runner(ReferenceRetriever retriever, AnalysisGenerationStage generator) {
         ArchitectureFactsExtractor facts = source -> facts(source.metadata().key());
+        return runner(facts, retriever, generator);
+    }
+
+    private EvaluationRunner runner(
+            ArchitectureFactsExtractor facts,
+            ReferenceRetriever retriever,
+            AnalysisGenerationStage generator
+    ) {
         ConfigurationIdentity configuration = new ConfigurationIdentity(
                 "terraformers-reference-v2",
                 "5.100.0",

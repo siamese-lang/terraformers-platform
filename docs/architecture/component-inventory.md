@@ -150,7 +150,7 @@ NEW gap이 아니다.
 아래 표는 현재 남아 있는 capability gap, 재평가 항목, 이미 구현되어 재사용 중인 foundation의 상태를
 함께 기록한다. 구체 product/service/framework 선정은 별도 evidence와 decision gate 없이 자동 승인되지 않는다.
 
-| Gap | Absence evidence checked | Decision | Decision rationale | Expected target state | Future validation |
+| Item | Current evidence / basis | Decision | Decision rationale | Expected target state | Future validation |
 |---|---|---|---|---|---|
 | Backend reliability decision depth | M5 restart/duplicate/partial-success tests, M6 implementations | **REASSESS** | failure-injection evidence는 이미 존재한다. 현재 gap은 harness 부재가 아니라 durable async operating requirement와 final architecture decision이 충분히 깊지 않다는 점이다. | Case B decision brief와 selected design implementation/validation | same M5 scenarios + process restart/delivery/retry/idempotency before/after evidence |
 | GCP runtime/IaC | `infra/terraform/envs/gcp-target-runtime/`, `infra/kubernetes/overlays/gcp-target/`, Vertex/OpenSearch target adapters | **IMPLEMENTED / REUSED TARGET RUNTIME** | 동일 GKE Standard + Workload Identity + Vertex AI + in-cluster OpenSearch runtime이 M3 live baseline과 M4 targeted evaluation에 실제 사용되었고, latest accepted M4 closure evidence에서 target node pool을 `node_count=0`으로 반환했다. | 동일 target IaC/runtime을 approved later cases와 M9 closure까지 재사용; 별도 evaluation cloud 금지 | 필요 시 fresh quota/billing/model-access 확인 후 same-runtime activate→evidence→idle; 새 환경 생성 금지 |

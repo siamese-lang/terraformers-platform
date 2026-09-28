@@ -31,6 +31,21 @@ class AnalysisRuntimePropertiesTest {
         assertThat(properties.getDispatchBatchSize()).isEqualTo(4);
         assertThat(properties.getLeaseDuration()).isEqualTo(Duration.ofSeconds(60));
         assertThat(properties.getLeaseRenewInterval()).isEqualTo(Duration.ofSeconds(20));
+        assertThat(properties.getMaxAttempts()).isEqualTo(3);
+        assertThat(properties.getRetryDelay()).isEqualTo(Duration.ofSeconds(10));
+    }
+
+    @Test
+    void rejectsInvalidRetryPolicy() {
+        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        properties.setMaxAttempts(0);
+        assertThatThrownBy(properties::validateDurableDispatch)
+                .hasMessageContaining("max-attempts must be at least 1");
+
+        properties = new AnalysisRuntimeProperties();
+        properties.setRetryDelay(Duration.ZERO);
+        assertThatThrownBy(properties::validateDurableDispatch)
+                .hasMessageContaining("retry-delay must be positive");
     }
 
     @Test

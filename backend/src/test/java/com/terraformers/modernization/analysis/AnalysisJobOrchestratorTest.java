@@ -19,9 +19,35 @@ import com.terraformers.modernization.storage.ObjectWriteResult;
 import com.terraformers.modernization.storage.StubObjectWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.net.SocketTimeoutException;
 import org.junit.jupiter.api.Test;
 
 class AnalysisJobOrchestratorTest {
+
+    @Test
+    void normalizesCausalNetworkTimeoutOnlyAtProviderBoundary() {
+        RuntimeException wrappedTimeout = new RuntimeException("provider transport",
+                new SocketTimeoutException("read timed out"));
+        AnalysisJobOrchestrator orchestrator = orchestrator(context -> { throw wrappedTimeout; },
+                mock(AnalysisResultStorage.class));
+
+        assertThatThrownBy(() -> orchestrator.executeProviderAndStoreDraft(sampleEntity(100L)))
+                .isInstanceOf(AnalysisProviderTimeoutException.class)
+                .hasCause(wrappedTimeout);
+    }
+
+    @Test
+    void doesNotNormalizeNetworkTimeoutFromResultStorage() {
+        AnalysisProvider provider = context -> validResult();
+        AnalysisResultStorage storage = mock(AnalysisResultStorage.class);
+        RuntimeException storageTimeout = new RuntimeException("storage transport",
+                new SocketTimeoutException("write timed out"));
+        when(storage.storeTerraformDraft(any(), any())).thenThrow(storageTimeout);
+        AnalysisJobOrchestrator orchestrator = orchestrator(provider, storage);
+
+        assertThatThrownBy(() -> orchestrator.executeProviderAndStoreDraft(sampleEntity(100L)))
+                .isSameAs(storageTimeout);
+    }
 
     @Test
     void storesResultObjectKeyAndFileIdWhenAnalysisSucceeds() {
@@ -163,6 +189,16 @@ class AnalysisJobOrchestratorTest {
         job.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
         job.prePersist();
         return job;
+    }
+
+    private AnalysisJobOrchestrator orchestrator(AnalysisProvider provider, AnalysisResultStorage storage) {
+        return new AnalysisJobOrchestrator(provider, mock(ProgressPublisher.class), storage,
+                mock(ProjectArtifactService.class), new TerraformDraftValidator());
+    }
+
+    private AnalysisResult validResult() {
+        return new AnalysisResult("test", "resource \"null_resource\" \"valid\" {}", "summary",
+                List.of(), List.of(), List.of(), List.of());
     }
 
     private static class CapturingProgressPublisher implements ProgressPublisher {

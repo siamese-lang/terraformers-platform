@@ -58,7 +58,7 @@ class AnalysisJobRunnerTest {
     }
 
     @Test
-    void transientProviderFailureIsFencedFailedOnceAndNeverSchedulesRetry() {
+    void providerTimeoutSchedulesDurableRetryBeforeExhaustion() {
         Fixture fixture = fixture();
         AnalysisJobEntity running = runningJob(1, 3);
         AtomicInteger invocations = new AtomicInteger();
@@ -67,15 +67,84 @@ class AnalysisJobRunnerTest {
             invocations.incrementAndGet();
             throw new AnalysisProviderTimeoutException(new SocketTimeoutException("temporary timeout"));
         });
-        when(fixture.state.markFailedOwned("job-transient", 3, NOW,
-                AnalysisJobRunner.TIMEOUT_FAILURE_REASON)).thenReturn(true);
+        when(fixture.state.scheduleRetryOwned("job-transient", 3, NOW, NOW.plusSeconds(10))).thenReturn(true);
 
         fixture.runner.run("job-transient");
 
         assertThat(invocations).hasValue(1);
-        verify(fixture.state).markFailedOwned("job-transient", 3, NOW,
-                AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
+        verify(fixture.state).scheduleRetryOwned("job-transient", 3, NOW, NOW.plusSeconds(10));
+        verify(fixture.state, never()).markFailedOwned(any(), anyLong(), any(), any());
+        assertThat(fixture.registry.find("terraformers.analysis.retries")
+                .tags("outcome", "scheduled").counter().count()).isEqualTo(1);
+        assertThat(fixture.registry.find("terraformers.analysis.jobs")
+                .tags("outcome", "failed").counter()).isNull();
+    }
+
+    @Test
+    void exhaustedProviderTimeoutIsFencedFailed() {
+        Fixture fixture = fixture();
+        AnalysisJobEntity running = runningJob(3, 5);
+        when(fixture.state.claimEligible("job-exhausted", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
+        when(fixture.orchestrator.executeProviderAndStoreDraft(running))
+                .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("timeout")));
+        when(fixture.state.markFailedOwned("job-exhausted", 5, NOW,
+                AnalysisJobRunner.TIMEOUT_FAILURE_REASON)).thenReturn(true);
+
+        fixture.runner.run("job-exhausted");
+
         verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
+        verify(fixture.state).markFailedOwned("job-exhausted", 5, NOW, AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
+        assertThat(fixture.registry.find("terraformers.analysis.retries")
+                .tags("outcome", "exhausted").counter().count()).isEqualTo(1);
+    }
+
+    @Test
+    void staleOwnerCannotScheduleRetryOrMarkTerminalFailure() {
+        Fixture fixture = fixture();
+        AnalysisJobEntity running = runningJob(1, 6);
+        when(fixture.state.claimEligible("job-stale-retry", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
+        when(fixture.orchestrator.executeProviderAndStoreDraft(running))
+                .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("timeout")));
+        when(fixture.state.scheduleRetryOwned("job-stale-retry", 6, NOW, NOW.plusSeconds(10))).thenReturn(false);
+
+        fixture.runner.run("job-stale-retry");
+
+        verify(fixture.state, never()).markFailedOwned(any(), anyLong(), any(), any());
+        assertThat(fixture.registry.find("terraformers.analysis.retries")
+                .tags("outcome", "ownership_lost").counter().count()).isEqualTo(1);
+    }
+
+    @Test
+    void providerSemanticFailureIsTerminalWithoutRetry() {
+        Fixture fixture = fixture();
+        AnalysisJobEntity running = runningJob(1, 8);
+        AnalysisProviderFailureException failure = new AnalysisProviderFailureException(
+                AnalysisProviderFailureReason.OUTPUT_TRUNCATED, new IllegalStateException("truncated"));
+        when(fixture.state.claimEligible("job-semantic", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
+        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenThrow(failure);
+        when(fixture.state.markFailedOwned("job-semantic", 8, NOW,
+                AnalysisJobRunner.TRUNCATED_FAILURE_REASON)).thenReturn(true);
+
+        fixture.runner.run("job-semantic");
+
+        verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
+        verify(fixture.state).markFailedOwned("job-semantic", 8, NOW, AnalysisJobRunner.TRUNCATED_FAILURE_REASON);
+    }
+
+    @Test
+    void rawStorageTimeoutCauseIsTerminalWithoutRetry() {
+        Fixture fixture = fixture();
+        AnalysisJobEntity running = runningJob(1, 10);
+        RuntimeException storageFailure = new RuntimeException("storage failed", new SocketTimeoutException("write"));
+        when(fixture.state.claimEligible("job-storage", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
+        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenThrow(storageFailure);
+        when(fixture.state.markFailedOwned("job-storage", 10, NOW,
+                AnalysisJobRunner.TIMEOUT_FAILURE_REASON)).thenReturn(true);
+
+        fixture.runner.run("job-storage");
+
+        verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
+        verify(fixture.state).markFailedOwned("job-storage", 10, NOW, AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
     }
 
     @Test

@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,10 +34,85 @@ class AnalysisJobRestartBaselineTest {
 
     private static final Instant START = Instant.parse("2026-09-28T00:00:00Z");
     private static final MutableClock TEST_CLOCK = new MutableClock(START);
+    private static final AtomicInteger PROVIDER_INVOCATIONS = new AtomicInteger();
+    private static final AtomicInteger TIMEOUTS_REMAINING = new AtomicInteger();
 
     @BeforeEach
     void resetClock() {
         TEST_CLOCK.set(START);
+        PROVIDER_INVOCATIONS.set(0);
+        TIMEOUTS_REMAINING.set(0);
+    }
+
+    @Test
+    void durableRetryWaitsUntilDueThenSucceedsOnSecondClaim() {
+        TIMEOUTS_REMAINING.set(1);
+        try (ConfigurableApplicationContext context = start(datasourceUrl(), "create")) {
+            UserEntity owner = owner(context);
+            OwnedProjectEntity project = project(context, owner);
+            ProjectFileEntity source = source(context, owner, project);
+            String jobId = context.getBean(AnalysisJobService.class).create(
+                    new AnalysisJobRequest(project.getProjectId(), source.getFileId(), "retry-success"), owner).id();
+            CapturingExecutor executor = context.getBean(CapturingExecutor.class);
+            AnalysisJobDispatcher dispatcher = context.getBean(AnalysisJobDispatcher.class);
+
+            executor.runAll();
+            AnalysisJobEntity waiting = context.getBean(AnalysisJobRepository.class).findById(jobId).orElseThrow();
+            assertThat(waiting.getStatus()).isEqualTo(AnalysisJobStatus.PENDING);
+            assertThat(waiting.getAttemptCount()).isEqualTo(1);
+            assertThat(waiting.getClaimGeneration()).isEqualTo(1);
+            assertThat(waiting.getNextAttemptAt()).isEqualTo(START.plusSeconds(10));
+            assertThat(waiting.getLeaseExpiresAt()).isNull();
+
+            TEST_CLOCK.set(START.plusSeconds(9));
+            dispatcher.dispatchEligible();
+            assertThat(executor.tasks()).isEmpty();
+
+            TEST_CLOCK.set(START.plusSeconds(10));
+            dispatcher.dispatchEligible();
+            assertThat(executor.tasks()).hasSize(1);
+            executor.runAll();
+            AnalysisJobEntity succeeded = context.getBean(AnalysisJobRepository.class).findById(jobId).orElseThrow();
+            assertThat(succeeded.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
+            assertThat(succeeded.getAttemptCount()).isEqualTo(2);
+            assertThat(succeeded.getClaimGeneration()).isEqualTo(2);
+            assertThat(PROVIDER_INVOCATIONS).hasValue(2);
+        }
+    }
+
+    @Test
+    void durableRetryExhaustionFailsThirdAttemptAndNeverExecutesFourth() {
+        TIMEOUTS_REMAINING.set(Integer.MAX_VALUE);
+        try (ConfigurableApplicationContext context = start(datasourceUrl(), "create")) {
+            UserEntity owner = owner(context);
+            OwnedProjectEntity project = project(context, owner);
+            ProjectFileEntity source = source(context, owner, project);
+            String jobId = context.getBean(AnalysisJobService.class).create(
+                    new AnalysisJobRequest(project.getProjectId(), source.getFileId(), "retry-exhausted"), owner).id();
+            CapturingExecutor executor = context.getBean(CapturingExecutor.class);
+            AnalysisJobDispatcher dispatcher = context.getBean(AnalysisJobDispatcher.class);
+
+            executor.runAll();
+            TEST_CLOCK.set(START.plusSeconds(10));
+            dispatcher.dispatchEligible();
+            executor.runAll();
+            TEST_CLOCK.set(START.plusSeconds(20));
+            dispatcher.dispatchEligible();
+            executor.runAll();
+
+            AnalysisJobEntity failed = context.getBean(AnalysisJobRepository.class).findById(jobId).orElseThrow();
+            assertThat(failed.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+            assertThat(failed.getAttemptCount()).isEqualTo(3);
+            assertThat(failed.getClaimGeneration()).isEqualTo(3);
+            assertThat(failed.getNextAttemptAt()).isNull();
+            assertThat(failed.getLeaseExpiresAt()).isNull();
+            assertThat(failed.getFailureReason()).isEqualTo(AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
+
+            TEST_CLOCK.set(START.plusSeconds(40));
+            dispatcher.dispatchEligible();
+            executor.runAll();
+            assertThat(PROVIDER_INVOCATIONS).hasValue(3);
+        }
     }
 
     @Test
@@ -231,6 +307,18 @@ class AnalysisJobRestartBaselineTest {
         @Bean
         @Primary
         Clock testClock() { return TEST_CLOCK; }
+
+        @Bean @Primary
+        AnalysisProvider deterministicAnalysisProvider() {
+            return context -> {
+                PROVIDER_INVOCATIONS.incrementAndGet();
+                if (TIMEOUTS_REMAINING.getAndUpdate(value -> value > 0 ? value - 1 : 0) > 0) {
+                    throw new AnalysisProviderTimeoutException(new java.net.SocketTimeoutException("test timeout"));
+                }
+                return new AnalysisResult("test", "resource \"null_resource\" \"generated\" {}", "summary",
+                        List.of(), List.of(), List.of(), List.of());
+            };
+        }
     }
 
     static class CapturingExecutor implements Executor {

@@ -97,6 +97,27 @@ public class AnalysisJobRunner {
                 if (execution != null && exception instanceof AnalysisResultFinalizationException) {
                     compensateStoredDraft(execution);
                 }
+                if (execution == null && isRetryable(exception)) {
+                    if (runningJob.getAttemptCount() < properties.getMaxAttempts()) {
+                        Instant now = clock.instant();
+                        Instant nextAttemptAt = now.plus(properties.getRetryDelay());
+                        boolean scheduled = stateService.scheduleRetryOwned(jobId, generation, now, nextAttemptAt);
+                        if (scheduled) {
+                            observability.retryOutcome("scheduled");
+                            log.warn("Analysis retry scheduled attempt={} generation={} nextAttemptAt={}",
+                                    runningJob.getAttemptCount(), generation, nextAttemptAt);
+                        } else {
+                            leaseLost.set(true);
+                            observability.retryOutcome("ownership_lost");
+                            log.warn("Analysis retry scheduling rejected because durable ownership was lost generation={}",
+                                    generation);
+                        }
+                        return;
+                    }
+                    observability.retryOutcome("exhausted");
+                    log.warn("Analysis retry budget exhausted attempt={} generation={}",
+                            runningJob.getAttemptCount(), generation);
+                }
                 boolean failed = stateService.markFailedOwned(jobId, generation, clock.instant(), safeFailureReason(exception));
                 if (failed) {
                     observability.jobFailed(exception);
@@ -111,6 +132,15 @@ public class AnalysisJobRunner {
                 observability.stopAnalysis(sample);
             }
         }
+    }
+
+    private boolean isRetryable(Throwable exception) {
+        Throwable current = exception;
+        while (current != null) {
+            if (current instanceof AnalysisProviderTimeoutException) return true;
+            current = current.getCause();
+        }
+        return false;
     }
 
     private void compensateStoredDraft(AnalysisJobExecution execution) {

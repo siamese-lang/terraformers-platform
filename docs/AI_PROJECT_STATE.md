@@ -14,10 +14,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R2 first foundation apply gate
+- Phase: M3-R2 GKE foundation proven / OpenSearch live readiness
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R2 — Authorize the first protected 12-create foundation apply**
+- Current implementation task: **M3-R2 — Deploy and prove the minimal internal OpenSearch runtime**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -31,8 +31,17 @@ run `36365247935` on `40750799aba5bf531ee939e0c50fe2b8042c1dd3` passed the plan-
 non-mutation check, mutable quota/API/machine/duplicate-runtime checks, state-bucket protection,
 empty canonical runtime state, and the corrected exact 12-create foundation contract; its apply job
 was skipped. Cloud Billing API remains disabled, so billing status and remaining Free Trial credit
-are intentionally one manual approval item rather than a reason to broaden the plan identity. No
-target runtime resource has been applied yet. Historical AWS live
+remain an operator-owned approval fact rather than a reason to broaden the plan identity.
+
+The protected foundation run `36365702742` then applied the reviewed plan successfully:
+`12 added, 0 changed, 0 destroyed`. Its final workflow status was failure only because the
+post-apply check read deprecated GKE `Cluster.currentNodeCount`, which returned blank after the
+cluster and node pool had already been created. The verification was corrected without re-applying
+resources. Read-only runtime-check run `36369764529` on
+`d47c85526f2b2a290b394084cbb19e0356883a0c` passed with the canonical 12 managed Terraform
+resources, GKE cluster/node-pool runtime checks, Terraform `node_count=1`, and a zero-drift refresh
+plan; its apply job was skipped. The remaining M3-R2 live boundary is the repository-defined
+internal OpenSearch StatefulSet/PVC readiness proof. Historical AWS live
 infrastructure is intentionally absent, so M3-4 is **WAITING_FOR_TARGET_RUNTIME**, not a request to
 recreate AWS. M3-R1 through M3-R3 now establish the actual GCP/open-source-oriented target AI/RAG
 runtime once; that same runtime is reused by M3-4, M4, later observability/failure work, and M9
@@ -185,26 +194,21 @@ No remaining M1 work.
 
 ## Immediate next work
 
-The separately authorized non-live M3-R3a track is complete: the repository now contains the
-deterministically derived `terraformers-reference-v3` static contract. All 128 curated v2 document
-IDs and contents remain unchanged, AWS provider knowledge remains at 5.100.0, and the target
-identity is `gemini-embedding-001` / 1024 dimensions / `terraformers-reference-v3`. Live embedding,
-OpenSearch ingestion, and serving-path smoke remain deferred to M3-R3b and must reuse the single
-target runtime.
+M3-R3a is complete and the repository-local next Codex task is
+[`docs/tasks/active/M3-R3b-gcp-target-corpus-ingestion.md`](tasks/active/M3-R3b-gcp-target-corpus-ingestion.md).
+That static implementation is explicitly allowed to proceed in parallel with the remaining M3-R2
+live-readiness work and does not require live GCP access.
 
-**Make the single separate approval decision for the first protected 12-create foundation apply.**
+For the live-runtime track, deploy **only** the existing M3-R2 OpenSearch resources to the already
+proven GKE cluster: namespace, repository-owned `pd-standard` StorageClass, internal ClusterIP
+Service, and one OpenSearch 3.8.0 StatefulSet with its 15 GiB PVC. Do not apply the full
+`gcp-target` overlay or deploy the backend yet. The protected
+`GCP Target OpenSearch Readiness` workflow must prove the StatefulSet is ready, the PVC is Bound
+to `terraformers-pd-standard`, the service remains internal-only, and the OpenSearch API reports
+version 3.8.0 with yellow/green cluster health.
 
-Automated preflight run `36365247935` succeeded on
-`40750799aba5bf531ee939e0c50fe2b8042c1dd3`. It reconfirmed the non-mutating plan identity,
-required quota/headroom, Seoul machine/GKE availability, required APIs, absence of an unmanaged
-target runtime, protected state bucket, empty canonical runtime state, and the fail-closed exact
-12-create Terraform foundation contract. The apply job was skipped.
-
-Cloud Billing API is intentionally not enabled for this check and no billing-account role is added
-to `terraformers-plan`. Therefore the operator confirms only two remaining facts at the one
-protected approval: billing remains enabled and sufficient Free Trial promotional credit remains.
-After that explicit approval, dispatch `foundation`; do not repeat the completed bootstrap,
-identity-check or standalone preflight.
+After that live proof, M3-R2 can close and M3-R3b can perform the separately bounded live corpus
+ingestion handoff. Do not repeat foundation Terraform apply.
 
 ## Do not revisit
 

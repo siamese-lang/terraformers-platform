@@ -191,29 +191,42 @@ terminal or duplicate-delivered job cannot re-enter execution.
 
 ## M6 — Backend Reliability Improvement
 
-**Status.** **ACTIVE.** The source-of-truth plan is
-[`active/M6-backend-reliability-improvement.md`](active/M6-backend-reliability-improvement.md).
+**Status.** **ACTIVE — integrated case review before closure.** The source-of-truth plan is
+[`active/M6-backend-reliability-improvement.md`](active/M6-backend-reliability-improvement.md),
+and the connected engineering case is
+[`backend-reliability-analysis-job-lifecycle-case.md`](../evaluation/backend-reliability-analysis-job-lifecycle-case.md).
 
-**Problem.** M5 confirmed three concrete gaps: stranded non-terminal jobs after process restart,
-duplicate re-execution of the same job id, and untracked result-object residue after relational
-finalization failure.
+**Problem.** M5's three findings are now treated as one backend reliability case rather than three
+small unrelated defects. `AnalysisJob` execution ownership lived partly in the in-process executor,
+restart semantics had no durable reconciliation rule, and result finalization crossed MariaDB and
+object storage without one atomic transaction. The observed symptoms were stranded jobs, duplicate
+execution, and orphaned result objects.
 
-**Work.** Apply the smallest evidence-backed controls in sequence. First, make the `PENDING →
-RUNNING` claim atomic and terminal states immutable. Second, reconcile stale non-terminal jobs on
-startup under the current single-replica runtime contract. Third, inspect existing storage
-capabilities and control partial-success residue through the smallest provider-neutral compensation
-or durable-accountability mechanism. Reuse M5 scenarios as before/after tests.
+**Work.** M6-1 (PR #82) added an atomic MariaDB-backed `PENDING → RUNNING` claim so duplicate or
+terminal delivery cannot re-enter provider/storage work. M6-2 (PR #83) added startup reconciliation
+for prior-process non-terminal jobs under the current single-replica/`maxSurge:0` runtime. M6-3
+(PR #84) added provider-neutral compensation when object persistence succeeds but relational
+success-finalization fails.
 
-**Evidence.** M6 must invert the M5 failure scenarios rather than replace them with unrelated tests.
-No RabbitMQ, Transactional Outbox, Kafka, Redis, distributed lock service, generic retry loop, or
-second worker is justified by the current evidence.
+**Evidence.** The same M5 scenarios are being inverted instead of replaced with unrelated tests.
+M6-1 has direct MariaDB compare-and-set evidence. M6-2's application restart test passed, but the
+new `failInterrupted(...)` bulk update was not directly executed in the PR #83 MariaDB smoke; the
+current validation-gap PR closes that evidence gap. M6-3 has successful compensation coverage for
+persistent S3/filesystem writers and metadata-only behavior.
 
-**Exit condition.** One caller can claim a pending job, terminal jobs cannot re-enter execution,
-current single-replica restart does not leave M5 stranded states indefinitely, partial-success
-residue is removed or durably accountable, and existing successful/rejection behavior remains
-intact.
+**Trade-off / open risk.** M6 is not complete merely because the happy paths are green. Compensation
+is currently best-effort: if object deletion fails, the cleanup failure is logged but there is no
+durable cleanup ledger, so residue may remain. M6-4 must explicitly accept this as a bounded current
+runtime limitation or add the smallest durable accountability mechanism. Do not claim cross-resource
+exactly-once semantics.
 
-**Immediate next single task.** M6-1 atomic claim / terminal-state guard only.
+**Exit condition.** The representative case must explain user/system impact, common root mechanism,
+alternatives considered, why the chosen controls were smaller than a broker/outbox/distributed lock,
+same-scenario before/after behavior, and residual risk. Only then may M6 close.
+
+**Immediate next single task.** Close the M6-2 MariaDB validation gap and perform the integrated
+M6-4 case review. Do not start M7 or another backend feature simply because M6-1 through M6-3 have
+implementation commits.
 
 ## M7 — Observability
 

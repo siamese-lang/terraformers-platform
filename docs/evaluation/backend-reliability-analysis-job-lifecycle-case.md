@@ -184,6 +184,22 @@ Implementation:
 - metadata-only storage remains a no-op because no object was persisted;
 - the M5 partial-success scenario is inverted for successful compensation.
 
+## Supporting observability baseline
+
+PR #86 / merge `46b87be8284e127d8d7fa070d04fb6561a1948a5` does not add a new observability
+platform. It captures the signals already emitted by the same M6-3 failure scenario:
+
+- failed-job counter increments;
+- bounded failure category remains `other`;
+- analysis duration is recorded;
+- logs carry `analysisJobId`;
+- compensation success is visible in logs;
+- configured `trace_id` / `span_id` fields are present but empty.
+
+This evidence is retained because it deepens the same reliability case and shows exactly what an
+operator can and cannot infer today. It does not by itself justify advancing to M7 or installing a
+tracing backend.
+
 ## Residual risk and trade-off
 
 M6 is not yet closed.

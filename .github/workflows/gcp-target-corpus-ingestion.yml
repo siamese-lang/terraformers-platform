@@ -203,7 +203,28 @@ jobs:
 
           kubectl -n "$TARGET_NAMESPACE" apply             -f "${RUNNER_TEMP}/ingestion-pod.yaml"
 
-          kubectl -n "$TARGET_NAMESPACE" wait             --for=condition=Ready "pod/${INGESTION_POD}"             --timeout=5m
+          if ! kubectl -n "$TARGET_NAMESPACE" wait \
+            --for=condition=Ready "pod/${INGESTION_POD}" \
+            --timeout=5m; then
+            echo 'Ingestion pod did not become Ready; capturing bounded Kubernetes diagnostics.' >&2
+            kubectl -n "$TARGET_NAMESPACE" get pod "$INGESTION_POD" -o wide || true
+            kubectl -n "$TARGET_NAMESPACE" get pod "$INGESTION_POD" -o json \
+              | jq '{
+                  phase: .status.phase,
+                  conditions: .status.conditions,
+                  containerStatuses: .status.containerStatuses,
+                  initContainerStatuses: .status.initContainerStatuses,
+                  nodeName: .spec.nodeName,
+                  serviceAccountName: .spec.serviceAccountName
+                }' || true
+            kubectl -n "$TARGET_NAMESPACE" describe pod "$INGESTION_POD" || true
+            kubectl -n "$TARGET_NAMESPACE" get events \
+              --field-selector "involvedObject.name=${INGESTION_POD}" \
+              --sort-by='.lastTimestamp' || true
+            kubectl -n "$TARGET_NAMESPACE" logs "$INGESTION_POD" \
+              --all-containers=true --tail=200 || true
+            exit 1
+          fi
 
       - name: Transfer exact ingestion bundle
         run: |

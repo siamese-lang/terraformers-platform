@@ -59,6 +59,7 @@ jobs:
           python3 -m py_compile scripts/deploy/gcp_target_plan_gate.py
           python3 -m unittest tests/deploy/test_gcp_target_plan_gate.py
           bash -n scripts/deploy/bootstrap_gcp_target_apply.sh
+          bash -n scripts/deploy/bootstrap_github_target_apply_environment.sh
 
       - name: Verify destroy-plan summary contract
         run: |

@@ -1,0 +1,12 @@
+{
+  "awsProviderVersion": "5.100.0",
+  "checksumAlgorithm": "SHA-256",
+  "chunkCount": 128,
+  "contentField": "content",
+  "corpusVersion": "terraformers-reference-v3",
+  "documentCount": 128,
+  "embeddingModelId": "gemini-embedding-001",
+  "indexName": "terraformers-reference-v3",
+  "vectorDimension": 1024,
+  "vectorField": "embedding"
+}

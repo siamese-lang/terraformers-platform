@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Authenticate only, create the reviewed foundation, or return the existing node pool to zero.
+        description: Authenticate only, run read-only preflight, create the reviewed foundation, or return the existing node pool to zero.
         required: true
         type: choice
         options:
           - identity-check
+          - preflight
           - foundation
           - idle
       expected_sha:
@@ -16,7 +17,7 @@ on:
         required: true
         type: string
       confirmation:
-        description: Use IDENTITY_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_12, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
+        description: Use IDENTITY_CHECK, PREFLIGHT_ONLY, APPLY_REVIEWED_GCP_FOUNDATION_12, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
         required: true
         type: string
 
@@ -29,8 +30,210 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  apply:
+  preflight:
     if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: gcp-target-plan
+    timeout-minutes: 30
+    env:
+      TF_IN_AUTOMATION: 'true'
+      TF_INPUT: 'false'
+      TF_VAR_project_id: terraformers-platform
+      TF_VAR_subnet_cidr: 10.40.0.0/20
+      TF_VAR_node_count: '1'
+    defaults:
+      run:
+        shell: bash
+        working-directory: infra/terraform/envs/gcp-target-runtime
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate preflight request
+        env:
+          OPERATION: ${{ inputs.operation }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          PLAN_SERVICE_ACCOUNT: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]] || exit 1
+          [[ "$GITHUB_REF" == refs/heads/main ]] || exit 1
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'expected_sha must be a full 40-character commit SHA.' >&2
+            exit 1
+          }
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Preflight SHA does not match the checked-out main commit.' >&2
+            exit 1
+          }
+
+          case "$OPERATION" in
+            identity-check)
+              [[ "$CONFIRMATION" == IDENTITY_CHECK ]] || exit 1
+              ;;
+            preflight)
+              [[ "$CONFIRMATION" == PREFLIGHT_ONLY ]] || exit 1
+              ;;
+            foundation)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_FOUNDATION_12 ]] || exit 1
+              ;;
+            idle)
+              [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_ZERO ]] || exit 1
+              ;;
+            *)
+              echo "Unsupported operation: $OPERATION" >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ "$OPERATION" == preflight || "$OPERATION" == foundation ]]; then
+            [[ -n "$STATE_BUCKET" && -n "$WIF_PROVIDER" && -n "$PLAN_SERVICE_ACCOUNT" ]] || {
+              echo 'gcp-target-plan environment variables are incomplete.' >&2
+              exit 1
+            }
+            [[ "$PLAN_SERVICE_ACCOUNT" == terraformers-plan@terraformers-platform.iam.gserviceaccount.com ]] || {
+              echo 'Foundation preflight must use the dedicated plan identity.' >&2
+              exit 1
+            }
+            [[ "$STATE_BUCKET" == terraformers-platform-tfstate-21647422237 ]] || {
+              echo 'Unexpected Terraform state bucket.' >&2
+              exit 1
+            }
+          fi
+
+      - uses: google-github-actions/auth@v3
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+
+      - name: Reconfirm plan identity is non-mutating
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        run: |
+          set -euo pipefail
+          access_token="$(gcloud auth print-access-token)"
+          response="$(
+            curl -fsS -X POST               -H "Authorization: Bearer ${access_token}"               -H 'Content-Type: application/json'               -d '{"permissions":["compute.networks.create","compute.subnetworks.create","container.clusters.create","container.clusters.update","iam.serviceAccounts.create","iam.serviceAccounts.actAs","resourcemanager.projects.setIamPolicy","serviceusage.services.enable"]}'               "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
+          )"
+          granted="$(jq -r '.permissions // [] | join(",")' <<< "$response")"
+          [[ -z "$granted" ]] || {
+            echo "Plan identity unexpectedly has target mutation permissions: $granted" >&2
+            exit 1
+          }
+
+      - name: Capture mutable account evidence
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        run: |
+          set -euo pipefail
+
+          gcloud projects describe terraformers-platform --format=json             > "${RUNNER_TEMP}/project.json"
+
+          gcloud billing projects describe terraformers-platform --format=json             > "${RUNNER_TEMP}/billing.json"
+
+          gcloud compute project-info describe             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/global-quota.json"
+
+          gcloud compute regions describe asia-northeast3             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/region.json"
+
+          gcloud compute machine-types describe e2-standard-2             --zone=asia-northeast3-a             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/machine.json"
+
+          gcloud container get-server-config             --zone=asia-northeast3-a             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/gke-server.json"
+
+          gcloud services list             --enabled             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/services.json"
+
+          gcloud container clusters list             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/clusters.json"
+
+          gcloud compute networks list             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/networks.json"
+
+          gcloud compute networks subnets list             --project=terraformers-platform             --regions=asia-northeast3             --format=json             > "${RUNNER_TEMP}/subnets.json"
+
+          gcloud iam service-accounts list             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/service-accounts.json"
+
+          gcloud compute instances list             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/instances.json"
+
+      - name: Enforce mutable foundation preflight
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        run: |
+          set -euo pipefail
+          python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_foundation_preflight.py"             --project-json "${RUNNER_TEMP}/project.json"             --billing-json "${RUNNER_TEMP}/billing.json"             --global-quota-json "${RUNNER_TEMP}/global-quota.json"             --region-json "${RUNNER_TEMP}/region.json"             --machine-json "${RUNNER_TEMP}/machine.json"             --gke-server-json "${RUNNER_TEMP}/gke-server.json"             --services-json "${RUNNER_TEMP}/services.json"             --clusters-json "${RUNNER_TEMP}/clusters.json"             --networks-json "${RUNNER_TEMP}/networks.json"             --subnets-json "${RUNNER_TEMP}/subnets.json"             --service-accounts-json "${RUNNER_TEMP}/service-accounts.json"             --instances-json "${RUNNER_TEMP}/instances.json"             --output-json "${RUNNER_TEMP}/gcp-foundation-preflight.json"             --output-md "${RUNNER_TEMP}/gcp-foundation-preflight.md"
+
+          cat "${RUNNER_TEMP}/gcp-foundation-preflight.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check canonical state bucket protection
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        env:
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+          versioning="$(gcloud storage buckets describe "gs://${STATE_BUCKET}" --format='value(versioning_enabled)')"
+          ubla="$(gcloud storage buckets describe "gs://${STATE_BUCKET}" --format='value(uniform_bucket_level_access)')"
+          [[ "$versioning" == True ]] || {
+            echo 'State bucket object versioning must be enabled.' >&2
+            exit 1
+          }
+          [[ "$ubla" == True ]] || {
+            echo 'State bucket uniform bucket-level access must be enabled.' >&2
+            exit 1
+          }
+
+      - uses: hashicorp/setup-terraform@v3
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: Verify empty canonical state and corrected foundation plan
+        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        env:
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+
+          terraform init -no-color -reconfigure -input=false             -backend-config="bucket=${STATE_BUCKET}"             -backend-config='prefix=gcp-target-runtime'
+
+          state_error="${RUNNER_TEMP}/terraform-state-list.err"
+          if state_list="$(terraform state list 2>"$state_error")"; then
+            if [[ -n "$state_list" ]]; then
+              echo 'Foundation preflight requires empty canonical runtime state.' >&2
+              printf '%s\n' "$state_list" >&2
+              exit 1
+            fi
+          else
+            if ! grep -q 'No state file was found' "$state_error"; then
+              cat "$state_error" >&2
+              exit 1
+            fi
+          fi
+
+          terraform plan -no-color -input=false -lock-timeout=5m             -out="${RUNNER_TEMP}/gcp-target-preflight.tfplan"
+
+          terraform show -json "${RUNNER_TEMP}/gcp-target-preflight.tfplan"             > "${RUNNER_TEMP}/gcp-target-preflight-plan.json"
+
+          python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_target_plan_gate.py"             --plan-json "${RUNNER_TEMP}/gcp-target-preflight-plan.json"             --operation foundation
+
+          {
+            echo
+            echo '### Pre-approval boundary'
+            echo
+            echo '- Corrected foundation contract: `12 create` only.'
+            echo '- Delete/replacement/additional managed resources: `forbidden`.'
+            echo '- Raw plan/state are not uploaded.'
+            echo '- Remaining Free Trial promotional credit is confirmed by the operator at the single protected foundation approval.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    needs: preflight
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation != 'preflight' &&
+      needs.preflight.result == 'success'
     runs-on: ubuntu-latest
     environment: gcp-target-apply
     timeout-minutes: 60

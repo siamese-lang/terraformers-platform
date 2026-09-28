@@ -53,11 +53,15 @@ jobs:
             tests/rag/test_curate_corpus_v2.py \
             tests/rag/test_ingest_corpus.py
 
-      - name: Verify GCP target apply plan gate
+      - name: Verify GCP target delivery gates
         run: |
           set -euo pipefail
-          python3 -m py_compile scripts/deploy/gcp_target_plan_gate.py
-          python3 -m unittest tests/deploy/test_gcp_target_plan_gate.py
+          python3 -m py_compile \
+            scripts/deploy/gcp_target_plan_gate.py \
+            scripts/deploy/gcp_foundation_preflight.py
+          python3 -m unittest \
+            tests/deploy/test_gcp_target_plan_gate.py \
+            tests/deploy/test_gcp_foundation_preflight.py
           bash -n scripts/deploy/bootstrap_gcp_target_apply.sh
           bash -n scripts/deploy/bootstrap_github_target_apply_environment.sh
 

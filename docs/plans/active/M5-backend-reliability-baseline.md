@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — BASELINE MEASUREMENT ONLY**
+**COMPLETE — M5 BASELINE CLASSIFIED / M6 GATE OPEN**
 
 M4 is complete. M5 measures the current `AnalysisJob` lifecycle before selecting any reliability
 mechanism.
@@ -105,26 +105,28 @@ No locks, state guards, idempotency keys, or deduplication were added.
 
 ## M5-3 — Object/DB partial-success baseline
 
-**Status: TODO**
+**Status: COMPLETE — PR #80 / merge `18503b656de090b6fc26b317908189b7090ecfc3`**
 
-Measure the boundary where the Terraform object is written successfully but relational result
-registration or final job-state persistence fails.
+The deterministic baseline forced generated-file relational registration to fail after a successful
+persistent result-object write.
 
-Required evidence:
+Observed behavior:
 
-- preserve successful object-write evidence;
-- force a deterministic DB/result-registration failure after that write;
-- observe job terminal state;
-- observe whether a result object remains without a committed corresponding result-file/job
-  reference;
-- record whether repeating the job overwrites the same deterministic object key or creates a new
-  side effect.
+- the object write succeeds and remains present;
+- the job ends `FAILED`;
+- relational `resultFileId` remains null;
+- relational `resultObjectKey` remains null;
+- no compensation removes the already-written object.
 
-Do not add compensation/deletion/outbox behavior in M5.
+The result key is deterministic from the job id, but the persisted job row does not account for the
+residue after finalization failure. Classification:
+`CONFIRMED_RELIABILITY_GAP`.
+
+No compensation/deletion/outbox behavior was added.
 
 ## M5-4 — Executor pressure classification
 
-**Status: TODO**
+**Status: COMPLETE — CONTROLLED CURRENT BEHAVIOR**
 
 Reuse the existing rejection behavior first.
 
@@ -134,12 +136,13 @@ Current evidence already shows:
 - rejection increments observability;
 - the persisted job is marked `FAILED`.
 
-Only add a bounded saturation integration measurement if the existing deterministic coverage cannot
-answer whether real executor pressure leaves jobs stranded. Do not create a separate load workflow.
+The existing deterministic rejection coverage is sufficient for the observed failure contract:
+executor rejection is caught, observed, and the persisted job is terminal `FAILED`. M5 therefore
+does not add a saturation workflow or another load harness.
 
 ## M5-5 — Baseline classification and M6 gate
 
-**Status: TODO**
+**Status: COMPLETE**
 
 Classify each candidate as one of:
 
@@ -148,16 +151,21 @@ Classify each candidate as one of:
 - `NOT_REPRODUCED`;
 - `OUT_OF_SCOPE / PRODUCT_CONTRACT_UNCLEAR`.
 
-For every confirmed gap record:
+Final classifications are recorded in
+[`m5-backend-reliability-baseline.md`](../../evaluation/m5-backend-reliability-baseline.md).
 
-- exact reproduction;
-- state transition sequence;
-- persisted DB/object result;
-- user-visible consequence;
-- invariant violated;
-- smallest solution families eligible for M6 consideration.
+Confirmed gaps:
 
-Do not select a solution in M5.
+- restart-stranded `PENDING`/`RUNNING`;
+- duplicate same-job execution through a terminal state;
+- persistent object residue after relational finalization failure.
+
+Controlled behavior:
+
+- executor rejection terminates the job as `FAILED`.
+
+M5 selects no broker/outbox/lock/retry architecture. The evidence opens M6 only for the minimal
+state-transition, current-runtime restart reconciliation, and partial-success residue controls.
 
 ## Validation discipline
 
@@ -181,6 +189,7 @@ M5 is complete when:
 
 ## Immediate next single task
 
-Run M5-3: force a deterministic failure after Terraform object write succeeds but before
-generated-file/job-success DB finalization, then record object residue and the persisted job state.
-Do not add compensation, deletion, outbox, or retry behavior.
+Begin M6-1 from
+[`M6 — Backend Reliability Improvement`](M6-backend-reliability-improvement.md): replace the
+unconditional `RUNNING` transition with an atomic `PENDING` claim and invert the M5-2 duplicate
+delivery baseline. Do not combine restart reconciliation or partial-success cleanup into M6-1.

@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE**
+**COMPLETE**
 
 This document accumulates M5 measurement results. M5 records current behavior only; reliability
 fixes are deferred to M6 after classification.
@@ -103,7 +103,52 @@ M5-3.
 
 No lock, compare-and-set transition, idempotency key, or deduplication behavior was added.
 
-## Existing executor-rejection evidence
+## M5-3 — Object write / DB finalization partial-success baseline
+
+**Classification: `CONFIRMED_RELIABILITY_GAP`**
+
+Evidence:
+
+- PR #80
+- merge commit: `18503b656de090b6fc26b317908189b7090ecfc3`
+- final successful Backend Local Verification run: `36395373207`
+- test:
+  `AnalysisJobPartialSuccessBaselineTest.successfulObjectWriteRemainsWhenRelationalFinalizationFails`
+
+### Reproduction
+
+The deterministic test uses the real JPA repository/state-service transaction boundaries and real
+`AnalysisJobOrchestrator`/Terraform validation with:
+
+- a deterministic persistent `ObjectWriter` fixture;
+- a forced exception at `ProjectArtifactService.registerGeneratedTerraform(...)` after object write.
+
+Observed result:
+
+1. provider analysis and Terraform validation succeed;
+2. result-object write succeeds and remains observable;
+3. generated-file relational registration fails;
+4. the runner records the job as `FAILED`;
+5. persisted `resultFileId` remains null;
+6. persisted `resultObjectKey` remains null;
+7. the already-written result object remains present because there is no compensation path.
+
+`AnalysisResultStorage` derives the object key from the job id, so repeat execution of the same job
+targets the same deterministic key rather than an arbitrary new path. M5 does not use that property
+as a substitute for residue cleanup/accountability.
+
+### Interpretation boundary
+
+This proves a cross-resource partial-success window: object persistence can commit before the
+relational success record, leaving persistent data that the job row does not reference. M5 does not
+claim a broker/outbox is required; it classifies the consistency gap and leaves the minimal control
+decision to M6.
+
+No compensation/delete behavior was added.
+
+## M5-4 — Executor pressure / rejection classification
+
+**Classification: `CONTROLLED_CURRENT_BEHAVIOR`**
 
 Existing deterministic coverage already proves:
 
@@ -111,7 +156,8 @@ Existing deterministic coverage already proves:
 - rejection is observed through `AnalysisObservability.jobRejected()`;
 - the persisted job is marked `FAILED`.
 
-M5 will reuse this evidence unless a later baseline shows a distinct executor-pressure state gap.
+Because the failure mode is already terminal and observable, M5 does not add a separate saturation
+workflow or load harness merely to reproduce the same rejection contract.
 
 ## Current classification table
 
@@ -119,11 +165,29 @@ M5 will reuse this evidence unless a later baseline shows a distinct executor-pr
 | --- | --- | --- |
 | Restart leaves persisted `PENDING`/`RUNNING` | **CONFIRMED_RELIABILITY_GAP** | PR #78 / restart baseline test |
 | Duplicate delivery of same job id | **CONFIRMED_RELIABILITY_GAP** | duplicate-execution baseline test |
-| Object write succeeds, DB finalization fails | PENDING MEASUREMENT | M5-3 |
+| Object write succeeds, DB finalization fails | **CONFIRMED_RELIABILITY_GAP** | PR #80 / partial-success baseline test |
 | Executor rejection | **CONTROLLED_CURRENT_BEHAVIOR** | existing `AnalysisJobServiceTest` |
 
-## Immediate next measurement
+## M5 closure decision
 
-M5-3: force a deterministic failure after Terraform object write succeeds but before generated-file
-and job-success state commit, then record the remaining object and DB/job state. Do not add
-compensation or outbox behavior.
+M5 exit criteria are **MET**.
+
+Confirmed reliability gaps:
+
+1. application restart can strand committed `PENDING`/`RUNNING` jobs indefinitely;
+2. duplicate delivery can re-execute an already-`SUCCEEDED` job and repeat side-effect attempts;
+3. object persistence can succeed while relational finalization fails, leaving untracked residue.
+
+Controlled current behavior:
+
+- executor rejection is converted to an observable terminal `FAILED` state.
+
+M5 does not select RabbitMQ, Transactional Outbox, distributed locks, or retry infrastructure.
+The evidence instead supports a smaller M6 sequence:
+
+1. atomic `PENDING → RUNNING` claim / terminal-state guard;
+2. current single-replica restart reconciliation to a safe terminal state;
+3. provider-neutral partial-success residue control after capability inspection.
+
+The M6 source-of-truth plan is
+[`M6 — Backend Reliability Improvement`](../plans/active/M6-backend-reliability-improvement.md).

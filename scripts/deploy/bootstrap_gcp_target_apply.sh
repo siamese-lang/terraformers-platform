@@ -61,16 +61,35 @@ service_account_exists() {
 
 project_role_bound() {
   local role="$1"
-  gcloud projects get-iam-policy "$GCP_PROJECT"     --flatten='bindings[].members'     --filter="bindings.role=${role} AND bindings.members=serviceAccount:${GCP_APPLY_SA}"     --format='value(bindings.role)'     | grep -Fxq "$role"
+  gcloud projects get-iam-policy "$GCP_PROJECT" --format=json \
+    | jq -e --arg role "$role" --arg member "serviceAccount:${GCP_APPLY_SA}" '
+        any(.bindings[]?;
+          .role == $role and any(.members[]?; . == $member)
+        )
+      ' >/dev/null
 }
 
 bucket_role_bound() {
   local role="$1"
-  gcloud storage buckets get-iam-policy "gs://${GCP_BUCKET}"     --flatten='bindings[].members'     --filter="bindings.role=${role} AND bindings.members=serviceAccount:${GCP_APPLY_SA}"     --format='value(bindings.role)'     | grep -Fxq "$role"
+  gcloud storage buckets get-iam-policy "gs://${GCP_BUCKET}" --format=json \
+    | jq -e --arg role "$role" --arg member "serviceAccount:${GCP_APPLY_SA}" '
+        any(.bindings[]?;
+          .role == $role and any(.members[]?; . == $member)
+        )
+      ' >/dev/null
 }
 
 wif_binding_present() {
-  gcloud iam service-accounts get-iam-policy "$GCP_APPLY_SA"     --project="$GCP_PROJECT"     --flatten='bindings[].members'     --filter="bindings.role=roles/iam.workloadIdentityUser AND bindings.members=principal://iam.googleapis.com/projects/${GCP_NUMBER}/locations/global/workloadIdentityPools/${GCP_POOL}/subject/${GITHUB_APPLY_SUBJECT}"     --format='value(bindings.role)'     | grep -Fxq roles/iam.workloadIdentityUser
+  local principal="principal://iam.googleapis.com/projects/${GCP_NUMBER}/locations/global/workloadIdentityPools/${GCP_POOL}/subject/${GITHUB_APPLY_SUBJECT}"
+  gcloud iam service-accounts get-iam-policy "$GCP_APPLY_SA" \
+    --project="$GCP_PROJECT" \
+    --format=json \
+    | jq -e --arg member "$principal" '
+        any(.bindings[]?;
+          .role == "roles/iam.workloadIdentityUser"
+          and any(.members[]?; . == $member)
+        )
+      ' >/dev/null
 }
 
 if [[ "$MODE" == apply ]]; then

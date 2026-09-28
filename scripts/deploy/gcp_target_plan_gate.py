@@ -160,28 +160,55 @@ def validate_foundation(changes: dict[str, dict[str, Any]]) -> None:
     require(node_sa.get("account_id") == "terraformers-gke-nodes", "unexpected node service account id")
 
 
-def validate_idle(changes: dict[str, dict[str, Any]]) -> None:
-    require(set(changes) == {"google_container_node_pool.target"}, "idle plan may only change the target node pool")
+def validate_node_pool_transition(
+    changes: dict[str, dict[str, Any]],
+    operation: str,
+    before_count: int,
+    after_count: int,
+) -> None:
+    require(
+        set(changes) == {"google_container_node_pool.target"},
+        f"{operation} plan may only change the target node pool",
+    )
     resource = changes["google_container_node_pool.target"]
-    require(resource.get("type") == "google_container_node_pool", "idle resource type changed")
+    require(resource.get("type") == "google_container_node_pool", f"{operation} resource type changed")
     change = resource.get("change", {})
-    require(list(change.get("actions", [])) == ["update"], "idle plan must be an in-place node-pool update")
+    require(
+        list(change.get("actions", [])) == ["update"],
+        f"{operation} plan must be an in-place node-pool update",
+    )
     before = change.get("before") or {}
     after = change.get("after") or {}
-    require(before.get("node_count") == 1, "idle transition must start from node_count=1")
-    require(after.get("node_count") == 0, "idle transition must end at node_count=0")
-    require(after.get("name") == "terraformers-target-primary", "idle plan targets an unexpected node pool")
-    require(after.get("location") == "asia-northeast3-a", "idle node-pool zone changed")
+    require(
+        before.get("node_count") == before_count,
+        f"{operation} transition must start from node_count={before_count}",
+    )
+    require(
+        after.get("node_count") == after_count,
+        f"{operation} transition must end at node_count={after_count}",
+    )
+    require(
+        after.get("name") == "terraformers-target-primary",
+        f"{operation} plan targets an unexpected node pool",
+    )
+    require(after.get("location") == "asia-northeast3-a", f"{operation} node-pool zone changed")
     node_config = single_block(after, "node_config")
-    require(node_config.get("machine_type") == "e2-standard-2", "idle plan changes node machine type")
-    require(node_config.get("disk_type") == "pd-standard", "idle plan changes node disk type")
-    require(node_config.get("disk_size_gb") == 30, "idle plan changes node disk size")
+    require(node_config.get("machine_type") == "e2-standard-2", f"{operation} plan changes node machine type")
+    require(node_config.get("disk_type") == "pd-standard", f"{operation} plan changes node disk type")
+    require(node_config.get("disk_size_gb") == 30, f"{operation} plan changes node disk size")
     require(
         node_config.get("service_account")
         == "terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
-        "idle plan changes node service account",
+        f"{operation} plan changes node service account",
     )
 
+
+def validate_activate(changes: dict[str, dict[str, Any]]) -> None:
+    validate_node_pool_transition(changes, "activate", 0, 1)
+
+
+def validate_idle(changes: dict[str, dict[str, Any]]) -> None:
+    validate_node_pool_transition(changes, "idle", 1, 0)
 
 def validate_plan(plan: dict[str, Any], operation: str) -> dict[str, Any]:
     changes = managed_changes(plan)
@@ -192,6 +219,8 @@ def validate_plan(plan: dict[str, Any], operation: str) -> dict[str, Any]:
 
     if operation == "foundation":
         validate_foundation(changes)
+    elif operation == "activate":
+        validate_activate(changes)
     elif operation == "idle":
         validate_idle(changes)
     else:
@@ -249,7 +278,7 @@ def append_summary(result: dict[str, Any], plan_hash: str) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fail-closed contract gate for the GCP target Terraform apply plan.")
     parser.add_argument("--plan-json", required=True, type=Path)
-    parser.add_argument("--operation", required=True, choices=("foundation", "idle"))
+    parser.add_argument("--operation", required=True, choices=("foundation", "activate", "idle"))
     return parser.parse_args()
 
 

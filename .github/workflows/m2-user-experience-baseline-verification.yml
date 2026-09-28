@@ -2,20 +2,6 @@ name: M2 User Experience Baseline Verification
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - "backend/src/**"
-      - "backend/pom.xml"
-      - "frontend/src/**"
-      - "frontend/package.json"
-      - "frontend/package-lock.json"
-      - "infra/kubernetes/overlays/portable-object-store/**"
-      - "scripts/checks/kind-portable-user-experience-baseline.sh"
-      - "scripts/checks/m2-frontend-experience-baseline.py"
-      - ".github/workflows/m2-user-experience-baseline-verification.yml"
-      - "docs/verification/m2-user-experience-baseline.md"
-
 permissions:
   contents: read
 

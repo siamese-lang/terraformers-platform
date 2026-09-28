@@ -30,7 +30,7 @@
 | M2 — Runtime Parity | **COMPLETE** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
 | M3 — AI Evaluation Baseline | **COMPLETE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
 | M4 — AI Targeted Improvement | **COMPLETE** | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
-| M5 — Backend Reliability Baseline | PLANNED | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
+| M5 — Backend Reliability Baseline | **ACTIVE** | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
 | M6 — Backend Reliability Improvement | PLANNED | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
 | M7 — Observability | PLANNED | 실제 장애를 signal 간 연결로 RCA하고 recovery 확인 | 하나 이상의 실제 failure에 대한 metric/log/trace 기반 원인 및 recovery evidence |
 | M8 — Failure & Load Verification | PLANNED | AI, reliability, observability 결합 상태를 failure/load 조건에서 검증 | Reproducible scenario, telemetry, resulting state, recovery와 operator evidence |
@@ -161,13 +161,33 @@ reliability mechanism.
 
 ## M5 — Backend Reliability Baseline
 
-**Problem.** 현재 `AnalysisJob`/runtime lifecycle의 failure behavior와 실제 reliability gap이 측정되지 않았다.
+**Status.** **ACTIVE.** The source-of-truth plan is
+[`active/M5-backend-reliability-baseline.md`](active/M5-backend-reliability-baseline.md).
 
-**Work.** Process restart, `PENDING`/`RUNNING` recovery, concurrent requests, executor saturation/rejection, duplicate execution, DB/object-store consistency, result write와 DB state transition 사이 failure를 investigation 후보로 실험한다. 이 후보를 결함으로 미리 단정하지 않는다.
+**Problem.** The current `AnalysisJob` lifecycle persists `PENDING` work, schedules it through an
+in-process executor after commit, transitions to `RUNNING` in a separate transaction, writes the
+result object before final DB success registration, and has no currently identified stale-job
+reconciliation path. Which of these boundaries are actual reliability gaps has not yet been
+measured.
 
-**Evidence.** Reproducible failure scenarios, current behavior report, invariants, confirmed failure와 non-failure 구분을 남긴다.
+**Work.** Measure restart/stranded `PENDING` and `RUNNING` behavior, same-job duplicate execution,
+the object-write/DB-finalization failure window, and executor pressure/rejection. Existing executor
+rejection coverage is reused before adding any new measurement. M5 classifies behavior only; it does
+not implement a reliability solution.
 
-**Exit condition.** 후보별 실제 behavior가 재현 가능하게 분류되고 개선 milestone이 사용할 명확한 invariants와 confirmed problems가 존재한다. RabbitMQ나 outbox는 이 baseline에서 해결책으로 선택하지 않는다.
+**Evidence.** Use existing backend/MariaDB/local deterministic infrastructure first. Each candidate
+must record the reproduction, resulting state and side effects, and whether the observed behavior is
+a confirmed reliability gap, controlled behavior, not reproduced, or outside the current product
+contract.
+
+**Exit condition.** Restart, duplicate execution, partial-success consistency, and executor pressure
+are reproducibly classified; confirmed gaps have explicit violated invariants and user/system
+consequences that can gate M6. RabbitMQ, Transactional Outbox, locking, retry infrastructure, or
+another mechanism is not selected before this baseline exists.
+
+**Immediate next single task.** Execute M5-1: reproduce persisted `PENDING`/`RUNNING` jobs across
+a simulated process-restart boundary and observe whether the current application discovers,
+resumes, fails, or leaves them unchanged.
 
 ## M6 — Backend Reliability Improvement
 

@@ -12,14 +12,15 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current milestone
 
-- Milestone: **M4 — AI Targeted Improvement**
-- Status: **COMPLETE**
-- Phase: M4 closure complete; M5 active-plan creation is next
-- Active plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
+- Milestone: **M5 — Backend Reliability Baseline**
+- Status: **ACTIVE**
+- Phase: M5-1 restart / stranded-state baseline
+- Active plan: [M5 — Backend Reliability Baseline](plans/active/M5-backend-reliability-baseline.md)
+- Completed M4 plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **none — create the M5 Backend Reliability Baseline active plan before M5 implementation**
+- Current implementation task: **M5-1 — reproduce persisted PENDING/RUNNING behavior across a simulated process-restart boundary without implementing recovery**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -83,6 +84,15 @@ PR #75 also reduced accumulated automatic PR CI from 18 workflows to the three c
 checks and added a machine-enforced allowlist in the existing Terraform Static scope job. Completed
 milestone and historical AWS workflows remain available through manual `workflow_dispatch` rather
 than running on every PR.
+
+M5 planning is now active. Current code inspection establishes the baseline candidates without
+pre-classifying them as defects: jobs are persisted `PENDING` and scheduled only after commit through
+the in-process executor; `markRunning` has no status guard/row lock/version transition; result object
+write occurs before final DB result registration; and no stale `PENDING`/`RUNNING` reconciliation
+component or startup hook is currently identified. Executor rejection is already caught and mapped
+to `FAILED` with deterministic unit coverage, so M5 reuses that evidence before adding any pressure
+measurement. The M5 plan forbids selecting RabbitMQ, Transactional Outbox, locks, retry
+infrastructure, or another solution until these behaviors are reproduced and classified.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected

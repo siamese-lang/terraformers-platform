@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case B B1 bounded implementation specification**
+- Current single task: **Case B B2 bounded implementation specification**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -52,8 +52,15 @@ Case B — Backend durable asynchronous processing:
   evidence justifies the added operational layer;
 - implementation is split into B1 durable state/fencing, B2 dispatcher/recovery, B3 bounded retry,
   B4 result/cleanup safety, and B5 integrated closure;
-- production implementation must proceed one bounded stage at a time; the immediate next task is the
-  B1 implementation specification, not implementation of all Case B stages.
+- B1 is complete in PR #97 / merge `237c97f35184312cac3af56aee438da830f4ff8a`: additive
+  durable state, lease/fencing transitions, strict lease/retry-time invariants, stale-generation
+  rejection, and real MariaDB single-owner initial/reclaim contention are verified;
+- B1 evidence is recorded in
+  [Case B B1 Durable State and Fencing Evidence](evaluation/case-b-b1-durable-state-fencing.md);
+- current runtime still uses after-commit in-memory dispatch and restart-to-FAILED reconciliation;
+  B2 is the first stage allowed to change those runtime delivery/recovery semantics;
+- production implementation must continue one bounded stage at a time; the immediate next task is the
+  B2 implementation specification, not B2/B3/B4 combined implementation.
 
 Case C — Cloud runtime capacity and safe delivery:
 - use the existing GKE/Vertex/OpenSearch target runtime as the baseline;

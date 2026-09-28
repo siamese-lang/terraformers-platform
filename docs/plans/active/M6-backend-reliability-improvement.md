@@ -2,7 +2,7 @@
 
 ## Status
 
-**COMPLETE — M6-1 THROUGH M6-4 CLOSED**
+**ACTIVE — INTEGRATED RELIABILITY CASE REVIEW BEFORE CLOSURE**
 
 M5 measured the current `AnalysisJob` lifecycle and confirmed three reliability gaps. M6 changes
 only those evidenced behaviors and reuses the exact M5 scenarios for validation.
@@ -154,7 +154,7 @@ residue ledger.
 
 ## M6-4 — Same-scenario before/after closure
 
-**Status: COMPLETE**
+**Status: ACTIVE — INTEGRATED CASE REVIEW**
 
 Re-run the M5 evidence scenarios after M6 changes.
 
@@ -166,6 +166,11 @@ Expected closure table:
 | Duplicate delivery after success | re-executes | no second claim/execution |
 | Object write then DB failure | untracked persisted residue | removed or durably recorded |
 | Executor rejection | controlled `FAILED` | unchanged controlled behavior |
+
+M6-4 is not a paperwork-only closure. The common mechanism is that execution ownership, process
+restart, and DB/object-storage finalization did not form one coherent durable `AnalysisJob`
+lifecycle. The integrated case review must record user/system impact, alternative architectures
+considered, why the implemented controls were the smallest sufficient changes, and residual risk.
 
 ## Exit condition
 
@@ -179,24 +184,33 @@ M6 is complete when:
 6. normal successful job behavior and executor rejection do not regress;
 7. no broker/outbox/distributed system is added without new evidence.
 
-## Completion evidence
+## Current evidence and closure hold
 
-Detailed before/after evidence is recorded in
-[`m6-backend-reliability-closure.md`](../../evaluation/m6-backend-reliability-closure.md).
+Implementation evidence already exists:
 
-Validation runs:
+- M6-1 / PR #82 / Backend Local Verification `36399415255` — **SUCCESS**;
+- M6-2 / PR #83 / Backend Local Verification `36399836413` — **SUCCESS**;
+- M6-3 / PR #84 / Backend Local Verification `36400693033` — **SUCCESS**.
 
-- M6-1 Backend Local Verification `36399415255` — **SUCCESS**;
-- M6-2 Backend Local Verification `36399836413` — **SUCCESS**;
-- M6-3 Backend Local Verification `36400693033` — **SUCCESS**.
+However, M6 is intentionally **not closed** yet.
 
-The three M5 gaps are controlled using the same scenarios: duplicate execution is prevented by the
-atomic pending claim, previous-process non-terminal jobs are failed before readiness under the
-current single-replica contract, and rollback-safe relational finalization failure compensates the
-just-written persistent object.
+Two reasons:
+
+1. PR #83's new `failInterrupted(...)` bulk update was not directly executed by the MariaDB smoke
+   when M6 was first marked complete. The current validation-gap PR adds that direct MariaDB check.
+2. PR #84 compensation is best-effort. If object deletion itself fails, the cleanup failure is
+   logged and persistent residue may remain without durable cleanup tracking. The happy-path
+   compensation test is therefore not sufficient to claim invariant 4 is fully solved.
+
+Treat M5+M6 as one representative engineering case rather than three small bug fixes:
+[`AnalysisJob durable lifecycle reliability case`](../../evaluation/backend-reliability-analysis-job-lifecycle-case.md).
+
+Before closure, M6-4 must connect the three symptoms to the common lifecycle boundary, preserve the
+alternatives/trade-offs, close the MariaDB validation gap, and explicitly decide whether
+compensation-delete failure is an acceptable bounded residual risk or still requires a minimal
+durable accountability mechanism.
 
 ## Immediate next single task
 
-Begin M7 from [`M7 — Observability and Failure RCA`](M7-observability.md) with M7-1 current-signal
-baseline. Do not install a dashboard, collector, or tracing backend before the signal gap is
-measured.
+Finish the M6-2 direct MariaDB validation and perform the integrated M6-4 case review. Do not start
+M7 or another unrelated backend task until that review is complete.

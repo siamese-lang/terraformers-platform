@@ -203,6 +203,24 @@ Implementation is governed by
 [Case B Durable Processing — Bounded Implementation Plan](case-b-durable-processing-implementation.md)
 and is split into B1 through B5. No stage authorizes automatic progression to the next.
 
+## Case B B1 implementation checkpoint
+
+B1 is complete and recorded in
+[Case B B1 Durable State and Fencing Evidence](../../evaluation/case-b-b1-durable-state-fencing.md).
+
+PR #97 merged as `237c97f35184312cac3af56aee438da830f4ff8a` and added only the durable
+state/fencing substrate required by ADR-007:
+
+- additive AnalysisJob attempt/lease/fencing state;
+- strict lease/retry-time transition invariants;
+- stale-generation rejection;
+- future retry eligibility representation without retry execution;
+- result-object accountability representation without object-flow rewiring;
+- real MariaDB single-winner initial claim and expired-lease reclaim validation.
+
+The runtime still uses current after-commit memory dispatch and restart-to-FAILED containment.
+Those semantics change only in B2.
+
 ## Observability and failure/load work
 
 M7/M8 are **PAUSED AS INDEPENDENT MILESTONES**.
@@ -238,10 +256,12 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-Prepare the bounded **Case B B1 implementation specification** from
-[ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md) and
-[Case B Durable Processing — Bounded Implementation Plan](case-b-durable-processing-implementation.md).
+Prepare the bounded **Case B B2 implementation specification** from
+[ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md),
+[Case B Durable Processing — Bounded Implementation Plan](case-b-durable-processing-implementation.md),
+and
+[Case B B1 Durable State and Fencing Evidence](../../evaluation/case-b-b1-durable-state-fencing.md).
 
-B1 is limited to durable schema/state representation and fenced repository/state transitions.
-Do not add polling, restart recovery, provider retry, RabbitMQ, Outbox, or object-cleanup execution
-as part of B1.
+B2 is limited to durable dispatcher/restart recovery using the B1 lease/fencing substrate.
+Do not add provider retry/backoff, RabbitMQ, Outbox, deterministic result-key changes, or
+object-cleanup execution as part of B2.

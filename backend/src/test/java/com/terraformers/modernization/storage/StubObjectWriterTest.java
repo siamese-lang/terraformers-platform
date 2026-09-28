@@ -9,6 +9,7 @@ class StubObjectWriterTest {
         StubObjectWriter writer = new StubObjectWriter();
         ObjectWriteResult text = writer.writeText(new ObjectWriteRequest("bucket", "main.tf", "content", "text/plain"));
         ObjectWriteResult binary = writer.writeBytes(new ObjectBinaryWriteRequest("bucket", "image.png", new byte[] {1}, "image/png"));
+        writer.remove(new ObjectReference("bucket", "main.tf"));
         assertMetadataOnly(text, "main.tf");
         assertMetadataOnly(binary, "image.png");
     }

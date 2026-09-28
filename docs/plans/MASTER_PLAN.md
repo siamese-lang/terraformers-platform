@@ -31,8 +31,8 @@
 | M3 — AI Evaluation Baseline | **COMPLETE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
 | M4 — AI Targeted Improvement | **COMPLETE** | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
 | M5 — Backend Reliability Baseline | **COMPLETE** | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
-| M6 — Backend Reliability Improvement | **ACTIVE** | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
-| M7 — Observability | PLANNED | 실제 장애를 signal 간 연결로 RCA하고 recovery 확인 | 하나 이상의 실제 failure에 대한 metric/log/trace 기반 원인 및 recovery evidence |
+| M6 — Backend Reliability Improvement | **COMPLETE** | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
+| M7 — Observability | **ACTIVE** | 실제 장애를 signal 간 연결로 RCA하고 recovery 확인 | 하나 이상의 실제 failure에 대한 metric/log/trace 기반 원인 및 recovery evidence |
 | M8 — Failure & Load Verification | PLANNED | AI, reliability, observability 결합 상태를 failure/load 조건에서 검증 | Reproducible scenario, telemetry, resulting state, recovery와 operator evidence |
 | M9 — GCP Runtime Closure | PLANNED | 앞선 milestone에서 사용한 동일 GCP target runtime의 delivery, rollback, teardown evidence 최종 정리 | Reused target IaC/runtime, immutable release, smoke, rollback, teardown evidence |
 | M10 — Portfolio Closure | PLANNED | 문제 해결 evidence를 역추적 가능한 최종 결과물로 구성 | Repository evidence에 연결된 2~3개의 strongest case |
@@ -191,39 +191,60 @@ terminal or duplicate-delivered job cannot re-enter execution.
 
 ## M6 — Backend Reliability Improvement
 
-**Status.** **ACTIVE.** The source-of-truth plan is
-[`active/M6-backend-reliability-improvement.md`](active/M6-backend-reliability-improvement.md).
+**Status.** **COMPLETE.** The completed plan is
+[`active/M6-backend-reliability-improvement.md`](active/M6-backend-reliability-improvement.md), and
+closure evidence is recorded in
+[`m6-backend-reliability-closure.md`](../evaluation/m6-backend-reliability-closure.md).
 
-**Problem.** M5 confirmed three concrete gaps: stranded non-terminal jobs after process restart,
-duplicate re-execution of the same job id, and untracked result-object residue after relational
-finalization failure.
+**Problem.** M5 confirmed stranded non-terminal jobs after restart, duplicate re-execution of one
+job id, and persistent result-object residue after relational success finalization failed.
 
-**Work.** Apply the smallest evidence-backed controls in sequence. First, make the `PENDING →
-RUNNING` claim atomic and terminal states immutable. Second, reconcile stale non-terminal jobs on
-startup under the current single-replica runtime contract. Third, inspect existing storage
-capabilities and control partial-success residue through the smallest provider-neutral compensation
-or durable-accountability mechanism. Reuse M5 scenarios as before/after tests.
+**Work.** M6 used the smallest controls justified by those scenarios. PR #82 added an atomic
+database `PENDING → RUNNING` claim and terminal-state guard. PR #83 added pre-readiness
+reconciliation that fails previous-process `PENDING`/`RUNNING` jobs under the current
+single-replica runtime instead of replaying uncertain side effects. PR #84 added provider-neutral
+result-object compensation for rollback-safe relational finalization failures, implemented for S3,
+filesystem, and metadata-only storage modes.
 
-**Evidence.** M6 must invert the M5 failure scenarios rather than replace them with unrelated tests.
-No RabbitMQ, Transactional Outbox, Kafka, Redis, distributed lock service, generic retry loop, or
-second worker is justified by the current evidence.
+**Evidence.** PR #82 merged as `d36a36148353027118f0c5eb1c86543fffa00dad` with Backend Local
+Verification run `36399415255` PASS. PR #83 merged as
+`3385114b365859aaa8d688621f33176d411d3ab6` with run `36399836413` PASS. PR #84 merged as
+`bb25229da188f690bc88f9abce5248911db3514f` with run `36400693033` PASS. Each change inverted
+the corresponding M5 scenario, and MariaDB validation remained green.
 
-**Exit condition.** One caller can claim a pending job, terminal jobs cannot re-enter execution,
-current single-replica restart does not leave M5 stranded states indefinitely, partial-success
-residue is removed or durably accountable, and existing successful/rejection behavior remains
-intact.
+**Exit condition.** **MET.** Duplicate terminal jobs no longer re-enter execution; prior-process
+non-terminal jobs do not remain indefinitely stranded in the current one-replica runtime; the
+measured pre-commit object/DB partial-success residue is compensated; executor rejection remains
+controlled. No broker, outbox, distributed lock, retry loop, or second worker was introduced.
 
-**Immediate next single task.** M6-1 atomic claim / terminal-state guard only.
+**Immediate next single task.** Start M7-1 current-signal baseline from
+[`active/M7-observability.md`](active/M7-observability.md).
 
 ## M7 — Observability
 
-**Problem.** 현재 portable telemetry runtime과 repository-owned trace propagation/export/validation gap 때문에 실제 failure의 end-to-end RCA가 보장되지 않는다.
+**Status.** **ACTIVE.** The source-of-truth plan is
+[`active/M7-observability.md`](active/M7-observability.md).
 
-**Work.** Micrometer metrics, Actuator/health와 correlation semantics를 재사용하며 `request → AnalysisJob → retrieval → model/provider → validation → result` correlation을 구축·검증한다.
+**Problem.** The repository already exposes Actuator/Prometheus metrics and job-correlated logs, but
+it has not proven that an operator can reconstruct one failure from emitted signals. The console
+format includes `trace_id`/`span_id` fields without a currently configured tracing bridge, and
+the active Vertex/OpenSearch path does not share the historical Bedrock/AOSS metric contract.
 
-**Evidence.** 실제 injected/observed failure 하나 이상을 metric, log, trace 또는 가능한 신호 조합으로 연결하고 root cause 및 recovery를 설명한다.
+**Work.** First capture current signals for one existing deterministic failure. Then add only the
+provider-neutral stage/correlation signals that the RCA evidence proves are missing. Reuse
+`AnalysisObservability`, MDC `analysisJobId`, source revision, Actuator and Prometheus before
+considering a tracing bridge or backend.
 
-**Exit condition.** Repository evidence로 failure 원인과 recovery를 추적할 수 있다. Dashboard 설치만으로 완료하지 않는다.
+**Evidence.** One injected/observed analysis failure must be traceable from job identity through
+ordered stage/failure signals to resulting state and recovery/compensation. Metric dimensions must
+remain bounded; per-job identity stays in logs rather than metric labels.
+
+**Exit condition.** Repository-owned signals explain at least one failure and recovery end to end
+without sensitive payloads or high-cardinality metrics. Dashboard/collector/tracing-backend
+installation is not itself an exit criterion.
+
+**Immediate next single task.** M7-1: capture the current logs/metrics for the existing M6-3
+relational-finalization failure harness and identify the smallest missing signal.
 
 ## M8 — Failure & Load Verification
 

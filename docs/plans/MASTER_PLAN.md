@@ -12,7 +12,9 @@
 **Status: ACTIVE — FEATURE/MILESTONE PROGRESSION PAUSED**
 
 The repository is temporarily governed by
-[`portfolio-case-reassessment.md`](active/portfolio-case-reassessment.md).
+[`portfolio-case-reassessment.md`](active/portfolio-case-reassessment.md), with case measurement
+and acceptance governed by
+[`portfolio-case-measurement-contract.md`](active/portfolio-case-measurement-contract.md).
 
 This override exists because historical milestone completion became too closely coupled to
 "small fix → green validation → next milestone" and does not by itself prove a portfolio-grade
@@ -20,18 +22,40 @@ technical decision case.
 
 Until the reassessment exits:
 
-- M0/M1: lightweight foundation audit;
-- M2/M3: provisionally retained foundations, subject only to contradiction found by the audit;
+- M0/M1: lightweight foundation audit **complete; retained**;
+- M2: **retained** as portable runtime-parity foundation;
+- M3: **retained** as immutable Case A before-state and evaluation foundation;
 - M4: **REASSESS** — existing AI evidence is retained, but portfolio-case completion is withdrawn;
 - M5: baseline evidence retained as observed backend failure material;
 - M6: **REASSESS / NOT ACCEPTED AS FINAL RELIABILITY DESIGN**;
 - M7/M8/M9: independent progression paused;
+- representative cases are fixed as Case A AI/RAG, Case B durable async backend, and Case C cloud runtime capacity/safe delivery;
+- observability/load work is a dependency of those cases, not a separate portfolio objective;
 - no historical `COMPLETE` or `ACTIVE` label below authorizes automatic implementation;
 - exactly one approved case/decision task may proceed at a time.
 
-Project success is now evaluated primarily by whether 2–3 engineering cases can demonstrate
+Project success is now evaluated primarily by whether the three representative engineering cases can demonstrate
 `scenario → failure → impact → root mechanism → alternatives → decision → implementation →
 same-scenario validation → trade-off`, not by milestone completion count.
+
+## Representative case contract
+
+The active representative-case source of truth is
+[Portfolio Case Measurement & Acceptance Contract](active/portfolio-case-measurement-contract.md).
+
+It fixes:
+
+- **Case A:** AI/RAG quality, performance, and reliability;
+- **Case B:** durable asynchronous `AnalysisJob` processing;
+- **Case C:** cloud runtime capacity and safe delivery.
+
+Each case must pass Measurement Readiness before production implementation. Performance thresholds
+without an accepted baseline are measured and frozen before the change, not invented or fitted after
+implementation. Observability and load tooling are added only where the case contract shows a
+measurement gap.
+
+Implementation sequence is **B → A → C**, but this does not authorize automatic progression between
+cases.
 
 ## Planning principles
 
@@ -52,17 +76,17 @@ same-scenario validation → trade-off`, not by milestone completion count.
 
 | Milestone | Status | Purpose | Exit evidence |
 | --- | --- | --- | --- |
-| M0 — Baseline & Governance | **AUDIT** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 현재 방향과 모순 여부만 경량 감사 |
-| M1 — Cloud Decoupling | **AUDIT** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | current main에서 provider-neutral boundary 유지 여부 경량 감사 |
-| M2 — Runtime Parity | **PROVISIONALLY RETAIN** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | M0/M1 감사에서 모순이 없으면 foundation evidence로 유지 |
-| M3 — AI Evaluation Baseline | **PROVISIONALLY RETAIN** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | fixed dataset/provenance/live baseline을 Case A foundation으로 유지 |
+| M0 — Baseline & Governance | **AUDITED / RETAINED** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | current main audit에서 방향 모순 없음 |
+| M1 — Cloud Decoupling | **AUDITED / RETAINED** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | provider-neutral boundary가 current main에 유지됨 |
+| M2 — Runtime Parity | **RETAINED FOUNDATION** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | foundation evidence로 유지; production-readiness claim 아님 |
+| M3 — AI Evaluation Baseline | **RETAINED CASE A BASELINE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | fixed dataset/provenance/canonical live baseline을 immutable before-state로 유지 |
 | M4 — AI Targeted Improvement | **REASSESS** | M3 evidence를 AI/RAG 대표 문제 해결 case로 충분히 깊게 발전시키는지 재평가 | causal/trade-off evidence와 stronger case decision 필요 |
 | M5 — Backend Reliability Baseline | **EVIDENCE RETAINED** | `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Case B failure material로 유지 |
 | M6 — Backend Reliability Improvement | **REASSESS** | durable async processing 요구와 대안 비교를 포함해 reliability 설계 재평가 | 기존 수정은 provisional primitives; final design 아님 |
 | M7 — Observability | **PAUSED** | 승인된 대표 case의 실제 RCA를 깊게 만드는 지원 축 | 독립 milestone 진행 금지 |
 | M8 — Failure & Load Verification | **PAUSED** | 승인된 대표 case의 failure/load 조건 재검증 | 독립 milestone 진행 금지 |
 | M9 — GCP Runtime Closure | **PAUSED** | 동일 target runtime delivery/rollback/teardown 정리 | representative cases 이후 진행 |
-| M10 — Portfolio Closure | **REDEFINED** | 마지막에 소재를 만드는 단계가 아니라 이미 깊게 만든 2~3 case를 최종 편집 | repository evidence에 연결된 strongest cases |
+| M10 — Portfolio Closure | **REDEFINED** | 마지막에 소재를 만드는 단계가 아니라 이미 깊게 만든 Case A/B/C를 최종 편집 | repository evidence에 연결된 three representative cases |
 
 ## M0 — Baseline & Governance
 

@@ -31,8 +31,8 @@
 | M3 — AI Evaluation Baseline | **COMPLETE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
 | M4 — AI Targeted Improvement | **COMPLETE** | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
 | M5 — Backend Reliability Baseline | **COMPLETE** | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
-| M6 — Backend Reliability Improvement | **COMPLETE** | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
-| M7 — Observability | **ACTIVE** | 실제 장애를 signal 간 연결로 RCA하고 recovery 확인 | 하나 이상의 실제 failure에 대한 metric/log/trace 기반 원인 및 recovery evidence |
+| M6 — Backend Reliability Improvement | **ACTIVE** | M5에서 확인된 reliability 문제를 하나의 대표 lifecycle case로 개선·검증 | 동일 failure scenarios, trade-off, residual risk를 포함한 integrated case evidence |
+| M7 — Observability | PLANNED | M6 대표 reliability case를 실제 signal 기반 RCA로 더 깊게 검증 | M6 case와 연결된 metric/log/trace 기반 원인 및 recovery evidence |
 | M8 — Failure & Load Verification | PLANNED | AI, reliability, observability 결합 상태를 failure/load 조건에서 검증 | Reproducible scenario, telemetry, resulting state, recovery와 operator evidence |
 | M9 — GCP Runtime Closure | PLANNED | 앞선 milestone에서 사용한 동일 GCP target runtime의 delivery, rollback, teardown evidence 최종 정리 | Reused target IaC/runtime, immutable release, smoke, rollback, teardown evidence |
 | M10 — Portfolio Closure | PLANNED | 문제 해결 evidence를 역추적 가능한 최종 결과물로 구성 | Repository evidence에 연결된 2~3개의 strongest case |
@@ -191,60 +191,63 @@ terminal or duplicate-delivered job cannot re-enter execution.
 
 ## M6 — Backend Reliability Improvement
 
-**Status.** **COMPLETE.** The completed plan is
-[`active/M6-backend-reliability-improvement.md`](active/M6-backend-reliability-improvement.md), and
-closure evidence is recorded in
-[`m6-backend-reliability-closure.md`](../evaluation/m6-backend-reliability-closure.md).
+**Status.** **ACTIVE — integrated case review before closure.** The source-of-truth plan is
+[`active/M6-backend-reliability-improvement.md`](active/M6-backend-reliability-improvement.md),
+and the connected engineering case is
+[`backend-reliability-analysis-job-lifecycle-case.md`](../evaluation/backend-reliability-analysis-job-lifecycle-case.md).
 
-**Problem.** M5 confirmed stranded non-terminal jobs after restart, duplicate re-execution of one
-job id, and persistent result-object residue after relational success finalization failed.
+**Problem.** M5's three findings are one lifecycle reliability case rather than three unrelated
+small defects. `AnalysisJob` execution ownership lived partly in an in-process executor, restart
+semantics had no durable reconciliation rule, and result finalization crossed MariaDB and object
+storage without one atomic transaction. The observed symptoms were stranded jobs, duplicate
+execution, and orphaned result objects.
 
-**Work.** M6 used the smallest controls justified by those scenarios. PR #82 added an atomic
-database `PENDING → RUNNING` claim and terminal-state guard. PR #83 added pre-readiness
-reconciliation that fails previous-process `PENDING`/`RUNNING` jobs under the current
-single-replica runtime instead of replaying uncertain side effects. PR #84 added provider-neutral
-result-object compensation for rollback-safe relational finalization failures, implemented for S3,
-filesystem, and metadata-only storage modes.
+**Work.** M6-1 (PR #82) added an atomic MariaDB-backed `PENDING → RUNNING` claim. M6-2 (PR #83)
+added startup reconciliation for previous-process non-terminal jobs under the current
+single-replica/`maxSurge:0` runtime. M6-3 (PR #84) added provider-neutral compensation when object
+persistence succeeds but rollback-safe relational success-finalization fails.
 
-**Evidence.** PR #82 merged as `d36a36148353027118f0c5eb1c86543fffa00dad` with Backend Local
-Verification run `36399415255` PASS. PR #83 merged as
-`3385114b365859aaa8d688621f33176d411d3ab6` with run `36399836413` PASS. PR #84 merged as
-`bb25229da188f690bc88f9abce5248911db3514f` with run `36400693033` PASS. Each change inverted
-the corresponding M5 scenario, and MariaDB validation remained green.
+**Evidence.** The M5 failure scenarios were inverted rather than replaced with unrelated tests.
+M6-1 directly exercises the compare-and-set path against MariaDB. M6-2's restart behavior is covered
+by the application-context test, but PR #83 did not directly execute the new
+`failInterrupted(...)` bulk update in the MariaDB smoke; the current gap-fix PR adds that missing
+evidence. PR #86 captures the current logs/metrics for the same M6-3 failure and is retained as
+supporting evidence for this case, not as permission to progress automatically into M7.
 
-**Exit condition.** **MET.** Duplicate terminal jobs no longer re-enter execution; prior-process
-non-terminal jobs do not remain indefinitely stranded in the current one-replica runtime; the
-measured pre-commit object/DB partial-success residue is compensated; executor rejection remains
-controlled. No broker, outbox, distributed lock, retry loop, or second worker was introduced.
+**Trade-off / open risk.** M6 is not complete merely because the common happy paths are green.
+Compensation is best-effort: if object deletion itself fails, the cleanup failure is logged but
+there is no durable cleanup ledger, so residue may remain. M6-4 must explicitly accept this as a
+bounded current-runtime limitation or add the smallest durable accountability mechanism. Do not
+claim cross-resource exactly-once semantics.
 
-**Immediate next single task.** Start M7-1 current-signal baseline from
-[`active/M7-observability.md`](active/M7-observability.md).
+**Exit condition.** The representative case must explain user/system impact, common root mechanism,
+alternatives considered, why the chosen controls were smaller than a broker/outbox/distributed lock,
+same-scenario before/after behavior, and residual risk. Only then may M6 close.
+
+**Immediate next single task.** Close the M6-2 direct MariaDB validation gap and perform the
+integrated M6-4 case review. Do not start a new milestone simply because M6-1 through M6-3 already
+have implementation commits.
 
 ## M7 — Observability
 
-**Status.** **ACTIVE.** The source-of-truth plan is
-[`active/M7-observability.md`](active/M7-observability.md).
+**Status.** **PLANNED — blocked on M6 case review.**
 
 **Problem.** The repository already exposes Actuator/Prometheus metrics and job-correlated logs, but
-it has not proven that an operator can reconstruct one failure from emitted signals. The console
-format includes `trace_id`/`span_id` fields without a currently configured tracing bridge, and
-the active Vertex/OpenSearch path does not share the historical Bedrock/AOSS metric contract.
+it has not yet proven an operator can reconstruct one failure end to end from emitted signals.
 
-**Work.** First capture current signals for one existing deterministic failure. Then add only the
-provider-neutral stage/correlation signals that the RCA evidence proves are missing. Reuse
-`AnalysisObservability`, MDC `analysisJobId`, source revision, Actuator and Prometheus before
-considering a tracing bridge or backend.
+**Work.** When unblocked, deepen the existing AnalysisJob reliability case first: connect job
+identity, ordered lifecycle stage, failure category, resulting state, and compensation/recovery.
+PR #86 already records the current signal baseline for the M6-3 failure and should be reused rather
+than repeated.
 
-**Evidence.** One injected/observed analysis failure must be traceable from job identity through
-ordered stage/failure signals to resulting state and recovery/compensation. Metric dimensions must
-remain bounded; per-job identity stays in logs rather than metric labels.
+**Evidence.** One injected/observed failure from the representative backend case must be traceable
+from repository-owned signals. Do not create an unrelated dashboard or observability demo just to
+advance the milestone.
 
-**Exit condition.** Repository-owned signals explain at least one failure and recovery end to end
-without sensitive payloads or high-cardinality metrics. Dashboard/collector/tracing-backend
-installation is not itself an exit criterion.
+**Exit condition.** The same backend reliability case can be diagnosed from bounded
+metric/log/trace evidence without sensitive or high-cardinality dimensions.
 
-**Immediate next single task.** M7-1: capture the current logs/metrics for the existing M6-3
-relational-finalization failure harness and identify the smallest missing signal.
+**Immediate next single task.** None until M6 integrated case review is complete.
 
 ## M8 — Failure & Load Verification
 

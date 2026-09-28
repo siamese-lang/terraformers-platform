@@ -19,9 +19,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -31,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@ExtendWith(OutputCaptureExtension.class)
 @Import({
         AnalysisJobStateService.class,
         AnalysisJobOrchestrator.class,
@@ -55,7 +59,7 @@ class AnalysisJobPartialSuccessBaselineTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void successfulObjectWriteIsCompensatedWhenRelationalFinalizationFails() {
+    void successfulObjectWriteIsCompensatedWhenRelationalFinalizationFails(CapturedOutput output) {
         when(projectArtifactService.registerGeneratedTerraform(
                 anyLong(),
                 anyString(),
@@ -72,10 +76,11 @@ class AnalysisJobPartialSuccessBaselineTest {
         job.setStatus(AnalysisJobStatus.PENDING);
         String jobId = repository.saveAndFlush(job).getId();
 
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
         new AnalysisJobRunner(
                 orchestrator,
                 stateService,
-                new AnalysisObservability(new SimpleMeterRegistry())
+                new AnalysisObservability(registry)
         ).run(jobId);
 
         AnalysisJobEntity persisted = repository.findById(jobId).orElseThrow();
@@ -100,6 +105,19 @@ class AnalysisJobPartialSuccessBaselineTest {
                 anyString(),
                 any(ObjectWriteResult.class)
         );
+
+        assertThat(registry.find("terraformers.analysis.jobs")
+                .tags("outcome", "failed").counter().count()).isEqualTo(1.0);
+        assertThat(registry.find("terraformers.analysis.failures")
+                .tags("category", "other").counter().count()).isEqualTo(1.0);
+        assertThat(registry.find("terraformers.analysis.duration").timer().count()).isEqualTo(1);
+
+        String logs = output.getOut() + output.getErr();
+        assertThat(logs)
+                .contains("analysisJobId=" + jobId)
+                .contains("Analysis job failed outcome=failed exceptionCategory=other")
+                .contains("Compensated stored analysis draft after relational finalization failure")
+                .contains("trace_id= span_id=");
     }
 
     @TestConfiguration

@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case B Measurement Readiness Audit**
+- Current single task: **Case B Architecture Decision Gate**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -43,9 +43,14 @@ Case A — AI/RAG quality, performance and reliability:
 Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim;
 - do not accept restart-to-`FAILED` as the final durability solution by default;
-- explicitly decide whether an accepted analysis request must survive process restart;
-- compare current executor containment, MariaDB-backed durable queue/lease, RabbitMQ, and
-  Transactional Outbox + broker as real alternatives;
+- measurement-readiness evidence after PR #94 is recorded in
+  [Case B Measurement Readiness Evidence](evaluation/case-b-measurement-readiness.md);
+- deterministic before-state now covers accepted-but-not-started restart, claimed-RUNNING restart,
+  duplicate delivery, transient failure/no retry, relational finalization compensation, cleanup
+  failure residue, and real MariaDB concurrent claim;
+- Case B is ready for the Architecture Decision Gate, not production implementation;
+- compare current executor containment, MariaDB-backed durable queue/lease/bounded retry,
+  RabbitMQ durable delivery, and Transactional Outbox + broker as real alternatives;
 - do not exclude RabbitMQ/Outbox merely because they were previously DEFER-listed.
 
 Case C — Cloud runtime capacity and safe delivery:

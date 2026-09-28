@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — M4-2 COMPLETE / M4-3 PREPARATION**
+**ACTIVE — M4-3 IMPLEMENTATION / LIVE VALIDATION PENDING**
 
 M3 is complete. M4 changes only failure classes that were observed in the canonical M3 baseline.
 
@@ -194,13 +194,17 @@ attempt.
 
 ## M4-3 — Minimal targeted behavior change
 
-**Status: NEXT — TRUNCATION-TARGETED**
+**Status: IN PROGRESS — LOW-THINKING FACT EXTRACTION**
 
 M4-2 reproduced `arch-vpc-three-tier` as `RESPONSE_TRUNCATED` and did not capture a transient
-HTTP/provider error. M4-3 must therefore address only the demonstrated truncation path.
+HTTP/provider error. Code inspection found that Vertex fact extraction keeps a hard
+`MAX_FACT_TOKENS=800` limit while Gemini 3.8 Flash defaults to `MEDIUM` thinking. Gemini's output
+limit includes thinking plus visible response tokens, so a compact structured-output request can
+reach `MAX_TOKENS` before producing the final JSON. The smallest targeted change is to keep the
+existing 800-token bound and explicitly set fact extraction to `LOW` thinking; prompt, schema,
+model, corpus, retrieval, validator, and retry behavior remain unchanged.
 
-Before changing behavior, inspect the existing Vertex fact-extraction request/response contract and
-determine the smallest remedy. The implementation must:
+The implementation must:
 
 - preserve the same fixed dataset and generation/embedding model identities;
 - preserve successful fact-extraction semantics and structured response parsing;
@@ -277,6 +281,7 @@ return it to 0 afterward.
 
 ## Immediate next single task
 
-Return the canonical target node pool to `node_count=0` using the protected `idle` operation.
-Then inspect the Vertex fact-extraction truncation path and implement only the smallest
-M4-3 truncation-targeted change justified by run `36385950712`. Do not add generic retry/backoff.
+Merge the deterministic M4-3 low-thinking fact-extraction change after CI passes. Then reactivate
+the single canonical node only for one bounded `arch-vpc-three-tier` validation run on the same
+dataset/configuration, preserve the trace, and return the node pool to `node_count=0`. Do not add
+generic retry/backoff.

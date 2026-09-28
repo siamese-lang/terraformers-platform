@@ -14,12 +14,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M4 — AI Targeted Improvement**
 - Status: **ACTIVE**
-- Phase: M4-2 complete / M4-3 truncation-targeted preparation
+- Phase: M4-3 low-thinking fact-extraction implementation / live validation pending
 - Active plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **idle the canonical runtime, then address the reproduced fact-extraction truncation**
+- Current implementation task: **merge the low-thinking fact-extraction change, then run one bounded VPC validation**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -28,7 +28,7 @@ prompt/model/dataset/corpus/retrieval/validator contract. The PR head was
 successfully before merge. The implementation was merged as
 `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`.
 
-The existing target runtime is active for the bounded M4-2 evidence session. PR #71 added the
+The existing target runtime is currently idle after the bounded M4-2 evidence session. PR #71 added the
 protected `activate` operation and merged as
 `64dbaae156906e3705e4bfeb161fb11bacd79f52`. Protected run `36384234371` passed its contract
 gate with exactly one managed-resource change, updated only
@@ -46,6 +46,17 @@ configuration fingerprint
 Detailed evidence is in
 [`m4-r2-live-reproduction-evidence.md`](evaluation/m4-r2-live-reproduction-evidence.md). Generic
 retry/backoff is therefore not justified; M4-3 is constrained to the demonstrated truncation path.
+
+Post-evidence idle run `36386950442` on `c8ae238cfcad31c03f5e5b3bec1b59f5c9b513be` passed with
+one in-place `google_container_node_pool.target` update, plan JSON SHA-256
+`2d36638ec05b13cdc7c3f9b4b99d12b2f4b945df4658864c8ef8460d1599afcd`,
+`0 added, 1 changed, 0 destroyed`, and the final idle `node_count=0` boundary check.
+
+M4-3 code inspection found the direct mechanism: Vertex fact extraction uses a hard
+`MAX_FACT_TOKENS=800` while Gemini 3.8 Flash defaults to `MEDIUM` thinking, and the output-token
+ceiling includes thinking plus visible response tokens. The targeted implementation keeps the
+800-token cap and all fixed evaluation identities, but sets only fact extraction to `LOW` thinking.
+Deterministic tests verify that bounded request configuration before live revalidation.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -240,9 +251,10 @@ M4 is active under
 The canonical before-state remains M3 baseline run `36379633596` with configuration fingerprint
 `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
 
-M4-2 is complete. The immediate operational task is to return the canonical target node pool to
-idle size 0. After that, M4-3 must inspect the Vertex fact-extraction truncation path demonstrated by
-run `36385950712` and implement only the smallest truncation-targeted change.
+M4-2 is complete and the canonical target node pool is idle at `node_count=0`. M4-3 now has a
+deterministic low-thinking fact-extraction change pending merge and live validation. After CI/merge,
+reactivate one node only long enough to rerun `arch-vpc-three-tier` once under the unchanged fixed
+dataset/configuration, preserve the trace, and immediately idle again.
 
 Do not add generic retry/backoff: no 429/5xx/capacity failure was captured in M4-2. Preserve the fixed
 dataset, model IDs, corpus/index, top-K, vector dimension, validator, and production Java path unless

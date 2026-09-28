@@ -77,6 +77,9 @@ fixed prompt/model/dataset/corpus/retrieval/validator identity wherever possible
 
 ## Runtime lifecycle
 
-The bounded reproduction session used the approved one-node target runtime. After this evidence is
-recorded, the existing protected `idle` operation must return the canonical node pool to Terraform
-`node_count=0` before M4-3 implementation work continues.
+The bounded reproduction session used the approved one-node target runtime. Protected idle run
+`36386950442` on commit `c8ae238cfcad31c03f5e5b3bec1b59f5c9b513be` passed the plan gate
+with `operation=idle`, exactly one managed-resource change, and plan JSON SHA-256
+`2d36638ec05b13cdc7c3f9b4b99d12b2f4b945df4658864c8ef8460d1599afcd`. It updated only
+`google_container_node_pool.target`, applied `0 added, 1 changed, 0 destroyed`, and the final
+runtime-boundary check passed with the idle `node_count=0` contract.

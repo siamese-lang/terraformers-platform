@@ -8,6 +8,8 @@ import com.google.genai.types.FinishReason;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
+import com.google.genai.types.ThinkingConfig;
+import com.google.genai.types.ThinkingLevel;
 import com.terraformers.modernization.analysis.vertex.VertexRuntimeProperties;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.lang.reflect.Method;
@@ -64,6 +66,7 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
         GenerateContentConfig config = GenerateContentConfig.builder()
                 .temperature(0.0f)
                 .maxOutputTokens(MAX_FACT_TOKENS)
+                .thinkingConfig(ThinkingConfig.builder().thinkingLevel(ThinkingLevel.Known.LOW))
                 .responseMimeType("application/json")
                 .responseJsonSchema(responseJsonSchema())
                 .build();

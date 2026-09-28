@@ -122,7 +122,13 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
     require(project.get("lifecycleState") == "ACTIVE", "project lifecycleState is not ACTIVE")
 
     require(billing.get("projectId") == PROJECT_ID, "billing response projectId mismatch")
-    require(billing.get("billingEnabled") is True, "billing is not enabled")
+    billing_verification = billing.get("verificationStatus", "verified")
+    require(
+        billing_verification in {"verified", "unavailable"},
+        "unexpected billing verification status",
+    )
+    if billing_verification == "verified":
+        require(billing.get("billingEnabled") is True, "billing is not enabled")
 
     quota_rows = []
     quota_rows.extend(
@@ -174,7 +180,14 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
         "project_id": PROJECT_ID,
         "project_number": PROJECT_NUMBER,
         "project_active": True,
-        "billing_enabled": True,
+        "billing_verified": billing_verification == "verified",
+        "billing_enabled": billing.get("billingEnabled") if billing_verification == "verified" else None,
+        "billing_note": (
+            "billingEnabled=true was verified automatically."
+            if billing_verification == "verified"
+            else "Cloud Billing status could not be queried with the project-scoped read identity; "
+            "confirm billing status together with remaining Free Trial credit at foundation approval."
+        ),
         "free_trial_credit_balance_checked": False,
         "free_trial_credit_note": (
             "Promotional credit balance is not exposed by this project-scoped preflight. "
@@ -200,15 +213,21 @@ def render_markdown(result: dict[str, Any]) -> str:
         "",
         f"- Project: `{result['project_id']}`",
         "- Project lifecycle: `ACTIVE`",
-        "- Billing enabled: `true`",
+        (
+            "- Billing enabled: `true` (automatically verified)"
+            if result["billing_verified"]
+            else "- Billing status: `manual confirmation required`"
+        ),
         "- Duplicate target runtime: `none`",
         f"- Machine type: `e2-standard-2` in `{ZONE}`",
         f"- GKE default cluster version: `{result['gke_default_cluster_version']}`",
         "- Required APIs: `enabled`",
         "- Preflight status: `PASS`",
         "",
-        "> Free Trial promotional credit balance is intentionally not queried by this project-scoped "
-        "identity. Remaining credit is confirmed once, at the protected foundation approval.",
+        "> Cloud Billing status is checked automatically only when the existing project-scoped identity "
+        "can query it without enabling a new API or gaining billing-account roles. Otherwise billing "
+        "status and remaining Free Trial credit are confirmed together at the single protected "
+        "foundation approval.",
         "",
         "| Scope | Quota | Limit | Usage | Available | Required available |",
         "| --- | --- | ---: | ---: | ---: | ---: |",

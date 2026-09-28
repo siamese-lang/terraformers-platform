@@ -12,15 +12,16 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current milestone
 
-- Milestone: **M5 — Backend Reliability Baseline**
+- Milestone: **M6 — Backend Reliability Improvement**
 - Status: **ACTIVE**
-- Phase: M5-3 object-write / DB-finalization partial-success baseline
-- Active plan: [M5 — Backend Reliability Baseline](plans/active/M5-backend-reliability-baseline.md)
+- Phase: M6-1 atomic PENDING claim / terminal-state guard
+- Active plan: [M6 — Backend Reliability Improvement](plans/active/M6-backend-reliability-improvement.md)
+- Completed M5 plan: [M5 — Backend Reliability Baseline](plans/active/M5-backend-reliability-baseline.md)
 - Completed M4 plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **M5-3 — reproduce object-write success followed by relational finalization failure without implementing compensation**
+- Current implementation task: **M6-1 — atomic PENDING-to-RUNNING claim and terminal-state guard only**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -109,6 +110,25 @@ one job to `SUCCEEDED`, then delivers the same job id again. The existing transi
 attempted twice. This proves the same-job idempotency/state-guard gap without adding a flaky
 concurrency harness. Detailed M5 evidence is accumulated in
 [`m5-backend-reliability-baseline.md`](evaluation/m5-backend-reliability-baseline.md).
+
+M5-3 is complete. PR #80 merged as
+`18503b656de090b6fc26b317908189b7090ecfc3`; final successful Backend Local Verification run
+`36395373207` passed. The partial-success baseline proves that a result-object write can persist
+before generated-file relational registration fails. The runner then marks the job `FAILED`, while
+`resultFileId` and `resultObjectKey` remain null and the already-written object remains without
+compensation. Classification: `CONFIRMED_RELIABILITY_GAP`.
+
+M5 is therefore complete with three confirmed gaps: restart-stranded non-terminal jobs, duplicate
+same-job re-execution, and untracked object residue after DB finalization failure. Executor rejection
+remains `CONTROLLED_CURRENT_BEHAVIOR` because it is already observed and terminates the job as
+`FAILED`.
+
+M6 is active. The first change is deliberately smaller than introducing durable messaging:
+atomically claim only `PENDING` jobs for `RUNNING` so duplicate/terminal delivery cannot re-enter
+provider/storage execution. The current canonical backend Deployment remains a single replica with
+`maxSurge: 0`; restart reconciliation in M6-2 is scoped to that current runtime contract and is not
+claimed as a future multi-replica design. Partial-success residue control remains M6-3 and requires
+storage-capability inspection before choosing compensation versus durable residue accountability.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected

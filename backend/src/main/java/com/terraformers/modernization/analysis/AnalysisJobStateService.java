@@ -19,6 +19,17 @@ public class AnalysisJobStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public int reconcileInterrupted(String failureReason) {
+        return repository.failInterrupted(
+                AnalysisJobStatus.PENDING,
+                AnalysisJobStatus.RUNNING,
+                AnalysisJobStatus.FAILED,
+                failureReason,
+                Instant.now()
+        );
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<AnalysisJobEntity> claimPending(String jobId) {
         int claimed = repository.claimPending(
                 jobId,

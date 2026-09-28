@@ -28,7 +28,7 @@
 | M0 — Baseline & Governance | **COMPLETE** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 모든 M0 문서와 valid links, 상호 모순 없음, closure SHA와 M1 진입 기록 |
 | M1 — Cloud Decoupling | **COMPLETE** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
 | M2 — Runtime Parity | **COMPLETE** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
-| M3 — AI Evaluation Baseline | **ACTIVE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
+| M3 — AI Evaluation Baseline | **COMPLETE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
 | M4 — AI Targeted Improvement | PLANNED | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
 | M5 — Backend Reliability Baseline | PLANNED | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
 | M6 — Backend Reliability Improvement | PLANNED | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
@@ -88,46 +88,36 @@ implementation until that plan is the repository source of truth.
 
 ## M3 — AI Evaluation Baseline
 
-**Status.** **ACTIVE — DEPENDENCY RESEQUENCED.** The
-[active M3 plan](active/M3-ai-evaluation-baseline.md) records M3-1 through M3-3 as complete.
-M3-4 live evaluation is **WAITING_FOR_TARGET_RUNTIME**. M3-R1 is complete. The current task is
-**M3-R2 — Single target AI/RAG runtime foundation**.
+**Status.** **COMPLETE.** The completed
+[active M3 plan](active/M3-ai-evaluation-baseline.md) and
+[M3 closure evidence](../verification/m3-ai-evaluation-closure.md) record the full evaluation
+baseline lifecycle.
 
-**Problem.** The evaluation contract, fixed dataset, and reusable provenance runner exist, but the
-historical AWS live runtime was intentionally removed. Recreating an AWS evaluation stack or
-building a throwaway cloud test environment would duplicate infrastructure that is not the project
-target.
+**Problem.** AI/RAG changes required one fixed, explainable before-state so later improvements could
+target measured failures rather than adding architecture by convention.
 
-**Sequencing decision.** Insert M3-R1 through M3-R3 before M3-4:
+**Work.** M3 created the stage-provenance contract, fixed six-case dataset, reusable evaluation
+runner, single reusable GKE/Vertex/OpenSearch target runtime, immutable
+`terraformers-reference-v3` corpus/index, production Java serving-path smoke, six-case live
+baseline, reproducible metrics/failure taxonomy, and framework-decision checkpoint.
 
-1. **M3-R1 — Target runtime evidence and capability decision:** collect actual GCP
-   quota/billing/cost/runtime constraints and select only the minimum target capabilities required
-   by the existing neutral ports.
-2. **M3-R2 — Single target AI/RAG runtime foundation:** implement the selected GCP/open-source
-   adapters, IaC/runtime identity/networking, retrieval/index, and model/embedding access as the
-   actual project runtime—not an evaluation-only stack.
-3. **M3-R3 — Corpus ingestion and serving-path smoke:** load the versioned corpus and prove the
-   existing Spring Boot-facing contracts can use the target runtime.
-4. Resume **M3-4** on that same runtime and collect the fixed live baseline.
+**Evidence.** Canonical live baseline run `36379633596` used configuration fingerprint
+`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
+The primary first-divergence class is `FACT_EXTRACTION / PROVIDER_RUNTIME` in 2 of 6 cases.
+Where the pipeline reached later stages, required project-decision retrieval, required resource
+coverage, grounded generation, validation, and negative-control classification were successful.
+The baseline analysis and machine-readable metrics are committed under
+`docs/evaluation/m3-live-baseline-analysis.md` and
+`evaluation/baselines/m3-live-baseline-metrics.json`.
 
-**Environment rule.** The runtime created in M3-R2/R3 is reused by M3-4, M4, later
-observability/failure work, and M9. Local/CI/Kind fixtures remain deterministic verification tools,
-not a second cloud environment. M9 closes this same runtime; it does not rebuild it.
+**Exit condition.** **MET.** All 15 M3 exit criteria are PASS. Current quality is reproducibly
+measurable, failures are localized to the first observable stage, and M4 has an evidence-backed
+first investigation target. LangGraph, LangChain, rerankers, judge-model expansion, and a persistent
+Python AI worker remain DEFER because M3 does not show they address the measured first divergence.
 
-**Evidence.** M3-R1 records the decision inputs and cost boundary. M3-R2/R3 record reusable target
-IaC/configuration and a serving-path smoke. M3-4 then records live machine-readable evaluation
-traces from the fixed `terraformers-eval-v1` dataset.
-
-**Exit condition.** The same target runtime can execute the fixed dataset repeatedly, preserve
-stage provenance, and provide failure classes for M4. No AWS compatibility recreation or temporary
-parallel cloud environment is part of the exit condition.
-
-**Immediate next single task.** Continue **M3-R2** by generating and reviewing the first
-Terraform plan with `node_count=1`. Fresh 2026-09-24 evidence confirms Free Trial coverage,
-sufficient quota, GKE and both Vertex model access, and no existing conflicting GKE cluster or
-Terraformers target VM. Review the resource list before apply and do not use `-auto-approve`.
-After live readiness evidence, return this same node pool to 0 and continue to M3-R3; do not start
-full corpus ingestion yet.
+**Immediate next single task.** Create
+`docs/plans/active/M4-ai-targeted-improvement.md` from the M3 failure taxonomy. Do not implement an
+M4 change until that plan is the repository source of truth.
 
 ## M4 — AI Targeted Improvement
 

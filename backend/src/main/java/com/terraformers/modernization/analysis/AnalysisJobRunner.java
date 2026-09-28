@@ -26,7 +26,11 @@ public class AnalysisJobRunner {
     }
 
     public void run(String jobId) {
-        AnalysisJobEntity runningJob = stateService.markRunning(jobId);
+        AnalysisJobEntity runningJob = stateService.claimPending(jobId).orElse(null);
+        if (runningJob == null) {
+            log.info("Analysis job skipped outcome=not_claimed reason=non_pending");
+            return;
+        }
         try (AnalysisLogCorrelation ignored = AnalysisLogCorrelation.forJob(jobId)) {
             io.micrometer.core.instrument.Timer.Sample sample = observability.startAnalysis();
             observability.jobStarted();

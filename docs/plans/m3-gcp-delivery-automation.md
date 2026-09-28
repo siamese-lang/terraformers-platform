@@ -1,8 +1,8 @@
 # M3 GCP Delivery Automation — Implementation Plan
 
-Status: **A-B COMPLETE; C replan required after node-IAM correction; protected apply automation in progress; no runtime apply authorized**
+Status: **A-D PRE-APPLY COMPLETE; first protected foundation apply not yet authorized**
 Baseline: `main` `d3eb25f12548414954c0331fa57576f114c10588` (2026-09-24)  
-Owner milestone: M3-R2; the first incomplete delivery task is the protected apply identity/environment proof.
+Owner milestone: M3-R2; the first incomplete delivery task is the separately approved first foundation apply.
 
 ## Why this is a prerequisite
 
@@ -149,20 +149,26 @@ A through C are complete:
 - the first live plan on commit `1d453895c32f5bbd5543b04bed320e116d601107` succeeded and was
   separately reviewed as exactly 14 create actions with no update/delete/replacement;
 - apply-IAM review then found that the custom GKE node service account should use Google's current
-  documented `roles/container.defaultNodeServiceAccount` minimum role. That pre-apply correction
-  supersedes the 14-create plan and reduces the next expected foundation shape to 12 creates;
-- the refreshed pre-apply account gate passed for the previous SHA and remains dated evidence; and
-- the plan identity is now continuously checked for absence of the target mutation permissions.
+  documented `roles/container.defaultNodeServiceAccount` minimum role. The corrected main plan,
+  run `36335535056` at `fc95a7f54d375dce900bac573dcd79ea0215750f`, contains exactly 12
+  creates with no update/delete/replacement;
+- the plan identity is continuously checked for absence of target mutation permissions;
+- the dedicated `terraformers-apply` identity was bootstrapped with the reviewed role matrix;
+- the `gcp-target-apply` GitHub environment is main-only with the reviewed variables and reviewer
+  protection; and
+- identity-check run `36363635464` at `334dc611dd44eccb286739d95c193dd3ffeedbb3` succeeded,
+  proving exact-SHA validation and OIDC authentication while all Terraform/runtime steps were
+  skipped.
 
-D preparation adds a separate manual-only `gcp-target-apply` workflow with an exact-SHA input,
-protected environment, dedicated apply identity, exact saved-plan application and fail-closed
-foundation/idle contracts. Foundation will permit only the corrected reviewed 12 creates and
-critical values; idle permits only the canonical node pool 1→0 in-place update.
+D is therefore complete through the pre-apply trust boundary. Foundation permits only the corrected
+reviewed 12 creates and critical values; idle permits only the canonical node pool 1→0 in-place
+update. The refreshed billing/quota/duplicate-runtime evidence remains mutable and must be checked
+immediately before first creation.
 
 ## Immediate single task
 
-Merge the node-IAM/apply-automation change, regenerate and review the corrected main-branch plan,
-then bootstrap **only the apply trust boundary**: configure `gcp-target-apply`, create/bind
-`terraformers-apply` with the reviewed role matrix, and run `identity-check`. Do not dispatch
-`foundation` until the corrected same-SHA plan, identity proof and fresh mutable-account gate are
-all present.
+Refresh only the mutable pre-apply account checks (billing/remaining credit, relevant quota/headroom
+and duplicate target runtime), then make the **single separate approval decision** for the first
+`foundation` dispatch. Do not repeat the completed bootstrap or identity-check. Do not dispatch
+`foundation` unless the refreshed mutable checks still pass and the 12-create contract remains
+the reviewed target shape.

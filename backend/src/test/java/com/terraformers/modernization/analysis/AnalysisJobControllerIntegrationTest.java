@@ -1,5 +1,6 @@
 package com.terraformers.modernization.analysis;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -15,9 +16,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -27,6 +31,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ExtendWith(OutputCaptureExtension.class)
 @Import(SynchronousAnalysisExecutorTestConfig.class)
 class AnalysisJobControllerIntegrationTest {
 
@@ -37,7 +42,7 @@ class AnalysisJobControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void createAnalysisJobReturnsSucceededStateAndResultArtifact() throws Exception {
+    void createAnalysisJobReturnsSucceededStateAndResultArtifact(CapturedOutput output) throws Exception {
         JsonNode upload = createOwnedProjectAndSourceFile();
         long projectId = upload.path("projectId").asLong();
         long sourceFileId = upload.path("sourceFileId").asLong();
@@ -66,6 +71,8 @@ class AnalysisJobControllerIntegrationTest {
 
         JsonNode created = objectMapper.readTree(createResult.getResponse().getContentAsString());
         String jobId = created.path("id").asText();
+        assertThat(createResult.getResponse().getHeader("Location"))
+                .endsWith("/api/analysis/jobs/" + jobId);
 
         mockMvc.perform(get("/api/analysis/jobs/{id}", jobId).with(testUserJwt()))
                 .andExpect(status().isOk())
@@ -76,6 +83,13 @@ class AnalysisJobControllerIntegrationTest {
                 .andExpect(jsonPath("$.status").value("SUCCEEDED"))
                 .andExpect(jsonPath("$.resultObjectKey", not(nullValue())))
                 .andExpect(jsonPath("$.resultPreview", not(nullValue())));
+
+        String logs = output.getOut() + output.getErr();
+        assertThat(logs)
+                .contains("analysisJobId=" + jobId)
+                .contains("source_revision=unknown")
+                .contains("analysis stage outcome=success stage=analysis_execution")
+                .contains("analysis stage outcome=success stage=result_finalize");
     }
 
     private JsonNode createOwnedProjectAndSourceFile() throws Exception {

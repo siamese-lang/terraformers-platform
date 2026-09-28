@@ -43,6 +43,25 @@ class FileSystemObjectStoreTest {
     }
 
     @Test
+    void removesPersistedObjectAndMetadata() {
+        FileSystemObjectStore store = new FileSystemObjectStore(root.toString());
+        ObjectReference reference = new ObjectReference("bucket", "result/main.tf");
+        store.writeText(new ObjectWriteRequest(
+                reference.bucket(),
+                reference.key(),
+                "resource \"test\" \"removed\" {}",
+                "text/plain"
+        ));
+
+        store.remove(reference);
+
+        assertThat(root.resolve("bucket/result/main.tf")).doesNotExist();
+        assertThat(root.resolve("bucket/result/main.tf.terraformers-meta")).doesNotExist();
+        assertThatThrownBy(() -> store.readContent(reference))
+                .isInstanceOf(ObjectStorageException.class);
+    }
+
+    @Test
     void reportsMissingObjectAsNotFound() {
         FileSystemObjectStore store = new FileSystemObjectStore(root.toString());
         assertThatThrownBy(() -> store.readContent(new ObjectReference("bucket", "missing")))

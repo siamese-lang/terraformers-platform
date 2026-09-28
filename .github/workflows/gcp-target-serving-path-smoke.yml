@@ -1,0 +1,313 @@
+name: GCP Target Serving Path Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact trusted main commit SHA used for the smoke.
+        required: true
+        type: string
+      confirmation:
+        description: Use RUN_M3_R3C_SERVING_SMOKE.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: gcp-target-terraform-state
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 30
+    env:
+      CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
+      TARGET_PROJECT: terraformers-platform
+      TARGET_CLUSTER: terraformers-target
+      TARGET_ZONE: asia-northeast3-a
+      TARGET_NAMESPACE: terraformers-target
+      TARGET_KSA: terraformers-backend
+      SMOKE_POD: terraformers-serving-smoke
+      OPENSEARCH_SERVICE: terraformers-opensearch
+      SMOKE_CASE_ID: arch-vpc-three-tier
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted smoke request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'expected_sha must be a full 40-character commit SHA.' >&2
+            exit 1
+          }
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match the checked-out main commit.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == RUN_M3_R3C_SERVING_SMOKE ]] || {
+            echo 'Serving-path smoke requires confirmation RUN_M3_R3C_SERVING_SMOKE.' >&2
+            exit 1
+          }
+          [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]] || {
+            echo 'Unexpected Kubernetes deployment identity.' >&2
+            exit 1
+          }
+          [[ -n "$WIF_PROVIDER" ]] || {
+            echo 'Missing GCP_WIF_PROVIDER environment variable.' >&2
+            exit 1
+          }
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build bounded launcher bundle
+        run: |
+          set -euo pipefail
+          mvn -q -f backend/pom.xml -DskipTests package dependency:copy-dependencies             -DincludeScope=runtime
+
+          bundle_root="${RUNNER_TEMP}/live-smoke-bundle"
+          mkdir -p "$bundle_root/classes" "$bundle_root/dependency" "$bundle_root/evaluation"
+
+          cp -a backend/target/classes/. "$bundle_root/classes/"
+          cp -a backend/target/dependency/. "$bundle_root/dependency/"
+          cp -a evaluation/terraformers-eval-v1 "$bundle_root/evaluation/"
+
+          (
+            cd "$bundle_root"
+            zip -qr "${RUNNER_TEMP}/live-smoke.zip" classes dependency evaluation
+          )
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - name: Verify GKE and OpenSearch substrate
+        run: |
+          set -euo pipefail
+          cluster_status="$(
+            gcloud container clusters describe "$TARGET_CLUSTER"               --zone="$TARGET_ZONE"               --project="$TARGET_PROJECT"               --format='value(status)'
+          )"
+          node_pool_status="$(
+            gcloud container node-pools describe "${TARGET_CLUSTER}-primary"               --cluster="$TARGET_CLUSTER"               --zone="$TARGET_ZONE"               --project="$TARGET_PROJECT"               --format='value(status)'
+          )"
+          [[ "$cluster_status" == RUNNING ]] || {
+            echo "GKE cluster status is $cluster_status, expected RUNNING." >&2
+            exit 1
+          }
+          [[ "$node_pool_status" == RUNNING ]] || {
+            echo "GKE node pool status is $node_pool_status, expected RUNNING." >&2
+            exit 1
+          }
+
+      - name: Configure GKE credentials
+        uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify bounded Kubernetes permissions
+        run: |
+          set -euo pipefail
+          for permission in             'create serviceaccounts'             'create pods'             'create pods/exec'             'get pods'             'delete pods'; do
+            verb="${permission%% *}"
+            resource="${permission#* }"
+            kubectl auth can-i "$verb" "$resource" -n "$TARGET_NAMESPACE" | grep -Fxq yes || {
+              echo "Apply identity lacks Kubernetes permission: $verb $resource" >&2
+              exit 1
+            }
+          done
+
+      - name: Verify backend Workload Identity IAM bindings
+        run: |
+          set -euo pipefail
+          project_number="$(
+            gcloud projects describe "$TARGET_PROJECT" --format='value(projectNumber)'
+          )"
+          principal="principal://iam.googleapis.com/projects/${project_number}/locations/global/workloadIdentityPools/${TARGET_PROJECT}.svc.id.goog/subject/ns/${TARGET_NAMESPACE}/sa/${TARGET_KSA}"
+          policy="${RUNNER_TEMP}/project-iam.json"
+          gcloud projects get-iam-policy "$TARGET_PROJECT" --format=json > "$policy"
+
+          for role in roles/aiplatform.user roles/serviceusage.serviceUsageConsumer; do
+            jq -e --arg role "$role" --arg principal "$principal" '
+              any(.bindings[]?;
+                .role == $role and any(.members[]?; . == $principal)
+              )
+            ' "$policy" >/dev/null || {
+              echo "Missing backend Workload Identity binding: $role" >&2
+              exit 1
+            }
+          done
+
+      - name: Apply only the backend Kubernetes ServiceAccount
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" apply             -f infra/kubernetes/base/backend-serviceaccount.yaml
+
+      - name: Verify OpenSearch readiness
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" rollout status             statefulset/terraformers-opensearch             --timeout=2m
+
+          service_type="$(
+            kubectl -n "$TARGET_NAMESPACE" get service "$OPENSEARCH_SERVICE"               -o jsonpath='{.spec.type}'
+          )"
+          [[ "$service_type" == ClusterIP ]] || {
+            echo "OpenSearch service must remain ClusterIP, got $service_type." >&2
+            exit 1
+          }
+
+      - name: Start ephemeral Java smoke pod
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" delete pod "$SMOKE_POD"             --ignore-not-found=true --wait=true
+
+          cat > "${RUNNER_TEMP}/smoke-pod.yaml" <<'EOF'
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: terraformers-serving-smoke
+            labels:
+              app.kubernetes.io/name: terraformers-serving-smoke
+              app.kubernetes.io/part-of: terraformers-modernization
+          spec:
+            serviceAccountName: terraformers-backend
+            restartPolicy: Never
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 10001
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+              - name: smoke
+                image: eclipse-temurin:17-jdk-jammy
+                imagePullPolicy: IfNotPresent
+                command: ["/bin/sh", "-c", "sleep 1800"]
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop: ["ALL"]
+                resources:
+                  requests:
+                    cpu: 1m
+                    memory: 256Mi
+                  limits:
+                    cpu: "1"
+                    memory: 1Gi
+          EOF
+
+          kubectl -n "$TARGET_NAMESPACE" apply -f "${RUNNER_TEMP}/smoke-pod.yaml"
+
+          if ! kubectl -n "$TARGET_NAMESPACE" wait             --for=condition=Ready "pod/${SMOKE_POD}"             --timeout=5m; then
+            echo 'Serving smoke pod did not become Ready; capturing bounded diagnostics.' >&2
+            kubectl -n "$TARGET_NAMESPACE" get pod "$SMOKE_POD" -o wide || true
+            kubectl -n "$TARGET_NAMESPACE" get pod "$SMOKE_POD" -o json               | jq '{
+                  phase: .status.phase,
+                  conditions: .status.conditions,
+                  containerStatuses: .status.containerStatuses,
+                  nodeName: .spec.nodeName,
+                  serviceAccountName: .spec.serviceAccountName
+                }' || true
+            kubectl -n "$TARGET_NAMESPACE" describe pod "$SMOKE_POD" || true
+            kubectl -n "$TARGET_NAMESPACE" get events               --field-selector "involvedObject.name=${SMOKE_POD}"               --sort-by='.lastTimestamp' || true
+            kubectl -n "$TARGET_NAMESPACE" logs "$SMOKE_POD"               --all-containers=true --tail=200 || true
+            exit 1
+          fi
+
+      - name: Transfer launcher bundle
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" exec -i "$SMOKE_POD" --             /bin/sh -c 'cat > /tmp/live-smoke.zip'             < "${RUNNER_TEMP}/live-smoke.zip"
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$SMOKE_POD" --             /bin/sh -c 'rm -rf /tmp/workspace && mkdir -p /tmp/workspace && cd /tmp/workspace && jar xf /tmp/live-smoke.zip'
+
+      - name: Run one production Java serving-path smoke
+        run: |
+          set -euo pipefail
+          run_id="m3-r3c-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$SMOKE_POD" --             env               EVALUATION_DATASET=/tmp/workspace/evaluation/terraformers-eval-v1/dataset.json               EVALUATION_OUTPUT=/tmp/live-smoke-result.json               EVALUATION_RUN_ID="$run_id"               EVALUATION_MODE=single               EVALUATION_CASE_ID="$SMOKE_CASE_ID"               GOOGLE_CLOUD_PROJECT=terraformers-platform               GOOGLE_CLOUD_LOCATION=global               ANALYSIS_PROVIDER=vertex               EMBEDDING_PROVIDER=vertex               RETRIEVAL_MODE=REQUIRED               VERTEX_GENERATION_MODEL_ID=gemini-3.8-flash               VERTEX_EMBEDDING_MODEL_ID=gemini-embedding-001               OPENSEARCH_ENDPOINT="http://${OPENSEARCH_SERVICE}:9200"               INDEX_NAME=terraformers-reference-v3               VECTOR_FIELD_NAME=embedding               CONTENT_FIELD_NAME=content               CORPUS_VERSION=terraformers-reference-v3               PROVIDER_VERSION=5.100.0               EXPECTED_VECTOR_DIMENSION=1024               OPENSEARCH_TOP_K=8               VERTEX_MAX_OUTPUT_TOKENS=8192               java -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*'                 com.terraformers.modernization.evaluation.LiveEvaluationLauncher
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$SMOKE_POD" --             cat /tmp/live-smoke-result.json             > "${RUNNER_TEMP}/live-smoke-result.json"
+
+      - name: Verify serving-path trace
+        run: |
+          set -euo pipefail
+          result="${RUNNER_TEMP}/live-smoke-result.json"
+
+          jq -e '
+            .datasetVersion == "terraformers-eval-v1"
+            and (.traces | length == 1)
+            and .traces[0].caseId == "arch-vpc-three-tier"
+            and .configuration.corpusVersion == "terraformers-reference-v3"
+            and .configuration.providerVersion == "5.100.0"
+            and .configuration.analysisProvider == "vertex"
+            and .configuration.embeddingProvider == "vertex"
+            and .configuration.retrievalMode == "REQUIRED"
+            and .configuration.topK == 8
+            and .configuration.generationModelId == "gemini-3.8-flash"
+            and .configuration.embeddingModelId == "gemini-embedding-001"
+            and (.configuration.configurationFingerprint | startswith("sha256:"))
+            and .traces[0].factExtraction.status == "PASS"
+            and .traces[0].retrieval.status == "PASS"
+            and (.traces[0].retrieval.evidence.hits | length > 0)
+            and .traces[0].generation.status == "PASS"
+            and (.traces[0].generation.evidence.suppliedReferenceIds | length > 0)
+            and (
+              .traces[0].validation.status == "PASS"
+              or .traces[0].validation.status == "FAIL"
+            )
+            and .traces[0].validation.evidence.applicationValidator.name == "TerraformDraftValidator"
+          ' "$result" >/dev/null
+
+          {
+            echo '## M3-R3c live serving-path smoke'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            echo '- Case: `arch-vpc-three-tier`'
+            printf -- '- Configuration fingerprint: `%s`\n' "$(jq -r '.configuration.configurationFingerprint' "$result")"
+            printf -- '- Fact extraction: `%s`\n' "$(jq -r '.traces[0].factExtraction.status' "$result")"
+            printf -- '- Retrieval: `%s`\n' "$(jq -r '.traces[0].retrieval.status' "$result")"
+            printf -- '- Retrieval hits: `%s`\n' "$(jq -r '.traces[0].retrieval.evidence.hits | map(.documentId) | join(",")' "$result")"
+            printf -- '- Generation: `%s`\n' "$(jq -r '.traces[0].generation.status' "$result")"
+            printf -- '- Validation: `%s`\n' "$(jq -r '.traces[0].validation.status' "$result")"
+            printf -- '- First divergence: `%s`\n' "$(jq -r 'if .traces[0].firstDivergence == null then "none" else (.traces[0].firstDivergence.stage + ":" + .traces[0].firstDivergence.category) end' "$result")"
+            echo '- Full prompt contents, image bytes, embedding vectors, and credentials were not logged.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload machine-readable smoke trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r3c-serving-smoke-${{ github.run_id }}
+          path: ${{ runner.temp }}/live-smoke-result.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Delete ephemeral serving smoke pod
+        if: always()
+        run: |
+          kubectl -n "$TARGET_NAMESPACE" delete pod "$SMOKE_POD"             --ignore-not-found=true --wait=false || true

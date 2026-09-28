@@ -2,19 +2,6 @@ name: AWS Deployment Contract Inventory Verification
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/**"
-      - "backend/src/main/resources/application-prod.yml"
-      - "frontend/.env.example"
-      - "infra/terraform/**"
-      - "infra/kubernetes/**"
-      - "scripts/deploy/**"
-      - "scripts/checks/aws-deployment-contract-inventory.py"
-      - "scripts/checks/aws-workflow-reference-reconciliation.py"
-
 permissions:
   contents: read
 

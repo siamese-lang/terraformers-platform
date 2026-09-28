@@ -13,8 +13,42 @@ SPEC.loader.exec_module(MODULE)
 
 
 class ChangedScopeTest(unittest.TestCase):
+    def write_workflow(self, root, relative_path, automatic=True):
+        path = root / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        trigger = "  workflow_dispatch:\n"
+        if automatic:
+            trigger += "  pull_request:\n"
+        path.write_text(
+            "name: test\n\non:\n" + trigger + "\njobs:\n  noop:\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n",
+            encoding="utf-8",
+        )
+
     def flags(self, path):
         return MODULE.classify([path])
+
+    def test_current_repository_has_only_allowlisted_automatic_pr_workflows(self):
+        root = Path(__file__).parents[2]
+        self.assertEqual(MODULE.verify_workflow_policy(root), MODULE.AUTO_PR_WORKFLOW_ALLOWLIST)
+
+    def test_policy_rejects_unapproved_automatic_pr_workflow(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for workflow in MODULE.AUTO_PR_WORKFLOW_ALLOWLIST:
+                self.write_workflow(root, workflow, automatic=True)
+            self.write_workflow(root, ".github/workflows/new-milestone-verifier.yml", automatic=True)
+
+            with self.assertRaisesRegex(RuntimeError, "unapproved automatic PR workflows"):
+                MODULE.verify_workflow_policy(root)
+
+    def test_policy_requires_explicit_allowlist_change_to_remove_core_pr_ci(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for workflow in MODULE.AUTO_PR_WORKFLOW_ALLOWLIST:
+                self.write_workflow(root, workflow, automatic=not workflow.endswith("frontend-ci.yml"))
+
+            with self.assertRaisesRegex(RuntimeError, "allowlisted workflows no longer automatic"):
+                MODULE.verify_workflow_policy(root)
 
     def test_docs_state_only_skips_expensive_workflows(self):
         flags = self.flags("docs/AI_PROJECT_STATE.md")

@@ -8,6 +8,13 @@ import subprocess
 from pathlib import Path
 
 
+AUTO_PR_WORKFLOW_ALLOWLIST = frozenset({
+    ".github/workflows/backend-local-verification.yml",
+    ".github/workflows/frontend-ci.yml",
+    ".github/workflows/terraform-static-verification.yml",
+})
+
+
 WORKFLOW_OUTPUTS = {
     "m1": ("boundary_contract", "backend_regression", "mariadb_regression", "frontend_regression", "runtime_contract"),
     "m2-baseline": ("kind_local_stub_baseline",),
@@ -16,6 +23,48 @@ WORKFLOW_OUTPUTS = {
     "terraform-static": ("terraform_static_verification",),
     "aws-runtime-package": ("aws_runtime_deployment_package",),
 }
+
+
+
+
+def workflow_triggers_pull_request(path: Path) -> bool:
+    """Return whether a workflow declares a pull_request trigger."""
+    lines = path.read_text(encoding="utf-8").splitlines()
+    in_on_block = False
+    for line in lines:
+        if not in_on_block:
+            if line.startswith("on:"):
+                if "pull_request" in line:
+                    return True
+                in_on_block = line.strip() == "on:"
+            continue
+
+        if line and not line[0].isspace() and not line.startswith("#"):
+            return False
+        if "pull_request" in line and line.strip().startswith("pull_request"):
+            return True
+    return False
+
+
+def verify_workflow_policy(repo_root: Path) -> set[str]:
+    """Keep automatic PR CI intentionally small and reviewable."""
+    workflow_dir = repo_root / ".github" / "workflows"
+    actual = {
+        path.relative_to(repo_root).as_posix()
+        for pattern in ("*.yml", "*.yaml")
+        for path in workflow_dir.glob(pattern)
+        if workflow_triggers_pull_request(path)
+    }
+    unexpected = sorted(actual - AUTO_PR_WORKFLOW_ALLOWLIST)
+    missing = sorted(AUTO_PR_WORKFLOW_ALLOWLIST - actual)
+    if unexpected or missing:
+        details = []
+        if unexpected:
+            details.append("unapproved automatic PR workflows: " + ", ".join(unexpected))
+        if missing:
+            details.append("allowlisted workflows no longer automatic: " + ", ".join(missing))
+        raise RuntimeError("; ".join(details))
+    return actual
 
 
 def under(path: str, prefix: str) -> bool:
@@ -155,12 +204,22 @@ def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--workflow", choices=WORKFLOW_OUTPUTS, required=True)
+    parser.add_argument("--workflow", choices=WORKFLOW_OUTPUTS)
+    parser.add_argument("--verify-workflow-policy", action="store_true")
+    parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--base")
     parser.add_argument("--head")
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--github-output", type=Path)
     args = parser.parse_args()
+    if args.verify_workflow_policy:
+        approved = verify_workflow_policy(args.repo_root)
+        print("automatic_pr_workflow_policy=passed")
+        for workflow in sorted(approved):
+            print(f"automatic_pr_workflow={workflow}")
+        return
+    if not args.workflow:
+        parser.error("--workflow is required unless --verify-workflow-policy is used")
     if args.all:
         selected = {name: True for name in WORKFLOW_OUTPUTS[args.workflow]}
     else:

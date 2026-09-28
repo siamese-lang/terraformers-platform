@@ -128,6 +128,7 @@ Evidence는 의사결정과 완료 주장을 제한하는 조건이지, reposito
 - 새 test는 변경된 production behavior 또는 확인된 failure의 회귀를 실제로 잡을 때만 추가한다. 문서 상태, task 상태, SHA 문자열, 기존 test의 PASS 문구만 확인하는 test는 추가하지 않는다.
 - 새 verifier/script는 기존 test나 command로 재현할 수 없는 engineering behavior를 반복 검증해야 하고, 향후 관련 production 변경에서도 재사용될 명확한 대상이 있어야 한다. 일회성 milestone 확인은 PR 결과와 문서 기록으로 충분하면 script로 승격하지 않는다.
 - 새 GitHub Actions workflow는 기존 workflow/job에 합리적으로 포함할 수 없고 독립적인 지속 검증 경계가 있을 때만 추가한다. milestone/subtask마다 workflow를 하나씩 만드는 패턴은 금지한다.
+- 자동 `pull_request` CI는 `scripts/checks/ci_changed_scope.py`의 allowlist로 제한하고 `Terraform Static Verification`의 lightweight scope job에서 매 PR마다 기계적으로 검증한다. 완료 milestone 및 historical compatibility/evidence workflow는 기본적으로 `workflow_dispatch` 전용으로 보존한다. 새 자동 PR workflow가 정말 필요하면 기존 자동 workflow로 커버할 수 없는 반복 regression boundary와 비용을 설명하고 allowlist 변경을 같은 PR에서 명시적으로 검토한다.
 - milestone closure는 원칙적으로 이미 통과한 evidence를 검토하고 source-of-truth 문서를 갱신하는 작업이다. closure 자체를 위해 '검증을 검증하는 verifier'나 self-referential workflow를 만들지 않는다.
 - 동일 fixture/bootstrap/JWT/JWKS/Kind setup을 여러 script에 복제하지 않는다. 반복 사용이 확인되면 기존 harness를 확장하거나 공통 helper로 통합하고, 단일 시나리오 때문에 새 parallel harness를 만들지 않는다.
 - 새로운 validation code를 제안하기 전에는 다음 네 질문에 답한다: (1) 어떤 실제 product/runtime failure를 잡는가, (2) 기존 test/check가 왜 부족한가, (3) 어떤 미래 변경에서도 재사용되는가, (4) 추가 maintenance cost보다 regression value가 큰가. 하나라도 답할 수 없으면 추가하지 않는다.

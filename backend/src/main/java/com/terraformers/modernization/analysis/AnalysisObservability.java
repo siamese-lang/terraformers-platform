@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Supplier;
@@ -47,6 +48,19 @@ public class AnalysisObservability {
         jobs("failed").increment();
         failures("terraformers.analysis.failures", "executor_rejected").increment();
         executorRejections().increment();
+    }
+
+    public void claimOutcome(boolean claimed) {
+        Counter.builder("terraformers.analysis.claims")
+                .tag("outcome", claimed ? "claimed" : "not_claimed")
+                .register(meterRegistry)
+                .increment();
+    }
+
+    public void recordQueueWait(Duration wait) {
+        Timer.builder("terraformers.analysis.queue.wait")
+                .register(meterRegistry)
+                .record(wait.isNegative() ? Duration.ZERO : wait);
     }
 
     public <T> T recordStage(AnalysisTelemetryStage stage, Supplier<T> operation) {

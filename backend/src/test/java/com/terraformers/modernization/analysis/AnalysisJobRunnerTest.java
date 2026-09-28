@@ -9,6 +9,7 @@ import com.terraformers.modernization.storage.ObjectWriteResult;
 import java.util.List;
 import java.util.Optional;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -154,6 +155,34 @@ class AnalysisJobRunnerTest {
         org.assertj.core.api.Assertions.assertThat(
                 registry.find("terraformers.analysis.jobs").tags("outcome", "started").counter()
         ).isNull();
+        org.assertj.core.api.Assertions.assertThat(registry.find("terraformers.analysis.claims")
+                .tags("outcome", "not_claimed").counter().count()).isEqualTo(1);
+    }
+
+    @Test
+    void beforeStateTransientProviderFailureIsNotRetriedAndJobBecomesTerminal() {
+        AnalysisJobOrchestrator orchestrator = mock(AnalysisJobOrchestrator.class);
+        AnalysisJobStateService stateService = mock(AnalysisJobStateService.class);
+        AnalysisJobEntity running = new AnalysisJobEntity();
+        running.prePersist();
+        AtomicInteger invocations = new AtomicInteger();
+        when(stateService.claimPending("job-transient")).thenReturn(Optional.of(running));
+        when(orchestrator.executeProviderAndStoreDraft(running)).thenAnswer(ignored -> {
+            if (invocations.incrementAndGet() == 1) {
+                throw new AnalysisProviderTimeoutException(new SocketTimeoutException("temporary timeout"));
+            }
+            return mock(AnalysisJobExecution.class);
+        });
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
+        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(registry)).run("job-transient");
+
+        org.assertj.core.api.Assertions.assertThat(invocations).hasValue(1);
+        verify(stateService).markFailed("job-transient", AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
+        org.assertj.core.api.Assertions.assertThat(registry.find("terraformers.analysis.claims")
+                .tags("outcome", "claimed").counter().count()).isEqualTo(1);
+        org.assertj.core.api.Assertions.assertThat(registry.find("terraformers.analysis.queue.wait")
+                .timer().count()).isEqualTo(1);
     }
 
     @Test

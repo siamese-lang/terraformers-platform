@@ -374,7 +374,7 @@ minimum GKE/OpenSearch/Vertex live-readiness boundary on the single target runti
 
 ### M3-R3 — Corpus ingestion and serving-path smoke
 
-**Status: IN PROGRESS — v3 live ingestion complete; serving-path smoke pending**
+**Status: IN PROGRESS — v3 live ingestion and serving-path launcher complete; protected smoke pending**
 
 **Problem / gap.** A deployed runtime is not useful for RAG until the versioned corpus/index
 contract and application-facing retrieval/model path work together.
@@ -398,10 +398,13 @@ exact 128-document count, `gemini-embedding-001`, 1024-dimensional vectors, stab
 `terraformers-reference-v3` index identity, and representative k-NN hits. The ephemeral ingestion
 pod was deleted after the run.
 
-The remaining M3-R3 boundary is the existing Java serving path. The repository-local task
+The remaining M3-R3 boundary is the protected execution of the existing Java serving path. The repository-local task
 [`M3-R3c-live-serving-path-smoke.md`](../../tasks/active/M3-R3c-live-serving-path-smoke.md)
-defines the next static implementation: wire the current production Vertex/OpenSearch components
-into the existing `EvaluationRunner` without deploying the full web/JPA/security application.
+is statically complete: `LiveEvaluationLauncher` wires the current production
+Vertex/OpenSearch components into the existing `EvaluationRunner` without starting the full
+web/JPA/security application. It accepts explicit CLI/environment configuration, fails closed on
+target-contract drift, supports one selected case or the unchanged six-case dataset, and writes the
+existing `EvaluationRunResult` schema with a deterministic effective-configuration fingerprint.
 
 **Validation.** Prove a small serving-path smoke through the existing extraction/retrieval/generation
 boundaries, including retrieval metadata/provenance. This smoke establishes runtime readiness; it

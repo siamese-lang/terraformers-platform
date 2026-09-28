@@ -212,13 +212,15 @@ documents, `gemini-embedding-001`, 1024-dimensional vectors, index
 `terraformers-reference-v3`, outcome `ingested`, and representative k-NN hits. The ephemeral
 ingestion pod cleanup also succeeded.
 
-The next repository development task is
-[`docs/tasks/active/M3-R3c-live-serving-path-smoke.md`](tasks/active/M3-R3c-live-serving-path-smoke.md).
-Implement the smallest live-evaluation launcher that reuses the existing production Vertex
+The repository development task
+[`docs/tasks/active/M3-R3c-live-serving-path-smoke.md`](tasks/active/M3-R3c-live-serving-path-smoke.md)
+is statically complete. The standalone `LiveEvaluationLauncher` reuses the production Vertex
 facts/query-embedding/retrieval/generation/parser/validator components and the existing
-`EvaluationRunner`, without starting the full web/JPA/security application runtime.
+`EvaluationRunner`, without starting the full web/JPA/security application runtime. It fails closed
+unless the explicit runtime identity matches the accepted GCP target contract and emits the
+existing machine-readable evaluation schema.
 
-After that static implementation is merged, run one protected positive-case serving-path smoke on
+The immediate next single task is to run one protected positive-case serving-path smoke on
 the same GKE/OpenSearch/Vertex runtime. Do not change prompts, retrieval ranking, corpus, models, or
 dataset expectations before M3-4 baseline evidence exists.
 

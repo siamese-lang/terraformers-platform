@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
 import com.terraformers.modernization.storage.ObjectWriteResult;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ class AnalysisJobDuplicateExecutionBaselineTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void duplicateDeliveryReexecutesSucceededJobWithoutStateGuard() {
+    void duplicateDeliveryDoesNotReexecuteSucceededJobAfterAtomicClaim() {
         AnalysisJobEntity job = new AnalysisJobEntity();
         job.setProjectId(701L);
         job.setSourceFileId(801L);
@@ -49,14 +48,6 @@ class AnalysisJobDuplicateExecutionBaselineTest {
         job.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
         job.setStatus(AnalysisJobStatus.PENDING);
         String jobId = repository.saveAndFlush(job).getId();
-
-        List<AnalysisJobStatus> statusBeforeMarkRunning = new ArrayList<>();
-        doAnswer(invocation -> {
-            AnalysisJobEntity entity = invocation.getArgument(0);
-            statusBeforeMarkRunning.add(entity.getStatus());
-            entity.setStatus(AnalysisJobStatus.RUNNING);
-            return null;
-        }).when(orchestrator).markRunning(any(AnalysisJobEntity.class));
 
         AnalysisJobExecution execution = new AnalysisJobExecution(
                 new AnalysisResult(
@@ -100,14 +91,13 @@ class AnalysisJobDuplicateExecutionBaselineTest {
         runner.run(jobId);
         runner.run(jobId);
 
-        assertThat(statusBeforeMarkRunning)
-                .containsExactly(AnalysisJobStatus.PENDING, AnalysisJobStatus.SUCCEEDED);
         assertThat(repository.findById(jobId))
                 .get()
                 .extracting(AnalysisJobEntity::getStatus)
                 .isEqualTo(AnalysisJobStatus.SUCCEEDED);
 
-        verify(orchestrator, times(2)).executeProviderAndStoreDraft(any(AnalysisJobEntity.class));
-        verify(orchestrator, times(2)).registerGeneratedTerraform(anyLong(), any(AnalysisJobExecution.class));
+        verify(orchestrator, times(1)).markRunning(any(AnalysisJobEntity.class));
+        verify(orchestrator, times(1)).executeProviderAndStoreDraft(any(AnalysisJobEntity.class));
+        verify(orchestrator, times(1)).registerGeneratedTerraform(anyLong(), any(AnalysisJobExecution.class));
     }
 }

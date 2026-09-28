@@ -164,7 +164,19 @@ A through C are complete:
   mutable quota/API/machine/duplicate-runtime checks, state-bucket protection, empty canonical
   runtime state and the exact corrected 12-create foundation contract; its apply job was skipped.
 
-D is therefore complete through the pre-apply trust boundary. Foundation permits only the corrected
+The first protected foundation apply subsequently completed the reviewed Terraform mutation as
+`12 added, 0 changed, 0 destroyed`, and read-only runtime-check run `36369764529` proved the
+canonical 12 managed resources, GKE cluster/node-pool readiness, `node_count=1`, and zero drift.
+
+The first protected OpenSearch readiness run `36370511427` then proved GitHub-runner control-plane
+authentication but failed before any Kubernetes mutation: `kubectl auth can-i create namespaces`
+returned `no`. The reviewed apply identity had `roles/container.clusterAdmin`, which manages
+cluster resources but not Kubernetes API objects. The smallest predefined GKE role matching the
+bounded Namespace/StorageClass/Service/StatefulSet/PVC deployment path is
+`roles/container.developer`; adding that role is a fresh IAM-matrix change and therefore requires
+separate operator approval before bootstrap convergence.
+
+D is therefore complete through the applied GKE foundation. Foundation permits only the corrected
 reviewed 12 creates and critical values; idle permits only the canonical node pool 1→0 in-place
 update. Cloud Billing API is intentionally not enabled for preflight and no billing-account role is
 added to the read identity, so billing-enabled status and remaining Free Trial credit are confirmed
@@ -172,7 +184,7 @@ once at the protected foundation approval.
 
 ## Immediate single task
 
-Make the **single separate approval decision** for the first `foundation` dispatch. Automated
-preflight already reconfirmed all project-scoped mutable checks and the 12-create contract. At that
-approval, confirm only that billing remains enabled and sufficient Free Trial promotional credit
-remains. Do not repeat the completed bootstrap, identity-check or standalone preflight.
+Review and approve the single IAM-matrix addition
+`roles/container.developer` for `terraformers-apply`, then rerun the idempotent GCP apply
+bootstrap and the protected OpenSearch readiness workflow. Do not repeat the foundation Terraform
+apply. No OpenSearch/PVC resource was created by failed readiness run `36370511427`.

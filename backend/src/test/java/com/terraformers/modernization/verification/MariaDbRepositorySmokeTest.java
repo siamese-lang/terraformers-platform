@@ -32,6 +32,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -39,7 +40,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-@SpringBootTest
+@SpringBootTest(properties = "terraformers.analysis.dispatch-enabled=false")
 @ActiveProfiles("prod")
 @EnabledIfEnvironmentVariable(named = "SPRING_DATASOURCE_URL", matches = "^jdbc:.*")
 @Transactional
@@ -68,6 +69,43 @@ class MariaDbRepositorySmokeTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Test
+    void durableEligibilityDiscoveryExecutesAgainstMariaDb() {
+        Instant now = Instant.parse("2026-09-28T00:00:00Z");
+        AnalysisJobEntity due = saveEligibilityJob("mariadb-due", AnalysisJobStatus.PENDING);
+        AnalysisJobEntity future = saveEligibilityJob("mariadb-future", AnalysisJobStatus.PENDING);
+        future.setNextAttemptAt(now.plusSeconds(30));
+        analysisJobRepository.saveAndFlush(future);
+        AnalysisJobEntity expired = saveEligibilityJob("mariadb-expired", AnalysisJobStatus.PENDING);
+        analysisJobRepository.claimEligible(expired.getId(), AnalysisJobStatus.PENDING,
+                AnalysisJobStatus.RUNNING, now.minusSeconds(120), now.minusSeconds(60));
+        AnalysisJobEntity active = saveEligibilityJob("mariadb-active", AnalysisJobStatus.PENDING);
+        analysisJobRepository.claimEligible(active.getId(), AnalysisJobStatus.PENDING,
+                AnalysisJobStatus.RUNNING, now.minusSeconds(1), now.plusSeconds(60));
+        AnalysisJobEntity legacy = saveEligibilityJob("mariadb-legacy", AnalysisJobStatus.PENDING);
+        analysisJobRepository.claimPending(legacy.getId(), AnalysisJobStatus.PENDING,
+                AnalysisJobStatus.RUNNING, now.minusSeconds(60));
+        AnalysisJobEntity terminal = saveEligibilityJob("mariadb-terminal", AnalysisJobStatus.SUCCEEDED);
+
+        List<String> eligible = analysisJobRepository.findEligibleJobIds(
+                AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, now, PageRequest.of(0, 10));
+
+        assertThat(eligible).contains(due.getId(), expired.getId(), legacy.getId());
+        assertThat(eligible).doesNotContain(future.getId(), active.getId(), terminal.getId());
+    }
+
+    private AnalysisJobEntity saveEligibilityJob(String correlationId, AnalysisJobStatus status) {
+        AnalysisJobEntity job = new AnalysisJobEntity();
+        job.setProjectId(999_001L);
+        job.setSourceFileId(999_002L);
+        job.setSourceBucket("mariadb-eligibility");
+        job.setSourceKey("source/eligibility.png");
+        job.setCorrelationId(correlationId);
+        job.setStatus(status);
+        job.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
+        return analysisJobRepository.saveAndFlush(job);
+    }
 
     private int claimInIndependentTransaction(String jobId, CyclicBarrier contendersReady) {
         return new TransactionTemplate(transactionManager).execute(status -> {

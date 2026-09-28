@@ -134,7 +134,7 @@ class AnalysisJobPartialSuccessBaselineTest {
         assertThat(logs)
                 .contains("analysisJobId=" + jobId)
                 .contains("Analysis job failed outcome=failed exceptionCategory=result_finalization")
-                .contains("Compensated stored analysis draft after relational finalization failure")
+                .contains("Compensated stored analysis draft after owned relational finalization failure")
                 .containsSubsequence(
                         "analysis stage outcome=success stage=analysis_execution",
                         "analysis stage outcome=failure stage=result_finalize category=result_finalization",
@@ -179,7 +179,7 @@ class AnalysisJobPartialSuccessBaselineTest {
         assertThat(output.getOut() + output.getErr())
                 .contains("analysisJobId=" + jobId)
                 .contains("analysis stage outcome=failure stage=compensation category=other")
-                .contains("Analysis draft compensation failed after relational finalization failure cleanupException=IllegalStateException")
+                .contains("Analysis draft compensation failed cleanupException=IllegalStateException")
                 .doesNotContain(write.bucket())
                 .doesNotContain(write.key());
     }

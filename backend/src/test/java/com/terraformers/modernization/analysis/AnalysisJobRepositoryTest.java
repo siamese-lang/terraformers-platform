@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -108,6 +109,38 @@ class AnalysisJobRepositoryTest {
         assertThat(reclaimed.getAttemptCount()).isEqualTo(2);
         assertThat(reclaimed.getClaimGeneration()).isEqualTo(2);
         assertThat(reclaimed.getLeaseExpiresAt()).isEqualTo(LEASE.plusSeconds(300));
+    }
+
+    @Test
+    void boundedDiscoveryIncludesDuePendingExpiredAndLegacyRunningOnly() {
+        AnalysisJobEntity due = savePending("due");
+        AnalysisJobEntity future = savePending("future");
+        future.setNextAttemptAt(NOW.plusSeconds(1));
+        repository.saveAndFlush(future);
+        AnalysisJobEntity expired = savePending("expired");
+        repository.claimEligible(expired.getId(), AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                NOW.minusSeconds(120), NOW.minusSeconds(60));
+        AnalysisJobEntity active = savePending("active");
+        repository.claimEligible(active.getId(), AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                NOW.minusSeconds(1), NOW.plusSeconds(60));
+        AnalysisJobEntity legacy = savePending("legacy-null-lease");
+        repository.claimPending(legacy.getId(), AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                NOW.minusSeconds(60));
+        AnalysisJobEntity terminal = savePending("terminal");
+        terminal.setStatus(AnalysisJobStatus.SUCCEEDED);
+        repository.saveAndFlush(terminal);
+
+        var discovered = repository.findEligibleJobIds(AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                NOW, PageRequest.of(0, 4));
+
+        assertThat(discovered).containsExactlyInAnyOrder(due.getId(), expired.getId(), legacy.getId());
+        assertThat(discovered).doesNotContain(future.getId(), active.getId(), terminal.getId());
+        assertThat(repository.claimEligible(legacy.getId(), AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                NOW, LEASE)).isEqualTo(1);
+        AnalysisJobEntity reclaimedLegacy = repository.findById(legacy.getId()).orElseThrow();
+        assertThat(reclaimedLegacy.getAttemptCount()).isEqualTo(1);
+        assertThat(reclaimedLegacy.getClaimGeneration()).isEqualTo(1);
+        assertThat(reclaimedLegacy.getLeaseExpiresAt()).isEqualTo(LEASE);
     }
 
     @Test

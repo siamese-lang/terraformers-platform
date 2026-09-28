@@ -28,6 +28,11 @@ terraformers:
     reader-provider: disabled
     writer-provider: metadata-only
   analysis:
+    dispatch-enabled: false
+    dispatch-poll-interval: 2s
+    dispatch-batch-size: 4
+    lease-duration: 60s
+    lease-renew-interval: 20s
     mode: integrated-java
     provider: stub
     embedding-provider: disabled

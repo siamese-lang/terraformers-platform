@@ -44,17 +44,35 @@ public class AnalysisObservability {
         failures("terraformers.analysis.failures", category(exception)).increment();
     }
 
-    public void jobRejected() {
-        jobs("failed").increment();
-        failures("terraformers.analysis.failures", "executor_rejected").increment();
-        executorRejections().increment();
-    }
-
-    public void claimOutcome(boolean claimed) {
+    public void claimOutcome(String outcome) {
         Counter.builder("terraformers.analysis.claims")
-                .tag("outcome", claimed ? "claimed" : "not_claimed")
+                .tag("outcome", outcome)
                 .register(meterRegistry)
                 .increment();
+    }
+
+    public void dispatchOutcome(String outcome) {
+        Counter.builder("terraformers.analysis.dispatch")
+                .tag("outcome", outcome).register(meterRegistry).increment();
+        if ("executor_rejected".equals(outcome)) {
+            executorRejections().increment();
+        }
+    }
+
+    public void leaseRenewal(boolean renewed) {
+        Counter.builder("terraformers.analysis.lease.renewals")
+                .tag("outcome", renewed ? "renewed" : "lost")
+                .register(meterRegistry).increment();
+    }
+
+    public void dispatchScanCandidates(int count) {
+        DistributionSummary.builder("terraformers.analysis.dispatch.scan.candidates")
+                .register(meterRegistry).record(count);
+    }
+
+    public void recordRecovery(Duration delay) {
+        Timer.builder("terraformers.analysis.recovery.delay").register(meterRegistry)
+                .record(delay.isNegative() ? Duration.ZERO : delay);
     }
 
     public void recordQueueWait(Duration wait) {

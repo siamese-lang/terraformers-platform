@@ -66,8 +66,8 @@ class AnalysisObservabilityTest {
         } catch (IllegalStateException ignored) {
         }
         observability.retrievedHits(3);
-        observability.claimOutcome(true);
-        observability.claimOutcome(false);
+        observability.claimOutcome("initial_claim");
+        observability.claimOutcome("not_claimed");
         observability.recordQueueWait(Duration.ofMillis(25));
 
         String scrape = registry.scrape();

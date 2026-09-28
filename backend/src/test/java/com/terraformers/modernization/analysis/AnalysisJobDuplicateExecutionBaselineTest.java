@@ -105,13 +105,13 @@ class AnalysisJobDuplicateExecutionBaselineTest {
         verify(orchestrator, times(1)).executeProviderAndStoreDraft(any(AnalysisJobEntity.class));
         verify(orchestrator, times(1)).registerGeneratedTerraform(anyLong(), any(AnalysisJobExecution.class));
         assertThat(registry.find("terraformers.analysis.claims")
-                .tags("outcome", "claimed").counter().count()).isEqualTo(1);
+                .tags("outcome", "initial_claim").counter().count()).isEqualTo(1);
         assertThat(registry.find("terraformers.analysis.claims")
                 .tags("outcome", "not_claimed").counter().count()).isEqualTo(1);
         assertThat(registry.find("terraformers.analysis.queue.wait").timer().count()).isEqualTo(1);
         assertThat(output.getOut() + output.getErr())
                 .contains("analysisJobId=" + jobId)
-                .contains("Analysis job claimed outcome=claimed")
+                .contains("Analysis job claimed outcome=initial_claim")
                 .contains("Analysis job execution started")
                 .contains("Analysis job skipped outcome=not_claimed");
     }

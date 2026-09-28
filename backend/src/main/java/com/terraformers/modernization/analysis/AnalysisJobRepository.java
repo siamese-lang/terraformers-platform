@@ -3,6 +3,8 @@ package com.terraformers.modernization.analysis;
 import jakarta.persistence.LockModeType;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,22 +15,14 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
 
     Optional<AnalysisJobEntity> findFirstByProjectIdOrderByCreatedAtDesc(Long projectId);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-            update AnalysisJobEntity job
-               set job.status = :failed,
-                   job.failureReason = :failureReason,
-                   job.updatedAt = :reconciledAt
-             where job.status = :pending
-                or job.status = :running
+            select job.id from AnalysisJobEntity job
+             where (job.status = :pending and (job.nextAttemptAt is null or job.nextAttemptAt <= :now))
+                or (job.status = :running and (job.leaseExpiresAt is null or job.leaseExpiresAt <= :now))
+             order by job.createdAt asc, job.id asc
             """)
-    int failInterrupted(
-            @Param("pending") AnalysisJobStatus pending,
-            @Param("running") AnalysisJobStatus running,
-            @Param("failed") AnalysisJobStatus failed,
-            @Param("failureReason") String failureReason,
-            @Param("reconciledAt") Instant reconciledAt
-    );
+    List<String> findEligibleJobIds(AnalysisJobStatus pending, AnalysisJobStatus running, Instant now,
+            Pageable pageable);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
@@ -57,7 +51,7 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
              where job.id = :jobId
                and :leaseExpiresAt > :now
                and ((job.status = :pending and (job.nextAttemptAt is null or job.nextAttemptAt <= :now))
-                    or (job.status = :running and job.leaseExpiresAt is not null and job.leaseExpiresAt <= :now))
+                    or (job.status = :running and (job.leaseExpiresAt is null or job.leaseExpiresAt <= :now)))
             """)
     int claimEligible(String jobId, AnalysisJobStatus pending, AnalysisJobStatus running,
             Instant now, Instant leaseExpiresAt);

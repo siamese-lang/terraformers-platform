@@ -3,6 +3,8 @@ package com.terraformers.modernization.analysis;
 import com.terraformers.modernization.projectcore.ProjectArtifactService;
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
 import com.terraformers.modernization.storage.ObjectWriteResult;
+import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,7 +42,19 @@ public class AnalysisJobOrchestrator {
     }
 
     public AnalysisJobExecution executeProviderAndStoreDraft(AnalysisJobEntity entity) {
-        AnalysisResult result = analysisProvider.analyze(toContext(entity));
+        AnalysisResult result;
+        try {
+            result = analysisProvider.analyze(toContext(entity));
+        } catch (AnalysisProviderTimeoutException exception) {
+            throw exception;
+        } catch (AnalysisProviderFailureException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            if (hasStandardNetworkTimeout(exception)) {
+                throw new AnalysisProviderTimeoutException(exception);
+            }
+            throw exception;
+        }
         TerraformDraftValidation validation = terraformDraftValidator.validate(result.terraformCode());
         if (!validation.valid()) {
             throw new IllegalStateException(validation.reason());
@@ -48,6 +62,15 @@ public class AnalysisJobOrchestrator {
         AnalysisResult sanitizedResult = result.withTerraformCode(validation.sanitizedContent());
         ObjectWriteResult writeResult = resultStorage.storeTerraformDraft(entity, sanitizedResult);
         return new AnalysisJobExecution(sanitizedResult, writeResult);
+    }
+
+    private boolean hasStandardNetworkTimeout(Throwable exception) {
+        Throwable current = exception;
+        while (current != null) {
+            if (current instanceof SocketTimeoutException || current instanceof HttpTimeoutException) return true;
+            current = current.getCause();
+        }
+        return false;
     }
 
     public void removeStoredDraft(ObjectWriteResult writeResult) {

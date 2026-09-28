@@ -65,6 +65,12 @@ public class AnalysisObservability {
                 .register(meterRegistry).increment();
     }
 
+    public void retryOutcome(String outcome) {
+        Counter.builder("terraformers.analysis.retries")
+                .tag("outcome", outcome)
+                .register(meterRegistry).increment();
+    }
+
     public void dispatchScanCandidates(int count) {
         DistributionSummary.builder("terraformers.analysis.dispatch.scan.candidates")
                 .register(meterRegistry).record(count);

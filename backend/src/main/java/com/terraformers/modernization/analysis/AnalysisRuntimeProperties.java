@@ -30,6 +30,8 @@ public class AnalysisRuntimeProperties {
     private int dispatchBatchSize = 4;
     private Duration leaseDuration = Duration.ofSeconds(60);
     private Duration leaseRenewInterval = Duration.ofSeconds(20);
+    private int maxAttempts = 3;
+    private Duration retryDelay = Duration.ofSeconds(10);
 
     @PostConstruct
     void validateDurableDispatch() {
@@ -47,6 +49,12 @@ public class AnalysisRuntimeProperties {
         }
         if (leaseRenewInterval.compareTo(leaseDuration) >= 0) {
             throw new IllegalStateException("terraformers.analysis.lease-renew-interval must be shorter than lease-duration");
+        }
+        if (maxAttempts < 1) {
+            throw new IllegalStateException("terraformers.analysis.max-attempts must be at least 1");
+        }
+        if (retryDelay == null || retryDelay.isZero() || retryDelay.isNegative()) {
+            throw new IllegalStateException("terraformers.analysis.retry-delay must be positive");
         }
     }
 
@@ -174,4 +182,8 @@ public class AnalysisRuntimeProperties {
     public void setLeaseDuration(Duration leaseDuration) { this.leaseDuration = leaseDuration; }
     public Duration getLeaseRenewInterval() { return leaseRenewInterval; }
     public void setLeaseRenewInterval(Duration leaseRenewInterval) { this.leaseRenewInterval = leaseRenewInterval; }
+    public int getMaxAttempts() { return maxAttempts; }
+    public void setMaxAttempts(int maxAttempts) { this.maxAttempts = maxAttempts; }
+    public Duration getRetryDelay() { return retryDelay; }
+    public void setRetryDelay(Duration retryDelay) { this.retryDelay = retryDelay; }
 }

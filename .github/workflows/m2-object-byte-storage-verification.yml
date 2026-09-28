@@ -2,16 +2,6 @@ name: M2 Object Byte Storage Verification
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - "backend/src/main/java/com/terraformers/modernization/storage/FileSystemObjectStore.java"
-      - "backend/src/test/java/com/terraformers/modernization/storage/FileSystemObjectStoreTest.java"
-      - "backend/src/main/java/com/terraformers/modernization/storage/StorageRuntimeProperties.java"
-      - "infra/kubernetes/overlays/portable-object-store/**"
-      - "scripts/checks/kind-portable-upload-analysis-filesystem.sh"
-      - ".github/workflows/m2-object-byte-storage-verification.yml"
-
 permissions:
   contents: read
 

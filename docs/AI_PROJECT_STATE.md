@@ -12,17 +12,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current milestone
 
-- Milestone: **M7 — Observability and Failure RCA**
+- Milestone: **M6 — Backend Reliability Improvement**
 - Status: **ACTIVE**
-- Phase: M7-1 current signal baseline
-- Active plan: [M7 — Observability and Failure RCA](plans/active/M7-observability.md)
-- Completed M6 plan: [M6 — Backend Reliability Improvement](plans/active/M6-backend-reliability-improvement.md)
+- Phase: integrated AnalysisJob reliability case review; M6-2 MariaDB validation gap being closed
+- Active plan: [M6 — Backend Reliability Improvement](plans/active/M6-backend-reliability-improvement.md)
+- Planned/blocked M7 plan: [M7 — Observability and Failure RCA](plans/active/M7-observability.md)
 - Completed M5 plan: [M5 — Backend Reliability Baseline](plans/active/M5-backend-reliability-baseline.md)
 - Completed M4 plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **M7-1 — capture current logs/metrics for the existing M6-3 finalization failure and identify the smallest missing signal**
+- Current implementation task: **close M6-2 direct MariaDB validation, then perform the integrated M6 case review; do not start new milestone work**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -124,31 +124,29 @@ same-job re-execution, and untracked object residue after DB finalization failur
 remains `CONTROLLED_CURRENT_BEHAVIOR` because it is already observed and terminates the job as
 `FAILED`.
 
-M6 is complete. PR #82 merged as
-`d36a36148353027118f0c5eb1c86543fffa00dad`; Backend Local Verification run `36399415255`
-passed. The repository now claims `PENDING → RUNNING` atomically, and duplicate delivery of an
-already-terminal job no longer re-enters provider/storage execution.
+M6 implementation exists but final closure is reopened for case-depth review.
 
-PR #83 merged as `3385114b365859aaa8d688621f33176d411d3ab6`; run `36399836413` passed.
-Before readiness, the current single-replica runtime now reconciles previous-process `PENDING` and
-`RUNNING` jobs to a safe terminal `FAILED` state rather than replaying uncertain side effects.
-Existing terminal jobs remain unchanged.
+- PR #82 / merge `d36a36148353027118f0c5eb1c86543fffa00dad` — atomic MariaDB-backed
+  `PENDING → RUNNING` claim prevents duplicate/terminal delivery from re-entering execution.
+- PR #83 / merge `3385114b365859aaa8d688621f33176d411d3ab6` — current single-replica startup
+  reconciliation fails previous-process `PENDING`/`RUNNING` jobs instead of replaying uncertain
+  side effects. Its application restart test passed, but the new `failInterrupted(...)` bulk update
+  was not directly executed by the PR #83 MariaDB smoke; the current gap-fix PR closes that evidence
+  gap.
+- PR #84 / merge `bb25229da188f690bc88f9abce5248911db3514f` — rollback-safe relational
+  finalization failure triggers provider-neutral result-object compensation for S3/filesystem and
+  metadata-only modes.
 
-PR #84 merged as `bb25229da188f690bc88f9abce5248911db3514f`; run `36400693033` passed.
-M6-3 added provider-neutral result-object removal for S3/filesystem and explicit metadata-only
-no-op compensation. Relational finalization failures that occur inside the rollback-safe transaction
-body now remove the immediately preceding persistent object before the job is marked `FAILED`.
-Commit-phase ambiguous errors are intentionally outside that compensation classification. Detailed
-before/after evidence is in
-[`m6-backend-reliability-closure.md`](evaluation/m6-backend-reliability-closure.md).
+M6 is not complete merely because those three implementation paths are green. PR #84 cleanup is
+best-effort: if object deletion itself fails, residue may remain and there is no durable cleanup
+ledger. The integrated case review must explicitly accept or address that trade-off before closure.
+M5+M6 are now grouped as one representative engineering case:
+[`AnalysisJob durable lifecycle reliability case`](evaluation/backend-reliability-analysis-job-lifecycle-case.md).
 
-M7 is active. Existing observability assets are Actuator/Prometheus metrics, job-level Micrometer
-counters/timers, the `analysisJobId` MDC scope, and source revision in logs. The console pattern
-contains `trace_id`/`span_id`, but the backend currently has no Micrometer tracing bridge/exporter
-dependency proving those fields are populated. Historical Bedrock/AOSS external metrics also do not
-cover the active Vertex/OpenSearch path. M7 therefore starts by capturing the current signals for
-one existing deterministic failure before adding stage telemetry, tracing, dashboards, or a
-collector.
+PR #86 merged as `46b87be8284e127d8d7fa070d04fb6561a1948a5` and captured the current
+metrics/log surface for the existing M6-3 failure. It is retained as supporting evidence that deepens
+the same backend case, not as automatic progression into M7. M7 is planned/blocked until the M6
+integrated case review is complete.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected

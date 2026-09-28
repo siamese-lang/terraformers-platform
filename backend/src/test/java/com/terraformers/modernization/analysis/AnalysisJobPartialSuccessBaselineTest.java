@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.terraformers.modernization.projectcore.ProjectArtifactService;
+import com.terraformers.modernization.storage.ObjectReference;
+import com.terraformers.modernization.storage.ObjectRemover;
 import com.terraformers.modernization.storage.ObjectWriteRequest;
 import com.terraformers.modernization.storage.ObjectWriteResult;
 import com.terraformers.modernization.storage.ObjectWriter;
@@ -53,7 +55,7 @@ class AnalysisJobPartialSuccessBaselineTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void successfulObjectWriteRemainsWhenRelationalFinalizationFails() {
+    void successfulObjectWriteIsCompensatedWhenRelationalFinalizationFails() {
         when(projectArtifactService.registerGeneratedTerraform(
                 anyLong(),
                 anyString(),
@@ -89,8 +91,9 @@ class AnalysisJobPartialSuccessBaselineTest {
         assertThat(write.key()).endsWith("/" + jobId + "/main.tf");
         assertThat(write.content()).contains("resource \"aws_s3_bucket\" \"partial_success\"");
         assertThat(write.content()).contains("bucket_prefix = \"partial-success-\"");
-        assertThat(objectWriter.objects())
-                .containsEntry(write.bucket() + "/" + write.key(), write.content());
+        assertThat(objectWriter.objects()).isEmpty();
+        assertThat(objectWriter.removals())
+                .containsExactly(new ObjectReference(write.bucket(), write.key()));
 
         verify(projectArtifactService).registerGeneratedTerraform(
                 anyLong(),
@@ -141,10 +144,17 @@ class AnalysisJobPartialSuccessBaselineTest {
         }
     }
 
-    static class CapturingObjectWriter implements ObjectWriter {
+    static class CapturingObjectWriter implements ObjectWriter, ObjectRemover {
 
         private final List<ObjectWriteRequest> writes = new ArrayList<>();
+        private final List<ObjectReference> removals = new ArrayList<>();
         private final Map<String, String> objects = new LinkedHashMap<>();
+
+        @Override
+        public void remove(ObjectReference reference) {
+            removals.add(reference);
+            objects.remove(reference.bucket() + "/" + reference.key());
+        }
 
         @Override
         public ObjectWriteResult writeText(ObjectWriteRequest request) {
@@ -161,6 +171,10 @@ class AnalysisJobPartialSuccessBaselineTest {
 
         List<ObjectWriteRequest> writes() {
             return List.copyOf(writes);
+        }
+
+        List<ObjectReference> removals() {
+            return List.copyOf(removals);
         }
 
         Map<String, String> objects() {

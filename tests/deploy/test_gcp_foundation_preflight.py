@@ -51,7 +51,11 @@ class GcpFoundationPreflightTest(unittest.TestCase):
             ),
             "billing_json": self.write(
                 "billing.json",
-                {"projectId": "terraformers-platform", "billingEnabled": True},
+                {
+                    "projectId": "terraformers-platform",
+                    "billingEnabled": True,
+                    "verificationStatus": "verified",
+                },
             ),
             "global_quota_json": self.write(
                 "global.json",
@@ -114,9 +118,24 @@ class GcpFoundationPreflightTest(unittest.TestCase):
     def test_accepts_expected_mutable_preflight(self) -> None:
         result = preflight.validate(self.args())
         self.assertEqual(result["status"], "passed")
+        self.assertTrue(result["billing_verified"])
         self.assertTrue(result["billing_enabled"])
         self.assertFalse(result["free_trial_credit_balance_checked"])
         self.assertEqual(result["duplicate_runtime_findings"], [])
+
+    def test_accepts_unavailable_billing_query_for_manual_approval(self) -> None:
+        billing = self.write(
+            "billing-unavailable.json",
+            {
+                "projectId": "terraformers-platform",
+                "billingEnabled": None,
+                "verificationStatus": "unavailable",
+            },
+        )
+        result = preflight.validate(self.args(billing_json=billing))
+        self.assertFalse(result["billing_verified"])
+        self.assertIsNone(result["billing_enabled"])
+        self.assertEqual(result["status"], "passed")
 
     def test_rejects_insufficient_regional_e2_cpu(self) -> None:
         region = self.write(
@@ -137,7 +156,11 @@ class GcpFoundationPreflightTest(unittest.TestCase):
     def test_rejects_disabled_billing(self) -> None:
         billing = self.write(
             "billing-off.json",
-            {"projectId": "terraformers-platform", "billingEnabled": False},
+            {
+                "projectId": "terraformers-platform",
+                "billingEnabled": False,
+                "verificationStatus": "verified",
+            },
         )
         with self.assertRaises(preflight.PreflightError):
             preflight.validate(self.args(billing_json=billing))

@@ -10,19 +10,44 @@ This checkpoint lets a new conversation or agent resume from repository evidence
 
 M0 closure was validated against this main SHA. Current `main` may differ after merge, so every new task must verify GitHub `main` again rather than treating this SHA as permanently current. It is not this PR's head SHA or a predicted merge SHA.
 
-## Current milestone
+## Current execution mode
 
-- Milestone: **M7 — Observability and Failure RCA**
-- Status: **ACTIVE**
-- Phase: M7-1 current signal baseline
-- Active plan: [M7 — Observability and Failure RCA](plans/active/M7-observability.md)
-- Completed M6 plan: [M6 — Backend Reliability Improvement](plans/active/M6-backend-reliability-improvement.md)
-- Completed M5 plan: [M5 — Backend Reliability Baseline](plans/active/M5-backend-reliability-baseline.md)
-- Completed M4 plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
-- Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
-- Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **M7-1 — capture current logs/metrics for the existing M6-3 finalization failure and identify the smallest missing signal**
+- Mode: **Portfolio Case Reassessment**
+- Status: **FEATURE/MILESTONE PROGRESSION PAUSED**
+- Active reassessment plan:
+  [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
+- Current single task: **lightweight M0/M1 foundation audit**
+- M2: **PROVISIONALLY RETAIN**
+- M3: **PROVISIONALLY RETAIN**
+- M4: **REASSESS**
+- M5: **EVIDENCE RETAINED**
+- M6: **REASSESS / NOT ACCEPTED AS FINAL RELIABILITY DESIGN**
+- M7/M8/M9: **PAUSED**
+
+Historical `COMPLETE` or `ACTIVE` labels later in this file are evidence history only and do not
+authorize automatic progression while this reassessment is active.
+
+The project success criterion is now explicit: produce 2–3 technically defensible engineering cases
+with repository-backed technical decisions, not merely a sequence of completed milestones.
+
+Candidate Case A — AI/RAG:
+- retain M3 fixed baseline/provenance and M4 failure evidence;
+- do not treat M4 as portfolio-closed;
+- require an approved decision brief covering the strongest measured AI/RAG problem, credible
+  alternatives, repeated same-condition experiment, latency/token/quality trade-off, and residual
+  risk before new AI implementation.
+
+Candidate Case B — Backend durable asynchronous processing:
+- retain M5 failure evidence and useful M6 primitives such as atomic claim;
+- do not accept restart-to-`FAILED` as the final durability solution by default;
+- explicitly decide whether an accepted analysis request must survive process restart;
+- compare current executor containment, MariaDB-backed durable queue/lease, RabbitMQ, and
+  Transactional Outbox + broker as real alternatives;
+- do not exclude RabbitMQ/Outbox merely because they were previously DEFER-listed.
+
+Observability and failure/load work may continue later only when it deepens an approved Case A or
+Case B. PR #86/#88 evidence is retained but is not independent permission to advance M7.
+
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -62,7 +87,7 @@ corpus, retrieval/top-K, validator, and no-retry behavior. Targeted VPC validati
 `36388548679` passed fact extraction, retrieval, generation, and validation with no first
 divergence and `retryOccurred=false`.
 
-M4-4/M4-5 are complete. Full six-case run `36391698161` on commit
+Historical M4 implementation checkpoint: M4-4/M4-5 had been marked complete before the current reassessment. Full six-case run `36391698161` on commit
 `2526f85b4bef781976126f99e5ed0c25344d0f94` used the unchanged dataset and canonical
 configuration fingerprint
 `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
@@ -124,7 +149,7 @@ same-job re-execution, and untracked object residue after DB finalization failur
 remains `CONTROLLED_CURRENT_BEHAVIOR` because it is already observed and terminates the job as
 `FAILED`.
 
-M6 is complete. PR #82 merged as
+Historical M6 implementation checkpoint before reassessment: M6 had been marked complete. That portfolio/final-design conclusion is withdrawn; the following implementation evidence remains valid. PR #82 merged as
 `d36a36148353027118f0c5eb1c86543fffa00dad`; Backend Local Verification run `36399415255`
 passed. The repository now claims `PENDING → RUNNING` atomically, and duplicate delivery of an
 already-terminal job no longer re-enters provider/storage execution.
@@ -142,7 +167,7 @@ Commit-phase ambiguous errors are intentionally outside that compensation classi
 before/after evidence is in
 [`m6-backend-reliability-closure.md`](evaluation/m6-backend-reliability-closure.md).
 
-M7 is active. Existing observability assets are Actuator/Prometheus metrics, job-level Micrometer
+Historical state before reassessment: M7 had been marked active. That progression is now superseded and PAUSED. Existing observability assets are Actuator/Prometheus metrics, job-level Micrometer
 counters/timers, the `analysisJobId` MDC scope, and source revision in logs. The console pattern
 contains `trace_id`/`span_id`, but the backend currently has no Micrometer tracing bridge/exporter
 dependency proving those fields are populated. Historical Bedrock/AOSS external metrics also do not

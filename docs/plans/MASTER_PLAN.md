@@ -6,6 +6,33 @@
 
 각 milestone은 기술 목록이 아니라 **problem → work → evidence → exit condition**으로 관리한다. 날짜나 예상 기간은 이 계획에서 정하지 않는다.
 
+
+## Temporary execution override — Portfolio Case Reassessment
+
+**Status: ACTIVE — FEATURE/MILESTONE PROGRESSION PAUSED**
+
+The repository is temporarily governed by
+[`portfolio-case-reassessment.md`](active/portfolio-case-reassessment.md).
+
+This override exists because historical milestone completion became too closely coupled to
+"small fix → green validation → next milestone" and does not by itself prove a portfolio-grade
+technical decision case.
+
+Until the reassessment exits:
+
+- M0/M1: lightweight foundation audit;
+- M2/M3: provisionally retained foundations, subject only to contradiction found by the audit;
+- M4: **REASSESS** — existing AI evidence is retained, but portfolio-case completion is withdrawn;
+- M5: baseline evidence retained as observed backend failure material;
+- M6: **REASSESS / NOT ACCEPTED AS FINAL RELIABILITY DESIGN**;
+- M7/M8/M9: independent progression paused;
+- no historical `COMPLETE` or `ACTIVE` label below authorizes automatic implementation;
+- exactly one approved case/decision task may proceed at a time.
+
+Project success is now evaluated primarily by whether 2–3 engineering cases can demonstrate
+`scenario → failure → impact → root mechanism → alternatives → decision → implementation →
+same-scenario validation → trade-off`, not by milestone completion count.
+
 ## Planning principles
 
 - Milestone은 기본적으로 M0부터 M10까지 순서대로 진행한다.
@@ -25,17 +52,17 @@
 
 | Milestone | Status | Purpose | Exit evidence |
 | --- | --- | --- | --- |
-| M0 — Baseline & Governance | **COMPLETE** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 모든 M0 문서와 valid links, 상호 모순 없음, closure SHA와 M1 진입 기록 |
-| M1 — Cloud Decoupling | **COMPLETE** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
-| M2 — Runtime Parity | **COMPLETE** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
-| M3 — AI Evaluation Baseline | **COMPLETE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
-| M4 — AI Targeted Improvement | **COMPLETE** | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
-| M5 — Backend Reliability Baseline | **COMPLETE** | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
-| M6 — Backend Reliability Improvement | **COMPLETE** | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
-| M7 — Observability | **ACTIVE** | 실제 장애를 signal 간 연결로 RCA하고 recovery 확인 | 하나 이상의 실제 failure에 대한 metric/log/trace 기반 원인 및 recovery evidence |
-| M8 — Failure & Load Verification | PLANNED | AI, reliability, observability 결합 상태를 failure/load 조건에서 검증 | Reproducible scenario, telemetry, resulting state, recovery와 operator evidence |
-| M9 — GCP Runtime Closure | PLANNED | 앞선 milestone에서 사용한 동일 GCP target runtime의 delivery, rollback, teardown evidence 최종 정리 | Reused target IaC/runtime, immutable release, smoke, rollback, teardown evidence |
-| M10 — Portfolio Closure | PLANNED | 문제 해결 evidence를 역추적 가능한 최종 결과물로 구성 | Repository evidence에 연결된 2~3개의 strongest case |
+| M0 — Baseline & Governance | **AUDIT** | Repository 사실, 재사용 자산, 목표 architecture, decision rule과 전체 plan을 source of truth로 고정 | 현재 방향과 모순 여부만 경량 감사 |
+| M1 — Cloud Decoupling | **AUDIT** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | current main에서 provider-neutral boundary 유지 여부 경량 감사 |
+| M2 — Runtime Parity | **PROVISIONALLY RETAIN** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | M0/M1 감사에서 모순이 없으면 foundation evidence로 유지 |
+| M3 — AI Evaluation Baseline | **PROVISIONALLY RETAIN** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | fixed dataset/provenance/live baseline을 Case A foundation으로 유지 |
+| M4 — AI Targeted Improvement | **REASSESS** | M3 evidence를 AI/RAG 대표 문제 해결 case로 충분히 깊게 발전시키는지 재평가 | causal/trade-off evidence와 stronger case decision 필요 |
+| M5 — Backend Reliability Baseline | **EVIDENCE RETAINED** | `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Case B failure material로 유지 |
+| M6 — Backend Reliability Improvement | **REASSESS** | durable async processing 요구와 대안 비교를 포함해 reliability 설계 재평가 | 기존 수정은 provisional primitives; final design 아님 |
+| M7 — Observability | **PAUSED** | 승인된 대표 case의 실제 RCA를 깊게 만드는 지원 축 | 독립 milestone 진행 금지 |
+| M8 — Failure & Load Verification | **PAUSED** | 승인된 대표 case의 failure/load 조건 재검증 | 독립 milestone 진행 금지 |
+| M9 — GCP Runtime Closure | **PAUSED** | 동일 target runtime delivery/rollback/teardown 정리 | representative cases 이후 진행 |
+| M10 — Portfolio Closure | **REDEFINED** | 마지막에 소재를 만드는 단계가 아니라 이미 깊게 만든 2~3 case를 최종 편집 | repository evidence에 연결된 strongest cases |
 
 ## M0 — Baseline & Governance
 
@@ -121,7 +148,7 @@ M4 change until that plan is the repository source of truth.
 
 ## M4 — AI Targeted Improvement
 
-**Status.** **COMPLETE.** The source-of-truth plan is
+**Status.** **REASSESS — historical implementation evidence retained; portfolio-case closure withdrawn.** The source-of-truth plan is
 [`active/M4-ai-targeted-improvement.md`](active/M4-ai-targeted-improvement.md), and closure evidence
 is recorded in
 [`m4-targeted-improvement-closure.md`](../evaluation/m4-targeted-improvement-closure.md).
@@ -161,7 +188,7 @@ reliability mechanism.
 
 ## M5 — Backend Reliability Baseline
 
-**Status.** **COMPLETE.** The completed plan is
+**Status.** **EVIDENCE RETAINED — failure baseline remains valid input to Case B.** The completed plan is
 [`active/M5-backend-reliability-baseline.md`](active/M5-backend-reliability-baseline.md), and
 classification evidence is recorded in
 [`m5-backend-reliability-baseline.md`](../evaluation/m5-backend-reliability-baseline.md).
@@ -191,7 +218,7 @@ terminal or duplicate-delivered job cannot re-enter execution.
 
 ## M6 — Backend Reliability Improvement
 
-**Status.** **COMPLETE.** The completed plan is
+**Status.** **REASSESS — existing implementation is provisional evidence, not the accepted final reliability design.** The completed plan is
 [`active/M6-backend-reliability-improvement.md`](active/M6-backend-reliability-improvement.md), and
 closure evidence is recorded in
 [`m6-backend-reliability-closure.md`](../evaluation/m6-backend-reliability-closure.md).
@@ -222,7 +249,7 @@ controlled. No broker, outbox, distributed lock, retry loop, or second worker wa
 
 ## M7 — Observability
 
-**Status.** **ACTIVE.** The source-of-truth plan is
+**Status.** **PAUSED — prior observability implementation evidence is retained, but independent milestone progression is stopped.** The source-of-truth plan is
 [`active/M7-observability.md`](active/M7-observability.md).
 
 **Problem.** The repository already exposes Actuator/Prometheus metrics and job-correlated logs, but

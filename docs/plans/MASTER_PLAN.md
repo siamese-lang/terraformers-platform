@@ -29,7 +29,7 @@
 | M1 — Cloud Decoupling | **COMPLETE** | AWS-specific integration과 application core의 결합을 code boundary에서 제거 | Provider-neutral contract 및 configuration evidence, business regression pass |
 | M2 — Runtime Parity | **COMPLETE** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
 | M3 — AI Evaluation Baseline | **COMPLETE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
-| M4 — AI Targeted Improvement | **ACTIVE** | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
+| M4 — AI Targeted Improvement | **COMPLETE** | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
 | M5 — Backend Reliability Baseline | PLANNED | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
 | M6 — Backend Reliability Improvement | PLANNED | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
 | M7 — Observability | PLANNED | 실제 장애를 signal 간 연결로 RCA하고 recovery 확인 | 하나 이상의 실제 failure에 대한 metric/log/trace 기반 원인 및 recovery evidence |
@@ -121,36 +121,43 @@ M4 change until that plan is the repository source of truth.
 
 ## M4 — AI Targeted Improvement
 
-**Status.** **ACTIVE.** The source-of-truth plan is
-[`active/M4-ai-targeted-improvement.md`](active/M4-ai-targeted-improvement.md).
+**Status.** **COMPLETE.** The source-of-truth plan is
+[`active/M4-ai-targeted-improvement.md`](active/M4-ai-targeted-improvement.md), and closure evidence
+is recorded in
+[`m4-targeted-improvement-closure.md`](../evaluation/m4-targeted-improvement-closure.md).
 
-**Problem.** M3 identified a concrete first-divergence class:
-`FACT_EXTRACTION / PROVIDER_RUNTIME`. M4-1 added safe diagnostics, and M4-2 then reproduced the VPC
-failure as `FACT_EXTRACTION / OUTPUT_TRUNCATED` with `reason=RESPONSE_TRUNCATED`; the second
-affected AOSS case passed end to end under the unchanged configuration.
+**Problem.** M3 identified `FACT_EXTRACTION / PROVIDER_RUNTIME` as the first divergence in 2 of 6
+fixed cases. M4-1 preserved actionable provider/response diagnostics, and M4-2 reproduced the VPC
+case specifically as `FACT_EXTRACTION / OUTPUT_TRUNCATED` with
+`reason=RESPONSE_TRUNCATED`; the AOSS failure did not reproduce in its bounded rerun.
 
-**Work.** Follow
-`baseline failure → root cause → minimal targeted change → same-dataset re-evaluation`.
-M4-1 diagnostics and M4-2 bounded live reproduction are complete. M4-3 is now limited to the
-reproduced truncation path; generic retry/backoff is not justified by the captured evidence.
-LangGraph, LangChain, rerankers, judge-model expansion, unrelated prompt/model/corpus changes, and a
-persistent Python worker remain DEFER.
+**Work.** Code inspection showed that Vertex fact extraction used a fixed 800-token output bound
+while Gemini 3.8 Flash thinking was not explicitly constrained for the compact structured-output
+request. PR #74 set only fact extraction to `LOW` thinking, keeping the 800-token bound, prompt,
+schema, models, corpus, retrieval/top-K, validator, and no-retry behavior unchanged. The targeted VPC
+rerun then passed end to end. M4-4 reran all six unchanged cases on the same reusable GCP target
+runtime and fixed dataset/configuration identity.
 
-**Evidence.** Reuse M3 canonical baseline run `36379633596` and configuration fingerprint
-`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
-M4-2 runs `36385950712` and `36386233526` classify the two affected cases; detailed evidence is
-in [M4-2 live reproduction evidence](../evaluation/m4-r2-live-reproduction-evidence.md). After the
-targeted M4-3 change, rerun the same six fixed cases on the same target runtime/configuration and
-compare first-divergence count/category, latency, retries, and regressions.
+**Evidence.** Canonical before run `36379633596` had fact extraction PASS 4/6 and two first
+divergences. Targeted post-change VPC run `36388548679` passed fact extraction, retrieval,
+generation, and validation with no retry. Full after run `36391698161` on commit
+`2526f85b4bef781976126f99e5ed0c25344d0f94` had fact extraction PASS 6/6, retrieval PASS 6/6,
+generation PASS 6/6, all four architecture cases validation PASS, both negative controls still
+correct, and zero first divergences. Artifact digest is
+`sha256:3697bf1a703b437132d6bf98eb89a51ab45810154afb02d3e5d3e1ffcbb7d1c6`.
+Residual evidence is preserved: the newly reachable VPC retrieval stage missed part of its fixed
+top-8 requirement, and AOSS fact extraction had a one-run 130489 ms latency outlier. Final protected
+idle run `36392580754` returned the canonical node pool to `node_count=0`.
 
-**Exit condition.** The selected M3 failure class has a reproduced root cause, the smallest justified
-change is implemented, and the same-dataset/configuration comparison shows the failure reduced or
-controlled without regressing previously successful behavior.
+**Exit condition.** **MET.** The selected M3 first-divergence class was reproduced/root-caused, the
+smallest justified change was implemented, the same fixed dataset/runtime contract was rerun, the
+targeted failure count fell from 2 to 0, and previously successful downstream/negative-control
+behavior did not regress. No generic retry, reranker, framework expansion, model switch, prompt
+tuning, or corpus change was introduced.
 
-**Immediate next single task.** Return the canonical target node pool to zero using the protected
-`idle` operation. Then begin M4-3 by inspecting the Vertex fact-extraction truncation path and
-implementing only the smallest change justified by `RESPONSE_TRUNCATED` evidence. Do not add
-generic retry/backoff.
+**Immediate next single task.** Create the M5 — Backend Reliability Baseline active plan from the
+current `AnalysisJob` lifecycle. Measure and classify current failure behavior before selecting a
+reliability mechanism.
 
 ## M5 — Backend Reliability Baseline
 

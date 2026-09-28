@@ -13,13 +13,13 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current milestone
 
 - Milestone: **M4 — AI Targeted Improvement**
-- Status: **ACTIVE**
-- Phase: M4-3 low-thinking fact-extraction implementation / live validation pending
+- Status: **COMPLETE**
+- Phase: M4 closure complete; M5 active-plan creation is next
 - Active plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **merge the low-thinking fact-extraction change, then run one bounded VPC validation**
+- Current implementation task: **none — create the M5 Backend Reliability Baseline active plan before M5 implementation**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -52,11 +52,37 @@ one in-place `google_container_node_pool.target` update, plan JSON SHA-256
 `2d36638ec05b13cdc7c3f9b4b99d12b2f4b945df4658864c8ef8460d1599afcd`,
 `0 added, 1 changed, 0 destroyed`, and the final idle `node_count=0` boundary check.
 
-M4-3 code inspection found the direct mechanism: Vertex fact extraction uses a hard
-`MAX_FACT_TOKENS=800` while Gemini 3.8 Flash defaults to `MEDIUM` thinking, and the output-token
-ceiling includes thinking plus visible response tokens. The targeted implementation keeps the
-800-token cap and all fixed evaluation identities, but sets only fact extraction to `LOW` thinking.
-Deterministic tests verify that bounded request configuration before live revalidation.
+M4-3 is complete. PR #74 merged as
+`4369feb20da5ef4c48986667c88606cc6488259f` and changed only Vertex fact extraction to explicit
+`LOW` thinking while keeping the existing `MAX_FACT_TOKENS=800` bound, prompt/schema, models,
+corpus, retrieval/top-K, validator, and no-retry behavior. Targeted VPC validation run
+`36388548679` passed fact extraction, retrieval, generation, and validation with no first
+divergence and `retryOccurred=false`.
+
+M4-4/M4-5 are complete. Full six-case run `36391698161` on commit
+`2526f85b4bef781976126f99e5ed0c25344d0f94` used the unchanged dataset and canonical
+configuration fingerprint
+`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
+Fact-extraction PASS changed from 4/6 to 6/6 and first divergence from 2 to 0; retrieval and
+generation passed for all six cases, all four architecture cases passed validation, both negative
+controls remained correctly classified, and no generation retry occurred. The after artifact is
+`m3-live-baseline-36391698161` (id `10955719668`, digest
+`sha256:3697bf1a703b437132d6bf98eb89a51ab45810154afb02d3e5d3e1ffcbb7d1c6`).
+Residual findings are explicit rather than tuned away: the newly reachable VPC retrieval stage
+missed part of its fixed top-8 retrieval requirement, and AOSS fact extraction had a one-run
+`130489 ms` latency outlier. Detailed closure evidence is in
+[`m4-targeted-improvement-closure.md`](evaluation/m4-targeted-improvement-closure.md).
+
+The final M4 live session was closed by protected idle run `36392580754`. It updated only
+`google_container_node_pool.target` from 1 to 0, applied `0 added, 1 changed, 0 destroyed`,
+used plan JSON SHA-256
+`e8a7bd03f416c66c707dd44f01fbcae9e61eeed02a14d5d9b18f84d7ccc70367`, and passed the final
+`node_count=0` runtime boundary.
+
+PR #75 also reduced accumulated automatic PR CI from 18 workflows to the three core automatic
+checks and added a machine-enforced allowlist in the existing Terraform Static scope job. Completed
+milestone and historical AWS workflows remain available through manual `workflow_dispatch` rather
+than running on every PR.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected

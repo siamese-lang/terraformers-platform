@@ -391,7 +391,7 @@ minimum GKE/OpenSearch/Vertex live readiness is proven.
 
 ### M3-R3 — Corpus ingestion and serving-path smoke
 
-**Status: TODO**
+**Status: IN PROGRESS — static corpus contract complete; live ingestion/smoke pending**
 
 **Problem / gap.** A deployed runtime is not useful for RAG until the versioned corpus/index
 contract and application-facing retrieval/model path work together.
@@ -399,6 +399,14 @@ contract and application-facing retrieval/model path work together.
 **Change boundary.** Ingest the versioned corpus with the selected embedding/index contract and
 connect the existing Spring Boot-facing ports to the same target runtime. Preserve corpus/version
 identity and any embedding-dimension rebuild decision explicitly.
+
+**M3-R3a static result.** `terraformers-reference-v3` is deterministically derived from the
+committed curated v2 corpus without running embeddings or ingestion. It preserves all 128 document
+IDs, content, AWS provider 5.100.0 knowledge, and provenance while changing only the corpus/index
+identity, the embedding model identity to `gemini-embedding-001`, and project-owned source-version
+references that identify the new corpus. The existing 1024-dimensional FAISS/HNSW cosine mapping
+is retained. M3-R3b must perform the deferred live embedding, ingestion, and serving-path smoke on
+the single target runtime.
 
 **Validation.** Prove a small serving-path smoke through the existing extraction/retrieval/generation
 boundaries, including retrieval metadata/provenance. This smoke establishes runtime readiness; it

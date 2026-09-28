@@ -185,6 +185,13 @@ No remaining M1 work.
 
 ## Immediate next work
 
+The separately authorized non-live M3-R3a track is complete: the repository now contains the
+deterministically derived `terraformers-reference-v3` static contract. All 128 curated v2 document
+IDs and contents remain unchanged, AWS provider knowledge remains at 5.100.0, and the target
+identity is `gemini-embedding-001` / 1024 dimensions / `terraformers-reference-v3`. Live embedding,
+OpenSearch ingestion, and serving-path smoke remain deferred to M3-R3b and must reuse the single
+target runtime.
+
 **Make the single separate approval decision for the first protected 12-create foundation apply.**
 
 Automated preflight run `36365247935` succeeded on

@@ -46,7 +46,7 @@ TYPES = {
     "TERRAFORMERS_PATTERN",
 }
 PROVIDER_TYPES = {"AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE", "AWS_PROVIDER_SCHEMA"}
-FIXED_RUNTIME = {
+HISTORICAL_RUNTIME = {
     "awsProviderVersion": "5.100.0",
     "embeddingModelId": "amazon.titan-embed-text-v2:0",
     "vectorDimension": 1024,
@@ -54,6 +54,15 @@ FIXED_RUNTIME = {
     "vectorField": "embedding",
     "contentField": "content",
 }
+V3_RUNTIME = {
+    "awsProviderVersion": "5.100.0",
+    "embeddingModelId": "gemini-embedding-001",
+    "vectorDimension": 1024,
+    "indexName": "terraformers-reference-v3",
+    "vectorField": "embedding",
+    "contentField": "content",
+}
+EXPECTED_RUNTIME_BY_MAJOR = {1: HISTORICAL_RUNTIME, 2: HISTORICAL_RUNTIME, 3: V3_RUNTIME}
 CORPUS_VERSION_PATTERN = re.compile(r"^terraformers-reference-v([1-9][0-9]*)$")
 FORBIDDEN = [
     (re.compile(r"(?<!\d)\d{12}(?!\d)"), "account-like identifier"),
@@ -154,7 +163,10 @@ def main() -> None:
     major = corpus_major(version)
     if corpus.name != f"v{major}":
         fail("corpus directory name must match manifest corpusVersion")
-    for key, value in FIXED_RUNTIME.items():
+    expected_runtime = EXPECTED_RUNTIME_BY_MAJOR.get(major)
+    if expected_runtime is None:
+        fail(f"corpus version v{major} has no registered runtime contract")
+    for key, value in expected_runtime.items():
         if manifest.get(key) != value:
             fail(f"manifest {key} must be {value!r}")
     if manifest["checksumAlgorithm"] != "SHA-256":

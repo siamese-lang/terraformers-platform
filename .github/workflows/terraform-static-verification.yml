@@ -48,9 +48,12 @@ jobs:
           python3 scripts/checks/rag-corpus-contract-verification.py
           python3 scripts/checks/rag-corpus-contract-verification.py \
             --corpus-dir corpus/terraformers-reference/v2
+          python3 scripts/checks/rag-corpus-contract-verification.py \
+            --corpus-dir corpus/terraformers-reference/v3
           python3 -m unittest \
             tests/rag/test_build_corpus_v2.py \
             tests/rag/test_curate_corpus_v2.py \
+            tests/rag/test_derive_corpus_v3.py \
             tests/rag/test_ingest_corpus.py
 
       - name: Verify GCP target delivery and billing fallback gates

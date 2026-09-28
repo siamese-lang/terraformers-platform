@@ -105,6 +105,55 @@ target runtime을 한 번 구축하고 계속 확장·재사용하는 것**이�
 - test, verifier, workflow, evidence document 자체를 프로젝트 개선 결과로 취급하지 않는다.
   그것들은 product/runtime/engineering claim을 뒷받침하는 수단이다.
 
+## Role separation and authority
+
+이 프로젝트는 한 agent가 판단·구현·검증·병합을 모두 수행하는 구조를 사용하지 않는다.
+
+### ChatGPT — technical lead / reviewer
+
+ChatGPT의 기본 역할은 **read/analysis/review**다.
+
+- current `main`, code path, evidence, logs, PR diff를 읽고 분석한다.
+- operating scenario, failure impact, alternatives, trade-off, validation plan을 정리한다.
+- Case Decision Gate를 작성하고 사용자의 기술 방향 승인을 받는다.
+- 승인된 결정을 Codex가 구현할 수 있는 bounded implementation spec으로 변환한다.
+- Codex 결과를 원래 decision/acceptance criteria와 대조해 review한다.
+- portfolio case depth와 residual risk를 판정한다.
+- GitHub write는 예외이며, 현재 GitHub app permission은 read는 허용하되 **write마다 사용자 승인**을 요구하는 모드로 유지한다.
+- 사용자 승인 없이 branch 생성, source 수정, PR 생성/수정, merge를 수행하지 않는다.
+
+### Codex — bounded implementation agent
+
+production/runtime 코드 구현은 원칙적으로 Codex에 bounded task로 위임한다.
+
+Codex task에는 최소한 다음이 포함되어야 한다.
+
+- exact base SHA;
+- 구현 목표와 승인된 technical decision;
+- 수정 허용/금지 범위;
+- acceptance criteria;
+- 실행할 기존 test/check;
+- 새 workflow/verifier 생성 금지 여부;
+- 완료 시 반환할 diff/test 결과;
+- 다음 milestone/subtask로 자동 진행 금지.
+
+Codex는 "backend reliability 개선", "AI/RAG 고도화"처럼 열린 목표를 받지 않는다. 한 번에 승인된
+implementation unit 하나만 수행한다.
+
+### User — decision and merge checkpoint
+
+사용자는 최소 두 지점에서 명시적 checkpoint를 가진다.
+
+1. **Decision approval** — alternatives와 선택 근거를 검토한 뒤 구현 방향을 승인한다.
+2. **Merge approval** — Codex 구현과 ChatGPT review 결과를 본 뒤 merge 여부를 결정한다.
+
+사용자가 명시적으로 merge까지 승인한 bounded task가 아니면 ChatGPT/Codex가 스스로 병합하지 않는다.
+
+### Exception
+
+문서 오탈자, 명백한 metadata 수정처럼 production/architecture 의미가 전혀 없는 소규모 변경은 사용자가
+해당 변경을 직접 요청한 경우 ChatGPT가 수행할 수 있다. 이 예외를 기능/설계 변경으로 확대하지 않는다.
+
 ### Interaction and execution boundary
 
 대화가 길어지거나 새 대화로 전환되어도 agent가 독자적으로 작업 범위를 넓히지 않도록 다음을 지킨다.

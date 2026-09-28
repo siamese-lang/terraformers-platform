@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — STATE TRANSITION / RECOVERY FIRST**
+**ACTIVE — INTEGRATED RELIABILITY CASE REVIEW BEFORE CLOSURE**
 
 M5 measured the current `AnalysisJob` lifecycle and confirmed three reliability gaps. M6 changes
 only those evidenced behaviors and reuses the exact M5 scenarios for validation.
@@ -74,7 +74,7 @@ No GCP live runtime activation is expected for M6 unless local/MariaDB evidence 
 
 ## M6-1 — Atomic PENDING claim and terminal-state guard
 
-**Status: TODO**
+**Status: COMPLETE — PR #82 / merge `d36a36148353027118f0c5eb1c86543fffa00dad`**
 
 Replace the current load-and-unconditionally-set-`RUNNING` transition with an atomic database claim
 whose success condition is:
@@ -101,7 +101,7 @@ Validation:
 
 ## M6-2 — Single-replica restart reconciliation
 
-**Status: TODO**
+**Status: IMPLEMENTED — PR #83 / merge `3385114b365859aaa8d688621f33176d411d3ab6`; direct MariaDB query validation is being closed in the current gap-fix PR**
 
 On application startup, classify persisted `PENDING` and `RUNNING` jobs left by the prior process
 as interrupted and move them to a safe terminal `FAILED` state.
@@ -131,7 +131,7 @@ Validation:
 
 ## M6-3 — Partial-success residue control
 
-**Status: TODO — DECISION AFTER CAPABILITY INSPECTION**
+**Status: IMPLEMENTED — PR #84 / merge `bb25229da188f690bc88f9abce5248911db3514f`; compensation-failure residual risk remains open for M6-4 review**
 
 M5-3 proves that object persistence can succeed before relational finalization fails.
 
@@ -154,7 +154,7 @@ residue ledger.
 
 ## M6-4 — Same-scenario before/after closure
 
-**Status: TODO**
+**Status: ACTIVE — INTEGRATED CASE REVIEW**
 
 Re-run the M5 evidence scenarios after M6 changes.
 
@@ -166,6 +166,24 @@ Expected closure table:
 | Duplicate delivery after success | re-executes | no second claim/execution |
 | Object write then DB failure | untracked persisted residue | removed or durably recorded |
 | Executor rejection | controlled `FAILED` | unchanged controlled behavior |
+
+M6-4 is not a paperwork-only closure. Treat M5+M6 as one representative backend reliability case:
+**the in-process `AnalysisJob` execution path lacked one coherent durable lifecycle across execution
+ownership, process restart, and DB/object-storage finalization.**
+
+Before closing M6, the case review must connect the three observed symptoms to that common mechanism,
+record user/system impact, compare the rejected architecture options (broker/outbox/distributed lock)
+with the implemented smaller controls, and state residual risks.
+
+In particular, PR #84 compensation is currently best-effort: if object deletion itself fails, the
+runner logs the cleanup failure and the object may remain without durable cleanup tracking. This means
+M6 invariant 4 is not fully proven for cleanup-failure conditions. M6-4 must explicitly decide whether:
+
+- this is an acceptable residual limitation for the current single-runtime portfolio case, with the
+  limitation carried into M7/M8 observability/failure verification; or
+- a small durable residue-accountability mechanism is still required before M6 closure.
+
+Do not silently mark M6 complete based only on the happy-path compensation test.
 
 ## Exit condition
 
@@ -181,6 +199,6 @@ M6 is complete when:
 
 ## Immediate next single task
 
-Implement M6-1 as the smallest atomic repository/state-service claim and invert the existing M5-2
-duplicate-delivery baseline. Do not begin restart reconciliation or partial-success cleanup in the
-same code change.
+Close the M6-2 MariaDB validation gap, then perform the integrated M6-4 case review. Do not start M7
+or add another reliability mechanism until the backend reliability case can be explained end to end,
+including the PR #84 compensation-failure residual risk.

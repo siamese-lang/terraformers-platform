@@ -14,9 +14,12 @@ import com.terraformers.modernization.storage.ObjectWriteResult;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Propagation;
@@ -25,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 @DataJpaTest
 @ActiveProfiles("test")
 @Import(AnalysisJobStateService.class)
+@ExtendWith(OutputCaptureExtension.class)
 class AnalysisJobDuplicateExecutionBaselineTest {
 
     @Autowired
@@ -38,7 +42,7 @@ class AnalysisJobDuplicateExecutionBaselineTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void duplicateDeliveryDoesNotReexecuteSucceededJobAfterAtomicClaim() {
+    void duplicateDeliveryDoesNotReexecuteSucceededJobAfterAtomicClaim(CapturedOutput output) {
         AnalysisJobEntity job = new AnalysisJobEntity();
         job.setProjectId(701L);
         job.setSourceFileId(801L);
@@ -82,10 +86,11 @@ class AnalysisJobDuplicateExecutionBaselineTest {
                 any(ProjectFileEntity.class)
         );
 
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
         AnalysisJobRunner runner = new AnalysisJobRunner(
                 orchestrator,
                 stateService,
-                new AnalysisObservability(new SimpleMeterRegistry())
+                new AnalysisObservability(registry)
         );
 
         runner.run(jobId);
@@ -99,5 +104,15 @@ class AnalysisJobDuplicateExecutionBaselineTest {
         verify(orchestrator, times(1)).markRunning(any(AnalysisJobEntity.class));
         verify(orchestrator, times(1)).executeProviderAndStoreDraft(any(AnalysisJobEntity.class));
         verify(orchestrator, times(1)).registerGeneratedTerraform(anyLong(), any(AnalysisJobExecution.class));
+        assertThat(registry.find("terraformers.analysis.claims")
+                .tags("outcome", "claimed").counter().count()).isEqualTo(1);
+        assertThat(registry.find("terraformers.analysis.claims")
+                .tags("outcome", "not_claimed").counter().count()).isEqualTo(1);
+        assertThat(registry.find("terraformers.analysis.queue.wait").timer().count()).isEqualTo(1);
+        assertThat(output.getOut() + output.getErr())
+                .contains("analysisJobId=" + jobId)
+                .contains("Analysis job claimed outcome=claimed")
+                .contains("Analysis job execution started")
+                .contains("Analysis job skipped outcome=not_claimed");
     }
 }

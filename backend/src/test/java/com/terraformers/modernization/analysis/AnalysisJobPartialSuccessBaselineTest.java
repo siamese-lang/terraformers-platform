@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -56,6 +57,11 @@ class AnalysisJobPartialSuccessBaselineTest {
 
     @MockBean
     private ProjectArtifactService projectArtifactService;
+
+    @BeforeEach
+    void resetObjectWriter() {
+        objectWriter.reset();
+    }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -136,6 +142,48 @@ class AnalysisJobPartialSuccessBaselineTest {
                 );
     }
 
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void beforeStateFailedCompensationLeavesUntrackedObjectResidue(CapturedOutput output) {
+        when(projectArtifactService.registerGeneratedTerraform(
+                anyLong(),
+                anyString(),
+                any(ObjectWriteResult.class)
+        )).thenThrow(new IllegalStateException("forced relational finalization failure"));
+        objectWriter.failRemovals();
+
+        AnalysisJobEntity job = new AnalysisJobEntity();
+        job.setProjectId(911L);
+        job.setSourceFileId(912L);
+        job.setSourceBucket("compensation-failure-source");
+        job.setSourceKey("source/architecture.png");
+        job.setCorrelationId("compensation-failure");
+        job.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
+        job.setStatus(AnalysisJobStatus.PENDING);
+        String jobId = repository.saveAndFlush(job).getId();
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
+        new AnalysisJobRunner(orchestrator, stateService, new AnalysisObservability(registry)).run(jobId);
+
+        AnalysisJobEntity persisted = repository.findById(jobId).orElseThrow();
+        ObjectWriteRequest write = objectWriter.writes().get(0);
+        assertThat(persisted.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+        assertThat(persisted.getResultFileId()).isNull();
+        assertThat(persisted.getResultObjectKey()).isNull();
+        assertThat(objectWriter.removals()).containsExactly(new ObjectReference(write.bucket(), write.key()));
+        assertThat(objectWriter.objects()).containsKey(write.bucket() + "/" + write.key());
+        assertThat(registry.find("terraformers.analysis.stage.duration")
+                .tags("stage", "compensation", "outcome", "failure").timer().count()).isEqualTo(1);
+        assertThat(registry.find("terraformers.analysis.stage.failures")
+                .tags("stage", "compensation", "category", "other").counter().count()).isEqualTo(1.0);
+        assertThat(output.getOut() + output.getErr())
+                .contains("analysisJobId=" + jobId)
+                .contains("analysis stage outcome=failure stage=compensation category=other")
+                .contains("Analysis draft compensation failed after relational finalization failure cleanupException=IllegalStateException")
+                .doesNotContain(write.bucket())
+                .doesNotContain(write.key());
+    }
+
     @TestConfiguration
     static class BaselineConfig {
 
@@ -183,10 +231,14 @@ class AnalysisJobPartialSuccessBaselineTest {
         private final List<ObjectWriteRequest> writes = new ArrayList<>();
         private final List<ObjectReference> removals = new ArrayList<>();
         private final Map<String, String> objects = new LinkedHashMap<>();
+        private boolean failRemovals;
 
         @Override
         public void remove(ObjectReference reference) {
             removals.add(reference);
+            if (failRemovals) {
+                throw new IllegalStateException("forced cleanup failure");
+            }
             objects.remove(reference.bucket() + "/" + reference.key());
         }
 
@@ -213,6 +265,17 @@ class AnalysisJobPartialSuccessBaselineTest {
 
         Map<String, String> objects() {
             return Map.copyOf(objects);
+        }
+
+        void failRemovals() {
+            failRemovals = true;
+        }
+
+        void reset() {
+            writes.clear();
+            removals.clear();
+            objects.clear();
+            failRemovals = false;
         }
     }
 }

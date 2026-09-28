@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 class AnalysisObservabilityTest {
@@ -65,10 +66,15 @@ class AnalysisObservabilityTest {
         } catch (IllegalStateException ignored) {
         }
         observability.retrievedHits(3);
+        observability.claimOutcome(true);
+        observability.claimOutcome(false);
+        observability.recordQueueWait(Duration.ofMillis(25));
 
         String scrape = registry.scrape();
         assertThat(scrape).contains(
                 "terraformers_analysis_jobs",
+                "terraformers_analysis_claims",
+                "terraformers_analysis_queue_wait",
                 "terraformers_bedrock_invocations",
                 "terraformers_aoss_retrievals",
                 "terraformers_aoss_retrieved_hits"
@@ -79,5 +85,11 @@ class AnalysisObservabilityTest {
                         .extracting(Tag::getKey)
                         .containsExactly("outcome")
         );
+        assertThat(registry.find("terraformers.analysis.claims").meters()).allSatisfy(meter ->
+                assertThat(meter.getId().getTags())
+                        .extracting(Tag::getKey)
+                        .containsExactly("outcome")
+        );
+        assertThat(registry.find("terraformers.analysis.queue.wait").timer().count()).isEqualTo(1);
     }
 }

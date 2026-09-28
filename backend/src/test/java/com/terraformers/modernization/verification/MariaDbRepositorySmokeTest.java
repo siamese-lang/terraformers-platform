@@ -18,16 +18,22 @@ import com.terraformers.modernization.projectcore.OwnedProjectRepository;
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
 import com.terraformers.modernization.projectcore.ProjectFileRepository;
 import com.terraformers.modernization.projectcore.ProjectStatus;
-import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest
 @ActiveProfiles("prod")
@@ -54,10 +60,27 @@ class MariaDbRepositorySmokeTest {
     private CommentRepository commentRepository;
 
     @Autowired
-    private EntityManager entityManager;
+    private PlatformTransactionManager transactionManager;
+
+    private int claimInIndependentTransaction(String jobId, CyclicBarrier contendersReady) {
+        return new TransactionTemplate(transactionManager).execute(status -> {
+            try {
+                contendersReady.await();
+            } catch (Exception exception) {
+                throw new IllegalStateException("concurrent claim barrier failed", exception);
+            }
+            return analysisJobRepository.claimPending(
+                    jobId,
+                    AnalysisJobStatus.PENDING,
+                    AnalysisJobStatus.RUNNING,
+                    Instant.now()
+            );
+        });
+    }
 
     @Test
-    void canonicalRepositoryQueriesExecuteAgainstMariaDb() {
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void canonicalRepositoryQueriesAndConcurrentClaimExecuteAgainstMariaDb() throws Exception {
         String suffix = UUID.randomUUID().toString();
 
         UserEntity owner = new UserEntity();
@@ -144,24 +167,26 @@ class MariaDbRepositorySmokeTest {
         claimJob.setStatus(AnalysisJobStatus.PENDING);
         claimJob.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
         claimJob = analysisJobRepository.saveAndFlush(claimJob);
+        String claimJobId = claimJob.getId();
 
-        assertThat(analysisJobRepository.claimPending(
-                claimJob.getId(),
-                AnalysisJobStatus.PENDING,
-                AnalysisJobStatus.RUNNING,
-                Instant.now()
-        )).isEqualTo(1);
-        assertThat(analysisJobRepository.claimPending(
-                claimJob.getId(),
-                AnalysisJobStatus.PENDING,
-                AnalysisJobStatus.RUNNING,
-                Instant.now()
-        )).isZero();
-        assertThat(analysisJobRepository.findById(claimJob.getId()))
+        CyclicBarrier contendersReady = new CyclicBarrier(2);
+        ExecutorService contenders = Executors.newFixedThreadPool(2);
+        try {
+            Future<Integer> first = contenders.submit(
+                    () -> claimInIndependentTransaction(claimJobId, contendersReady)
+            );
+            Future<Integer> second = contenders.submit(
+                    () -> claimInIndependentTransaction(claimJobId, contendersReady)
+            );
+            assertThat(List.of(first.get(), second.get())).containsExactlyInAnyOrder(0, 1);
+        } finally {
+            contenders.shutdownNow();
+        }
+        assertThat(analysisJobRepository.findById(claimJobId))
                 .get()
                 .extracting(AnalysisJobEntity::getStatus)
                 .isEqualTo(AnalysisJobStatus.RUNNING);
-        analysisJobRepository.deleteById(claimJob.getId());
+        analysisJobRepository.deleteById(claimJobId);
         analysisJobRepository.flush();
 
         BoardEntity board = new BoardEntity();
@@ -185,9 +210,6 @@ class MariaDbRepositorySmokeTest {
         String jobId = job.getId();
         Long boardId = board.getBoardId();
         Long commentId = comment.getCommentId();
-
-        entityManager.flush();
-        entityManager.clear();
 
         assertThat(userRepository.findByExternalIdentityProviderAndExternalIdentitySubject(
                 "cognito",

@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis;
 
 import java.net.SocketTimeoutException;
+import java.time.Duration;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,14 +28,21 @@ public class AnalysisJobRunner {
     }
 
     public void run(String jobId) {
-        AnalysisJobEntity runningJob = stateService.claimPending(jobId).orElse(null);
-        if (runningJob == null) {
-            log.info("Analysis job skipped outcome=not_claimed reason=non_pending");
-            return;
-        }
         try (AnalysisLogCorrelation ignored = AnalysisLogCorrelation.forJob(jobId)) {
+            AnalysisJobEntity runningJob = stateService.claimPending(jobId).orElse(null);
+            boolean claimed = runningJob != null;
+            observability.claimOutcome(claimed);
+            if (!claimed) {
+                log.info("Analysis job skipped outcome=not_claimed reason=non_pending");
+                return;
+            }
+            if (runningJob.getCreatedAt() != null) {
+                observability.recordQueueWait(Duration.between(runningJob.getCreatedAt(), Instant.now()));
+            }
+            log.info("Analysis job claimed outcome=claimed");
             io.micrometer.core.instrument.Timer.Sample sample = observability.startAnalysis();
             observability.jobStarted();
+            log.info("Analysis job execution started");
             AnalysisJobExecution execution = null;
             try {
                 execution = observability.recordStage(

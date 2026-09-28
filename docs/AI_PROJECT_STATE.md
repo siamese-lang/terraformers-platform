@@ -17,7 +17,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Phase: M3-R3 live corpus ingestion and serving-path smoke
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R3b — Live ingest terraformers-reference-v3 on the proven target runtime**
+- Current implementation task: **M3-R3c — Live Spring serving-path smoke on the proven target runtime**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -201,25 +201,26 @@ No remaining M1 work.
 
 ## Immediate next work
 
-M3-R2 is complete. Do not repeat the foundation Terraform apply or OpenSearch readiness deployment.
+M3-R2 is complete. M3-R3a static v3 derivation is complete. M3-R3b static implementation and live
+ingestion are complete.
 
-M3-R3a static corpus derivation and the M3-R3b one-shot GCP ingestion adapter are both implemented.
-The next single live task is the protected
-`GCP Target Corpus Ingestion` workflow. It must reuse the existing
-`terraformers-backend` Kubernetes ServiceAccount / GKE Workload Identity principal that Terraform
-already granted `roles/aiplatform.user` and
-`roles/serviceusage.serviceUsageConsumer`. The GitHub apply identity is limited to bounded
-Kubernetes object operations and must not receive Vertex permissions.
+Protected corpus-ingestion run `36375171823` at
+`155b7293a7d7a8cbd6c2e69eb6b45d86c08b25e8` succeeded on the single target runtime. Its
+machine-readable receipt recorded corpus `terraformers-reference-v3`, checksum
+`df8c198f0648827d754e1ef92ff4c07b1397e7dd36a06487eebfee1443ce892f`, exactly 128
+documents, `gemini-embedding-001`, 1024-dimensional vectors, index
+`terraformers-reference-v3`, outcome `ingested`, and representative k-NN hits. The ephemeral
+ingestion pod cleanup also succeeded.
 
-The live ingestion path must validate the committed v3 checksum, create or validate the
-`terraformers-reference-v3` OpenSearch index, generate 128
-`gemini-embedding-001` `RETRIEVAL_DOCUMENT` embeddings at 1024 dimensions, preserve stable
-document/provenance identity, verify exact document count and a representative k-NN hit, emit only
-a sanitized receipt, and delete its ephemeral ingestion pod afterward.
+The next repository development task is
+[`docs/tasks/active/M3-R3c-live-serving-path-smoke.md`](tasks/active/M3-R3c-live-serving-path-smoke.md).
+Implement the smallest live-evaluation launcher that reuses the existing production Vertex
+facts/query-embedding/retrieval/generation/parser/validator components and the existing
+`EvaluationRunner`, without starting the full web/JPA/security application runtime.
 
-After successful ingestion, proceed to the M3-R3 serving-path smoke through the existing Spring
-Boot extraction/retrieval/generation/validation boundaries. Do not tune prompts, retrieval, corpus,
-or models before M3-4 baseline evidence exists.
+After that static implementation is merged, run one protected positive-case serving-path smoke on
+the same GKE/OpenSearch/Vertex runtime. Do not change prompts, retrieval ranking, corpus, models, or
+dataset expectations before M3-4 baseline evidence exists.
 
 ## Do not revisit
 

@@ -106,7 +106,7 @@ class AnalysisJobPartialSuccessBaselineTest {
         AnalysisProvider analysisProvider() {
             return context -> new AnalysisResult(
                     "partial-success-provider",
-                    "resource \"aws_s3_bucket\" \"partial_success\" {}",
+                    "resource \"aws_s3_bucket\" \"partial_success\" { bucket_prefix = \"partial-success-\" }",
                     "partial success baseline",
                     List.of("S3"),
                     List.of(),

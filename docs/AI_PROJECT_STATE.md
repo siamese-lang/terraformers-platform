@@ -14,12 +14,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M4 — AI Targeted Improvement**
 - Status: **ACTIVE**
-- Phase: M4-2 bounded live root-cause reproduction
+- Phase: M4-2 complete / M4-3 truncation-targeted preparation
 - Active plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **run the two affected M4-2 cases on the active canonical runtime**
+- Current implementation task: **idle the canonical runtime, then address the reproduced fact-extraction truncation**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -35,6 +35,17 @@ gate with exactly one managed-resource change, updated only
 `google_container_node_pool.target`, applied `0 added, 1 changed, 0 destroyed`, and verified the
 cluster/node pool `RUNNING` with Terraform `node_count=1`. The saved plan JSON SHA-256 was
 `49055c3593910e55d3a7f68a18a8502f09ef18d06523203817c9439e35942b22`.
+
+M4-2 is complete on the unchanged canonical configuration. Run `36385950712` reproduced
+`arch-vpc-three-tier` as `FACT_EXTRACTION / OUTPUT_TRUNCATED` with
+`reason=RESPONSE_TRUNCATED`; retrieval, generation, and validation did not run. Run
+`36386233526` did not reproduce the AOSS failure: fact extraction, retrieval, generation, and
+validation all passed with no first divergence and generation `retryOccurred=false`. Both runs used
+configuration fingerprint
+`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
+Detailed evidence is in
+[`m4-r2-live-reproduction-evidence.md`](evaluation/m4-r2-live-reproduction-evidence.md). Generic
+retry/backoff is therefore not justified; M4-3 is constrained to the demonstrated truncation path.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -172,16 +183,17 @@ Reuse the domain/project/user/file/comment flow, `AnalysisJob` lifecycle baselin
 
 Current M3 evidence leaves these concrete gaps:
 
-- `VertexArchitectureFactsExtractor` live reliability is not yet demonstrated across the fixed
-  dataset: 2 of 6 baseline cases failed at `FACT_EXTRACTION / PROVIDER_RUNTIME`;
-- provider runtime failures lose actionable detail in evaluation traces, preserving only
-  `IllegalStateException` rather than a sanitized provider status/category and retry metadata;
+- M4-2 proves at least one baseline fact-extraction failure is output truncation:
+  `arch-vpc-three-tier` reproduced as `FACT_EXTRACTION / OUTPUT_TRUNCATED` with
+  `reason=RESPONSE_TRUNCATED`;
+- `arch-private-aoss` did not reproduce its original failure in the bounded M4-2 run and instead
+  passed through validation, so no generic transient-provider fix is justified;
 - provider usage telemetry is incomplete: output-token counts exist for successful architecture
   generation, but input tokens and cost are unavailable;
 - the earlier one-case serving smoke exposed a validator false-positive candidate around the phrase
   `Placeholder EC2 instance`, but that behavior was not reproduced in the canonical six-case
   baseline and is secondary evidence rather than the primary M4 target;
-- M3-6 still needs to record framework decisions and close the milestone.
+- M4-3 still needs the smallest truncation-targeted behavior change and same-condition validation.
 
 The target GKE/OpenSearch/Vertex runtime, v3 corpus ingestion, Java serving path, six-case baseline,
 retrieval provenance, generation evidence, and Terraform validation evidence are all available.
@@ -197,7 +209,12 @@ Reusable patterns include provider abstraction, immutable image/SHA identity, le
 
 **DEFER — evidence required:** RabbitMQ, Transactional Outbox, LangGraph, a persistent Python AI worker/service, Keycloak, Redis, Kafka, and multi-agent architecture.
 
-**GCP target selected/implemented for M3-R2:** one zonal GKE Standard cluster with an idle `node_count=0` and a bounded `1 × e2-standard-2` live session; internal single-node OpenSearch OSS with a 15 GiB `pd-standard` PVC; Vertex AI `gemini-3.8-flash` and `gemini-embedding-001` at 1024 dimensions; Workload Identity Federation for GKE. Static code exists, but no target resources have been applied.
+**GCP target selected/implemented for M3-R2:** one zonal GKE Standard cluster with an approved idle
+`node_count=0` and bounded `1 × e2-standard-2` live sessions; internal single-node OpenSearch OSS
+with a 15 GiB `pd-standard` PVC; Vertex AI `gemini-3.8-flash` and
+`gemini-embedding-001` at 1024 dimensions; Workload Identity Federation for GKE. The canonical
+runtime has been applied and reused for M3/M4 evidence; protected `activate` and `idle` operations
+control the node-pool lifecycle.
 
 **Still GATED:** database hosting, object storage implementation, external identity provider, frontend/ingress, broader secrets and observability topology, image registry, GitHub Actions-to-GCP identity and delivery method, and Terraform remote backend. The GKE workload identity decision does not select GitHub Actions federation.
 
@@ -223,17 +240,13 @@ M4 is active under
 The canonical before-state remains M3 baseline run `36379633596` with configuration fingerprint
 `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
 
-M4-1 is complete and the canonical runtime is active. The immediate task is M4-2 bounded live
-reproduction of `arch-vpc-three-tier` and `arch-private-aoss` with the unchanged
-`terraformers-eval-v1` identity and canonical configuration fingerprint
-`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
+M4-2 is complete. The immediate operational task is to return the canonical target node pool to
+idle size 0. After that, M4-3 must inspect the Vertex fact-extraction truncation path demonstrated by
+run `36385950712` and implement only the smallest truncation-targeted change.
 
-Use the existing GCP target evaluation workflow's M4 scopes, preserve both machine-readable traces,
-and classify each fact-extraction outcome from the new sanitized diagnostics. A PASS is evidence that
-the failure was not reproduced in that attempt; do not rerun merely to manufacture a failure. Do not
-implement retry/backoff until a transient provider status is actually observed.
-
-After the bounded live evidence session, return the target GKE node pool to idle size 0.
+Do not add generic retry/backoff: no 429/5xx/capacity failure was captured in M4-2. Preserve the fixed
+dataset, model IDs, corpus/index, top-K, vector dimension, validator, and production Java path unless
+new evidence passes ADR-004.
 
 ## Do not revisit
 
@@ -258,9 +271,9 @@ Without new evidence, an ADR where needed, and the change gate, do not:
 Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this
 document, (4) read `MASTER_PLAN.md`, and (5) read the
 [active M4 plan](plans/active/M4-ai-targeted-improvement.md). Follow the M4 evidence chain:
-M4-1 diagnostics → existing-runtime resume prerequisite → M4-2 bounded live reproduction → only
-then an evidence-justified M4-3 behavior change. Do not create a second cloud runtime and do not
-implement retry/backoff before M4-2 classifies the observed failure. Retain the
+M4-1 diagnostics → existing-runtime resume prerequisite → M4-2 bounded live reproduction → M4-3
+truncation-targeted change → M4-4 same-dataset comparison. Do not create a second cloud runtime and
+do not add generic retry/backoff without new retryable-provider evidence. Retain the
 [completed M2 plan](plans/active/M2-runtime-parity.md) and [completed M1 plan](plans/active/M1-cloud-decoupling.md)
 as historical milestone evidence.
 

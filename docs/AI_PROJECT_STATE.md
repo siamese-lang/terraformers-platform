@@ -16,9 +16,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Status: **FEATURE/MILESTONE PROGRESSION PAUSED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
-- Current single task: **lightweight M0/M1 foundation audit**
-- M2: **PROVISIONALLY RETAIN**
-- M3: **PROVISIONALLY RETAIN**
+- Measurement/acceptance source of truth:
+  [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
+- Current single task after this contract is merged: **Case B Measurement Readiness Audit**
+- M0/M1: **AUDITED / RETAINED**
+- M2: **RETAINED FOUNDATION**
+- M3: **RETAINED CASE A BASELINE**
 - M4: **REASSESS**
 - M5: **EVIDENCE RETAINED**
 - M6: **REASSESS / NOT ACCEPTED AS FINAL RELIABILITY DESIGN**
@@ -27,17 +30,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 Historical `COMPLETE` or `ACTIVE` labels later in this file are evidence history only and do not
 authorize automatic progression while this reassessment is active.
 
-The project success criterion is now explicit: produce 2–3 technically defensible engineering cases
-with repository-backed technical decisions, not merely a sequence of completed milestones.
+The project success criterion is now explicit: complete three technically defensible engineering
+cases with repository-backed technical decisions, not merely a sequence of completed milestones.
 
-Candidate Case A — AI/RAG:
+Case A — AI/RAG quality, performance and reliability:
 - retain M3 fixed baseline/provenance and M4 failure evidence;
 - do not treat M4 as portfolio-closed;
 - require an approved decision brief covering the strongest measured AI/RAG problem, credible
   alternatives, repeated same-condition experiment, latency/token/quality trade-off, and residual
   risk before new AI implementation.
 
-Candidate Case B — Backend durable asynchronous processing:
+Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim;
 - do not accept restart-to-`FAILED` as the final durability solution by default;
 - explicitly decide whether an accepted analysis request must survive process restart;
@@ -45,8 +48,16 @@ Candidate Case B — Backend durable asynchronous processing:
   Transactional Outbox + broker as real alternatives;
 - do not exclude RabbitMQ/Outbox merely because they were previously DEFER-listed.
 
-Observability and failure/load work may continue later only when it deepens an approved Case A or
-Case B. PR #86/#88 evidence is retained but is not independent permission to advance M7.
+Case C — Cloud runtime capacity and safe delivery:
+- use the existing GKE/Vertex/OpenSearch target runtime as the baseline;
+- measure saturation and identify the first bottleneck before tuning replicas, HPA, executor, node,
+  or OpenSearch resources;
+- validate healthy rollout and faulty-release rollback under representative workload;
+- freeze latency/availability thresholds only after the before baseline exists;
+- treat observability/load tooling as case measurement dependencies, not independent milestones.
+
+Observability and failure/load work may continue only when it closes a measurement gap for Case A,
+Case B, or Case C. PR #86/#88 evidence is retained but is not independent permission to advance M7.
 
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized

@@ -24,6 +24,7 @@ import com.terraformers.modernization.evaluation.EvaluationTrace.UsageEvidence;
 import com.terraformers.modernization.evaluation.EvaluationTrace.ValidationCheck;
 import com.terraformers.modernization.evaluation.EvaluationTrace.ValidationEvidence;
 import com.terraformers.modernization.reference.ArchitectureFactsExtractor;
+import com.terraformers.modernization.reference.ArchitectureFactsExtractionException;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceQuery;
@@ -149,7 +150,7 @@ public class EvaluationRunner {
                         null,
                         failure(
                                 EvaluationStage.FACT_EXTRACTION,
-                                EvaluationFailureCategory.PROVIDER_RUNTIME,
+                                factExtractionFailureCategory(exception),
                                 exception
                         )
                 );
@@ -531,7 +532,10 @@ public class EvaluationRunner {
             EvaluationFailureCategory category,
             RuntimeException exception
     ) {
-        return new EvaluationFailure(stage, category, exception.getClass().getSimpleName());
+        String detail = exception instanceof ArchitectureFactsExtractionException factsFailure
+                ? factsFailure.evaluationDetail()
+                : exception.getClass().getSimpleName();
+        return new EvaluationFailure(stage, category, detail);
     }
 
     private EvaluationFailureCategory generationFailureCategory(RuntimeException exception) {
@@ -543,6 +547,17 @@ public class EvaluationRunner {
         }
         if (exception instanceof AnalysisProviderTimeoutException) {
             return EvaluationFailureCategory.PROVIDER_TIMEOUT;
+        }
+        return EvaluationFailureCategory.PROVIDER_RUNTIME;
+    }
+
+    private EvaluationFailureCategory factExtractionFailureCategory(RuntimeException exception) {
+        if (exception instanceof ArchitectureFactsExtractionException factsFailure) {
+            return switch (factsFailure.reason()) {
+                case PROVIDER_RUNTIME -> EvaluationFailureCategory.PROVIDER_RUNTIME;
+                case RESPONSE_TRUNCATED -> EvaluationFailureCategory.OUTPUT_TRUNCATED;
+                case EMPTY_RESPONSE, INVALID_RESPONSE, EMPTY_FACTS -> EvaluationFailureCategory.RESPONSE_FORMAT;
+            };
         }
         return EvaluationFailureCategory.PROVIDER_RUNTIME;
     }

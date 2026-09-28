@@ -5,7 +5,7 @@ This overlay is the workload side of the single target runtime selected by ADR-0
 It reuses the provider-neutral backend base and adds the target AI/RAG settings plus one internal
 OpenSearch 3.8.0 StatefulSet. It is not an evaluation-only overlay.
 
-## Current M3-R2 boundary
+## Proven M3-R2 boundary
 
 - OpenSearch is single-node and exposed only through a ClusterIP Service.
 - The OpenSearch security plugin is disabled for the initial internal-only portfolio runtime so the
@@ -23,11 +23,14 @@ OpenSearch 3.8.0 StatefulSet. It is not an evaluation-only overlay.
 - The canonical cluster may remain applied with its node pool at 0 while idle. Live verification
   raises the same node pool to 1 and returns it to 0 afterward; this is not a second environment.
 
-The directory is the canonical target overlay, but **M3-R2 live readiness does not apply the full
+The directory is the canonical target overlay, but **M3-R2 live readiness did not apply the full
 overlay** because the backend base still expects database/object-storage/JWT runtime dependencies
-outside the M3-R2 scope. M3-R2 applies only the namespace and OpenSearch Service/StatefulSet as
-documented in `docs/runbooks/gcp-target-free-trial-preapply.md`.
+outside the M3-R2 scope. The protected readiness run applied only the namespace, repository-owned
+StorageClass, OpenSearch Service/StatefulSet and 15 GiB PVC, and proved OpenSearch 3.8.0
+yellow/green health while keeping the Service internal-only.
 
-M3-R3 creates the v3 corpus/index and performs the first Spring-facing target-adapter smoke on this
-same runtime. Later security/observability/delivery work hardens this same environment rather than
+M3-R3 reuses this same runtime. The backend ServiceAccount may be applied independently for the
+bounded Workload Identity ingestion/smoke path; the backend Deployment itself remains deferred
+until its unrelated runtime dependencies are intentionally supplied. M3-R3 ingests the v3
+corpus/index and performs the first Spring-facing target-adapter smoke on this same runtime. Later security/observability/delivery work hardens this same environment rather than
 replacing it.

@@ -75,6 +75,14 @@ class ChangedScopeTest(unittest.TestCase):
         self.assertTrue(flags["m2-persistent"]["portable_persistent_runtime"])
         self.assertTrue(flags["m2-authenticated"]["authenticated_identity_parity"])
 
+    def test_gcp_apply_workflow_runs_terraform_static_verification(self):
+        flags = self.flags(".github/workflows/gcp-target-terraform-apply.yml")
+        self.assertTrue(flags["terraform-static"]["terraform_static_verification"])
+
+    def test_gcp_delivery_gate_runs_terraform_static_verification(self):
+        flags = self.flags("scripts/deploy/gcp_target_plan_gate.py")
+        self.assertTrue(flags["terraform-static"]["terraform_static_verification"])
+
     def test_deleted_base_manifest_is_collected_and_classified(self):
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)

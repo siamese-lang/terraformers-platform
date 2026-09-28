@@ -109,15 +109,31 @@ class AnalysisJobPartialSuccessBaselineTest {
         assertThat(registry.find("terraformers.analysis.jobs")
                 .tags("outcome", "failed").counter().count()).isEqualTo(1.0);
         assertThat(registry.find("terraformers.analysis.failures")
-                .tags("category", "other").counter().count()).isEqualTo(1.0);
+                .tags("category", "result_finalization").counter().count()).isEqualTo(1.0);
         assertThat(registry.find("terraformers.analysis.duration").timer().count()).isEqualTo(1);
+        assertThat(registry.find("terraformers.analysis.stage.duration")
+                .tags("stage", "analysis_execution", "outcome", "success")
+                .timer().count()).isEqualTo(1);
+        assertThat(registry.find("terraformers.analysis.stage.duration")
+                .tags("stage", "result_finalize", "outcome", "failure")
+                .timer().count()).isEqualTo(1);
+        assertThat(registry.find("terraformers.analysis.stage.duration")
+                .tags("stage", "compensation", "outcome", "success")
+                .timer().count()).isEqualTo(1);
+        assertThat(registry.find("terraformers.analysis.stage.failures")
+                .tags("stage", "result_finalize", "category", "result_finalization")
+                .counter().count()).isEqualTo(1.0);
 
         String logs = output.getOut() + output.getErr();
         assertThat(logs)
                 .contains("analysisJobId=" + jobId)
-                .contains("Analysis job failed outcome=failed exceptionCategory=other")
+                .contains("Analysis job failed outcome=failed exceptionCategory=result_finalization")
                 .contains("Compensated stored analysis draft after relational finalization failure")
-                .contains("trace_id= span_id=");
+                .containsSubsequence(
+                        "analysis stage outcome=success stage=analysis_execution",
+                        "analysis stage outcome=failure stage=result_finalize category=result_finalization",
+                        "analysis stage outcome=success stage=compensation"
+                );
     }
 
     @TestConfiguration

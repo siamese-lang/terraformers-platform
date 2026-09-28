@@ -36,8 +36,18 @@ public class AnalysisJobRunner {
             observability.jobStarted();
             AnalysisJobExecution execution = null;
             try {
-                execution = orchestrator.executeProviderAndStoreDraft(runningJob);
-                stateService.markSucceeded(jobId, execution);
+                execution = observability.recordStage(
+                        AnalysisTelemetryStage.ANALYSIS_EXECUTION,
+                        () -> orchestrator.executeProviderAndStoreDraft(runningJob)
+                );
+                AnalysisJobExecution finalizedExecution = execution;
+                observability.recordStage(
+                        AnalysisTelemetryStage.RESULT_FINALIZE,
+                        () -> {
+                            stateService.markSucceeded(jobId, finalizedExecution);
+                            return null;
+                        }
+                );
                 observability.jobSucceeded();
             } catch (RuntimeException exception) {
                 if (execution != null && exception instanceof AnalysisResultFinalizationException) {
@@ -54,7 +64,13 @@ public class AnalysisJobRunner {
 
     private void compensateStoredDraft(AnalysisJobExecution execution) {
         try {
-            orchestrator.removeStoredDraft(execution.writeResult());
+            observability.recordStage(
+                    AnalysisTelemetryStage.COMPENSATION,
+                    () -> {
+                        orchestrator.removeStoredDraft(execution.writeResult());
+                        return null;
+                    }
+            );
             log.warn("Compensated stored analysis draft after relational finalization failure");
         } catch (RuntimeException cleanupException) {
             log.error(

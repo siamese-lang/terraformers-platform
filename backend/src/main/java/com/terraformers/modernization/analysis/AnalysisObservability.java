@@ -7,32 +7,127 @@ import io.micrometer.core.instrument.Timer;
 import java.util.Locale;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AnalysisObservability {
+
+    private static final Logger log = LoggerFactory.getLogger(AnalysisObservability.class);
+
     private final MeterRegistry meterRegistry;
 
-    public AnalysisObservability(MeterRegistry meterRegistry) { this.meterRegistry = meterRegistry; }
-    public Timer.Sample startAnalysis() { return Timer.start(meterRegistry); }
-    public void stopAnalysis(Timer.Sample sample) { sample.stop(Timer.builder("terraformers.analysis.duration").register(meterRegistry)); }
-    public void jobStarted() { jobs("started").increment(); }
-    public void jobSucceeded() { jobs("succeeded").increment(); }
-    public void jobFailed(Throwable exception) { jobs("failed").increment(); failures("terraformers.analysis.failures", category(exception)).increment(); }
-    public void jobRejected() { jobs("failed").increment(); failures("terraformers.analysis.failures", "executor_rejected").increment(); executorRejections().increment(); }
-    public <T> T recordBedrock(Supplier<T> operation) { return recordExternal("terraformers.bedrock", operation); }
-    public <T> T recordAoss(Supplier<T> operation) { return recordExternal("terraformers.aoss", operation); }
-    public void retrievedHits(int count) { DistributionSummary.builder("terraformers.aoss.retrieved_hits").register(meterRegistry).record(count); }
-    private Counter jobs(String outcome) { return Counter.builder("terraformers.analysis.jobs").tag("outcome", outcome).register(meterRegistry); }
-    private Counter failures(String name, String category) { return Counter.builder(name).tag("category", category).register(meterRegistry); }
-    private Counter executorRejections() { return Counter.builder("terraformers.analysis.executor.rejections").register(meterRegistry); }
+    public AnalysisObservability(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
+    public Timer.Sample startAnalysis() {
+        return Timer.start(meterRegistry);
+    }
+
+    public void stopAnalysis(Timer.Sample sample) {
+        sample.stop(Timer.builder("terraformers.analysis.duration").register(meterRegistry));
+    }
+
+    public void jobStarted() {
+        jobs("started").increment();
+    }
+
+    public void jobSucceeded() {
+        jobs("succeeded").increment();
+    }
+
+    public void jobFailed(Throwable exception) {
+        jobs("failed").increment();
+        failures("terraformers.analysis.failures", category(exception)).increment();
+    }
+
+    public void jobRejected() {
+        jobs("failed").increment();
+        failures("terraformers.analysis.failures", "executor_rejected").increment();
+        executorRejections().increment();
+    }
+
+    public <T> T recordStage(AnalysisTelemetryStage stage, Supplier<T> operation) {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        long startedAt = System.nanoTime();
+        String outcome = "success";
+        try {
+            T value = operation.get();
+            log.info(
+                    "analysis stage outcome=success stage={} elapsedMs={}",
+                    stage.tag(),
+                    elapsedMs(startedAt)
+            );
+            return value;
+        } catch (RuntimeException exception) {
+            outcome = "failure";
+            String category = category(exception);
+            Counter.builder("terraformers.analysis.stage.failures")
+                    .tag("stage", stage.tag())
+                    .tag("category", category)
+                    .register(meterRegistry)
+                    .increment();
+            log.warn(
+                    "analysis stage outcome=failure stage={} category={} errorClass={} elapsedMs={}",
+                    stage.tag(),
+                    category,
+                    exception.getClass().getSimpleName(),
+                    elapsedMs(startedAt)
+            );
+            throw exception;
+        } finally {
+            sample.stop(Timer.builder("terraformers.analysis.stage.duration")
+                    .tag("stage", stage.tag())
+                    .tag("outcome", outcome)
+                    .register(meterRegistry));
+        }
+    }
+
+    public <T> T recordBedrock(Supplier<T> operation) {
+        return recordExternal("terraformers.bedrock", operation);
+    }
+
+    public <T> T recordAoss(Supplier<T> operation) {
+        return recordExternal("terraformers.aoss", operation);
+    }
+
+    public void retrievedHits(int count) {
+        DistributionSummary.builder("terraformers.aoss.retrieved_hits").register(meterRegistry).record(count);
+    }
+
+    private Counter jobs(String outcome) {
+        return Counter.builder("terraformers.analysis.jobs").tag("outcome", outcome).register(meterRegistry);
+    }
+
+    private Counter failures(String name, String category) {
+        return Counter.builder(name).tag("category", category).register(meterRegistry);
+    }
+
+    private Counter executorRejections() {
+        return Counter.builder("terraformers.analysis.executor.rejections").register(meterRegistry);
+    }
+
     private <T> T recordExternal(String prefix, Supplier<T> operation) {
         Timer.Sample sample = Timer.start(meterRegistry);
-        try { T value = operation.get(); Counter.builder(prefix + (prefix.endsWith("bedrock") ? ".invocations" : ".retrievals")).tag("outcome", "success").register(meterRegistry).increment(); return value; }
-        catch (RuntimeException exception) { Counter.builder(prefix + (prefix.endsWith("bedrock") ? ".invocations" : ".retrievals")).tag("outcome", "failure").register(meterRegistry).increment(); failures(prefix + ".failures", category(exception)).increment(); throw exception; }
-        finally { sample.stop(Timer.builder(prefix + ".duration").register(meterRegistry)); }
+        try {
+            T value = operation.get();
+            Counter.builder(prefix + (prefix.endsWith("bedrock") ? ".invocations" : ".retrievals"))
+                    .tag("outcome", "success").register(meterRegistry).increment();
+            return value;
+        } catch (RuntimeException exception) {
+            Counter.builder(prefix + (prefix.endsWith("bedrock") ? ".invocations" : ".retrievals"))
+                    .tag("outcome", "failure").register(meterRegistry).increment();
+            failures(prefix + ".failures", category(exception)).increment();
+            throw exception;
+        } finally {
+            sample.stop(Timer.builder(prefix + ".duration").register(meterRegistry));
+        }
     }
+
     public String category(Throwable exception) {
+        if (exception instanceof AnalysisResultFinalizationException) return "result_finalization";
         if (exception instanceof AnalysisProviderFailureException providerFailure) {
             return switch (providerFailure.reason()) {
                 case OUTPUT_TRUNCATED -> "truncated_output";
@@ -49,5 +144,9 @@ public class AnalysisObservability {
         if (simple.contains("format")) return "response_format";
         if (simple.contains("truncated")) return "truncated_output";
         return "other";
+    }
+
+    private long elapsedMs(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000;
     }
 }

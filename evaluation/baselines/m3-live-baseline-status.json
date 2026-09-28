@@ -1,36 +1,31 @@
 {
-  "recordVersion": "m3-live-baseline-status-v1",
-  "recordedAgainstMainSha": "3e706f97c94a051432de9ce576a820d8672a5b4f",
+  "recordVersion": "m3-live-baseline-status-v2",
+  "recordedAgainstMainSha": "ed5c6e424473ce3f6201f54ecca2c75e558481be",
   "datasetVersion": "terraformers-eval-v1",
   "evaluationSchemaVersion": "m3-evaluation-v1",
-  "status": "BLOCKED",
-  "baselineType": "CURRENT_IMPLEMENTED_REAL_PROVIDER_PATH",
-  "committedCompatibilityConfiguration": {
-    "springProfiles": [
-      "prod",
-      "aws-compat"
-    ],
-    "awsRegion": "ap-northeast-2",
-    "analysisProvider": "bedrock",
-    "embeddingProvider": "bedrock",
+  "status": "READY_FOR_LIVE_EXECUTION",
+  "baselineType": "TARGET_RUNTIME_CURRENT_IMPLEMENTED_REAL_PROVIDER_PATH",
+  "targetConfiguration": {
+    "analysisProvider": "vertex",
+    "embeddingProvider": "vertex",
     "retrievalMode": "REQUIRED",
-    "generationModelId": "global.anthropic.claude-sonnet-4-6",
-    "embeddingModelId": "amazon.titan-embed-text-v2:0",
-    "corpusVersion": "terraformers-reference-v2",
+    "generationModelId": "gemini-3.8-flash",
+    "embeddingModelId": "gemini-embedding-001",
+    "corpusVersion": "terraformers-reference-v3",
     "providerVersion": "5.100.0",
-    "indexName": "terraformers-reference-v1",
+    "indexName": "terraformers-reference-v3",
     "vectorFieldName": "embedding",
     "contentFieldName": "content",
     "expectedVectorDimension": 1024,
     "topK": 8,
-    "opensearchSigningService": "aoss"
+    "opensearchTransport": "http",
+    "vertexLocation": "global"
   },
   "execution": {
-    "executableCaseCount": 0,
+    "executableCaseCount": 6,
     "executedCaseCount": 0,
-    "failedCaseCount": 0,
-    "blockedCaseCount": 6,
-    "blockedCaseIds": [
+    "blockedCaseCount": 0,
+    "caseIds": [
       "arch-vpc-three-tier",
       "arch-cloudfront-private-alb",
       "arch-private-aoss",
@@ -39,33 +34,16 @@
       "non-architecture-deployment-dashboard"
     ]
   },
-  "blockers": [
-    {
-      "code": "LIVE_RAG_COLLECTION_ABSENT",
-      "evidence": "docs/lifecycle/aws-final-zero-resource-proof.md",
-      "detail": "Project-scoped final AWS proof records zero OpenSearch Serverless collections and zero Terraformers runtime resources."
-    },
-    {
-      "code": "LIVE_AWS_IDENTITY_BOOTSTRAP_ABSENT",
-      "evidence": "docs/lifecycle/aws-final-zero-resource-proof.md",
-      "detail": "State bucket, project GitHub OIDC provider, and live IAM roles were deleted; retained GitHub identifiers are stale until redeployment."
-    },
-    {
-      "code": "LIVE_COST_APPROVAL_NOT_ESTABLISHED",
-      "evidence": "docs/lifecycle/aws-redeploy-runbook.md",
-      "detail": "Recreating the faithful AWS evaluation substrate exposes paid AOSS, networking, and Bedrock usage and requires explicit approval."
-    }
-  ],
-  "substitution": {
-    "used": false,
-    "reason": "A stub provider, local retriever, alternate model, or alternate vector store would not measure the current implemented real provider path."
+  "readinessEvidence": {
+    "openSearchRun": 36371424659,
+    "ingestionRun": 36375171823,
+    "servingSmokeRun": 36378589888,
+    "servingSmokeConfigurationFingerprint": "sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66",
+    "servingSmokeFirstDivergence": "VALIDATION:TERRAFORM_STRUCTURAL_VALIDATION"
   },
-  "nextRequiredAction": "Execute M3-R1 target runtime evidence and capability decision; then build the single reusable target runtime in M3-R2/R3 before resuming M3-4.",
-  "planningDisposition": {
-    "currentStatus": "WAITING_FOR_TARGET_RUNTIME",
-    "sequencing": "M3-R1 -> M3-R2 -> M3-R3 -> M3-4",
-    "temporaryEvaluationEnvironmentAllowed": false,
-    "historicalAwsRedeploymentIsUnblockPath": false,
-    "runtimeReuse": "The target AI/RAG runtime created before M3-4 is reused by M3-4, M4, later observability/failure work, and M9 closure."
-  }
+  "historicalAwsBlocker": {
+    "resolvedForCurrentTargetRuntime": true,
+    "evidence": "docs/evaluation/m3-live-baseline-blocker.md"
+  },
+  "nextRequiredAction": "Run the protected GCP Target Evaluation Baseline workflow over all six unchanged cases and preserve the machine-readable artifact."
 }

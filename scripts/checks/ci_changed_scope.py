@@ -126,6 +126,7 @@ def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
                 ".github/workflows/gcp-target-opensearch-readiness.yml",
                 ".github/workflows/gcp-target-corpus-ingestion.yml",
                 ".github/workflows/gcp-target-serving-path-smoke.yml",
+                ".github/workflows/gcp-target-evaluation-baseline.yml",
                 ".github/workflows/aws-live-terraform-apply.yml",
                 ".github/workflows/aws-terraform-destroy-plan.yml",
                 ".github/workflows/aws-runtime-teardown.yml",

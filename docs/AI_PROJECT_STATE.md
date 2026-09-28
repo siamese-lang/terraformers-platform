@@ -14,10 +14,10 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M3 — AI Evaluation Baseline**
 - Status: **ACTIVE**
-- Phase: M3-R3 live corpus ingestion and serving-path smoke
+- Phase: M3-4 current live/provider baseline
 - Active plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M3-R3c — Live Spring serving-path smoke on the proven target runtime**
+- Current implementation task: **M3-4 — Execute the unchanged six-case live baseline on the proven target runtime**
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -48,11 +48,10 @@ readiness run `36371424659` on `31785eb0f9f1afc83584412c1e1ad8c011fc3b74` comple
 successfully: the namespace/StorageClass/Service/StatefulSet were applied, the single replica became
 Ready, the 15 GiB PVC was Bound to `terraformers-pd-standard`, the Service remained
 `ClusterIP`, and the OpenSearch 3.8.0 API reached yellow/green health. M3-R2 is therefore
-complete on the single target runtime. Historical AWS live
-infrastructure is intentionally absent, so M3-4 is **WAITING_FOR_TARGET_RUNTIME**, not a request to
-recreate AWS. M3-R1 through M3-R3 now establish the actual GCP/open-source-oriented target AI/RAG
-runtime once; that same runtime is reused by M3-4, M4, later observability/failure work, and M9
-closure.
+complete on the single target runtime. Historical AWS live infrastructure remains intentionally absent and is no longer a blocker.
+M3-R1 through M3-R3 established the actual GCP/open-source-oriented target AI/RAG runtime once;
+that same runtime is now the live M3-4 baseline target and remains reusable by M4, later
+observability/failure work, and M9 closure.
 
 ## Completed
 
@@ -201,28 +200,38 @@ No remaining M1 work.
 
 ## Immediate next work
 
-M3-R2 is complete. M3-R3a static v3 derivation is complete. M3-R3b static implementation and live
-ingestion are complete.
+M3-R1, M3-R2, and M3-R3 are complete.
 
-Protected corpus-ingestion run `36375171823` at
-`155b7293a7d7a8cbd6c2e69eb6b45d86c08b25e8` succeeded on the single target runtime. Its
-machine-readable receipt recorded corpus `terraformers-reference-v3`, checksum
-`df8c198f0648827d754e1ef92ff4c07b1397e7dd36a06487eebfee1443ce892f`, exactly 128
-documents, `gemini-embedding-001`, 1024-dimensional vectors, index
-`terraformers-reference-v3`, outcome `ingested`, and representative k-NN hits. The ephemeral
-ingestion pod cleanup also succeeded.
+Protected serving-path smoke run `36378589888` at
+`ed5c6e424473ce3f6201f54ecca2c75e558481be` proved the existing production Java path on the
+single target runtime without deploying the full Spring web/JPA/security application.
 
-The repository development task
-[`docs/tasks/active/M3-R3c-live-serving-path-smoke.md`](tasks/active/M3-R3c-live-serving-path-smoke.md)
-is statically complete. The standalone `LiveEvaluationLauncher` reuses the production Vertex
-facts/query-embedding/retrieval/generation/parser/validator components and the existing
-`EvaluationRunner`, without starting the full web/JPA/security application runtime. It fails closed
-unless the explicit runtime identity matches the accepted GCP target contract and emits the
-existing machine-readable evaluation schema.
+The machine-readable trace recorded:
 
-The immediate next single task is to run one protected positive-case serving-path smoke on
-the same GKE/OpenSearch/Vertex runtime. Do not change prompts, retrieval ranking, corpus, models, or
-dataset expectations before M3-4 baseline evidence exists.
+- case `arch-vpc-three-tier`;
+- configuration fingerprint
+  `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`;
+- fact extraction PASS (8920 ms);
+- retrieval PASS (2608 ms) with 8 ordered `terraformers-reference-v3` hits;
+- generation PASS (18726 ms);
+- `TerraformDraftValidator` execution;
+- validation FAIL with first divergence
+  `VALIDATION / TERRAFORM_STRUCTURAL_VALIDATION`.
+
+The observed validation failure is baseline evidence, not a reason to tune before M3-4. The generated
+Terraform contains the comment `Placeholder EC2 instance`, and the current validator classifies the
+whole draft as placeholder/example output. Preserve this behavior until the unchanged six-case
+baseline is captured.
+
+The next live action is the protected `GCP Target Evaluation Baseline` workflow. It must run the
+same `LiveEvaluationLauncher` in FULL mode over all six unchanged
+`terraformers-eval-v1` cases with the same provider/model/corpus/retrieval configuration. Quality
+failures must remain in the machine-readable traces rather than being converted into workflow
+infrastructure failures.
+
+After the six-case artifact is captured, M3-5 may compute baseline metrics, provenance findings, and
+the first-divergence failure taxonomy. Do not change prompts, retrieval ranking, corpus content,
+models, validator behavior, or dataset expectations before that artifact exists.
 
 ## Do not revisit
 

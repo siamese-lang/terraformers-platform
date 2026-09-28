@@ -374,7 +374,7 @@ minimum GKE/OpenSearch/Vertex live-readiness boundary on the single target runti
 
 ### M3-R3 — Corpus ingestion and serving-path smoke
 
-**Status: IN PROGRESS — v3 live ingestion and serving-path launcher complete; protected smoke pending**
+**Status: DONE — v3 live ingestion and production Java serving-path smoke verified**
 
 **Problem / gap.** A deployed runtime is not useful for RAG until the versioned corpus/index
 contract and application-facing retrieval/model path work together.
@@ -406,56 +406,62 @@ web/JPA/security application. It accepts explicit CLI/environment configuration,
 target-contract drift, supports one selected case or the unchanged six-case dataset, and writes the
 existing `EvaluationRunResult` schema with a deterministic effective-configuration fingerprint.
 
-**Validation.** Prove a small serving-path smoke through the existing extraction/retrieval/generation
-boundaries, including retrieval metadata/provenance. This smoke establishes runtime readiness; it
-does not replace M3-4 quality evaluation.
+**Validation.** Protected serving-path smoke run `36378589888` at
+`ed5c6e424473ce3f6201f54ecca2c75e558481be` executed
+`arch-vpc-three-tier` through the existing production Java components. Fact extraction passed,
+REQUIRED retrieval passed with 8 ordered v3 hits, generation passed, and
+`TerraformDraftValidator` executed. The machine-readable trace artifact was preserved and the
+ephemeral Java pod was deleted.
+
+The trace's first quality divergence is validation:
+`TERRAFORM_STRUCTURAL_VALIDATION`, because the generated Terraform contains the phrase
+`Placeholder EC2 instance` in a comment and the current validator treats that as placeholder
+output. This is preserved as evidence and is not changed before M3-4.
 
 **Completion evidence.** The single target runtime is ready for the unchanged
-`terraformers-eval-v1` dataset.
+`terraformers-eval-v1` dataset and the same runner/configuration can now execute all six cases.
 
 ### M3-4 — Current live/provider baseline
 
-**Status: WAITING_FOR_TARGET_RUNTIME**
+**Status: READY_FOR_LIVE_EXECUTION**
 
-**Problem / gap.** There is still no measured live quality baseline for the current AI/RAG
-implementation.
+**Problem / gap.** The target runtime is now executable, but the project still lacks one
+machine-readable live quality baseline across all six fixed cases.
 
-**Observed execution boundary.** The last committed real AWS compatibility configuration is
-`prod,aws-compat` with `ANALYSIS_PROVIDER=bedrock`, `EMBEDDING_PROVIDER=bedrock`,
-`RETRIEVAL_MODE=REQUIRED`, generation model
-`global.anthropic.claude-sonnet-4-6`, embedding model
-`amazon.titan-embed-text-v2:0`, corpus `terraformers-reference-v2`, AWS Provider
-`5.100.0`, index `terraformers-reference-v1`, vector field `embedding`, content field
-`content`, vector dimension 1024, top-K 8, signing service `aoss`, and region
-`ap-northeast-2`.
+**Current measured configuration.** The baseline must use the proven target runtime and the exact
+configuration already exercised by M3-R3c:
 
-Repository lifecycle evidence also proves that this runtime no longer exists. The final
-project-scoped AWS closure records zero OpenSearch Serverless collections and zero Terraformers
-runtime resources, and records the state bucket, project GitHub OIDC provider, and live roles as
-deleted. Retained GitHub environment/variable/secret configuration contains stale AWS resource
-identifiers and is not a usable live identity.
+- analysis provider: `vertex`
+- embedding provider: `vertex`
+- retrieval mode: `REQUIRED`
+- generation model: `gemini-3.8-flash`
+- embedding model: `gemini-embedding-001`
+- corpus/index: `terraformers-reference-v3`
+- provider knowledge version: `5.100.0`
+- vector field/content field: `embedding` / `content`
+- vector dimension: 1024
+- top-K: 8
+- OpenSearch transport: internal HTTP
+- dataset: unchanged `terraformers-eval-v1`
 
-**Execution result.** No M3 evaluation case was executed against a live provider. All six
-`terraformers-eval-v1` cases are **BLOCKED**, not failed. The canonical machine-readable status is
-[`m3-live-baseline-status.json`](../../../evaluation/baselines/m3-live-baseline-status.json), and
-the human-readable evidence is [M3 Live Baseline Blocker](../../evaluation/m3-live-baseline-blocker.md).
+The historical AWS BLOCKED record remains useful lifecycle evidence, but its missing-runtime
+conditions are resolved by M3-R1 through M3-R3 and must not be treated as the current execution
+state.
 
-No stub, local retriever, alternate model, or different vector store was substituted because doing
-so would no longer measure the current implemented RAG path. No AWS resource was recreated because
-that would require explicit infrastructure/cost approval and would expand M3-4 into a live
-redeployment task.
+**Execution boundary.** Use the existing `LiveEvaluationLauncher` in FULL mode so all six cases
+flow through the same `EvaluationRunner` and production Vertex/OpenSearch components. Persist one
+`EvaluationRunResult` artifact. Do not require every case/stage to PASS: observed quality failures
+are the baseline data. Workflow failure should mean the live run/identity/artifact could not be
+executed or validated, not merely that a case has a first divergence.
 
-**Validation.** The blocker was established from current repository configuration plus the final
-AWS zero-resource proof. The six case IDs in the blocker record are the complete
-`terraformers-eval-v1` dataset. This is a readiness result, not an AI quality result.
+**Validation.** Require the fixed six case IDs, one configuration identity/fingerprint, target
+provider/model/corpus identity, and a machine-readable trace for each case. Preserve extracted facts,
+ordered retrieval provenance, generated resource evidence, validator outcome, latency, usage fields,
+and first divergence as emitted by the existing runner.
 
-**Completion evidence.** **NOT MET.** Machine-readable quality traces do not exist because there is
-no executable live retrieval substrate. M3-5 must not start until this blocker is resolved and at
-least one faithful live run is captured.
-
-**Resume condition.** Complete M3-R1 through M3-R3 so the project's actual target runtime supplies
-valid model/embedding access, the versioned corpus/index, and endpoint/identity/network configuration
-required by the existing application ports. Historical AWS redeployment is not an unblock path.
+**Completion evidence.** One protected six-case live artifact is captured without modifying the
+dataset, prompt, retrieval ranking, corpus, model choice, or current validator behavior. That
+artifact becomes the sole input to M3-5 metrics/failure taxonomy.
 
 ### M3-5 — Baseline metrics, provenance review, and failure taxonomy
 

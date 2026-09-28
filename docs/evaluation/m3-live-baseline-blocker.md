@@ -2,6 +2,10 @@
 
 ## Status
 
+**Historical record — the AWS-era blocker has been resolved by the current GCP target runtime.**
+
+Current execution readiness is tracked in `evaluation/baselines/m3-live-baseline-status.json`. M3-R3c serving-path smoke run `36378589888` succeeded; this document is retained to explain why the earlier AWS live baseline was blocked and must not be read as the current M3-4 state.
+
 **Historical readiness result: BLOCKED — no live quality run executed**
 
 Current planning disposition: **WAITING_FOR_TARGET_RUNTIME**

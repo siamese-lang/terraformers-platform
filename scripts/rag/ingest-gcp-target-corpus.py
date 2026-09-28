@@ -123,10 +123,30 @@ def ensure_mapping(actual: dict[str, object], schema: dict[str, object]) -> None
     current = actual.get("mappings", {}).get("properties", {})
     for name, wanted in expected.items():
         found = current.get(name)
-        if not isinstance(found, dict) or found.get("type") != wanted.get("type"):
+        if not isinstance(wanted, dict) or not isinstance(found, dict):
             fail(f"existing index mapping differs for {name}")
-        if wanted.get("type") == "knn_vector" and found.get("dimension") != wanted.get("dimension"):
+        if found.get("type") != wanted.get("type"):
             fail(f"existing index mapping differs for {name}")
+        if wanted.get("type") != "knn_vector":
+            continue
+        if found.get("dimension") != wanted.get("dimension"):
+            fail(f"existing index mapping differs for {name}")
+
+        wanted_method = wanted.get("method")
+        found_method = found.get("method")
+        if not isinstance(wanted_method, dict) or not isinstance(found_method, dict):
+            fail(f"existing index mapping differs for {name}")
+        for key in ("name", "engine", "space_type"):
+            if found_method.get(key) != wanted_method.get(key):
+                fail(f"existing index mapping differs for {name}")
+
+        wanted_parameters = wanted_method.get("parameters", {})
+        found_parameters = found_method.get("parameters", {})
+        if not isinstance(wanted_parameters, dict) or not isinstance(found_parameters, dict):
+            fail(f"existing index mapping differs for {name}")
+        for key, value in wanted_parameters.items():
+            if found_parameters.get(key) != value:
+                fail(f"existing index mapping differs for {name}")
 
 
 def stored_checksum(mapping: dict[str, object]) -> str | None:

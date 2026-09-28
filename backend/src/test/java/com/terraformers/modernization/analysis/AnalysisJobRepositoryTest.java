@@ -83,6 +83,16 @@ class AnalysisJobRepositoryTest {
         String jobId = savePending("durable-claim").getId();
 
         assertThat(repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                NOW, NOW.minusSeconds(1))).isZero();
+        assertThat(repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                NOW, NOW)).isZero();
+        AnalysisJobEntity unclaimed = repository.findById(jobId).orElseThrow();
+        assertThat(unclaimed.getStatus()).isEqualTo(AnalysisJobStatus.PENDING);
+        assertThat(unclaimed.getAttemptCount()).isZero();
+        assertThat(unclaimed.getClaimGeneration()).isZero();
+        assertThat(unclaimed.getLeaseExpiresAt()).isNull();
+
+        assertThat(repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
                 NOW, LEASE)).isEqualTo(1);
         AnalysisJobEntity firstClaim = repository.findById(jobId).orElseThrow();
         assertThat(firstClaim.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
@@ -125,6 +135,8 @@ class AnalysisJobRepositoryTest {
         assertThat(repository.lockOwned(jobId, AnalysisJobStatus.RUNNING, 1, LEASE.plusSeconds(1))).isEmpty();
         assertThat(repository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING, 1,
                 LEASE.plusSeconds(1), "old-bucket", "old-key", AnalysisResultCleanupStatus.PENDING)).isZero();
+        assertThat(repository.scheduleRetryOwned(jobId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.PENDING,
+                1, LEASE.plusSeconds(1), LEASE.plusSeconds(60))).isZero();
         assertThat(repository.lockOwned(jobId, AnalysisJobStatus.RUNNING, 2, LEASE.plusSeconds(1))).isPresent();
         assertThat(repository.findById(jobId).orElseThrow().getClaimGeneration()).isEqualTo(2);
     }
@@ -134,6 +146,9 @@ class AnalysisJobRepositoryTest {
         String renewalId = savePending("renewal").getId();
         repository.claimEligible(renewalId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, NOW, LEASE);
         assertThat(repository.renewLease(renewalId, AnalysisJobStatus.RUNNING, 99, NOW, LEASE.plusSeconds(60))).isZero();
+        assertThat(repository.renewLease(renewalId, AnalysisJobStatus.RUNNING, 1,
+                NOW, LEASE.minusSeconds(60))).isZero();
+        assertThat(repository.renewLease(renewalId, AnalysisJobStatus.RUNNING, 1, NOW, LEASE)).isZero();
         assertThat(repository.renewLease(renewalId, AnalysisJobStatus.RUNNING, 1, NOW, LEASE.plusSeconds(60))).isEqualTo(1);
         assertThat(repository.renewLease(renewalId, AnalysisJobStatus.RUNNING, 1,
                 LEASE.plusSeconds(61), LEASE.plusSeconds(120))).isZero();
@@ -141,6 +156,16 @@ class AnalysisJobRepositoryTest {
         String retryId = savePending("retry").getId();
         repository.claimEligible(retryId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, NOW, LEASE);
         Instant retryAt = NOW.plusSeconds(60);
+        assertThat(repository.scheduleRetryOwned(retryId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.PENDING,
+                1, NOW, NOW.minusSeconds(1))).isZero();
+        assertThat(repository.scheduleRetryOwned(retryId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.PENDING,
+                1, NOW, NOW)).isZero();
+        AnalysisJobEntity beforeRetry = repository.findById(retryId).orElseThrow();
+        assertThat(beforeRetry.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
+        assertThat(beforeRetry.getLeaseExpiresAt()).isEqualTo(LEASE);
+        assertThat(beforeRetry.getAttemptCount()).isEqualTo(1);
+        assertThat(beforeRetry.getClaimGeneration()).isEqualTo(1);
+        assertThat(beforeRetry.getNextAttemptAt()).isNull();
         assertThat(repository.scheduleRetryOwned(retryId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.PENDING,
                 1, NOW, retryAt)).isEqualTo(1);
         AnalysisJobEntity retry = repository.findById(retryId).orElseThrow();

@@ -59,12 +59,6 @@ public class AnalysisJobStateService {
         return repository.renewLease(jobId, AnalysisJobStatus.RUNNING, generation, now, newLeaseExpiry) == 1;
     }
 
-    /** The database ownership lock protects only work performed in this transaction. */
-    @Transactional
-    public boolean guardOwnership(String jobId, long generation, Instant now) {
-        return repository.lockOwned(jobId, AnalysisJobStatus.RUNNING, generation, now).isPresent();
-    }
-
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean scheduleRetryOwned(String jobId, long generation, Instant now, Instant nextAttemptAt) {
         return repository.scheduleRetryOwned(jobId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.PENDING,

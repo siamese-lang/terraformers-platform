@@ -55,6 +55,7 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
                    job.nextAttemptAt = null,
                    job.updatedAt = :now
              where job.id = :jobId
+               and :leaseExpiresAt > :now
                and ((job.status = :pending and (job.nextAttemptAt is null or job.nextAttemptAt <= :now))
                     or (job.status = :running and job.leaseExpiresAt is not null and job.leaseExpiresAt <= :now))
             """)
@@ -66,9 +67,15 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
             update AnalysisJobEntity job set job.leaseExpiresAt = :newLeaseExpiry, job.updatedAt = :now
              where job.id = :jobId and job.status = :running
                and job.claimGeneration = :generation and job.leaseExpiresAt > :now
+               and :newLeaseExpiry > job.leaseExpiresAt
             """)
     int renewLease(String jobId, AnalysisJobStatus running, long generation, Instant now, Instant newLeaseExpiry);
 
+    /*
+     * This pessimistic ownership lock is transaction-local. It must be acquired and consumed
+     * inside the same transaction as the protected mutation; its result must never be exposed
+     * as a reusable authorization or fencing boolean.
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select job from AnalysisJobEntity job
@@ -84,6 +91,7 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
                    job.leaseExpiresAt = null, job.updatedAt = :now
              where job.id = :jobId and job.status = :running
                and job.claimGeneration = :generation and job.leaseExpiresAt > :now
+               and :nextAttemptAt > :now
             """)
     int scheduleRetryOwned(String jobId, AnalysisJobStatus running, AnalysisJobStatus pending,
             long generation, Instant now, Instant nextAttemptAt);

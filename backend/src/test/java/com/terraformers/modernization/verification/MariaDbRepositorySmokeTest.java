@@ -242,12 +242,21 @@ class MariaDbRepositorySmokeTest {
             analysisJobRepository.deleteById(claimJobId);
             analysisJobRepository.flush();
 
+            assertThat(analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(project.getProjectId()))
+                    .get()
+                    .satisfies(found -> {
+                        assertThat(found.getId()).isEqualTo(job.getId());
+                        assertThat(found.getSourceFileId()).isEqualTo(sourceFile.getFileId());
+                        assertThat(found.getResultFileId()).isEqualTo(resultFile.getFileId());
+                    });
+
             Instant durableNow = Instant.parse("2026-09-28T00:00:00Z");
             Instant durableLease = Instant.parse("2026-09-28T00:05:00Z");
             durableInitialJob = newClaimJob(project, sourceFile, "repository-smoke-durable-initial");
             durableInitialJob = analysisJobRepository.saveAndFlush(durableInitialJob);
             assertConcurrentDurableClaim(durableInitialJob.getId(), durableNow, durableLease);
             AnalysisJobEntity claimed = analysisJobRepository.findById(durableInitialJob.getId()).orElseThrow();
+            assertThat(claimed.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
             assertThat(claimed.getAttemptCount()).isEqualTo(1);
             assertThat(claimed.getClaimGeneration()).isEqualTo(1);
 
@@ -259,6 +268,7 @@ class MariaDbRepositorySmokeTest {
             durableReclaimJob = analysisJobRepository.saveAndFlush(durableReclaimJob);
             assertConcurrentDurableClaim(durableReclaimJob.getId(), durableNow, durableLease);
             AnalysisJobEntity reclaimed = analysisJobRepository.findById(durableReclaimJob.getId()).orElseThrow();
+            assertThat(reclaimed.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
             assertThat(reclaimed.getAttemptCount()).isEqualTo(2);
             assertThat(reclaimed.getClaimGeneration()).isEqualTo(2);
 
@@ -280,7 +290,6 @@ class MariaDbRepositorySmokeTest {
             Long projectId = project.getProjectId();
             Long sourceFileId = sourceFile.getFileId();
             Long resultFileId = resultFile.getFileId();
-            String jobId = job.getId();
             Long boardId = board.getBoardId();
             Long commentId = comment.getCommentId();
 
@@ -308,13 +317,6 @@ class MariaDbRepositorySmokeTest {
                     .extracting(ProjectFileEntity::getFileId)
                     .containsExactly(sourceFileId, resultFileId);
 
-            assertThat(analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(projectId))
-                    .get()
-                    .satisfies(found -> {
-                        assertThat(found.getId()).isEqualTo(jobId);
-                        assertThat(found.getSourceFileId()).isEqualTo(sourceFileId);
-                        assertThat(found.getResultFileId()).isEqualTo(resultFileId);
-                    });
             assertThat(boardRepository.findFirstByProject_ProjectIdAndCategoryAndDeletedAtIsNullOrderByCreatedAtAsc(
                     projectId,
                     BoardEntity.PUBLIC_DISCUSSION_CATEGORY

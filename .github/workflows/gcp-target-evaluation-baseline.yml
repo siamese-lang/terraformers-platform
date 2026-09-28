@@ -1,0 +1,300 @@
+name: GCP Target Evaluation Baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact trusted main commit SHA used for the six-case baseline.
+        required: true
+        type: string
+      confirmation:
+        description: Use RUN_M3_4_BASELINE.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: gcp-target-terraform-state
+  cancel-in-progress: false
+
+jobs:
+  baseline:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 45
+    env:
+      CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
+      TARGET_PROJECT: terraformers-platform
+      TARGET_CLUSTER: terraformers-target
+      TARGET_ZONE: asia-northeast3-a
+      TARGET_NAMESPACE: terraformers-target
+      TARGET_KSA: terraformers-backend
+      BASELINE_POD: terraformers-evaluation-baseline
+      OPENSEARCH_SERVICE: terraformers-opensearch
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted baseline request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'expected_sha must be a full 40-character commit SHA.' >&2
+            exit 1
+          }
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match the checked-out main commit.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == RUN_M3_4_BASELINE ]] || {
+            echo 'M3-4 baseline requires confirmation RUN_M3_4_BASELINE.' >&2
+            exit 1
+          }
+          [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]] || {
+            echo 'Unexpected Kubernetes deployment identity.' >&2
+            exit 1
+          }
+          [[ -n "$WIF_PROVIDER" ]] || {
+            echo 'Missing GCP_WIF_PROVIDER environment variable.' >&2
+            exit 1
+          }
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build bounded evaluation bundle
+        run: |
+          set -euo pipefail
+          mvn -q -f backend/pom.xml -DskipTests package dependency:copy-dependencies             -DincludeScope=runtime
+
+          bundle_root="${RUNNER_TEMP}/live-baseline-bundle"
+          mkdir -p "$bundle_root/classes" "$bundle_root/dependency" "$bundle_root/evaluation"
+
+          cp -a backend/target/classes/. "$bundle_root/classes/"
+          cp -a backend/target/dependency/. "$bundle_root/dependency/"
+          cp -a evaluation/terraformers-eval-v1 "$bundle_root/evaluation/"
+
+          (
+            cd "$bundle_root"
+            zip -qr "${RUNNER_TEMP}/live-baseline.zip" classes dependency evaluation
+          )
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - name: Verify GKE and OpenSearch substrate
+        run: |
+          set -euo pipefail
+          cluster_status="$(
+            gcloud container clusters describe "$TARGET_CLUSTER"               --zone="$TARGET_ZONE"               --project="$TARGET_PROJECT"               --format='value(status)'
+          )"
+          node_pool_status="$(
+            gcloud container node-pools describe "${TARGET_CLUSTER}-primary"               --cluster="$TARGET_CLUSTER"               --zone="$TARGET_ZONE"               --project="$TARGET_PROJECT"               --format='value(status)'
+          )"
+          [[ "$cluster_status" == RUNNING ]]
+          [[ "$node_pool_status" == RUNNING ]]
+
+      - name: Configure GKE credentials
+        uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify bounded Kubernetes permissions
+        run: |
+          set -euo pipefail
+          for permission in             'create serviceaccounts'             'create pods'             'create pods/exec'             'get pods'             'delete pods'; do
+            verb="${permission%% *}"
+            resource="${permission#* }"
+            kubectl auth can-i "$verb" "$resource" -n "$TARGET_NAMESPACE" | grep -Fxq yes || {
+              echo "Apply identity lacks Kubernetes permission: $verb $resource" >&2
+              exit 1
+            }
+          done
+
+      - name: Verify backend Workload Identity IAM bindings
+        run: |
+          set -euo pipefail
+          project_number="$(
+            gcloud projects describe "$TARGET_PROJECT" --format='value(projectNumber)'
+          )"
+          principal="principal://iam.googleapis.com/projects/${project_number}/locations/global/workloadIdentityPools/${TARGET_PROJECT}.svc.id.goog/subject/ns/${TARGET_NAMESPACE}/sa/${TARGET_KSA}"
+          policy="${RUNNER_TEMP}/project-iam.json"
+          gcloud projects get-iam-policy "$TARGET_PROJECT" --format=json > "$policy"
+
+          for role in roles/aiplatform.user roles/serviceusage.serviceUsageConsumer; do
+            jq -e --arg role "$role" --arg principal "$principal" '
+              any(.bindings[]?;
+                .role == $role and any(.members[]?; . == $principal)
+              )
+            ' "$policy" >/dev/null || {
+              echo "Missing backend Workload Identity binding: $role" >&2
+              exit 1
+            }
+          done
+
+      - name: Apply only the backend Kubernetes ServiceAccount
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" apply             -f infra/kubernetes/base/backend-serviceaccount.yaml
+
+      - name: Verify OpenSearch readiness
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" rollout status             statefulset/terraformers-opensearch             --timeout=2m
+          service_type="$(
+            kubectl -n "$TARGET_NAMESPACE" get service "$OPENSEARCH_SERVICE"               -o jsonpath='{.spec.type}'
+          )"
+          [[ "$service_type" == ClusterIP ]]
+
+      - name: Start ephemeral Java baseline pod
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" delete pod "$BASELINE_POD"             --ignore-not-found=true --wait=true
+
+          cat > "${RUNNER_TEMP}/baseline-pod.yaml" <<'EOF'
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: terraformers-evaluation-baseline
+            labels:
+              app.kubernetes.io/name: terraformers-evaluation-baseline
+              app.kubernetes.io/part-of: terraformers-modernization
+          spec:
+            serviceAccountName: terraformers-backend
+            restartPolicy: Never
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 10001
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+              - name: baseline
+                image: eclipse-temurin:17-jdk-jammy
+                imagePullPolicy: IfNotPresent
+                command: ["/bin/sh", "-c", "sleep 2700"]
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop: ["ALL"]
+                resources:
+                  requests:
+                    cpu: 1m
+                    memory: 256Mi
+                  limits:
+                    cpu: "1"
+                    memory: 1Gi
+          EOF
+
+          kubectl -n "$TARGET_NAMESPACE" apply -f "${RUNNER_TEMP}/baseline-pod.yaml"
+
+          if ! kubectl -n "$TARGET_NAMESPACE" wait             --for=condition=Ready "pod/${BASELINE_POD}"             --timeout=5m; then
+            echo 'Evaluation baseline pod did not become Ready; capturing bounded diagnostics.' >&2
+            kubectl -n "$TARGET_NAMESPACE" get pod "$BASELINE_POD" -o wide || true
+            kubectl -n "$TARGET_NAMESPACE" describe pod "$BASELINE_POD" || true
+            kubectl -n "$TARGET_NAMESPACE" get events               --field-selector "involvedObject.name=${BASELINE_POD}"               --sort-by='.lastTimestamp' || true
+            kubectl -n "$TARGET_NAMESPACE" logs "$BASELINE_POD"               --all-containers=true --tail=200 || true
+            exit 1
+          fi
+
+      - name: Transfer evaluation bundle
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" exec -i "$BASELINE_POD" --             /bin/sh -c 'cat > /tmp/live-baseline.zip'             < "${RUNNER_TEMP}/live-baseline.zip"
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" --             /bin/sh -c 'rm -rf /tmp/workspace && mkdir -p /tmp/workspace && cd /tmp/workspace && jar xf /tmp/live-baseline.zip'
+
+      - name: Run unchanged six-case M3 baseline
+        run: |
+          set -euo pipefail
+          run_id="m3-baseline-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" --             env               EVALUATION_DATASET=/tmp/workspace/evaluation/terraformers-eval-v1/dataset.json               EVALUATION_OUTPUT=/tmp/m3-live-baseline.json               EVALUATION_RUN_ID="$run_id"               EVALUATION_MODE=full               GOOGLE_CLOUD_PROJECT=terraformers-platform               GOOGLE_CLOUD_LOCATION=global               ANALYSIS_PROVIDER=vertex               EMBEDDING_PROVIDER=vertex               RETRIEVAL_MODE=REQUIRED               VERTEX_GENERATION_MODEL_ID=gemini-3.8-flash               VERTEX_EMBEDDING_MODEL_ID=gemini-embedding-001               OPENSEARCH_ENDPOINT="http://${OPENSEARCH_SERVICE}:9200"               INDEX_NAME=terraformers-reference-v3               VECTOR_FIELD_NAME=embedding               CONTENT_FIELD_NAME=content               CORPUS_VERSION=terraformers-reference-v3               PROVIDER_VERSION=5.100.0               EXPECTED_VECTOR_DIMENSION=1024               OPENSEARCH_TOP_K=8               VERTEX_MAX_OUTPUT_TOKENS=8192               java -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*'                 com.terraformers.modernization.evaluation.LiveEvaluationLauncher
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" --             cat /tmp/m3-live-baseline.json             > "${RUNNER_TEMP}/m3-live-baseline.json"
+
+      - name: Verify baseline identity and completeness
+        run: |
+          set -euo pipefail
+          result="${RUNNER_TEMP}/m3-live-baseline.json"
+
+          jq -e '
+            .schemaVersion == "m3-evaluation-v1"
+            and .datasetVersion == "terraformers-eval-v1"
+            and (.traces | length == 6)
+            and ([.traces[].caseId] == [
+              "arch-vpc-three-tier",
+              "arch-cloudfront-private-alb",
+              "arch-private-aoss",
+              "arch-s3-metadata-split",
+              "ambiguous-cropped-service-sketch",
+              "non-architecture-deployment-dashboard"
+            ])
+            and .configuration.corpusVersion == "terraformers-reference-v3"
+            and .configuration.providerVersion == "5.100.0"
+            and .configuration.analysisProvider == "vertex"
+            and .configuration.embeddingProvider == "vertex"
+            and .configuration.retrievalMode == "REQUIRED"
+            and .configuration.topK == 8
+            and .configuration.generationModelId == "gemini-3.8-flash"
+            and .configuration.embeddingModelId == "gemini-embedding-001"
+            and (.configuration.configurationFingerprint | startswith("sha256:"))
+            and all(.traces[]; .configuration == $.configuration)
+          ' "$result" >/dev/null
+
+          {
+            echo '## M3-4 unchanged six-case live baseline'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Run ID: `%s`\n' "$(jq -r '.runId' "$result")"
+            printf -- '- Configuration fingerprint: `%s`\n' "$(jq -r '.configuration.configurationFingerprint' "$result")"
+            echo '- Dataset: `terraformers-eval-v1`'
+            echo '- Cases: `6`'
+            echo
+            echo '| Case | Facts | Retrieval | Generation | Validation | First divergence |'
+            echo '|---|---|---|---|---|---|'
+            jq -r '
+              .traces[] |
+              "| (.caseId) | (.factExtraction.status) | (.retrieval.status) | (.generation.status) | (.validation.status) | " +
+              (if .firstDivergence == null then "none" else "(.firstDivergence.stage):(.firstDivergence.category)" end) +
+              " |"
+            ' "$result"
+            echo
+            echo '- Quality failures are preserved as baseline evidence and do not change the fixed dataset or runtime configuration.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload machine-readable baseline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-live-baseline-${{ github.run_id }}
+          path: ${{ runner.temp }}/m3-live-baseline.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Delete ephemeral evaluation baseline pod
+        if: always()
+        run: |
+          kubectl -n "$TARGET_NAMESPACE" delete pod "$BASELINE_POD"             --ignore-not-found=true --wait=false || true

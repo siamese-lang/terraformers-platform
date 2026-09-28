@@ -194,7 +194,11 @@ jobs:
                     drop: ["ALL"]
                 resources:
                   requests:
-                    cpu: 100m
+                    # This is a one-shot network-bound evidence pod on the single-node
+                    # Free Trial runtime. Keep the scheduling reservation minimal so it
+                    # can coexist with the 1 CPU OpenSearch request and GKE system pods;
+                    # the CPU limit still permits short bursts during pip/JSON work.
+                    cpu: 1m
                     memory: 128Mi
                   limits:
                     cpu: "1"

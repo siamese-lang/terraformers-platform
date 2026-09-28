@@ -136,6 +136,29 @@ Evidence는 의사결정과 완료 주장을 제한하는 조건이지, reposito
 - generated artifacts, logs, one-off investigation output은 source control에 영구 보존할 필요가 있을 때만 commit한다. 그렇지 않으면 CI artifact 또는 PR evidence로 남긴다.
 - validation 성공은 프로젝트 목표 달성과 동일하지 않다. 완료 보고에는 반드시 '무엇이 실제로 개선되었는가'를 별도로 적고, 답이 '검증이 추가되었다'뿐이면 그 작업의 필요성을 재검토한다.
 
+## Portfolio case depth and milestone progression
+
+이 repository의 최종 산출물은 작은 결함 수정의 개수가 아니라, repository evidence로 설명 가능한
+대표 문제 해결 사례다. 따라서 milestone/subtask를 순서대로 소진하는 것 자체를 진행으로 간주하지 않는다.
+
+- 같은 subsystem/root boundary에서 나온 여러 증상은 가능한 한 하나의 engineering case로 묶어
+  `problem → reproduction → root mechanism → alternatives → decision → implementation → same-scenario validation → trade-off/residual risk`
+  흐름으로 정리한다.
+- 단일 test PASS, 단일 restart, 단일 exception handling만으로 "문제 해결 사례"를 완료했다고 주장하지 않는다.
+- active 개선 축에서 대표 case 후보가 확인되면 다음 milestone로 넘어가기 전에 최소한 다음을 답할 수 있어야 한다.
+  1. 사용자/시스템에 어떤 실제 영향이 있는가?
+  2. 여러 증상을 관통하는 근본 메커니즘은 무엇인가?
+  3. 어떤 대안을 검토했고 왜 채택/기각했는가?
+  4. 선택한 변경이 왜 최소이면서 충분한가?
+  5. 동일 failure scenario에서 before/after가 어떻게 달라졌는가?
+  6. 무엇을 해결하지 못했고 어떤 trade-off를 남겼는가?
+- 동일 root cause를 가진 현상을 milestone별 작은 closure로 분절하지 않는다. backend reliability,
+  observability, failure/load verification이 같은 case를 더 깊게 만드는 경우에는 그 연속성을 보존한다.
+- milestone closure는 "다음 단계로 이동"을 위한 행정 절차가 아니라 case의 engineering claim이 충분히
+  성숙했는지 확인하는 checkpoint다. portfolio 가치가 낮은 작은 수정은 보조 evidence로 남기고 대표 case로 과장하지 않는다.
+- agent는 active plan의 TODO를 기계적으로 모두 소진하지 않는다. 대표 case의 깊이를 높이지 않거나
+  실제 개선 축에 기여하지 않는 후속 작업은 DEFER한다.
+
 ## Completion report
 
 작업 완료 시 항상 다음 항목을 보고한다.

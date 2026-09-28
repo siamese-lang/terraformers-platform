@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — STATE TRANSITION / RECOVERY FIRST**
+**COMPLETE — M6-1 THROUGH M6-4 CLOSED**
 
 M5 measured the current `AnalysisJob` lifecycle and confirmed three reliability gaps. M6 changes
 only those evidenced behaviors and reuses the exact M5 scenarios for validation.
@@ -74,7 +74,7 @@ No GCP live runtime activation is expected for M6 unless local/MariaDB evidence 
 
 ## M6-1 — Atomic PENDING claim and terminal-state guard
 
-**Status: TODO**
+**Status: COMPLETE — PR #82 / merge `d36a36148353027118f0c5eb1c86543fffa00dad`**
 
 Replace the current load-and-unconditionally-set-`RUNNING` transition with an atomic database claim
 whose success condition is:
@@ -101,7 +101,7 @@ Validation:
 
 ## M6-2 — Single-replica restart reconciliation
 
-**Status: TODO**
+**Status: COMPLETE — PR #83 / merge `3385114b365859aaa8d688621f33176d411d3ab6`**
 
 On application startup, classify persisted `PENDING` and `RUNNING` jobs left by the prior process
 as interrupted and move them to a safe terminal `FAILED` state.
@@ -131,7 +131,7 @@ Validation:
 
 ## M6-3 — Partial-success residue control
 
-**Status: TODO — DECISION AFTER CAPABILITY INSPECTION**
+**Status: COMPLETE — PR #84 / merge `bb25229da188f690bc88f9abce5248911db3514f`**
 
 M5-3 proves that object persistence can succeed before relational finalization fails.
 
@@ -154,7 +154,7 @@ residue ledger.
 
 ## M6-4 — Same-scenario before/after closure
 
-**Status: TODO**
+**Status: COMPLETE**
 
 Re-run the M5 evidence scenarios after M6 changes.
 
@@ -179,8 +179,24 @@ M6 is complete when:
 6. normal successful job behavior and executor rejection do not regress;
 7. no broker/outbox/distributed system is added without new evidence.
 
+## Completion evidence
+
+Detailed before/after evidence is recorded in
+[`m6-backend-reliability-closure.md`](../../evaluation/m6-backend-reliability-closure.md).
+
+Validation runs:
+
+- M6-1 Backend Local Verification `36399415255` — **SUCCESS**;
+- M6-2 Backend Local Verification `36399836413` — **SUCCESS**;
+- M6-3 Backend Local Verification `36400693033` — **SUCCESS**.
+
+The three M5 gaps are controlled using the same scenarios: duplicate execution is prevented by the
+atomic pending claim, previous-process non-terminal jobs are failed before readiness under the
+current single-replica contract, and rollback-safe relational finalization failure compensates the
+just-written persistent object.
+
 ## Immediate next single task
 
-Implement M6-1 as the smallest atomic repository/state-service claim and invert the existing M5-2
-duplicate-delivery baseline. Do not begin restart reconciliation or partial-success cleanup in the
-same code change.
+Begin M7 from [`M7 — Observability and Failure RCA`](M7-observability.md) with M7-1 current-signal
+baseline. Do not install a dashboard, collector, or tracing backend before the signal gap is
+measured.

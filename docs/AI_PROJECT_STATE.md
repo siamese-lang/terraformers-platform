@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case B B2 bounded implementation specification**
+- Current single task: **Case B B3 bounded implementation specification**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -57,10 +57,15 @@ Case B — Backend durable asynchronous processing:
   rejection, and real MariaDB single-owner initial/reclaim contention are verified;
 - B1 evidence is recorded in
   [Case B B1 Durable State and Fencing Evidence](evaluation/case-b-b1-durable-state-fencing.md);
-- current runtime still uses after-commit in-memory dispatch and restart-to-FAILED reconciliation;
-  B2 is the first stage allowed to change those runtime delivery/recovery semantics;
+- B2 is complete in PR #99 / merge `0f18e437af3aaf3c16c3ed075e8963c32cdab240`, with evidence in
+  [Case B B2 Durable Dispatcher and Restart Recovery Evidence](evaluation/case-b-b2-durable-dispatch-recovery.md);
+- MariaDB durable eligibility is now the execution recovery source, while the executor remains the
+  bounded local concurrency pool; restart-to-FAILED is no longer the recovery model for recoverable
+  AnalysisJob work;
+- provider retry remains disabled until B3, and B4 deterministic object identity and durable cleanup
+  work remain unresolved;
 - production implementation must continue one bounded stage at a time; the immediate next task is the
-  B2 implementation specification, not B2/B3/B4 combined implementation.
+  B3 bounded implementation specification, not B3/B4/B5 combined implementation.
 
 Case C — Cloud runtime capacity and safe delivery:
 - use the existing GKE/Vertex/OpenSearch target runtime as the baseline;

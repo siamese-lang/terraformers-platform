@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE PLAN — B1 COMPLETE, B2 SPECIFICATION NEXT**
+**ACTIVE PLAN — B1/B2 COMPLETE, B3 SPECIFICATION NEXT**
 
 This plan implements
 [ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md)
@@ -113,6 +113,20 @@ Do not add polling, restart recovery, or retry execution in B1.
 
 # B2 — Durable dispatcher and restart recovery
 
+## Status
+
+**COMPLETE**
+
+Implementation evidence:
+[Case B B2 Durable Dispatcher and Restart Recovery Evidence](../../evaluation/case-b-b2-durable-dispatch-recovery.md)
+
+PR #99 head `b7ef9ec77d74d936a28068d64386d2331aa05b46` merged as
+`0f18e437af3aaf3c16c3ed075e8963c32cdab240`. Periodic MariaDB eligibility discovery now recovers
+lost immediate handoffs and expired ownership, while the bounded executor remains a local
+concurrency mechanism. Terraform Static Verification run `36445520873` and Backend Local
+Verification run `36445520887` succeeded. Provider failure remains single-attempt and terminal for
+the current valid owner; B2 does not enable retry, which remains the B3 boundary.
+
 ## Goal
 
 Replace “afterCommit memory handoff is the only path to execution” with MariaDB-backed durable
@@ -124,11 +138,21 @@ The existing executor remains the bounded local execution pool.
 
 - API commit creates durable eligible work;
 - a dispatcher/poller finds eligible jobs;
-- successful lease claim precedes submission to executor;
+- durable eligibility discovery precedes bounded executor submission;
+- the submitted runnable must begin and successfully acquire a fenced lease claim before provider
+  execution;
 - process restart does not mark recoverable PENDING/RUNNING ownership loss terminally FAILED;
 - expired ownership is reclaimable;
 - executor rejection does not lose the durable job;
 - polling/claim loop is bounded and has explicit lifecycle/shutdown behavior.
+
+The accepted ordering is:
+
+`durable eligibility discovery → bounded executor submission → runnable begins → fenced lease claim → provider execution`
+
+Local executor submission does not constitute durable ownership. Rejection or process loss before
+the runnable starts leaves the database job durably recoverable, and claim failure prevents provider
+execution.
 
 The old startup restart-to-`FAILED` reconciler must be removed, replaced, or narrowed so it no longer
 violates ADR-007.
@@ -346,7 +370,7 @@ bounded correctness purpose.
 
 ## Current immediate next task
 
-Prepare the bounded **B2 implementation specification** for Codex.
+Prepare the bounded **B3 implementation specification**.
 
-B2 is limited to durable dispatcher/restart recovery using the B1 lease/fencing state. Provider
-retry remains disabled until B3, and result-idempotency/cleanup execution remains deferred to B4.
+Provider retry remains disabled pending B3, and result-idempotency/cleanup execution remains
+deferred to B4.

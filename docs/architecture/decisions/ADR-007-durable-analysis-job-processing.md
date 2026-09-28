@@ -12,17 +12,17 @@ stages in one change or automatically progressing between stages.
 Case B requires an accepted analysis request to survive application-process restart without forcing
 the user to submit a new job.
 
-The measured current flow is:
+The measured pre-B2 flow was:
 
 `API → analysis_jobs(PENDING) commit → afterCommit callback → in-memory executor → claim → analysis`
 
 PR #94 and
 [Case B Measurement Readiness Evidence](../../evaluation/case-b-measurement-readiness.md)
-established that:
+established that, before the ADR-007 implementation:
 
 - the committed MariaDB job outlives the in-memory delivery mechanism;
-- an accepted-but-not-started job is currently marked `FAILED` after restart;
-- a claimed `RUNNING` job is currently marked `FAILED` after restart rather than reclaimed;
+- an accepted-but-not-started job was marked `FAILED` after restart;
+- a claimed `RUNNING` job was marked `FAILED` after restart rather than reclaimed;
 - terminal duplicate execution is already controlled by an atomic conditional claim;
 - two real MariaDB transactions contending for one PENDING job admit exactly one winner;
 - transient provider failure currently has no retry;
@@ -34,7 +34,7 @@ recovery for the measured AnalysisJob lifecycle.
 
 ## Decision gate alternatives
 
-### 1. Current in-process executor + restart-to-FAILED reconciliation
+### 1. Pre-B2 in-process executor + restart-to-FAILED reconciliation
 
 **Decision: REJECT as final Case B design**
 
@@ -59,8 +59,9 @@ It remains useful as historical before-state and as an execution primitive.
 MariaDB is already the system of record for `AnalysisJob`. The committed job row becomes the
 durable work source.
 
-A worker/poller selects eligible work from MariaDB, atomically acquires a time-bounded lease, and
-hands only successfully claimed work to the existing bounded executor.
+A worker/poller selects eligible work from MariaDB and offers it to the existing bounded executor.
+Only after the submitted runnable begins does it atomically acquire a time-bounded lease before
+performing provider work.
 
 The design must include:
 
@@ -119,7 +120,7 @@ architecture needs independent consumers, event fan-out, or broker-specific deli
 
 The selected logical flow is:
 
-`API → MariaDB AnalysisJob commit → durable eligibility → lease claim → bounded executor → analysis → fenced finalization`
+`API → MariaDB AnalysisJob commit → durable eligibility → bounded executor scheduling → runnable begins → atomic durable lease/fencing claim → provider work → fenced finalization`
 
 MariaDB is the durable source of truth for work ownership.
 
@@ -129,8 +130,12 @@ The existing `ThreadPoolTaskExecutor` remains useful, but its role changes:
 - **after:** the executor only limits local concurrent execution of work that remains durably
   represented in MariaDB.
 
-A process crash may lose an executor task, but it must not lose the logical job. Lease expiry makes
-the same job eligible for reclaim.
+Executor queue admission is local and non-durable, so it does not constitute durable ownership.
+Pre-claiming before a runnable starts could consume a lease for work that is rejected, remains
+queued when the process dies, or never starts. Ownership therefore begins only when the runnable
+starts and successfully claims; provider work cannot begin before that claim. MariaDB eligibility
+scanning makes a lost local scheduling attempt recoverable. A crash after claim may lose the local
+task, but lease expiry makes the same logical job eligible for reclaim.
 
 ## Durable state contract
 

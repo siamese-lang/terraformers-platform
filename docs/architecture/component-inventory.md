@@ -152,7 +152,7 @@ NEW gap이 아니다.
 
 | Item | Current evidence / basis | Decision | Decision rationale | Expected target state | Future validation |
 |---|---|---|---|---|---|
-| Backend reliability decision depth | M5 restart/duplicate/partial-success tests, M6 implementations | **REASSESS** | failure-injection evidence는 이미 존재한다. 현재 gap은 harness 부재가 아니라 durable async operating requirement와 final architecture decision이 충분히 깊지 않다는 점이다. | Case B decision brief와 selected design implementation/validation | same M5 scenarios + process restart/delivery/retry/idempotency before/after evidence |
+| Backend reliability decision depth | ADR-007; Case B B1 durable state/fencing and B2 dispatcher/recovery evidence | **IMPLEMENTING / CASE B IN PROGRESS** | ADR-007이 MariaDB durable ownership architecture를 선택했고 B1/B2가 durable state, fencing, dispatch, restart recovery를 구현했다. 다만 retry, cross-resource safety, integrated portfolio evidence가 남아 있다. | B3 bounded retry, B4 deterministic result identity/cleanup safety, B5 integrated closure | B3 selective retry/exhaustion + B4 result/cleanup safety + B5 same-scenario integrated before/after evidence |
 | GCP runtime/IaC | `infra/terraform/envs/gcp-target-runtime/`, `infra/kubernetes/overlays/gcp-target/`, Vertex/OpenSearch target adapters | **IMPLEMENTED / REUSED TARGET RUNTIME** | 동일 GKE Standard + Workload Identity + Vertex AI + in-cluster OpenSearch runtime이 M3 live baseline과 M4 targeted evaluation에 실제 사용되었고, latest accepted M4 closure evidence에서 target node pool을 `node_count=0`으로 반환했다. | 동일 target IaC/runtime을 approved later cases와 M9 closure까지 재사용; 별도 evaluation cloud 금지 | 필요 시 fresh quota/billing/model-access 확인 후 same-runtime activate→evidence→idle; 새 환경 생성 금지 |
 | Batch-ingestion transport portability | `scripts/rag/ingest-corpus.py`, `tests/rag/` | **NEW** | runtime query transport/auth는 M1에서 provider-neutral `OpenSearchTransport` boundary로 분리되었지만 corpus ingestion은 여전히 boto3/S3 receipt/AWS4Auth/AOSS/Bedrock embedding에 결합되어 있다. | versioned corpus/index contract를 유지하면서 target runtime의 embedding/index/auth path로 재사용 가능한 ingestion implementation | deterministic corpus contract, target endpoint ingestion/query smoke, embedding dimension/version consistency |
 | Observability depth for representative cases | `AnalysisObservability.java`, `AnalysisLogCorrelation.java`, stage telemetry from PR #88 | **PAUSED / SUPPORTING CASES** | metrics, job-correlation logs, bounded stage telemetry가 이미 존재한다. 독립적인 tracing stack 도입 자체는 목표가 아니며 M7은 reassessment 동안 paused다. | Case A/B의 실제 RCA에 필요한 최소 signal만 추가하고 별도 observability project로 확장하지 않음 | approved failure scenario에서 metric/log/stage correlation로 cause→result→recovery 설명 가능 여부 |
@@ -162,7 +162,7 @@ NEW gap이 아니다.
 ### KEEP 핵심 자산
 
 1. `projectcore`, `project`, `identity`, `projectcomment`, `projecttree`의 domain/business flow와 JPA model.
-2. AnalysisJob의 domain/status/ownership contract와 `AnalysisProvider`/`ReferenceRetriever`/`EmbeddingProvider`/object storage ports는 KEEP한다. 현재 in-process executor 기반 async execution과 restart/durability semantics는 **REASSESS**다.
+2. AnalysisJob의 domain/status/ownership contract와 `AnalysisProvider`/`ReferenceRetriever`/`EmbeddingProvider`/object storage ports는 KEEP한다. MariaDB durable eligibility와 lease/fencing이 active restart/durability contract이며 executor는 durable delivery source가 아닌 bounded local concurrency pool이다. B3 retry와 B4 cross-resource result/cleanup safety는 아직 남아 있다.
 3. Flyway schema와 MariaDB system-of-record 계약.
 4. versioned RAG corpus, ingestion utilities, backend/frontend/RAG tests와 executable checks.
 5. cloud-neutral Docker image 및 Kubernetes base/local overlay, runtime contract.
@@ -179,7 +179,6 @@ NEW gap이 아니다.
 - 현재 AWS resources, Terraform state, Argo CD application, GitHub environments/secrets/required checks가 실제로 적용·동작 중인지 여부.
 - Bedrock analysis/embedding model ID, vector dimension, OpenSearch endpoint/index와 corpus version의 실제 운영 값 및 상호 일치 여부.
 - SQS progress event를 소비하는 component의 repository 내/외 존재와 운영 필요성.
-- process restart 이후 accepted analysis job을 자동 복구해야 하는 최종 운영 requirement와 그 구현 방식. M5에서 stranded-state 문제 자체는 이미 확인되었다.
 - compensation 자체가 실패했을 때 residue accountability를 어떤 durable mechanism으로 보장할지.
 - RDS/AWS historical backup/restore/failover 및 alert notification/on-call 정책의 현재 live relevance.
 - 독립 board API의 사용 여부, browser E2E/coverage 기준, Docker Compose 또는 frontend container의 필요성.

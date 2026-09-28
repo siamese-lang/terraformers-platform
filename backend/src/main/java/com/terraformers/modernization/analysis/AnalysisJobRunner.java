@@ -34,17 +34,33 @@ public class AnalysisJobRunner {
         try (AnalysisLogCorrelation ignored = AnalysisLogCorrelation.forJob(jobId)) {
             io.micrometer.core.instrument.Timer.Sample sample = observability.startAnalysis();
             observability.jobStarted();
+            AnalysisJobExecution execution = null;
             try {
-                AnalysisJobExecution execution = orchestrator.executeProviderAndStoreDraft(runningJob);
+                execution = orchestrator.executeProviderAndStoreDraft(runningJob);
                 stateService.markSucceeded(jobId, execution);
                 observability.jobSucceeded();
             } catch (RuntimeException exception) {
+                if (execution != null && exception instanceof AnalysisResultFinalizationException) {
+                    compensateStoredDraft(execution);
+                }
                 observability.jobFailed(exception);
                 log.error("Analysis job failed outcome=failed exceptionCategory={}", observability.category(exception));
                 stateService.markFailed(jobId, safeFailureReason(exception));
             } finally {
                 observability.stopAnalysis(sample);
             }
+        }
+    }
+
+    private void compensateStoredDraft(AnalysisJobExecution execution) {
+        try {
+            orchestrator.removeStoredDraft(execution.writeResult());
+            log.warn("Compensated stored analysis draft after relational finalization failure");
+        } catch (RuntimeException cleanupException) {
+            log.error(
+                    "Analysis draft compensation failed after relational finalization failure cleanupException={}",
+                    cleanupException.getClass().getSimpleName()
+            );
         }
     }
 

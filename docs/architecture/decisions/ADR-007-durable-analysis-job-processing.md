@@ -59,8 +59,9 @@ It remains useful as historical before-state and as an execution primitive.
 MariaDB is already the system of record for `AnalysisJob`. The committed job row becomes the
 durable work source.
 
-A worker/poller selects eligible work from MariaDB, atomically acquires a time-bounded lease, and
-hands only successfully claimed work to the existing bounded executor.
+A worker/poller selects eligible work from MariaDB and offers it to the existing bounded executor.
+Only after the submitted runnable begins does it atomically acquire a time-bounded lease before
+performing provider work.
 
 The design must include:
 
@@ -119,7 +120,7 @@ architecture needs independent consumers, event fan-out, or broker-specific deli
 
 The selected logical flow is:
 
-`API → MariaDB AnalysisJob commit → durable eligibility → lease claim → bounded executor → analysis → fenced finalization`
+`API → MariaDB AnalysisJob commit → durable eligibility → bounded executor scheduling → runnable begins → atomic durable lease/fencing claim → provider work → fenced finalization`
 
 MariaDB is the durable source of truth for work ownership.
 
@@ -129,8 +130,12 @@ The existing `ThreadPoolTaskExecutor` remains useful, but its role changes:
 - **after:** the executor only limits local concurrent execution of work that remains durably
   represented in MariaDB.
 
-A process crash may lose an executor task, but it must not lose the logical job. Lease expiry makes
-the same job eligible for reclaim.
+Executor queue admission is local and non-durable, so it does not constitute durable ownership.
+Pre-claiming before a runnable starts could consume a lease for work that is rejected, remains
+queued when the process dies, or never starts. Ownership therefore begins only when the runnable
+starts and successfully claims; provider work cannot begin before that claim. MariaDB eligibility
+scanning makes a lost local scheduling attempt recoverable. A crash after claim may lose the local
+task, but lease expiry makes the same logical job eligible for reclaim.
 
 ## Durable state contract
 

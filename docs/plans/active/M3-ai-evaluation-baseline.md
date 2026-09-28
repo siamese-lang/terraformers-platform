@@ -315,7 +315,7 @@ variables are explicit enough for M3-R2 implementation. No resource was created 
 
 ### M3-R2 — Single target AI/RAG runtime foundation
 
-**Status: IN PROGRESS — AUTOMATED PREFLIGHT PASSED / FIRST FOUNDATION APPLY PENDING**
+**Status: IN PROGRESS — GKE FOUNDATION APPLIED AND VERIFIED / OPENSEARCH LIVE READINESS PENDING**
 
 **Problem / gap.** ADR-005 selected the target products, but the project still needed deployable
 provider adapters and reusable GCP/OpenSearch infrastructure before the same runtime could serve
@@ -358,36 +358,28 @@ The readiness review also found that an unspecified PVC StorageClass could silen
 default balanced disk. The target now explicitly enables the GCE PD CSI driver and binds the
 OpenSearch 15 GiB PVC to a repository-owned `pd-standard` StorageClass.
 
-**Remaining live boundary.** **No GKE cluster/node/OpenSearch disk has been created.** The final
-read-only duplicate-runtime check passed: no GKE cluster and no target-labeled VM exists. The
-remote-state/OIDC bootstrap is now live: the dedicated GCS state bucket is versioned with uniform
-bucket-level access and public access prevention, the GitHub environment exchanges OIDC only from
-the immutable repository identity on `main`, and the plan identity remains separate from any apply
-identity.
+**Remaining live boundary.** The protected foundation apply is complete. Workflow run
+`36365702742` applied the reviewed plan as **12 added, 0 changed, 0 destroyed** and created the
+target GKE cluster, node pool, network/subnet, node service account, required APIs, and reviewed IAM
+members. The run's final failure was post-apply verification only: deprecated GKE
+`Cluster.currentNodeCount` returned blank after resource creation had already completed.
 
-The first successful GitHub Terraform plan is workflow run
-[`36332217168`](https://github.com/siamese-lang/terraformers-platform/actions/runs/36332217168)
-against commit `1d453895c32f5bbd5543b04bed320e116d601107` with `node_count=1`. The run passed
-OIDC exchange, bucket-protection checks, remote-state init, Terraform plan, and publication of the
-bounded action-count summary. An earlier live attempt exposed a bootstrap dependency on
-`cloudresourcemanager.googleapis.com`; enabling that API resolved the provider project-read 403.
-The published summary and secure Cloud Shell digest for run `36332217168` were reviewed as
-`14 create` with no update/delete/replacement. That plan is retained as historical delivery
-evidence but is **not applyable now**: the later apply-IAM review found the node identity contract
-did not match Google's current documented minimum for custom GKE node service accounts. The target
-Terraform now uses one `roles/container.defaultNodeServiceAccount` binding instead of
-`logging.logWriter`, `monitoring.metricWriter` and `monitoring.viewer`. The temporary default
-node pool required while GKE creates the cluster is also pinned to that custom node identity, so
-cluster creation does not depend on the Compute Engine default service account. GitHub plan run
-`36335535056` confirmed the corrected shape as **12 creates**, with no update, delete or
-replacement. The refreshed billing/credit/quota/duplicate-runtime evidence remains dated readiness
-evidence and must be refreshed immediately before the eventual apply. The next gate is the
-one-time protected apply identity/environment bootstrap followed by `identity-check`. Do not use `-auto-approve`, a second runtime environment, or full v3 corpus
-ingestion.
+The repository replaced that deprecated proof with cluster/node-pool status, canonical Terraform
+state, and refresh-plan checks. Read-only runtime-check run `36369764529` at
+`d47c85526f2b2a290b394084cbb19e0356883a0c` then completed successfully. It verified the
+canonical 12 managed Terraform resources (excluding the expected `data.google_project.current`
+data source), cluster/node-pool readiness, Terraform `node_count=1`, and zero Terraform drift;
+the apply job was skipped.
 
-**Completion evidence.** Static reusable target code/IaC and fresh account/model readiness evidence
-are present, but M3-R2 remains incomplete until the approved target runtime is applied and its
-minimum GKE/OpenSearch/Vertex live readiness is proven.
+The remaining M3-R2 live work is deliberately narrower than the full target overlay: apply only the
+`terraformers-target` namespace, `terraformers-pd-standard` StorageClass, internal OpenSearch
+ClusterIP Service, and OpenSearch 3.8.0 StatefulSet/PVC. Do not deploy the backend yet and do not
+repeat the foundation Terraform apply. The new protected OpenSearch-readiness workflow is the
+single execution path for this proof.
+
+**Completion evidence.** Static reusable target code/IaC, live Vertex model/embedding readiness,
+and the applied/verified GKE foundation are present. M3-R2 remains incomplete only until the
+minimal in-cluster OpenSearch StatefulSet/PVC/API readiness proof succeeds on this same runtime.
 
 ### M3-R3 — Corpus ingestion and serving-path smoke
 
@@ -405,8 +397,11 @@ committed curated v2 corpus without running embeddings or ingestion. It preserve
 IDs, content, AWS provider 5.100.0 knowledge, and provenance while changing only the corpus/index
 identity, the embedding model identity to `gemini-embedding-001`, and project-owned source-version
 references that identify the new corpus. The existing 1024-dimensional FAISS/HNSW cosine mapping
-is retained. M3-R3b must perform the deferred live embedding, ingestion, and serving-path smoke on
-the single target runtime.
+is retained. The repository-local task
+[`M3-R3b-gcp-target-corpus-ingestion.md`](../../tasks/active/M3-R3b-gcp-target-corpus-ingestion.md)
+defines the next non-live implementation boundary for Vertex retrieval-document embeddings and
+plain-HTTP OpenSearch ingestion. That static task may proceed in parallel with the remaining M3-R2
+OpenSearch readiness proof; live ingestion still waits for M3-R2 completion.
 
 **Validation.** Prove a small serving-path smoke through the existing extraction/retrieval/generation
 boundaries, including retrieval metadata/provenance. This smoke establishes runtime readiness; it

@@ -4,12 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Authenticate only, run read-only preflight, create the reviewed foundation, or return the existing node pool to zero.
+        description: Authenticate only, run read-only preflight/runtime verification, create the reviewed foundation, or return the existing node pool to zero.
         required: true
         type: choice
         options:
           - identity-check
           - preflight
+          - runtime-check
           - foundation
           - idle
       expected_sha:
@@ -17,7 +18,7 @@ on:
         required: true
         type: string
       confirmation:
-        description: Use IDENTITY_CHECK, PREFLIGHT_ONLY, APPLY_REVIEWED_GCP_FOUNDATION_12, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
+        description: Use IDENTITY_CHECK, PREFLIGHT_ONLY, RUNTIME_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_12, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
         required: true
         type: string
 
@@ -78,6 +79,9 @@ jobs:
             preflight)
               [[ "$CONFIRMATION" == PREFLIGHT_ONLY ]] || exit 1
               ;;
+            runtime-check)
+              [[ "$CONFIRMATION" == RUNTIME_CHECK ]] || exit 1
+              ;;
             foundation)
               [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_FOUNDATION_12 ]] || exit 1
               ;;
@@ -90,7 +94,7 @@ jobs:
               ;;
           esac
 
-          if [[ "$OPERATION" == preflight || "$OPERATION" == foundation ]]; then
+          if [[ "$OPERATION" == preflight || "$OPERATION" == runtime-check || "$OPERATION" == foundation ]]; then
             [[ -n "$STATE_BUCKET" && -n "$WIF_PROVIDER" && -n "$PLAN_SERVICE_ACCOUNT" ]] || {
               echo 'gcp-target-plan environment variables are incomplete.' >&2
               exit 1
@@ -106,17 +110,17 @@ jobs:
           fi
 
       - uses: google-github-actions/auth@v3
-        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
         with:
           project_id: terraformers-platform
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
 
       - uses: google-github-actions/setup-gcloud@v3
-        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
 
       - name: Reconfirm plan identity is non-mutating
-        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
         run: |
           set -euo pipefail
           access_token="$(gcloud auth print-access-token)"
@@ -130,7 +134,7 @@ jobs:
           }
 
       - name: Capture mutable account evidence
-        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
         run: |
           set -euo pipefail
 
@@ -164,7 +168,7 @@ jobs:
           gcloud compute instances list             --project=terraformers-platform             --format=json             > "${RUNNER_TEMP}/instances.json"
 
       - name: Enforce mutable foundation preflight
-        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
         run: |
           set -euo pipefail
           python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_foundation_preflight.py"             --project-json "${RUNNER_TEMP}/project.json"             --billing-json "${RUNNER_TEMP}/billing.json"             --global-quota-json "${RUNNER_TEMP}/global-quota.json"             --region-json "${RUNNER_TEMP}/region.json"             --machine-json "${RUNNER_TEMP}/machine.json"             --gke-server-json "${RUNNER_TEMP}/gke-server.json"             --services-json "${RUNNER_TEMP}/services.json"             --clusters-json "${RUNNER_TEMP}/clusters.json"             --networks-json "${RUNNER_TEMP}/networks.json"             --subnets-json "${RUNNER_TEMP}/subnets.json"             --service-accounts-json "${RUNNER_TEMP}/service-accounts.json"             --instances-json "${RUNNER_TEMP}/instances.json"             --output-json "${RUNNER_TEMP}/gcp-foundation-preflight.json"             --output-md "${RUNNER_TEMP}/gcp-foundation-preflight.md"
@@ -172,7 +176,7 @@ jobs:
           cat "${RUNNER_TEMP}/gcp-foundation-preflight.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check canonical state bucket protection
-        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
         env:
           STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
         run: |
@@ -189,7 +193,7 @@ jobs:
           }
 
       - uses: hashicorp/setup-terraform@v3
-        if: inputs.operation == 'preflight' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
         with:
           terraform_version: 1.15.8
           terraform_wrapper: false
@@ -233,12 +237,82 @@ jobs:
             echo '- Remaining Free Trial promotional credit is confirmed by the operator at the single protected foundation approval.'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Verify existing runtime without mutation
+        if: inputs.operation == 'runtime-check'
+        env:
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+
+          terraform init -no-color -reconfigure -input=false             -backend-config="bucket=${STATE_BUCKET}"             -backend-config='prefix=gcp-target-runtime'
+
+          mapfile -t managed_state < <(terraform state list)
+          [[ "${#managed_state[@]}" -eq 12 ]] || {
+            echo "Runtime check expected 12 managed resources, found ${#managed_state[@]}." >&2
+            printf '  %s\n' "${managed_state[@]}" >&2
+            exit 1
+          }
+
+          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target'
+          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target'
+
+          cluster_status="$(
+            gcloud container clusters describe terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform               --format='value(status)'
+          )"
+          [[ "$cluster_status" == RUNNING ]] || {
+            echo "GKE cluster status is $cluster_status, expected RUNNING." >&2
+            exit 1
+          }
+
+          node_pool_status="$(
+            gcloud container node-pools describe terraformers-target-primary               --cluster=terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform               --format='value(status)'
+          )"
+          [[ "$node_pool_status" == RUNNING ]] || {
+            echo "GKE node pool status is $node_pool_status, expected RUNNING." >&2
+            exit 1
+          }
+
+          terraform show -json > "${RUNNER_TEMP}/gcp-target-runtime-state.json"
+          node_count="$(
+            jq -r '
+              .values.root_module.resources[]
+              | select(.address == "google_container_node_pool.target")
+              | .values.node_count
+            ' "${RUNNER_TEMP}/gcp-target-runtime-state.json"
+          )"
+          [[ "$node_count" == 1 ]] || {
+            echo "Runtime check expected Terraform node_count=1, got $node_count." >&2
+            exit 1
+          }
+
+          set +e
+          terraform plan -no-color -input=false -lock-timeout=5m -detailed-exitcode             > "${RUNNER_TEMP}/gcp-target-runtime-check-plan.txt"
+          plan_rc=$?
+          set -e
+          [[ "$plan_rc" -eq 0 ]] || {
+            cat "${RUNNER_TEMP}/gcp-target-runtime-check-plan.txt" >&2
+            echo "Runtime check expected zero Terraform drift, plan exit code=$plan_rc." >&2
+            exit 1
+          }
+
+          {
+            echo '## GCP target runtime check'
+            echo
+            echo '- Canonical Terraform state resources: `12`'
+            printf -- '- Cluster status: `%s`\n' "$cluster_status"
+            printf -- '- Node pool status: `%s`\n' "$node_pool_status"
+            printf -- '- Terraform node count: `%s`\n' "$node_count"
+            echo '- Terraform drift: `none`'
+            echo '- No resource mutation was attempted.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   apply:
     needs: preflight
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch' &&
       inputs.operation != 'preflight' &&
+      inputs.operation != 'runtime-check' &&
       needs.preflight.result == 'success'
     runs-on: ubuntu-latest
     environment: gcp-target-apply
@@ -428,32 +502,50 @@ jobs:
           OPERATION: ${{ inputs.operation }}
         run: |
           set -euo pipefail
-          status="$(gcloud container clusters describe terraformers-target             --zone=asia-northeast3-a             --project=terraformers-platform             --format='value(status)')"
-          [[ "$status" == RUNNING ]] || {
-            echo "GKE cluster status is $status, expected RUNNING." >&2
+
+          cluster_status="$(
+            gcloud container clusters describe terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform               --format='value(status)'
+          )"
+          [[ "$cluster_status" == RUNNING ]] || {
+            echo "GKE cluster status is $cluster_status, expected RUNNING." >&2
             exit 1
           }
 
-          current_nodes="$(gcloud container clusters describe terraformers-target             --zone=asia-northeast3-a             --project=terraformers-platform             --format='value(currentNodeCount)')"
+          node_pool_status="$(
+            gcloud container node-pools describe terraformers-target-primary               --cluster=terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform               --format='value(status)'
+          )"
+          [[ "$node_pool_status" == RUNNING ]] || {
+            echo "GKE node pool status is $node_pool_status, expected RUNNING." >&2
+            exit 1
+          }
+
+          terraform show -json > "${RUNNER_TEMP}/gcp-target-runtime-state.json"
+          node_count="$(
+            jq -r '
+              .values.root_module.resources[]
+              | select(.address == "google_container_node_pool.target")
+              | .values.node_count
+            ' "${RUNNER_TEMP}/gcp-target-runtime-state.json"
+          )"
 
           if [[ "$OPERATION" == foundation ]]; then
-            [[ "$current_nodes" == 1 ]] || {
-              echo "Foundation apply expected currentNodeCount=1, got $current_nodes." >&2
-              exit 1
-            }
+            expected_nodes=1
           else
-            [[ "$current_nodes" == 0 ]] || {
-              echo "Idle apply expected currentNodeCount=0, got $current_nodes." >&2
-              exit 1
-            }
+            expected_nodes=0
           fi
+
+          [[ "$node_count" == "$expected_nodes" ]] || {
+            echo "Expected Terraform node_count=$expected_nodes, got $node_count." >&2
+            exit 1
+          }
 
           {
             echo '## GCP target apply result'
             echo
             printf -- '- Operation: `%s`\n' "$OPERATION"
             printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
-            printf -- '- Cluster status: `%s`\n' "$status"
-            printf -- '- Current node count: `%s`\n' "$current_nodes"
+            printf -- '- Cluster status: `%s`\n' "$cluster_status"
+            printf -- '- Node pool status: `%s`\n' "$node_pool_status"
+            printf -- '- Terraform node count: `%s`\n' "$node_count"
             echo '- Raw Terraform plan/state were not uploaded.'
           } >> "$GITHUB_STEP_SUMMARY"

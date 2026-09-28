@@ -168,6 +168,20 @@ require a measured bottleneck and the Case Decision Gate.
 Case C begins only after Cases B and A are sufficiently settled for its load results to represent the
 integrated system rather than unresolved durability or AI-behavior ambiguity.
 
+## Case B measurement-readiness checkpoint
+
+Case B measurement readiness is now recorded in
+[Case B Measurement Readiness Evidence](../../evaluation/case-b-measurement-readiness.md).
+
+PR #94 closed the pre-decision measurement gaps without selecting a durable-processing
+architecture. The repository now has deterministic evidence for accepted-but-not-started process
+loss, claimed-RUNNING process loss, transient failure with no retry, compensation cleanup failure,
+duplicate delivery, and real MariaDB concurrent claim behavior.
+
+Case B is therefore **ready for the Architecture Decision Gate**, but production implementation
+remains unauthorized until the user approves the selected direction and before/after acceptance
+experiment.
+
 ## Observability and failure/load work
 
 M7/M8 are **PAUSED AS INDEPENDENT MILESTONES**.
@@ -203,10 +217,12 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-Perform the **Case B Measurement Readiness Audit** against
+Perform the **Case B Architecture Decision Gate** using
+[Case B Measurement Readiness Evidence](../../evaluation/case-b-measurement-readiness.md) and the
 [Portfolio Case Measurement & Acceptance Contract](portfolio-case-measurement-contract.md).
 
-Identify which required Case B failure-matrix scenarios and measurements are already covered by
-current M5/M6 tests and observability, and which minimum test/signal gaps must be closed before
-comparing durable-processing architectures. Do not select or implement the production architecture
-as part of that audit.
+Compare the current executor containment, MariaDB durable queue/claim/lease/bounded-retry,
+RabbitMQ durable delivery, and Transactional Outbox + RabbitMQ alternatives against the measured
+failure matrix. Select a proposed direction and define the minimum before/after acceptance
+experiment, but do not implement production architecture until the user explicitly approves that
+decision.

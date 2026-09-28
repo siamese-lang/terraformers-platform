@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE**
+**COMPLETE**
 
 This document accumulates M5 measurement results. M5 records current behavior only; reliability
 fixes are deferred to M6 after classification.
@@ -65,9 +65,14 @@ No recovery implementation was added.
 
 **Classification: `CONFIRMED_RELIABILITY_GAP`**
 
-Evidence test:
+Evidence:
 
-`AnalysisJobDuplicateExecutionBaselineTest.duplicateDeliveryReexecutesSucceededJobWithoutStateGuard`
+- PR #79
+- merge commit: `8e4c27c5b0c179ba7187e1e92af2698a7bb4b316`
+- test:
+  `AnalysisJobDuplicateExecutionBaselineTest.duplicateDeliveryReexecutesSucceededJobWithoutStateGuard`
+- Backend Local Verification run: `36394547662` — **SUCCESS**
+- MariaDB schema/repository validation in the same workflow — **SUCCESS**
 
 ### Reproduction
 
@@ -103,6 +108,44 @@ M5-3.
 
 No lock, compare-and-set transition, idempotency key, or deduplication behavior was added.
 
+## M5-3 — Object-write / DB-finalization partial-success baseline
+
+**Classification: `CONFIRMED_RELIABILITY_GAP`**
+
+Evidence:
+
+- PR #80
+- merge commit: `18503b656de090b6fc26b317908189b7090ecfc3`
+- test:
+  `AnalysisJobPartialSuccessBaselineTest.successfulObjectWriteRemainsWhenRelationalFinalizationFails`
+- Backend Local Verification run: `36395373207` — **SUCCESS**
+- MariaDB schema/repository validation in the same workflow — **SUCCESS**
+
+### Reproduction
+
+The test uses the real JPA repository, proxied `AnalysisJobStateService` transactions,
+`AnalysisJobOrchestrator`, Terraform validation, and a deterministic persisted-object writer.
+Only `ProjectArtifactService.registerGeneratedTerraform(...)` is forced to fail so the exception
+occurs after a valid Terraform object has already been written.
+
+Observed result:
+
+- Terraform object write succeeds and remains present in the writer;
+- generated-file relational registration is attempted and fails;
+- the runner catches the failure and records the job as `FAILED`;
+- `resultFileId` remains null;
+- `resultObjectKey` remains null;
+- no compensation removes the already-written object.
+
+### Interpretation boundary
+
+The test does not assert that every DB exception creates the same residue. It proves the specific
+production ordering problem: an object can be durable before the relational transaction that makes
+that object reachable as the job result. If the relational finalization fails, current code leaves
+an unreferenced result object.
+
+No compensation, deletion, outbox, retry, or transaction redesign was added.
+
 ## Existing executor-rejection evidence
 
 Existing deterministic coverage already proves:
@@ -118,12 +161,33 @@ M5 will reuse this evidence unless a later baseline shows a distinct executor-pr
 | Candidate | Classification | Evidence |
 | --- | --- | --- |
 | Restart leaves persisted `PENDING`/`RUNNING` | **CONFIRMED_RELIABILITY_GAP** | PR #78 / restart baseline test |
-| Duplicate delivery of same job id | **CONFIRMED_RELIABILITY_GAP** | duplicate-execution baseline test |
-| Object write succeeds, DB finalization fails | PENDING MEASUREMENT | M5-3 |
+| Duplicate delivery of same job id | **CONFIRMED_RELIABILITY_GAP** | PR #79 / duplicate-execution baseline test |
+| Object write succeeds, DB finalization fails | **CONFIRMED_RELIABILITY_GAP** | PR #80 / partial-success baseline test |
 | Executor rejection | **CONTROLLED_CURRENT_BEHAVIOR** | existing `AnalysisJobServiceTest` |
 
-## Immediate next measurement
+## M5 exit decision
 
-M5-3: force a deterministic failure after Terraform object write succeeds but before generated-file
-and job-success state commit, then record the remaining object and DB/job state. Do not add
-compensation or outbox behavior.
+M5 exit criteria are **MET**.
+
+Confirmed reliability gaps:
+
+1. **Restart recovery gap** — persisted `PENDING`/`RUNNING` jobs remain stranded after process
+   restart when their in-process task is gone.
+2. **Duplicate-delivery gap** — the same job id can be re-executed after `SUCCEEDED`; terminal state
+   is not enforced as an execution guard.
+3. **Partial-success consistency gap** — result object persistence can succeed before relational
+   finalization, leaving an unreferenced object when DB registration fails.
+
+Controlled current behavior:
+
+- executor rejection is caught and maps the persisted job to `FAILED`; current deterministic
+  coverage is sufficient for the M5 baseline.
+
+M5 does not select a repair architecture. M6 must evaluate the smallest changes that enforce explicit
+state-transition/idempotency and recovery/consistency invariants. RabbitMQ, Transactional Outbox,
+distributed locks, retry infrastructure, and other mechanisms remain unselected until the M6 change
+gate compares them against these exact failures.
+
+## Immediate next task
+
+Create the M6 — Backend Reliability Improvement active plan from these three confirmed gaps.

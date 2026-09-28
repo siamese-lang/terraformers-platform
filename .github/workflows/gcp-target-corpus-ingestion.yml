@@ -215,7 +215,7 @@ jobs:
           import tarfile
           from pathlib import Path
 
-          root = Path("/workspace")
+          root = Path("/tmp/workspace")
           root.mkdir(parents=True, exist_ok=True)
           with tarfile.open(fileobj=sys.stdin.buffer, mode="r|gz") as archive:
               archive.extractall(root, filter="data")
@@ -224,12 +224,12 @@ jobs:
       - name: Install isolated ingestion dependencies
         run: |
           set -euo pipefail
-          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             python -m pip install               --disable-pip-version-check               --no-cache-dir               --target /tmp/terraformers-ingestion-deps               -r /workspace/scripts/rag/requirements-gcp.txt
+          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             python -m pip install               --disable-pip-version-check               --no-cache-dir               --target /tmp/terraformers-ingestion-deps               -r /tmp/workspace/scripts/rag/requirements-gcp.txt
 
       - name: Ingest terraformers-reference-v3
         run: |
           set -euo pipefail
-          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             env PYTHONPATH=/tmp/terraformers-ingestion-deps             python /workspace/scripts/rag/ingest-gcp-target-corpus.py               --project terraformers-platform               --location global               --opensearch-endpoint "http://${OPENSEARCH_SERVICE}:9200"               --receipt /tmp/terraformers-reference-v3-receipt.json
+          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             env PYTHONPATH=/tmp/terraformers-ingestion-deps             python /tmp/workspace/scripts/rag/ingest-gcp-target-corpus.py               --project terraformers-platform               --location global               --opensearch-endpoint "http://${OPENSEARCH_SERVICE}:9200"               --receipt /tmp/terraformers-reference-v3-receipt.json
 
           kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             cat /tmp/terraformers-reference-v3-receipt.json             > "${RUNNER_TEMP}/ingestion-receipt.json"
 

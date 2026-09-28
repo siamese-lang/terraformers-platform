@@ -12,16 +12,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current milestone
 
-- Milestone: **M6 — Backend Reliability Improvement**
+- Milestone: **M7 — Observability and Failure RCA**
 - Status: **ACTIVE**
-- Phase: M6-1 atomic PENDING claim / terminal-state guard
-- Active plan: [M6 — Backend Reliability Improvement](plans/active/M6-backend-reliability-improvement.md)
+- Phase: M7-1 current signal baseline
+- Active plan: [M7 — Observability and Failure RCA](plans/active/M7-observability.md)
+- Completed M6 plan: [M6 — Backend Reliability Improvement](plans/active/M6-backend-reliability-improvement.md)
 - Completed M5 plan: [M5 — Backend Reliability Baseline](plans/active/M5-backend-reliability-baseline.md)
 - Completed M4 plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
 - Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
-- Current implementation task: **M6-1 — atomic PENDING-to-RUNNING claim and terminal-state guard only**
+- Current implementation task: **M7-1 — capture current logs/metrics for the existing M6-3 finalization failure and identify the smallest missing signal**
 
 M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
 provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
@@ -123,12 +124,31 @@ same-job re-execution, and untracked object residue after DB finalization failur
 remains `CONTROLLED_CURRENT_BEHAVIOR` because it is already observed and terminates the job as
 `FAILED`.
 
-M6 is active. The first change is deliberately smaller than introducing durable messaging:
-atomically claim only `PENDING` jobs for `RUNNING` so duplicate/terminal delivery cannot re-enter
-provider/storage execution. The current canonical backend Deployment remains a single replica with
-`maxSurge: 0`; restart reconciliation in M6-2 is scoped to that current runtime contract and is not
-claimed as a future multi-replica design. Partial-success residue control remains M6-3 and requires
-storage-capability inspection before choosing compensation versus durable residue accountability.
+M6 is complete. PR #82 merged as
+`d36a36148353027118f0c5eb1c86543fffa00dad`; Backend Local Verification run `36399415255`
+passed. The repository now claims `PENDING → RUNNING` atomically, and duplicate delivery of an
+already-terminal job no longer re-enters provider/storage execution.
+
+PR #83 merged as `3385114b365859aaa8d688621f33176d411d3ab6`; run `36399836413` passed.
+Before readiness, the current single-replica runtime now reconciles previous-process `PENDING` and
+`RUNNING` jobs to a safe terminal `FAILED` state rather than replaying uncertain side effects.
+Existing terminal jobs remain unchanged.
+
+PR #84 merged as `bb25229da188f690bc88f9abce5248911db3514f`; run `36400693033` passed.
+M6-3 added provider-neutral result-object removal for S3/filesystem and explicit metadata-only
+no-op compensation. Relational finalization failures that occur inside the rollback-safe transaction
+body now remove the immediately preceding persistent object before the job is marked `FAILED`.
+Commit-phase ambiguous errors are intentionally outside that compensation classification. Detailed
+before/after evidence is in
+[`m6-backend-reliability-closure.md`](evaluation/m6-backend-reliability-closure.md).
+
+M7 is active. Existing observability assets are Actuator/Prometheus metrics, job-level Micrometer
+counters/timers, the `analysisJobId` MDC scope, and source revision in logs. The console pattern
+contains `trace_id`/`span_id`, but the backend currently has no Micrometer tracing bridge/exporter
+dependency proving those fields are populated. Historical Bedrock/AOSS external metrics also do not
+cover the active Vertex/OpenSearch path. M7 therefore starts by capturing the current signals for
+one existing deterministic failure before adding stage telemetry, tracing, dashboards, or a
+collector.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected

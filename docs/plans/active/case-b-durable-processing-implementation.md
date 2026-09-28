@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE PLAN — ADR-007 ACCEPTED, IMPLEMENTATION NOT STARTED**
+**ACTIVE PLAN — B1 COMPLETE, B2 SPECIFICATION NEXT**
 
 This plan implements
 [ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md)
@@ -46,6 +46,19 @@ Keep the current REST result retrieval and frontend polling model.
 ---
 
 # B1 — Durable processing schema and fenced state machine
+
+## Status
+
+**COMPLETE**
+
+Implementation evidence:
+[Case B B1 Durable State and Fencing Evidence](../../evaluation/case-b-b1-durable-state-fencing.md)
+
+PR #97 merged as `237c97f35184312cac3af56aee438da830f4ff8a`.
+The additive durable-state migration, lease/fencing repository primitives, strict temporal
+invariants, stale-generation rejection, and real MariaDB initial/reclaim contention checks passed.
+
+Runtime dispatch/restart behavior remains intentionally unchanged until B2.
 
 ## Goal
 
@@ -333,7 +346,7 @@ bounded correctness purpose.
 
 ## Current immediate next task
 
-After this decision/plan is merged, prepare the bounded **B1 implementation specification** for
-Codex.
+Prepare the bounded **B2 implementation specification** for Codex.
 
-Do not implement B1 as part of this documentation task.
+B2 is limited to durable dispatcher/restart recovery using the B1 lease/fencing state. Provider
+retry remains disabled until B3, and result-idempotency/cleanup execution remains deferred to B4.

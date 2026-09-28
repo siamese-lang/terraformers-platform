@@ -29,6 +29,26 @@
   3. Observability based on real failure diagnosis
   4. Cloud portability
 
+## Primary success criterion — portfolio-grade engineering cases
+
+이 프로젝트의 최종 성공 기준은 milestone 개수, PR 개수, workflow PASS 개수, 기술 목록이 아니다.
+**실제 문제를 근거로 기술적 판단을 설명할 수 있는 2~3개의 강한 engineering case**가 핵심 산출물이다.
+
+대표 case는 최소한 다음 흐름을 repository evidence로 설명할 수 있어야 한다.
+
+`operating scenario → observed failure/limitation → user/system impact → reproduction/baseline →
+root mechanism → alternatives and trade-offs → explicit decision → implementation →
+same-scenario before/after validation → residual risk`
+
+따라서:
+
+- milestone은 case를 만들기 위한 작업 구획일 뿐 포트폴리오 산출물 자체가 아니다.
+- test, verifier, workflow, 문서, cloud 연결 성공 자체는 case가 아니다.
+- 작은 결함을 고친 뒤 PASS했다고 바로 "문제 해결 경험 확보" 또는 milestone complete로 간주하지 않는다.
+- 같은 subsystem/root boundary에서 나온 여러 증상은 가능한 한 하나의 case로 연결한다.
+- case가 충분히 깊어지지 않았다면 과거 `COMPLETE` 표기도 재감사 후 `REASSESS/REOPENED`로 바꿀 수 있다.
+- M10에서 처음 case를 만드는 것이 아니라, active 개선 작업 자체가 처음부터 case depth를 목표로 해야 한다.
+
 ## Single live target runtime rule
 
 Live cloud runtime은 평가용과 최종 배포용으로 별도 구축하지 않는다. 기본 원칙은 **하나의
@@ -58,28 +78,79 @@ target runtime을 한 번 구축하고 계속 확장·재사용하는 것**이�
 
 ## Working rules
 
-- completed milestone을 임의로 재설계하거나 다시 열지 않는다.
-- current active milestone plan이 있으면 첫 미완료 작업부터 진행한다.
+- current `main`의 실제 코드와 evidence가 과거 closure claim보다 우선한다. 과거 `COMPLETE` 상태도
+  case-depth audit에서 근거가 부족하면 명시적으로 재검토하거나 다시 열 수 있다.
+- active milestone plan의 TODO 목록은 **자동 실행 큐가 아니다**. 첫 미완료 항목이라는 이유만으로
+  다음 구현을 시작하지 않는다.
 - 한 작업은 하나의 논리적으로 검증 가능한 결과로 제한한다.
+- 사용자가 승인한 **현재 한 작업만** 수행한다. 한 작업이 끝났다고 다음 branch/PR/subtask/milestone을
+  자동으로 시작하지 않는다.
+- 사용자의 `다음 작업 진행`은 직전 완료 보고에서 명시한 **immediate next single task 하나**에 대한
+  승인으로 해석한다. 여러 subtask나 milestone을 연쇄 실행하는 포괄 승인으로 해석하지 않는다.
+- 대표 case의 production/architecture 변경은 아래 Case Decision Gate를 통과하고 사용자가 선택된
+  방향을 명시적으로 승인하기 전에는 구현하지 않는다.
+- production/architecture-changing PR은 사전에 설명한 승인 범위를 벗어나 자동 병합하지 않는다.
+  구현 범위, 핵심 diff, validation, residual risk를 보고한 뒤 사용자가 승인한 작업 범위에 merge까지
+  포함된 경우에만 병합한다.
 - 현재 repository를 확인하지 않고 과거 대화나 다른 repository 상태를 추측하지 않는다.
 - `KEEP`으로 판정된 domain/business contract를 이유 없이 재작성하지 않는다.
 - historical AWS implementation을 현재 active runtime으로 오인하지 않는다.
-- 대규모 rewrite보다 existing abstraction과 contract의 재사용을 우선한다.
+- 대규모 rewrite보다 existing abstraction과 contract의 재사용을 우선하되, **재사용 자체가 목표는 아니다**.
+  실제 운영 요구를 충족하지 못하면 새 구조/기술도 정식 대안으로 평가한다.
 - architecture change가 발생하면 관련 source-of-truth 문서를 같은 작업에서 갱신한다.
-- inventory의 `UNKNOWN/TBD`를 확인된 요구사항이나 선택된 제품으로 바꾸지 않는다. 먼저 evidence와 명시적 결정을 남긴다.
-- 각 작업 시작 시 해당 작업이 네 개선 축 중 무엇을 직접 전진시키는지, 또는 그 축을 진행하기 위한 필수 선행조건인지 명시한다. 둘 다 아니면 기본 결정은 DEFER다.
-- test, verifier, workflow, evidence document 자체를 프로젝트 개선 결과로 취급하지 않는다. 그것들은 product/runtime/engineering claim을 뒷받침하는 수단이다.
+- inventory의 `UNKNOWN/TBD`를 확인된 요구사항이나 선택된 제품으로 바꾸지 않는다. 먼저 evidence와
+  명시적 결정을 남긴다.
+- 각 작업 시작 시 해당 작업이 네 개선 축 중 무엇을 직접 전진시키는지, 그리고 어떤 대표 case를
+  더 깊게 만드는지 명시한다. 둘 다 아니면 기본 결정은 DEFER다.
+- test, verifier, workflow, evidence document 자체를 프로젝트 개선 결과로 취급하지 않는다.
+  그것들은 product/runtime/engineering claim을 뒷받침하는 수단이다.
+
+### Interaction and execution boundary
+
+대화가 길어지거나 새 대화로 전환되어도 agent가 독자적으로 작업 범위를 넓히지 않도록 다음을 지킨다.
+
+- 하나의 응답에서 외부 CI/workflow 완료를 기다리며 장시간 반복 polling하지 않는다.
+- PR/CI가 아직 실행 중이면 필요한 상태를 한 번 확인하고, 완료되지 않았을 경우 현재 상태를 사용자에게
+  보고한 뒤 응답을 종료한다. 다음 사용자 입력에서 이어간다.
+- 실패가 발생하면 최초 실패 원인까지 확인할 수 있지만, 여러 차례 수정→CI→수정→CI를 사용자에게
+  알리지 않고 같은 응답에서 반복하지 않는다.
+- 예상하지 못한 다른 PR/commit이 `main`에 병합되면 즉시 작업을 멈추고 scope drift를 보고한다.
+- 사용자가 방향 재검토를 요구하면 새 기능 구현/merge보다 재감사와 decision 정리가 우선한다.
+
+## Case Decision Gate
+
+대표 문제 해결 case의 production/architecture 구현 전에 먼저 **decision brief**를 작성하고 사용자에게
+설명한다. 별도 장문 문서가 항상 필요한 것은 아니지만 다음 내용은 반드시 명시되어야 한다.
+
+1. **Operating scenario** — 실제 운영 서비스라면 어떤 상황을 보장해야 하는가?
+2. **Observed problem** — 현재 구현에서 무엇이 실제로 실패하거나 부족한가?
+3. **Impact** — 사용자, 데이터, 비용, 운영, 신뢰성/품질에 어떤 영향이 있는가?
+4. **Root mechanism hypothesis** — 단순 증상이 아니라 어떤 경계/메커니즘이 문제인가?
+5. **Alternatives** — 현상 유지 포함 최소 2개 이상의 현실적인 대안을 비교한다.
+6. **Decision criteria** — correctness/durability, failure semantics, operational complexity,
+   cloud portability, cost, implementation scope, portfolio explanation value를 필요에 맞게 비교한다.
+7. **Selected decision and rejection reasons** — 왜 선택했고 다른 대안을 왜 기각했는가?
+8. **Validation plan** — 같은 failure/quality scenario를 어떻게 재주입하고 before/after를 비교할 것인가?
+9. **Residual risk** — 선택 후에도 무엇이 해결되지 않는가?
+10. **User approval** — 위 판단 방향을 사용자가 승인하기 전에는 대표 case 구현을 시작하지 않는다.
+
+"프로젝트 규모가 작다", "새 기술이다", "기존 abstraction을 재사용할 수 있다"는 이유만으로 correctness나
+durability 요구를 낮추지 않는다. 작은 규모는 trade-off의 한 요소이지 요구사항을 자동으로 제거하는 근거가 아니다.
 
 ## New technology decision gate
 
-새 구조나 기술은 다음 질문에 **모두** `yes`라고 답하고 그 evidence를 남길 수 있을 때만 도입한다. 하나라도 충족하지 않으면 기본 결정은 **DEFER**다.
+새 구조나 기술은 유행이나 포트폴리오 장식 때문에 도입하지 않는다. 반대로 **DEFER 목록이라는 이유만으로
+필요한 기술을 회피하지도 않는다.**
+
+먼저 다음 기본 gate를 확인한다.
 
 1. 현재 구현에서 실제 문제가 관찰되었는가?
 2. 문제를 재현하거나 측정한 evidence가 있는가?
-3. proposed change가 그 문제를 직접 해결하는가?
+3. proposed change가 그 문제를 직접 해결하는 현실적인 대안인가?
 4. 동일 조건에서 개선을 재검증할 수 있는가?
 
-특히 다음 항목은 확정 기술이 아니며 별도의 evidence와 decision gate 없이 도입하지 않는다.
+문제가 아직 관찰되지 않았다면 기본 결정은 `DEFER`다. 그러나 문제가 실제로 확인되었고 아래 기술이
+직접적인 해결 후보라면 **Case Decision Gate의 alternatives에 포함해 공정하게 비교해야 한다.**
 
 - RabbitMQ
 - Transactional Outbox
@@ -90,7 +161,9 @@ target runtime을 한 번 구축하고 계속 확장·재사용하는 것**이�
 - Kafka
 - multi-agent architecture
 
-이 목록의 항목을 근거 없이 `NEW` 또는 `REPLACE`로 승격하지 않는다.
+예를 들어 durable asynchronous delivery 문제가 확인되었다면 RabbitMQ/DB-backed queue/outbox 등은
+"새 기술"이라는 이유로 제외할 수 없다. 반대로 broker를 넣었다는 사실만으로 개선이라고 주장할 수도 없다.
+최종 선택은 문제의 failure semantics와 운영 trade-off를 기준으로 한다.
 
 ## Frozen and reusable baseline
 

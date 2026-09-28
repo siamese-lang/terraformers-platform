@@ -1,0 +1,181 @@
+{
+  "recordVersion": "m3-live-baseline-summary-v1",
+  "sourceRunId": 36379633596,
+  "sourceRunAttempt": 1,
+  "sourceCommit": "8bb03ff6074246159d1007f572de454ed3a14df9",
+  "sourceWorkflow": "GCP Target Evaluation Baseline",
+  "sourceArtifact": {
+    "id": 10952207994,
+    "name": "m3-live-baseline-36379633596",
+    "sizeBytes": 7636,
+    "retentionDays": 90
+  },
+  "execution": {
+    "baselineExecutionStep": "SUCCESS",
+    "identityVerificationStep": "FAILED_AFTER_EXECUTION",
+    "identityVerificationFailure": "jq compile error caused by invalid $.configuration root reference",
+    "artifactUpload": "SUCCESS",
+    "ephemeralPodCleanup": "SUCCESS"
+  },
+  "schemaVersion": "m3-evaluation-v1",
+  "datasetVersion": "terraformers-eval-v1",
+  "evaluationRunId": "m3-baseline-36379633596-1",
+  "configuration": {
+    "corpusVersion": "terraformers-reference-v3",
+    "providerVersion": "5.100.0",
+    "analysisProvider": "vertex",
+    "embeddingProvider": "vertex",
+    "retrievalMode": "REQUIRED",
+    "topK": 8,
+    "generationModelId": "gemini-3.8-flash",
+    "embeddingModelId": "gemini-embedding-001",
+    "configurationFingerprint": "sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66"
+  },
+  "aggregate": {
+    "caseCount": 6,
+    "factExtractionPass": 4,
+    "factExtractionFail": 2,
+    "retrievalPass": 4,
+    "retrievalNotRun": 2,
+    "generationPass": 4,
+    "generationNotRun": 2,
+    "validationPass": 2,
+    "validationNotRun": 4,
+    "firstDivergenceCounts": {
+      "FACT_EXTRACTION:PROVIDER_RUNTIME": 2,
+      "none": 4
+    }
+  },
+  "cases": [
+    {
+      "caseId": "arch-vpc-three-tier",
+      "factExtraction": {
+        "status": "FAIL",
+        "latencyMs": 8545,
+        "failureCategory": "PROVIDER_RUNTIME",
+        "detail": "IllegalStateException"
+      },
+      "retrieval": {
+        "status": "NOT_RUN"
+      },
+      "generation": {
+        "status": "NOT_RUN"
+      },
+      "validation": {
+        "status": "NOT_RUN"
+      },
+      "firstDivergence": "FACT_EXTRACTION:PROVIDER_RUNTIME"
+    },
+    {
+      "caseId": "arch-cloudfront-private-alb",
+      "factExtraction": {
+        "status": "PASS",
+        "latencyMs": 6570
+      },
+      "retrieval": {
+        "status": "PASS",
+        "latencyMs": 1770,
+        "hitCount": 8
+      },
+      "generation": {
+        "status": "PASS",
+        "latencyMs": 17754,
+        "observedClassification": "ARCHITECTURE_DIAGRAM"
+      },
+      "validation": {
+        "status": "PASS",
+        "latencyMs": 1
+      },
+      "firstDivergence": null
+    },
+    {
+      "caseId": "arch-private-aoss",
+      "factExtraction": {
+        "status": "FAIL",
+        "latencyMs": 7188,
+        "failureCategory": "PROVIDER_RUNTIME",
+        "detail": "IllegalStateException"
+      },
+      "retrieval": {
+        "status": "NOT_RUN"
+      },
+      "generation": {
+        "status": "NOT_RUN"
+      },
+      "validation": {
+        "status": "NOT_RUN"
+      },
+      "firstDivergence": "FACT_EXTRACTION:PROVIDER_RUNTIME"
+    },
+    {
+      "caseId": "arch-s3-metadata-split",
+      "factExtraction": {
+        "status": "PASS",
+        "latencyMs": 5066
+      },
+      "retrieval": {
+        "status": "PASS",
+        "latencyMs": 1334,
+        "hitCount": 8
+      },
+      "generation": {
+        "status": "PASS",
+        "latencyMs": 17864,
+        "observedClassification": "ARCHITECTURE_DIAGRAM"
+      },
+      "validation": {
+        "status": "PASS",
+        "latencyMs": 0
+      },
+      "firstDivergence": null
+    },
+    {
+      "caseId": "ambiguous-cropped-service-sketch",
+      "factExtraction": {
+        "status": "PASS",
+        "latencyMs": 7704
+      },
+      "retrieval": {
+        "status": "PASS",
+        "latencyMs": 1275,
+        "hitCount": 8
+      },
+      "generation": {
+        "status": "PASS",
+        "latencyMs": 4657,
+        "observedClassification": "AMBIGUOUS"
+      },
+      "validation": {
+        "status": "NOT_RUN"
+      },
+      "firstDivergence": null
+    },
+    {
+      "caseId": "non-architecture-deployment-dashboard",
+      "factExtraction": {
+        "status": "PASS",
+        "latencyMs": 7178
+      },
+      "retrieval": {
+        "status": "PASS",
+        "latencyMs": 421,
+        "hitCount": 8
+      },
+      "generation": {
+        "status": "PASS",
+        "latencyMs": 5021,
+        "observedClassification": "NON_ARCHITECTURE_IMAGE"
+      },
+      "validation": {
+        "status": "NOT_RUN"
+      },
+      "firstDivergence": null
+    }
+  ],
+  "interpretationBoundary": [
+    "This file preserves the observed run-1 stage outcomes and latencies; it is not a tuned rerun.",
+    "The full machine-readable EvaluationRunResult remains in GitHub Actions artifact 10952207994.",
+    "The workflow failure occurred after the six-case execution completed and does not invalidate the baseline traces.",
+    "No prompt, corpus, model, ranking, validator, or dataset expectation was changed before capture."
+  ]
+}

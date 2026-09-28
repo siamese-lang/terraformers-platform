@@ -120,14 +120,6 @@ class AnalysisJobPartialSuccessBaselineTest {
         }
 
         @Bean
-        AnalysisRuntimeProperties analysisRuntimeProperties() {
-            AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-            properties.setResultBucketName("partial-success-result");
-            properties.setResultKeyPrefix("m5-partial-success");
-            return properties;
-        }
-
-        @Bean
         CapturingObjectWriter capturingObjectWriter() {
             return new CapturingObjectWriter();
         }
@@ -137,6 +129,8 @@ class AnalysisJobPartialSuccessBaselineTest {
                 CapturingObjectWriter writer,
                 AnalysisRuntimeProperties properties
         ) {
+            properties.setResultBucketName("partial-success-result");
+            properties.setResultKeyPrefix("m5-partial-success");
             return new AnalysisResultStorage(writer, properties);
         }
 

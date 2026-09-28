@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Authenticate only, run read-only preflight/runtime verification, create the reviewed foundation, or return the existing node pool to zero.
+        description: Authenticate only, run read-only preflight/runtime verification, create the reviewed foundation, activate the existing node pool to one, or return it to zero.
         required: true
         type: choice
         options:
@@ -12,13 +12,14 @@ on:
           - preflight
           - runtime-check
           - foundation
+          - activate
           - idle
       expected_sha:
         description: Exact trusted main commit SHA being approved.
         required: true
         type: string
       confirmation:
-        description: Use IDENTITY_CHECK, PREFLIGHT_ONLY, RUNTIME_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_12, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
+        description: Use IDENTITY_CHECK, PREFLIGHT_ONLY, RUNTIME_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_12, ACTIVATE_GCP_TARGET_ONE, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
         required: true
         type: string
 
@@ -84,6 +85,9 @@ jobs:
               ;;
             foundation)
               [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_FOUNDATION_12 ]] || exit 1
+              ;;
+            activate)
+              [[ "$CONFIRMATION" == ACTIVATE_GCP_TARGET_ONE ]] || exit 1
               ;;
             idle)
               [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_ZERO ]] || exit 1
@@ -382,6 +386,15 @@ jobs:
               [[ "$STATE_BUCKET" != *..* ]] || exit 1
               echo 'TF_VAR_node_count=1' >> "$GITHUB_ENV"
               ;;
+            activate)
+              [[ "$CONFIRMATION" == ACTIVATE_GCP_TARGET_ONE ]] || {
+                echo 'activate requires confirmation ACTIVATE_GCP_TARGET_ONE.' >&2
+                exit 1
+              }
+              [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
+              [[ "$STATE_BUCKET" != *..* ]] || exit 1
+              echo 'TF_VAR_node_count=1' >> "$GITHUB_ENV"
+              ;;
             idle)
               [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_ZERO ]] || {
                 echo 'idle requires confirmation SCALE_GCP_TARGET_TO_ZERO.' >&2
@@ -471,11 +484,11 @@ jobs:
             done
           else
             printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target' || {
-              echo 'Idle operation requires the canonical GKE cluster in remote state.' >&2
+              echo 'Runtime scale operation requires the canonical GKE cluster in remote state.' >&2
               exit 1
             }
             printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target' || {
-              echo 'Idle operation requires the canonical node pool in remote state.' >&2
+              echo 'Runtime scale operation requires the canonical node pool in remote state.' >&2
               exit 1
             }
           fi
@@ -534,7 +547,7 @@ jobs:
             ' "${RUNNER_TEMP}/gcp-target-runtime-state.json"
           )"
 
-          if [[ "$OPERATION" == foundation ]]; then
+          if [[ "$OPERATION" == foundation || "$OPERATION" == activate ]]; then
             expected_nodes=1
           else
             expected_nodes=0

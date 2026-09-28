@@ -175,6 +175,81 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "foundation")
 
+    def test_activate_accepts_only_zero_to_one_node_pool_update(self) -> None:
+        before = {
+            "name": "terraformers-target-primary",
+            "location": "asia-northeast3-a",
+            "node_count": 0,
+            "node_config": [node_config()],
+        }
+        after = dict(before)
+        after["node_count"] = 1
+        plan = {
+            "resource_changes": [
+                resource(
+                    "google_container_node_pool.target",
+                    "google_container_node_pool",
+                    ["update"],
+                    after,
+                    before,
+                )
+            ]
+        }
+        result = gate.validate_plan(plan, "activate")
+        self.assertEqual(result["resource_change_count"], 1)
+
+    def test_activate_rejects_transition_that_does_not_start_at_zero(self) -> None:
+        before = {
+            "name": "terraformers-target-primary",
+            "location": "asia-northeast3-a",
+            "node_count": 1,
+            "node_config": [node_config()],
+        }
+        after = dict(before)
+        plan = {
+            "resource_changes": [
+                resource(
+                    "google_container_node_pool.target",
+                    "google_container_node_pool",
+                    ["update"],
+                    after,
+                    before,
+                )
+            ]
+        }
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "activate")
+
+    def test_activate_rejects_other_managed_change(self) -> None:
+        before = {
+            "name": "terraformers-target-primary",
+            "location": "asia-northeast3-a",
+            "node_count": 0,
+            "node_config": [node_config()],
+        }
+        after = dict(before)
+        after["node_count"] = 1
+        plan = {
+            "resource_changes": [
+                resource(
+                    "google_container_node_pool.target",
+                    "google_container_node_pool",
+                    ["update"],
+                    after,
+                    before,
+                ),
+                resource(
+                    "google_compute_network.target",
+                    "google_compute_network",
+                    ["update"],
+                    {"name": "terraformers-target"},
+                    {"name": "terraformers-target"},
+                ),
+            ]
+        }
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "activate")
+
     def test_idle_accepts_only_one_to_zero_node_pool_update(self) -> None:
         before = {
             "name": "terraformers-target-primary",

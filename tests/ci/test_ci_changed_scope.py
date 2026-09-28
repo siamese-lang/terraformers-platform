@@ -91,6 +91,10 @@ class ChangedScopeTest(unittest.TestCase):
         flags = self.flags(".github/workflows/gcp-target-serving-path-smoke.yml")
         self.assertTrue(flags["terraform-static"]["terraform_static_verification"])
 
+    def test_gcp_evaluation_baseline_workflow_runs_terraform_static_verification(self):
+        flags = self.flags(".github/workflows/gcp-target-evaluation-baseline.yml")
+        self.assertTrue(flags["terraform-static"]["terraform_static_verification"])
+
     def test_gcp_delivery_gate_runs_terraform_static_verification(self):
         flags = self.flags("scripts/deploy/gcp_target_plan_gate.py")
         self.assertTrue(flags["terraform-static"]["terraform_static_verification"])

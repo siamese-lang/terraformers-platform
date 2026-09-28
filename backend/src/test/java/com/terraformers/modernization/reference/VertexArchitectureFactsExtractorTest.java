@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.genai.types.ThinkingLevel;
 import com.terraformers.modernization.analysis.vertex.VertexRuntimeProperties;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
@@ -13,6 +14,23 @@ import org.junit.jupiter.api.Test;
 class VertexArchitectureFactsExtractorTest {
 
     private static final String SECRET_PAYLOAD = "Bearer secret-token prompt-and-image-base64";
+
+    @Test
+    void usesLowThinkingWithinTheExistingFactTokenBound() {
+        VertexArchitectureFactsExtractor extractor = extractor((modelId, content, config) -> {
+            assertThat(config.maxOutputTokens()).contains(800);
+            assertThat(config.thinkingConfig()).isPresent();
+            assertThat(config.thinkingConfig().orElseThrow().thinkingLevel()).isPresent();
+            assertThat(config.thinkingConfig().orElseThrow().thinkingLevel().orElseThrow().knownEnum())
+                    .isEqualTo(ThinkingLevel.Known.LOW);
+            return response("""
+                    {"summary":"Three tier","components":["ALB","API"],
+                     "relationships":["ALB -> API"],"resourceTypes":["aws_lb"]}
+                    """);
+        });
+
+        extractor.extract(source());
+    }
 
     @Test
     void extractsSuccessfulFactsWithoutChangingTheirValues() {

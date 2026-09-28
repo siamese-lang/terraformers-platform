@@ -2,9 +2,9 @@
 
 ## Status
 
-**ACTIVE — OBSERVABILITY BASELINE / CORRELATION GAP FIRST**
+**PLANNED — BLOCKED ON M6 INTEGRATED RELIABILITY CASE REVIEW**
 
-M6 is complete. M7 does not start by installing a dashboard or tracing backend. It first proves what
+M6 implementation exists but final closure has been reopened for integrated case review. M7 is therefore not active yet. When unblocked, M7 does not start by installing a dashboard or tracing backend. It first proves what
 the current repository can and cannot explain about one real/injected failure, then adds only the
 signals needed for reproducible RCA.
 
@@ -79,7 +79,7 @@ condition without it.
 
 ## M7-1 — Current signal baseline
 
-**Status: TODO**
+**Status: PRELIMINARY EVIDENCE EXISTS (PR #86), BUT M7 IS NOT ACTIVE**
 
 Use one existing deterministic failure path to capture what current logs and metrics can explain
 without adding instrumentation.
@@ -183,5 +183,6 @@ validate the active Vertex/OpenSearch signal path.
 
 ## Immediate next single task
 
-Execute M7-1 using the existing M6-3 partial-success failure harness. Capture current emitted
-metrics/log correlation and identify the smallest missing signal before changing instrumentation.
+None until M6 integrated case review is complete. PR #86 already captured the current metrics/log
+surface for the M6-3 failure harness; retain that as supporting evidence for the same backend
+reliability case rather than using it to justify automatic progression into new observability work.

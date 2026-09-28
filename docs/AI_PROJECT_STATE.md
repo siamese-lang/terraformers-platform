@@ -14,11 +14,24 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 - Milestone: **M4 — AI Targeted Improvement**
 - Status: **ACTIVE**
-- Phase: M4-1 fact-extraction provider error evidence
+- Phase: M4-2 live root-cause reproduction preparation
 - Active plan: [M4 — AI Targeted Improvement](plans/active/M4-ai-targeted-improvement.md)
 - Completed M3 plan: [M3 — AI Evaluation Baseline](plans/active/M3-ai-evaluation-baseline.md)
 - Delivery prerequisite proposal: [M3 GCP Delivery Automation](plans/m3-gcp-delivery-automation.md)
-- Current implementation task: **M4-1 — Preserve root-cause evidence at Vertex fact extraction**
+- Completed M4-1 implementation: PR #69, merge commit `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`
+- Current implementation task: **add an existing-runtime `activate`/resume operation before M4-2 live reproduction**
+
+M4-1 is complete. PR #69 added provider-neutral fact-extraction failure subtypes, sanitized
+provider evidence, and deterministic offline coverage without adding retry/backoff or changing the
+prompt/model/dataset/corpus/retrieval/validator contract. The PR head was
+`81b6088e70cb6440fe6319271abdc22f80a4cebf`; all eight relevant pull-request workflows completed
+successfully before merge. The implementation was merged as
+`6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`.
+
+The target GKE node pool remains intentionally idle at Terraform `node_count=0`. Before M4-2, the
+repository-owned protected GCP apply workflow needs a resume operation that changes only
+`google_container_node_pool.target` from 0 to 1 using an exact saved plan; `foundation` must not
+be reused because it is restricted to an empty canonical runtime state.
 
 M0, M1, and M2 are complete. M3-1 defined the stage-provenance contract, M3-2 fixed the first
 repository-owned evaluation dataset, and M3-3 added one reusable runner. M3-R2 now has a corrected
@@ -248,9 +261,10 @@ Without new evidence, an ADR where needed, and the change gate, do not:
 
 Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this
 document, (4) read `MASTER_PLAN.md`, and (5) read the
-[active M3 plan](plans/active/M3-ai-evaluation-baseline.md). Follow its explicit dependency order:
-M3-R1 → M3-R2 → M3-R3 → resume M3-4. Do not create an evaluation-only cloud stack and do not
-absorb M4 improvement work into M3 baseline collection. Retain the
+[active M4 plan](plans/active/M4-ai-targeted-improvement.md). Follow the M4 evidence chain:
+M4-1 diagnostics → existing-runtime resume prerequisite → M4-2 bounded live reproduction → only
+then an evidence-justified M4-3 behavior change. Do not create a second cloud runtime and do not
+implement retry/backoff before M4-2 classifies the observed failure. Retain the
 [completed M2 plan](plans/active/M2-runtime-parity.md) and [completed M1 plan](plans/active/M1-cloud-decoupling.md)
 as historical milestone evidence.
 

@@ -131,10 +131,12 @@ preserves only `IllegalStateException`, which is not enough to identify the prov
 
 **Work.** Follow
 `baseline failure → root cause → minimal targeted change → same-dataset re-evaluation`.
-The first task preserves sanitized Vertex fact-extraction failure evidence without changing behavior.
-A retry/backoff change is conditional on live evidence proving a transient provider failure.
-LangGraph, LangChain, rerankers, judge-model expansion, prompt/model/corpus changes, and a persistent
-Python worker remain DEFER.
+M4-1 is complete: PR #69 preserved sanitized Vertex fact-extraction failure evidence without
+changing successful behavior. Before M4-2 live reproduction, the existing target runtime must be
+resumed from node count 0 to 1 through the repository-owned protected apply workflow. A retry/backoff
+change remains conditional on live evidence proving a transient provider failure. LangGraph,
+LangChain, rerankers, judge-model expansion, prompt/model/corpus changes, and a persistent Python
+worker remain DEFER.
 
 **Evidence.** Reuse M3 canonical baseline run `36379633596` and configuration fingerprint
 `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
@@ -145,8 +147,12 @@ and compare first-divergence count/category, latency, retries, and regressions.
 change is implemented, and the same-dataset/configuration comparison shows the failure reduced or
 controlled without regressing previously successful behavior.
 
-**Immediate next single task.** Implement **M4-1 — Preserve root-cause evidence at Vertex fact
-extraction** as a repository-only code/test change. Do not add retry behavior yet.
+**Immediate next single task.** Add an existing-runtime `activate`/resume operation to
+`.github/workflows/gcp-target-terraform-apply.yml`. It must require the canonical cluster/node pool
+to exist in remote state, set `TF_VAR_node_count=1`, allow exactly one
+`google_container_node_pool.target` update and no create/delete/replacement, apply the exact saved
+plan in protected `gcp-target-apply`, and reuse the existing OIDC/apply identity. Do not reuse
+`foundation` and do not add retry/backoff.
 
 ## M5 — Backend Reliability Baseline
 

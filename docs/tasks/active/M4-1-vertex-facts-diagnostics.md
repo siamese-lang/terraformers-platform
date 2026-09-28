@@ -1,6 +1,6 @@
 # M4-1 — Preserve root-cause evidence at Vertex fact extraction
 
-**Status: READY FOR STATIC IMPLEMENTATION — NO LIVE EXECUTION IN THIS TASK**
+**Status: COMPLETE — PR #69 merged as `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`**
 
 ## Execution authorization
 
@@ -182,3 +182,21 @@ Report:
 
 If GitHub authentication is unavailable, complete code/tests locally and report the commit/diff.
 Missing PR capability is not an implementation blocker.
+
+
+## Completion evidence
+
+- implementation PR: #69 — `Preserve Vertex fact-extraction root-cause diagnostics`;
+- base SHA: `d606766bb591390cac1b5286bf59055e0a6f27a5`;
+- implementation head SHA: `81b6088e70cb6440fe6319271abdc22f80a4cebf`;
+- merge commit: `6b6cd4bec6e0ecf78c8d9fb2d1f505201b6260a0`;
+- relevant pull-request workflows: all eight completed successfully;
+- provider failure remains first-divergence compatible with
+  `FACT_EXTRACTION / PROVIDER_RUNTIME`;
+- response truncation, empty response, invalid response, and empty facts are now distinguishable;
+- evaluation detail is bounded/sanitized and does not persist prompt/image/raw provider payloads;
+- no retry/backoff, timeout, prompt, token limit, model, dataset, corpus, retrieval, generation,
+  validator, Terraform, IAM, or workflow behavior was changed by M4-1.
+
+Immediate handoff: add a protected existing-runtime resume operation, then run M4-2 bounded live
+reproduction for `arch-vpc-three-tier` and `arch-private-aoss`.

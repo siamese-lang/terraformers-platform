@@ -14,6 +14,23 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
             update AnalysisJobEntity job
+               set job.status = :failed,
+                   job.failureReason = :failureReason,
+                   job.updatedAt = :reconciledAt
+             where job.status = :pending
+                or job.status = :running
+            """)
+    int failInterrupted(
+            @Param("pending") AnalysisJobStatus pending,
+            @Param("running") AnalysisJobStatus running,
+            @Param("failed") AnalysisJobStatus failed,
+            @Param("failureReason") String failureReason,
+            @Param("reconciledAt") Instant reconciledAt
+    );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update AnalysisJobEntity job
                set job.status = :running,
                    job.updatedAt = :claimedAt
              where job.id = :jobId

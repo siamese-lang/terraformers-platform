@@ -315,7 +315,7 @@ variables are explicit enough for M3-R2 implementation. No resource was created 
 
 ### M3-R2 — Single target AI/RAG runtime foundation
 
-**Status: IN PROGRESS — GKE FOUNDATION APPLIED AND VERIFIED / OPENSEARCH LIVE READINESS PENDING**
+**Status: DONE — SINGLE GKE/OPENSEARCH TARGET RUNTIME LIVE AND VERIFIED**
 
 **Problem / gap.** ADR-005 selected the target products, but the project still needed deployable
 provider adapters and reusable GCP/OpenSearch infrastructure before the same runtime could serve
@@ -358,32 +358,23 @@ The readiness review also found that an unspecified PVC StorageClass could silen
 default balanced disk. The target now explicitly enables the GCE PD CSI driver and binds the
 OpenSearch 15 GiB PVC to a repository-owned `pd-standard` StorageClass.
 
-**Remaining live boundary.** The protected foundation apply is complete. Workflow run
-`36365702742` applied the reviewed plan as **12 added, 0 changed, 0 destroyed** and created the
-target GKE cluster, node pool, network/subnet, node service account, required APIs, and reviewed IAM
-members. The run's final failure was post-apply verification only: deprecated GKE
-`Cluster.currentNodeCount` returned blank after resource creation had already completed.
+**Live completion evidence.** The protected foundation apply created the reviewed 12 Terraform
+resources, and read-only runtime-check run `36369764529` proved canonical state,
+cluster/node-pool readiness, `node_count=1`, and zero drift. The initial OpenSearch readiness run
+`36370511427` failed before mutation because the apply identity lacked Kubernetes-object
+permissions. After the separately approved least-privilege addition
+`roles/container.developer`, OpenSearch readiness run `36371424659` at
+`31785eb0f9f1afc83584412c1e1ad8c011fc3b74` succeeded.
 
-The repository replaced that deprecated proof with cluster/node-pool status, canonical Terraform
-state, and refresh-plan checks. Read-only runtime-check run `36369764529` at
-`d47c85526f2b2a290b394084cbb19e0356883a0c` then completed successfully. It verified the
-canonical 12 managed Terraform resources (excluding the expected `data.google_project.current`
-data source), cluster/node-pool readiness, Terraform `node_count=1`, and zero Terraform drift;
-the apply job was skipped.
-
-The remaining M3-R2 live work is deliberately narrower than the full target overlay: apply only the
-`terraformers-target` namespace, `terraformers-pd-standard` StorageClass, internal OpenSearch
-ClusterIP Service, and OpenSearch 3.8.0 StatefulSet/PVC. Do not deploy the backend yet and do not
-repeat the foundation Terraform apply. The new protected OpenSearch-readiness workflow is the
-single execution path for this proof.
-
-**Completion evidence.** Static reusable target code/IaC, live Vertex model/embedding readiness,
-and the applied/verified GKE foundation are present. M3-R2 remains incomplete only until the
-minimal in-cluster OpenSearch StatefulSet/PVC/API readiness proof succeeds on this same runtime.
+That successful run proved one Ready OpenSearch StatefulSet replica, a Bound 15 GiB PVC on the
+repository-owned `terraformers-pd-standard` StorageClass, an internal-only `ClusterIP` Service,
+OpenSearch version 3.8.0, and yellow/green API health. The full backend overlay was not deployed.
+Together with the prior successful Vertex generation/embedding probes, this satisfies the M3-R2
+minimum GKE/OpenSearch/Vertex live-readiness boundary on the single target runtime.
 
 ### M3-R3 — Corpus ingestion and serving-path smoke
 
-**Status: IN PROGRESS — static corpus contract complete; live ingestion/smoke pending**
+**Status: IN PROGRESS — static v3 + ingestion adapter complete; live ingestion/smoke pending**
 
 **Problem / gap.** A deployed runtime is not useful for RAG until the versioned corpus/index
 contract and application-facing retrieval/model path work together.
@@ -399,9 +390,12 @@ identity, the embedding model identity to `gemini-embedding-001`, and project-ow
 references that identify the new corpus. The existing 1024-dimensional FAISS/HNSW cosine mapping
 is retained. The repository-local task
 [`M3-R3b-gcp-target-corpus-ingestion.md`](../../tasks/active/M3-R3b-gcp-target-corpus-ingestion.md)
-defines the next non-live implementation boundary for Vertex retrieval-document embeddings and
-plain-HTTP OpenSearch ingestion. That static task may proceed in parallel with the remaining M3-R2
-OpenSearch readiness proof; live ingestion still waits for M3-R2 completion.
+defined the non-live implementation boundary for Vertex retrieval-document embeddings and
+plain-HTTP OpenSearch ingestion. PR #55 completed that adapter and its offline regression coverage.
+The live target runtime is now ready, so the protected `GCP Target Corpus Ingestion` workflow is
+the next execution boundary. It runs the adapter from an ephemeral pod using the existing
+`terraformers-backend` Workload Identity principal; it does not grant Vertex access to the GitHub
+apply identity or create another runtime.
 
 **Validation.** Prove a small serving-path smoke through the existing extraction/retrieval/generation
 boundaries, including retrieval metadata/provenance. This smoke establishes runtime readiness; it

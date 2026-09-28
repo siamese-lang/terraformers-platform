@@ -30,8 +30,8 @@
 | M2 — Runtime Parity | **COMPLETE** | Portable/current runtime에서 기존 핵심 사용자 흐름을 재현 | Reproducible startup/deployment, end-to-end smoke, persistence와 identity/config evidence |
 | M3 — AI Evaluation Baseline | **COMPLETE** | AI/RAG 변경 전 반복 가능한 품질 baseline 수립 | 동일 dataset/config로 재실행 가능한 stage-provenance baseline과 failure taxonomy |
 | M4 — AI Targeted Improvement | **COMPLETE** | M3에서 확인한 failure class만 최소 변경으로 개선 | 동일 조건 before/after comparison, trade-off 및 regression evidence |
-| M5 — Backend Reliability Baseline | **ACTIVE** | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
-| M6 — Backend Reliability Improvement | PLANNED | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
+| M5 — Backend Reliability Baseline | **COMPLETE** | 현재 `AnalysisJob` lifecycle의 실제 failure behavior 측정 | Reproducible scenarios, invariants, confirmed failure/non-failure report |
+| M6 — Backend Reliability Improvement | **ACTIVE** | M5에서 확인된 reliability 문제만 수정 | 동일 failure scenarios에서 해소 또는 통제됨을 보이는 evidence |
 | M7 — Observability | PLANNED | 실제 장애를 signal 간 연결로 RCA하고 recovery 확인 | 하나 이상의 실제 failure에 대한 metric/log/trace 기반 원인 및 recovery evidence |
 | M8 — Failure & Load Verification | PLANNED | AI, reliability, observability 결합 상태를 failure/load 조건에서 검증 | Reproducible scenario, telemetry, resulting state, recovery와 operator evidence |
 | M9 — GCP Runtime Closure | PLANNED | 앞선 milestone에서 사용한 동일 GCP target runtime의 delivery, rollback, teardown evidence 최종 정리 | Reused target IaC/runtime, immutable release, smoke, rollback, teardown evidence |
@@ -161,43 +161,59 @@ reliability mechanism.
 
 ## M5 — Backend Reliability Baseline
 
-**Status.** **ACTIVE.** The source-of-truth plan is
-[`active/M5-backend-reliability-baseline.md`](active/M5-backend-reliability-baseline.md).
+**Status.** **COMPLETE.** The completed plan is
+[`active/M5-backend-reliability-baseline.md`](active/M5-backend-reliability-baseline.md), and
+classification evidence is recorded in
+[`m5-backend-reliability-baseline.md`](../evaluation/m5-backend-reliability-baseline.md).
 
-**Problem.** The current `AnalysisJob` lifecycle persists `PENDING` work, schedules it through an
-in-process executor after commit, transitions to `RUNNING` in a separate transaction, writes the
-result object before final DB success registration, and has no currently identified stale-job
-reconciliation path. Which of these boundaries are actual reliability gaps has not yet been
-measured.
+**Problem.** The `AnalysisJob` lifecycle had unmeasured failure boundaries around in-process
+scheduling, restart, duplicate delivery, and object/DB partial success.
 
-**Work.** Measure restart/stranded `PENDING` and `RUNNING` behavior, same-job duplicate execution,
-the object-write/DB-finalization failure window, and executor pressure/rejection. Existing executor
-rejection coverage is reused before adding any new measurement. M5 classifies behavior only; it does
-not implement a reliability solution.
+**Work.** M5 reproduced the current behavior without implementing fixes. Restart tests proved
+persisted `PENDING`/`RUNNING` jobs remain stranded after process recreation. Duplicate-delivery
+tests proved an already-`SUCCEEDED` job can re-enter `RUNNING` and repeat provider/storage and
+generated-file registration attempts. Partial-success tests proved result object persistence can
+succeed before relational finalization fails, leaving a persistent object with no committed
+job/file reference. Existing executor rejection coverage was reused and classified as controlled
+because rejection already terminates the job as `FAILED`.
 
-**Evidence.** Use existing backend/MariaDB/local deterministic infrastructure first. Each candidate
-must record the reproduction, resulting state and side effects, and whether the observed behavior is
-a confirmed reliability gap, controlled behavior, not reproduced, or outside the current product
-contract.
+**Evidence.** PR #78 / merge `c58b2902556d30f4e85ff84b249a8dccfd83e207` covers restart-stranded
+states. PR #79 / merge `8e4c27c5b0c179ba7187e1e92af2698a7bb4b316` covers duplicate
+same-job delivery. PR #80 / merge `18503b656de090b6fc26b317908189b7090ecfc3` covers the
+object/DB partial-success window; final Backend Local Verification run `36395373207` passed.
 
-**Exit condition.** Restart, duplicate execution, partial-success consistency, and executor pressure
-are reproducibly classified; confirmed gaps have explicit violated invariants and user/system
-consequences that can gate M6. RabbitMQ, Transactional Outbox, locking, retry infrastructure, or
-another mechanism is not selected before this baseline exists.
+**Exit condition.** **MET.** Three confirmed reliability gaps and one controlled executor-rejection
+path are reproducibly classified. M6 receives explicit invariants without a preselected broker,
+outbox, distributed lock, retry infrastructure, or new cloud service.
 
-**Immediate next single task.** Execute M5-1: reproduce persisted `PENDING`/`RUNNING` jobs across
-a simulated process-restart boundary and observe whether the current application discovers,
-resumes, fails, or leaves them unchanged.
+**Immediate next single task.** Execute M6-1: enforce an atomic `PENDING → RUNNING` claim so a
+terminal or duplicate-delivered job cannot re-enter execution.
 
 ## M6 — Backend Reliability Improvement
 
-**Problem.** M5에서 확인된 failure가 business/runtime invariant를 위반한다.
+**Status.** **ACTIVE.** The source-of-truth plan is
+[`active/M6-backend-reliability-improvement.md`](active/M6-backend-reliability-improvement.md).
 
-**Work.** Evidence가 지시하는 최소 변경만 수행한다. Guarded state transition, idempotency, restart reconciliation, duplicate protection, recovery policy는 가능한 예일 뿐 선결정이 아니다. RabbitMQ나 Transactional Outbox는 M5 evidence가 필요성을 입증하고 ADR-004 gate를 통과할 때만 고려한다.
+**Problem.** M5 confirmed three concrete gaps: stranded non-terminal jobs after process restart,
+duplicate re-execution of the same job id, and untracked result-object residue after relational
+finalization failure.
 
-**Evidence.** 변경 전과 동일한 failure scenarios, regression suite, resulting state와 recovery behavior를 비교한다.
+**Work.** Apply the smallest evidence-backed controls in sequence. First, make the `PENDING →
+RUNNING` claim atomic and terminal states immutable. Second, reconcile stale non-terminal jobs on
+startup under the current single-replica runtime contract. Third, inspect existing storage
+capabilities and control partial-success residue through the smallest provider-neutral compensation
+or durable-accountability mechanism. Reuse M5 scenarios as before/after tests.
 
-**Exit condition.** 확인된 문제가 동일 scenario 재실행에서 해소되거나 명확하게 통제됨을 증명한다.
+**Evidence.** M6 must invert the M5 failure scenarios rather than replace them with unrelated tests.
+No RabbitMQ, Transactional Outbox, Kafka, Redis, distributed lock service, generic retry loop, or
+second worker is justified by the current evidence.
+
+**Exit condition.** One caller can claim a pending job, terminal jobs cannot re-enter execution,
+current single-replica restart does not leave M5 stranded states indefinitely, partial-success
+residue is removed or durably accountable, and existing successful/rejection behavior remains
+intact.
+
+**Immediate next single task.** M6-1 atomic claim / terminal-state guard only.
 
 ## M7 — Observability
 

@@ -10,6 +10,33 @@ The normal delivery path after this bootstrap is:
 
 Cloud Shell remains a recovery/raw-plan path rather than the normal apply path.
 
+
+## Preferred bootstrap path
+
+Use the repository-owned idempotent bootstrap script rather than replaying the IAM commands in this
+document by hand. The script verifies the active project/project number and canonical state bucket,
+creates the apply service account only when missing, adds only missing reviewed bindings, verifies
+the exact GitHub environment OIDC subject, and fails if Owner, Editor, Service Account Key Admin or
+Service Account Token Creator is bound directly to the apply identity.
+
+```bash
+cd ~/terraformers-platform
+git switch main
+git pull --ff-only
+
+bash scripts/deploy/bootstrap_gcp_target_apply.sh apply
+```
+
+Re-running the same command is safe: existing service-account and IAM bindings are detected and
+reused. The script does **not** run Terraform, create GKE/OpenSearch, or dispatch a GitHub workflow.
+
+The apply identity also receives `roles/browser` because the Google provider's project metadata
+read is part of plan/refresh; the first plan-only workflow already demonstrated this read
+dependency. The remaining roles are the mutation roles explained below.
+
+Use the detailed commands later in this runbook only as a recovery/audit reference if the script
+cannot be used.
+
 ## 1. GitHub environment
 
 Create a GitHub environment named **`gcp-target-apply`** before dispatching the apply workflow.

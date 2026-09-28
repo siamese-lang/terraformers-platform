@@ -88,6 +88,7 @@ class AnalysisJobPartialSuccessBaselineTest {
         assertThat(write.bucket()).isEqualTo("partial-success-result");
         assertThat(write.key()).endsWith("/" + jobId + "/main.tf");
         assertThat(write.content()).contains("resource \"aws_s3_bucket\" \"partial_success\"");
+        assertThat(write.content()).contains("bucket_prefix = \"partial-success-\"");
         assertThat(objectWriter.objects())
                 .containsEntry(write.bucket() + "/" + write.key(), write.content());
 

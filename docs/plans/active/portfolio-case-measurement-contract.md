@@ -284,9 +284,14 @@ Potential impact includes:
 
 For a successfully accepted analysis request:
 
-> application-process restart must not require the user to create a new job. The system must
-> automatically continue, reclaim, retry, or terminate the accepted job according to bounded,
-> durable semantics.
+> application-process restart by itself must not require the user to create a new job and must not
+> be treated as sufficient reason to mark the accepted job terminally failed. The system must
+> automatically resume, reclaim, or retry that same accepted job according to bounded, durable
+> semantics.
+
+A terminal `FAILED` state is permitted only when the actual processing failure is explicitly
+non-retryable or when the selected durable recovery/retry policy has been exhausted. Loss of
+previous-process ownership alone is not a final failure condition.
 
 Additional invariants:
 

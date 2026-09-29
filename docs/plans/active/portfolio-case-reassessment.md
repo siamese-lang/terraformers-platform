@@ -321,12 +321,24 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-After the READY Case A decision specification is reviewed and merged, seek separate user approval
-for the bounded **Case A retrieval-grounding measurement-readiness implementation**: deterministic
-coverage/rank scoring, multi-run aggregation, complete configuration provenance, an evaluation-only
-retrieval probe if required, a frozen holdout, and minimal existing-runtime experiment support. It
-must not change production retrieval semantics. Do not start it automatically or start Case C.
+After the A2 repeated-baseline closure is reviewed and merged, seek separate user approval for the
+bounded **A3 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream
+fact/query variability from retrieval/ranking behavior, must not preselect an alternative, and must
+not change production retrieval semantics. Do not start it automatically or start Case C.
 
 ## Case A A1 measurement-readiness checkpoint
 
 Case A remains **OPEN** around retrieval grounding / required-evidence coverage. A1 measurement readiness is **COMPLETE** with exact deterministic scoring, complete configuration provenance, per-run and multi-run reports, an evaluation-only fixed-facts probe, and frozen `terraformers-eval-holdout-v1`; see [Case A Retrieval-Grounding Measurement Readiness](../../evaluation/case-a-retrieval-grounding-measurement-readiness.md). This is measurement support, not a retrieval-quality improvement claim. Production retrieval change is **NOT AUTHORIZED / NOT PERFORMED**. The next candidate is **A2 — repeated current baseline, canonical N=3**, and requires separate user approval.
+
+
+## Case A A2 repeated current baseline checkpoint
+
+A2 is **COMPLETE** on source commit `96c6442026f6c57a30a9b248a8af115df1e7f2e4`; see
+[Case A A2 Repeated Current Baseline Evidence](../../evaluation/case-a-retrieval-grounding-a2-baseline.md).
+The VPC grounding gap reproduced `3 / 3` with production retrieval behavior **UNCHANGED**. Every VPC
+run had non-empty relevant resource filters, so the earlier filter-loss mechanism is insufficient to
+explain A2. Variable retrieval coverage/ranking and variable upstream fact/query wording remain to be
+isolated; root cause is **NOT YET SELECTED**, and vector ranking is not proven causal. The historical
+AOSS `130489 ms` latency outlier was **NOT reproduced in N=3**, so no latency/model/timeout/topology
+work is authorized. Case A remains **OPEN**. The next candidate is **A3 fixed-facts retrieval
+alternative comparison / decision**, requiring separate user approval.

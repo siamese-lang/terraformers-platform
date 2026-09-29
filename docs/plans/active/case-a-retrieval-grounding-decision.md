@@ -2,11 +2,12 @@
 
 ## Status
 
-**READY — PRIMARY PROBLEM SELECTED; MEASUREMENT READINESS NOT YET IMPLEMENTED**
+**A2 REPEATED CURRENT BASELINE COMPLETE — ROOT CAUSE NOT YET SELECTED**
 
-This documentation checkpoint advances the **AI/RAG evaluation and targeted improvement** axis and
-deepens Case A. It authorizes no production AI change, live experiment, holdout creation, or next
-stage. Case B remains portfolio-closed; Case A remains open.
+A1 measurement readiness and the A2 repeated current baseline are complete. The A2 evidence is
+recorded in [Case A A2 Repeated Current Baseline Evidence](../../evaluation/case-a-retrieval-grounding-a2-baseline.md).
+Production retrieval behavior remains unchanged, no retrieval alternative or root cause is selected,
+and Case A remains open. A3 requires separate user approval.
 
 ## Decision checkpoint
 
@@ -207,6 +208,25 @@ in rank, or was a one-run outcome. No retrieval fix precedes this baseline.
 Record AOSS fact-extraction latency in all three runs, report min/median/max, and preserve failures
 separately. Do not make a timeout/model/topology change from the historical `130489 ms` observation
 alone.
+
+## A2 repeated baseline checkpoint
+
+A2 is **COMPLETE** on source commit `96c6442026f6c57a30a9b248a8af115df1e7f2e4`. Three full
+canonical evaluations reproduced the VPC grounding gap `3 / 3` while fact extraction and retrieval
+each passed `18 / 18`, architecture validation passed `12 / 12`, negative controls were correct
+`6 / 6`, and first-divergence failures were `0`. Across 12 applicable positives there were `4 / 12`
+grounding gaps, all with valid output.
+
+All three VPC queries had non-empty resource filters containing `aws_vpc`, `aws_subnet`, `aws_lb`,
+`aws_security_group`, and `aws_db_instance`. The earlier CloudFormation-style/filter-loss mechanism
+is therefore insufficient to explain A2. Coverage/rank and upstream fact/query wording varied; vector
+ranking is not established as the root cause. The AOSS historical `130489 ms` fact-extraction outlier
+did not reproduce (`2832 / 3053 / 4443 ms` min/median/max). No latency/model/timeout/topology work is
+authorized.
+
+The next candidate is **A3 fixed-facts retrieval alternative comparison / decision** to isolate
+upstream variability from retrieval/ranking behavior. A3 is not started or authorized here and
+requires separate user approval.
 
 ## Retrieval scoring contract
 

@@ -3,6 +3,7 @@ package com.terraformers.modernization.analysis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -248,7 +249,8 @@ class AnalysisJobRepositoryTest {
         Instant firstUpdatedAt = repository.findById(first.getId()).orElseThrow().getUpdatedAt();
         Instant secondUpdatedAt = repository.findById(second.getId()).orElseThrow().getUpdatedAt();
         Instant deferredAt = (firstUpdatedAt.isAfter(secondUpdatedAt) ? firstUpdatedAt : secondUpdatedAt)
-                .plusSeconds(1);
+                .plusSeconds(1)
+                .truncatedTo(ChronoUnit.MILLIS);
         String selected = repository.findPendingCleanupJobIds(AnalysisJobStatus.FAILED,
                 AnalysisResultCleanupStatus.PENDING, PageRequest.of(0, 1)).get(0);
         AnalysisJobEntity selectedEntity = repository.findById(selected).orElseThrow();

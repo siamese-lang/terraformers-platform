@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE PLAN — B1/B2/B3/B4 COMPLETE, B5 SPECIFICATION READY, B5 EXECUTION NEXT**
+**COMPLETE — B1/B2/B3/B4/B5 COMPLETE, CASE B INTEGRATED CLOSURE PASS**
 
 This plan implements
 [ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md)
@@ -329,9 +329,11 @@ AnalysisJob-owned recovery mechanism is insufficient.
 
 ## Status
 
-**SPECIFICATION READY — EXECUTION / INTEGRATED CLOSURE NEXT**
+**COMPLETE — INTEGRATED CLOSURE PASS**
 
-B1/B2/B3/B4 are complete. B5 has not been executed, and Case B is not portfolio-closed.
+B1/B2/B3/B4/B5 are complete and Case B is portfolio-closed. The integrated evidence and exact
+execution provenance are recorded in
+[Case B Integrated Durable-Processing Closure](../../evaluation/case-b-integrated-closure.md).
 
 ## Goal
 
@@ -522,11 +524,11 @@ performance thresholds and is not a load test. Production-scale throughput and c
 belong to Case C, which later measures whether MariaDB polling, executor concurrency, database load,
 or external AI latency is the first runtime capacity bottleneck.
 
-## Minimum later execution shape
+## Executed validation shape
 
-1. **First choice — reuse:** rerun only the smallest relevant existing deterministic tests named in
-   the matrix, including the existing real-MariaDB contention smoke path, and assemble their state,
-   counter, timing, and signal observations.
+1. **Reuse applied:** the fresh full backend suite covered the named deterministic tests, and the
+   existing real-MariaDB contention smoke path supplied the required database evidence; current
+   source assertions define the row-specific state, counter, and controlled-time observations.
 2. **Second choice — exception:** only if execution proves a required invariant lacks a direct
    assertion, propose the smallest missing assertion or one narrowly scoped integration fixture in a
    separately bounded change.
@@ -539,13 +541,13 @@ retry, lease, polling, batch, result, cleanup, or ownership semantics before mea
 
 ## Closure artifact and decision
 
-The later B5 execution task, not this specification task, will create:
+The completed B5 execution is recorded in:
 
 ```text
 docs/evaluation/case-b-integrated-closure.md
 ```
 
-It must contain:
+It contains:
 
 1. before-state;
 2. accepted architecture and why;
@@ -558,13 +560,13 @@ It must contain:
 9. residual limitations;
 10. an explicit Case B closure decision.
 
-Case B closes only if every applicable matrix row has direct evidence, every hard gate passes, the
-measurements are reported without overstated SLO/scale claims, and residual risks are explicit. A
-successful test command alone is supporting evidence, not the closure decision.
+Every applicable matrix row has direct evidence, every hard gate passes, measurements are reported
+without overstated SLO/scale claims, and residual risks are explicit. The successful commands are
+supporting evidence rather than the closure decision by themselves.
 
 ## Residual limitations
 
-Even a passing B5 does **not** prove:
+The passing B5 does **not** prove:
 
 - exactly-once external provider invocation;
 - zero duplicate provider calls under every process-loss timing;
@@ -589,8 +591,5 @@ bounded correctness purpose.
 
 ## Current immediate next task
 
-Execute the approved bounded **Case B B5 integrated closure experiment** by reusing the smallest
-existing deterministic suite and producing `docs/evaluation/case-b-integrated-closure.md`.
-
-Do not execute B5 without the next explicit checkpoint; this specification task does not authorize
-automatic progression.
+Case B is complete. The next candidate is a separate user-approved **Case A decision/checkpoint**.
+Do not start Case A implementation or Case C automatically; this closure authorizes neither.

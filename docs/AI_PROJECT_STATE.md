@@ -463,3 +463,7 @@ Interpret this checkpoint through the [repository working contract](../AGENTS.md
 - [Completed M1 plan](plans/active/M1-cloud-decoupling.md)
 - [M1 closure verification](verification/m1-cloud-decoupling-closure.md)
 - [Active M0 plan](plans/active/M0-baseline-and-governance.md)
+
+## Case A A1 measurement-readiness checkpoint
+
+Case A's primary problem remains **retrieval grounding / required-evidence coverage**. A1 measurement readiness is **COMPLETE**; see [Case A Retrieval-Grounding Measurement Readiness](evaluation/case-a-retrieval-grounding-measurement-readiness.md). Production retrieval change is **NOT AUTHORIZED / NOT PERFORMED**, no live GCP evaluation was executed, and Case A remains **OPEN**. The next candidate is **A2 — repeated current baseline, canonical N=3**, requiring separate user approval.

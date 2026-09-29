@@ -23,6 +23,23 @@ class LiveEvaluationLauncherTest {
         assertThat(first.identity().analysisProvider()).isEqualTo("vertex");
         assertThat(first.identity().retrievalMode()).isEqualTo("REQUIRED");
         assertThat(first.identity().topK()).isEqualTo(8);
+        assertThat(first.identity().factExtractionThinkingLevel()).isEqualTo("LOW");
+        assertThat(first.identity().factExtractionMaxOutputTokens()).isEqualTo(800);
+        assertThat(first.identity().generationMaxOutputTokens()).isEqualTo(8192);
+        assertThat(first.fingerprint()).isEqualTo("sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66");
+    }
+
+    @Test
+    void readsHistoricalIdentityWithoutA1Provenance() throws Exception {
+        String json = """
+                {"corpusVersion":"v3","providerVersion":"5.100.0","analysisProvider":"vertex",
+                "embeddingProvider":"vertex","retrievalMode":"REQUIRED","topK":8,
+                "generationModelId":"generation","embeddingModelId":"embedding","configurationFingerprint":"legacy"}
+                """;
+        var identity = objectMapper.readValue(json, EvaluationTrace.ConfigurationIdentity.class);
+        assertThat(identity.factExtractionThinkingLevel()).isNull();
+        assertThat(identity.factExtractionMaxOutputTokens()).isNull();
+        assertThat(identity.generationMaxOutputTokens()).isNull();
     }
 
     @Test
@@ -91,7 +108,7 @@ class LiveEvaluationLauncherTest {
     private LiveEvaluationConfiguration configuration(String runId, Path dataset, Path output) {
         return new LiveEvaluationConfiguration(
                 dataset, output, runId, LiveEvaluationConfiguration.Mode.SINGLE, "arch-vpc-three-tier",
-                "test-project", "global", "vertex", "vertex", RetrievalMode.REQUIRED,
+                "terraformers-platform", "global", "vertex", "vertex", RetrievalMode.REQUIRED,
                 "gemini-3.8-flash", "gemini-embedding-001", "http://terraformers-opensearch:9200",
                 "terraformers-reference-v3", "embedding", "content", "terraformers-reference-v3",
                 "5.100.0", 1024, 8, 8192);

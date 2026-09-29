@@ -24,7 +24,8 @@ import org.springframework.stereotype.Component;
 @Lazy
 public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtractor {
 
-    private static final int MAX_FACT_TOKENS = 800;
+    public static final int MAX_FACT_TOKENS = 800;
+    public static final ThinkingLevel.Known FACT_EXTRACTION_THINKING_LEVEL = ThinkingLevel.Known.LOW;
     private static final String FACTS_PROMPT = """
             Return one compact JSON object only with keys summary, components, relationships, resourceTypes.
             Keep summary under 160 characters. Keep each array to at most 8 strings and each string under 60 characters.
@@ -66,7 +67,7 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
         GenerateContentConfig config = GenerateContentConfig.builder()
                 .temperature(0.0f)
                 .maxOutputTokens(MAX_FACT_TOKENS)
-                .thinkingConfig(ThinkingConfig.builder().thinkingLevel(ThinkingLevel.Known.LOW))
+                .thinkingConfig(ThinkingConfig.builder().thinkingLevel(FACT_EXTRACTION_THINKING_LEVEL))
                 .responseMimeType("application/json")
                 .responseJsonSchema(responseJsonSchema())
                 .build();

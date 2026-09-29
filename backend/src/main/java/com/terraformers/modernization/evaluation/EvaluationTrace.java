@@ -72,7 +72,10 @@ public record EvaluationTrace(
             Integer topK,
             String generationModelId,
             String embeddingModelId,
-            String configurationFingerprint
+            String configurationFingerprint,
+            String factExtractionThinkingLevel,
+            Integer factExtractionMaxOutputTokens,
+            Integer generationMaxOutputTokens
     ) {
         public ConfigurationIdentity {
             corpusVersion = normalize(corpusVersion);
@@ -86,6 +89,23 @@ public record EvaluationTrace(
             generationModelId = normalize(generationModelId);
             embeddingModelId = normalize(embeddingModelId);
             configurationFingerprint = requireText(configurationFingerprint, "configurationFingerprint");
+            factExtractionThinkingLevel = nullableText(factExtractionThinkingLevel);
+            if (factExtractionMaxOutputTokens != null && factExtractionMaxOutputTokens <= 0) {
+                throw new IllegalArgumentException("factExtractionMaxOutputTokens must be positive when set");
+            }
+            if (generationMaxOutputTokens != null && generationMaxOutputTokens <= 0) {
+                throw new IllegalArgumentException("generationMaxOutputTokens must be positive when set");
+            }
+        }
+
+        /** Retains source and JSON compatibility for pre-A1 M3/M4 identities. */
+        public ConfigurationIdentity(
+                String corpusVersion, String providerVersion, String analysisProvider,
+                String embeddingProvider, String retrievalMode, Integer topK,
+                String generationModelId, String embeddingModelId, String configurationFingerprint
+        ) {
+            this(corpusVersion, providerVersion, analysisProvider, embeddingProvider, retrievalMode, topK,
+                    generationModelId, embeddingModelId, configurationFingerprint, null, null, null);
         }
     }
 
@@ -331,6 +351,10 @@ public record EvaluationTrace(
 
     private static String normalize(String value) {
         return value == null ? "" : value.strip();
+    }
+
+    private static String nullableText(String value) {
+        return value == null ? null : requireText(value, "value");
     }
 
     private static List<String> immutable(List<String> values) {

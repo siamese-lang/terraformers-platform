@@ -1,0 +1,241 @@
+{
+  "schemaVersion": "m3-evaluation-v1",
+  "datasetVersion": "terraformers-eval-holdout-v1",
+  "description": "Frozen Case A holdout: two positive retrieval-grounding cases and two negative controls.",
+  "cases": [
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-holdout-v1",
+      "caseId": "holdout-eks-irsa",
+      "input": {
+        "path": "fixtures/holdout-01-eks-irsa.webp",
+        "sha256": "23bcd12096d0caaef53995077711a0ccb6dd2e9dc5a5a45db3664314ab3bd2ac",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "EKS Cluster",
+          "Managed Node Group",
+          "Application Pod",
+          "IAM Role"
+        ],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [
+          "EKS Cluster -> Managed Node Group",
+          "Managed Node Group -> Application Pod",
+          "Application Pod -> IAM Role through IRSA"
+        ],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_eks_cluster",
+          "aws_eks_node_group",
+          "aws_iam_role"
+        ],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION",
+          "PROJECT_DECISION"
+        ],
+        "requiredResourceTypes": [
+          "aws_eks_cluster",
+          "aws_eks_node_group",
+          "aws_iam_role"
+        ],
+        "requiredProjectDecisionIds": [
+          "tfref-v2-eks-irsa"
+        ],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_eks_cluster",
+            "aws_eks_node_group",
+            "aws_iam_role"
+          ],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Synthetic workload identity topology; static credentials are explicitly excluded."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-holdout-v1",
+      "caseId": "holdout-workload-rds-sg",
+      "input": {
+        "path": "fixtures/holdout-02-sg-rds.webp",
+        "sha256": "bf2b422a0e1ce3ad9d44adf70de9b05c5f72142b92aad5fe707fe36a81887cc1",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "Application Pod",
+          "App Security Group",
+          "DB Security Group",
+          "RDS Database"
+        ],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [
+          "Application Pod -> App Security Group",
+          "App Security Group -> DB Security Group",
+          "DB Security Group -> RDS Database"
+        ],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_security_group",
+          "aws_db_instance"
+        ],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION",
+          "PROJECT_DECISION"
+        ],
+        "requiredResourceTypes": [
+          "aws_security_group",
+          "aws_db_instance"
+        ],
+        "requiredProjectDecisionIds": [
+          "tfref-v2-sg-relations"
+        ],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_security_group",
+            "aws_db_instance"
+          ],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Synthetic relationship-sensitive source security-group topology."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-holdout-v1",
+      "caseId": "holdout-ambiguous-obscured-flow",
+      "input": {
+        "path": "fixtures/holdout-03-cropped-sketch.webp",
+        "sha256": "d183d6871da544352c4c00f45c3b9656592ab86120a6b016051f5ce52ffa1728",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "AMBIGUOUS",
+      "components": {
+        "required": [],
+        "acceptable": [
+          "Worker",
+          "Data"
+        ],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [],
+        "requiredResourceTypes": [],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": false,
+        "terraformResourceTypes": {
+          "required": [],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "NOT_APPLICABLE",
+      "notes": [
+        "Incomplete synthetic flow with an obscured center; no retrieval expectations."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-eval-holdout-v1",
+      "caseId": "holdout-non-architecture-status-board",
+      "input": {
+        "path": "fixtures/holdout-04-status-board.webp",
+        "sha256": "6ca06a5c186adc66b18626c1172877afb28f385d935d4d84bf038778277949a3",
+        "contentType": "image/webp"
+      },
+      "expectedClassification": "NON_ARCHITECTURE_IMAGE",
+      "components": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [],
+        "requiredResourceTypes": [],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": false,
+        "terraformResourceTypes": {
+          "required": [],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "NOT_APPLICABLE",
+      "notes": [
+        "Synthetic operational status board, not deployable topology."
+      ]
+    }
+  ]
+}

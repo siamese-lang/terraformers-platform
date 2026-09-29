@@ -326,3 +326,7 @@ for the bounded **Case A retrieval-grounding measurement-readiness implementatio
 coverage/rank scoring, multi-run aggregation, complete configuration provenance, an evaluation-only
 retrieval probe if required, a frozen holdout, and minimal existing-runtime experiment support. It
 must not change production retrieval semantics. Do not start it automatically or start Case C.
+
+## Case A A1 measurement-readiness checkpoint
+
+Case A remains **OPEN** around retrieval grounding / required-evidence coverage. A1 measurement readiness is **COMPLETE** with exact deterministic scoring, complete configuration provenance, per-run and multi-run reports, an evaluation-only fixed-facts probe, and frozen `terraformers-eval-holdout-v1`; see [Case A Retrieval-Grounding Measurement Readiness](../../evaluation/case-a-retrieval-grounding-measurement-readiness.md). This is measurement support, not a retrieval-quality improvement claim. Production retrieval change is **NOT AUTHORIZED / NOT PERFORMED**. The next candidate is **A2 — repeated current baseline, canonical N=3**, and requires separate user approval.

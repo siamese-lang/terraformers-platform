@@ -1,6 +1,7 @@
 package com.terraformers.modernization.evaluation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +13,7 @@ import com.terraformers.modernization.reference.RetrievalQueryTextBuilder;
 import com.terraformers.modernization.reference.opensearch.OpenSearchKnnQueryBuilder;
 import com.terraformers.modernization.reference.opensearch.OpenSearchResponseParser;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,6 +62,63 @@ class CaseAAlternativeProbeTest {
                 .contains("\"resourceTypes\"").contains("aws_vpc");
         assertThat(unfiltered.at("/query/knn/embedding/filter").toString())
                 .doesNotContain("\"resourceTypes\"");
+    }
+
+    @Test
+    void embeddingRequestsAreGloballyPacedWithoutAnInitialDelay() throws Exception {
+        long interval = Duration.ofSeconds(13).toNanos();
+        long[] now = {0};
+        List<Long> requestStarts = new ArrayList<>();
+        List<String> requests = new ArrayList<>();
+        AtomicInteger embeddingCalls = new AtomicInteger();
+        var pacer = CaseAAlternativeProbeRunner.EmbeddingRequestPacer.testing(Duration.ofSeconds(13),
+                () -> now[0], nanos -> now[0] += nanos);
+        EvaluationCase definition = positiveCase("case", List.of(), List.of());
+        CaseAAlternativeProbeRunner runner = new CaseAAlternativeProbeRunner(text -> {
+            requestStarts.add(now[0]);
+            float marker = embeddingCalls.incrementAndGet();
+            return java.util.Collections.nCopies(1024, marker);
+        }, new OpenSearchKnnQueryBuilder(mapper),
+                (uri, body) -> { requests.add(body); return "{\"hits\":{\"hits\":[]}}"; },
+                new OpenSearchResponseParser(mapper), properties(), new RetrievalQueryTextBuilder(),
+                List.of(definition), pacer);
+
+        runner.run(fixture("case", new ArchitectureRetrievalFacts("summary", List.of("component"),
+                List.of("relationship"), List.of("aws_vpc"))), "a".repeat(40), "model");
+
+        assertThat(embeddingCalls).hasValue(12);
+        assertThat(requestStarts).hasSize(12);
+        assertThat(requestStarts.get(0)).isZero();
+        assertThat(java.util.stream.IntStream.range(1, requestStarts.size())
+                .mapToLong(i -> requestStarts.get(i) - requestStarts.get(i - 1)))
+                .allMatch(elapsed -> elapsed >= interval).isTrue();
+        assertThat(requestStarts.get(2) - requestStarts.get(1)).isEqualTo(interval);
+
+        for (int snapshot = 0; snapshot < 6; snapshot++) {
+            JsonNode currentControl = mapper.readTree(requests.get(snapshot * 4));
+            JsonNode currentWide = mapper.readTree(requests.get(snapshot * 4 + 1));
+            JsonNode currentUnfiltered = mapper.readTree(requests.get(snapshot * 4 + 2));
+            JsonNode relationship = mapper.readTree(requests.get(snapshot * 4 + 3));
+            JsonNode currentVector = currentControl.at("/query/knn/embedding/vector");
+            assertThat(currentVector).isEqualTo(currentWide.at("/query/knn/embedding/vector"));
+            assertThat(currentVector).isEqualTo(currentUnfiltered.at("/query/knn/embedding/vector"));
+            assertThat(currentVector).isNotEqualTo(relationship.at("/query/knn/embedding/vector"));
+        }
+    }
+
+    @Test
+    void interruptedPacingRestoresInterruptAndFailsClearly() {
+        long[] now = {0};
+        var pacer = CaseAAlternativeProbeRunner.EmbeddingRequestPacer.testing(Duration.ofSeconds(13),
+                () -> now[0], nanos -> { throw new InterruptedException("stop"); });
+        pacer.awaitRequestStart();
+
+        assertThatThrownBy(pacer::awaitRequestStart)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("interrupted while pacing A3 embedding requests")
+                .hasCauseInstanceOf(InterruptedException.class);
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        Thread.interrupted();
     }
 
     @Test

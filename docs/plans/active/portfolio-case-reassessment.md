@@ -321,8 +321,8 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-After the A3 probe-readiness change is reviewed and merged, seek separate user approval for one
-protected **A3 fixed-facts retrieval alternative comparison**. It must isolate upstream
+After the A3 evaluation-only pacing correction is reviewed and merged, seek separate user approval
+for one protected **A3 fixed-facts retrieval alternative comparison rerun**. It must isolate upstream
 fact/query variability from retrieval/ranking behavior, must not preselect an alternative, and must
 not change production retrieval semantics. Do not start it automatically or start Case C.
 
@@ -347,6 +347,9 @@ alternative comparison / decision**, requiring separate user approval.
 
 A3 probe readiness is **COMPLETE**; see
 [Case A A3 Fixed-Facts Retrieval Probe Readiness](../../evaluation/case-a-a3-retrieval-probe-readiness.md).
-The live comparison is **NOT RUN**, no retrieval alternative is selected, production retrieval is
-**UNCHANGED**, and Case A remains **OPEN**. The next single task after review and merge is one
-separately approved protected A3 live probe run; A4 is not authorized.
+Protected run `36592590562` aborted before comparison on Vertex embedding `429 RESOURCE_EXHAUSTED`
+under the applied 5 requests/minute `gemini-embedding` quota, and no machine-readable comparison
+artifact was produced. Evaluation-only 13-second pacing is implemented, but the live comparison is
+**INCOMPLETE**. No retrieval alternative is selected, production retrieval is **UNCHANGED**, and
+Case A remains **OPEN**. The next single task after review and merge is one separately approved
+protected A3 live probe rerun; A4 is not authorized.

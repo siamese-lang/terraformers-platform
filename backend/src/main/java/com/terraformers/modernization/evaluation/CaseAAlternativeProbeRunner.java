@@ -19,6 +19,7 @@ import com.terraformers.modernization.reference.opensearch.OpenSearchResponsePar
 import com.terraformers.modernization.reference.opensearch.OpenSearchTransport;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HexFormat;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.LongSupplier;
 
 /** Evaluation-only implementation of the six frozen A3 strategies. */
 public final class CaseAAlternativeProbeRunner {
@@ -41,13 +43,22 @@ public final class CaseAAlternativeProbeRunner {
     private final AnalysisRuntimeProperties properties;
     private final RetrievalQueryTextBuilder textBuilder;
     private final Map<String, EvaluationCase> cases;
+    private final EmbeddingRequestPacer embeddingPacer;
 
     public CaseAAlternativeProbeRunner(EmbeddingProvider embeddings, OpenSearchKnnQueryBuilder queryBuilder,
             OpenSearchTransport transport, OpenSearchResponseParser responseParser, AnalysisRuntimeProperties properties,
             RetrievalQueryTextBuilder textBuilder, List<EvaluationCase> cases) {
+        this(embeddings, queryBuilder, transport, responseParser, properties, textBuilder, cases,
+                EmbeddingRequestPacer.unpaced());
+    }
+
+    CaseAAlternativeProbeRunner(EmbeddingProvider embeddings, OpenSearchKnnQueryBuilder queryBuilder,
+            OpenSearchTransport transport, OpenSearchResponseParser responseParser, AnalysisRuntimeProperties properties,
+            RetrievalQueryTextBuilder textBuilder, List<EvaluationCase> cases, EmbeddingRequestPacer embeddingPacer) {
         this.embeddings = embeddings; this.queryBuilder = queryBuilder; this.transport = transport;
         this.responseParser = responseParser; this.properties = properties; this.textBuilder = textBuilder;
         this.cases = cases.stream().collect(java.util.stream.Collectors.toUnmodifiableMap(EvaluationCase::caseId, c -> c));
+        this.embeddingPacer = embeddingPacer;
     }
 
     public CaseAAlternativeProbeReport run(CaseAAlternativeProbeFixture fixture, String sourceCommit,
@@ -151,6 +162,7 @@ public final class CaseAAlternativeProbeRunner {
     }
 
     private List<Float> checkedEmbedding(String text) {
+        embeddingPacer.awaitRequestStart();
         List<Float> vector = embeddings.embed(text);
         if (vector.size() != properties.getExpectedVectorDimension()) {
             throw new IllegalStateException("embedding dimension mismatch: " + vector.size());
@@ -193,4 +205,54 @@ public final class CaseAAlternativeProbeRunner {
     private static List<Hit> hits(List<ReferenceDocument> documents) { return java.util.stream.IntStream.range(0, documents.size()).mapToObj(i -> { ReferenceDocument d=documents.get(i); return new Hit(i+1,d.id(),d.score(),d.authority(),d.priority(),d.resourceTypes(),d.riskTags(),d.content().length()); }).toList(); }
     private static Coverage coverage(List<String> required, List<ReferenceDocument> documents, BiPredicate<String, ReferenceDocument> predicate) { Map<String,Integer> ranks=new LinkedHashMap<>(); for(String item:required) java.util.stream.IntStream.range(0,documents.size()).filter(i->predicate.test(item,documents.get(i))).findFirst().ifPresent(i->ranks.put(item,i+1)); List<String> missing=required.stream().filter(v->!ranks.containsKey(v)).toList(); return new Coverage(ranks.size(),required.size(),required.isEmpty()?null:(double)ranks.size()/required.size(),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(ranks)),missing); }
     record Search(List<ReferenceDocument> documents, long latencyMs) { Search { documents=List.copyOf(documents); } }
+
+    static final class EmbeddingRequestPacer {
+        private final long minimumIntervalNanos;
+        private final LongSupplier nanoTime;
+        private final Sleeper sleeper;
+        private Long previousRequestStart;
+
+        private EmbeddingRequestPacer(Duration minimumInterval, LongSupplier nanoTime, Sleeper sleeper) {
+            this.minimumIntervalNanos = minimumInterval.toNanos();
+            this.nanoTime = nanoTime;
+            this.sleeper = sleeper;
+        }
+
+        static EmbeddingRequestPacer paced(Duration minimumInterval) {
+            return new EmbeddingRequestPacer(minimumInterval, System::nanoTime, nanos -> {
+                long millis = nanos / 1_000_000;
+                int remainderNanos = (int) (nanos % 1_000_000);
+                Thread.sleep(millis, remainderNanos);
+            });
+        }
+
+        static EmbeddingRequestPacer unpaced() {
+            return new EmbeddingRequestPacer(Duration.ZERO, System::nanoTime, nanos -> { });
+        }
+
+        static EmbeddingRequestPacer testing(Duration minimumInterval, LongSupplier nanoTime, Sleeper sleeper) {
+            return new EmbeddingRequestPacer(minimumInterval, nanoTime, sleeper);
+        }
+
+        void awaitRequestStart() {
+            if (previousRequestStart != null) {
+                long deadline = previousRequestStart + minimumIntervalNanos;
+                long remaining;
+                while ((remaining = deadline - nanoTime.getAsLong()) > 0) {
+                    try {
+                        sleeper.sleep(remaining);
+                    } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
+                        throw new IllegalStateException("interrupted while pacing A3 embedding requests", exception);
+                    }
+                }
+            }
+            previousRequestStart = nanoTime.getAsLong();
+        }
+    }
+
+    @FunctionalInterface
+    interface Sleeper {
+        void sleep(long nanos) throws InterruptedException;
+    }
 }

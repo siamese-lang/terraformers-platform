@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       evaluation_scope:
-        description: Run the unchanged M3 full baseline or one bounded M4-2 affected-case reproduction.
+        description: Run M3, one M4-2 reproduction, or one Case A canonical baseline.
         required: true
         type: choice
         default: m3-full-baseline
@@ -16,8 +16,9 @@ on:
           - m3-full-baseline
           - m4-arch-vpc-three-tier
           - m4-arch-private-aoss
+          - case-a-full-baseline
       confirmation:
-        description: Use RUN_M3_4_BASELINE for the full baseline or RUN_M4_2_REPRODUCTION for an M4 affected case.
+        description: Use the scope-specific explicit confirmation token.
         required: true
         type: string
 
@@ -87,6 +88,12 @@ jobs:
                 exit 1
               }
               echo 'M4_CASE_ID=arch-private-aoss' >> "$GITHUB_ENV"
+              ;;
+            case-a-full-baseline)
+              [[ "$CONFIRMATION" == RUN_CASE_A_BASELINE ]] || {
+                echo 'Case A baseline requires confirmation RUN_CASE_A_BASELINE.' >&2
+                exit 1
+              }
               ;;
             *)
               echo "Unsupported evaluation scope: $EVALUATION_SCOPE" >&2
@@ -332,7 +339,7 @@ jobs:
           retention-days: 90
 
       - name: Run one bounded M4-2 affected-case reproduction
-        if: inputs.evaluation_scope != 'm3-full-baseline'
+        if: startsWith(inputs.evaluation_scope, 'm4-')
         run: |
           set -euo pipefail
           [[ "$M4_CASE_ID" == arch-vpc-three-tier || "$M4_CASE_ID" == arch-private-aoss ]]
@@ -343,7 +350,7 @@ jobs:
           kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" --             cat /tmp/m4-live-reproduction.json             > "${RUNNER_TEMP}/m4-live-reproduction.json"
 
       - name: Verify M4-2 identity and preserve diagnostic outcome
-        if: inputs.evaluation_scope != 'm3-full-baseline'
+        if: startsWith(inputs.evaluation_scope, 'm4-')
         run: |
           set -euo pipefail
           result="${RUNNER_TEMP}/m4-live-reproduction.json"
@@ -393,11 +400,80 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload M4-2 machine-readable reproduction
-        if: always() && inputs.evaluation_scope != 'm3-full-baseline'
+        if: always() && startsWith(inputs.evaluation_scope, 'm4-')
         uses: actions/upload-artifact@v4
         with:
           name: m4-r2-reproduction-${{ github.run_id }}
           path: ${{ runner.temp }}/m4-live-reproduction.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Run one Case A canonical baseline and deterministic scoring
+        if: inputs.evaluation_scope == 'case-a-full-baseline'
+        run: |
+          set -euo pipefail
+          run_id="case-a-baseline-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- env \
+            EVALUATION_DATASET=/tmp/workspace/evaluation/terraformers-eval-v1/dataset.json \
+            EVALUATION_OUTPUT=/tmp/case-a-baseline.json EVALUATION_RUN_ID="$run_id" EVALUATION_MODE=full \
+            GOOGLE_CLOUD_PROJECT=terraformers-platform GOOGLE_CLOUD_LOCATION=global \
+            ANALYSIS_PROVIDER=vertex EMBEDDING_PROVIDER=vertex RETRIEVAL_MODE=REQUIRED \
+            VERTEX_GENERATION_MODEL_ID=gemini-3.8-flash VERTEX_EMBEDDING_MODEL_ID=gemini-embedding-001 \
+            OPENSEARCH_ENDPOINT="http://${OPENSEARCH_SERVICE}:9200" INDEX_NAME=terraformers-reference-v3 \
+            VECTOR_FIELD_NAME=embedding CONTENT_FIELD_NAME=content CORPUS_VERSION=terraformers-reference-v3 \
+            PROVIDER_VERSION=5.100.0 EXPECTED_VECTOR_DIMENSION=1024 OPENSEARCH_TOP_K=8 \
+            VERTEX_MAX_OUTPUT_TOKENS=8192 java -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+            com.terraformers.modernization.evaluation.LiveEvaluationLauncher
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+            -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+            com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+            --mode=report --result=/tmp/case-a-baseline.json \
+            --dataset=/tmp/workspace/evaluation/terraformers-eval-v1/dataset.json \
+            --output=/tmp/case-a-grounding-report.json
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat /tmp/case-a-baseline.json > "${RUNNER_TEMP}/case-a-baseline.json"
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat /tmp/case-a-grounding-report.json > "${RUNNER_TEMP}/case-a-grounding-report.json"
+
+      - name: Verify Case A identity and report
+        if: inputs.evaluation_scope == 'case-a-full-baseline'
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/case-a-baseline.json"
+          report="${RUNNER_TEMP}/case-a-grounding-report.json"
+          jq -e '
+            .datasetVersion == "terraformers-eval-v1" and (.traces | length == 6)
+            and .configuration.corpusVersion == "terraformers-reference-v3"
+            and .configuration.providerVersion == "5.100.0"
+            and .configuration.analysisProvider == "vertex"
+            and .configuration.embeddingProvider == "vertex"
+            and .configuration.retrievalMode == "REQUIRED"
+            and .configuration.topK == 8
+            and .configuration.generationModelId == "gemini-3.8-flash"
+            and .configuration.embeddingModelId == "gemini-embedding-001"
+            and .configuration.factExtractionThinkingLevel == "LOW"
+            and .configuration.factExtractionMaxOutputTokens == 800
+            and .configuration.generationMaxOutputTokens == 8192
+          ' "$raw" >/dev/null
+          jq -e --arg run_id "$(jq -r .runId "$raw")" '
+            .reportSchemaVersion == "case-a-retrieval-grounding-report-v1"
+            and .sourceRunId == $run_id and .datasetVersion == "terraformers-eval-v1"
+            and .caseCount == 6 and (.cases | length == 6)
+          ' "$report" >/dev/null
+
+      - name: Upload Case A raw artifact
+        if: always() && inputs.evaluation_scope == 'case-a-full-baseline'
+        uses: actions/upload-artifact@v4
+        with:
+          name: case-a-baseline-${{ github.run_id }}
+          path: ${{ runner.temp }}/case-a-baseline.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Upload Case A grounding report artifact
+        if: always() && inputs.evaluation_scope == 'case-a-full-baseline'
+        uses: actions/upload-artifact@v4
+        with:
+          name: case-a-grounding-report-${{ github.run_id }}
+          path: ${{ runner.temp }}/case-a-grounding-report.json
           if-no-files-found: warn
           retention-days: 90
 

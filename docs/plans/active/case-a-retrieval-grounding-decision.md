@@ -388,3 +388,9 @@ After this specification is reviewed and merged, seek separate user approval for
 7. minimal Case A execution support using the existing target runtime/workflow pattern.
 
 It must not change production retrieval semantics. Do not implement A1 from this specification.
+
+## A1 measurement-readiness checkpoint
+
+A1 is **COMPLETE** as documented in [Case A Retrieval-Grounding Measurement Readiness](../../evaluation/case-a-retrieval-grounding-measurement-readiness.md). The primary problem remains retrieval grounding / required-evidence coverage. Deterministic exact-match scoring, explicit `LOW`/`800`/`8192` provenance, per-run reporting, compatible multi-run aggregation, a fixed-facts evaluation-only probe, and frozen `terraformers-eval-holdout-v1` now make the problem comparable.
+
+No production retrieval change was authorized or performed, no live GCP evaluation ran, and Case A remains **OPEN**. The next candidate is **A2 — repeated current baseline, canonical N=3**, which requires separate user approval.

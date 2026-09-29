@@ -2,6 +2,7 @@ package com.terraformers.modernization.evaluation;
 
 import com.terraformers.modernization.evaluation.EvaluationTrace.ConfigurationIdentity;
 import com.terraformers.modernization.reference.RetrievalMode;
+import com.terraformers.modernization.reference.VertexArchitectureFactsExtractor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -79,7 +80,9 @@ public record LiveEvaluationConfiguration(
     public ConfigurationIdentity identity() {
         return new ConfigurationIdentity(
                 corpusVersion, providerVersion, analysisProvider, embeddingProvider,
-                retrievalMode.name(), topK, generationModelId, embeddingModelId, fingerprint());
+                retrievalMode.name(), topK, generationModelId, embeddingModelId, fingerprint(),
+                VertexArchitectureFactsExtractor.FACT_EXTRACTION_THINKING_LEVEL.name(),
+                VertexArchitectureFactsExtractor.MAX_FACT_TOKENS, maxOutputTokens);
     }
 
     /** Hashes only effective runtime behavior, never run IDs or filesystem paths. */

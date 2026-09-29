@@ -56,8 +56,10 @@ class CaseAAlternativeProbeTest {
         assertThat(control.at("/query/knn/embedding/vector")).isEqualTo(wide.at("/query/knn/embedding/vector"));
         assertThat(wide.at("/query/knn/embedding/vector")).isEqualTo(unfiltered.at("/query/knn/embedding/vector"));
         assertThat(control.at("/size").asInt()).isEqualTo(8);
-        assertThat(control.toString()).contains("aws_vpc");
-        assertThat(unfiltered.toString()).doesNotContain("resourceTypes");
+        assertThat(control.at("/query/knn/embedding/filter").toString())
+                .contains("\"resourceTypes\"").contains("aws_vpc");
+        assertThat(unfiltered.at("/query/knn/embedding/filter").toString())
+                .doesNotContain("\"resourceTypes\"");
     }
 
     @Test

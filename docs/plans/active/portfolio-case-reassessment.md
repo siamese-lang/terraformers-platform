@@ -247,24 +247,8 @@ retry-scheduling threshold, although reclaim increments the shared counter and c
 timeout-retry headroom. Deterministic evidence demonstrates timeout → retry → timeout → retry →
 timeout → `FAILED` without a fourth timeout-scheduled execution, as well as rejection of retry
 mutation from a stale generation. Explicit semantic provider failures and storage/finalization
-failures remain terminal. B4 subsequently closed result identity and durable cleanup accountability;
-Case B remains open for B5 integrated closure.
-
-## Case B B4 implementation checkpoint
-
-B4 is complete and recorded in
-[Case B B4 Result Idempotency and Durable Cleanup Accountability Evidence](../../evaluation/case-b-b4-result-idempotency-cleanup.md).
-
-PR #103 final head `99334b59334f87406f37fcc16137af344cd27c25` merged as
-`90c47cb9c0fcdbe75258ed2ac4613cb1625a5463`. B4 replaces time-derived result keys with deterministic
-project/job canonical identity and freezes the exact bucket/key as durable intent before external
-persistence. Canonical writes and immediate compensation now occur under the current generation's
-owned row lock, so a stale owner cannot write/finalize or later delete a newer winner's canonical
-object. Failed compensation retains exact `PENDING` accountability, while bounded in-process cleanup
-recovery removes attributable residue. Accountable removal failures advance `updated_at`, allowing
-later bounded candidates to progress without claiming generic global database fairness.
-
-Case B is not portfolio-closed because B5 integrated closure remains.
+failures remain terminal. B4 result identity and durable cleanup accountability remain unresolved,
+and Case B is not portfolio-closed.
 
 ## Observability and failure/load work
 
@@ -301,6 +285,12 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-Prepare the bounded **Case B B5 integrated closure experiment specification**.
+Prepare the bounded **Case B B4 result idempotency and durable cleanup accountability implementation
+specification** from
+[ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md),
+[Case B Durable Processing — Bounded Implementation Plan](case-b-durable-processing-implementation.md),
+and
+[Case B B3 Selective Bounded Retry Evidence](../../evaluation/case-b-b3-selective-bounded-retry.md).
 
-Do not implement or execute B5 in this documentation-only B4 closure.
+Do not implement B4 as part of this source-of-truth closure or combine it with B5 integrated
+closure.

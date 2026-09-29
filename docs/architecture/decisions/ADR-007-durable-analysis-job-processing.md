@@ -215,31 +215,33 @@ The current result-storage shape remains valid:
 
 No message broker is required for result delivery to the UI.
 
-B4 implements that stronger idempotency contract. The canonical key is deterministic per project
-and job (`{normalized-result-prefix}/{projectId}/{analysisJobId}/main.tf`); the historical pre-B4
-`Instant.now()` date-derived key has been removed. A previously recorded intent freezes the exact
-bucket/key even if later configuration changes.
+However durable re-execution requires stronger result idempotency:
 
-The current fenced owner records that durable intent as cleanup `PENDING` before external
-persistence. It then holds the `AnalysisJob` pessimistic row lock while performing the canonical
-object mutation and relational finalization. A stale generation that cannot obtain `lockOwned()`
-therefore performs no canonical write and cannot finalize over newer ownership. This is
-effectively-once logical finalization fencing, not exactly-once provider invocation.
+1. one logical job must have a deterministic result-object identity;
+2. retry/reclaim must not create an unbounded sequence of object keys;
+3. only the current fenced owner may make the job/result terminally visible;
+4. stale workers must not overwrite a newer finalized result.
+
+The current result key uses `Instant.now()` for the date path. A bounded implementation must make
+same-job retries resolve to the same logical result identity, for example by deriving the date/path
+from immutable job creation identity rather than attempt time.
 
 ## Cross-resource cleanup contract
 
-Immediate compensation remains an external side effect, but B4 serializes it inside the same owned
-row-lock window as canonical write/finalization. Successful compensation is followed by a separate
-generation-and-reference-fenced bookkeeping transition to `COMPLETED`, because finalization rollback
-also rolls back in-transaction database cleanup state. Failed compensation leaves the exact durable
-intent and `PENDING` cleanup accountability on the failed job rather than silent residue.
+Immediate compensation remains useful, but cleanup failure must not become silent residue.
 
-The existing application scheduler and bounded executor discover failed jobs with complete pending
-intent and run idempotent removal under a pessimistic cleanup-row lock. Accountable removal failures
-are durably deferred by advancing `updated_at`, preventing the same oldest failing set from pinning
-all later bounded work. No separate broker, cleanup microservice, outbox, or deployment was added.
-MariaDB remains the durable source of truth. See the
-[B4 evidence](../../evaluation/case-b-b4-result-idempotency-cleanup.md).
+If an object may exist while relational finalization did not complete, MariaDB must retain enough
+durable information to answer:
+
+- which object may exist;
+- whether cleanup is required;
+- whether cleanup succeeded or remains pending;
+- whether terminal job state is safe to expose.
+
+A separate message broker, cleanup microservice, or outbox is not required by this ADR.
+
+The minimum design should keep accountability in the AnalysisJob lifecycle unless evidence shows
+that a separate component is necessary.
 
 ## Before/after acceptance contract
 
@@ -313,7 +315,7 @@ For bounded implementation:
 - polling creates database read/write load that must be measured in Case C;
 - lease/retry/fencing state increases lifecycle complexity;
 - retry cannot guarantee exactly-once external provider invocation;
-- cross-resource object consistency requires the implemented durable intent/cleanup accountability and remains non-atomic with MariaDB.
+- cross-resource object consistency still requires explicit accountability.
 
 The goal is **effectively-once logical finalization**, not a false claim of exactly-once execution.
 

@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case B B3 bounded implementation specification**
+- Current single task: **Case B B4 result idempotency and durable cleanup accountability bounded implementation specification**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -62,10 +62,16 @@ Case B — Backend durable asynchronous processing:
 - MariaDB durable eligibility is now the execution recovery source, while the executor remains the
   bounded local concurrency pool; restart-to-FAILED is no longer the recovery model for recoverable
   AnalysisJob work;
-- provider retry remains disabled until B3, and B4 deterministic object identity and durable cleanup
-  work remain unresolved;
+- B3 is complete in PR #101 / merge `fb1bc3f7b64a0a0274114f1e29ac9f28f2ae652d`, with evidence in
+  [Case B B3 Selective Bounded Retry Evidence](evaluation/case-b-b3-selective-bounded-retry.md);
+- automatic provider retry is enabled only for the approved timeout signal; another retry is
+  scheduled only while current `attempt_count < 3`, with a fixed `10s` delay durably represented by
+  MariaDB `next_attempt_at`; B2 expired-lease reclaim is not capped by that scheduling threshold;
+- semantic provider failures and post-provider side-effect failures remain terminal; B4 deterministic
+  result identity, object accountability, and cleanup execution remain unresolved, and B5 integrated
+  closure remains pending;
 - production implementation must continue one bounded stage at a time; the immediate next task is the
-  B3 bounded implementation specification, not B3/B4/B5 combined implementation.
+  B4 bounded implementation specification, not B4/B5 combined implementation.
 
 Case C — Cloud runtime capacity and safe delivery:
 - use the existing GKE/Vertex/OpenSearch target runtime as the baseline;

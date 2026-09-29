@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE PLAN — B1/B2 COMPLETE, B3 SPECIFICATION NEXT**
+**ACTIVE PLAN — B1/B2/B3 COMPLETE, B4 SPECIFICATION NEXT**
 
 This plan implements
 [ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md)
@@ -188,16 +188,38 @@ Do not add transient retry policy in B2.
 
 # B3 — Selective bounded retry
 
+## Status
+
+**COMPLETE**
+
+Implementation evidence:
+[Case B B3 Selective Bounded Retry Evidence](../../evaluation/case-b-b3-selective-bounded-retry.md)
+
+PR #101 final head `f3aa4e488e1858f84688d7b848a4b1af07538656` merged as
+`fb1bc3f7b64a0a0274114f1e29ac9f28f2ae652d`. Terraform Static Verification run `36451986173`
+and Backend Local Verification run `36451986210` succeeded, including the backend local smoke and
+MariaDB schema/repository jobs.
+
+B3 retries only `AnalysisProviderTimeoutException`, with a fixed `10s` delay. Another timeout retry
+is scheduled only while the current `attempt_count < 3`; an approved provider timeout at
+`attempt_count >= 3` becomes terminal `FAILED`. MariaDB `next_attempt_at` is the durable wait
+mechanism, with no backoff or jitter. B2 expired-lease reclaim remains independent of this B3
+retry-scheduling threshold. Reclaim increments `attempt_count`, so it can consume later
+timeout-retry headroom. Retry scheduling remains generation/lease fenced, and a stale owner neither
+schedules retry nor falls through to overwrite newer state. Semantic provider failures and
+storage/finalization/cleanup failures remain terminal; deterministic result identity and durable
+cleanup accountability remain the B4 boundary.
+
 ## Goal
 
-Add retry only for approved transient failures.
+Add retry only for the approved provider-timeout signal.
 
-Before implementation, freeze configuration values for:
+The implemented configuration freezes:
 
-- maximum attempts;
-- retry delay/backoff shape;
-- lease duration as it interacts with retry;
-- polling interval where relevant.
+- provider-timeout retry scheduling only while current `attempt_count < 3`;
+- retry delay at a fixed `10s`;
+- no exponential backoff or jitter;
+- the existing B2 lease duration at `60s` and polling interval at `2s`.
 
 The values must be documented as configuration, not retroactively adjusted to make tests pass.
 
@@ -206,17 +228,19 @@ The values must be documented as configuration, not retroactively adjusted to ma
 - retryable transient failure schedules a later eligible attempt;
 - attempt count is durable;
 - successful later attempt reaches SUCCEEDED;
-- maximum attempts are bounded;
+- provider-timeout retry scheduling stops when `attempt_count >= 3`;
 - exhaustion reaches explicit FAILED;
 - non-retryable failures remain terminal immediately;
 - stale worker cannot schedule retry or terminal state after losing fencing ownership.
 
-## Initial failure classification
+## Implemented failure classification
 
-Retry candidates may include:
+The sole automatic retry signal is:
 
-- provider/network timeout;
-- explicit transient upstream failure.
+- `AnalysisProviderTimeoutException`, including causal `SocketTimeoutException` or
+  `HttpTimeoutException` normalized at the provider boundary.
+
+Explicit provider semantic classifications outrank nested timeout causes and remain terminal.
 
 Do not automatically retry:
 
@@ -229,7 +253,7 @@ Do not automatically retry:
 ## Required tests
 
 - PR #94 transient-first-failure fixture succeeds on bounded retry;
-- retry exhaustion terminates exactly at configured bound;
+- timeout-retry exhaustion terminates when the current attempt count reaches the configured threshold;
 - non-retryable failure makes one attempt;
 - stale owner cannot mutate retry state.
 
@@ -370,7 +394,5 @@ bounded correctness purpose.
 
 ## Current immediate next task
 
-Prepare the bounded **B3 implementation specification**.
-
-Provider retry remains disabled pending B3, and result-idempotency/cleanup execution remains
-deferred to B4.
+Prepare the bounded **Case B B4 result idempotency and durable cleanup accountability implementation
+specification**.

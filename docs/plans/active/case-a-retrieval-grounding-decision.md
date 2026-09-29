@@ -155,7 +155,8 @@ combinations of these. Resource-vocabulary normalization remains one candidate, 
   `m4-arch-private-aoss`, with M3/M4-specific confirmations; it has no dedicated repeated Case A
   experiment. Historical input names must not be silently repurposed.
 - The retained configuration fingerprint does not fully encode the M4 fact-extraction-specific
-  thinking-level behavior.
+  thinking identity or its retained fact-extraction output-budget identity
+  (`MAX_FACT_TOKENS=800`).
 
 These are measurement-readiness gaps, not authorization to alter production retrieval.
 
@@ -179,13 +180,17 @@ topK = 8
 generationModel = gemini-3.8-flash
 embeddingModel = gemini-embedding-001
 embedding dimension = 1024
-max output tokens = 8192
-fact-extraction thinking behavior = current M4 LOW behavior
+fact-extraction thinking = LOW
+fact-extraction max output tokens = 800
+generation/live-evaluation max output tokens = 8192
 ```
 
-Measurement readiness must encode the exact thinking identity in provenance/fingerprint before this
-baseline if it is not currently represented. The canonical fixtures and expectations remain
-unchanged.
+Measurement readiness must encode both the exact fact-extraction thinking identity and the
+fact-extraction output-budget identity in experiment provenance/fingerprint before this baseline if
+they are not currently represented. Case A is isolating retrieval behavior, so the M4
+`LOW` thinking behavior and retained `MAX_FACT_TOKENS=800` fact-extraction bound must remain frozen
+across repeated before/after experiments. The distinct generation/live-evaluation output bound
+remains `8192`. The canonical fixtures and expectations remain unchanged.
 
 For every run record fact-extraction status/failure category; retrieval, generation, and validation
 status; first divergence; stage and observed end-to-end latencies; query text, filters, and top-K;
@@ -376,7 +381,8 @@ After this specification is reviewed and merged, seek separate user approval for
 1. deterministic retrieval-expectation scoring;
 2. rank/coverage reporting;
 3. multi-run aggregation;
-4. configuration identity including fact-extraction thinking behavior;
+4. configuration identity including fact-extraction thinking behavior and fact-extraction
+   output-budget identity;
 5. an evaluation-only retrieval probe if required;
 6. creation of the frozen holdout dataset; and
 7. minimal Case A execution support using the existing target runtime/workflow pattern.

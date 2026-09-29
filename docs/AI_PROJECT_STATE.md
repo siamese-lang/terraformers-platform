@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case B B5 execution / integrated closure**
+- Current single task: **separate Case A decision/checkpoint (approval required)**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -72,10 +72,11 @@ Case B — Backend durable asynchronous processing:
   [Case B B4 Result Idempotency and Durable Cleanup Accountability](evaluation/case-b-b4-result-idempotency-cleanup.md);
 - B4 provides deterministic identity, pre-write durable intent, fenced canonical mutation,
   serialized compensation, exact `PENDING` accountability, and bounded cleanup recovery;
-- B1/B2/B3/B4 are **COMPLETE**. The bounded B5 experiment specification is **READY** in the
+- B1/B2/B3/B4/B5 are **COMPLETE**. The B5 execution and integrated closure are **PASS** in
   [Case B Durable Processing plan](plans/active/case-b-durable-processing-implementation.md);
-- Case B is not portfolio-closed. **B5 execution / integrated closure is next**; no B5 execution has
-  occurred in the specification task.
+- Case B is **portfolio-closed**. The 12-row matrix, fresh GitHub Actions run `36555800770`, real
+  MariaDB contention evidence, hard-gate results, trade-offs, and residual limitations are recorded
+  in [Case B Integrated Durable-Processing Closure](evaluation/case-b-integrated-closure.md).
 
 Case C — Cloud runtime capacity and safe delivery:
 - use the existing GKE/Vertex/OpenSearch target runtime as the baseline;
@@ -402,11 +403,9 @@ No remaining M1 work.
 
 ## Immediate next work
 
-Execute the approved bounded **Case B B5 integrated closure experiment** by reusing the smallest
-existing deterministic suite and produce `docs/evaluation/case-b-integrated-closure.md`.
-
-Do not add verification infrastructure or change runtime semantics by default. Case B remains open
-until the 12-row evidence and hard acceptance decision are recorded.
+Hold a separate user-approved **Case A decision/checkpoint** to select the strongest measured AI/RAG
+problem and confirm its comparison experiment. Do not begin an AI production change automatically,
+and do not start Case C.
 
 ## Do not revisit
 

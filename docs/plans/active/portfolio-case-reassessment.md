@@ -260,10 +260,20 @@ in-lock compensation accountability, and bounded cleanup recovery. PR #105 / mer
 same job's mutable retry/reclaim timing crosses a UTC date boundary. Accountable removal failures
 advance `updated_at` so later bounded candidates can progress; this is not a generic fairness claim.
 
-Case B is not portfolio-closed. The bounded B5 execution specification is now frozen under
-[`B5 — Integrated Case B closure experiment`](case-b-durable-processing-implementation.md#b5--integrated-case-b-closure-experiment).
-It maps all twelve rows to existing direct evidence, defines measurement provenance and hard gates,
-and identifies no current need for new tests or instrumentation. B5 has not been executed.
+## Case B B5 integrated closure checkpoint
+
+Case B is **portfolio-closed**. The
+[Case B Integrated Durable-Processing Closure](../../evaluation/case-b-integrated-closure.md)
+records B5 PASS on execution SHA `164fe2f5a83c9d9eba44eca351db604368940598` using fresh manual
+GitHub Actions run `36555800770`. The full backend Maven suite and the real-MariaDB repository smoke
+both passed. All twelve matrix rows have current direct assertions and all eight hard correctness
+gates pass.
+
+The closure remains bounded: it does not prove exactly-once provider invocation, zero provider calls
+under every crash timing, production-scale throughput, queue-wait/recovery SLOs, multi-service
+distributed durability, universal rejection of RabbitMQ/Transactional Outbox, or generic cleanup
+fairness. MariaDB remains the durable source of truth and the executor remains a bounded local
+concurrency pool. Case C retains capacity and bottleneck validation.
 
 ## Observability and failure/load work
 
@@ -300,8 +310,5 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-Execute the approved bounded **Case B B5 integrated closure experiment** using the smallest existing
-deterministic suite and create `docs/evaluation/case-b-integrated-closure.md`.
-
-Do not change production semantics or add a verifier, workflow, harness, or instrumentation by
-default. Case B remains open until B5 evidence is reviewed.
+Hold a separate user-approved **Case A decision/checkpoint**. Case A is next in the accepted sequence,
+but this checkpoint does not authorize AI production implementation. Do not start Case C.

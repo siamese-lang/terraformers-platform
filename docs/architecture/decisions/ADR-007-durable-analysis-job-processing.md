@@ -25,7 +25,7 @@ established that, before the ADR-007 implementation:
 - a claimed `RUNNING` job was marked `FAILED` after restart rather than reclaimed;
 - terminal duplicate execution is already controlled by an atomic conditional claim;
 - two real MariaDB transactions contending for one PENDING job admit exactly one winner;
-- transient provider failure currently has no retry;
+- transient provider failure had no durable job-level retry;
 - rollback-safe object compensation works for the measured DB-finalization failure;
 - cleanup failure can leave an object residue without a durable accountability record.
 
@@ -171,12 +171,27 @@ All ownership-sensitive transitions must therefore validate the current fencing 
 
 Retry is bounded and selective.
 
-Initial implementation must distinguish:
+The implemented B3 policy is:
+
+- maximum claimed attempts: `3`;
+- fixed retry delay: `10s`;
+- exponential backoff: none;
+- jitter: none.
+
+`attempt_count` is the durable total claim/reclaim counter, not a separate retry counter. Every
+successful initial claim or lease reclaim consumes the same bound. An approved retry is scheduled
+durably by setting `next_attempt_at`; MariaDB eligibility scanning ignores it until that time and a
+later successful claim increments both `attempt_count` and the fencing generation.
+
+Only `AnalysisProviderTimeoutException` is automatically retryable in B3. Standard causal network
+timeouts are normalized to that signal at the analysis-provider boundary. Explicit provider
+semantic failures remain terminal, and their semantic classification outranks any nested timeout
+cause. Storage, relational finalization, and cleanup failures are not automatically retried.
+
+The policy distinguishes:
 
 **Retryable candidates**
-- provider/network timeout;
-- explicitly classified transient upstream failure;
-- other failure classes only when evidence justifies retry.
+- the approved `AnalysisProviderTimeoutException` signal.
 
 **Terminal/non-retryable candidates**
 - rejected architecture input;
@@ -185,10 +200,8 @@ Initial implementation must distinguish:
 - deterministic Terraform validation failure;
 - authorization or invariant violation.
 
-The exact maximum attempt count and retry delay are configuration choices to be frozen before the
-retry implementation stage and validated with deterministic tests.
-
-Do not add generic catch-all retry.
+Do not add generic catch-all retry. Additional transient failure classes require separate evidence
+and approval before becoming retryable.
 
 ## Result persistence and idempotency
 

@@ -234,6 +234,20 @@ remains intentionally deferred to B3, and deterministic result identity plus dur
 safety remain intentionally deferred to B4. Case B is not portfolio-closed until the remaining
 stages and integrated evidence are complete.
 
+## Case B B3 implementation checkpoint
+
+B3 is complete and recorded in
+[Case B B3 Selective Bounded Retry Evidence](../../evaluation/case-b-b3-selective-bounded-retry.md).
+
+PR #101 final head `f3aa4e488e1858f84688d7b848a4b1af07538656` merged as
+`fb1bc3f7b64a0a0274114f1e29ac9f28f2ae652d`. B3 enables selective durable retry only for the
+approved provider-timeout signal, bounded to `3` total claimed execution attempts with a fixed
+`10s` delay. Deterministic evidence demonstrates transient timeout followed by later success,
+exhaustion to terminal `FAILED` without a fourth execution, and rejection of retry mutation from a
+stale generation. Explicit semantic provider failures and storage/finalization failures remain
+terminal. B4 result identity and durable cleanup accountability remain unresolved, and Case B is
+not portfolio-closed.
+
 ## Observability and failure/load work
 
 M7/M8 are **PAUSED AS INDEPENDENT MILESTONES**.
@@ -269,11 +283,12 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-Prepare the bounded **Case B B3 implementation specification** from
+Prepare the bounded **Case B B4 result idempotency and durable cleanup accountability implementation
+specification** from
 [ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md),
 [Case B Durable Processing — Bounded Implementation Plan](case-b-durable-processing-implementation.md),
 and
-[Case B B2 Durable Dispatcher and Restart Recovery Evidence](../../evaluation/case-b-b2-durable-dispatch-recovery.md).
+[Case B B3 Selective Bounded Retry Evidence](../../evaluation/case-b-b3-selective-bounded-retry.md).
 
-B3 is limited to the selective bounded retry contract. Do not implement B3 as part of this
-source-of-truth closure, and do not combine it with B4 result-key or object-cleanup work.
+Do not implement B4 as part of this source-of-truth closure or combine it with B5 integrated
+closure.

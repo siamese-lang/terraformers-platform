@@ -467,7 +467,7 @@ Interpret this checkpoint through the [repository working contract](../AGENTS.md
 
 ## Case A A1 measurement-readiness checkpoint
 
-Case A's primary problem remains **retrieval grounding / required-evidence coverage**. A1 measurement readiness is **COMPLETE**; see [Case A Retrieval-Grounding Measurement Readiness](evaluation/case-a-retrieval-grounding-measurement-readiness.md). Production retrieval change is **NOT AUTHORIZED / NOT PERFORMED**, no live GCP evaluation was executed, and Case A remains **OPEN**. The next candidate is **A2 — repeated current baseline, canonical N=3**, requiring separate user approval.
+Case A's primary problem remains **retrieval grounding / required-evidence coverage**. A1 measurement readiness is **COMPLETE**; see [Case A Retrieval-Grounding Measurement Readiness](evaluation/case-a-retrieval-grounding-measurement-readiness.md). At A1 closure, production retrieval change was **NOT AUTHORIZED / NOT PERFORMED**, no live GCP evaluation had been executed, and A2 was the next candidate. A2 has since completed; see the A2 checkpoint below. Production retrieval behavior remains unchanged, Case A remains **OPEN**, and the current next candidate is **A3 fixed-facts retrieval alternative comparison / decision**, requiring separate user approval.
 
 
 ## Case A A2 repeated baseline checkpoint

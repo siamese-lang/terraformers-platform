@@ -328,7 +328,7 @@ not change production retrieval semantics. Do not start it automatically or star
 
 ## Case A A1 measurement-readiness checkpoint
 
-Case A remains **OPEN** around retrieval grounding / required-evidence coverage. A1 measurement readiness is **COMPLETE** with exact deterministic scoring, complete configuration provenance, per-run and multi-run reports, an evaluation-only fixed-facts probe, and frozen `terraformers-eval-holdout-v1`; see [Case A Retrieval-Grounding Measurement Readiness](../../evaluation/case-a-retrieval-grounding-measurement-readiness.md). This is measurement support, not a retrieval-quality improvement claim. Production retrieval change is **NOT AUTHORIZED / NOT PERFORMED**. The next candidate is **A2 — repeated current baseline, canonical N=3**, and requires separate user approval.
+Case A remains **OPEN** around retrieval grounding / required-evidence coverage. A1 measurement readiness is **COMPLETE** with exact deterministic scoring, complete configuration provenance, per-run and multi-run reports, an evaluation-only fixed-facts probe, and frozen `terraformers-eval-holdout-v1`; see [Case A Retrieval-Grounding Measurement Readiness](../../evaluation/case-a-retrieval-grounding-measurement-readiness.md). This is measurement support, not a retrieval-quality improvement claim. At A1 closure, production retrieval change was **NOT AUTHORIZED / NOT PERFORMED** and A2 was the next candidate. A2 has since completed; see the A2 checkpoint below. Production retrieval behavior remains unchanged, and the current next candidate is **A3 fixed-facts retrieval alternative comparison / decision**, requiring separate user approval.
 
 
 ## Case A A2 repeated current baseline checkpoint

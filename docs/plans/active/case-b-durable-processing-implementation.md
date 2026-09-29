@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE PLAN — B1/B2/B3 COMPLETE, B4 SPECIFICATION NEXT**
+**ACTIVE PLAN — B1/B2/B3/B4 COMPLETE, B5 SPECIFICATION NEXT**
 
 This plan implements
 [ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md)
@@ -207,8 +207,8 @@ mechanism, with no backoff or jitter. B2 expired-lease reclaim remains independe
 retry-scheduling threshold. Reclaim increments `attempt_count`, so it can consume later
 timeout-retry headroom. Retry scheduling remains generation/lease fenced, and a stale owner neither
 schedules retry nor falls through to overwrite newer state. Semantic provider failures and
-storage/finalization/cleanup failures remain terminal; deterministic result identity and durable
-cleanup accountability remain the B4 boundary.
+storage/finalization/cleanup failures remain terminal. B4 subsequently closed deterministic result
+identity and durable cleanup accountability without changing the B3 timeout policy.
 
 ## Goal
 
@@ -264,6 +264,19 @@ B3 does not change object-storage consistency beyond what is necessary for safe 
 ---
 
 # B4 — Result idempotency and durable cleanup accountability
+
+## Status
+
+**COMPLETE**
+
+Evidence: [Case B B4 Result Idempotency and Durable Cleanup Accountability](../../evaluation/case-b-b4-result-idempotency-cleanup.md)
+
+PR #103 final head `99334b59334f87406f37fcc16137af344cd27c25` merged as
+`90c47cb9c0fcdbe75258ed2ac4613cb1625a5463`; PR #105 supplied the follow-up direct changed-date
+identity regression evidence. B4 implements deterministic `{prefix}/{projectId}/{jobId}/main.tf`,
+pre-write durable intent, canonical mutation and immediate compensation under the fenced owned row
+lock, exact `PENDING` accountability, and bounded cleanup recovery. Accountable cleanup failures are
+deferred by advancing `updated_at`. No schema, broker, outbox, cleanup service, or deployment was added.
 
 ## Goal
 
@@ -394,5 +407,4 @@ bounded correctness purpose.
 
 ## Current immediate next task
 
-Prepare the bounded **Case B B4 result idempotency and durable cleanup accountability implementation
-specification**.
+Prepare the bounded **Case B B5 integrated closure experiment specification**.

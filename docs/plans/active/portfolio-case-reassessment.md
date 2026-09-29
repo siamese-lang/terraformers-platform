@@ -247,8 +247,20 @@ retry-scheduling threshold, although reclaim increments the shared counter and c
 timeout-retry headroom. Deterministic evidence demonstrates timeout → retry → timeout → retry →
 timeout → `FAILED` without a fourth timeout-scheduled execution, as well as rejection of retry
 mutation from a stale generation. Explicit semantic provider failures and storage/finalization
-failures remain terminal. B4 result identity and durable cleanup accountability remain unresolved,
-and Case B is not portfolio-closed.
+failures remain terminal. B4 subsequently closed result identity and durable cleanup accountability;
+Case B remains open for B5 integrated closure.
+
+## Case B B4 implementation checkpoint
+
+B4 is complete; evidence is recorded in
+[Case B B4 Result Idempotency and Durable Cleanup Accountability](../../evaluation/case-b-b4-result-idempotency-cleanup.md).
+PR #103 implemented deterministic identity, durable intent, stale-owner canonical-write fencing,
+in-lock compensation accountability, and bounded cleanup recovery. PR #105 / merge
+`035b950975ef90c292856bd720ed23a729e12971` directly proves unchanged canonical identity when the
+same job's mutable retry/reclaim timing crosses a UTC date boundary. Accountable removal failures
+advance `updated_at` so later bounded candidates can progress; this is not a generic fairness claim.
+
+Case B is not portfolio-closed because B5 integrated closure remains.
 
 ## Observability and failure/load work
 
@@ -285,12 +297,6 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-Prepare the bounded **Case B B4 result idempotency and durable cleanup accountability implementation
-specification** from
-[ADR-007](../../architecture/decisions/ADR-007-durable-analysis-job-processing.md),
-[Case B Durable Processing — Bounded Implementation Plan](case-b-durable-processing-implementation.md),
-and
-[Case B B3 Selective Bounded Retry Evidence](../../evaluation/case-b-b3-selective-bounded-retry.md).
+Prepare the bounded **Case B B5 integrated closure experiment specification**.
 
-Do not implement B4 as part of this source-of-truth closure or combine it with B5 integrated
-closure.
+Do not implement or execute B5 in this documentation closure.

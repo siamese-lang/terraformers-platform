@@ -2,12 +2,12 @@
 
 ## Status
 
-**A2 REPEATED CURRENT BASELINE COMPLETE — ROOT CAUSE NOT YET SELECTED**
+**A3 PROBE READINESS COMPLETE — LIVE COMPARISON NOT RUN — ALTERNATIVE NOT SELECTED**
 
 A1 measurement readiness and the A2 repeated current baseline are complete. The A2 evidence is
 recorded in [Case A A2 Repeated Current Baseline Evidence](../../evaluation/case-a-retrieval-grounding-a2-baseline.md).
 Production retrieval behavior remains unchanged, no retrieval alternative or root cause is selected,
-and Case A remains open. A3 requires separate user approval.
+and Case A remains open. One protected A3 live probe run requires separate user approval.
 
 ## Decision checkpoint
 
@@ -401,12 +401,18 @@ worker; start Case C; or close Case A.
 - The holdout design itself can still encode evaluator bias; frozen expectations and corpus checks
   mitigate but do not eliminate it.
 
+## A3 probe-readiness checkpoint
+
+The evaluation-only six-snapshot comparison harness is ready as documented in
+[Case A A3 Fixed-Facts Retrieval Probe Readiness](../../evaluation/case-a-a3-retrieval-probe-readiness.md).
+Production retrieval is **UNCHANGED**, the live comparison is **NOT RUN**, no alternative is selected,
+and Case A remains **OPEN**.
+
 ## Immediate next task
 
-After A2 closure is reviewed and merged, seek separate user approval for the bounded
-**A3 fixed-facts retrieval alternative comparison / decision**. Hold upstream facts constant, reuse
-the A1 evaluation-only probe, compare credible retrieval alternatives against the current control,
-and record coverage/rank/latency trade-offs without changing production retrieval semantics.
+After this readiness change is reviewed and merged, seek separate approval for one protected A3 live
+probe run. Hold upstream facts constant and record the frozen comparison artifact without changing
+production retrieval semantics.
 
 Do not preselect a winner, do not start A4, and do not start Case C.
 

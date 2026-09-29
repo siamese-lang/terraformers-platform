@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       evaluation_scope:
-        description: Run M3, one M4-2 reproduction, or one Case A canonical baseline.
+        description: Run M3, one M4-2 reproduction, one Case A baseline, or the A3 retrieval probe.
         required: true
         type: choice
         default: m3-full-baseline
@@ -17,6 +17,7 @@ on:
           - m4-arch-vpc-three-tier
           - m4-arch-private-aoss
           - case-a-full-baseline
+          - case-a-a3-retrieval-probe
       confirmation:
         description: Use the scope-specific explicit confirmation token.
         required: true
@@ -95,6 +96,12 @@ jobs:
                 exit 1
               }
               ;;
+            case-a-a3-retrieval-probe)
+              [[ "$CONFIRMATION" == RUN_CASE_A_A3_PROBE ]] || {
+                echo 'Case A A3 probe requires confirmation RUN_CASE_A_A3_PROBE.' >&2
+                exit 1
+              }
+              ;;
             *)
               echo "Unsupported evaluation scope: $EVALUATION_SCOPE" >&2
               exit 1
@@ -126,6 +133,7 @@ jobs:
           cp -a backend/target/classes/. "$bundle_root/classes/"
           cp -a backend/target/dependency/. "$bundle_root/dependency/"
           cp -a evaluation/terraformers-eval-v1 "$bundle_root/evaluation/"
+          cp evaluation/case-a-a3-fixed-facts-v1.json "$bundle_root/evaluation/"
 
           (
             cd "$bundle_root"
@@ -474,6 +482,47 @@ jobs:
         with:
           name: case-a-grounding-report-${{ github.run_id }}
           path: ${{ runner.temp }}/case-a-grounding-report.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Run one Case A A3 fixed-facts retrieval comparison
+        if: inputs.evaluation_scope == 'case-a-a3-retrieval-probe'
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- env \
+            A3_FIXED_FACTS=/tmp/workspace/evaluation/case-a-a3-fixed-facts-v1.json \
+            EVALUATION_DATASET=/tmp/workspace/evaluation/terraformers-eval-v1/dataset.json \
+            A3_OUTPUT=/tmp/case-a-a3-retrieval-probe.json SOURCE_COMMIT="$GITHUB_SHA" \
+            GOOGLE_CLOUD_PROJECT=terraformers-platform GOOGLE_CLOUD_LOCATION=global \
+            VERTEX_EMBEDDING_MODEL_ID=gemini-embedding-001 \
+            OPENSEARCH_ENDPOINT="http://${OPENSEARCH_SERVICE}:9200" INDEX_NAME=terraformers-reference-v3 \
+            VECTOR_FIELD_NAME=embedding CONTENT_FIELD_NAME=content CORPUS_VERSION=terraformers-reference-v3 \
+            PROVIDER_VERSION=5.100.0 EXPECTED_VECTOR_DIMENSION=1024 \
+            java -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+            com.terraformers.modernization.evaluation.CaseAAlternativeProbeLauncher
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- \
+            cat /tmp/case-a-a3-retrieval-probe.json > "${RUNNER_TEMP}/case-a-a3-retrieval-probe.json"
+
+      - name: Verify Case A A3 probe identity and comparison shape
+        if: inputs.evaluation_scope == 'case-a-a3-retrieval-probe'
+        run: |
+          set -euo pipefail
+          jq -e --arg sha "$GITHUB_SHA" '
+            .schemaVersion == "case-a-a3-retrieval-probe-v1"
+            and .sourceCommit == $sha and .datasetVersion == "terraformers-eval-v1"
+            and .corpusVersion == "terraformers-reference-v3" and .providerVersion == "5.100.0"
+            and .embeddingModel == "gemini-embedding-001" and .embeddingDimension == 1024
+            and (.snapshots | length == 6)
+            and all(.snapshots[]; (.strategies | length == 6))
+            and (.aggregates | keys | length == 6)
+          ' "${RUNNER_TEMP}/case-a-a3-retrieval-probe.json" >/dev/null
+
+      - name: Upload Case A A3 machine-readable probe artifact
+        if: always() && inputs.evaluation_scope == 'case-a-a3-retrieval-probe'
+        uses: actions/upload-artifact@v4
+        with:
+          name: case-a-a3-retrieval-probe-${{ github.run_id }}
+          path: ${{ runner.temp }}/case-a-a3-retrieval-probe.json
           if-no-files-found: warn
           retention-days: 90
 

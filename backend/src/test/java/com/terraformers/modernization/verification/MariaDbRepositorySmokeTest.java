@@ -323,20 +323,16 @@ class MariaDbRepositorySmokeTest {
             assertThat(claimed.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
             assertThat(claimed.getAttemptCount()).isEqualTo(1);
             assertThat(claimed.getClaimGeneration()).isEqualTo(1);
-            assertThat(analysisJobRepository.recordResultObjectIntentOwned(claimed.getId(),
-                    AnalysisJobStatus.RUNNING, 1, durableNow, "result-bucket", "result-key",
-                    AnalysisResultCleanupStatus.PENDING)).isEqualTo(1);
-            assertThat(analysisJobRepository.recordResultObjectIntentOwned(claimed.getId(),
-                    AnalysisJobStatus.RUNNING, 1, durableNow, "result-bucket", "result-key",
-                    AnalysisResultCleanupStatus.PENDING)).isEqualTo(1);
-            assertThat(analysisJobRepository.recordResultObjectIntentOwned(claimed.getId(),
-                    AnalysisJobStatus.RUNNING, 1, durableNow, "other-bucket", "other-key",
-                    AnalysisResultCleanupStatus.PENDING)).isZero();
-            assertThat(analysisJobRepository.markResultCleanupCompleted(claimed.getId(), 2,
-                    "result-bucket", "result-key", AnalysisResultCleanupStatus.PENDING,
-                    AnalysisResultCleanupStatus.COMPLETED, durableNow)).isZero();
-            assertThat(analysisJobRepository.markFailedOwned(claimed.getId(), AnalysisJobStatus.RUNNING,
-                    AnalysisJobStatus.FAILED, 1, durableNow, "cleanup required")).isEqualTo(1);
+            assertThat(recordIntentInIndependentTransaction(claimed.getId(), 1, durableNow,
+                    "result-bucket", "result-key")).isEqualTo(1);
+            assertThat(recordIntentInIndependentTransaction(claimed.getId(), 1, durableNow,
+                    "result-bucket", "result-key")).isEqualTo(1);
+            assertThat(recordIntentInIndependentTransaction(claimed.getId(), 1, durableNow,
+                    "other-bucket", "other-key")).isZero();
+            assertThat(markCleanupCompletedInIndependentTransaction(claimed.getId(), 2, durableNow,
+                    "result-bucket", "result-key")).isZero();
+            assertThat(markFailedInIndependentTransaction(claimed.getId(), 1, durableNow,
+                    "cleanup required")).isEqualTo(1);
             assertThat(analysisJobRepository.findPendingCleanupJobIds(AnalysisJobStatus.FAILED,
                     AnalysisResultCleanupStatus.PENDING, PageRequest.of(0, 1)))
                     .containsExactly(claimed.getId());
@@ -421,6 +417,27 @@ class MariaDbRepositorySmokeTest {
         assertThat(projectFileRepository.existsById(sourceFile.getFileId())).isFalse();
         assertThat(projectRepository.existsById(project.getProjectId())).isFalse();
         assertThat(userRepository.existsById(owner.getUserId())).isFalse();
+    }
+
+    private int recordIntentInIndependentTransaction(String jobId, long generation, Instant now,
+            String bucket, String key) {
+        return new TransactionTemplate(transactionManager).execute(status ->
+                analysisJobRepository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING,
+                        generation, now, bucket, key, AnalysisResultCleanupStatus.PENDING));
+    }
+
+    private int markCleanupCompletedInIndependentTransaction(String jobId, long generation, Instant now,
+            String bucket, String key) {
+        return new TransactionTemplate(transactionManager).execute(status ->
+                analysisJobRepository.markResultCleanupCompleted(jobId, generation, bucket, key,
+                        AnalysisResultCleanupStatus.PENDING, AnalysisResultCleanupStatus.COMPLETED, now));
+    }
+
+    private int markFailedInIndependentTransaction(String jobId, long generation, Instant now,
+            String failureReason) {
+        return new TransactionTemplate(transactionManager).execute(status ->
+                analysisJobRepository.markFailedOwned(jobId, AnalysisJobStatus.RUNNING,
+                        AnalysisJobStatus.FAILED, generation, now, failureReason));
     }
 
     private void cleanupCreatedRows(

@@ -134,6 +134,16 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
     int markResultCleanupCompleted(String jobId, long generation, String bucket, String key,
             AnalysisResultCleanupStatus pendingCleanup, AnalysisResultCleanupStatus completed, Instant now);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update AnalysisJobEntity job set job.updatedAt = :now
+             where job.id = :jobId and job.status = :failed
+               and job.resultCleanupStatus = :pendingCleanup
+               and job.resultObjectIntentBucket = :bucket and job.resultObjectIntentKey = :key
+            """)
+    int touchPendingCleanup(String jobId, AnalysisJobStatus failed,
+            AnalysisResultCleanupStatus pendingCleanup, String bucket, String key, Instant now);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select job from AnalysisJobEntity job

@@ -1,5 +1,6 @@
 package com.terraformers.modernization.analysis;
 
+import java.time.Clock;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -19,15 +20,17 @@ public class AnalysisResultCleanupDispatcher {
     private final Executor executor;
     private final AnalysisRuntimeProperties properties;
     private final AnalysisObservability observability;
+    private final Clock clock;
     private final Set<String> locallySubmitted = ConcurrentHashMap.newKeySet();
 
     public AnalysisResultCleanupDispatcher(AnalysisJobStateService stateService,
             @Qualifier("analysisJobExecutor") Executor executor, AnalysisRuntimeProperties properties,
-            AnalysisObservability observability) {
+            AnalysisObservability observability, Clock clock) {
         this.stateService = stateService;
         this.executor = executor;
         this.properties = properties;
         this.observability = observability;
+        this.clock = clock;
     }
 
     public void dispatchPending() {
@@ -48,9 +51,14 @@ public class AnalysisResultCleanupDispatcher {
                     boolean completed = observability.recordStage(AnalysisTelemetryStage.CLEANUP_RECOVERY,
                             () -> stateService.recoverPendingCleanup(jobId));
                     observability.cleanupOutcome(completed ? "recovery_completed" : "recovery_failed");
+                } catch (AnalysisJobStateService.CleanupRecoveryException exception) {
+                    observability.cleanupOutcome("recovery_failed");
+                    deferFailedCleanup(jobId, exception);
+                    log.warn("Analysis result cleanup recovery failed errorClass={}",
+                            exception.getCause().getClass().getSimpleName());
                 } catch (RuntimeException exception) {
                     observability.cleanupOutcome("recovery_failed");
-                    log.warn("Analysis result cleanup recovery failed errorClass={}",
+                    log.warn("Analysis result cleanup recovery failed before an accountable reference was available errorClass={}",
                             exception.getClass().getSimpleName());
                 } finally {
                     locallySubmitted.remove(jobId);
@@ -62,6 +70,17 @@ public class AnalysisResultCleanupDispatcher {
             locallySubmitted.remove(jobId);
             observability.cleanupOutcome("executor_rejected");
             return false;
+        }
+    }
+
+    private void deferFailedCleanup(String jobId, AnalysisJobStateService.CleanupRecoveryException exception) {
+        try {
+            if (!stateService.deferPendingCleanup(jobId, exception.reference(), clock.instant())) {
+                log.warn("Analysis result cleanup deferral rejected because durable accountability changed");
+            }
+        } catch (RuntimeException deferException) {
+            log.warn("Analysis result cleanup deferral failed errorClass={}",
+                    deferException.getClass().getSimpleName());
         }
     }
 

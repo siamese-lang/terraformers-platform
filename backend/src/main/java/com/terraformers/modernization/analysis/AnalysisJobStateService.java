@@ -135,10 +135,33 @@ public class AnalysisJobStateService {
         AnalysisJobEntity entity = pending.get();
         ObjectReference reference = new ObjectReference(entity.getResultObjectIntentBucket(),
                 entity.getResultObjectIntentKey());
-        orchestrator.removeStoredDraft(reference);
+        try {
+            orchestrator.removeStoredDraft(reference);
+        } catch (RuntimeException exception) {
+            throw new CleanupRecoveryException(reference, exception);
+        }
         entity.setResultCleanupStatus(AnalysisResultCleanupStatus.COMPLETED);
         repository.save(entity);
         repository.flush();
         return true;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean deferPendingCleanup(String jobId, ObjectReference reference, Instant now) {
+        return repository.touchPendingCleanup(jobId, AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, reference.bucket(), reference.key(), now) == 1;
+    }
+
+    static final class CleanupRecoveryException extends RuntimeException {
+        private final ObjectReference reference;
+
+        CleanupRecoveryException(ObjectReference reference, RuntimeException cause) {
+            super("analysis result cleanup recovery failed", cause);
+            this.reference = reference;
+        }
+
+        ObjectReference reference() {
+            return reference;
+        }
     }
 }

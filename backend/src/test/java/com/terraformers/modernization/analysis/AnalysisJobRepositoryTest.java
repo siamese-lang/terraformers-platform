@@ -241,6 +241,37 @@ class AnalysisJobRepositoryTest {
         assertThat(resolved.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.COMPLETED);
     }
 
+    @Test
+    void touchingFailedOldestCleanupRotatesLaterPendingWorkIntoBoundedBatch() {
+        AnalysisJobEntity first = savePendingCleanup("cleanup-a", "bucket-a", "key-a");
+        AnalysisJobEntity second = savePendingCleanup("cleanup-b", "bucket-b", "key-b");
+        String selected = repository.findPendingCleanupJobIds(AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, PageRequest.of(0, 1)).get(0);
+        AnalysisJobEntity selectedEntity = repository.findById(selected).orElseThrow();
+        String later = selected.equals(first.getId()) ? second.getId() : first.getId();
+
+        assertThat(repository.touchPendingCleanup(selected, AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, selectedEntity.getResultObjectIntentBucket(),
+                "different-key", NOW.plusSeconds(300))).isZero();
+        assertThat(repository.touchPendingCleanup(selected, AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, selectedEntity.getResultObjectIntentBucket(),
+                selectedEntity.getResultObjectIntentKey(), NOW.plusSeconds(300))).isEqualTo(1);
+
+        assertThat(repository.findById(selected).orElseThrow().getResultCleanupStatus())
+                .isEqualTo(AnalysisResultCleanupStatus.PENDING);
+        assertThat(repository.findPendingCleanupJobIds(AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, PageRequest.of(0, 1))).containsExactly(later);
+    }
+
+    private AnalysisJobEntity savePendingCleanup(String correlationId, String bucket, String key) {
+        AnalysisJobEntity entity = savePending(correlationId);
+        entity.setStatus(AnalysisJobStatus.FAILED);
+        entity.setResultObjectIntentBucket(bucket);
+        entity.setResultObjectIntentKey(key);
+        entity.setResultCleanupStatus(AnalysisResultCleanupStatus.PENDING);
+        return repository.saveAndFlush(entity);
+    }
+
     private AnalysisJobEntity savePending(String correlationId) {
         AnalysisJobEntity entity = new AnalysisJobEntity();
         entity.setProjectId(102L);

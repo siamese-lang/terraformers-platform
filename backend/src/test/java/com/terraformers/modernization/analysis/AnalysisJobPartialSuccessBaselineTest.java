@@ -1,6 +1,7 @@
 package com.terraformers.modernization.analysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -58,12 +59,16 @@ class AnalysisJobPartialSuccessBaselineTest {
     @Autowired
     private AnalysisObservability observability;
 
+    @Autowired
+    private SimpleMeterRegistry meterRegistry;
+
     @MockBean
     private ProjectArtifactService projectArtifactService;
 
     @BeforeEach
-    void resetObjectWriter() {
+    void resetFixtureState() {
         objectWriter.reset();
+        meterRegistry.clear();
     }
 
     @Test
@@ -205,6 +210,27 @@ class AnalysisJobPartialSuccessBaselineTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void persistedThenThrownWriteRemainsDurablyAccountedWhenCleanupFails() {
+        objectWriter.throwAfterWrite();
+        objectWriter.failRemovals();
+        AnalysisJobEntity job = pendingJob(926L, "ambiguous-write-cleanup-failure");
+        String jobId = repository.saveAndFlush(job).getId();
+
+        TestAnalysisJobRunnerFactory.create(orchestrator, stateService, observability).run(jobId);
+
+        AnalysisJobEntity persisted = repository.findById(jobId).orElseThrow();
+        ObjectWriteRequest write = objectWriter.writes().get(0);
+        assertThat(persisted.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+        assertThat(persisted.getResultFileId()).isNull();
+        assertThat(persisted.getResultObjectKey()).isNull();
+        assertThat(persisted.getResultObjectIntentBucket()).isEqualTo(write.bucket());
+        assertThat(persisted.getResultObjectIntentKey()).isEqualTo(write.key());
+        assertThat(persisted.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.PENDING);
+        assertThat(objectWriter.objects()).containsKey(write.bucket() + "/" + write.key());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void recoveryDeletesDurablyAccountedResidueWithoutRetryingJob() {
         when(projectArtifactService.registerGeneratedTerraform(anyLong(), anyString(), any(ObjectWriteResult.class)))
                 .thenThrow(new IllegalStateException("forced relational finalization failure"));
@@ -212,6 +238,19 @@ class AnalysisJobPartialSuccessBaselineTest {
         AnalysisJobEntity job = pendingJob(931L, "cleanup-recovery");
         String jobId = repository.saveAndFlush(job).getId();
         TestAnalysisJobRunnerFactory.create(orchestrator, stateService, observability).run(jobId);
+        AnalysisJobEntity pending = repository.findById(jobId).orElseThrow();
+        ObjectReference reference = new ObjectReference(
+                pending.getResultObjectIntentBucket(), pending.getResultObjectIntentKey());
+        java.time.Instant deferredAt = java.time.Instant.parse("2099-01-01T00:00:00Z");
+
+        assertThatThrownBy(() -> stateService.recoverPendingCleanup(jobId))
+                .isInstanceOf(AnalysisJobStateService.CleanupRecoveryException.class);
+        assertThat(stateService.deferPendingCleanup(jobId, reference, deferredAt)).isTrue();
+        AnalysisJobEntity deferred = repository.findById(jobId).orElseThrow();
+        assertThat(deferred.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+        assertThat(deferred.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.PENDING);
+        assertThat(deferred.getUpdatedAt()).isEqualTo(deferredAt);
+        assertThat(objectWriter.objects()).containsKey(reference.bucket() + "/" + reference.key());
         objectWriter.allowRemovals();
 
         assertThat(stateService.recoverPendingCleanup(jobId)).isTrue();
@@ -284,7 +323,7 @@ class AnalysisJobPartialSuccessBaselineTest {
     }
 
     private SimpleMeterRegistry observabilityRegistry() {
-        return (SimpleMeterRegistry) org.springframework.test.util.ReflectionTestUtils.getField(observability, "meterRegistry");
+        return meterRegistry;
     }
 
     static class CapturingObjectWriter implements ObjectWriter, ObjectRemover {

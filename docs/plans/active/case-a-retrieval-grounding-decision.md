@@ -2,11 +2,12 @@
 
 ## Status
 
-**READY — PRIMARY PROBLEM SELECTED; MEASUREMENT READINESS NOT YET IMPLEMENTED**
+**A2 REPEATED CURRENT BASELINE COMPLETE — ROOT CAUSE NOT YET SELECTED**
 
-This documentation checkpoint advances the **AI/RAG evaluation and targeted improvement** axis and
-deepens Case A. It authorizes no production AI change, live experiment, holdout creation, or next
-stage. Case B remains portfolio-closed; Case A remains open.
+A1 measurement readiness and the A2 repeated current baseline are complete. The A2 evidence is
+recorded in [Case A A2 Repeated Current Baseline Evidence](../../evaluation/case-a-retrieval-grounding-a2-baseline.md).
+Production retrieval behavior remains unchanged, no retrieval alternative or root cause is selected,
+and Case A remains open. A3 requires separate user approval.
 
 ## Decision checkpoint
 
@@ -141,7 +142,10 @@ a fix. A controlled decision experiment must distinguish missing/empty filters, 
 semantic query construction, vector ranking, project-decision authority/priority handling, and
 combinations of these. Resource-vocabulary normalization remains one candidate, not a conclusion.
 
-## Measurement gaps
+## Historical measurement-readiness gaps (closed by A1)
+
+The following gaps were identified before A1 and are retained as decision history. A1 closed these
+measurement-readiness gaps before A2 was executed.
 
 - `EvaluationRunner` preserves raw retrieval provenance, but stage `PASS` represents a completed
   invocation even when fixed retrieval expectations are incomplete.
@@ -208,6 +212,25 @@ Record AOSS fact-extraction latency in all three runs, report min/median/max, an
 separately. Do not make a timeout/model/topology change from the historical `130489 ms` observation
 alone.
 
+## A2 repeated baseline checkpoint
+
+A2 is **COMPLETE** on source commit `96c6442026f6c57a30a9b248a8af115df1e7f2e4`. Three full
+canonical evaluations reproduced the VPC grounding gap `3 / 3` while fact extraction and retrieval
+each passed `18 / 18`, architecture validation passed `12 / 12`, negative controls were correct
+`6 / 6`, and first-divergence failures were `0`. Across 12 applicable positives there were `4 / 12`
+grounding gaps, all with valid output.
+
+All three VPC queries had non-empty resource filters containing `aws_vpc`, `aws_subnet`, `aws_lb`,
+`aws_security_group`, and `aws_db_instance`. The earlier CloudFormation-style/filter-loss mechanism
+is therefore insufficient to explain A2. Coverage/rank and upstream fact/query wording varied; vector
+ranking is not established as the root cause. The AOSS historical `130489 ms` fact-extraction outlier
+did not reproduce (`2832 / 3053 / 4443 ms` min/median/max). No latency/model/timeout/topology work is
+authorized.
+
+The next candidate is **A3 fixed-facts retrieval alternative comparison / decision** to isolate
+upstream variability from retrieval/ranking behavior. A3 is not started or authorized here and
+requires separate user approval.
+
 ## Retrieval scoring contract
 
 Score deterministically against each applicable positive `EvaluationCase.retrieval` contract:
@@ -225,11 +248,11 @@ Score deterministically against each applicable positive `EvaluationCase.retriev
 - **Downstream evidence:** whether generation was reached, required generated-resource coverage,
   forbidden generated-resource count, Terraform validation, and first divergence.
 
-## Holdout contract
+## Holdout contract (implemented by A1)
 
-`terraformers-eval-v1` remains immutable. A later bounded measurement-readiness task must create and
-freeze a separate versioned `terraformers-eval-holdout-v1` **before** a production candidate change;
-this task creates no holdout files.
+`terraformers-eval-v1` remains immutable. A1 created and froze the separate versioned
+`terraformers-eval-holdout-v1` **before** any production retrieval candidate change. The contract
+below remains the acceptance boundary for later candidate evaluation.
 
 Minimum composition is two new positive architecture fixtures, one ambiguous/cropped control, and
 one non-architecture control. Positive fixtures must be repository-owned synthetic inputs; differ
@@ -344,7 +367,8 @@ grounding improvement only when explicitly measured and frozen before implementa
    latency/token/quality comparison.
 6. **A6 — Case A integrated closure.**
 
-No stage automatically authorizes the next. These labels do not authorize A1 now.
+No stage automatically authorizes the next. A1 and A2 are complete; A3 requires separate user
+approval before any retrieval alternative comparison or decision work begins.
 
 The existing single target runtime must be reused. Later live work must verify main SHA,
 billing/quota/model access, and absence of a duplicate runtime; activate the protected target; run
@@ -353,7 +377,10 @@ Workflow support may be minimally extended only if A1 proves it necessary, while
 protected activate/evaluate/idle lifecycle and exact trusted-SHA gates. Do not duplicate
 GKE/OpenSearch/Vertex infrastructure.
 
-## Non-goals
+## Original decision-specification non-goals (historical boundary)
+
+These constraints describe the pre-A1 decision-specification task and are retained as historical
+scope boundaries; the A1/A2 checkpoints below supersede any current-state reading of them.
 
 This task does not change production retrieval, ranking, production top-K, prompts, corpus, models,
 embeddings, fact extraction, generation, retry/backoff, Terraform validation, code, tests,
@@ -363,7 +390,8 @@ worker; start Case C; or close Case A.
 
 ## Residual risks
 
-- One retained VPC run does not establish frequency, ranking stability, or causality.
+- A2 reproduced the VPC grounding gap in all three bounded runs, but `N=3` does not establish a
+  long-run reliability rate or causality; coverage/rank and upstream fact/query wording still varied.
 - Upstream fact-extraction variability can alter retrieval input unless isolated by the probe.
 - Wider retrieval can trade recall for noise, latency, and generation context growth.
 - Filtering can lose cross-resource evidence; deterministic reranking can encode ranking bias.
@@ -375,22 +403,15 @@ worker; start Case C; or close Case A.
 
 ## Immediate next task
 
-After this specification is reviewed and merged, seek separate user approval for the bounded
-**Case A retrieval-grounding measurement-readiness implementation**. Its allowed purposes are only:
+After A2 closure is reviewed and merged, seek separate user approval for the bounded
+**A3 fixed-facts retrieval alternative comparison / decision**. Hold upstream facts constant, reuse
+the A1 evaluation-only probe, compare credible retrieval alternatives against the current control,
+and record coverage/rank/latency trade-offs without changing production retrieval semantics.
 
-1. deterministic retrieval-expectation scoring;
-2. rank/coverage reporting;
-3. multi-run aggregation;
-4. configuration identity including fact-extraction thinking behavior and fact-extraction
-   output-budget identity;
-5. an evaluation-only retrieval probe if required;
-6. creation of the frozen holdout dataset; and
-7. minimal Case A execution support using the existing target runtime/workflow pattern.
-
-It must not change production retrieval semantics. Do not implement A1 from this specification.
+Do not preselect a winner, do not start A4, and do not start Case C.
 
 ## A1 measurement-readiness checkpoint
 
 A1 is **COMPLETE** as documented in [Case A Retrieval-Grounding Measurement Readiness](../../evaluation/case-a-retrieval-grounding-measurement-readiness.md). The primary problem remains retrieval grounding / required-evidence coverage. Deterministic exact-match scoring, explicit `LOW`/`800`/`8192` provenance, per-run reporting, compatible multi-run aggregation, a fixed-facts evaluation-only probe, and frozen `terraformers-eval-holdout-v1` now make the problem comparable.
 
-No production retrieval change was authorized or performed, no live GCP evaluation ran, and Case A remains **OPEN**. The next candidate is **A2 — repeated current baseline, canonical N=3**, which requires separate user approval.
+At A1 closure, no production retrieval change was authorized or performed and no live GCP evaluation had run; A2 was the next candidate. A2 is now **COMPLETE** as recorded above. Production retrieval behavior remains unchanged, Case A remains **OPEN**, and the current next candidate is **A3 fixed-facts retrieval alternative comparison / decision**, requiring separate user approval.

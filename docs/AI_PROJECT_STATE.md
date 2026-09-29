@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case A retrieval-grounding decision specification (READY)**
+- Current single task: **Case A A2 repeated current baseline closure (COMPLETE)**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -42,10 +42,11 @@ Case A — AI/RAG quality, performance and reliability:
   validation passed; retrieval stage `PASS` therefore does not prove grounding coverage;
 - the M4 fact-extraction truncation remediation is retained as a completed precursor, while the
   one-run AOSS `130489 ms` outlier remains measurement-only;
-- the [Case A Retrieval-Grounding Decision Specification](plans/active/case-a-retrieval-grounding-decision.md)
-  is **READY** and freezes repeated baseline, scoring, holdout, alternatives, and acceptance gates;
-- next task, only after separate user approval, is bounded Case A retrieval-grounding
-  measurement-readiness. No production AI behavior change is authorized.
+- A1 measurement readiness and the A2 repeated current baseline are **COMPLETE**; the
+  [A2 evidence](evaluation/case-a-retrieval-grounding-a2-baseline.md) reproduces the VPC grounding
+  gap `3 / 3` with production retrieval behavior unchanged;
+- root cause is **NOT YET SELECTED**. The next candidate, only after separate user approval, is A3
+  fixed-facts retrieval alternative comparison / decision. No production AI behavior change is authorized.
 
 Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim and rollback-safe compensation;
@@ -410,11 +411,11 @@ No remaining M1 work.
 
 ## Immediate next work
 
-After review and merge of the READY Case A decision specification, obtain separate user approval for
-the bounded **Case A retrieval-grounding measurement-readiness implementation**. It may add only the
-specified evaluation measurement support and frozen holdout; it must not change production retrieval
-semantics. Do not start it automatically, do not begin an AI production change, and do not start
-Case C.
+After review and merge of the A2 closure, obtain separate user approval for the bounded **A3
+fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query
+variability from retrieval/ranking behavior without selecting or changing production retrieval
+semantics in advance. Do not start it automatically, do not begin an AI production change, and do
+not start Case C.
 
 ## Do not revisit
 
@@ -466,4 +467,16 @@ Interpret this checkpoint through the [repository working contract](../AGENTS.md
 
 ## Case A A1 measurement-readiness checkpoint
 
-Case A's primary problem remains **retrieval grounding / required-evidence coverage**. A1 measurement readiness is **COMPLETE**; see [Case A Retrieval-Grounding Measurement Readiness](evaluation/case-a-retrieval-grounding-measurement-readiness.md). Production retrieval change is **NOT AUTHORIZED / NOT PERFORMED**, no live GCP evaluation was executed, and Case A remains **OPEN**. The next candidate is **A2 — repeated current baseline, canonical N=3**, requiring separate user approval.
+Case A's primary problem remains **retrieval grounding / required-evidence coverage**. A1 measurement readiness is **COMPLETE**; see [Case A Retrieval-Grounding Measurement Readiness](evaluation/case-a-retrieval-grounding-measurement-readiness.md). At A1 closure, production retrieval change was **NOT AUTHORIZED / NOT PERFORMED**, no live GCP evaluation had been executed, and A2 was the next candidate. A2 has since completed; see the A2 checkpoint below. Production retrieval behavior remains unchanged, Case A remains **OPEN**, and the current next candidate is **A3 fixed-facts retrieval alternative comparison / decision**, requiring separate user approval.
+
+
+## Case A A2 repeated baseline checkpoint
+
+Case A's A2 repeated current baseline is **COMPLETE** on source commit
+`96c6442026f6c57a30a9b248a8af115df1e7f2e4`; see [Case A A2 Repeated Current Baseline
+Evidence](evaluation/case-a-retrieval-grounding-a2-baseline.md). The VPC grounding gap reproduced
+`3 / 3`, production retrieval behavior is **UNCHANGED**, and the historical AOSS `130489 ms` latency
+outlier was **NOT reproduced in N=3**. Non-empty VPC resource filters in every run invalidate absent
+filters as an established A2 root cause. Root cause is **NOT YET SELECTED**, vector ranking is not
+proven causal, and Case A remains **OPEN**. The next candidate is **A3 fixed-facts retrieval
+alternative comparison / decision**, requiring separate user approval.

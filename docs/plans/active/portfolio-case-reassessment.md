@@ -97,10 +97,21 @@ Missing depth includes, as applicable:
 
 ### Required decision gate before new AI implementation
 
-Produce an AI case decision brief that identifies the strongest problem to deepen:
-fact-extraction truncation/reasoning-budget behavior, retrieval grounding, or another measured
-failure. Compare credible alternatives and define the repeated same-condition experiment before
-changing production behavior.
+The selected primary problem is **retrieval grounding / required-evidence coverage**, and its
+[decision specification](case-a-retrieval-grounding-decision.md) is READY. The direct VPC evidence
+is required decision coverage `0 / 1` and exact required resource-type coverage `2 / 4` at top-K 8,
+despite generation producing `4 / 4` required Terraform resources and structural validation
+passing. This grounding gap demonstrates that retrieval invocation success and downstream success
+do not prove required-evidence coverage.
+
+M4 fact-extraction `RESPONSE_TRUNCATED` remediation remains a completed precursor rather than being
+re-selected. The AOSS `130489 ms` fact-extraction result remains a secondary measurement item—not an
+established bottleneck—because it is one outlier and the bounded reproduction passed at `9392 ms`.
+
+The observed CloudFormation-shaped resource candidates, empty Terraform `resourceTypeFilters`, and
+unfiltered semantic k-NN form a candidate mechanism, not causal proof or a selected fix. Repeated
+baseline and controlled alternative evidence must distinguish filtering, cutoff, query, ranking,
+and authority/priority effects before any production change.
 
 ## Case B — durable asynchronous AnalysisJob processing
 
@@ -310,5 +321,8 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-Hold a separate user-approved **Case A decision/checkpoint**. Case A is next in the accepted sequence,
-but this checkpoint does not authorize AI production implementation. Do not start Case C.
+After the READY Case A decision specification is reviewed and merged, seek separate user approval
+for the bounded **Case A retrieval-grounding measurement-readiness implementation**: deterministic
+coverage/rank scoring, multi-run aggregation, complete configuration provenance, an evaluation-only
+retrieval probe if required, a frozen holdout, and minimal existing-runtime experiment support. It
+must not change production retrieval semantics. Do not start it automatically or start Case C.

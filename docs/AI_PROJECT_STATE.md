@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **separate Case A decision/checkpoint (approval required)**
+- Current single task: **Case A retrieval-grounding decision specification (READY)**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -36,9 +36,16 @@ cases with repository-backed technical decisions, not merely a sequence of compl
 Case A — AI/RAG quality, performance and reliability:
 - retain M3 fixed baseline/provenance and M4 failure evidence;
 - do not treat M4 as portfolio-closed;
-- require an approved decision brief covering the strongest measured AI/RAG problem, credible
-  alternatives, repeated same-condition experiment, latency/token/quality trade-off, and residual
-  risk before new AI implementation.
+- primary problem selected: **retrieval grounding / required-evidence coverage**;
+- the retained VPC trace has required decision coverage `0 / 1` and exact required resource-type
+  coverage `2 / 4` at top-K 8, while generation produced `4 / 4` required resources and Terraform
+  validation passed; retrieval stage `PASS` therefore does not prove grounding coverage;
+- the M4 fact-extraction truncation remediation is retained as a completed precursor, while the
+  one-run AOSS `130489 ms` outlier remains measurement-only;
+- the [Case A Retrieval-Grounding Decision Specification](plans/active/case-a-retrieval-grounding-decision.md)
+  is **READY** and freezes repeated baseline, scoring, holdout, alternatives, and acceptance gates;
+- next task, only after separate user approval, is bounded Case A retrieval-grounding
+  measurement-readiness. No production AI behavior change is authorized.
 
 Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim and rollback-safe compensation;
@@ -403,9 +410,11 @@ No remaining M1 work.
 
 ## Immediate next work
 
-Hold a separate user-approved **Case A decision/checkpoint** to select the strongest measured AI/RAG
-problem and confirm its comparison experiment. Do not begin an AI production change automatically,
-and do not start Case C.
+After review and merge of the READY Case A decision specification, obtain separate user approval for
+the bounded **Case A retrieval-grounding measurement-readiness implementation**. It may add only the
+specified evaluation measurement support and frozen holdout; it must not change production retrieval
+semantics. Do not start it automatically, do not begin an AI production change, and do not start
+Case C.
 
 ## Do not revisit
 

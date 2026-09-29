@@ -6,6 +6,7 @@ import com.terraformers.modernization.analysis.AnalysisJobEntity;
 import com.terraformers.modernization.analysis.AnalysisJobRepository;
 import com.terraformers.modernization.analysis.AnalysisJobStatus;
 import com.terraformers.modernization.analysis.AnalysisMode;
+import com.terraformers.modernization.analysis.AnalysisResultCleanupStatus;
 import com.terraformers.modernization.collaboration.BoardEntity;
 import com.terraformers.modernization.collaboration.BoardRepository;
 import com.terraformers.modernization.collaboration.CommentEntity;
@@ -322,6 +323,23 @@ class MariaDbRepositorySmokeTest {
             assertThat(claimed.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
             assertThat(claimed.getAttemptCount()).isEqualTo(1);
             assertThat(claimed.getClaimGeneration()).isEqualTo(1);
+            assertThat(analysisJobRepository.recordResultObjectIntentOwned(claimed.getId(),
+                    AnalysisJobStatus.RUNNING, 1, durableNow, "result-bucket", "result-key",
+                    AnalysisResultCleanupStatus.PENDING)).isEqualTo(1);
+            assertThat(analysisJobRepository.recordResultObjectIntentOwned(claimed.getId(),
+                    AnalysisJobStatus.RUNNING, 1, durableNow, "result-bucket", "result-key",
+                    AnalysisResultCleanupStatus.PENDING)).isEqualTo(1);
+            assertThat(analysisJobRepository.recordResultObjectIntentOwned(claimed.getId(),
+                    AnalysisJobStatus.RUNNING, 1, durableNow, "other-bucket", "other-key",
+                    AnalysisResultCleanupStatus.PENDING)).isZero();
+            assertThat(analysisJobRepository.markResultCleanupCompleted(claimed.getId(), 2,
+                    "result-bucket", "result-key", AnalysisResultCleanupStatus.PENDING,
+                    AnalysisResultCleanupStatus.COMPLETED, durableNow)).isZero();
+            assertThat(analysisJobRepository.markFailedOwned(claimed.getId(), AnalysisJobStatus.RUNNING,
+                    AnalysisJobStatus.FAILED, 1, durableNow, "cleanup required")).isEqualTo(1);
+            assertThat(analysisJobRepository.findPendingCleanupJobIds(AnalysisJobStatus.FAILED,
+                    AnalysisResultCleanupStatus.PENDING, PageRequest.of(0, 1)))
+                    .containsExactly(claimed.getId());
 
             durableReclaimJob = newClaimJob(project, sourceFile, "repository-smoke-durable-reclaim");
             durableReclaimJob.setStatus(AnalysisJobStatus.RUNNING);

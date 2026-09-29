@@ -227,9 +227,13 @@ class AnalysisJobRepositoryTest {
                 "bucket", "key", AnalysisResultCleanupStatus.PENDING)).isZero();
         assertThat(repository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING, 1, NOW,
                 "bucket", "key", AnalysisResultCleanupStatus.PENDING)).isEqualTo(1);
-        assertThat(repository.markResultCleanupCompleted(jobId, "bucket", "different-key",
+        assertThat(repository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING, 1, NOW,
+                "other-bucket", "other-key", AnalysisResultCleanupStatus.PENDING)).isZero();
+        assertThat(repository.markResultCleanupCompleted(jobId, 1, "bucket", "different-key",
                 AnalysisResultCleanupStatus.PENDING, AnalysisResultCleanupStatus.COMPLETED, NOW)).isZero();
-        assertThat(repository.markResultCleanupCompleted(jobId, "bucket", "key",
+        assertThat(repository.markResultCleanupCompleted(jobId, 2, "bucket", "key",
+                AnalysisResultCleanupStatus.PENDING, AnalysisResultCleanupStatus.COMPLETED, NOW)).isZero();
+        assertThat(repository.markResultCleanupCompleted(jobId, 1, "bucket", "key",
                 AnalysisResultCleanupStatus.PENDING, AnalysisResultCleanupStatus.COMPLETED, NOW)).isEqualTo(1);
         AnalysisJobEntity resolved = repository.findById(jobId).orElseThrow();
         assertThat(resolved.getResultObjectIntentBucket()).isEqualTo("bucket");

@@ -3,7 +3,8 @@ package com.terraformers.modernization.analysis;
 public enum AnalysisTelemetryStage {
     ANALYSIS_EXECUTION("analysis_execution"),
     RESULT_FINALIZE("result_finalize"),
-    COMPENSATION("compensation");
+    COMPENSATION("compensation"),
+    CLEANUP_RECOVERY("cleanup_recovery");
 
     private final String tag;
 

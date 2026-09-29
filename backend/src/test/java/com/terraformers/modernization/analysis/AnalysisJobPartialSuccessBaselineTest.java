@@ -55,6 +55,9 @@ class AnalysisJobPartialSuccessBaselineTest {
     @Autowired
     private CapturingObjectWriter objectWriter;
 
+    @Autowired
+    private AnalysisObservability observability;
+
     @MockBean
     private ProjectArtifactService projectArtifactService;
 
@@ -82,9 +85,8 @@ class AnalysisJobPartialSuccessBaselineTest {
         job.setStatus(AnalysisJobStatus.PENDING);
         String jobId = repository.saveAndFlush(job).getId();
 
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
         TestAnalysisJobRunnerFactory.create(
-                orchestrator, stateService, new AnalysisObservability(registry)
+                orchestrator, stateService, observability
         ).run(jobId);
 
         AnalysisJobEntity persisted = repository.findById(jobId).orElseThrow();
@@ -93,6 +95,9 @@ class AnalysisJobPartialSuccessBaselineTest {
         assertThat(persisted.getFailureReason()).isEqualTo(AnalysisJobRunner.GENERIC_FAILURE_REASON);
         assertThat(persisted.getResultFileId()).isNull();
         assertThat(persisted.getResultObjectKey()).isNull();
+        assertThat(persisted.getResultObjectIntentBucket()).isEqualTo("partial-success-result");
+        assertThat(persisted.getResultObjectIntentKey()).endsWith("/" + jobId + "/main.tf");
+        assertThat(persisted.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.COMPLETED);
 
         assertThat(objectWriter.writes()).hasSize(1);
         ObjectWriteRequest write = objectWriter.writes().get(0);
@@ -110,21 +115,21 @@ class AnalysisJobPartialSuccessBaselineTest {
                 any(ObjectWriteResult.class)
         );
 
-        assertThat(registry.find("terraformers.analysis.jobs")
+        assertThat(observabilityRegistry().find("terraformers.analysis.jobs")
                 .tags("outcome", "failed").counter().count()).isEqualTo(1.0);
-        assertThat(registry.find("terraformers.analysis.failures")
+        assertThat(observabilityRegistry().find("terraformers.analysis.failures")
                 .tags("category", "result_finalization").counter().count()).isEqualTo(1.0);
-        assertThat(registry.find("terraformers.analysis.duration").timer().count()).isEqualTo(1);
-        assertThat(registry.find("terraformers.analysis.stage.duration")
+        assertThat(observabilityRegistry().find("terraformers.analysis.duration").timer().count()).isEqualTo(1);
+        assertThat(observabilityRegistry().find("terraformers.analysis.stage.duration")
                 .tags("stage", "analysis_execution", "outcome", "success")
                 .timer().count()).isEqualTo(1);
-        assertThat(registry.find("terraformers.analysis.stage.duration")
+        assertThat(observabilityRegistry().find("terraformers.analysis.stage.duration")
                 .tags("stage", "result_finalize", "outcome", "failure")
                 .timer().count()).isEqualTo(1);
-        assertThat(registry.find("terraformers.analysis.stage.duration")
+        assertThat(observabilityRegistry().find("terraformers.analysis.stage.duration")
                 .tags("stage", "compensation", "outcome", "success")
                 .timer().count()).isEqualTo(1);
-        assertThat(registry.find("terraformers.analysis.stage.failures")
+        assertThat(observabilityRegistry().find("terraformers.analysis.stage.failures")
                 .tags("stage", "result_finalize", "category", "result_finalization")
                 .counter().count()).isEqualTo(1.0);
 
@@ -132,7 +137,6 @@ class AnalysisJobPartialSuccessBaselineTest {
         assertThat(logs)
                 .contains("analysisJobId=" + jobId)
                 .contains("Analysis job failed outcome=failed exceptionCategory=result_finalization")
-                .contains("Compensated stored analysis draft after owned relational finalization failure")
                 .containsSubsequence(
                         "analysis stage outcome=success stage=analysis_execution",
                         "analysis stage outcome=failure stage=result_finalize category=result_finalization",
@@ -142,7 +146,7 @@ class AnalysisJobPartialSuccessBaselineTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void beforeStateFailedCompensationLeavesUntrackedObjectResidue(CapturedOutput output) {
+    void failedCompensationLeavesDurablyAccountedObjectResidue(CapturedOutput output) {
         when(projectArtifactService.registerGeneratedTerraform(
                 anyLong(),
                 anyString(),
@@ -159,31 +163,86 @@ class AnalysisJobPartialSuccessBaselineTest {
         job.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
         job.setStatus(AnalysisJobStatus.PENDING);
         String jobId = repository.saveAndFlush(job).getId();
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
-
-        TestAnalysisJobRunnerFactory.create(orchestrator, stateService, new AnalysisObservability(registry)).run(jobId);
+        TestAnalysisJobRunnerFactory.create(orchestrator, stateService, observability).run(jobId);
 
         AnalysisJobEntity persisted = repository.findById(jobId).orElseThrow();
         ObjectWriteRequest write = objectWriter.writes().get(0);
         assertThat(persisted.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
         assertThat(persisted.getResultFileId()).isNull();
         assertThat(persisted.getResultObjectKey()).isNull();
+        assertThat(persisted.getResultObjectIntentBucket()).isEqualTo(write.bucket());
+        assertThat(persisted.getResultObjectIntentKey()).isEqualTo(write.key());
+        assertThat(persisted.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.PENDING);
         assertThat(objectWriter.removals()).containsExactly(new ObjectReference(write.bucket(), write.key()));
         assertThat(objectWriter.objects()).containsKey(write.bucket() + "/" + write.key());
-        assertThat(registry.find("terraformers.analysis.stage.duration")
+        assertThat(observabilityRegistry().find("terraformers.analysis.stage.duration")
                 .tags("stage", "compensation", "outcome", "failure").timer().count()).isEqualTo(1);
-        assertThat(registry.find("terraformers.analysis.stage.failures")
+        assertThat(observabilityRegistry().find("terraformers.analysis.stage.failures")
                 .tags("stage", "compensation", "category", "other").counter().count()).isEqualTo(1.0);
         assertThat(output.getOut() + output.getErr())
                 .contains("analysisJobId=" + jobId)
                 .contains("analysis stage outcome=failure stage=compensation category=other")
-                .contains("Analysis draft compensation failed cleanupException=IllegalStateException")
                 .doesNotContain(write.bucket())
                 .doesNotContain(write.key());
     }
 
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void persistedThenThrownWriteIsRemovedUsingDurableIntent() {
+        objectWriter.throwAfterWrite();
+        AnalysisJobEntity job = pendingJob(921L, "ambiguous-write");
+        String jobId = repository.saveAndFlush(job).getId();
+
+        TestAnalysisJobRunnerFactory.create(orchestrator, stateService, observability).run(jobId);
+
+        AnalysisJobEntity persisted = repository.findById(jobId).orElseThrow();
+        assertThat(persisted.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+        assertThat(persisted.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.COMPLETED);
+        assertThat(objectWriter.objects()).isEmpty();
+        assertThat(objectWriter.removals()).containsExactly(new ObjectReference(
+                persisted.getResultObjectIntentBucket(), persisted.getResultObjectIntentKey()));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void recoveryDeletesDurablyAccountedResidueWithoutRetryingJob() {
+        when(projectArtifactService.registerGeneratedTerraform(anyLong(), anyString(), any(ObjectWriteResult.class)))
+                .thenThrow(new IllegalStateException("forced relational finalization failure"));
+        objectWriter.failRemovals();
+        AnalysisJobEntity job = pendingJob(931L, "cleanup-recovery");
+        String jobId = repository.saveAndFlush(job).getId();
+        TestAnalysisJobRunnerFactory.create(orchestrator, stateService, observability).run(jobId);
+        objectWriter.allowRemovals();
+
+        assertThat(stateService.recoverPendingCleanup(jobId)).isTrue();
+
+        AnalysisJobEntity recovered = repository.findById(jobId).orElseThrow();
+        assertThat(recovered.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+        assertThat(recovered.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.COMPLETED);
+        assertThat(objectWriter.objects()).isEmpty();
+    }
+
+    private AnalysisJobEntity pendingJob(Long projectId, String correlationId) {
+        AnalysisJobEntity job = new AnalysisJobEntity();
+        job.setProjectId(projectId); job.setSourceFileId(projectId + 1);
+        job.setSourceBucket("source"); job.setSourceKey("source/architecture.png");
+        job.setCorrelationId(correlationId); job.setAnalysisMode(AnalysisMode.INTEGRATED_JAVA);
+        job.setStatus(AnalysisJobStatus.PENDING);
+        return job;
+    }
+
     @TestConfiguration
     static class BaselineConfig {
+
+        @Bean
+        SimpleMeterRegistry meterRegistry() {
+            return new SimpleMeterRegistry();
+        }
+
+        @Bean
+        AnalysisObservability analysisObservability(SimpleMeterRegistry registry) {
+            return new AnalysisObservability(registry);
+        }
 
         @Bean
         AnalysisProvider analysisProvider() {
@@ -224,12 +283,17 @@ class AnalysisJobPartialSuccessBaselineTest {
         }
     }
 
+    private SimpleMeterRegistry observabilityRegistry() {
+        return (SimpleMeterRegistry) org.springframework.test.util.ReflectionTestUtils.getField(observability, "meterRegistry");
+    }
+
     static class CapturingObjectWriter implements ObjectWriter, ObjectRemover {
 
         private final List<ObjectWriteRequest> writes = new ArrayList<>();
         private final List<ObjectReference> removals = new ArrayList<>();
         private final Map<String, String> objects = new LinkedHashMap<>();
         private boolean failRemovals;
+        private boolean throwAfterWrite;
 
         @Override
         public void remove(ObjectReference reference) {
@@ -244,6 +308,9 @@ class AnalysisJobPartialSuccessBaselineTest {
         public ObjectWriteResult writeText(ObjectWriteRequest request) {
             writes.add(request);
             objects.put(request.bucket() + "/" + request.key(), request.content());
+            if (throwAfterWrite) {
+                throw new IllegalStateException("ambiguous object write failure");
+            }
             return new ObjectWriteResult(
                     "capturing-persisted",
                     true,
@@ -269,11 +336,16 @@ class AnalysisJobPartialSuccessBaselineTest {
             failRemovals = true;
         }
 
+        void allowRemovals() { failRemovals = false; }
+
+        void throwAfterWrite() { throwAfterWrite = true; }
+
         void reset() {
             writes.clear();
             removals.clear();
             objects.clear();
             failRemovals = false;
+            throwAfterWrite = false;
         }
     }
 }

@@ -1,19 +1,14 @@
 package com.terraformers.modernization.analysis;
 
 import com.terraformers.modernization.storage.ObjectRemover;
+import com.terraformers.modernization.storage.ObjectReference;
 import com.terraformers.modernization.storage.ObjectWriteRequest;
 import com.terraformers.modernization.storage.ObjectWriteResult;
 import com.terraformers.modernization.storage.ObjectWriter;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AnalysisResultStorage {
-
-    private static final DateTimeFormatter DATE_PATH = DateTimeFormatter.ofPattern("yyyy/MM/dd")
-            .withZone(ZoneOffset.UTC);
 
     private final ObjectWriter objectWriter;
     private final AnalysisRuntimeProperties properties;
@@ -23,27 +18,36 @@ public class AnalysisResultStorage {
         this.properties = properties;
     }
 
-    public void removeStoredDraft(ObjectWriteResult writeResult) {
-        if (writeResult == null || !writeResult.persisted()) {
-            return;
-        }
+    public void removeStoredDraft(ObjectReference reference) {
         if (!(objectWriter instanceof ObjectRemover remover)) {
-            throw new IllegalStateException(
-                    "persistent object writer does not support compensation: " + writeResult.provider()
-            );
+            throw new IllegalStateException("persistent object writer does not support idempotent removal");
         }
-        remover.remove(writeResult.reference());
+        remover.remove(reference);
     }
 
-    public ObjectWriteResult storeTerraformDraft(AnalysisJobEntity job, AnalysisResult result) {
-        String bucket = resolveResultBucket(job);
-        String key = buildResultKey(job);
-        return objectWriter.writeText(new ObjectWriteRequest(
-                bucket,
-                key,
+    public ObjectReference resolveResultObjectReference(AnalysisJobEntity job) {
+        String intentBucket = job.getResultObjectIntentBucket();
+        String intentKey = job.getResultObjectIntentKey();
+        if (intentBucket != null && intentKey != null) {
+            return new ObjectReference(intentBucket, intentKey);
+        }
+        if (intentBucket != null || intentKey != null) {
+            throw new IllegalStateException("analysis result object intent is partially populated");
+        }
+        return new ObjectReference(resolveResultBucket(job), buildResultKey(job));
+    }
+
+    public ObjectWriteResult storeTerraformDraft(ObjectReference reference, AnalysisResult result) {
+        ObjectWriteResult writeResult = objectWriter.writeText(new ObjectWriteRequest(
+                reference.bucket(),
+                reference.key(),
                 result.terraformCode(),
                 "text/plain; charset=utf-8"
         ));
+        if (!reference.bucket().equals(writeResult.bucket()) || !reference.key().equals(writeResult.key())) {
+            throw new IllegalStateException("object writer relocated the requested analysis result");
+        }
+        return writeResult;
     }
 
     private String resolveResultBucket(AnalysisJobEntity job) {
@@ -55,8 +59,7 @@ public class AnalysisResultStorage {
 
     private String buildResultKey(AnalysisJobEntity job) {
         String prefix = normalizePrefix(properties.getResultKeyPrefix());
-        String datePath = DATE_PATH.format(Instant.now());
-        return prefix + "/" + job.getProjectId() + "/" + datePath + "/" + job.getId() + "/main.tf";
+        return prefix + "/" + job.getProjectId() + "/" + job.getId() + "/main.tf";
     }
 
     private String normalizePrefix(String prefix) {

@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -30,6 +32,7 @@ class AnalysisJobStateServiceTest {
     @Autowired AnalysisJobRepository repository;
     @Autowired AnalysisJobStateService stateService;
     @MockBean AnalysisJobOrchestrator orchestrator;
+    @MockBean AnalysisObservability observability;
     private final List<String> committedJobIds = new ArrayList<>();
 
     @AfterEach
@@ -52,10 +55,11 @@ class AnalysisJobStateServiceTest {
         assertThat(reclaimed.getClaimGeneration()).isEqualTo(2);
 
         boolean finalized = stateService.markSucceededOwned(id, 1, NOW.plusSeconds(11),
-                org.mockito.Mockito.mock(AnalysisJobExecution.class));
+                org.mockito.Mockito.mock(AnalysisResult.class),
+                new com.terraformers.modernization.storage.ObjectReference("bucket", "key"));
 
         assertThat(finalized).isFalse();
-        verify(orchestrator, never()).registerGeneratedTerraform(any(), any());
+        verify(orchestrator, never()).storeTerraformDraft(any(), any());
         AnalysisJobEntity current = repository.findById(id).orElseThrow();
         assertThat(current.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
         assertThat(current.getAttemptCount()).isEqualTo(2);
@@ -83,6 +87,40 @@ class AnalysisJobStateServiceTest {
         assertThat(renewed.getLeaseExpiresAt()).isEqualTo(renewedLease);
         assertThat(renewed.getAttemptCount()).isEqualTo(1);
         assertThat(renewed.getClaimGeneration()).isEqualTo(1);
+    }
+
+    @Test
+    void currentOwnerWritesAndFinalizesTheExactDurableIntent() {
+        AnalysisJobEntity job = pendingJob();
+        String id = saveCommitted(job);
+        assertThat(stateService.claimEligible(id, NOW, NOW.plusSeconds(60))).isPresent();
+        String key = "analysis-results/1/" + id + "/main.tf";
+        assertThat(stateService.recordResultObjectIntentOwned(id, 1, NOW, "bucket", key)).isTrue();
+        var reference = new com.terraformers.modernization.storage.ObjectReference("bucket", key);
+        var result = new AnalysisResult("stub", "resource {}", "summary", List.of(), List.of(), List.of(), List.of());
+        var writeResult = new com.terraformers.modernization.storage.ObjectWriteResult(
+                "metadata-only", false, "bucket", key, null);
+        var resultFile = org.mockito.Mockito.mock(
+                com.terraformers.modernization.projectcore.ProjectFileEntity.class);
+        when(resultFile.getFileId()).thenReturn(44L);
+        when(orchestrator.storeTerraformDraft(reference, result)).thenReturn(writeResult);
+        when(orchestrator.registerGeneratedTerraform(1L, result, writeResult)).thenReturn(resultFile);
+        doAnswer(invocation -> {
+            AnalysisJobEntity entity = invocation.getArgument(0);
+            entity.setStatus(AnalysisJobStatus.SUCCEEDED);
+            entity.setResultFileId(44L);
+            entity.setResultObjectKey(key);
+            return null;
+        }).when(orchestrator).markSucceeded(any(), any(), any(), any());
+
+        assertThat(stateService.markSucceededOwned(id, 1, NOW, result, reference)).isTrue();
+
+        AnalysisJobEntity succeeded = repository.findById(id).orElseThrow();
+        assertThat(succeeded.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
+        assertThat(succeeded.getResultFileId()).isEqualTo(44L);
+        assertThat(succeeded.getResultObjectKey()).isEqualTo(key);
+        assertThat(succeeded.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.NOT_REQUIRED);
+        assertThat(succeeded.getLeaseExpiresAt()).isNull();
     }
 
     @Test

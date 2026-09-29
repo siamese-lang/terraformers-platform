@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import java.util.Optional;
+import com.terraformers.modernization.storage.ObjectReference;
+import com.terraformers.modernization.storage.ObjectWriteResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +15,13 @@ public class AnalysisJobStateService {
 
     private final AnalysisJobRepository repository;
     private final AnalysisJobOrchestrator orchestrator;
+    private final AnalysisObservability observability;
 
-    public AnalysisJobStateService(AnalysisJobRepository repository, AnalysisJobOrchestrator orchestrator) {
+    public AnalysisJobStateService(AnalysisJobRepository repository, AnalysisJobOrchestrator orchestrator,
+            AnalysisObservability observability) {
         this.repository = repository;
         this.orchestrator = orchestrator;
+        this.observability = observability;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -30,6 +35,12 @@ public class AnalysisJobStateService {
     public List<String> findEligibleJobIds(Instant now, int batchSize) {
         return repository.findEligibleJobIds(AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, now,
                 PageRequest.of(0, batchSize));
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> findPendingCleanupJobIds(int batchSize) {
+        return repository.findPendingCleanupJobIds(AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, PageRequest.of(0, batchSize));
     }
 
     @Transactional(readOnly = true)
@@ -66,32 +77,68 @@ public class AnalysisJobStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean markResultCleanupCompleted(String jobId, String bucket, String key, Instant now) {
-        return repository.markResultCleanupCompleted(jobId, bucket, key, AnalysisResultCleanupStatus.PENDING,
+    public boolean markResultCleanupCompleted(String jobId, long generation, String bucket, String key, Instant now) {
+        return repository.markResultCleanupCompleted(jobId, generation, bucket, key, AnalysisResultCleanupStatus.PENDING,
                 AnalysisResultCleanupStatus.COMPLETED, now) == 1;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean markSucceededOwned(String jobId, long generation, Instant now, AnalysisJobExecution execution) {
+    public boolean markSucceededOwned(String jobId, long generation, Instant now, AnalysisResult result,
+            ObjectReference reference) {
+        Optional<AnalysisJobEntity> owned = repository.lockOwned(
+                jobId, AnalysisJobStatus.RUNNING, generation, now);
+        if (owned.isEmpty()) {
+            return false;
+        }
+        AnalysisJobEntity entity = owned.get();
+        if (!reference.bucket().equals(entity.getResultObjectIntentBucket())
+                || !reference.key().equals(entity.getResultObjectIntentKey())
+                || entity.getResultCleanupStatus() != AnalysisResultCleanupStatus.PENDING) {
+            throw new IllegalStateException("owned result finalization does not match durable object intent");
+        }
+        boolean cleanupCompleted = false;
         try {
-            Optional<AnalysisJobEntity> owned = repository.lockOwned(
-                    jobId, AnalysisJobStatus.RUNNING, generation, now);
-            if (owned.isEmpty()) {
-                return false;
-            }
-            AnalysisJobEntity entity = owned.get();
+            ObjectWriteResult writeResult = orchestrator.storeTerraformDraft(reference, result);
             orchestrator.markSucceeded(
                     entity,
-                    execution.result(),
-                    execution.writeResult(),
-                    orchestrator.registerGeneratedTerraform(entity.getProjectId(), execution)
+                    result,
+                    writeResult,
+                    orchestrator.registerGeneratedTerraform(entity.getProjectId(), result, writeResult)
             );
+            if (!reference.key().equals(entity.getResultObjectKey())) {
+                throw new IllegalStateException("successful result key does not match durable object intent");
+            }
+            entity.setResultCleanupStatus(AnalysisResultCleanupStatus.NOT_REQUIRED);
             entity.clearLease();
             repository.save(entity);
             repository.flush();
             return true;
         } catch (RuntimeException exception) {
-            throw new AnalysisResultFinalizationException(exception);
+            try {
+                observability.recordStage(AnalysisTelemetryStage.COMPENSATION, () -> {
+                    orchestrator.removeStoredDraft(reference);
+                    return null;
+                });
+                cleanupCompleted = true;
+            } catch (RuntimeException cleanupException) {
+                exception.addSuppressed(cleanupException);
+            }
+            throw new AnalysisResultFinalizationException(exception, reference, cleanupCompleted);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean recoverPendingCleanup(String jobId) {
+        Optional<AnalysisJobEntity> pending = repository.lockPendingCleanup(jobId, AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING);
+        if (pending.isEmpty()) return false;
+        AnalysisJobEntity entity = pending.get();
+        ObjectReference reference = new ObjectReference(entity.getResultObjectIntentBucket(),
+                entity.getResultObjectIntentKey());
+        orchestrator.removeStoredDraft(reference);
+        entity.setResultCleanupStatus(AnalysisResultCleanupStatus.COMPLETED);
+        repository.save(entity);
+        repository.flush();
+        return true;
     }
 }

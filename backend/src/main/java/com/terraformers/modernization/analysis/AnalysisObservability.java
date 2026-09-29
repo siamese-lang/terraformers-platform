@@ -71,6 +71,17 @@ public class AnalysisObservability {
                 .register(meterRegistry).increment();
     }
 
+    public void cleanupOutcome(String outcome) {
+        Counter.builder("terraformers.analysis.cleanup")
+                .tag("outcome", outcome)
+                .register(meterRegistry).increment();
+    }
+
+    public void cleanupScanCandidates(int count) {
+        DistributionSummary.builder("terraformers.analysis.cleanup.scan.candidates")
+                .register(meterRegistry).record(count);
+    }
+
     public void dispatchScanCandidates(int count) {
         DistributionSummary.builder("terraformers.analysis.dispatch.scan.candidates")
                 .register(meterRegistry).record(count);

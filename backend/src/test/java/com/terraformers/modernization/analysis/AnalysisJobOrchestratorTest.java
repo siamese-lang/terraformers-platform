@@ -31,13 +31,13 @@ class AnalysisJobOrchestratorTest {
         AnalysisJobOrchestrator orchestrator = orchestrator(context -> { throw wrappedTimeout; },
                 mock(AnalysisResultStorage.class));
 
-        assertThatThrownBy(() -> orchestrator.executeProviderAndStoreDraft(sampleEntity(100L)))
+        assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(sampleEntity(100L)))
                 .isInstanceOf(AnalysisProviderTimeoutException.class)
                 .hasCause(wrappedTimeout);
     }
 
     @Test
-    void doesNotNormalizeNetworkTimeoutFromResultStorage() {
+    void storageRemainsOutsideProviderBoundary() {
         AnalysisProvider provider = context -> validResult();
         AnalysisResultStorage storage = mock(AnalysisResultStorage.class);
         RuntimeException storageTimeout = new RuntimeException("storage transport",
@@ -45,7 +45,8 @@ class AnalysisJobOrchestratorTest {
         when(storage.storeTerraformDraft(any(), any())).thenThrow(storageTimeout);
         AnalysisJobOrchestrator orchestrator = orchestrator(provider, storage);
 
-        assertThatThrownBy(() -> orchestrator.executeProviderAndStoreDraft(sampleEntity(100L)))
+        assertThatThrownBy(() -> orchestrator.storeTerraformDraft(
+                new com.terraformers.modernization.storage.ObjectReference("bucket", "key"), validResult()))
                 .isSameAs(storageTimeout)
                 .isNotInstanceOf(AnalysisProviderTimeoutException.class);
         verify(storage).storeTerraformDraft(any(), any());
@@ -59,7 +60,7 @@ class AnalysisJobOrchestratorTest {
         AnalysisJobOrchestrator orchestrator = orchestrator(context -> { throw semanticFailure; },
                 mock(AnalysisResultStorage.class));
 
-        assertThatThrownBy(() -> orchestrator.executeProviderAndStoreDraft(sampleEntity(100L)))
+        assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(sampleEntity(100L)))
                 .isSameAs(semanticFailure)
                 .isNotInstanceOf(AnalysisProviderTimeoutException.class);
     }
@@ -95,7 +96,12 @@ class AnalysisJobOrchestratorTest {
 
         AnalysisJobEntity job = sampleEntity(101L);
 
-        orchestrator.run(job);
+        orchestrator.markRunning(job);
+        AnalysisResult result = orchestrator.executeProviderAndValidate(job);
+        var reference = orchestrator.resolveResultObjectReference(job);
+        ObjectWriteResult writeResult = orchestrator.storeTerraformDraft(reference, result);
+        ProjectFileEntity registered = orchestrator.registerGeneratedTerraform(job.getProjectId(), result, writeResult);
+        orchestrator.markSucceeded(job, result, writeResult, registered);
 
         assertThat(job.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
         assertThat(job.getProvider()).isEqualTo("test-provider");
@@ -132,17 +138,11 @@ class AnalysisJobOrchestratorTest {
 
         AnalysisJobEntity job = sampleEntity(102L);
 
-        orchestrator.run(job);
-
-        assertThat(job.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
-        assertThat(job.getFailureReason()).contains("provider failure");
+        assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(job))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("provider failure");
         assertThat(job.getResultFileId()).isNull();
         assertThat(job.getResultObjectKey()).isNull();
         verify(artifactService, never()).registerGeneratedTerraform(anyLong(), anyString(), any(ObjectWriteResult.class));
-        assertThat(progressPublisher.statuses()).containsExactly(
-                AnalysisJobStatus.RUNNING,
-                AnalysisJobStatus.FAILED
-        );
     }
 
     @Test
@@ -169,10 +169,8 @@ class AnalysisJobOrchestratorTest {
 
         AnalysisJobEntity job = sampleEntity(103L);
 
-        orchestrator.run(job);
-
-        assertThat(job.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
-        assertThat(job.getFailureReason()).contains("resource or module");
+        assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(job))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("resource or module");
         assertThat(job.getResultObjectKey()).isNull();
         verify(artifactService, never()).registerGeneratedTerraform(anyLong(), anyString(), any(ObjectWriteResult.class));
     }
@@ -188,7 +186,7 @@ class AnalysisJobOrchestratorTest {
         AnalysisJobOrchestrator orchestrator = new AnalysisJobOrchestrator(
                 provider, mock(ProgressPublisher.class), resultStorage, artifactService, validator);
 
-        assertThatThrownBy(() -> orchestrator.executeProviderAndStoreDraft(sampleEntity(104L)))
+        assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(sampleEntity(104L)))
                 .isSameAs(rejection);
 
         verifyNoInteractions(validator, resultStorage, artifactService);

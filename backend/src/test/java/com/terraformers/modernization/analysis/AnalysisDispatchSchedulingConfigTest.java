@@ -27,7 +27,8 @@ class AnalysisDispatchSchedulingConfigTest {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
         properties.setDispatchEnabled(false);
         ScheduledTaskRegistrar registrar = mock(ScheduledTaskRegistrar.class);
-        new AnalysisDispatchSchedulingConfig(mock(AnalysisJobDispatcher.class), properties,
+        new AnalysisDispatchSchedulingConfig(mock(AnalysisJobDispatcher.class),
+                mock(AnalysisResultCleanupDispatcher.class), properties,
                 mock(TaskScheduler.class)).configureTasks(registrar);
 
         verify(registrar, never()).addFixedDelayTask(any(Runnable.class), any(Duration.class));
@@ -38,7 +39,8 @@ class AnalysisDispatchSchedulingConfigTest {
         properties.setDispatchPollInterval(interval);
         ScheduledTaskRegistrar registrar = mock(ScheduledTaskRegistrar.class);
         TaskScheduler scheduler = mock(TaskScheduler.class);
-        new AnalysisDispatchSchedulingConfig(mock(AnalysisJobDispatcher.class), properties, scheduler)
+        new AnalysisDispatchSchedulingConfig(mock(AnalysisJobDispatcher.class),
+                mock(AnalysisResultCleanupDispatcher.class), properties, scheduler)
                 .configureTasks(registrar);
 
         verify(registrar).setTaskScheduler(scheduler);

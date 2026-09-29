@@ -10,7 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.terraformers.modernization.storage.ObjectWriteResult;
+import com.terraformers.modernization.storage.ObjectReference;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.SocketTimeoutException;
 import java.time.Clock;
@@ -32,15 +32,15 @@ class AnalysisJobRunnerTest {
     void claimsWithLeaseInsideRunAndFinalizesWithAcquiredGeneration() {
         Fixture fixture = fixture();
         AnalysisJobEntity running = runningJob(1, 7);
-        AnalysisJobExecution execution = execution();
+        AnalysisResult result = result();
         when(fixture.state.claimEligible("job-1", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
-        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenReturn(execution);
-        when(fixture.state.markSucceededOwned("job-1", 7, NOW, execution)).thenReturn(true);
+        when(fixture.orchestrator.executeProviderAndValidate(running)).thenReturn(result);
+        when(fixture.state.markSucceededOwned("job-1", 7, NOW, result, new ObjectReference("result-bucket", "analysis/main.tf"))).thenReturn(true);
 
         fixture.runner.run("job-1");
 
         verify(fixture.state).claimEligible("job-1", NOW, NOW.plusSeconds(60));
-        verify(fixture.state).markSucceededOwned("job-1", 7, NOW, execution);
+        verify(fixture.state).markSucceededOwned("job-1", 7, NOW, result, new ObjectReference("result-bucket", "analysis/main.tf"));
         assertThat(fixture.registry.find("terraformers.analysis.claims")
                 .tags("outcome", "initial_claim").counter().count()).isEqualTo(1);
     }
@@ -52,7 +52,7 @@ class AnalysisJobRunnerTest {
 
         fixture.runner.run("job-terminal");
 
-        verify(fixture.orchestrator, never()).executeProviderAndStoreDraft(any());
+        verify(fixture.orchestrator, never()).executeProviderAndValidate(any());
         assertThat(fixture.registry.find("terraformers.analysis.claims")
                 .tags("outcome", "not_claimed").counter().count()).isEqualTo(1);
     }
@@ -63,7 +63,7 @@ class AnalysisJobRunnerTest {
         AnalysisJobEntity running = runningJob(1, 3);
         AtomicInteger invocations = new AtomicInteger();
         when(fixture.state.claimEligible("job-transient", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
-        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenAnswer(ignored -> {
+        when(fixture.orchestrator.executeProviderAndValidate(running)).thenAnswer(ignored -> {
             invocations.incrementAndGet();
             throw new AnalysisProviderTimeoutException(new SocketTimeoutException("temporary timeout"));
         });
@@ -85,7 +85,7 @@ class AnalysisJobRunnerTest {
         Fixture fixture = fixture();
         AnalysisJobEntity running = runningJob(3, 5);
         when(fixture.state.claimEligible("job-exhausted", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
-        when(fixture.orchestrator.executeProviderAndStoreDraft(running))
+        when(fixture.orchestrator.executeProviderAndValidate(running))
                 .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("timeout")));
         when(fixture.state.markFailedOwned("job-exhausted", 5, NOW,
                 AnalysisJobRunner.TIMEOUT_FAILURE_REASON)).thenReturn(true);
@@ -103,7 +103,7 @@ class AnalysisJobRunnerTest {
         Fixture fixture = fixture();
         AnalysisJobEntity running = runningJob(1, 6);
         when(fixture.state.claimEligible("job-stale-retry", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
-        when(fixture.orchestrator.executeProviderAndStoreDraft(running))
+        when(fixture.orchestrator.executeProviderAndValidate(running))
                 .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("timeout")));
         when(fixture.state.scheduleRetryOwned("job-stale-retry", 6, NOW, NOW.plusSeconds(10))).thenReturn(false);
 
@@ -121,7 +121,7 @@ class AnalysisJobRunnerTest {
         AnalysisProviderFailureException failure = new AnalysisProviderFailureException(
                 AnalysisProviderFailureReason.OUTPUT_TRUNCATED, new IllegalStateException("truncated"));
         when(fixture.state.claimEligible("job-semantic", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
-        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenThrow(failure);
+        when(fixture.orchestrator.executeProviderAndValidate(running)).thenThrow(failure);
         when(fixture.state.markFailedOwned("job-semantic", 8, NOW,
                 AnalysisJobRunner.TRUNCATED_FAILURE_REASON)).thenReturn(true);
 
@@ -137,7 +137,7 @@ class AnalysisJobRunnerTest {
         AnalysisJobEntity running = runningJob(1, 10);
         RuntimeException storageFailure = new RuntimeException("storage failed", new SocketTimeoutException("write"));
         when(fixture.state.claimEligible("job-storage", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
-        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenThrow(storageFailure);
+        when(fixture.orchestrator.executeProviderAndValidate(running)).thenThrow(storageFailure);
         when(fixture.state.markFailedOwned("job-storage", 10, NOW,
                 AnalysisJobRunner.TIMEOUT_FAILURE_REASON)).thenReturn(true);
 
@@ -153,14 +153,14 @@ class AnalysisJobRunnerTest {
         AnalysisJobEntity running = runningJob(2, 9);
         when(fixture.state.claimEligible("job-stale", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
         when(fixture.state.renewLease("job-stale", 9, NOW, NOW.plusSeconds(60))).thenReturn(false);
-        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenAnswer(ignored -> {
+        when(fixture.orchestrator.executeProviderAndValidate(running)).thenAnswer(ignored -> {
             fixture.heartbeat.getValue().run();
-            return execution();
+            return result();
         });
 
         fixture.runner.run("job-stale");
 
-        verify(fixture.state, never()).markSucceededOwned(eq("job-stale"), anyLong(), any(), any());
+        verify(fixture.state, never()).markSucceededOwned(eq("job-stale"), anyLong(), any(), any(), any());
         verify(fixture.state, never()).markFailedOwned(eq("job-stale"), anyLong(), any(), any());
         assertThat(fixture.registry.find("terraformers.analysis.lease.renewals")
                 .tags("outcome", "lost").counter().count()).isEqualTo(1);
@@ -170,14 +170,14 @@ class AnalysisJobRunnerTest {
     void heartbeatRenewsSameGenerationWithoutCreatingAnotherAttempt() {
         Fixture fixture = fixture();
         AnalysisJobEntity running = runningJob(1, 4);
-        AnalysisJobExecution execution = execution();
+        AnalysisResult result = result();
         when(fixture.state.claimEligible("job-long", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
         when(fixture.state.renewLease("job-long", 4, NOW, NOW.plusSeconds(60))).thenReturn(true);
-        when(fixture.orchestrator.executeProviderAndStoreDraft(running)).thenAnswer(ignored -> {
+        when(fixture.orchestrator.executeProviderAndValidate(running)).thenAnswer(ignored -> {
             fixture.heartbeat.getValue().run();
-            return execution;
+            return result;
         });
-        when(fixture.state.markSucceededOwned("job-long", 4, NOW, execution)).thenReturn(true);
+        when(fixture.state.markSucceededOwned("job-long", 4, NOW, result, new ObjectReference("result-bucket", "analysis/main.tf"))).thenReturn(true);
 
         fixture.runner.run("job-long");
 
@@ -194,6 +194,9 @@ class AnalysisJobRunnerTest {
         AnalysisJobStateService state = mock(AnalysisJobStateService.class);
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        ObjectReference reference = new ObjectReference("result-bucket", "analysis/main.tf");
+        when(orchestrator.resolveResultObjectReference(any())).thenReturn(reference);
+        when(state.recordResultObjectIntentOwned(any(), anyLong(), any(), any(), any())).thenReturn(true);
         ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
         ScheduledFuture<?> future = mock(ScheduledFuture.class);
         ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
@@ -216,10 +219,8 @@ class AnalysisJobRunnerTest {
         return entity;
     }
 
-    private AnalysisJobExecution execution() {
-        return new AnalysisJobExecution(
-                new AnalysisResult("stub", "resource {}", "summary", List.of(), List.of(), List.of(), List.of()),
-                new ObjectWriteResult("s3", true, "result-bucket", "analysis/main.tf", "etag"));
+    private AnalysisResult result() {
+        return new AnalysisResult("stub", "resource {}", "summary", List.of(), List.of(), List.of(), List.of());
     }
 
     private record Fixture(AnalysisJobOrchestrator orchestrator, AnalysisJobStateService state,

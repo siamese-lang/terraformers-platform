@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
 import com.terraformers.modernization.storage.ObjectWriteResult;
+import com.terraformers.modernization.storage.ObjectReference;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class AnalysisJobDuplicateExecutionBaselineTest {
     @MockBean
     private AnalysisJobOrchestrator orchestrator;
 
+    @MockBean
+    private AnalysisObservability stateObservability;
+
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void duplicateDeliveryDoesNotReexecuteSucceededJobAfterAtomicClaim(CapturedOutput output) {
@@ -53,38 +57,25 @@ class AnalysisJobDuplicateExecutionBaselineTest {
         job.setStatus(AnalysisJobStatus.PENDING);
         String jobId = repository.saveAndFlush(job).getId();
 
-        AnalysisJobExecution execution = new AnalysisJobExecution(
-                new AnalysisResult(
-                        "duplicate-baseline",
-                        "resource \"aws_s3_bucket\" \"duplicate\" {}",
-                        "duplicate baseline",
-                        List.of("S3"),
-                        List.of(),
-                        List.of(),
-                        List.of()
-                ),
-                new ObjectWriteResult(
-                        "metadata-only",
-                        false,
-                        "duplicate-baseline-bucket",
-                        "analysis-results/duplicate/main.tf",
-                        null
-                )
-        );
-        when(orchestrator.executeProviderAndStoreDraft(any(AnalysisJobEntity.class))).thenReturn(execution);
-        when(orchestrator.registerGeneratedTerraform(anyLong(), any(AnalysisJobExecution.class)))
-                .thenReturn(mock(ProjectFileEntity.class));
+        AnalysisResult result = new AnalysisResult(
+                "duplicate-baseline", "resource \"aws_s3_bucket\" \"duplicate\" {}",
+                "duplicate baseline", List.of("S3"), List.of(), List.of(), List.of());
+        ObjectReference reference = new ObjectReference("duplicate-baseline-bucket",
+                "analysis-results/701/" + jobId + "/main.tf");
+        ObjectWriteResult writeResult = new ObjectWriteResult("metadata-only", false,
+                reference.bucket(), reference.key(), null);
+        when(orchestrator.executeProviderAndValidate(any(AnalysisJobEntity.class))).thenReturn(result);
+        when(orchestrator.resolveResultObjectReference(any(AnalysisJobEntity.class))).thenReturn(reference);
+        when(orchestrator.storeTerraformDraft(reference, result)).thenReturn(writeResult);
+        when(orchestrator.registerGeneratedTerraform(anyLong(), any(AnalysisResult.class),
+                any(ObjectWriteResult.class))).thenReturn(mock(ProjectFileEntity.class));
         doAnswer(invocation -> {
             AnalysisJobEntity entity = invocation.getArgument(0);
             entity.setStatus(AnalysisJobStatus.SUCCEEDED);
-            entity.setResultObjectKey(execution.writeResult().key());
+            entity.setResultObjectKey(writeResult.key());
             return null;
-        }).when(orchestrator).markSucceeded(
-                any(AnalysisJobEntity.class),
-                any(AnalysisResult.class),
-                any(ObjectWriteResult.class),
-                any(ProjectFileEntity.class)
-        );
+        }).when(orchestrator).markSucceeded(any(AnalysisJobEntity.class), any(AnalysisResult.class),
+                any(ObjectWriteResult.class), any(ProjectFileEntity.class));
 
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         AnalysisJobRunner runner = TestAnalysisJobRunnerFactory.create(
@@ -100,8 +91,8 @@ class AnalysisJobDuplicateExecutionBaselineTest {
                 .isEqualTo(AnalysisJobStatus.SUCCEEDED);
 
         verify(orchestrator, times(1)).markRunning(any(AnalysisJobEntity.class));
-        verify(orchestrator, times(1)).executeProviderAndStoreDraft(any(AnalysisJobEntity.class));
-        verify(orchestrator, times(1)).registerGeneratedTerraform(anyLong(), any(AnalysisJobExecution.class));
+        verify(orchestrator, times(1)).executeProviderAndValidate(any(AnalysisJobEntity.class));
+        verify(orchestrator, times(1)).registerGeneratedTerraform(anyLong(), any(AnalysisResult.class), any(ObjectWriteResult.class));
         assertThat(registry.find("terraformers.analysis.claims")
                 .tags("outcome", "initial_claim").counter().count()).isEqualTo(1);
         assertThat(registry.find("terraformers.analysis.claims")

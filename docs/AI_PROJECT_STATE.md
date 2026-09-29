@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case A A3 evaluation-only embedding pacing correction (IMPLEMENTED; LIVE RERUN PENDING)**
+- Current single task: **Case A A4 resource-aware retrieval candidate (IMPLEMENTED / LOCAL VALIDATION ONLY)**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -45,12 +45,16 @@ Case A — AI/RAG quality, performance and reliability:
 - A1 measurement readiness and the A2 repeated current baseline are **COMPLETE**; the
   [A2 evidence](evaluation/case-a-retrieval-grounding-a2-baseline.md) reproduces the VPC grounding
   gap `3 / 3` with production retrieval behavior unchanged;
-- root cause and retrieval alternative are **NOT YET SELECTED**. A3 probe readiness is **COMPLETE**;
-  protected run `36592590562` aborted before comparison on Vertex embedding `429 RESOURCE_EXHAUSTED`
-  against the applied `gemini-embedding` quota of 5 requests/minute and produced no comparison
-  artifact. Evaluation-only 13-second pacing is implemented, but the live comparison remains
-  **INCOMPLETE**. The next single task after separate approval is one protected A3 probe rerun. No
-  production AI behavior change or A4 work is authorized.
+- A3 live comparison is **COMPLETE** in run `36600868601` on source
+  `ab1ae4b1db6011b2fe72a7c5a2b3913232d63857`; artifact
+  `case-a-a3-retrieval-probe-36600868601` has digest
+  `sha256:7052c94eac9f00f4d80514f534d5b701ea2f0985493faea487c473e975d51c74`;
+- A3 showed required evidence below the shared global K8 cutoff, not that K24 should be a production
+  context. A4 therefore selects resource-aware acquisition plus bounded deterministic coverage
+  selection and rejects global K24 widening, unfiltered retrieval, relationship-first retrieval,
+  and pure global priority reranking;
+- the A4 candidate is **IMPLEMENTED / LOCAL VALIDATION ONLY** until review and merge. A5 is **NOT
+  RUN**, no production improvement or holdout pass is proven, and Case A remains **OPEN**.
 
 Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim and rollback-safe compensation;
@@ -415,12 +419,10 @@ No remaining M1 work.
 
 ## Immediate next work
 
-After review and merge of the A3 embedding-pacing correction, obtain separate user approval for
-**one protected A3 live fixed-facts retrieval probe rerun** on the existing single target, followed
-by artifact review and idle closure. Run `36592590562` aborted before comparison due to the evidenced
-embedding quota/cadence mismatch and produced no machine-readable comparison artifact. The live
-comparison remains **INCOMPLETE**, no retrieval alternative has been selected, production retrieval
-is **UNCHANGED**, and Case A remains **OPEN**. Do not start A4.
+Independently review the A4 PR and merge only after user approval. After merge, the next single task
+is **A5 same-shape production evaluation** on the existing live target: canonical `N=3`, frozen
+holdout, and before/after comparison. Only then make the Case A closure decision. A5 is **NOT RUN**
+and Case A remains **OPEN**.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query
@@ -478,7 +480,7 @@ Interpret this checkpoint through the [repository working contract](../AGENTS.md
 
 ## Case A A1 measurement-readiness checkpoint
 
-Case A's primary problem remains **retrieval grounding / required-evidence coverage**. A1 measurement readiness is **COMPLETE**; see [Case A Retrieval-Grounding Measurement Readiness](evaluation/case-a-retrieval-grounding-measurement-readiness.md). At A1 closure, production retrieval change was **NOT AUTHORIZED / NOT PERFORMED**, no live GCP evaluation had been executed, and A2 was the next candidate. A2 has since completed; see the A2 checkpoint below. Production retrieval behavior remains unchanged, Case A remains **OPEN**, and the current next candidate is **A3 fixed-facts retrieval alternative comparison / decision**, requiring separate user approval.
+Case A's primary problem remains **retrieval grounding / required-evidence coverage**. A1 measurement readiness is **COMPLETE**; see [Case A Retrieval-Grounding Measurement Readiness](evaluation/case-a-retrieval-grounding-measurement-readiness.md). At A1 closure, production retrieval change was **NOT AUTHORIZED / NOT PERFORMED**, no live GCP evaluation had been executed, and A2 was the next candidate. Those were historical A1 boundaries; A2 and A3 have since completed and the current A4/A5 state is recorded above.
 
 
 ## Case A A2 repeated baseline checkpoint
@@ -486,8 +488,8 @@ Case A's primary problem remains **retrieval grounding / required-evidence cover
 Case A's A2 repeated current baseline is **COMPLETE** on source commit
 `96c6442026f6c57a30a9b248a8af115df1e7f2e4`; see [Case A A2 Repeated Current Baseline
 Evidence](evaluation/case-a-retrieval-grounding-a2-baseline.md). The VPC grounding gap reproduced
-`3 / 3`, production retrieval behavior is **UNCHANGED**, and the historical AOSS `130489 ms` latency
+`3 / 3`, production retrieval behavior at A2 was **UNCHANGED**, and the historical AOSS `130489 ms` latency
 outlier was **NOT reproduced in N=3**. Non-empty VPC resource filters in every run invalidate absent
-filters as an established A2 root cause. Root cause is **NOT YET SELECTED**, vector ranking is not
-proven causal, and Case A remains **OPEN**. The next candidate is **A3 fixed-facts retrieval
-alternative comparison / decision**, requiring separate user approval.
+filters as an established A2 root cause. At that checkpoint vector ranking was not proven causal and
+A3 was the next candidate. A3 has since completed; Case A remains **OPEN** pending A4 review/merge
+and A5 evaluation.

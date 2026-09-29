@@ -2,15 +2,13 @@
 
 ## Status
 
-**A3 PROBE READINESS COMPLETE — FIRST LIVE ATTEMPT ABORTED — LIVE COMPARISON INCOMPLETE — ALTERNATIVE NOT SELECTED**
+**A3 LIVE COMPARISON COMPLETE — A4 IMPLEMENTED / LOCAL VALIDATION ONLY — A5 NOT RUN — CASE A OPEN**
 
-A1 measurement readiness and the A2 repeated current baseline are complete. The A2 evidence is
-recorded in [Case A A2 Repeated Current Baseline Evidence](../../evaluation/case-a-retrieval-grounding-a2-baseline.md).
-Production retrieval behavior remains unchanged, no retrieval alternative or root cause is selected,
-and Case A remains open. Run `36592590562` aborted before comparison on Vertex embedding
-`429 RESOURCE_EXHAUSTED` under the applied 5 requests/minute `gemini-embedding` quota and produced no
-comparison artifact. Evaluation-only 13-second pacing is implemented; one protected A3 live probe
-rerun requires separate user approval.
+A1 measurement readiness, A2 repeated baseline, and A3 protected live comparison are complete. A3
+run `36600868601` used source `ab1ae4b1db6011b2fe72a7c5a2b3913232d63857`; artifact
+`case-a-a3-retrieval-probe-36600868601` has digest
+`sha256:7052c94eac9f00f4d80514f534d5b701ea2f0985493faea487c473e975d51c74`.
+The A4 candidate is implemented with local validation only; it is not merged or live-evaluated.
 
 ## Decision checkpoint
 
@@ -22,7 +20,8 @@ reproduction. A latency-focused change requires a new evidence gate if repeated 
 a material pattern.
 
 This specification freezes the problem, evidence, measurement contract, alternatives, and decision
-boundaries. It does not select a retrieval alternative. Each later stage requires separate user
+boundaries. The A3 evidence and user-approved A4 direction select resource-aware candidate
+acquisition with bounded resource-coverage selection. Each later stage still requires separate user
 approval.
 
 ## Selected problem
@@ -370,8 +369,8 @@ grounding improvement only when explicitly measured and frozen before implementa
    latency/token/quality comparison.
 6. **A6 — Case A integrated closure.**
 
-No stage automatically authorizes the next. A1 and A2 are complete; A3 requires separate user
-approval before any retrieval alternative comparison or decision work begins.
+No stage automatically authorizes the next. A1, A2, and A3 are complete; A4 was separately approved
+and is implemented locally. A5 requires review, user-approved merge, and separate execution.
 
 The existing single target runtime must be reused. Later live work must verify main SHA,
 billing/quota/model access, and absence of a duplicate runtime; activate the protected target; run
@@ -404,27 +403,33 @@ worker; start Case C; or close Case A.
 - The holdout design itself can still encode evaluator bias; frozen expectations and corpus checks
   mitigate but do not eliminate it.
 
-## A3 probe-readiness checkpoint
+## A3 comparison and A4 decision checkpoint
 
-The evaluation-only six-snapshot comparison harness is ready as documented in
-[Case A A3 Fixed-Facts Retrieval Probe Readiness](../../evaluation/case-a-a3-retrieval-probe-readiness.md).
-Production retrieval is **UNCHANGED**. Protected run `36592590562` on source
-`b8c549bd1f80e90c4649f65fa70719ffab93c56f` aborted before comparison on Vertex embedding
-`429 RESOURCE_EXHAUSTED`; the applied `gemini-embedding` quota was 5 requests/minute and no
-machine-readable comparison artifact was produced. The target was subsequently returned to
-Terraform `node_count=0`. Evaluation-only 13-second pacing is implemented, the live comparison is
-still **INCOMPLETE**, no alternative is selected, and Case A remains **OPEN**.
+The completed comparison is documented in [Case A A3 Fixed-Facts Retrieval Probe
+Evidence](../../evaluation/case-a-a3-retrieval-probe-readiness.md). Required VPC evidence was
+available below the current global K8 cutoff: `aws_db_instance` evidence was repeatedly around rank
+12 and `tfref-v2-sg-relations` around rank 8–10. Wider retrieval established candidate availability,
+not K24 as a production solution.
+
+A4 rejects simple global K24 widening, unfiltered retrieval, relationship-first retrieval, and pure
+global priority reranking. The selected candidate gives every distinct query resource type one
+singleton-filtered, final-limit-bounded search opportunity while reusing the single query embedding,
+then deduplicates by document ID and applies bounded deterministic resource-coverage selection.
+Global results remain the fill baseline and remain unchanged when already adequate. The A4 candidate
+is **IMPLEMENTED / LOCAL VALIDATION ONLY**; A5 is **NOT RUN**, improvement is not proven, and Case A
+remains **OPEN**.
 
 ## Immediate next task
 
-After the pacing correction is reviewed and merged, seek separate approval for one protected A3 live
-probe rerun. Hold upstream facts constant and record the frozen comparison artifact without changing
-production retrieval semantics, then return the existing target to idle.
-
-Do not preselect a winner, do not start A4, and do not start Case C.
+Independently review A4 and merge only after user approval. Then run A5 on the existing live target:
+canonical `N=3`, frozen holdout, and same-shape before/after comparison. Only then make the Case A
+closure decision. Do not start A5 before merge and do not start Case C.
 
 ## A1 measurement-readiness checkpoint
 
 A1 is **COMPLETE** as documented in [Case A Retrieval-Grounding Measurement Readiness](../../evaluation/case-a-retrieval-grounding-measurement-readiness.md). The primary problem remains retrieval grounding / required-evidence coverage. Deterministic exact-match scoring, explicit `LOW`/`800`/`8192` provenance, per-run reporting, compatible multi-run aggregation, a fixed-facts evaluation-only probe, and frozen `terraformers-eval-holdout-v1` now make the problem comparable.
 
-At A1 closure, no production retrieval change was authorized or performed and no live GCP evaluation had run; A2 was the next candidate. A2 is now **COMPLETE** as recorded above. Production retrieval behavior remains unchanged, Case A remains **OPEN**, and the current next candidate is **A3 fixed-facts retrieval alternative comparison / decision**, requiring separate user approval.
+At A1 closure, no production retrieval change was authorized or performed and no live GCP
+evaluation had run; A2 was the next candidate. Those were historical A1 boundaries. A2 and A3 are
+now complete, the A4 candidate is implemented with local validation only, and Case A remains open
+pending review/merge and A5 evaluation.

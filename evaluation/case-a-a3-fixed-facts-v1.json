@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "case-a-a3-fixed-facts-v1",
+  "datasetVersion": "terraformers-eval-v1",
+  "snapshots": [
+    {
+      "snapshotId": "vpc-a2-run1", "sourceWorkflowRunId": 36574906125, "caseId": "arch-vpc-three-tier",
+      "facts": {
+        "summary": "AWS VPC three-tier application architecture with an ALB, Application Service, and RDS Database segmented across subnets.",
+        "components": ["Internet", "VPC (10.0.0.0/16)", "Application Load Balancer (public subnets)", "Application Service (private subnets)", "RDS Database (private DB subnets)", "Security Groups"],
+        "relationships": ["Internet forwards traffic to ALB over HTTPS", "ALB forwards traffic to Application Service over HTTP", "Application Service queries RDS Database over SQL", "Security-group rules restrict traffic at each hop"],
+        "resourceTypes": ["aws_vpc", "aws_lb", "aws_subnet", "aws_db_instance", "aws_security_group"]
+      }
+    },
+    {
+      "snapshotId": "vpc-a2-run2", "sourceWorkflowRunId": 36576165161, "caseId": "arch-vpc-three-tier",
+      "facts": {
+        "summary": "A three-tier AWS VPC architecture directing traffic from the Internet to an ALB, then to an Application Service, and finally to an RDS Database.",
+        "components": ["Internet", "Application Load Balancer (public subnets)", "Application Service (private subnets)", "RDS Database (private DB subnets)", "VPC 10.0.0.0/16", "Security groups restricting each hop"],
+        "relationships": ["Internet routes HTTPS to Application Load Balancer", "Application Load Balancer routes HTTP to Application Service", "Application Service communicates SQL to RDS Database", "ALB, App Service, and RDS reside within VPC 10.0.0.0/16"],
+        "resourceTypes": ["aws_vpc", "aws_subnet", "aws_lb", "aws_security_group", "aws_db_instance"]
+      }
+    },
+    {
+      "snapshotId": "vpc-a2-run3", "sourceWorkflowRunId": 36577747809, "caseId": "arch-vpc-three-tier",
+      "facts": {
+        "summary": "A three-tier AWS VPC architecture directing traffic from the Internet through an ALB and Application Service to an RDS Database restricted by security groups.",
+        "components": ["Internet", "Application Load Balancer (public subnets)", "Application Service (private subnets)", "RDS Database (private DB subnets)", "VPC 10.0.0.0/16", "Security-group rules"],
+        "relationships": ["Internet sends HTTPS to Application Load Balancer", "Application Load Balancer sends HTTP to Application Service", "Application Service sends SQL to RDS Database", "ALB, Application Service, and RDS are hosted in VPC"],
+        "resourceTypes": ["aws_vpc", "aws_subnet", "aws_lb", "aws_security_group", "aws_db_instance"]
+      }
+    },
+    {
+      "snapshotId": "cloudfront-a2-run2", "sourceWorkflowRunId": 36576165161, "caseId": "arch-cloudfront-private-alb",
+      "facts": {
+        "summary": "Architecture showing CloudFront as the sole public entry directing traffic to a private ALB origin serving an EKS backend inside a VPC.",
+        "components": ["Users", "CloudFront (public entry)", "Private ALB (origin)", "EKS Service (private backend)", "VPC (no public ALB ingress)"],
+        "relationships": ["Users send HTTPS requests to CloudFront", "CloudFront forwards requests to Private ALB as origin", "Private ALB forwards HTTP requests to EKS Service", "Private ALB and EKS Service reside inside the VPC"],
+        "resourceTypes": ["aws_cloudfront_distribution", "aws_lb", "aws_vpc", "eks_service"]
+      }
+    },
+    {
+      "snapshotId": "aoss-a2-run2", "sourceWorkflowRunId": 36576165161, "caseId": "arch-private-aoss",
+      "facts": {
+        "summary": "Architecture diagram depicting private OpenSearch Serverless vector search access via a VPC Endpoint with reader and ingester separation.",
+        "components": ["Backend Reader (search only)", "OIDC Corpus Ingester (index write)", "VPC Endpoint (private access)", "OpenSearch Serverless VECTORSEARCH", "VPC Boundary"],
+        "relationships": ["Backend Reader sends read requests to VPC Endpoint", "OIDC Corpus Ingester sends write requests to VPC Endpoint", "VPC Endpoint routes private traffic to OpenSearch Serverless"],
+        "resourceTypes": ["VPC", "VPC Endpoint", "OpenSearch Serverless Collection", "Compute / Workload Client"]
+      }
+    },
+    {
+      "snapshotId": "s3-a2-run2", "sourceWorkflowRunId": 36576165161, "caseId": "arch-s3-metadata-split",
+      "facts": {
+        "summary": "Object content and relational metadata split architecture where uploads are decoupled into S3 byte storage and MariaDB metadata.",
+        "components": ["User Upload", "Spring Boot API", "MariaDB", "S3 Bucket"],
+        "relationships": ["User Upload sends upload to Spring Boot API", "Spring Boot API writes metadata to MariaDB", "Spring Boot API writes bytes to S3 Bucket"],
+        "resourceTypes": ["Client", "Application Service", "Relational Database", "Object Storage"]
+      }
+    }
+  ]
+}

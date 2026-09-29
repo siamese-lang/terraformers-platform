@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case A A2 repeated current baseline closure (COMPLETE)**
+- Current single task: **Case A A3 fixed-facts retrieval probe readiness (COMPLETE)**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -45,8 +45,9 @@ Case A — AI/RAG quality, performance and reliability:
 - A1 measurement readiness and the A2 repeated current baseline are **COMPLETE**; the
   [A2 evidence](evaluation/case-a-retrieval-grounding-a2-baseline.md) reproduces the VPC grounding
   gap `3 / 3` with production retrieval behavior unchanged;
-- root cause is **NOT YET SELECTED**. The next candidate, only after separate user approval, is A3
-  fixed-facts retrieval alternative comparison / decision. No production AI behavior change is authorized.
+- root cause and retrieval alternative are **NOT YET SELECTED**. A3 probe readiness is **COMPLETE**,
+  its live comparison is **NOT RUN**, and the next single task after separate approval is one
+  protected A3 probe run. No production AI behavior change or A4 work is authorized.
 
 Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim and rollback-safe compensation;
@@ -411,7 +412,12 @@ No remaining M1 work.
 
 ## Immediate next work
 
-After review and merge of the A2 closure, obtain separate user approval for the bounded **A3
+After review and merge of the A3 probe-readiness change, obtain separate user approval for **one
+protected A3 live fixed-facts retrieval comparison**. The live comparison is currently **NOT RUN**,
+no retrieval alternative has been selected, production retrieval is **UNCHANGED**, and Case A
+remains **OPEN**. Do not start A4.
+
+Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query
 variability from retrieval/ranking behavior without selecting or changing production retrieval
 semantics in advance. Do not start it automatically, do not begin an AI production change, and do

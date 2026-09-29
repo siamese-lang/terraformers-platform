@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case B B5 integrated closure experiment bounded specification**
+- Current single task: **Case B B5 execution / integrated closure**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -72,8 +72,10 @@ Case B — Backend durable asynchronous processing:
   [Case B B4 Result Idempotency and Durable Cleanup Accountability](evaluation/case-b-b4-result-idempotency-cleanup.md);
 - B4 provides deterministic identity, pre-write durable intent, fenced canonical mutation,
   serialized compensation, exact `PENDING` accountability, and bounded cleanup recovery;
-- Case B is not portfolio-closed. B5 integrated closure remains pending; its bounded experiment
-  specification is the immediate next task.
+- B1/B2/B3/B4 are **COMPLETE**. The bounded B5 experiment specification is **READY** in the
+  [Case B Durable Processing plan](plans/active/case-b-durable-processing-implementation.md);
+- Case B is not portfolio-closed. **B5 execution / integrated closure is next**; no B5 execution has
+  occurred in the specification task.
 
 Case C — Cloud runtime capacity and safe delivery:
 - use the existing GKE/Vertex/OpenSearch target runtime as the baseline;
@@ -400,9 +402,11 @@ No remaining M1 work.
 
 ## Immediate next work
 
-Prepare the bounded **Case B B5 integrated closure experiment specification**.
+Execute the approved bounded **Case B B5 integrated closure experiment** by reusing the smallest
+existing deterministic suite and produce `docs/evaluation/case-b-integrated-closure.md`.
 
-Do not implement or execute B5 before independent review and approval. Case B remains open.
+Do not add verification infrastructure or change runtime semantics by default. Case B remains open
+until the 12-row evidence and hard acceptance decision are recorded.
 
 ## Do not revisit
 

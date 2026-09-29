@@ -1,5 +1,7 @@
 package com.terraformers.modernization.analysis;
 
+import com.terraformers.modernization.storage.ObjectReference;
+
 /**
  * Signals a failure inside the relational success-finalization transaction body.
  * The transaction will roll back, so the result object written immediately before it is eligible
@@ -7,7 +9,16 @@ package com.terraformers.modernization.analysis;
  */
 public class AnalysisResultFinalizationException extends RuntimeException {
 
-    public AnalysisResultFinalizationException(RuntimeException cause) {
+    private final ObjectReference reference;
+    private final boolean cleanupCompleted;
+
+    public AnalysisResultFinalizationException(RuntimeException cause, ObjectReference reference,
+            boolean cleanupCompleted) {
         super("analysis result finalization failed", cause);
+        this.reference = reference;
+        this.cleanupCompleted = cleanupCompleted;
     }
+
+    public ObjectReference reference() { return reference; }
+    public boolean cleanupCompleted() { return cleanupCompleted; }
 }

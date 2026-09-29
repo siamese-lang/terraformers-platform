@@ -8,6 +8,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import com.terraformers.modernization.storage.ObjectReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -73,17 +74,28 @@ public class AnalysisJobRunner {
             io.micrometer.core.instrument.Timer.Sample sample = observability.startAnalysis();
             observability.jobStarted();
             log.info("Analysis job execution started");
-            AnalysisJobExecution execution = null;
+            AnalysisResult result = null;
             try {
-                execution = observability.recordStage(AnalysisTelemetryStage.ANALYSIS_EXECUTION,
-                        () -> orchestrator.executeProviderAndStoreDraft(runningJob));
+                result = observability.recordStage(AnalysisTelemetryStage.ANALYSIS_EXECUTION,
+                        () -> orchestrator.executeProviderAndValidate(runningJob));
                 if (leaseLost.get()) {
                     log.warn("Analysis result not finalized because durable ownership was lost generation={}", generation);
                     return;
                 }
-                AnalysisJobExecution completed = execution;
+                ObjectReference reference = orchestrator.resolveResultObjectReference(runningJob);
+                if (!stateService.recordResultObjectIntentOwned(jobId, generation, clock.instant(),
+                        reference.bucket(), reference.key())) {
+                    leaseLost.set(true);
+                    log.warn("Analysis result intent rejected because durable ownership was lost generation={}", generation);
+                    return;
+                }
+                if (leaseLost.get()) {
+                    log.warn("Analysis result not written because durable ownership was lost generation={}", generation);
+                    return;
+                }
+                AnalysisResult completed = result;
                 boolean finalized = observability.recordStage(AnalysisTelemetryStage.RESULT_FINALIZE,
-                        () -> stateService.markSucceededOwned(jobId, generation, clock.instant(), completed));
+                        () -> stateService.markSucceededOwned(jobId, generation, clock.instant(), completed, reference));
                 if (finalized) observability.jobSucceeded();
                 else {
                     leaseLost.set(true);
@@ -94,10 +106,17 @@ public class AnalysisJobRunner {
                     log.warn("Analysis failure not finalized because durable ownership was lost generation={}", generation);
                     return;
                 }
-                if (execution != null && exception instanceof AnalysisResultFinalizationException) {
-                    compensateStoredDraft(execution);
+                if (exception instanceof AnalysisResultFinalizationException finalizationException) {
+                    if (finalizationException.cleanupCompleted()) {
+                        boolean recorded = stateService.markResultCleanupCompleted(jobId, generation,
+                                finalizationException.reference().bucket(), finalizationException.reference().key(),
+                                clock.instant());
+                        observability.cleanupOutcome(recorded ? "immediate_completed" : "immediate_pending");
+                    } else {
+                        observability.cleanupOutcome("immediate_pending");
+                    }
                 }
-                if (execution == null && isRetryable(exception)) {
+                if (result == null && isRetryable(exception)) {
                     if (runningJob.getAttemptCount() < properties.getMaxAttempts()) {
                         Instant now = clock.instant();
                         Instant nextAttemptAt = now.plus(properties.getRetryDelay());
@@ -141,19 +160,6 @@ public class AnalysisJobRunner {
             current = current.getCause();
         }
         return false;
-    }
-
-    private void compensateStoredDraft(AnalysisJobExecution execution) {
-        try {
-            observability.recordStage(AnalysisTelemetryStage.COMPENSATION, () -> {
-                orchestrator.removeStoredDraft(execution.writeResult());
-                return null;
-            });
-            log.warn("Compensated stored analysis draft after owned relational finalization failure");
-        } catch (RuntimeException cleanupException) {
-            log.error("Analysis draft compensation failed cleanupException={}",
-                    cleanupException.getClass().getSimpleName());
-        }
     }
 
     private ScheduledFuture<?> startHeartbeat(String jobId, long generation, AtomicBoolean leaseLost) {

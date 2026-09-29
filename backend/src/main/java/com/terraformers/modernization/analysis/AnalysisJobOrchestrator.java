@@ -3,6 +3,7 @@ package com.terraformers.modernization.analysis;
 import com.terraformers.modernization.projectcore.ProjectArtifactService;
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
 import com.terraformers.modernization.storage.ObjectWriteResult;
+import com.terraformers.modernization.storage.ObjectReference;
 import java.net.SocketTimeoutException;
 import java.net.http.HttpTimeoutException;
 import org.springframework.stereotype.Service;
@@ -30,18 +31,7 @@ public class AnalysisJobOrchestrator {
         this.terraformDraftValidator = terraformDraftValidator;
     }
 
-    public void run(AnalysisJobEntity entity) {
-        try {
-            markRunning(entity);
-            AnalysisJobExecution execution = executeProviderAndStoreDraft(entity);
-            ProjectFileEntity resultFile = registerGeneratedTerraform(entity.getProjectId(), execution);
-            markSucceeded(entity, execution.result(), execution.writeResult(), resultFile);
-        } catch (RuntimeException exception) {
-            markFailed(entity, exception);
-        }
-    }
-
-    public AnalysisJobExecution executeProviderAndStoreDraft(AnalysisJobEntity entity) {
+    public AnalysisResult executeProviderAndValidate(AnalysisJobEntity entity) {
         AnalysisResult result;
         try {
             result = analysisProvider.analyze(toContext(entity));
@@ -59,9 +49,7 @@ public class AnalysisJobOrchestrator {
         if (!validation.valid()) {
             throw new IllegalStateException(validation.reason());
         }
-        AnalysisResult sanitizedResult = result.withTerraformCode(validation.sanitizedContent());
-        ObjectWriteResult writeResult = resultStorage.storeTerraformDraft(entity, sanitizedResult);
-        return new AnalysisJobExecution(sanitizedResult, writeResult);
+        return result.withTerraformCode(validation.sanitizedContent());
     }
 
     private boolean hasStandardNetworkTimeout(Throwable exception) {
@@ -73,15 +61,24 @@ public class AnalysisJobOrchestrator {
         return false;
     }
 
-    public void removeStoredDraft(ObjectWriteResult writeResult) {
-        resultStorage.removeStoredDraft(writeResult);
+    public ObjectReference resolveResultObjectReference(AnalysisJobEntity entity) {
+        return resultStorage.resolveResultObjectReference(entity);
     }
 
-    public ProjectFileEntity registerGeneratedTerraform(Long projectId, AnalysisJobExecution execution) {
+    public ObjectWriteResult storeTerraformDraft(ObjectReference reference, AnalysisResult result) {
+        return resultStorage.storeTerraformDraft(reference, result);
+    }
+
+    public void removeStoredDraft(ObjectReference reference) {
+        resultStorage.removeStoredDraft(reference);
+    }
+
+    public ProjectFileEntity registerGeneratedTerraform(Long projectId, AnalysisResult result,
+            ObjectWriteResult writeResult) {
         return projectArtifactService.registerGeneratedTerraform(
                 projectId,
-                execution.result().terraformCode(),
-                execution.writeResult()
+                result.terraformCode(),
+                writeResult
         );
     }
 

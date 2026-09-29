@@ -3,6 +3,7 @@ package com.terraformers.modernization.analysis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -227,14 +228,60 @@ class AnalysisJobRepositoryTest {
                 "bucket", "key", AnalysisResultCleanupStatus.PENDING)).isZero();
         assertThat(repository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING, 1, NOW,
                 "bucket", "key", AnalysisResultCleanupStatus.PENDING)).isEqualTo(1);
-        assertThat(repository.markResultCleanupCompleted(jobId, "bucket", "different-key",
+        assertThat(repository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING, 1, NOW,
+                "other-bucket", "other-key", AnalysisResultCleanupStatus.PENDING)).isZero();
+        assertThat(repository.markResultCleanupCompleted(jobId, 1, "bucket", "different-key",
                 AnalysisResultCleanupStatus.PENDING, AnalysisResultCleanupStatus.COMPLETED, NOW)).isZero();
-        assertThat(repository.markResultCleanupCompleted(jobId, "bucket", "key",
+        assertThat(repository.markResultCleanupCompleted(jobId, 2, "bucket", "key",
+                AnalysisResultCleanupStatus.PENDING, AnalysisResultCleanupStatus.COMPLETED, NOW)).isZero();
+        assertThat(repository.markResultCleanupCompleted(jobId, 1, "bucket", "key",
                 AnalysisResultCleanupStatus.PENDING, AnalysisResultCleanupStatus.COMPLETED, NOW)).isEqualTo(1);
         AnalysisJobEntity resolved = repository.findById(jobId).orElseThrow();
         assertThat(resolved.getResultObjectIntentBucket()).isEqualTo("bucket");
         assertThat(resolved.getResultObjectIntentKey()).isEqualTo("key");
         assertThat(resolved.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.COMPLETED);
+    }
+
+    @Test
+    void touchingFailedOldestCleanupRotatesLaterPendingWorkIntoBoundedBatch() {
+        AnalysisJobEntity first = savePendingCleanup("cleanup-a", "bucket-a", "key-a");
+        AnalysisJobEntity second = savePendingCleanup("cleanup-b", "bucket-b", "key-b");
+        Instant firstUpdatedAt = repository.findById(first.getId()).orElseThrow().getUpdatedAt();
+        Instant secondUpdatedAt = repository.findById(second.getId()).orElseThrow().getUpdatedAt();
+        Instant deferredAt = (firstUpdatedAt.isAfter(secondUpdatedAt) ? firstUpdatedAt : secondUpdatedAt)
+                .plusSeconds(1)
+                .truncatedTo(ChronoUnit.MILLIS);
+        String selected = repository.findPendingCleanupJobIds(AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, PageRequest.of(0, 1)).get(0);
+        AnalysisJobEntity selectedEntity = repository.findById(selected).orElseThrow();
+        String selectedBucket = selectedEntity.getResultObjectIntentBucket();
+        String selectedKey = selectedEntity.getResultObjectIntentKey();
+        String later = selected.equals(first.getId()) ? second.getId() : first.getId();
+
+        assertThat(repository.touchPendingCleanup(selected, AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, selectedBucket,
+                "different-key", deferredAt)).isZero();
+        assertThat(repository.touchPendingCleanup(selected, AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, selectedBucket,
+                selectedKey, deferredAt)).isEqualTo(1);
+
+        AnalysisJobEntity deferred = repository.findById(selected).orElseThrow();
+        assertThat(deferred.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+        assertThat(deferred.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.PENDING);
+        assertThat(deferred.getResultObjectIntentBucket()).isEqualTo(selectedBucket);
+        assertThat(deferred.getResultObjectIntentKey()).isEqualTo(selectedKey);
+        assertThat(deferred.getUpdatedAt()).isEqualTo(deferredAt);
+        assertThat(repository.findPendingCleanupJobIds(AnalysisJobStatus.FAILED,
+                AnalysisResultCleanupStatus.PENDING, PageRequest.of(0, 1))).containsExactly(later);
+    }
+
+    private AnalysisJobEntity savePendingCleanup(String correlationId, String bucket, String key) {
+        AnalysisJobEntity entity = savePending(correlationId);
+        entity.setStatus(AnalysisJobStatus.FAILED);
+        entity.setResultObjectIntentBucket(bucket);
+        entity.setResultObjectIntentKey(key);
+        entity.setResultCleanupStatus(AnalysisResultCleanupStatus.PENDING);
+        return repository.saveAndFlush(entity);
     }
 
     private AnalysisJobEntity savePending(String correlationId) {

@@ -24,6 +24,15 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
     List<String> findEligibleJobIds(AnalysisJobStatus pending, AnalysisJobStatus running, Instant now,
             Pageable pageable);
 
+    @Query("""
+            select job.id from AnalysisJobEntity job
+             where job.status = :failed and job.resultCleanupStatus = :pendingCleanup
+               and job.resultObjectIntentBucket is not null and job.resultObjectIntentKey is not null
+             order by job.updatedAt asc, job.id asc
+            """)
+    List<String> findPendingCleanupJobIds(AnalysisJobStatus failed,
+            AnalysisResultCleanupStatus pendingCleanup, Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
             update AnalysisJobEntity job
@@ -108,6 +117,8 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
                    job.resultCleanupStatus = :pendingCleanup, job.updatedAt = :now
              where job.id = :jobId and job.status = :running
                and job.claimGeneration = :generation and job.leaseExpiresAt > :now
+               and ((job.resultObjectIntentBucket is null and job.resultObjectIntentKey is null)
+                    or (job.resultObjectIntentBucket = :bucket and job.resultObjectIntentKey = :key))
             """)
     int recordResultObjectIntentOwned(String jobId, AnalysisJobStatus running, long generation, Instant now,
             String bucket, String key, AnalysisResultCleanupStatus pendingCleanup);
@@ -116,9 +127,30 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
     @Query("""
             update AnalysisJobEntity job
                set job.resultCleanupStatus = :completed, job.updatedAt = :now
-             where job.id = :jobId and job.resultCleanupStatus = :pendingCleanup
+             where job.id = :jobId and job.claimGeneration = :generation
+               and job.resultCleanupStatus = :pendingCleanup
                and job.resultObjectIntentBucket = :bucket and job.resultObjectIntentKey = :key
             """)
-    int markResultCleanupCompleted(String jobId, String bucket, String key,
+    int markResultCleanupCompleted(String jobId, long generation, String bucket, String key,
             AnalysisResultCleanupStatus pendingCleanup, AnalysisResultCleanupStatus completed, Instant now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update AnalysisJobEntity job set job.updatedAt = :now
+             where job.id = :jobId and job.status = :failed
+               and job.resultCleanupStatus = :pendingCleanup
+               and job.resultObjectIntentBucket = :bucket and job.resultObjectIntentKey = :key
+            """)
+    int touchPendingCleanup(String jobId, AnalysisJobStatus failed,
+            AnalysisResultCleanupStatus pendingCleanup, String bucket, String key, Instant now);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select job from AnalysisJobEntity job
+             where job.id = :jobId and job.status = :failed
+               and job.resultCleanupStatus = :pendingCleanup
+               and job.resultObjectIntentBucket is not null and job.resultObjectIntentKey is not null
+            """)
+    Optional<AnalysisJobEntity> lockPendingCleanup(String jobId, AnalysisJobStatus failed,
+            AnalysisResultCleanupStatus pendingCleanup);
 }

@@ -6,6 +6,7 @@ import com.terraformers.modernization.analysis.AnalysisJobEntity;
 import com.terraformers.modernization.analysis.AnalysisJobRepository;
 import com.terraformers.modernization.analysis.AnalysisJobStatus;
 import com.terraformers.modernization.analysis.AnalysisMode;
+import com.terraformers.modernization.analysis.AnalysisResultCleanupStatus;
 import com.terraformers.modernization.collaboration.BoardEntity;
 import com.terraformers.modernization.collaboration.BoardRepository;
 import com.terraformers.modernization.collaboration.CommentEntity;
@@ -322,6 +323,19 @@ class MariaDbRepositorySmokeTest {
             assertThat(claimed.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
             assertThat(claimed.getAttemptCount()).isEqualTo(1);
             assertThat(claimed.getClaimGeneration()).isEqualTo(1);
+            assertThat(recordIntentInIndependentTransaction(claimed.getId(), 1, durableNow,
+                    "result-bucket", "result-key")).isEqualTo(1);
+            assertThat(recordIntentInIndependentTransaction(claimed.getId(), 1, durableNow,
+                    "result-bucket", "result-key")).isEqualTo(1);
+            assertThat(recordIntentInIndependentTransaction(claimed.getId(), 1, durableNow,
+                    "other-bucket", "other-key")).isZero();
+            assertThat(markCleanupCompletedInIndependentTransaction(claimed.getId(), 2, durableNow,
+                    "result-bucket", "result-key")).isZero();
+            assertThat(markFailedInIndependentTransaction(claimed.getId(), 1, durableNow,
+                    "cleanup required")).isEqualTo(1);
+            assertThat(analysisJobRepository.findPendingCleanupJobIds(AnalysisJobStatus.FAILED,
+                    AnalysisResultCleanupStatus.PENDING, PageRequest.of(0, 1)))
+                    .containsExactly(claimed.getId());
 
             durableReclaimJob = newClaimJob(project, sourceFile, "repository-smoke-durable-reclaim");
             durableReclaimJob.setStatus(AnalysisJobStatus.RUNNING);
@@ -403,6 +417,27 @@ class MariaDbRepositorySmokeTest {
         assertThat(projectFileRepository.existsById(sourceFile.getFileId())).isFalse();
         assertThat(projectRepository.existsById(project.getProjectId())).isFalse();
         assertThat(userRepository.existsById(owner.getUserId())).isFalse();
+    }
+
+    private int recordIntentInIndependentTransaction(String jobId, long generation, Instant now,
+            String bucket, String key) {
+        return new TransactionTemplate(transactionManager).execute(status ->
+                analysisJobRepository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING,
+                        generation, now, bucket, key, AnalysisResultCleanupStatus.PENDING));
+    }
+
+    private int markCleanupCompletedInIndependentTransaction(String jobId, long generation, Instant now,
+            String bucket, String key) {
+        return new TransactionTemplate(transactionManager).execute(status ->
+                analysisJobRepository.markResultCleanupCompleted(jobId, generation, bucket, key,
+                        AnalysisResultCleanupStatus.PENDING, AnalysisResultCleanupStatus.COMPLETED, now));
+    }
+
+    private int markFailedInIndependentTransaction(String jobId, long generation, Instant now,
+            String failureReason) {
+        return new TransactionTemplate(transactionManager).execute(status ->
+                analysisJobRepository.markFailedOwned(jobId, AnalysisJobStatus.RUNNING,
+                        AnalysisJobStatus.FAILED, generation, now, failureReason));
     }
 
     private void cleanupCreatedRows(

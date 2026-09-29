@@ -16,14 +16,17 @@ public class AnalysisDispatchSchedulingConfig implements SchedulingConfigurer {
 
     private final AnalysisJobDispatcher dispatcher;
     private final AnalysisRuntimeProperties properties;
+    private final AnalysisResultCleanupDispatcher cleanupDispatcher;
     private final TaskScheduler taskScheduler;
 
     public AnalysisDispatchSchedulingConfig(
             AnalysisJobDispatcher dispatcher,
+            AnalysisResultCleanupDispatcher cleanupDispatcher,
             AnalysisRuntimeProperties properties,
             @Qualifier("analysisDispatchTaskScheduler") TaskScheduler analysisDispatchTaskScheduler
     ) {
         this.dispatcher = dispatcher;
+        this.cleanupDispatcher = cleanupDispatcher;
         this.properties = properties;
         this.taskScheduler = analysisDispatchTaskScheduler;
     }
@@ -32,7 +35,10 @@ public class AnalysisDispatchSchedulingConfig implements SchedulingConfigurer {
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         taskRegistrar.setTaskScheduler(taskScheduler);
         if (properties.isDispatchEnabled()) {
-            taskRegistrar.addFixedDelayTask(dispatcher::dispatchEligible, properties.getDispatchPollInterval());
+            taskRegistrar.addFixedDelayTask(() -> {
+                dispatcher.dispatchEligible();
+                cleanupDispatcher.dispatchPending();
+            }, properties.getDispatchPollInterval());
         }
     }
 

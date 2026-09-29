@@ -90,8 +90,9 @@ class CaseAAlternativeProbeTest {
         assertThat(requestStarts).hasSize(12);
         assertThat(requestStarts.get(0)).isZero();
         assertThat(java.util.stream.IntStream.range(1, requestStarts.size())
-                .mapToLong(i -> requestStarts.get(i) - requestStarts.get(i - 1)))
-                .allMatch(elapsed -> elapsed >= interval).isTrue();
+                .mapToLong(i -> requestStarts.get(i) - requestStarts.get(i - 1))
+                .allMatch(elapsed -> elapsed >= interval))
+                .isTrue();
         assertThat(requestStarts.get(2) - requestStarts.get(1)).isEqualTo(interval);
 
         for (int snapshot = 0; snapshot < 6; snapshot++) {

@@ -2,12 +2,15 @@
 
 ## Status
 
-**A3 PROBE READINESS COMPLETE — LIVE COMPARISON NOT RUN — ALTERNATIVE NOT SELECTED**
+**A3 PROBE READINESS COMPLETE — FIRST LIVE ATTEMPT ABORTED — LIVE COMPARISON INCOMPLETE — ALTERNATIVE NOT SELECTED**
 
 A1 measurement readiness and the A2 repeated current baseline are complete. The A2 evidence is
 recorded in [Case A A2 Repeated Current Baseline Evidence](../../evaluation/case-a-retrieval-grounding-a2-baseline.md).
 Production retrieval behavior remains unchanged, no retrieval alternative or root cause is selected,
-and Case A remains open. One protected A3 live probe run requires separate user approval.
+and Case A remains open. Run `36592590562` aborted before comparison on Vertex embedding
+`429 RESOURCE_EXHAUSTED` under the applied 5 requests/minute `gemini-embedding` quota and produced no
+comparison artifact. Evaluation-only 13-second pacing is implemented; one protected A3 live probe
+rerun requires separate user approval.
 
 ## Decision checkpoint
 
@@ -405,14 +408,18 @@ worker; start Case C; or close Case A.
 
 The evaluation-only six-snapshot comparison harness is ready as documented in
 [Case A A3 Fixed-Facts Retrieval Probe Readiness](../../evaluation/case-a-a3-retrieval-probe-readiness.md).
-Production retrieval is **UNCHANGED**, the live comparison is **NOT RUN**, no alternative is selected,
-and Case A remains **OPEN**.
+Production retrieval is **UNCHANGED**. Protected run `36592590562` on source
+`b8c549bd1f80e90c4649f65fa70719ffab93c56f` aborted before comparison on Vertex embedding
+`429 RESOURCE_EXHAUSTED`; the applied `gemini-embedding` quota was 5 requests/minute and no
+machine-readable comparison artifact was produced. The target was subsequently returned to
+Terraform `node_count=0`. Evaluation-only 13-second pacing is implemented, the live comparison is
+still **INCOMPLETE**, no alternative is selected, and Case A remains **OPEN**.
 
 ## Immediate next task
 
-After this readiness change is reviewed and merged, seek separate approval for one protected A3 live
-probe run. Hold upstream facts constant and record the frozen comparison artifact without changing
-production retrieval semantics.
+After the pacing correction is reviewed and merged, seek separate approval for one protected A3 live
+probe rerun. Hold upstream facts constant and record the frozen comparison artifact without changing
+production retrieval semantics, then return the existing target to idle.
 
 Do not preselect a winner, do not start A4, and do not start Case C.
 

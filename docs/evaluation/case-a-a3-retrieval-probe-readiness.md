@@ -2,8 +2,33 @@
 
 ## Status
 
-**A3 probe readiness = COMPLETE. A3 live comparison = NOT RUN.** Production retrieval is
-**UNCHANGED**, no retrieval alternative is selected, and Case A remains **OPEN**.
+**A3 probe readiness = COMPLETE. The first protected live attempt aborted before comparison, and
+the A3 live comparison remains INCOMPLETE.** Evaluation-only embedding pacing is implemented;
+production retrieval is **UNCHANGED**, no retrieval alternative is selected, Case A remains
+**OPEN**, and A4 is not authorized.
+
+## First protected live attempt and pacing correction
+
+Protected workflow run `36592590562` used source commit
+`b8c549bd1f80e90c4649f65fa70719ffab93c56f`. GKE/OpenSearch substrate checks, ephemeral evaluation
+pod startup, and bundle transfer succeeded. The probe then aborted in
+`VertexEmbeddingProvider.embed` via `CaseAAlternativeProbeRunner.checkedEmbedding` with Vertex
+embedding `429 RESOURCE_EXHAUSTED` before the retrieval-strategy comparison completed. No
+machine-readable A3 comparison artifact was produced, so the retrieval alternative result is
+**NOT OBSERVED**.
+
+The subsequently queried project quota for project `terraformers-platform` (project number
+`21647422237`) showed `gemini-embedding = 5 requests/minute`, refreshed per minute, with quota
+increase eligibility `NOT_ENOUGH_USAGE_HISTORY`. The unchanged six-snapshot experiment makes two
+embedding calls per snapshot, or exactly 12 unpaced requests. This is evidence of an evaluation
+harness quota/cadence mismatch, not retrieval-strategy, OpenSearch, GKE, or production retrieval
+failure. The separate `gemini-embedding-2` quota is outside the frozen experiment.
+
+The evaluation-only launcher now spaces embedding request starts by at least 13 seconds across the
+entire probe, without delaying the first request, changing/caching vectors, or adding 429 retry or
+backoff. The frozen `gemini-embedding-001` model, 1024 dimensions, corpus, provider version,
+strategies, K values, fixture, and expectations remain unchanged. After the failed attempt, the
+target was returned to Terraform `node_count=0`.
 
 ## Evidence and fixed inputs
 
@@ -39,6 +64,7 @@ latency, context characters, and complexity. Equivalent quality prefers selected
 simpler approach. A K24 diagnostic alone cannot authorize production K24, and a single VPC pass is
 insufficient.
 
-Live execution has not occurred. The immediate next single task, after review and merge, is one
-separately approved protected A3 live probe run against the existing target. A3 itself is not
-complete, A4 is not authorized, and production retrieval remains unchanged.
+The first live attempt did not complete the comparison. The immediate next single task, after review
+and merge, is one separately approved protected A3 live probe rerun against the existing single
+target, followed by artifact review and idle closure. A3 itself is not complete, A4 is not
+authorized, and production retrieval remains unchanged.

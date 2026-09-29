@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case A A3 fixed-facts retrieval probe readiness (COMPLETE)**
+- Current single task: **Case A A3 evaluation-only embedding pacing correction (IMPLEMENTED; LIVE RERUN PENDING)**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -45,9 +45,12 @@ Case A — AI/RAG quality, performance and reliability:
 - A1 measurement readiness and the A2 repeated current baseline are **COMPLETE**; the
   [A2 evidence](evaluation/case-a-retrieval-grounding-a2-baseline.md) reproduces the VPC grounding
   gap `3 / 3` with production retrieval behavior unchanged;
-- root cause and retrieval alternative are **NOT YET SELECTED**. A3 probe readiness is **COMPLETE**,
-  its live comparison is **NOT RUN**, and the next single task after separate approval is one
-  protected A3 probe run. No production AI behavior change or A4 work is authorized.
+- root cause and retrieval alternative are **NOT YET SELECTED**. A3 probe readiness is **COMPLETE**;
+  protected run `36592590562` aborted before comparison on Vertex embedding `429 RESOURCE_EXHAUSTED`
+  against the applied `gemini-embedding` quota of 5 requests/minute and produced no comparison
+  artifact. Evaluation-only 13-second pacing is implemented, but the live comparison remains
+  **INCOMPLETE**. The next single task after separate approval is one protected A3 probe rerun. No
+  production AI behavior change or A4 work is authorized.
 
 Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim and rollback-safe compensation;
@@ -412,10 +415,12 @@ No remaining M1 work.
 
 ## Immediate next work
 
-After review and merge of the A3 probe-readiness change, obtain separate user approval for **one
-protected A3 live fixed-facts retrieval comparison**. The live comparison is currently **NOT RUN**,
-no retrieval alternative has been selected, production retrieval is **UNCHANGED**, and Case A
-remains **OPEN**. Do not start A4.
+After review and merge of the A3 embedding-pacing correction, obtain separate user approval for
+**one protected A3 live fixed-facts retrieval probe rerun** on the existing single target, followed
+by artifact review and idle closure. Run `36592590562` aborted before comparison due to the evidenced
+embedding quota/cadence mismatch and produced no machine-readable comparison artifact. The live
+comparison remains **INCOMPLETE**, no retrieval alternative has been selected, production retrieval
+is **UNCHANGED**, and Case A remains **OPEN**. Do not start A4.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query

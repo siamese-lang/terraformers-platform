@@ -12,6 +12,7 @@ import com.terraformers.modernization.reference.opensearch.OpenSearchKnnQueryBui
 import com.terraformers.modernization.reference.opensearch.OpenSearchResponseParser;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 
 /** Spring-free launcher for exactly one A3 six-snapshot comparison. */
 public final class CaseAAlternativeProbeLauncher {
@@ -43,7 +44,8 @@ public final class CaseAAlternativeProbeLauncher {
                 .vertexAI(true).httpOptions(HttpOptions.builder().apiVersion("v1").build()).build();
         CaseAAlternativeProbeRunner runner = new CaseAAlternativeProbeRunner(new VertexEmbeddingProvider(client, vertex),
                 new OpenSearchKnnQueryBuilder(mapper), new HttpOpenSearchTransport(), new OpenSearchResponseParser(mapper),
-                analysis, new RetrievalQueryTextBuilder(), dataset.cases());
+                analysis, new RetrievalQueryTextBuilder(), dataset.cases(),
+                CaseAAlternativeProbeRunner.EmbeddingRequestPacer.paced(Duration.ofSeconds(13)));
         CaseAAlternativeProbeReport report = runner.run(fixture, required("SOURCE_COMMIT"),
                 required("VERTEX_EMBEDDING_MODEL_ID"));
         Files.createDirectories(outputPath.toAbsolutePath().getParent());

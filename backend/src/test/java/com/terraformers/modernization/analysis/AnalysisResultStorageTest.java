@@ -85,7 +85,6 @@ class AnalysisResultStorageTest {
                 .isEqualTo(new ObjectReference("original-bucket", "original-prefix/103/job/main.tf"));
     }
 
-
     @Test
     void sameLogicalJobKeepsCanonicalIdentityWhenRetryTimingCrossesUtcDateBoundary() {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();

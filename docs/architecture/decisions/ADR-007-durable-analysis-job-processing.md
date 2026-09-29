@@ -215,33 +215,25 @@ The current result-storage shape remains valid:
 
 No message broker is required for result delivery to the UI.
 
-However durable re-execution requires stronger result idempotency:
+B4 implements stronger result idempotency. The canonical key is deterministic per project/job
+(`{normalized-result-prefix}/{projectId}/{analysisJobId}/main.tf`); the historical pre-B4
+`Instant.now()` date path is gone. Recorded intent freezes the exact bucket/key across later
+configuration changes.
 
-1. one logical job must have a deterministic result-object identity;
-2. retry/reclaim must not create an unbounded sequence of object keys;
-3. only the current fenced owner may make the job/result terminally visible;
-4. stale workers must not overwrite a newer finalized result.
-
-The current result key uses `Instant.now()` for the date path. A bounded implementation must make
-same-job retries resolve to the same logical result identity, for example by deriving the date/path
-from immutable job creation identity rather than attempt time.
+The current fenced owner records durable intent as cleanup `PENDING` before external persistence and
+holds the `AnalysisJob` owned row lock for canonical object mutation and relational finalization.
+Stale ownership therefore cannot perform the canonical write or finalize over a newer generation.
+This is effectively-once logical finalization, not exactly-once provider invocation.
 
 ## Cross-resource cleanup contract
 
-Immediate compensation remains useful, but cleanup failure must not become silent residue.
-
-If an object may exist while relational finalization did not complete, MariaDB must retain enough
-durable information to answer:
-
-- which object may exist;
-- whether cleanup is required;
-- whether cleanup succeeded or remains pending;
-- whether terminal job state is safe to expose.
-
-A separate message broker, cleanup microservice, or outbox is not required by this ADR.
-
-The minimum design should keep accountability in the AnalysisJob lifecycle unless evidence shows
-that a separate component is necessary.
+Immediate compensation remains an external side effect but runs inside the same owned-row-lock
+window. Successful removal is followed by separate generation/reference-fenced `COMPLETED`
+bookkeeping; failed compensation retains exact intent with `PENDING` accountability. The existing
+application scheduler and bounded executor recover accountable failed jobs using idempotent removal.
+Accountable removal failures are deferred by advancing `updated_at`; no broker, outbox, cleanup
+service, or extra deployment was added. MariaDB remains the durable source of truth. See the
+[B4 evidence](../../evaluation/case-b-b4-result-idempotency-cleanup.md).
 
 ## Before/after acceptance contract
 
@@ -315,7 +307,7 @@ For bounded implementation:
 - polling creates database read/write load that must be measured in Case C;
 - lease/retry/fencing state increases lifecycle complexity;
 - retry cannot guarantee exactly-once external provider invocation;
-- cross-resource object consistency still requires explicit accountability.
+- cross-resource object consistency remains non-atomic with MariaDB and relies on implemented durable intent/cleanup accountability.
 
 The goal is **effectively-once logical finalization**, not a false claim of exactly-once execution.
 

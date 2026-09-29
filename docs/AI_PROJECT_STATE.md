@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case B B4 result idempotency and durable cleanup accountability bounded implementation specification**
+- Current single task: **Case B B5 integrated closure experiment bounded specification**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -67,11 +67,13 @@ Case B — Backend durable asynchronous processing:
 - automatic provider retry is enabled only for the approved timeout signal; another retry is
   scheduled only while current `attempt_count < 3`, with a fixed `10s` delay durably represented by
   MariaDB `next_attempt_at`; B2 expired-lease reclaim is not capped by that scheduling threshold;
-- semantic provider failures and post-provider side-effect failures remain terminal; B4 deterministic
-  result identity, object accountability, and cleanup execution remain unresolved, and B5 integrated
-  closure remains pending;
-- production implementation must continue one bounded stage at a time; the immediate next task is the
-  B4 bounded implementation specification, not B4/B5 combined implementation.
+- B4 is complete in PR #103 / merge `90c47cb9c0fcdbe75258ed2ac4613cb1625a5463`, with evidence in
+  [Case B B4 Result Idempotency and Durable Cleanup Accountability Evidence](evaluation/case-b-b4-result-idempotency-cleanup.md);
+- B4 now provides deterministic project/job result identity, pre-write durable intent, canonical
+  mutation under the fenced owned row lock, serialized compensation, exact `PENDING` accountability,
+  and bounded cleanup recovery; semantic provider failures and post-provider failures remain terminal;
+- Case B is not portfolio-closed. B5 integrated closure remains pending, and the immediate next task
+  is its bounded experiment specification, not implementation or execution.
 
 Case C — Cloud runtime capacity and safe delivery:
 - use the existing GKE/Vertex/OpenSearch target runtime as the baseline;
@@ -398,20 +400,10 @@ No remaining M1 work.
 
 ## Immediate next work
 
-M4 is active under
-`docs/plans/active/M4-ai-targeted-improvement.md`.
+Prepare the bounded **Case B B5 integrated closure experiment specification**.
 
-The canonical before-state remains M3 baseline run `36379633596` with configuration fingerprint
-`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
-
-M4-2 is complete and the canonical target node pool is idle at `node_count=0`. M4-3 now has a
-deterministic low-thinking fact-extraction change pending merge and live validation. After CI/merge,
-reactivate one node only long enough to rerun `arch-vpc-three-tier` once under the unchanged fixed
-dataset/configuration, preserve the trace, and immediately idle again.
-
-Do not add generic retry/backoff: no 429/5xx/capacity failure was captured in M4-2. Preserve the fixed
-dataset, model IDs, corpus/index, top-K, vector dimension, validator, and production Java path unless
-new evidence passes ADR-004.
+Do not implement or execute B5 until that bounded specification is independently reviewed and
+approved. Case B remains open until B5 validates the integrated failure matrix.
 
 ## Do not revisit
 

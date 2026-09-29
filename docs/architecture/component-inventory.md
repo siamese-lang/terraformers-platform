@@ -25,7 +25,7 @@
 
 | Actual path | Current role | Decision | Decision rationale | Expected target state | Future validation |
 |---|---|---|---|---|---|
-| `backend/src/main/java/com/terraformers/modernization/analysis/` | upload 접수, DB job 생성/조회, MariaDB eligibility와 lease/fencing 기반 dispatch/recovery, selective bounded retry, provider 호출, result object/file 저장, compensation, progress/telemetry | **MODIFY — ADR-007 / B1/B2/B3 COMPLETE** | PR #94가 restart/no-retry/cleanup-residue/duplicate/concurrent-claim before-state를 측정했고 ADR-007이 MariaDB durable ownership을 선택했다. B1은 durable state/fencing, B2는 dispatcher/recovery, B3는 timeout-only bounded retry를 구현했다. MariaDB eligibility, lease/fencing, `next_attempt_at`이 active durable execution/retry contract이며 executor는 bounded local concurrency만 담당한다. | B4 deterministic result identity/fenced finalization+cleanup accountability execution을 구현한 뒤 B5 integrated closure로 진행 | B4 result identity/cleanup safety evidence와 B5 same-scenario integrated failure matrix; Case B는 아직 complete가 아님 |
+| `backend/src/main/java/com/terraformers/modernization/analysis/` | upload 접수, DB job 생성/조회, MariaDB eligibility와 lease/fencing 기반 dispatch/recovery, selective bounded retry, provider 호출, deterministic canonical result 저장, durable intent, fenced finalization/compensation, cleanup accountability/recovery, progress/telemetry | **MODIFY — ADR-007 / B1/B2/B3/B4 COMPLETE** | PR #94가 before-state를 측정했고 ADR-007이 MariaDB durable ownership을 선택했다. B1/B2/B3는 durable state, fencing, recovery, timeout-only retry를 구현했고 B4는 deterministic identity, pre-write durable intent, owned-row-lock object finalization, compensation accountability와 bounded cleanup recovery를 구현했다. MariaDB가 durable source이며 executor는 bounded local concurrency만 담당한다. | B5 integrated closure | B5 same-scenario integrated failure matrix; Case B는 아직 portfolio-closed가 아님 |
 | `backend/src/main/java/com/terraformers/modernization/analysis/ProgressPublisher.java`, `LoggingProgressPublisher.java`, `SqsProgressPublisher.java` | progress port와 local logging/AWS SQS adapter | **MODIFY** | core는 port에 의존하지만 SQS는 AWS-specific adapter이다. 삭제나 broker 교체 근거는 없다. | port/event 계약은 유지하고 SQS 구성은 배포 adapter로 격리; 기본은 logging publisher | publisher contract test와 enabled/disabled profile startup; 실제 SQS delivery/consumer 존재 여부는 **UNKNOWN/TBD** |
 
 ### 3. AI / RAG provider
@@ -56,7 +56,7 @@
 |---|---|---|---|---|---|
 | `ObjectReader.java`, `ObjectWriter.java`, `ObjectRemover.java`, `ObjectReference.java`, `ObjectContent.java`, `ObjectMetadata.java` | object read/write/remove의 provider-neutral ports와 value objects | **KEEP** | application core와 cloud storage를 분리하는 재사용 가능한 경계이며 M6 partial-success compensation도 이 boundary를 사용한다. | upload/source/result services와 compensation이 provider-neutral storage contract에 의존 | reader/writer/remover contract tests 및 content-type/size/metadata validation |
 | `backend/src/main/java/com/terraformers/modernization/storage/AwsS3ObjectReader.java`, `AwsS3ObjectWriter.java`, `StubObjectReader.java`, `StubObjectWriter.java` | 조건부 S3 adapter와 local stub | **MODIFY** | S3 구현은 AWS-specific이나 stub과 interface로 격리되어 있다. 삭제/대체 근거는 없다. | S3 adapter는 historical compatibility/reference로 보존하고 core model과 분리 | stub tests, `scripts/checks/s3-writer-production-validation.sh`, 실제 bucket IAM/read-write smoke |
-| `UploadObjectStorageService.java`, `SourceObjectReaderService.java`, `AnalysisResultStorage.java` | upload key 생성, source read authorization, result object/project-file metadata 저장 및 M6 compensation 경로와 연계 | **KEEP / REASSESS FAILURE SEMANTICS** | storage port 사용은 유지할 가치가 있으나 object write 이후 DB finalization failure와 cleanup-failure semantics는 Case B의 durable processing 설계와 함께 재평가해야 한다. | key/metadata/ownership 계약 유지; cross-resource partial success는 selected durability design과 일관된 recovery semantics로 정리 | M5-3 same-scenario test, compensation failure/residue accountability 검증 |
+| `UploadObjectStorageService.java`, `SourceObjectReaderService.java`, `AnalysisResultStorage.java` | upload key 생성, source read authorization, deterministic result object/project-file metadata 저장 및 compensation 경로 | **KEEP / B4 ACCOUNTABILITY IMPLEMENTED** | B4가 canonical project/job key, pre-write durable intent, fenced finalization, exact `PENDING` residue accountability와 bounded cleanup recovery를 구현했다. Provider-neutral storage port와 idempotent removal contract를 유지한다. | key/metadata/ownership 계약과 AnalysisJob-owned intent/cleanup 상태 유지 | B5 integrated same-scenario object/finalization/cleanup matrix |
 
 ### 7. Authentication
 
@@ -152,7 +152,7 @@ NEW gap이 아니다.
 
 | Item | Current evidence / basis | Decision | Decision rationale | Expected target state | Future validation |
 |---|---|---|---|---|---|
-| Backend reliability decision depth | ADR-007; Case B B1 durable state/fencing, B2 dispatcher/recovery, and B3 selective retry evidence | **IMPLEMENTING / CASE B IN PROGRESS** | ADR-007이 MariaDB durable ownership architecture를 선택했고 B1/B2/B3가 durable state, fencing, dispatch, restart recovery, selective bounded retry를 구현했다. Cross-resource safety와 integrated portfolio evidence가 남아 있다. | B4 deterministic result identity/cleanup safety → B5 integrated closure | B4 result/cleanup safety + B5 same-scenario integrated before/after evidence |
+| Backend reliability decision depth | ADR-007; Case B B1 durable state/fencing, B2 dispatcher/recovery, B3 selective retry, and B4 result/cleanup evidence | **IMPLEMENTING / CASE B IN PROGRESS** | ADR-007이 MariaDB durable ownership architecture를 선택했고 B1/B2/B3/B4가 durable state, fencing, dispatch, restart recovery, selective bounded retry, deterministic identity, fenced object finalization, cleanup accountability/recovery를 구현했다. B5 integrated portfolio evidence가 남아 있다. | B5 integrated closure | B5 same-scenario integrated before/after evidence |
 | GCP runtime/IaC | `infra/terraform/envs/gcp-target-runtime/`, `infra/kubernetes/overlays/gcp-target/`, Vertex/OpenSearch target adapters | **IMPLEMENTED / REUSED TARGET RUNTIME** | 동일 GKE Standard + Workload Identity + Vertex AI + in-cluster OpenSearch runtime이 M3 live baseline과 M4 targeted evaluation에 실제 사용되었고, latest accepted M4 closure evidence에서 target node pool을 `node_count=0`으로 반환했다. | 동일 target IaC/runtime을 approved later cases와 M9 closure까지 재사용; 별도 evaluation cloud 금지 | 필요 시 fresh quota/billing/model-access 확인 후 same-runtime activate→evidence→idle; 새 환경 생성 금지 |
 | Batch-ingestion transport portability | `scripts/rag/ingest-corpus.py`, `tests/rag/` | **NEW** | runtime query transport/auth는 M1에서 provider-neutral `OpenSearchTransport` boundary로 분리되었지만 corpus ingestion은 여전히 boto3/S3 receipt/AWS4Auth/AOSS/Bedrock embedding에 결합되어 있다. | versioned corpus/index contract를 유지하면서 target runtime의 embedding/index/auth path로 재사용 가능한 ingestion implementation | deterministic corpus contract, target endpoint ingestion/query smoke, embedding dimension/version consistency |
 | Observability depth for representative cases | `AnalysisObservability.java`, `AnalysisLogCorrelation.java`, stage telemetry from PR #88 | **PAUSED / SUPPORTING CASES** | metrics, job-correlation logs, bounded stage telemetry가 이미 존재한다. 독립적인 tracing stack 도입 자체는 목표가 아니며 M7은 reassessment 동안 paused다. | Case A/B의 실제 RCA에 필요한 최소 signal만 추가하고 별도 observability project로 확장하지 않음 | approved failure scenario에서 metric/log/stage correlation로 cause→result→recovery 설명 가능 여부 |
@@ -162,7 +162,7 @@ NEW gap이 아니다.
 ### KEEP 핵심 자산
 
 1. `projectcore`, `project`, `identity`, `projectcomment`, `projecttree`의 domain/business flow와 JPA model.
-2. AnalysisJob의 domain/status/ownership contract와 `AnalysisProvider`/`ReferenceRetriever`/`EmbeddingProvider`/object storage ports는 KEEP한다. MariaDB durable eligibility, lease/fencing, `next_attempt_at` retry scheduling이 active restart/durability contract이며 executor는 durable delivery source가 아닌 bounded local concurrency pool이다. B4 cross-resource result/cleanup safety와 B5 integrated closure가 아직 남아 있다.
+2. AnalysisJob의 domain/status/ownership contract와 `AnalysisProvider`/`ReferenceRetriever`/`EmbeddingProvider`/object storage ports는 KEEP한다. MariaDB durable eligibility, lease/fencing, `next_attempt_at` retry scheduling, deterministic canonical result identity, durable intent와 cleanup status가 active durability contract이며 executor는 durable delivery source가 아닌 bounded local concurrency pool이다. B4 cross-resource safety는 구현되었고 B5 integrated closure가 남아 있다.
 3. Flyway schema와 MariaDB system-of-record 계약.
 4. versioned RAG corpus, ingestion utilities, backend/frontend/RAG tests와 executable checks.
 5. cloud-neutral Docker image 및 Kubernetes base/local overlay, runtime contract.
@@ -174,12 +174,15 @@ NEW gap이 아니다.
 3. 기존 AWS Terraform live stacks, AWS Kubernetes overlay, Argo CD runtime, CloudWatch 및 AWS live deployment/teardown workflow는 **ARCHIVE** historical baseline/reference이며 새 프로젝트의 active target으로 유지한다고 가정하지 않는다.
 4. historical delivery에서 확인된 approval gate, immutable SHA, expected-account check, state separation, plan/apply separation, ordered teardown 및 validation/evidence pattern은 provider-neutral 설계 원칙으로 재사용한다.
 
+B4에서 compensation 실패 residue accountability의 기존 UNKNOWN은 AnalysisJob-owned intent
+bucket/key + `cleanup_status=PENDING` + bounded cleanup recovery로 결정·구현되었다. B5 integrated
+evidence는 남아 있다.
+
 ### 확인하지 못한 사항 (UNKNOWN/TBD)
 
 - 현재 AWS resources, Terraform state, Argo CD application, GitHub environments/secrets/required checks가 실제로 적용·동작 중인지 여부.
 - Bedrock analysis/embedding model ID, vector dimension, OpenSearch endpoint/index와 corpus version의 실제 운영 값 및 상호 일치 여부.
 - SQS progress event를 소비하는 component의 repository 내/외 존재와 운영 필요성.
-- compensation 자체가 실패했을 때 residue accountability를 어떤 durable mechanism으로 보장할지.
 - RDS/AWS historical backup/restore/failover 및 alert notification/on-call 정책의 현재 live relevance.
 - 독립 board API의 사용 여부, browser E2E/coverage 기준, Docker Compose 또는 frontend container의 필요성.
 - RabbitMQ, Transactional Outbox, LangGraph, 상시 Python worker, Keycloak, Redis, Kafka의 **최종 채택 여부**. 이들은 자동 배제 대상이 아니며 실제 문제를 직접 해결하는 경우 Case Decision Gate에서 비교한다.

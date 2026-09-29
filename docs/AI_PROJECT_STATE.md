@@ -64,8 +64,9 @@ Case B — Backend durable asynchronous processing:
   AnalysisJob work;
 - B3 is complete in PR #101 / merge `fb1bc3f7b64a0a0274114f1e29ac9f28f2ae652d`, with evidence in
   [Case B B3 Selective Bounded Retry Evidence](evaluation/case-b-b3-selective-bounded-retry.md);
-- automatic provider retry is enabled only for the approved timeout signal, with at most `3` total
-  claimed attempts and a fixed `10s` delay durably represented by MariaDB `next_attempt_at`;
+- automatic provider retry is enabled only for the approved timeout signal; another retry is
+  scheduled only while current `attempt_count < 3`, with a fixed `10s` delay durably represented by
+  MariaDB `next_attempt_at`; B2 expired-lease reclaim is not capped by that scheduling threshold;
 - semantic provider failures and post-provider side-effect failures remain terminal; B4 deterministic
   result identity, object accountability, and cleanup execution remain unresolved, and B5 integrated
   closure remains pending;

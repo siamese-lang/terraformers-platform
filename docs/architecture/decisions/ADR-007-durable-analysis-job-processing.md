@@ -173,15 +173,19 @@ Retry is bounded and selective.
 
 The implemented B3 policy is:
 
-- maximum claimed attempts: `3`;
+- provider-timeout retry scheduling threshold: schedule another retry only while current
+  `attempt_count < 3`;
 - fixed retry delay: `10s`;
 - exponential backoff: none;
 - jitter: none.
 
-`attempt_count` is the durable total claim/reclaim counter, not a separate retry counter. Every
-successful initial claim or lease reclaim consumes the same bound. An approved retry is scheduled
-durably by setting `next_attempt_at`; MariaDB eligibility scanning ignores it until that time and a
-later successful claim increments both `attempt_count` and the fencing generation.
+`attempt_count` is the durable claim/reclaim counter, not a separate retry counter. The threshold
+is applied when scheduling a retry after an approved provider timeout; it is not a
+`claimEligible()` predicate for B2 expired-lease reclaim. Every successful initial claim or lease
+reclaim increments `attempt_count`, so reclaim can reduce the remaining timeout-retry headroom
+without itself being rejected at the threshold. An approved retry is scheduled durably by setting
+`next_attempt_at`; MariaDB eligibility scanning ignores it until that time and a later successful
+claim increments both `attempt_count` and the fencing generation.
 
 Only `AnalysisProviderTimeoutException` is automatically retryable in B3. Standard causal network
 timeouts are normalized to that signal at the analysis-provider boundary. Explicit provider

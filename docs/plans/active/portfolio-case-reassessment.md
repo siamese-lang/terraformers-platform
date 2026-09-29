@@ -241,12 +241,14 @@ B3 is complete and recorded in
 
 PR #101 final head `f3aa4e488e1858f84688d7b848a4b1af07538656` merged as
 `fb1bc3f7b64a0a0274114f1e29ac9f28f2ae652d`. B3 enables selective durable retry only for the
-approved provider-timeout signal, bounded to `3` total claimed execution attempts with a fixed
-`10s` delay. Deterministic evidence demonstrates transient timeout followed by later success,
-exhaustion to terminal `FAILED` without a fourth execution, and rejection of retry mutation from a
-stale generation. Explicit semantic provider failures and storage/finalization failures remain
-terminal. B4 result identity and durable cleanup accountability remain unresolved, and Case B is
-not portfolio-closed.
+approved provider-timeout signal: another retry is scheduled only while current
+`attempt_count < 3`, with a fixed `10s` delay. B2 expired-lease reclaim is not capped by that B3
+retry-scheduling threshold, although reclaim increments the shared counter and can reduce later
+timeout-retry headroom. Deterministic evidence demonstrates timeout → retry → timeout → retry →
+timeout → `FAILED` without a fourth timeout-scheduled execution, as well as rejection of retry
+mutation from a stale generation. Explicit semantic provider failures and storage/finalization
+failures remain terminal. B4 result identity and durable cleanup accountability remain unresolved,
+and Case B is not portfolio-closed.
 
 ## Observability and failure/load work
 

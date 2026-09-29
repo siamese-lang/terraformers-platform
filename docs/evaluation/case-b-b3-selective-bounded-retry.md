@@ -49,8 +49,9 @@ These values are initial operational configuration, not SLOs.
 
 ## 2. Attempt-budget semantics
 
-B3 reuses the durable `attempt_count`; there is no separate retry counter. `attempt_count`
-increments on every successful claim or reclaim:
+B3 reuses the durable `attempt_count`; there is no separate retry counter. `attempt_count` is
+incremented by every successful claim or reclaim. B3 consults that counter only when deciding
+whether an approved provider-timeout failure may schedule another retry:
 
 ```text
 current attempt_count < 3
@@ -60,9 +61,13 @@ current attempt_count >= 3
 → retryable failure is exhausted and becomes terminal FAILED
 ```
 
-B2 process-loss reclaims therefore conservatively consume the same total attempt budget.
-`max-attempts=3` does **not** mean three retries. It means **at most three claimed execution
-attempts**. A typical timeout-only path is:
+Expired-lease reclaim remains governed by the B2 claim eligibility contract. It is not rejected
+solely because `attempt_count` has reached `3`; `claimEligible()` has no maximum-attempt predicate.
+Because reclaim increments `attempt_count`, however, a prior reclaim reduces the remaining
+eligibility for a later timeout-driven retry. `max-attempts=3` is therefore a B3 retry-scheduling
+threshold, not a global total-attempt ceiling.
+
+The deterministic timeout-only retry sequence is:
 
 ```text
 attempt 1 timeout
@@ -197,8 +202,10 @@ attempt 2 timeout → retry
 attempt 3 timeout → FAILED
 ```
 
-Advancing beyond another retry interval produces no fourth provider execution. The terminal state
-is:
+For this deterministic timeout-only sequence, advancing beyond another retry interval produces no
+fourth provider execution caused by timeout retry scheduling. This does not prevent a B2
+expired-lease reclaim from producing a later claim. The terminal state in the tested timeout-only
+scenario is:
 
 ```text
 status = FAILED
@@ -283,9 +290,9 @@ canonical repository smoke queries passed
 | retry waits until `next_attempt_at` | **PASS** |
 | retry succeeds on later claim | **PASS** |
 | attempt/generation increment on next claim | **PASS** |
-| total claimed attempts bounded at 3 | **PASS** |
+| provider-timeout retry scheduling stops when `attempt_count` reaches 3 | **PASS** |
 | exhaustion reaches FAILED | **PASS** |
-| no fourth execution | **PASS** |
+| timeout-only exhaustion scenario schedules no fourth execution | **PASS** |
 | explicit semantic provider failure remains terminal | **PASS** |
 | nested timeout cannot override semantic classification | **PASS** |
 | storage/finalization boundary not automatically retried | **PASS** |

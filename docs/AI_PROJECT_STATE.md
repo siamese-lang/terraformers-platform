@@ -63,8 +63,13 @@ Case A — AI/RAG quality, performance and reliability:
   context. A4 therefore selects resource-aware acquisition plus bounded deterministic coverage
   selection and rejects global K24 widening, unfiltered retrieval, relationship-first retrieval,
   and pure global priority reranking;
-- the A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`. A5 is **NOT RUN**,
-  no production improvement or holdout pass is proven, and Case A remains **OPEN**.
+- the A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`; subsequent A5
+  canonical N=3 evaluations progressed through the PROJECT_DECISION ordering correction in PR #118,
+  where VPC decision coverage reached `3/3`, VPC resource coverage stayed `4/4 × 3`, grounding
+  gaps fell to `0/12`, and positive validation passed `12/12`, but negative controls were
+  `5/6`; PR #119 then corrected the zero-hit REQUIRED-grounding/classification lifecycle boundary.
+  A fresh canonical N=3 after that correction and the frozen holdout are not recorded as complete,
+  so Case A remains **OPEN**.
 
 Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim and rollback-safe compensation;

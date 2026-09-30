@@ -10,6 +10,9 @@ import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.evaluation.opus.OpusGenerationFixtureLoader;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -73,6 +76,34 @@ class GeminiFactReuseComparisonTest {
                 .allSatisfy(c -> assertThat(c.secondGenerationInvoked()).isFalse());
         assertThat(cases).filteredOn(c -> "ARCHITECTURE_DIAGRAM".equals(c.expectedClassification()))
                 .allSatisfy(c -> assertThat(c.secondGenerationInvoked()).isTrue());
+    }
+
+    @Test
+    void artifactMapperSerializesNestedTelemetryInstantsAsIsoStrings() throws Exception {
+        Instant fixed = Instant.parse("2026-09-30T18:00:00Z");
+        ObjectMapper artifactMapper = GeminiFactReuseComparisonLauncher.artifactMapper();
+        GeminiLatencyTelemetry telemetry = new GeminiLatencyTelemetry(
+                artifactMapper, Clock.fixed(fixed, ZoneOffset.UTC));
+
+        var scope = telemetry.start(
+                "case",
+                GeminiLatencyTelemetry.Arm.CONTROL,
+                GeminiLatencyTelemetry.Phase.FACT_EXTRACTION,
+                new GeminiLatencyTelemetry.RequestIdentity("gemini-3.8-flash", "global", "LOW", 800),
+                GeminiLatencyTelemetry.PayloadShape.of("IMAGE_AND_TEXT", 3, "", List.of()));
+        telemetry.callStart();
+        scope.close(null);
+
+        String json = artifactMapper.writeValueAsString(
+                telemetry.evidenceFor("case", GeminiLatencyTelemetry.Arm.CONTROL));
+        var tree = artifactMapper.readTree(json);
+
+        assertThat(tree.get(0).get("startedAt").asText()).isEqualTo(fixed.toString());
+        assertThat(tree.get(0).get("endedAt").asText()).isEqualTo(fixed.toString());
+        assertThat(tree.get(0).get("requests").get(0).get("requestStartedAt").asText())
+                .isEqualTo(fixed.toString());
+        assertThat(tree.get(0).get("requests").get(0).get("responseCompletedAt").asText())
+                .isEqualTo(fixed.toString());
     }
 
     @Test

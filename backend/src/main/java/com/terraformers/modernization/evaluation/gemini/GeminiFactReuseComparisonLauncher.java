@@ -2,6 +2,7 @@ package com.terraformers.modernization.evaluation.gemini;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.genai.Client;
 import com.google.genai.types.ClientOptions;
 import com.google.genai.types.HttpOptions;
@@ -46,7 +47,7 @@ public final class GeminiFactReuseComparisonLauncher {
                 GeminiGenerationComparisonLauncher.required(env, "GENERATION_MAX_OUTPUT_TOKENS"));
         requireIdentity(location, modelId, maxTokens);
 
-        ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+        ObjectMapper mapper = artifactMapper();
         var fixture = new OpusGenerationFixtureLoader(mapper).load(
                 GeminiGenerationComparisonLauncher.requiredPath(env, "OPUS_FIXTURE_MANIFEST"),
                 GeminiGenerationComparisonLauncher.requiredPath(env, "EVALUATION_DATASET"),
@@ -142,6 +143,13 @@ public final class GeminiFactReuseComparisonLauncher {
             Files.createDirectories(output.toAbsolutePath().getParent());
         }
         mapper.writeValue(output.toFile(), artifact);
+    }
+
+    static ObjectMapper artifactMapper() {
+        return new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     static List<OpusGenerationFixtureLoader.FixtureCase> selectCases(

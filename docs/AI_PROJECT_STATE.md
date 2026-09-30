@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case A A5 live-evaluation readiness (A5 NOT RUN)**
+- Current single task: **Fact-reuse latency diagnostic closure; next candidate Work Package = adaptive retrieval live-measurement readiness (AWAITING_APPROVAL)**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -34,6 +34,16 @@ The project success criterion is now explicit: complete three technically defens
 cases with repository-backed technical decisions, not merely a sequence of completed milestones.
 
 Case A — AI/RAG quality, performance and reliability:
+- latest latency side-investigation is **CLOSED** in
+  [Gemini Fact-Reuse Latency Diagnostic Closure](evaluation/gemini-fact-reuse-latency-diagnostic-closure.md);
+  the three successful instrumented attempts in run `36758290144` reproduced a text-only
+  CloudFront candidate generation tail of `109773 ms` with one HTTP exchange, zero network
+  failures, and HTTP 200; the delay accumulated before response headers, so production fact-reuse
+  adoption is **HOLD**, generic retry is not selected, and the diagnostic must not be repeated until
+  lucky;
+- PR #127 adaptive retrieval is merged, but `terraformers-eval-v1` does not contain a >8-resource
+  acceptance case; a separate frozen evaluation-only >8-resource measurement scenario is therefore
+  the next candidate Work Package and remains `AWAITING_APPROVAL`;
 - retain M3 fixed baseline/provenance and M4 failure evidence;
 - do not treat M4 as portfolio-closed;
 - primary problem selected: **retrieval grounding / required-evidence coverage**;

@@ -71,7 +71,7 @@ public class TerraformDraftValidator {
         var matcher = SENSITIVE_LITERAL_ASSIGNMENT.matcher(candidate);
         while (matcher.find()) {
             String value = matcher.group(1);
-            if (!value.contains("\${") && !value.contains("%{")) {
+            if (!value.contains("${") && !value.contains("%{")) {
                 return true;
             }
         }

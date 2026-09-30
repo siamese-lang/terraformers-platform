@@ -414,3 +414,13 @@ O1 validation commands:
 No live Claude/Opus model call or evaluation workflow dispatch occurred during O1. Production
 provider routing and the existing Case A workflow are unchanged. O2 remains a separate,
 explicitly-authorized one-run activity; this checkpoint does not authorize or begin O2.
+
+## O2 billing stop — 2026-09-30
+
+O1's harness was completed, but no live Claude/Opus request was executed. O2 stopped before
+inference because the Google Cloud Free Trial $300 Welcome credit cannot be used for generative AI
+partner models offered as managed APIs, as documented in the official
+[Google Cloud Free Program documentation](https://cloud.google.com/free/docs/free-cloud-features#free-trial).
+The user has a hard no-paid-spend constraint. Claude model quality therefore remains **NOT
+EVALUATED**; this billing stop must not be interpreted as an Opus quality failure. The O1 harness is
+preserved for reference, but its workflow must not be dispatched.

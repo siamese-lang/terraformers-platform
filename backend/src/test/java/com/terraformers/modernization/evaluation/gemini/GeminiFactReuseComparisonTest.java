@@ -24,9 +24,10 @@ class GeminiFactReuseComparisonTest {
 
         AnalysisGenerationStage control = (context, source, references) -> {
             var c = caseFor(fixture, source.metadata().key());
-            if (c.definition().expectedClassification() != AnalysisInputClassification.ARCHITECTURE_DIAGRAM) {
-                throw new AnalysisInputRejectedException(
-                        c.definition().expectedClassification(), 0.95, false, null);
+            AnalysisInputClassification expected = AnalysisInputClassification.valueOf(
+                    c.definition().expectedClassification().name());
+            if (expected != AnalysisInputClassification.ARCHITECTURE_DIAGRAM) {
+                throw new AnalysisInputRejectedException(expected, 0.95, false, null);
             }
             return passing(c);
         };
@@ -34,7 +35,8 @@ class GeminiFactReuseComparisonTest {
         GeminiFactReusePipelineStage candidate = new GeminiFactReusePipelineStage(
                 source -> {
                     var c = caseFor(fixture, source.metadata().key());
-                    AnalysisInputClassification classification = c.definition().expectedClassification();
+                    AnalysisInputClassification classification = AnalysisInputClassification.valueOf(
+                            c.definition().expectedClassification().name());
                     if (classification == AnalysisInputClassification.ARCHITECTURE_DIAGRAM) {
                         return new GeminiCanonicalEnvelope(
                                 classification,

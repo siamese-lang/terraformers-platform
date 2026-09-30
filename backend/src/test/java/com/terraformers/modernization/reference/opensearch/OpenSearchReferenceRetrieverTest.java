@@ -52,14 +52,15 @@ class OpenSearchReferenceRetrieverTest {
         Fixture fixture = fixture(2,
                 response(document("global", 1, "aws_alpha")),
                 response(document("alpha", 1, "aws_alpha")),
-                response(document("beta", 1, "aws_beta")));
+                response(document("beta", 1, "aws_beta")),
+                response());
 
         fixture.retriever().retrieve(new ReferenceQuery(
                 "architecture summary", List.of("aws_alpha", "aws_beta", "aws_alpha"), 2));
 
         verify(fixture.embedding(), times(1)).embed("architecture summary");
         ArgumentCaptor<String> bodies = ArgumentCaptor.forClass(String.class);
-        verify(fixture.transport(), times(3)).post(any(URI.class), bodies.capture());
+        verify(fixture.transport(), times(4)).post(any(URI.class), bodies.capture());
         List<JsonNode> requests = bodies.getAllValues().stream().map(this::readTree).toList();
         assertThat(requests).allSatisfy(request -> {
             assertThat(request.path("size").asInt()).isEqualTo(2);
@@ -68,6 +69,8 @@ class OpenSearchReferenceRetrieverTest {
         assertThat(resourceFilter(requests.get(0))).containsExactly("aws_alpha", "aws_beta");
         assertThat(resourceFilter(requests.get(1))).containsExactly("aws_alpha");
         assertThat(resourceFilter(requests.get(2))).containsExactly("aws_beta");
+        assertThat(resourceFilter(requests.get(3))).containsExactly("aws_alpha", "aws_beta");
+        assertThat(requests.get(3).toString()).contains("PROJECT_DECISION", "authority");
     }
 
     @Test
@@ -82,8 +85,8 @@ class OpenSearchReferenceRetrieverTest {
         ReferenceQuery query = new ReferenceQuery(
                 "architecture summary", List.of("aws_alpha", "aws_beta"), 2);
 
-        List<ReferenceDocument> first = fixture(2, global, alpha, beta).retriever().retrieve(query);
-        List<ReferenceDocument> second = fixture(2, global, alpha, beta).retriever().retrieve(query);
+        List<ReferenceDocument> first = fixture(2, global, alpha, beta, response()).retriever().retrieve(query);
+        List<ReferenceDocument> second = fixture(2, global, alpha, beta, response()).retriever().retrieve(query);
 
         assertThat(first).extracting(ReferenceDocument::id).containsExactly("shared", "targeted");
         assertThat(first).extracting(ReferenceDocument::id).doesNotHaveDuplicates();
@@ -96,7 +99,8 @@ class OpenSearchReferenceRetrieverTest {
     void higherPriorityBreaksEqualCoverageTie() {
         Fixture fixture = fixture(1,
                 response(document("global", 1, "aws_alpha")),
-                response(document("low-priority", 10, "aws_alpha"), document("high-priority", 90, "aws_alpha")));
+                response(document("low-priority", 10, "aws_alpha"), document("high-priority", 90, "aws_alpha")),
+                response());
 
         List<ReferenceDocument> result = fixture.retriever().retrieve(
                 new ReferenceQuery("architecture summary", List.of("aws_alpha"), 1));
@@ -106,7 +110,8 @@ class OpenSearchReferenceRetrieverTest {
 
         Fixture missingGlobally = fixture(2,
                 response(document("unrelated-one", 1, "aws_other"), document("unrelated-two", 1, "aws_other")),
-                response(document("low-priority", 10, "aws_alpha"), document("high-priority", 90, "aws_alpha")));
+                response(document("low-priority", 10, "aws_alpha"), document("high-priority", 90, "aws_alpha")),
+                response());
         assertThat(missingGlobally.retriever().retrieve(
                 new ReferenceQuery("architecture summary", List.of("aws_alpha"), 2)))
                 .extracting(ReferenceDocument::id).containsExactly("unrelated-one", "high-priority");
@@ -119,7 +124,8 @@ class OpenSearchReferenceRetrieverTest {
                         document("global-alpha", 1, "aws_alpha"),
                         document("semantic-unrelated", 1, "aws_other")),
                 response(document("high-priority-alpha", 100, "aws_alpha")),
-                response(document("targeted-beta", 1, "aws_beta")));
+                response(document("targeted-beta", 1, "aws_beta")),
+                response());
 
         assertThat(fixture.retriever().retrieve(new ReferenceQuery(
                 "architecture summary", List.of("aws_alpha", "aws_beta"), 2)))
@@ -132,7 +138,8 @@ class OpenSearchReferenceRetrieverTest {
         Fixture fixture = fixture(2,
                 response(document("first", 1, "aws_alpha"), document("second", 1, "aws_beta")),
                 response(document("target-alpha", 100, "aws_alpha")),
-                response(document("target-beta", 100, "aws_beta")));
+                response(document("target-beta", 100, "aws_beta")),
+                response());
 
         assertThat(fixture.retriever().retrieve(new ReferenceQuery(
                 "architecture summary", List.of("aws_alpha", "aws_beta"), 2)))

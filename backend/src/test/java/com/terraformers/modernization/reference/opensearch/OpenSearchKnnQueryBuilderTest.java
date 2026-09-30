@@ -32,7 +32,22 @@ class OpenSearchKnnQueryBuilderTest {
         assertThat(parameters.path("k").asInt()).isEqualTo(8);
         assertThat(parameters.path("vector").size()).isEqualTo(3);
         assertThat(filters.toString()).contains("terraformers-reference-v2", "5.100.0", "aws_vpc", "aws_subnet");
+        assertThat(filters.toString()).doesNotContain("authority");
         assertThat(root.path("_source").toString()).contains("documentId", "authority", "riskTags", "content");
+    }
+
+    @Test
+    void combinesAuthorityResourceAndVersionFilters() throws Exception {
+        String body = builder.build(
+                "embedding", "content", List.of(0.1f), 8,
+                "corpus-v2", "provider-v5", List.of("aws_alpha", "aws_beta"),
+                List.of("PROJECT_DECISION"));
+
+        JsonNode filters = objectMapper.readTree(body).path("query").path("knn").path("embedding")
+                .path("filter").path("bool").path("filter");
+        assertThat(filters.toString()).contains(
+                "corpus-v2", "provider-v5", "aws_alpha", "aws_beta", "PROJECT_DECISION");
+        assertThat(filters.toString()).contains("\"authority\"");
     }
 
     @Test

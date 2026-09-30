@@ -74,6 +74,67 @@ class OpenSearchReferenceRetrieverTest {
     }
 
     @Test
+    void expandsAboveBaseOnlyWhenTwelveResourceCoverageCannotFitByReplacement() throws Exception {
+        List<String> resources = java.util.stream.IntStream.rangeClosed(1, 12)
+                .mapToObj(index -> "aws_service_" + index)
+                .toList();
+        String[] responses = new String[resources.size() + 2];
+        responses[0] = response(java.util.stream.IntStream.rangeClosed(1, 8)
+                .mapToObj(index -> document("global-" + index, 1, resources.get(index - 1)))
+                .toArray(String[]::new));
+        for (int index = 0; index < resources.size(); index++) {
+            responses[index + 1] = response(document(
+                    "target-" + (index + 1), 1, resources.get(index)));
+        }
+        responses[responses.length - 1] = response();
+
+        Fixture fixture = fixture(8, 16, responses);
+        List<ReferenceDocument> result = fixture.retriever().retrieve(
+                new ReferenceQuery("large architecture", resources, 16));
+
+        assertThat(result).hasSize(12);
+        assertThat(result.stream().flatMap(document -> document.resourceTypes().stream()).toList())
+                .containsAll(resources);
+        assertThat(result).extracting(ReferenceDocument::id)
+                .containsExactly(
+                        "global-1", "global-2", "global-3", "global-4",
+                        "global-5", "global-6", "global-7", "global-8",
+                        "target-9", "target-10", "target-11", "target-12"
+                );
+        verify(fixture.embedding(), times(1)).embed("large architecture");
+        ArgumentCaptor<String> bodies = ArgumentCaptor.forClass(String.class);
+        verify(fixture.transport(), times(14)).post(any(URI.class), bodies.capture());
+        assertThat(bodies.getAllValues().stream().map(this::readTree).toList())
+                .allSatisfy(request -> assertThat(request.path("size").asInt()).isEqualTo(8));
+    }
+
+    @Test
+    void keepsBaseBudgetWhenTwelveResourceCoverageAlreadyFitsWithinEightDocuments() {
+        List<String> resources = java.util.stream.IntStream.rangeClosed(1, 12)
+                .mapToObj(index -> "aws_service_" + index)
+                .toList();
+        String[] globalDocuments = java.util.stream.IntStream.rangeClosed(0, 5)
+                .mapToObj(index -> document(
+                        "global-" + (index + 1),
+                        1,
+                        resources.get(index * 2),
+                        resources.get(index * 2 + 1)))
+                .toArray(String[]::new);
+        String[] responses = new String[resources.size() + 2];
+        responses[0] = response(globalDocuments);
+        for (int index = 1; index < responses.length; index++) {
+            responses[index] = response();
+        }
+
+        List<ReferenceDocument> result = fixture(8, 16, responses).retriever().retrieve(
+                new ReferenceQuery("large architecture", resources, 16));
+
+        assertThat(result).hasSize(6);
+        assertThat(result.stream().flatMap(document -> document.resourceTypes().stream()).toList())
+                .containsAll(resources);
+    }
+
+    @Test
     void selectsDeduplicatedTargetedEvidenceWithinTheExistingLimitDeterministically() {
         String global = response(
                 document("shared", 1, "aws_alpha"),
@@ -168,6 +229,22 @@ class OpenSearchReferenceRetrieverTest {
     }
 
     @Test
+    void rejectsMaxEvidenceBelowBaseTopKBeforeCallingDependencies() {
+        AnalysisRuntimeProperties properties = activeProperties(8, 7);
+        EmbeddingProvider embedding = mock(EmbeddingProvider.class);
+        OpenSearchTransport transport = mock(OpenSearchTransport.class);
+        OpenSearchReferenceRetriever retriever = new OpenSearchReferenceRetriever(
+                embedding, new OpenSearchKnnQueryBuilder(objectMapper), new OpenSearchResponseParser(objectMapper),
+                transport, properties);
+
+        assertThatThrownBy(() -> retriever.retrieve(new ReferenceQuery("architecture summary", 16)))
+                .hasMessageContaining("opensearch-max-evidence")
+                .hasMessageContaining("greater than or equal");
+        verify(embedding, never()).embed(any());
+        verify(transport, never()).post(any(), any());
+    }
+
+    @Test
     void rejectsInvalidActiveConfigurationBeforeCallingDependencies() {
         AnalysisRuntimeProperties properties = activeProperties(2);
         properties.setOpensearchTopK(0);
@@ -184,6 +261,10 @@ class OpenSearchReferenceRetrieverTest {
     }
 
     private Fixture fixture(int limit, String... responses) {
+        return fixture(limit, 16, responses);
+    }
+
+    private Fixture fixture(int baseLimit, int maxEvidence, String... responses) {
         EmbeddingProvider embedding = mock(EmbeddingProvider.class);
         when(embedding.embed(any())).thenReturn(List.of(0.1f, 0.2f));
         OpenSearchTransport transport = mock(OpenSearchTransport.class);
@@ -194,11 +275,15 @@ class OpenSearchReferenceRetrieverTest {
                 new OpenSearchKnnQueryBuilder(objectMapper),
                 new OpenSearchResponseParser(objectMapper),
                 transport,
-                activeProperties(limit));
+                activeProperties(baseLimit, maxEvidence));
         return new Fixture(retriever, embedding, transport);
     }
 
     private AnalysisRuntimeProperties activeProperties(int limit) {
+        return activeProperties(limit, 16);
+    }
+
+    private AnalysisRuntimeProperties activeProperties(int baseLimit, int maxEvidence) {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
         properties.setOpensearchEndpoint("https://search.example");
         properties.setIndexName("references");
@@ -206,7 +291,8 @@ class OpenSearchReferenceRetrieverTest {
         properties.setContentFieldName("content");
         properties.setCorpusVersion("terraformers-reference-v2");
         properties.setProviderVersion("5.100.0");
-        properties.setOpensearchTopK(limit);
+        properties.setOpensearchTopK(baseLimit);
+        properties.setOpensearchMaxEvidence(maxEvidence);
         return properties;
     }
 

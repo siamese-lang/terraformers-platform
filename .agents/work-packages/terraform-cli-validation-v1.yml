@@ -1,0 +1,149 @@
+work_package:
+  id: terraform-cli-validation-v1
+  status: AWAITING_EXECUTION
+  approved_base_sha: "933855989295ac875aab413957883b6885c3d51d"
+
+  goal: >
+    Validate generated Terraform with the real Terraform CLI before result persistence,
+    without cloud credentials, remote backend access, terraform plan/apply, or arbitrary
+    remote module execution.
+
+  engineering_axis:
+    - AI/RAG evaluation and targeted improvement
+    - Backend reliability
+
+  allowed_paths:
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/**
+    - backend/Dockerfile
+
+  prohibited_paths:
+    - .github/**
+    - infra/**
+    - frontend/**
+    - evaluation/**
+    - AGENTS.md
+    - docs/architecture/**
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - create_branch
+    - modify_allowed_paths
+    - run_existing_tests
+    - add_regression_tests_for_changed_behavior
+    - build_backend_image
+    - create_pull_request
+    - inspect_ci
+    - inspect_artifacts
+    - repair_same_failure_once
+
+  allowed_writes:
+    - create_work_branch
+    - update_work_branch
+    - create_pull_request
+
+  auto_repair_limit: 1
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - create_or_modify_github_workflow
+    - terraform_plan
+    - terraform_apply
+    - cloud_credential_use
+    - kubectl_mutation
+    - iam_change
+    - secret_policy_change
+    - live_ai_model_call
+    - architecture_change
+    - acceptance_criteria_change
+    - next_work_package_start
+
+  selected_design:
+    terraform_version: "1.8.5"
+    aws_provider_version: "5.100.0"
+    execution:
+      - write sanitized generated Terraform to an isolated temporary directory
+      - initialize with backend disabled and input disabled
+      - use only the pre-baked local AWS provider plugin
+      - run terraform validate with machine-readable JSON diagnostics
+      - enforce a bounded subprocess timeout
+      - delete the temporary directory after success or failure
+    remote_modules:
+      policy: fail_closed
+      requirement: >
+        Generated module blocks that require downloading a remote module must not be fetched
+        or executed by runtime validation. Return a bounded validation failure instead.
+    forbidden_runtime_behavior:
+      - network provider download during request validation
+      - remote module download
+      - backend initialization
+      - terraform plan
+      - terraform apply
+      - AWS API call
+      - provider credential lookup
+
+  acceptance_criteria:
+    - id: cli_is_real
+      requirement: >
+        Production result finalization invokes Terraform CLI validation, not only regex/HCL-shape validation.
+    - id: provider_schema
+      requirement: >
+        A syntactically valid Terraform draft containing an invalid AWS provider argument is rejected.
+    - id: valid_draft
+      requirement: >
+        A representative generated AWS resource draft that satisfies the frozen provider schema is accepted.
+    - id: fail_closed
+      requirement: >
+        Terraform CLI timeout, non-zero initialization, malformed JSON diagnostics, or validate failure
+        prevents successful result persistence.
+    - id: no_cloud_side_effect
+      requirement: >
+        Validation performs no plan/apply/backend initialization and requires no cloud credentials.
+    - id: no_arbitrary_module_fetch
+      requirement: >
+        A generated remote module cannot cause module download or execution.
+    - id: cleanup
+      requirement: >
+        Temporary validation workspace is removed on both success and failure.
+    - id: existing_safety_preserved
+      requirement: >
+        Existing placeholder, hard-coded credential, account-specific identifier, and structural validation
+        behavior remains covered and passing.
+    - id: image_contract
+      requirement: >
+        backend/Dockerfile contains Terraform 1.8.5 and the frozen AWS provider 5.100.0 in a local
+        runtime-usable plugin source so request-time validation does not fetch the provider from the network.
+    - id: no_new_workflow
+      requirement: Existing CI and backend image build assets are reused; no new GitHub Actions workflow is added.
+
+  verification:
+    evidence_sources:
+      - GitHub remote base/head SHA
+      - PR diff
+      - existing backend test suite
+      - targeted Terraform CLI validation regression tests
+      - existing backend image build verification
+      - CI results
+    verifier_outcomes:
+      - PASS
+      - FAIL
+      - INCONCLUSIVE
+    implementer_self_report_is_evidence: false
+
+  stop_on:
+    - unexpected_main_change
+    - scope_drift
+    - same_failure_repeated
+    - failure_class_changed
+    - auto_repair_limit_exceeded
+    - architecture_decision_required
+    - allowed_path_insufficient
+    - acceptance_criteria_change_required
+    - live_cloud_action_required
+    - cost_or_security_boundary_required
+
+  completion:
+    merge_requires_user_approval: true
+    next_work_package_start_requires_user_approval: true

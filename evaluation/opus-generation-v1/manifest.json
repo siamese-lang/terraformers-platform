@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "opus-generation-fixture-v1",
+  "sourceRepositoryCommit": "3fc610f1e9d601a4d5f79f281b358b783342c4ce",
+  "sourceEvaluationRunId": "36691519268",
+  "sourceEvaluationArtifact": "case-a-baseline-36691519268",
+  "datasetVersion": "terraformers-eval-v1",
+  "corpusVersion": "terraformers-reference-v3",
+  "purpose": "Freeze image inputs and ordered retrieved reference IDs for an Opus generation-only experiment. Retrieval and fact extraction must not run in this experiment.",
+  "cases": [
+    {
+      "caseId": "arch-vpc-three-tier",
+      "inputPath": "fixtures/case-01-vpc-three-tier.webp",
+      "inputSha256": "a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "orderedReferenceIds": [
+        "tfaws-5.100.0-aws_lb-example-1-application-load-balancer",
+        "tfaws-5.100.0-aws_db_subnet_group-example-1-example-1",
+        "tfaws-5.100.0-aws_lb_target_group-example-1-instance-target-group",
+        "tfaws-5.100.0-aws_db_instance-schema",
+        "tfaws-5.100.0-aws_lb_listener-example-1-forward-action",
+        "tfaws-5.100.0-aws_subnet-schema",
+        "tfaws-5.100.0-aws_vpc-overview",
+        "tfref-v2-sg-relations"
+      ]
+    },
+    {
+      "caseId": "arch-cloudfront-private-alb",
+      "inputPath": "fixtures/case-02-cloudfront-private-alb.webp",
+      "inputSha256": "2eea1601b1d15e8c9ffedd41c0d5fedc064acf909d20ab40becc1de2a04ee6b1",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "orderedReferenceIds": [
+        "tfref-v2-alb-private-origin",
+        "tfaws-5.100.0-aws_lb_listener-example-1-forward-action",
+        "tfaws-5.100.0-aws_lb-example-1-application-load-balancer",
+        "tfaws-5.100.0-aws_cloudfront_distribution-example-1-the-example-below-creates-a-cloudfront-distribution-with-an-",
+        "tfaws-5.100.0-aws_eks_cluster-example-1-eks-cluster",
+        "tfaws-5.100.0-aws_lb_listener-example-5-authenticate-cognito-action",
+        "tfref-v2-eks-irsa",
+        "tfaws-5.100.0-aws_vpc-schema"
+      ]
+    },
+    {
+      "caseId": "arch-private-aoss",
+      "inputPath": "fixtures/case-03-private-aoss.webp",
+      "inputSha256": "160b8c0ecfae277b74f85dfd5d25ba4da1a33f7006a4df6a94554b75a16ebeed",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "orderedReferenceIds": [
+        "tfref-v2-aoss-private",
+        "tfref-v2-aoss-access",
+        "tfaws-5.100.0-aws_opensearchserverless_access_policy-example-1-grant-all-collection-and-index-permissions",
+        "tfaws-5.100.0-aws_opensearchserverless_access_policy-overview",
+        "tfaws-5.100.0-aws_opensearchserverless_collection-overview",
+        "tfaws-5.100.0-aws_opensearchserverless_collection-schema",
+        "tfaws-5.100.0-aws_opensearchserverless_collection-example-1-basic-usage",
+        "tfaws-5.100.0-aws_vpc-schema"
+      ]
+    },
+    {
+      "caseId": "arch-s3-metadata-split",
+      "inputPath": "fixtures/case-04-s3-metadata-split.webp",
+      "inputSha256": "a55a8bcf1e9d36491921275e4eedfd3058afd5a1c24a104cd0b33bbeab0ff3b0",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "orderedReferenceIds": [
+        "tfref-v2-s3-content-metadata",
+        "tfaws-5.100.0-aws_s3_bucket-example-1-private-bucket-with-tags",
+        "tfaws-5.100.0-aws_db_instance-example-1-basic-usage",
+        "tfaws-5.100.0-aws_s3_bucket-schema",
+        "tfaws-5.100.0-aws_s3_bucket-overview",
+        "tfaws-5.100.0-aws_db_instance-schema",
+        "tfaws-5.100.0-aws_db_instance-overview",
+        "tfaws-5.100.0-aws_db_instance-example-7-you-can-specify-the-master-user-secret-kms-key-id-attribute-"
+      ]
+    },
+    {
+      "caseId": "ambiguous-cropped-service-sketch",
+      "inputPath": "fixtures/case-05-ambiguous-cropped.webp",
+      "inputSha256": "c3c1cd89444b6f9fdf5a34366ab5a36d5e025ecf967280f69e79945ce16ca738",
+      "expectedClassification": "AMBIGUOUS",
+      "orderedReferenceIds": [
+        "tfref-v2-tags-outputs",
+        "tfref-v2-immutable-images",
+        "tfref-v2-s3-content-metadata",
+        "tfaws-5.100.0-aws_vpc-overview",
+        "tfaws-5.100.0-aws_ecr_repository-overview",
+        "tfaws-5.100.0-aws_cloudfront_distribution-example-1-the-example-below-creates-a-cloudfront-distribution-with-an-",
+        "tfref-v2-aoss-private",
+        "tfaws-5.100.0-aws_cloudfront_distribution-example-3-the-example-below-creates-a-cloudfront-distribution-with-an-"
+      ]
+    },
+    {
+      "caseId": "non-architecture-deployment-dashboard",
+      "inputPath": "fixtures/case-06-non-architecture-dashboard.webp",
+      "inputSha256": "12eb8590b89eaea0988d5038c7a9862eebc584039d88084fe91433848a53d36d",
+      "expectedClassification": "NON_ARCHITECTURE_IMAGE",
+      "orderedReferenceIds": [
+        "tfref-v2-tags-outputs",
+        "tfref-v2-immutable-images",
+        "tfaws-5.100.0-aws_lb-example-1-application-load-balancer",
+        "tfaws-5.100.0-aws_lb_listener-example-1-forward-action",
+        "tfaws-5.100.0-aws_cloudwatch_log_group-example-1-example-1",
+        "tfref-v2-eks-irsa",
+        "tfaws-5.100.0-aws_lb_listener-example-5-authenticate-cognito-action",
+        "tfref-v2-s3-content-metadata"
+      ]
+    }
+  ]
+}

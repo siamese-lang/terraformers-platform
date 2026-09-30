@@ -10,6 +10,12 @@ public class TerraformDraftValidator {
     private static final Pattern RESOURCE_OR_MODULE = Pattern.compile("(?m)^\\s*(resource|module)\\s+\\\"[^\\\"]+\\\"");
     private static final Pattern ONLY_META_BLOCKS = Pattern.compile("(?s)^(\\s*(terraform|provider)\\s*(\\\"[^\\\"]+\\\")?\\s*\\{[^{}]*(?:\\{[^{}]*}[^{}]*)*}\\s*)+$");
     private static final Pattern STRUCTURED_RESOURCE_OR_MODULE = Pattern.compile("(?ms)^\\s*(resource|module)\\s+\"[^\"]+\"(?:\\s+\"[^\"]+\")?\\s*\\{.*?(=|^\\s*[A-Za-z_][A-Za-z0-9_-]*\\s*\\{).*?\\}");
+    private static final Pattern SENSITIVE_LITERAL_ASSIGNMENT = Pattern.compile(
+            "(?im)^\\s*(?:[a-z0-9_]*password(?:_wo)?|secret_access_key|access_key(?:_id)?|client_secret|api_key|auth_token|private_key(?:_pem)?)\\s*=\\s*\"([^\"]*)\"");
+    private static final Pattern AWS_ACCOUNT_SCOPED_ARN = Pattern.compile(
+            "arn:(?:aws|aws-us-gov|aws-cn):[A-Za-z0-9-]+:[A-Za-z0-9-]*:\\d{12}:[^\\s\"']+");
+    private static final Pattern AWS_ACCOUNT_ID_LITERAL = Pattern.compile(
+            "(?im)^\\s*(?:account_id|aws_account_id)\\s*=\\s*\"\\d{12}\"");
 
     public TerraformDraftValidation validate(String candidate) {
         String sanitized = stripMarkdownFences(candidate);
@@ -22,6 +28,12 @@ public class TerraformDraftValidator {
         }
         if (containsPlaceholderOnlyLanguage(normalized)) {
             return invalid(sanitized, "generated Terraform appears to be placeholder/example output");
+        }
+        if (containsHardCodedSensitiveCredential(sanitized)) {
+            return invalid(sanitized, "generated Terraform contains a hard-coded sensitive credential");
+        }
+        if (containsAccountSpecificAwsIdentifier(sanitized)) {
+            return invalid(sanitized, "generated Terraform contains an account-specific AWS identifier");
         }
         if (!RESOURCE_OR_MODULE.matcher(sanitized).find()) {
             return invalid(sanitized, "generated Terraform must contain at least one resource or module block");
@@ -53,6 +65,22 @@ public class TerraformDraftValidator {
                 || normalized.contains("replace this")
                 || normalized.contains("insert terraform")
                 || normalized.contains("todo");
+    }
+
+    private boolean containsHardCodedSensitiveCredential(String candidate) {
+        var matcher = SENSITIVE_LITERAL_ASSIGNMENT.matcher(candidate);
+        while (matcher.find()) {
+            String value = matcher.group(1);
+            if (!value.contains("\${") && !value.contains("%{")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsAccountSpecificAwsIdentifier(String candidate) {
+        return AWS_ACCOUNT_SCOPED_ARN.matcher(candidate).find()
+                || AWS_ACCOUNT_ID_LITERAL.matcher(candidate).find();
     }
 
     private boolean looksLikeProse(String normalized) {

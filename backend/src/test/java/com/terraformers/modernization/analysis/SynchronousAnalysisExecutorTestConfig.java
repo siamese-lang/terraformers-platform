@@ -9,6 +9,12 @@ import org.springframework.core.task.SyncTaskExecutor;
 @TestConfiguration
 public class SynchronousAnalysisExecutorTestConfig {
 
+    @Bean
+    @Primary
+    public TerraformExecutableValidator terraformExecutableValidator() {
+        return candidate -> new TerraformDraftValidation(true, candidate, null);
+    }
+
     @Bean(name = "analysisJobExecutor")
     @Primary
     public Executor analysisJobExecutor() {

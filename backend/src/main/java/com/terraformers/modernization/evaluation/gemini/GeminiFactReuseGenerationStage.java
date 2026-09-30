@@ -40,8 +40,21 @@ final class GeminiFactReuseGenerationStage {
             VertexPromptBuilder schemaSource,
             VertexResponseParser responseParser
     ) {
+        this(client, modelId, maxOutputTokens, objectMapper, schemaSource, responseParser, null);
+    }
+
+    GeminiFactReuseGenerationStage(
+            Client client,
+            String modelId,
+            int maxOutputTokens,
+            ObjectMapper objectMapper,
+            VertexPromptBuilder schemaSource,
+            VertexResponseParser responseParser,
+            GeminiLatencyTelemetry telemetry
+    ) {
         this((id, content, config) -> {
             GenerateContentResponse response = client.models.generateContent(id, content, config);
+            if (telemetry != null) telemetry.captureSdkResponse(response);
             return new GenerationResponse(response.text(), response.finishReason(),
                     response.usageMetadata().flatMap(metadata -> metadata.candidatesTokenCount()).orElse(null));
         }, modelId, maxOutputTokens, objectMapper, schemaSource, responseParser);

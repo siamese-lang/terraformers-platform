@@ -106,7 +106,7 @@ jobs:
           elif [[ "$COMPARISON_MODE" == THINKING ]]; then
             jq -e '.schemaVersion=="gemini-thinking-comparison-v1" and .fixtureSchemaVersion=="opus-generation-fixture-v1" and .modelId=="gemini-3.8-flash" and .controlThinkingLevel=="MEDIUM" and .candidateThinkingLevel=="LOW" and .location=="global" and .maxOutputTokens==8192 and .caseCount==6 and ([.cases[] | (.control.modelId == .candidate.modelId and .control.renderedPromptSha256 == .candidate.renderedPromptSha256)] | all)' gemini-thinking-comparison-*.json
           else
-            jq -e '.schemaVersion=="gemini-fact-reuse-comparison-v1" and .fixtureSchemaVersion=="opus-generation-fixture-v1" and .modelId=="gemini-3.8-flash" and .controlMode=="CURRENT_IMAGE_TWICE" and .candidateMode=="CANONICAL_FACT_REUSE" and .location=="global" and .maxOutputTokens==8192 and .caseCount==6' gemini-fact-reuse-comparison-*.json
+            jq -e '.schemaVersion=="gemini-fact-reuse-comparison-v2" and .fixtureSchemaVersion=="opus-generation-fixture-v1" and .modelId=="gemini-3.8-flash" and .controlMode=="CURRENT_IMAGE_TWICE" and .candidateMode=="CANONICAL_FACT_REUSE" and .location=="global" and .maxOutputTokens==8192 and .caseCount==6 and ([.cases[] | ([.control.phases[].phase] == ["FACT_EXTRACTION","GENERATION"] and ([.candidate.phases[].phase] == ["CANONICAL_EXTRACTION","GENERATION"] or [.candidate.phases[].phase] == ["CANONICAL_EXTRACTION"]))] | all)' gemini-fact-reuse-comparison-*.json
           fi
       - uses: actions/upload-artifact@v4
         with:

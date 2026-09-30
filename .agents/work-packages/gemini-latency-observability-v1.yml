@@ -1,0 +1,80 @@
+work_package:
+  id: gemini-latency-observability-v1
+  status: MEASUREMENT_IMPLEMENTED_CI_VALIDATION_PENDING
+  approved_base_sha: "769109f823de33bae5a4d0568f4483b7da8263a4"
+  execution_base_sha: "769109f823de33bae5a4d0568f4483b7da8263a4"
+  goal: Add evaluation-only phase, request, transport, usage, and payload-shape evidence for FACT_REUSE diagnostics without changing request semantics.
+  engineering_axis:
+    - AI/RAG evaluation and targeted improvement
+    - Observability based on real failure diagnosis
+  allowed_paths:
+    - .agents/work-packages/gemini-latency-observability-v1.yml
+    - backend/src/main/java/com/terraformers/modernization/evaluation/gemini/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/gemini/**
+    - .github/workflows/gcp-gemini-generation-comparison.yml
+  prohibited_paths:
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/main/java/com/terraformers/modernization/storage/**
+    - backend/pom.xml
+    - AGENTS.md
+    - docs/**
+    - evaluation/**
+    - corpus/**
+    - infra/**
+    - frontend/**
+  allowed_actions:
+    - inspect_repository
+    - add_evaluation_only_instrumentation
+    - add_deterministic_tests
+    - minimally_update_existing_workflow_artifact_validation
+    - create_pull_request
+    - inspect_ci_once
+    - repair_same_failure_once
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - live_gemini_call
+    - workflow_dispatch
+    - sdk_upgrade
+    - timeout_policy_change
+    - retry_policy_change
+    - prompt_or_thinking_change
+    - create_new_workflow
+    - next_work_package_start
+  auto_repair_limit: 1
+  selected_design:
+    artifact_schema: gemini-fact-reuse-comparison-v2
+    phase_context: instance-owned ThreadLocal scoped to the sequential evaluation request
+    transport: evaluation-only OkHttp EventListener and response metadata interceptor retained through OkHttpClient.newBuilder
+    timeout_semantics: connect/read/write/call timeouts explicitly remain zero
+    retry_semantics: retain google-genai default RetryInterceptor and observe repeated request callbacks
+    usage: SDK response accessors for evaluation-owned calls and bounded final-response metadata extraction for production control calls
+  acceptance_criteria:
+    - control fact extraction and generation phases are timed directly
+    - candidate canonical extraction and optional text generation phases are timed directly
+    - negative candidate cases have no generation phase
+    - each request records identity, safe payload sizes, optional usage, completion, error, and supported transport evidence
+    - observed HTTP exchanges and pre-header network failures remain distinct from compact application retry; exact SDK attempt count is unknown
+    - progress logs contain case arm phase and timing but no request or response content
+    - production sources and request semantics remain unchanged
+    - no live inference occurs
+  verification:
+    - evaluation Gemini unit tests
+    - existing FACT_REUSE and comparison tests
+    - source and scope diff audit
+    - existing normal pull request CI when local Maven dependencies are unavailable
+  stop_on:
+    - unexpected_base_change
+    - production_path_change_required
+    - backend_pom_change_required
+    - sdk_upgrade_or_undocumented_api_required
+    - transport_semantics_cannot_be_preserved
+    - live_call_required
+    - failure_class_changed
+    - auto_repair_limit_exceeded
+  completion:
+    result_before_ci: MEASUREMENT_IMPLEMENTED_CI_VALIDATION_PENDING
+    merge_requires_user_approval: true
+    targeted_live_diagnostic_requires_new_user_approval: true
+    next_work_package_status: AWAITING_APPROVAL

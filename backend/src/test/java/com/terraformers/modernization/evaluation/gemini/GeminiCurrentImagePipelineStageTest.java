@@ -2,6 +2,7 @@ package com.terraformers.modernization.evaluation.gemini;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisMode;
@@ -20,6 +21,7 @@ class GeminiCurrentImagePipelineStageTest {
     void controlPerformsFactsExtractionThenImageGeneration() {
         AtomicInteger factsCalls = new AtomicInteger();
         AtomicInteger generationCalls = new AtomicInteger();
+        GeminiLatencyTelemetry telemetry = new GeminiLatencyTelemetry(new ObjectMapper());
         GeminiCurrentImagePipelineStage stage = new GeminiCurrentImagePipelineStage(
                 source -> {
                     factsCalls.incrementAndGet();
@@ -41,7 +43,10 @@ class GeminiCurrentImagePipelineStageTest {
                             100,
                             false
                     );
-                }
+                },
+                telemetry,
+                identity("LOW", 800),
+                identity("DEFAULT", 8192)
         );
 
         stage.generate(
@@ -54,6 +59,11 @@ class GeminiCurrentImagePipelineStageTest {
 
         assertThat(factsCalls).hasValue(1);
         assertThat(generationCalls).hasValue(1);
+        assertThat(telemetry.evidenceFor("case", GeminiLatencyTelemetry.Arm.CONTROL))
+                .extracting(GeminiLatencyTelemetry.PhaseEvidence::phase)
+                .containsExactly(
+                        GeminiLatencyTelemetry.Phase.FACT_EXTRACTION,
+                        GeminiLatencyTelemetry.Phase.GENERATION);
     }
 
     private ObjectContent source() {
@@ -61,5 +71,9 @@ class GeminiCurrentImagePipelineStageTest {
         return new ObjectContent(
                 new ObjectMetadata("evaluation", "fixture.webp", "image/webp", bytes.length, ""),
                 bytes);
+    }
+
+    private GeminiLatencyTelemetry.RequestIdentity identity(String thinking, int maxTokens) {
+        return new GeminiLatencyTelemetry.RequestIdentity("gemini-3.8-flash", "global", thinking, maxTokens);
     }
 }

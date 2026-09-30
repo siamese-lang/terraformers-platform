@@ -20,9 +20,23 @@ final class ReferenceEvidenceSelector {
             List<String> resourceTypes,
             int limit
     ) {
-        List<ReferenceDocument> selected = new ArrayList<>(global.stream().limit(limit).toList());
-        supplementResourceCoverage(candidates, selected, resourceTypes, limit);
-        promoteDecisions(candidates, selected, resourceTypes, limit);
+        return select(candidates, global, resourceTypes, limit, limit);
+    }
+
+    List<ReferenceDocument> select(
+            Collection<Candidate> candidates,
+            List<ReferenceDocument> global,
+            List<String> resourceTypes,
+            int baseLimit,
+            int maxLimit
+    ) {
+        if (baseLimit <= 0 || maxLimit < baseLimit) {
+            throw new IllegalArgumentException("evidence limits must be positive and max must be >= base");
+        }
+        List<ReferenceDocument> selected = new ArrayList<>(global.stream().limit(baseLimit).toList());
+        supplementResourceCoverage(candidates, selected, resourceTypes, baseLimit, maxLimit);
+        int decisionLimit = Math.min(maxLimit, Math.max(baseLimit, selected.size()));
+        promoteDecisions(candidates, selected, resourceTypes, decisionLimit);
         return List.copyOf(selected);
     }
 
@@ -30,7 +44,8 @@ final class ReferenceEvidenceSelector {
             Collection<Candidate> candidates,
             List<ReferenceDocument> selected,
             List<String> resourceTypes,
-            int limit
+            int baseLimit,
+            int maxLimit
     ) {
         Set<String> missing = new LinkedHashSet<>(resourceTypes);
         selected.forEach(document -> missing.removeAll(document.resourceTypes()));
@@ -54,15 +69,18 @@ final class ReferenceEvidenceSelector {
             if (best == null) {
                 return;
             }
-            if (selected.size() < limit) {
+            if (selected.size() < baseLimit) {
                 selected.add(best.document());
             } else {
                 int replacement = safeResourceReplacement(selected, best.document(), resourceTypes);
-                if (replacement < 0) {
+                if (replacement >= 0) {
+                    selectedIds.remove(selected.get(replacement).id());
+                    selected.set(replacement, best.document());
+                } else if (selected.size() < maxLimit) {
+                    selected.add(best.document());
+                } else {
                     return;
                 }
-                selectedIds.remove(selected.get(replacement).id());
-                selected.set(replacement, best.document());
             }
             selectedIds.add(best.document().id());
             missing.removeAll(best.document().resourceTypes());

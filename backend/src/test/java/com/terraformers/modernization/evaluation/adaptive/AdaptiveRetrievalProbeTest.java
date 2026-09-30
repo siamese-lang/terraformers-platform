@@ -139,18 +139,18 @@ class AdaptiveRetrievalProbeTest {
         try {
             List<Map<String, Object>> hits = documents.stream().map(document -> Map.<String, Object>of(
                     "_score", document.score(),
-                    "_source", Map.of(
-                            "documentId", document.id(),
-                            "title", document.title(),
-                            "content", document.content(),
-                            "documentType", document.documentType(),
-                            "resourceTypes", document.resourceTypes(),
-                            "sourcePath", document.sourcePath(),
-                            "providerVersion", document.providerVersion(),
-                            "corpusVersion", document.corpusVersion(),
-                            "authority", document.authority(),
-                            "priority", document.priority(),
-                            "riskTags", document.riskTags()
+                    "_source", Map.ofEntries(
+                            Map.entry("documentId", document.id()),
+                            Map.entry("title", document.title()),
+                            Map.entry("content", document.content()),
+                            Map.entry("documentType", document.documentType()),
+                            Map.entry("resourceTypes", document.resourceTypes()),
+                            Map.entry("sourcePath", document.sourcePath()),
+                            Map.entry("providerVersion", document.providerVersion()),
+                            Map.entry("corpusVersion", document.corpusVersion()),
+                            Map.entry("authority", document.authority()),
+                            Map.entry("priority", document.priority()),
+                            Map.entry("riskTags", document.riskTags())
                     )
             )).toList();
             return mapper.writeValueAsString(Map.of("hits", Map.of("hits", hits)));

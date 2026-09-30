@@ -11,13 +11,20 @@ import java.util.List;
 
 final class GeminiFactReusePipelineStage implements AnalysisGenerationStage {
 
-    private final GeminiCanonicalEnvelopeExtractor extractor;
-    private final GeminiFactReuseGenerationStage generationStage;
+    private final EnvelopeExtractor extractor;
+    private final FactGenerator generationStage;
     private Trace lastTrace;
 
     GeminiFactReusePipelineStage(
             GeminiCanonicalEnvelopeExtractor extractor,
             GeminiFactReuseGenerationStage generationStage
+    ) {
+        this(extractor::extract, generationStage::generate);
+    }
+
+    GeminiFactReusePipelineStage(
+            EnvelopeExtractor extractor,
+            FactGenerator generationStage
     ) {
         this.extractor = extractor;
         this.generationStage = generationStage;
@@ -59,6 +66,20 @@ final class GeminiFactReusePipelineStage implements AnalysisGenerationStage {
 
     private static long elapsed(long start) {
         return (System.nanoTime() - start) / 1_000_000;
+    }
+
+    @FunctionalInterface
+    interface EnvelopeExtractor {
+        GeminiCanonicalEnvelope extract(ObjectContent source);
+    }
+
+    @FunctionalInterface
+    interface FactGenerator {
+        AnalysisGenerationResult generate(
+                AnalysisRequestContext context,
+                GeminiCanonicalEnvelope envelope,
+                List<ReferenceDocument> references
+        );
     }
 
     record Trace(

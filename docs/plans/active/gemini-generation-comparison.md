@@ -29,3 +29,31 @@ provider/setup failure is not model-quality evidence. A single run cannot establ
 model is generally better or more reliable. Stop after the deterministic harness and manual-only
 workflow are reviewed; do not dispatch it, change production routing, run a holdout, or start a
 repeated evaluation without a separate user decision.
+
+
+## Fact-reuse latency diagnostic closure
+
+The later FACT_REUSE experiment reused the same frozen six-case generation fixture to test whether
+one canonical image analysis could replace the second image-bearing generation request. Production
+adoption was explicitly gated on preserved quality/safety **and** meaningful end-to-end latency
+improvement.
+
+That investigation is now closed by
+[Gemini Fact-Reuse Latency Diagnostic Closure](../../evaluation/gemini-fact-reuse-latency-diagnostic-closure.md).
+
+Key decision:
+
+- candidate canonical classification and frozen generation acceptance were strong enough to continue
+  diagnosis;
+- repeated instrumented evidence reproduced a text-only `109773 ms` generation tail;
+- all 24 logical requests across the final N=3 diagnostic used exactly one observed HTTP exchange,
+  zero network failures, and HTTP 200;
+- the long interval accumulated after request-body completion and before response headers;
+- duplicate image processing, SDK retry, transport failure, and simple token volume do not explain
+  the observed tail;
+- provider-internal queue/scheduling versus inference compute remains unresolved;
+- production fact-reuse adoption is **HOLD** because the frozen latency gate was not reliably met;
+- generic retry and an arbitrary production timeout are not selected.
+
+Do not rerun FACT_REUSE merely to obtain a faster sample. Any production adoption, retry, timeout,
+model, or routing change requires a new explicit Work Package.

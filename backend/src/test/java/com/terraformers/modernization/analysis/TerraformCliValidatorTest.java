@@ -56,7 +56,7 @@ class TerraformCliValidatorTest {
         assertThat(executor.workingDirectories().get(0))
                 .isEqualTo(executor.workingDirectories().get(1));
         assertThat(executor.sawMainTf()).containsOnly(true);
-        assertThat(tempRoot).isDirectoryContaining(path -> false);
+        assertTempRootEmpty();
     }
 
     @Test
@@ -80,7 +80,7 @@ class TerraformCliValidatorTest {
         assertThat(validation.reason()).isEqualTo(
                 "generated Terraform failed Terraform CLI validation");
         assertThat(validation.reason()).doesNotContain("definitely_not_a_real_argument");
-        assertThat(tempRoot).isDirectoryContaining(path -> false);
+        assertTempRootEmpty();
     }
 
     @Test
@@ -96,7 +96,7 @@ class TerraformCliValidatorTest {
         assertThat(validation.valid()).isFalse();
         assertThat(validation.reason()).contains("offline Terraform initialization");
         assertThat(executor.commands()).hasSize(1);
-        assertThat(tempRoot).isDirectoryContaining(path -> false);
+        assertTempRootEmpty();
     }
 
     @Test
@@ -125,7 +125,7 @@ class TerraformCliValidatorTest {
         assertThat(timeout.reason()).contains("timed out");
         assertThat(malformed.valid()).isFalse();
         assertThat(malformed.reason()).contains("malformed diagnostics");
-        assertThat(tempRoot).isDirectoryContaining(path -> false);
+        assertTempRootEmpty();
     }
 
     @Test

@@ -39,14 +39,13 @@ public final class GoogleClaudeVertexClient implements ClaudeVertexClient {
 
     @Override public ClaudeResponse rawPredict(JsonNode request) {
         try {
-            credentials.refreshIfExpired();
-            String token = credentials.getAccessToken().getTokenValue();
+            String token = accessToken();
             HttpRequest httpRequest = HttpRequest.newBuilder(endpoint).timeout(Duration.ofMinutes(3))
                     .header("Authorization", "Bearer " + token).header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(request))).build();
             HttpResponse<String> response = http.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) {
-                throw new ClaudeProviderException(response.statusCode(), "MODEL_ACCESS",
+                throw new ClaudeProviderException(response.statusCode(), failureCategory(response.statusCode()),
                         "Claude Vertex rawPredict returned HTTP " + response.statusCode());
             }
             JsonNode root = mapper.readTree(response.body());
@@ -57,11 +56,25 @@ public final class GoogleClaudeVertexClient implements ClaudeVertexClient {
                     integer(root.path("usage").path("input_tokens")), integer(root.path("usage").path("output_tokens")),
                     root.path("model").asText());
         } catch (ClaudeProviderException exception) { throw exception;
-        } catch (IOException exception) { throw new ClaudeProviderException(null, "MODEL_ACCESS", exception.getClass().getSimpleName());
+        } catch (IOException exception) { throw new ClaudeProviderException(null, "PROVIDER_RUNTIME", exception.getClass().getSimpleName());
         } catch (InterruptedException exception) { Thread.currentThread().interrupt(); throw new ClaudeProviderException(null, "PROVIDER_RUNTIME", "InterruptedException"); }
     }
 
     private static Integer integer(JsonNode node) { return node.isIntegralNumber() ? node.intValue() : null; }
+    private String accessToken() {
+        try {
+            credentials.refreshIfExpired();
+            if (credentials.getAccessToken() == null) {
+                throw new ClaudeProviderException(null, "MODEL_ACCESS", "ApplicationDefaultCredentialsUnavailable");
+            }
+            return credentials.getAccessToken().getTokenValue();
+        } catch (IOException exception) {
+            throw new ClaudeProviderException(null, "MODEL_ACCESS", exception.getClass().getSimpleName());
+        }
+    }
+    static String failureCategory(int status) {
+        return status == 401 || status == 403 || status == 404 ? "MODEL_ACCESS" : "PROVIDER_RUNTIME";
+    }
     private static GoogleCredentials applicationDefault() {
         try { return GoogleCredentials.getApplicationDefault(); }
         catch (IOException e) { throw new ClaudeProviderException(null, "MODEL_ACCESS", "ApplicationDefaultCredentialsUnavailable"); }

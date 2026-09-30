@@ -389,6 +389,16 @@ ADC-backed `ClaudeVertexClient`. It preserves `VertexPromptBuilder` prompt seman
 Claude-unsupported schema bounds, uses Claude structured output, permits one compact truncation
 retry, reuses `VertexResponseParser` semantics, runs `TerraformDraftValidator`, and writes an
 `opus-generation-evaluation-v1` artifact with deterministic generation-only failure precedence.
+The artifact fixes `promptContractSourceCommit` to
+`3fc610f1e9d601a4d5f79f281b358b783342c4ce` and records the SHA-256 of each exact rendered standard
+prompt (and the compact prompt when truncation causes the single retry), without retaining image
+bytes or full request bodies.
+
+Bounded per-case provider failures are evidence rather than whole-run aborts: authentication,
+authorization, and unavailable-model responses are recorded as `MODEL_ACCESS`; quota, HTTP 5xx,
+timeout, and transport failures are recorded as `PROVIDER_RUNTIME`. Safe reasons and HTTP status
+when available are retained, all six cases continue, and no response body, token, header, or
+credential material is written to the artifact.
 
 The dedicated manual launcher is `.github/workflows/gcp-opus-generation-evaluation.yml`. It is
 `workflow_dispatch`-only, requires `RUN_OPUS_GENERATION_EVALUATION`, runs an ephemeral pod as the

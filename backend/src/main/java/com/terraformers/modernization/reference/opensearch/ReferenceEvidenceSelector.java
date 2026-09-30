@@ -148,14 +148,45 @@ final class ReferenceEvidenceSelector {
                 if (redundantOnly != redundant) {
                     continue;
                 }
-                List<ReferenceDocument> proposed = replacing(selected, index, replacement);
-                if (coveredResourceTypes(proposed, resourceTypes).containsAll(existingResources)
-                        && providerCoverage(proposed, resourceTypes).containsAll(existingProviders)) {
+                if (preservesCoverage(
+                        selected, index, replacement, resourceTypes, existingResources, existingProviders)) {
                     return index;
                 }
             }
         }
+        Set<String> requested = new LinkedHashSet<>(resourceTypes);
+        for (int index = selected.size() - 1; index >= 0; index--) {
+            ReferenceDocument removed = selected.get(index);
+            if (PROJECT_DECISION.equals(removed.authority())
+                    && structurallyBetter(replacement, removed, requested)
+                    && preservesCoverage(
+                            selected, index, replacement, resourceTypes, existingResources, existingProviders)) {
+                return index;
+            }
+        }
         return -1;
+    }
+
+    private boolean structurallyBetter(
+            ReferenceDocument replacement, ReferenceDocument existing, Set<String> requested) {
+        int replacementMatches = coverage(replacement, requested);
+        int existingMatches = coverage(existing, requested);
+        return replacementMatches > existingMatches
+                || (replacementMatches == existingMatches
+                        && unsupported(replacement, requested) < unsupported(existing, requested));
+    }
+
+    private boolean preservesCoverage(
+            List<ReferenceDocument> selected,
+            int index,
+            ReferenceDocument replacement,
+            List<String> resourceTypes,
+            Set<String> existingResources,
+            Set<String> existingProviders
+    ) {
+        List<ReferenceDocument> proposed = replacing(selected, index, replacement);
+        return coveredResourceTypes(proposed, resourceTypes).containsAll(existingResources)
+                && providerCoverage(proposed, resourceTypes).containsAll(existingProviders);
     }
 
     private List<ReferenceDocument> replacing(

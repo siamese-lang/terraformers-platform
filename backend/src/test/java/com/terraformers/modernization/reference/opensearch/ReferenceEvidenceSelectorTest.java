@@ -86,7 +86,7 @@ class ReferenceEvidenceSelectorTest {
     @Test
     void doesNotReplaceSelectedDecisionAtSaturatedLimitAndIsDeterministic() {
         ReferenceDocument first = document("decision-one", "PROJECT_DECISION", 0.8, 1, "aws_alpha");
-        ReferenceDocument second = document("decision-two", "PROJECT_DECISION", 0.7, 1, "aws_alpha");
+        ReferenceDocument second = document("decision-two", "PROJECT_DECISION", 0.99, 100, "aws_alpha");
         List<ReferenceEvidenceSelector.Candidate> candidates = List.of(
                 candidate(first, true, true, 0), candidate(second, false, false, 1));
 
@@ -96,6 +96,36 @@ class ReferenceEvidenceSelectorTest {
         assertThat(firstRun).extracting(ReferenceDocument::id).containsExactly("decision-one");
         assertThat(secondRun).isEqualTo(firstRun);
         assertThat(firstRun).hasSize(1);
+    }
+
+    @Test
+    void replacesBroadSelectedDecisionWithStructurallyCoherentDecisionWithoutLosingCoverage() {
+        ReferenceDocument providerAlpha = document("provider-alpha", "PROVIDER_SCHEMA", 1, 1, "aws_alpha");
+        ReferenceDocument providerBeta = document("provider-beta", "PROVIDER_DOCUMENTATION", 1, 1, "aws_beta");
+        ReferenceDocument broad = document(
+                "broad-decision", "PROJECT_DECISION", 0.9, 90, "aws_alpha", "aws_gamma");
+        ReferenceDocument coherent = document(
+                "coherent-decision", "PROJECT_DECISION", 0.5, 10, "aws_alpha");
+        List<ReferenceEvidenceSelector.Candidate> candidates = List.of(
+                candidate(providerAlpha, true, true, 0),
+                candidate(providerBeta, true, true, 1),
+                candidate(broad, true, true, 2),
+                candidate(coherent, false, false, 3));
+
+        List<ReferenceDocument> firstRun = select(
+                candidates, List.of(providerAlpha, providerBeta, broad), List.of("aws_alpha", "aws_beta"), 3);
+        List<ReferenceDocument> secondRun = select(
+                candidates, List.of(providerAlpha, providerBeta, broad), List.of("aws_alpha", "aws_beta"), 3);
+
+        assertThat(firstRun).extracting(ReferenceDocument::id)
+                .containsExactly("provider-alpha", "provider-beta", "coherent-decision");
+        assertThat(firstRun).extracting(ReferenceDocument::resourceTypes)
+                .anySatisfy(resources -> assertThat(resources).contains("aws_alpha"))
+                .anySatisfy(resources -> assertThat(resources).contains("aws_beta"));
+        assertThat(firstRun).extracting(ReferenceDocument::authority)
+                .contains("PROVIDER_SCHEMA", "PROVIDER_DOCUMENTATION");
+        assertThat(secondRun).isEqualTo(firstRun);
+        assertThat(firstRun).hasSize(3);
     }
 
     @Test

@@ -1,0 +1,141 @@
+package com.terraformers.modernization.evaluation.gemini;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.terraformers.modernization.analysis.AnalysisGenerationResult;
+import com.terraformers.modernization.analysis.AnalysisGenerationStage;
+import com.terraformers.modernization.analysis.AnalysisInputClassification;
+import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
+import com.terraformers.modernization.evaluation.opus.OpusGenerationFixtureLoader;
+import java.nio.file.Path;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+class GeminiFactReuseComparisonTest {
+
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final Path root = Path.of("..").toAbsolutePath().normalize();
+
+    @Test
+    void sixCaseFakeRunAcceptsMatchingCanonicalClassificationsAndSkipsNegativeSecondGeneration() {
+        var fixture = fixture();
+
+        AnalysisGenerationStage control = (context, source, references) -> {
+            var c = caseFor(fixture, source.metadata().key());
+            if (c.definition().expectedClassification() != AnalysisInputClassification.ARCHITECTURE_DIAGRAM) {
+                throw new AnalysisInputRejectedException(
+                        c.definition().expectedClassification(), 0.95, false, null);
+            }
+            return passing(c);
+        };
+
+        GeminiFactReusePipelineStage candidate = new GeminiFactReusePipelineStage(
+                source -> {
+                    var c = caseFor(fixture, source.metadata().key());
+                    AnalysisInputClassification classification = c.definition().expectedClassification();
+                    if (classification == AnalysisInputClassification.ARCHITECTURE_DIAGRAM) {
+                        return new GeminiCanonicalEnvelope(
+                                classification,
+                                0.96,
+                                "fixture canonical classification",
+                                "fixture architecture",
+                                List.of("component"),
+                                List.of("component -> dependency"),
+                                c.definition().generation().terraformResourceTypes().required()
+                        );
+                    }
+                    return new GeminiCanonicalEnvelope(
+                            classification,
+                            0.96,
+                            "fixture canonical classification",
+                            "",
+                            List.of(),
+                            List.of(),
+                            List.of()
+                    );
+                },
+                (context, envelope, references) -> passing(caseById(fixture, context.targetName()))
+        );
+
+        GeminiFactReuseComparisonRunner runner =
+                new GeminiFactReuseComparisonRunner(control, candidate, "gemini-3.8-flash");
+
+        var cases = fixture.cases().stream().map(runner::evaluate).toList();
+
+        assertThat(GeminiFactReuseComparisonLauncher.armAccepted(cases, true)).isTrue();
+        assertThat(GeminiFactReuseComparisonLauncher.armAccepted(cases, false)).isTrue();
+        assertThat(GeminiFactReuseComparisonLauncher.canonicalClassificationAccepted(cases)).isTrue();
+        assertThat(cases).filteredOn(c -> !"ARCHITECTURE_DIAGRAM".equals(c.expectedClassification()))
+                .allSatisfy(c -> assertThat(c.secondGenerationInvoked()).isFalse());
+        assertThat(cases).filteredOn(c -> "ARCHITECTURE_DIAGRAM".equals(c.expectedClassification()))
+                .allSatisfy(c -> assertThat(c.secondGenerationInvoked()).isTrue());
+    }
+
+    @Test
+    void rejectsFactReuseRuntimeIdentityDrift() {
+        assertThatThrownBy(() -> GeminiFactReuseComparisonLauncher.requireIdentity(
+                "us-central1", "gemini-3.8-flash", 8192))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> GeminiFactReuseComparisonLauncher.requireIdentity(
+                "global", "other", 8192))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> GeminiFactReuseComparisonLauncher.requireIdentity(
+                "global", "gemini-3.8-flash", 4096))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private OpusGenerationFixtureLoader.LoadedFixture fixture() {
+        return new OpusGenerationFixtureLoader(mapper).load(
+                root.resolve("evaluation/opus-generation-v1/manifest.json"),
+                root.resolve("evaluation/terraformers-eval-v1/dataset.json"),
+                root.resolve("corpus/terraformers-reference/v3/documents.jsonl")
+        );
+    }
+
+    private OpusGenerationFixtureLoader.FixtureCase caseFor(
+            OpusGenerationFixtureLoader.LoadedFixture fixture,
+            String path
+    ) {
+        return fixture.cases().stream()
+                .filter(c -> c.definition().input().path().equals(path))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private OpusGenerationFixtureLoader.FixtureCase caseById(
+            OpusGenerationFixtureLoader.LoadedFixture fixture,
+            String id
+    ) {
+        return fixture.cases().stream()
+                .filter(c -> c.definition().caseId().equals(id))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private AnalysisGenerationResult passing(OpusGenerationFixtureLoader.FixtureCase c) {
+        String terraform = terraform(c);
+        return new AnalysisGenerationResult(
+                "fake",
+                AnalysisInputClassification.ARCHITECTURE_DIAGRAM,
+                0.95,
+                terraform,
+                "fixture architecture",
+                List.of("component"),
+                List.of("relationship"),
+                List.of(),
+                "STOP",
+                100,
+                false
+        );
+    }
+
+    private String terraform(OpusGenerationFixtureLoader.FixtureCase c) {
+        StringBuilder out = new StringBuilder();
+        c.definition().generation().terraformResourceTypes().required().forEach(
+                type -> out.append("resource \"").append(type)
+                        .append("\" \"test\" { name = \"test\" }\n"));
+        return out.toString();
+    }
+}

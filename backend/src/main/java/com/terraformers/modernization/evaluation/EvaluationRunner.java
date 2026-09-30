@@ -174,7 +174,11 @@ public class EvaluationRunner {
 
             ReferenceQuery query;
             try {
-                query = new ReferenceQuery(queryTextBuilder.build(facts), configuration.topK());
+                query = new ReferenceQuery(
+                        queryTextBuilder.build(facts),
+                        facts.resourceTypes(),
+                        configuration.topK()
+                );
             } catch (RuntimeException exception) {
                 retrievalTrace = StageTrace.fail(
                         EvaluationStage.RETRIEVAL,

@@ -23,6 +23,11 @@ class VertexArchitectureFactsExtractorTest {
             assertThat(config.thinkingConfig().orElseThrow().thinkingLevel()).isPresent();
             assertThat(config.thinkingConfig().orElseThrow().thinkingLevel().orElseThrow().knownEnum())
                     .isEqualTo(ThinkingLevel.Known.LOW);
+            assertThat(VertexArchitectureFactsExtractor.FACTS_PROMPT)
+                    .contains("Terraform AWS provider resource type identifiers")
+                    .contains("aws_[a-z0-9_]+", "aws_vpc", "aws_db_instance", "aws_security_group", "aws_lb")
+                    .contains("AWS::EC2::VPC", "AWS::RDS::DBInstance")
+                    .contains("empty", "resourceTypes");
             return response("""
                     {"summary":"Three tier","components":["ALB","API"],
                      "relationships":["ALB -> API"],"resourceTypes":["aws_lb"]}

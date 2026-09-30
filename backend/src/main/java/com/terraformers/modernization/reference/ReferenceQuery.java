@@ -16,6 +16,7 @@ public record ReferenceQuery(String text, List<String> resourceTypes, int limit)
                 : resourceTypes.stream()
                         .filter(value -> value != null && !value.isBlank())
                         .map(String::strip)
+                        .peek(ReferenceQuery::requireCanonicalResourceType)
                         .distinct()
                         .limit(8)
                         .toList();
@@ -44,5 +45,12 @@ public record ReferenceQuery(String text, List<String> resourceTypes, int limit)
             }
         }
         return List.copyOf(resources);
+    }
+
+    private static void requireCanonicalResourceType(String resourceType) {
+        if (!RESOURCE_TYPE.matcher(resourceType).matches()) {
+            throw new IllegalArgumentException(
+                    "reference query resource type must be a Terraform AWS provider identifier: " + resourceType);
+        }
     }
 }

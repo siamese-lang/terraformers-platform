@@ -17,6 +17,7 @@ import com.terraformers.modernization.reference.ArchitectureFactsExtractor;
 import com.terraformers.modernization.reference.ArchitectureFactsExtractionException;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.ReferenceDocument;
+import com.terraformers.modernization.reference.ReferenceQuery;
 import com.terraformers.modernization.reference.ReferenceRetriever;
 import com.terraformers.modernization.reference.RetrievalMode;
 import com.terraformers.modernization.reference.RetrievalQueryTextBuilder;
@@ -24,12 +25,72 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class EvaluationRunnerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    void passesStructuredFactResourceTypesToRetrievalWithoutParsingQueryText() {
+        LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
+        AtomicReference<ReferenceQuery> receivedQuery = new AtomicReference<>();
+        ReferenceRetriever capturingRetriever = query -> {
+            if (receivedQuery.get() == null) {
+                receivedQuery.set(query);
+            }
+            return List.of();
+        };
+        RetrievalQueryTextBuilder textWithoutResourceIdentifiers = new RetrievalQueryTextBuilder() {
+            @Override
+            public String build(ArchitectureRetrievalFacts facts) {
+                return "architecture facts without resource identifiers";
+            }
+        };
+        ConfigurationIdentity configuration = new ConfigurationIdentity(
+                "terraformers-reference-v2", "5.100.0", "bedrock", "bedrock",
+                RetrievalMode.REQUIRED.name(), 5, "stub-generation-model", "stub-embedding-model",
+                "stub-config-sha256"
+        );
+        EvaluationRunner runner = new EvaluationRunner(
+                source -> new ArchitectureRetrievalFacts(
+                        "Three tier", List.of("VPC", "Database"), List.of("VPC -> Database"),
+                        List.of("aws_vpc", "aws_db_instance", "aws_security_group")),
+                textWithoutResourceIdentifiers,
+                capturingRetriever,
+                generator(),
+                new TerraformDraftValidator(),
+                RetrievalMode.REQUIRED,
+                configuration
+        );
+
+        runner.run(dataset, "structured-resource-types");
+
+        assertThat(receivedQuery.get()).isNotNull();
+        assertThat(receivedQuery.get().text()).doesNotContain("aws_");
+        assertThat(receivedQuery.get().resourceTypes())
+                .containsExactly("aws_vpc", "aws_db_instance", "aws_security_group");
+    }
+
+    @Test
+    void reportsInvalidExplicitResourceTypeAsRetrievalQueryConstructionFailure() {
+        LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
+        ArchitectureFactsExtractor invalidFacts = source -> new ArchitectureRetrievalFacts(
+                "VPC", List.of("VPC"), List.of(), List.of("AWS::EC2::VPC"));
+
+        EvaluationTrace trace = trace(
+                runner(invalidFacts, retriever(), generator()).run(dataset, "invalid-resource-type"),
+                "arch-vpc-three-tier"
+        );
+
+        assertThat(trace.retrieval().status()).isEqualTo(EvaluationStageStatus.FAIL);
+        assertThat(trace.firstDivergence().stage()).isEqualTo(EvaluationStage.RETRIEVAL);
+        assertThat(trace.firstDivergence().category())
+                .isEqualTo(EvaluationFailureCategory.RETRIEVAL_QUERY_CONSTRUCTION);
+        assertThat(trace.generation().status()).isEqualTo(EvaluationStageStatus.NOT_RUN);
+    }
 
     @Test
     void executesFixedDatasetAndWritesOneMachineReadableRun(@TempDir Path tempDir) throws Exception {

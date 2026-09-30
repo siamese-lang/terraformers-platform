@@ -26,9 +26,14 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
 
     public static final int MAX_FACT_TOKENS = 800;
     public static final ThinkingLevel.Known FACT_EXTRACTION_THINKING_LEVEL = ThinkingLevel.Known.LOW;
-    private static final String FACTS_PROMPT = """
+    static final String FACTS_PROMPT = """
             Return one compact JSON object only with keys summary, components, relationships, resourceTypes.
             Keep summary under 160 characters. Keep each array to at most 8 strings and each string under 60 characters.
+            resourceTypes must contain only Terraform AWS provider resource type identifiers matching aws_[a-z0-9_]+,
+            for example aws_vpc, aws_db_instance, aws_security_group, or aws_lb.
+            Never return CloudFormation-style identifiers such as AWS::EC2::VPC or AWS::RDS::DBInstance.
+            If a Terraform AWS provider resource type cannot be identified confidently, omit it; use an empty
+            resourceTypes array when none can be identified confidently.
             Describe architecture facts only; never generate Terraform, Markdown, or explanatory prose.
             """;
 

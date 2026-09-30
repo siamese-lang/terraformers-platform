@@ -1,0 +1,213 @@
+work_package:
+  id: fact-reuse-generation-v1
+  status: ACTIVE
+  approved_base_sha: "eaaffa32ba0b2a121d9b5679aa47dad9cc1e55e5"
+  execution_base_sha: "eaaffa32ba0b2a121d9b5679aa47dad9cc1e55e5"
+
+  goal: >
+    Measure whether reusing a bounded canonical first-pass image analysis can remove the
+    second image inference while preserving frozen generation acceptance and improving
+    end-to-end latency.
+
+  engineering_axis:
+    - AI/RAG evaluation and targeted improvement
+    - Generation latency
+    - Duplicate image analysis removal
+
+  contract_file_immutable_after_first_implementation_write: true
+
+  allowed_paths:
+    - backend/src/main/java/com/terraformers/modernization/evaluation/gemini/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/gemini/**
+    - .github/workflows/gcp-gemini-generation-comparison.yml
+
+  prohibited_paths:
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/main/java/com/terraformers/modernization/storage/**
+    - backend/Dockerfile
+    - infra/**
+    - frontend/**
+    - evaluation/**
+    - corpus/**
+    - docs/**
+    - AGENTS.md
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - add_evaluation_only_candidate
+    - add_regression_tests
+    - reuse_existing_manual_workflow
+    - create_pull_request
+    - inspect_ci
+    - repair_same_failure_once
+
+  auto_repair_limit: 1
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - create_new_github_workflow
+    - dispatch_workflow
+    - live_ai_model_call
+    - live_opensearch_evaluation
+    - production_routing_change
+    - production_prompt_change
+    - production_fact_extractor_change
+    - corpus_change
+    - dataset_change
+    - retrieval_change
+    - terraform_validation_change
+    - terraform_plan
+    - terraform_apply
+    - iam_change
+    - infrastructure_change
+    - next_work_package_start
+    - acceptance_criteria_change
+
+  selected_design:
+    fixture:
+      source: evaluation/opus-generation-v1/manifest.json
+      cases: 6
+      references: fixed_ordered_reference_ids
+      retrieval_execution: disabled_for_comparison
+    shared_identity:
+      model_id: gemini-3.8-flash
+      location: global
+      generation_max_output_tokens: 8192
+      generation_thinking_level: MEDIUM
+    control_arm:
+      description: current service inference shape with fixed references
+      sequence:
+        - production VertexArchitectureFactsExtractor over original image
+        - discard facts after extraction for generation purposes
+        - production VertexGenerationStage with original image and fixed references
+      fact_thinking_level: LOW
+    candidate_arm:
+      description: canonical first-pass analysis reused by text-only generation
+      sequence:
+        - evaluation-only canonical envelope extraction over original image
+        - if inputType is ARCHITECTURE_DIAGRAM, generate from envelope text plus fixed references without image bytes
+        - if inputType is AMBIGUOUS or NON_ARCHITECTURE_IMAGE, skip the second model call and return the first-pass classification
+      canonical_envelope:
+        fields:
+          - inputType
+          - classificationConfidence
+          - classificationReason
+          - summary
+          - components
+          - relationships
+          - resourceTypes
+        summary_max_chars: 320
+        components_max: 16
+        relationships_max: 16
+        resource_types_max: 16
+        max_output_tokens: 1200
+        thinking_level: LOW
+      candidate_generation:
+        image_part: forbidden
+        input: canonical_envelope_text_plus_fixed_references
+        thinking_level: MEDIUM
+        max_output_tokens: 8192
+        retry_policy: existing single compact retry only on MAX_TOKENS
+    artifact:
+      schema: gemini-fact-reuse-comparison-v1
+      required_root_fields:
+        - sourceCommit
+        - modelId
+        - controlMode
+        - candidateMode
+        - caseCount
+      required_per_arm_evidence:
+        - latencyMs
+        - outputTokens
+        - compactRetryOccurred
+        - observedClassification
+        - generatedTerraformResourceTypes
+        - terraformDraftValidatorPassed
+        - firstFailureCategory
+      required_candidate_extra_evidence:
+        - canonicalInputType
+        - canonicalExtractionLatencyMs
+        - secondGenerationInvoked
+
+  acceptance_criteria:
+    - id: control_reproduces_current_shape
+      requirement: >
+        Control performs one production fact extraction over the image and one production
+        image generation call using the same frozen references.
+    - id: candidate_has_one_image_call
+      requirement: >
+        Candidate canonical extraction is the only model call that receives image bytes.
+        Candidate generation for architecture cases is text-only; negative/ambiguous cases
+        make no second model call.
+    - id: canonical_classification_quality
+      requirement: >
+        The canonical envelope inputType matches all six frozen expected classifications.
+    - id: frozen_generation_acceptance
+      requirement: >
+        Candidate must meet the same frozen generation acceptance as the control on all six cases.
+    - id: same_reference_and_model_contract
+      requirement: >
+        Both arms use the same ordered frozen references, Gemini 3.8 Flash, global location,
+        and generation max output token limit.
+    - id: no_candidate_image_leak
+      requirement: >
+        Tests prove candidate generation content contains text only and does not attach source bytes.
+    - id: latency_evidence
+      requirement: >
+        Artifact records end-to-end arm latency and candidate canonical extraction latency so the
+        duplicate-image removal effect can be evaluated without inferring from workflow wall time.
+    - id: current_production_unchanged
+      requirement: >
+        No production analysis, retrieval, prompt, routing, or validation source file changes occur.
+    - id: no_live_run
+      requirement: >
+        No model inference is executed before this PR is independently reviewed and merged.
+    - id: workflow_reuse
+      requirement: >
+        Existing gcp-gemini-generation-comparison.yml is reused by adding FACT_REUSE mode;
+        MODEL and THINKING modes remain unchanged.
+
+  decision_after_live_run:
+    adopt_candidate_only_if:
+      - canonical classification is 6/6
+      - candidate frozen acceptance is 6/6
+      - no new safety or account-specific literal failure appears
+      - end-to-end latency improvement is meaningful on the frozen run
+    otherwise:
+      - do_not_change_production
+      - do_not_repeat_until_lucky
+      - inspect failure mechanism before any further experiment
+
+  verification:
+    evidence_sources:
+      - GitHub remote base/head SHA
+      - PR diff
+      - evaluation-only unit tests
+      - existing Gemini comparison tests
+      - backend clean test suite
+      - CI results
+    verifier_outcomes:
+      - PASS
+      - FAIL
+      - INCONCLUSIVE
+    implementer_self_report_is_evidence: false
+
+  stop_on:
+    - unexpected_main_change
+    - scope_drift
+    - production_path_change_required
+    - same_failure_repeated
+    - failure_class_changed
+    - auto_repair_limit_exceeded
+    - architecture_decision_required
+    - acceptance_criteria_change_required
+    - live_cloud_action_required
+
+  completion:
+    merge_requires_user_approval: true
+    live_comparison_requires_user_approval: true
+    production_adoption_requires_new_work_package: true
+    next_work_package_start_requires_user_approval: true

@@ -76,6 +76,56 @@ class GeminiFactReuseComparisonTest {
     }
 
     @Test
+    void absentOrBlankSelectorPreservesAllSixCasesInFixtureOrder() {
+        var fixture = fixture();
+        List<String> expected = fixture.cases().stream().map(c -> c.definition().caseId()).toList();
+
+        assertThat(GeminiFactReuseComparisonLauncher.selectCases(fixture.cases(), null))
+                .extracting(c -> c.definition().caseId())
+                .containsExactlyElementsOf(expected);
+        assertThat(GeminiFactReuseComparisonLauncher.selectCases(fixture.cases(), "  "))
+                .extracting(c -> c.definition().caseId())
+                .containsExactlyElementsOf(expected);
+        assertThat(expected).hasSize(6);
+    }
+
+    @Test
+    void frozenDiagnosticSelectorReturnsOnlyAnomalousCasesInFrozenOrderWithoutMutation() {
+        var fixture = fixture();
+        List<OpusGenerationFixtureLoader.FixtureCase> original = List.copyOf(fixture.cases());
+
+        var selected = GeminiFactReuseComparisonLauncher.selectCases(
+                fixture.cases(), String.join(",", GeminiFactReuseComparisonLauncher.DIAGNOSTIC_CASE_IDS));
+
+        assertThat(selected).extracting(c -> c.definition().caseId())
+                .containsExactly("arch-cloudfront-private-alb", "arch-private-aoss");
+        assertThat(selected.get(0)).isSameAs(caseById(fixture, "arch-cloudfront-private-alb"));
+        assertThat(selected.get(1)).isSameAs(caseById(fixture, "arch-private-aoss"));
+        assertThat(fixture.cases()).containsExactlyElementsOf(original);
+    }
+
+    @Test
+    void targetedSelectorRejectsUnknownCaseBeforeEvaluation() {
+        var fixture = fixture();
+
+        assertThatThrownBy(() -> GeminiFactReuseComparisonLauncher.selectCases(
+                fixture.cases(), "arch-cloudfront-private-alb,unknown"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unknown FACT_REUSE case IDs")
+                .hasMessageContaining("unknown");
+    }
+
+    @Test
+    void targetedSelectorRejectsDuplicateCaseBeforeEvaluation() {
+        var fixture = fixture();
+
+        assertThatThrownBy(() -> GeminiFactReuseComparisonLauncher.selectCases(
+                fixture.cases(), "arch-private-aoss,arch-private-aoss"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must not contain duplicates");
+    }
+
+    @Test
     void rejectsFactReuseRuntimeIdentityDrift() {
         assertThatThrownBy(() -> GeminiFactReuseComparisonLauncher.requireIdentity(
                 "us-central1", "gemini-3.8-flash", 8192))

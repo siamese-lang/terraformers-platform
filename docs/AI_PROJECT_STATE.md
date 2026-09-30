@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Fact-reuse latency diagnostic closure; next candidate Work Package = adaptive retrieval live-measurement readiness (AWAITING_APPROVAL)**
+- Current single task: **Adaptive retrieval live-measurement readiness implemented; live adaptive retrieval probe AWAITING_APPROVAL**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -34,6 +34,13 @@ The project success criterion is now explicit: complete three technically defens
 cases with repository-backed technical decisions, not merely a sequence of completed milestones.
 
 Case A — AI/RAG quality, performance and reliability:
+- adaptive retrieval live-measurement readiness is implemented in
+  [Adaptive Retrieval Live Measurement Readiness](evaluation/adaptive-retrieval-live-measurement-readiness.md):
+  the frozen `large-vpc-eks-rds-s3` facts require 12 resource types that need a minimum of 10
+  committed v3 corpus documents for complete coverage, so K8 is structurally insufficient; the
+  readiness harness compares production `OpenSearchReferenceRetriever` at maxEvidence 8 vs 16
+  while reusing one delegated Vertex embedding, and the manual live run remains
+  **AWAITING_APPROVAL**;
 - latest latency side-investigation is **CLOSED** in
   [Gemini Fact-Reuse Latency Diagnostic Closure](evaluation/gemini-fact-reuse-latency-diagnostic-closure.md);
   the three successful instrumented attempts in run `36758290144` reproduced a text-only

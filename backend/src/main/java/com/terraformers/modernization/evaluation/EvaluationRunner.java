@@ -279,15 +279,16 @@ public class EvaluationRunner {
             AnalysisGenerationResult generated = generationStage.generate(context, source, references);
             EvaluationCase.InputClassification observed = classification(generated.inputClassification().name());
             GenerationEvidence evidence = generationEvidence(generated, references, observed);
-            if (RequiredGroundingPolicy.isMissing(retrievalMode, generated.inputClassification(), references)) {
+            if (observed != definition.expectedClassification()) {
                 generationTrace = StageTrace.fail(
                         EvaluationStage.GENERATION,
                         elapsedMillis(generationStartedAt),
                         evidence,
                         new EvaluationFailure(
                                 EvaluationStage.GENERATION,
-                                EvaluationFailureCategory.RETRIEVAL_EMPTY,
-                                "required grounding is missing for architecture analysis"
+                                EvaluationFailureCategory.INPUT_CLASSIFICATION,
+                                "observed classification " + observed + " but expected "
+                                        + definition.expectedClassification()
                         )
                 );
                 return trace(
@@ -301,16 +302,15 @@ public class EvaluationRunner {
                         StageTrace.notRun(EvaluationStage.VALIDATION)
                 );
             }
-            if (observed != definition.expectedClassification()) {
+            if (RequiredGroundingPolicy.isMissing(retrievalMode, generated.inputClassification(), references)) {
                 generationTrace = StageTrace.fail(
                         EvaluationStage.GENERATION,
                         elapsedMillis(generationStartedAt),
                         evidence,
                         new EvaluationFailure(
                                 EvaluationStage.GENERATION,
-                                EvaluationFailureCategory.INPUT_CLASSIFICATION,
-                                "observed classification " + observed + " but expected "
-                                        + definition.expectedClassification()
+                                EvaluationFailureCategory.RETRIEVAL_EMPTY,
+                                "required grounding is missing for architecture analysis"
                         )
                 );
                 return trace(

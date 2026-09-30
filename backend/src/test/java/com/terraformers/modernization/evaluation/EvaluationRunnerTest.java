@@ -205,6 +205,42 @@ class EvaluationRunnerTest {
     }
 
     @Test
+    void classificationMismatchPrecedesRequiredEmptyGroundingFailure() {
+        LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
+        AnalysisGenerationStage incorrectArchitectureGenerator = (context, source, references) ->
+                new AnalysisGenerationResult(
+                        "stub",
+                        AnalysisInputClassification.ARCHITECTURE_DIAGRAM,
+                        0.95,
+                        "resource \"aws_vpc\" \"main\" {}",
+                        "incorrect architecture classification",
+                        List.of("VPC"),
+                        List.of(),
+                        List.of(),
+                        "end_turn",
+                        100,
+                        false
+                );
+
+        EvaluationTrace trace = trace(
+                runner(query -> List.of(), incorrectArchitectureGenerator)
+                        .run(dataset, "empty-classification-mismatch"),
+                "non-architecture-deployment-dashboard"
+        );
+
+        assertThat(trace.retrieval().status()).isEqualTo(EvaluationStageStatus.PASS);
+        assertThat(trace.retrieval().evidence().hits()).isEmpty();
+        assertThat(trace.generation().status()).isEqualTo(EvaluationStageStatus.FAIL);
+        assertThat(trace.generation().failures().get(0).category())
+                .isEqualTo(EvaluationFailureCategory.INPUT_CLASSIFICATION);
+        assertThat(trace.firstDivergence().stage()).isEqualTo(EvaluationStage.GENERATION);
+        assertThat(trace.firstDivergence().category())
+                .isEqualTo(EvaluationFailureCategory.INPUT_CLASSIFICATION);
+        assertThat(trace.generation().failures())
+                .noneMatch(failure -> failure.category() == EvaluationFailureCategory.RETRIEVAL_EMPTY);
+    }
+
+    @Test
     void recordsSanitizedFactFailureAndStopsRequiredPipelineAtFactExtraction() {
         LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
         String sensitive = "Bearer secret-token prompt image-base64";

@@ -229,6 +229,22 @@ class OpenSearchReferenceRetrieverTest {
     }
 
     @Test
+    void rejectsNonPositiveMaxEvidenceBeforeCallingDependencies() {
+        AnalysisRuntimeProperties properties = activeProperties(8, 0);
+        EmbeddingProvider embedding = mock(EmbeddingProvider.class);
+        OpenSearchTransport transport = mock(OpenSearchTransport.class);
+        OpenSearchReferenceRetriever retriever = new OpenSearchReferenceRetriever(
+                embedding, new OpenSearchKnnQueryBuilder(objectMapper), new OpenSearchResponseParser(objectMapper),
+                transport, properties);
+
+        assertThatThrownBy(() -> retriever.retrieve(new ReferenceQuery("architecture summary", 16)))
+                .hasMessageContaining("opensearch-max-evidence")
+                .hasMessageContaining("positive");
+        verify(embedding, never()).embed(any());
+        verify(transport, never()).post(any(), any());
+    }
+
+    @Test
     void rejectsMaxEvidenceBelowBaseTopKBeforeCallingDependencies() {
         AnalysisRuntimeProperties properties = activeProperties(8, 7);
         EmbeddingProvider embedding = mock(EmbeddingProvider.class);

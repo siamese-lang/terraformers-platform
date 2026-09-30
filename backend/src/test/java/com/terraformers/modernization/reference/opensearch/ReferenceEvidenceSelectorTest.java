@@ -11,6 +11,68 @@ class ReferenceEvidenceSelectorTest {
     private final ReferenceEvidenceSelector selector = new ReferenceEvidenceSelector();
 
     @Test
+    void expandsOnlyWhenCoverageCannotBePreservedWithinBaseBudget() {
+        List<String> resources = java.util.stream.IntStream.rangeClosed(1, 12)
+                .mapToObj(index -> "aws_service_" + index)
+                .toList();
+        List<ReferenceDocument> global = java.util.stream.IntStream.rangeClosed(1, 8)
+                .mapToObj(index -> document(
+                        "global-" + index, "PROVIDER_SCHEMA", 1, 1, resources.get(index - 1)))
+                .toList();
+        List<ReferenceEvidenceSelector.Candidate> candidates = new ArrayList<>();
+        for (int index = 0; index < global.size(); index++) {
+            candidates.add(candidate(global.get(index), true, true, index));
+        }
+        for (int index = 8; index < resources.size(); index++) {
+            candidates.add(candidate(
+                    document("target-" + (index + 1), "PROVIDER_SCHEMA", 1, 1, resources.get(index)),
+                    true,
+                    false,
+                    candidates.size()));
+        }
+
+        List<ReferenceDocument> selected = selector.select(candidates, global, resources, 8, 16);
+
+        assertThat(selected).hasSize(12);
+        assertThat(selected.stream().flatMap(document -> document.resourceTypes().stream()).toList())
+                .containsAll(resources);
+    }
+
+    @Test
+    void hardMaxStopsCoverageGrowthAndDecisionDoesNotExpandPostCoverageBudget() {
+        List<String> resources = java.util.stream.IntStream.rangeClosed(1, 12)
+                .mapToObj(index -> "aws_service_" + index)
+                .toList();
+        List<ReferenceDocument> global = java.util.stream.IntStream.rangeClosed(1, 8)
+                .mapToObj(index -> document(
+                        "global-" + index, "PROVIDER_SCHEMA", 1, 1, resources.get(index - 1)))
+                .toList();
+        List<ReferenceEvidenceSelector.Candidate> candidates = new ArrayList<>();
+        for (int index = 0; index < global.size(); index++) {
+            candidates.add(candidate(global.get(index), true, true, index));
+        }
+        for (int index = 8; index < resources.size(); index++) {
+            candidates.add(candidate(
+                    document("target-" + (index + 1), "PROVIDER_SCHEMA", 1, 1, resources.get(index)),
+                    true,
+                    false,
+                    candidates.size()));
+        }
+        candidates.add(candidate(
+                document("decision", "PROJECT_DECISION", 1, 100, resources.get(0)),
+                false,
+                false,
+                candidates.size()));
+
+        List<ReferenceDocument> selected = selector.select(candidates, global, resources, 8, 10);
+
+        assertThat(selected).hasSize(10);
+        assertThat(selected.stream().flatMap(document -> document.resourceTypes().stream()).toList())
+                .contains(resources.subList(0, 10).toArray(String[]::new))
+                .doesNotContain(resources.get(10), resources.get(11));
+    }
+
+    @Test
     void admitsSelfContainedDecisionEvenWhenGlobalAlreadyCoversEveryResource() {
         ReferenceDocument alpha = document("alpha", "PROVIDER_SCHEMA", 1, 1, "aws_alpha");
         ReferenceDocument beta = document("beta", "PROVIDER_SCHEMA", 1, 1, "aws_beta");

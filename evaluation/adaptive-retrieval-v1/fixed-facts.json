@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "adaptive-retrieval-probe-fixture-v1",
+  "scenarioId": "large-vpc-eks-rds-s3",
+  "corpusVersion": "terraformers-reference-v3",
+  "providerVersion": "5.100.0",
+  "minimumCorpusDocumentCover": 10,
+  "facts": {
+    "summary": "Internet-facing EKS application in a VPC with public and private subnets, controlled internet egress, RDS persistence, and S3 object storage.",
+    "components": [
+      "Internet",
+      "VPC",
+      "Public subnets",
+      "Private subnets",
+      "Application Load Balancer",
+      "EKS application",
+      "RDS database",
+      "S3 bucket"
+    ],
+    "relationships": [
+      "Internet -> Application Load Balancer",
+      "Application Load Balancer -> EKS application",
+      "EKS application -> RDS database",
+      "EKS application -> S3 bucket",
+      "VPC contains public subnets",
+      "VPC contains private subnets",
+      "Private subnets -> NAT gateway",
+      "Public subnets -> Internet gateway"
+    ],
+    "resourceTypes": [
+      "aws_vpc",
+      "aws_subnet",
+      "aws_internet_gateway",
+      "aws_nat_gateway",
+      "aws_route_table",
+      "aws_security_group",
+      "aws_lb",
+      "aws_lb_listener",
+      "aws_lb_target_group",
+      "aws_eks_cluster",
+      "aws_db_instance",
+      "aws_s3_bucket"
+    ]
+  }
+}

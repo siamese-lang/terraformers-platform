@@ -2,9 +2,9 @@
 
 ## Status
 
-**A3 live comparison = COMPLETE. A4 candidate = IMPLEMENTED / LOCAL VALIDATION ONLY. A5 = NOT
-RUN. Case A = OPEN.** The A4 candidate has not been merged or evaluated on the live target, so this
-document does not claim that production grounding is fixed or that the holdout passes.
+**A3 live comparison = COMPLETE. A4 = MERGED. A5 = NOT RUN. Case A = OPEN.** The A4 candidate was
+merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca` but has not been evaluated on the live target, so
+this document does not claim that production grounding is fixed or that the holdout passes.
 
 ## Protected live comparison
 
@@ -43,12 +43,12 @@ preserved unchanged when they already cover every requested resource type.
 
 This is a general response to cross-resource competition, not a search for an expected case or
 document ID. It introduces neither a global candidate-pool constant nor a larger generation context.
-It remains **IMPLEMENTED / LOCAL VALIDATION ONLY** until review and merge; A3 does not prove that the
-A4 production candidate improves full-pipeline quality.
+It was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`; A3 does not prove that the A4
+production candidate improves full-pipeline quality.
 
 ## Next boundary
 
-After independent review and user-approved merge, the immediate next task is **A5 same-shape
-production evaluation**: canonical `N=3`, then the frozen holdout, with before/after grounding,
-regression, latency, and context comparison on the existing live target. Only that evidence can
-support a Case A closure decision. A5 has not been run.
+After the A5 readiness PR is reviewed and merged, the immediate next task is **A5 same-shape
+production evaluation**: canonical after-state `N=3`, then the frozen holdout once, with
+before/after grounding, regression, latency, and context comparison on the existing live target.
+Only that evidence can support a Case A closure decision. A5 has not been run.

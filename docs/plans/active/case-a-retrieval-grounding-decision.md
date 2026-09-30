@@ -2,13 +2,14 @@
 
 ## Status
 
-**A3 LIVE COMPARISON COMPLETE — A4 IMPLEMENTED / LOCAL VALIDATION ONLY — A5 NOT RUN — CASE A OPEN**
+**A3 LIVE COMPARISON COMPLETE — A4 MERGED — A5 NOT RUN — CASE A OPEN**
 
 A1 measurement readiness, A2 repeated baseline, and A3 protected live comparison are complete. A3
 run `36600868601` used source `ab1ae4b1db6011b2fe72a7c5a2b3913232d63857`; artifact
 `case-a-a3-retrieval-probe-36600868601` has digest
 `sha256:7052c94eac9f00f4d80514f534d5b701ea2f0985493faea487c473e975d51c74`.
-The A4 candidate is implemented with local validation only; it is not merged or live-evaluated.
+The A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`; it has not been
+live-evaluated.
 
 ## Decision checkpoint
 
@@ -370,7 +371,8 @@ grounding improvement only when explicitly measured and frozen before implementa
 6. **A6 — Case A integrated closure.**
 
 No stage automatically authorizes the next. A1, A2, and A3 are complete; A4 was separately approved
-and is implemented locally. A5 requires review, user-approved merge, and separate execution.
+and merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`. A5 is **NOT RUN** and requires
+separate execution after this readiness change is reviewed and merged.
 
 The existing single target runtime must be reused. Later live work must verify main SHA,
 billing/quota/model access, and absence of a duplicate runtime; activate the protected target; run
@@ -416,14 +418,15 @@ global priority reranking. The selected candidate gives every distinct query res
 singleton-filtered, final-limit-bounded search opportunity while reusing the single query embedding,
 then deduplicates by document ID and applies bounded deterministic resource-coverage selection.
 Global results remain the fill baseline and remain unchanged when already adequate. The A4 candidate
-is **IMPLEMENTED / LOCAL VALIDATION ONLY**; A5 is **NOT RUN**, improvement is not proven, and Case A
-remains **OPEN**.
+was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`; A5 is **NOT RUN**, improvement is not
+proven, and Case A remains **OPEN**.
 
 ## Immediate next task
 
-Independently review A4 and merge only after user approval. Then run A5 on the existing live target:
-canonical `N=3`, frozen holdout, and same-shape before/after comparison. Only then make the Case A
-closure decision. Do not start A5 before merge and do not start Case C.
+After the A5 readiness PR is reviewed and merged, run A5 on the existing live target: canonical
+after-state `N=3`, frozen holdout once, artifact review, and same-shape before/after comparison. Only
+then make the Case A closure decision. Do not start A5 before the readiness merge and do not start
+Case C.
 
 ## A1 measurement-readiness checkpoint
 
@@ -431,5 +434,5 @@ A1 is **COMPLETE** as documented in [Case A Retrieval-Grounding Measurement Read
 
 At A1 closure, no production retrieval change was authorized or performed and no live GCP
 evaluation had run; A2 was the next candidate. Those were historical A1 boundaries. A2 and A3 are
-now complete, the A4 candidate is implemented with local validation only, and Case A remains open
-pending review/merge and A5 evaluation.
+now complete, the A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`, and
+Case A remains open pending A5 evaluation.

@@ -121,6 +121,46 @@ class AnalysisJobOrchestratorTest {
     }
 
     @Test
+    void executableValidationRunsAfterSafetySanitizationAndBlocksFinalization() {
+        AnalysisProvider provider = context -> new AnalysisResult(
+                "test-provider",
+                """
+                ```hcl
+                resource "aws_s3_bucket" "accepted" {
+                  bucket_prefix = "accepted-"
+                }
+                ```
+                """,
+                "test explanation",
+                List.of("S3"),
+                List.of(),
+                List.of(),
+                List.of()
+        );
+        TerraformExecutableValidator executableValidator = mock(TerraformExecutableValidator.class);
+        when(executableValidator.validate(anyString())).thenReturn(
+                new TerraformDraftValidation(false, "", "generated Terraform failed Terraform CLI validation"));
+        AnalysisJobOrchestrator orchestrator = new AnalysisJobOrchestrator(
+                provider,
+                mock(ProgressPublisher.class),
+                mock(AnalysisResultStorage.class),
+                mock(ProjectArtifactService.class),
+                new TerraformDraftValidator(),
+                executableValidator
+        );
+
+        assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(sampleEntity(105L)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("generated Terraform failed Terraform CLI validation");
+
+        verify(executableValidator).validate("""
+                resource "aws_s3_bucket" "accepted" {
+                  bucket_prefix = "accepted-"
+                }
+                """.strip());
+    }
+
+    @Test
     void marksFailedWhenAnalysisProviderFails() {
         AnalysisProvider provider = context -> {
             throw new IllegalStateException("provider failure");

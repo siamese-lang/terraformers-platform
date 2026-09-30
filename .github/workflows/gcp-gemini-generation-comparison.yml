@@ -1,0 +1,73 @@
+name: GCP Gemini Generation Comparison
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha: {description: Exact trusted main SHA, required: true, type: string}
+      confirmation: {description: Type RUN_GEMINI_GENERATION_COMPARISON, required: true, type: string}
+
+permissions: {contents: read, id-token: write}
+concurrency: {group: gcp-gemini-generation-comparison, cancel-in-progress: false}
+
+jobs:
+  compare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 30
+    env:
+      PROJECT: terraformers-platform
+      CLUSTER: terraformers-target
+      ZONE: asia-northeast3-a
+      NAMESPACE: terraformers-target
+      POD: terraformers-gemini-generation-comparison
+      GOOGLE_CLOUD_PROJECT: terraformers-platform
+      GOOGLE_CLOUD_LOCATION: global
+      CONTROL_MODEL_ID: gemini-3.8-flash
+      CANDIDATE_MODEL_ID: gemini-3.1-pro-preview
+      GENERATION_MAX_OUTPUT_TOKENS: '8192'
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate bounded request and fixed identity
+        env: {EXPECTED_SHA: '${{ inputs.expected_sha }}', CONFIRMATION: '${{ inputs.confirmation }}'}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ && "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
+          [[ "$CONFIRMATION" == RUN_GEMINI_GENERATION_COMPARISON ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$GOOGLE_CLOUD_PROJECT" == terraformers-platform && "$GOOGLE_CLOUD_LOCATION" == global ]]
+          [[ "$CONTROL_MODEL_ID" == gemini-3.8-flash && "$CANDIDATE_MODEL_ID" == gemini-3.1-pro-preview ]]
+          [[ "$GENERATION_MAX_OUTPUT_TOKENS" == 8192 ]]
+      - uses: actions/setup-java@v5
+        with: {distribution: temurin, java-version: '17', cache: maven}
+      - name: Build evaluation bundle
+        run: |
+          mvn -q -f backend/pom.xml -DskipTests package dependency:copy-dependencies -DincludeScope=runtime
+          mkdir -p bundle/{classes,dependency,evaluation,corpus}
+          cp -a backend/target/classes/. bundle/classes/
+          cp -a backend/target/dependency/. bundle/dependency/
+          cp -a evaluation/terraformers-eval-v1 evaluation/opus-generation-v1 bundle/evaluation/
+          cp -a corpus/terraformers-reference/v3 bundle/corpus/
+      - uses: google-github-actions/auth@v3
+        with: {project_id: terraformers-platform, workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}', service_account: '${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}'}
+      - uses: google-github-actions/get-gke-credentials@v3
+        with: {project_id: terraformers-platform, cluster_name: terraformers-target, location: asia-northeast3-a}
+      - name: Verify bounded Kubernetes access and KSA
+        run: |
+          set -euo pipefail
+          for p in 'create pods' 'create pods/exec' 'get pods' 'delete pods'; do kubectl auth can-i ${p} -n "$NAMESPACE" | grep -Fxq yes; done
+          kubectl get serviceaccount terraformers-backend -n "$NAMESPACE"
+      - name: Run paired comparison in backend identity
+        run: |
+          set -euo pipefail
+          trap 'kubectl delete pod "$POD" -n "$NAMESPACE" --ignore-not-found' EXIT
+          kubectl run "$POD" -n "$NAMESPACE" --image=eclipse-temurin:17-jre --restart=Never --overrides='{"spec":{"serviceAccountName":"terraformers-backend","containers":[{"name":"'$POD'","image":"eclipse-temurin:17-jre","command":["sleep","1800"]}]}}'
+          kubectl wait -n "$NAMESPACE" --for=condition=Ready "pod/$POD" --timeout=180s
+          kubectl cp bundle/. "$NAMESPACE/$POD:/work"
+          kubectl exec -n "$NAMESPACE" "$POD" -- env OPUS_FIXTURE_MANIFEST=/work/evaluation/opus-generation-v1/manifest.json EVALUATION_DATASET=/work/evaluation/terraformers-eval-v1/dataset.json CORPUS_DOCUMENTS=/work/corpus/v3/documents.jsonl EVALUATION_OUTPUT=/work/output.json EVALUATION_RUN_ID="$GITHUB_RUN_ID" SOURCE_COMMIT="$GITHUB_SHA" GOOGLE_CLOUD_PROJECT="$GOOGLE_CLOUD_PROJECT" GOOGLE_CLOUD_LOCATION="$GOOGLE_CLOUD_LOCATION" CONTROL_MODEL_ID="$CONTROL_MODEL_ID" CANDIDATE_MODEL_ID="$CANDIDATE_MODEL_ID" GENERATION_MAX_OUTPUT_TOKENS="$GENERATION_MAX_OUTPUT_TOKENS" java -cp '/work/classes:/work/dependency/*' com.terraformers.modernization.evaluation.gemini.GeminiGenerationComparisonLauncher
+          kubectl cp "$NAMESPACE/$POD:/work/output.json" gemini-generation-comparison-${GITHUB_RUN_ID}.json
+      - name: Validate artifact identity
+        run: |
+          jq -e '.schemaVersion=="gemini-generation-comparison-v1" and .fixtureSchemaVersion=="opus-generation-fixture-v1" and .controlModelId=="gemini-3.8-flash" and .candidateModelId=="gemini-3.1-pro-preview" and .location=="global" and .maxOutputTokens==8192 and .caseCount==6 and ([.cases[] | (.control.renderedPromptSha256 == .candidate.renderedPromptSha256)] | all)' gemini-generation-comparison-*.json
+      - uses: actions/upload-artifact@v4
+        with: {name: 'gemini-generation-comparison-${{ github.run_id }}', path: 'gemini-generation-comparison-*.json', if-no-files-found: error}

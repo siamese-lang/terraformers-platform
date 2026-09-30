@@ -99,7 +99,8 @@ final class GeminiLatencyTelemetry {
     void callStart() {
         ActivePhase phase = active.get();
         if (phase == null) return;
-        ActiveRequest request = new ActiveRequest(requestOrdinal.incrementAndGet(), now(), System.nanoTime());
+        ActiveRequest request = new ActiveRequest(
+                requestOrdinal.incrementAndGet(), now(), System.nanoTime(), phase.fallbackPayload);
         phase.currentRequest = request;
         phase.requests.add(request);
     }
@@ -195,8 +196,8 @@ final class GeminiLatencyTelemetry {
             JsonNode root = mapper.readTree(buffer.readUtf8());
             ShapeCounts counts = new ShapeCounts();
             countPayload(root, counts);
-            PayloadShape prior = phase.payload;
-            phase.payload = new PayloadShape(
+            PayloadShape prior = phase.fallbackPayload;
+            PayloadShape observed = new PayloadShape(
                     counts.imageBytes > 0 ? "IMAGE_AND_TEXT" : "TEXT",
                     counts.imageBytes,
                     counts.textChars,
@@ -204,6 +205,9 @@ final class GeminiLatencyTelemetry {
                     prior.referenceCount(),
                     prior.referenceTextCharCount(),
                     prior.referenceTextByteCount());
+            phase.payload = observed;
+            ActiveRequest activeRequest = currentRequest();
+            if (activeRequest != null) activeRequest.payload = observed;
         } catch (RuntimeException | IOException ignored) {
             // Keep caller-supplied safe shape evidence if the encoded request cannot be inspected.
         }
@@ -249,6 +253,7 @@ final class GeminiLatencyTelemetry {
         Instant ended = request.endedAt == null ? now() : request.endedAt;
         return new RequestEvidence(request.ordinal, request.startedAt, ended,
                 Math.max(0, java.time.Duration.between(request.startedAt, ended).toMillis()),
+                request.payload,
                 request.exchanges.size(),
                 request.exchanges.stream().map(ActiveExchange::snapshot).toList(),
                 request.networkFailures.size(), List.copyOf(request.networkFailures),
@@ -305,7 +310,7 @@ final class GeminiLatencyTelemetry {
                                 Instant responseBodyCompletedAt, Integer httpStatus) {}
     record NetworkFailureEvidence(String eventType, String errorType) {}
     record RequestEvidence(int logicalRequestOrdinal, Instant requestStartedAt, Instant responseCompletedAt,
-                           long elapsedMs, int observedHttpExchangeCount,
+                           long elapsedMs, PayloadShape payload, int observedHttpExchangeCount,
                            List<HttpExchangeEvidence> observedHttpExchanges,
                            int networkFailureCount, List<NetworkFailureEvidence> networkFailures,
                            Integer httpStatus, Boolean timeout, String errorType, String finishReason,
@@ -316,10 +321,12 @@ final class GeminiLatencyTelemetry {
 
     private static final class ActivePhase {
         final String caseId; final Arm arm; final Phase phase; final RequestIdentity identity;
+        final PayloadShape fallbackPayload;
         PayloadShape payload; final Instant startedAt; final long startedNanos;
         final List<ActiveRequest> requests = new ArrayList<>(); ActiveRequest currentRequest;
         ActivePhase(String c, Arm a, Phase p, RequestIdentity i, PayloadShape s, Instant at, long nanos) {
-            caseId = c; arm = a; phase = p; identity = i; payload = s; startedAt = at; startedNanos = nanos;
+            caseId = c; arm = a; phase = p; identity = i; fallbackPayload = s; payload = s;
+            startedAt = at; startedNanos = nanos;
         }
     }
     private static final class ShapeCounts { int imageBytes; int textChars; int textBytes; }
@@ -327,8 +334,11 @@ final class GeminiLatencyTelemetry {
         final int ordinal; final Instant startedAt; final long startedNanos;
         final List<ActiveExchange> exchanges = new ArrayList<>();
         final List<NetworkFailureEvidence> networkFailures = new ArrayList<>();
+        PayloadShape payload;
         Instant endedAt; Integer httpStatus; Boolean timeout; String errorType; String finishReason; UsageEvidence usage;
-        ActiveRequest(int ordinal, Instant startedAt, long startedNanos) { this.ordinal = ordinal; this.startedAt = startedAt; this.startedNanos = startedNanos; }
+        ActiveRequest(int ordinal, Instant startedAt, long startedNanos, PayloadShape payload) {
+            this.ordinal = ordinal; this.startedAt = startedAt; this.startedNanos = startedNanos; this.payload = payload;
+        }
     }
     private static final class ActiveExchange {
         final int ordinal; final Instant requestStartedAt; Instant requestBodyCompletedAt;

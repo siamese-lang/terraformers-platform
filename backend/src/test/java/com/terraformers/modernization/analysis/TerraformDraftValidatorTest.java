@@ -67,8 +67,12 @@ class TerraformDraftValidatorTest {
         assertSensitiveLiteralRejected("access_key", "AKIAEXAMPLE000000000");
         assertSensitiveLiteralRejected("secret_access_key", "example-secret-value");
         assertSensitiveLiteralRejected("client_secret", "example-client-secret");
+        assertSensitiveLiteralRejected("secret", "example-secret");
+        assertSensitiveLiteralRejected("secret_string", "example-secret-string");
         assertSensitiveLiteralRejected("api_key", "example-api-key");
         assertSensitiveLiteralRejected("auth_token", "example-auth-token");
+        assertSensitiveLiteralRejected("access_token", "example-access-token");
+        assertSensitiveLiteralRejected("token", "example-token");
         assertSensitiveLiteralRejected("private_key", "example-private-key");
     }
 
@@ -110,6 +114,29 @@ class TerraformDraftValidatorTest {
     }
 
     @Test
+    void rejectsMixedLiteralAndInterpolationCredential() {
+        TerraformDraftValidation validation = validator.validate("""
+                resource "aws_db_instance" "database" {
+                  engine   = "postgres"
+                  username = "dbadmin"
+                  password = "HardCodedSecret-${var.suffix}"
+                }
+                """);
+
+        assertThat(validation.valid()).isFalse();
+        assertThat(validation.reason()).contains("hard-coded sensitive credential");
+    }
+
+    @Test
+    void rejectsSensitiveLiteralInsideSingleLineResource() {
+        TerraformDraftValidation validation = validator.validate(
+                "resource \"aws_db_instance\" \"database\" { engine = \"postgres\" password = \"HardCodedSecret!\" }");
+
+        assertThat(validation.valid()).isFalse();
+        assertThat(validation.reason()).contains("hard-coded sensitive credential");
+    }
+
+    @Test
     void rejectsAccountScopedArnObservedInGeminiComparisonRun() {
         TerraformDraftValidation validation = validator.validate("""
                 resource "aws_iam_role" "gha" {
@@ -140,6 +167,15 @@ class TerraformDraftValidatorTest {
                   }
                 }
                 """);
+
+        assertThat(validation.valid()).isFalse();
+        assertThat(validation.reason()).contains("account-specific AWS identifier");
+    }
+
+    @Test
+    void rejectsLiteralAwsAccountIdInsideSingleLineMap() {
+        TerraformDraftValidation validation = validator.validate(
+                "resource \"aws_s3_bucket\" \"example\" { bucket_prefix = \"example-\" tags = { account_id = \"123456789012\" } }");
 
         assertThat(validation.valid()).isFalse();
         assertThat(validation.reason()).contains("account-specific AWS identifier");

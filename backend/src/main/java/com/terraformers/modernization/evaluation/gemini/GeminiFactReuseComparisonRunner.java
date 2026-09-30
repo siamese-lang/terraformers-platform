@@ -27,6 +27,7 @@ final class GeminiFactReuseComparisonRunner {
     private final AnalysisGenerationStage control;
     private final GeminiFactReusePipelineStage candidate;
     private final String modelId;
+    private final GeminiLatencyTelemetry telemetry;
     private final TerraformDraftValidator validator = new TerraformDraftValidator();
 
     GeminiFactReuseComparisonRunner(
@@ -34,68 +35,90 @@ final class GeminiFactReuseComparisonRunner {
             GeminiFactReusePipelineStage candidate,
             String modelId
     ) {
+        this(control, candidate, modelId, null);
+    }
+
+    GeminiFactReuseComparisonRunner(
+            AnalysisGenerationStage control,
+            GeminiFactReusePipelineStage candidate,
+            String modelId,
+            GeminiLatencyTelemetry telemetry
+    ) {
         this.control = control;
         this.candidate = candidate;
         this.modelId = modelId;
+        this.telemetry = telemetry;
     }
 
     CaseEvidence evaluate(OpusGenerationFixtureLoader.FixtureCase fixture) {
-        ObjectContent source = source(fixture);
-        AnalysisRequestContext context = new AnalysisRequestContext(
-                "gemini-fact-reuse-comparison",
-                "evaluation",
-                "fixture",
-                fixture.definition().input().path(),
-                fixture.definition().caseId(),
-                AnalysisMode.INTEGRATED_JAVA
-        );
+        String caseId = fixture.definition().caseId();
+        System.out.printf("FACT_REUSE case=%s START%n", caseId);
+        try {
+            ObjectContent source = source(fixture);
+            AnalysisRequestContext context = new AnalysisRequestContext(
+                    "gemini-fact-reuse-comparison", "evaluation", "fixture",
+                    fixture.definition().input().path(), caseId, AnalysisMode.INTEGRATED_JAVA);
 
-        ArmEvidence controlEvidence = invoke(control, context, source, fixture);
-        ArmEvidence candidateEvidence = invoke(candidate, context, source, fixture);
-        GeminiFactReusePipelineStage.Trace trace = candidate.lastTraceOrNull();
+            ArmEvidence controlEvidence = invoke(
+                    control, GeminiLatencyTelemetry.Arm.CONTROL, context, source, fixture);
+            ArmEvidence candidateEvidence = invoke(
+                    candidate, GeminiLatencyTelemetry.Arm.CANDIDATE, context, source, fixture);
+            GeminiFactReusePipelineStage.Trace trace = candidate.lastTraceOrNull();
 
-        return new CaseEvidence(
-                fixture.definition().caseId(),
-                fixture.definition().expectedClassification().name(),
-                fixture.referenceIds(),
-                controlEvidence,
-                candidateEvidence,
-                trace == null ? null : trace.canonicalInputType(),
-                trace == null ? null : trace.canonicalClassificationConfidence(),
-                trace == null ? null : trace.canonicalClassificationReason(),
-                trace == null ? null : trace.canonicalExtractionLatencyMs(),
-                trace == null ? null : trace.secondGenerationInvoked()
-        );
+            return new CaseEvidence(
+                    caseId, fixture.definition().expectedClassification().name(), fixture.referenceIds(),
+                    controlEvidence, candidateEvidence,
+                    trace == null ? null : trace.canonicalInputType(),
+                    trace == null ? null : trace.canonicalClassificationConfidence(),
+                    trace == null ? null : trace.canonicalClassificationReason(),
+                    trace == null ? null : trace.canonicalExtractionLatencyMs(),
+                    trace == null ? null : trace.secondGenerationInvoked());
+        } finally {
+            System.out.printf("FACT_REUSE case=%s END%n", caseId);
+        }
     }
 
     private ArmEvidence invoke(
             AnalysisGenerationStage stage,
+            GeminiLatencyTelemetry.Arm arm,
             AnalysisRequestContext context,
             ObjectContent source,
             OpusGenerationFixtureLoader.FixtureCase fixture
     ) {
+        System.out.printf("FACT_REUSE case=%s arm=%s START%n", fixture.definition().caseId(), arm);
         long started = System.nanoTime();
         try {
             AnalysisGenerationResult result = stage.generate(context, source, fixture.references());
-            return score(fixture, result, elapsed(started));
+            return score(fixture, result, elapsed(started), phases(fixture, arm));
         } catch (AnalysisInputRejectedException rejected) {
-            return scoreRejected(fixture, rejected, elapsed(started));
+            return scoreRejected(fixture, rejected, elapsed(started), phases(fixture, arm));
         } catch (AnalysisGenerationOutputTruncatedException truncated) {
             return failure(fixture, elapsed(started), "OUTPUT_TRUNCATED",
-                    "model output remained truncated after compact retry", true);
+                    "model output remained truncated after compact retry", true, phases(fixture, arm));
         } catch (AnalysisGenerationResponseFormatException format) {
             return failure(fixture, elapsed(started), "RESPONSE_FORMAT",
-                    format.getClass().getSimpleName(), false);
+                    format.getClass().getSimpleName(), false, phases(fixture, arm));
         } catch (RuntimeException provider) {
             return failure(fixture, elapsed(started), "PROVIDER_RUNTIME",
-                    provider.getClass().getSimpleName(), false);
+                    provider.getClass().getSimpleName(), false, phases(fixture, arm));
+        } finally {
+            System.out.printf("FACT_REUSE case=%s arm=%s END elapsedMs=%d%n",
+                    fixture.definition().caseId(), arm, elapsed(started));
         }
+    }
+
+    private List<GeminiLatencyTelemetry.PhaseEvidence> phases(
+            OpusGenerationFixtureLoader.FixtureCase fixture,
+            GeminiLatencyTelemetry.Arm arm
+    ) {
+        return telemetry == null ? List.of() : telemetry.evidenceFor(fixture.definition().caseId(), arm);
     }
 
     private ArmEvidence score(
             OpusGenerationFixtureLoader.FixtureCase fixture,
             AnalysisGenerationResult result,
-            long latency
+            long latency,
+            List<GeminiLatencyTelemetry.PhaseEvidence> phases
     ) {
         String terraform = result.terraformCode();
         Scoring scoring = scoring(fixture, terraform);
@@ -126,14 +149,16 @@ final class GeminiFactReuseComparisonRunner {
                 result.stopReason(),
                 result.retryOccurred(),
                 category,
-                null
+                null,
+                phases
         );
     }
 
     private ArmEvidence scoreRejected(
             OpusGenerationFixtureLoader.FixtureCase fixture,
             AnalysisInputRejectedException rejected,
-            long latency
+            long latency,
+            List<GeminiLatencyTelemetry.PhaseEvidence> phases
     ) {
         Scoring scoring = scoring(fixture, "");
         String category = category(fixture, rejected.classification(), scoring, true, "");
@@ -156,7 +181,8 @@ final class GeminiFactReuseComparisonRunner {
                 "",
                 rejected.retryOccurred(),
                 category,
-                null
+                null,
+                phases
         );
     }
 
@@ -165,7 +191,8 @@ final class GeminiFactReuseComparisonRunner {
             long latency,
             String category,
             String reason,
-            boolean retry
+            boolean retry,
+            List<GeminiLatencyTelemetry.PhaseEvidence> phases
     ) {
         return new ArmEvidence(
                 modelId,
@@ -186,7 +213,8 @@ final class GeminiFactReuseComparisonRunner {
                 "",
                 retry,
                 category,
-                reason
+                reason,
+                phases
         );
     }
 
@@ -285,6 +313,7 @@ final class GeminiFactReuseComparisonRunner {
             String stopReason,
             boolean compactRetryOccurred,
             String firstFailureCategory,
-            String safeFailureReason
+            String safeFailureReason,
+            List<GeminiLatencyTelemetry.PhaseEvidence> phases
     ) {}
 }

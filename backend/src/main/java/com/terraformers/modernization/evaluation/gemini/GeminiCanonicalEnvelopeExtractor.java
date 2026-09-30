@@ -54,8 +54,18 @@ final class GeminiCanonicalEnvelopeExtractor {
     private final String modelId;
 
     GeminiCanonicalEnvelopeExtractor(Client client, ObjectMapper objectMapper, String modelId) {
+        this(client, objectMapper, modelId, null);
+    }
+
+    GeminiCanonicalEnvelopeExtractor(
+            Client client,
+            ObjectMapper objectMapper,
+            String modelId,
+            GeminiLatencyTelemetry telemetry
+    ) {
         this((id, content, config) -> {
             GenerateContentResponse response = client.models.generateContent(id, content, config);
+            if (telemetry != null) telemetry.captureSdkResponse(response);
             FinishReason reason = response.finishReason();
             return new EnvelopeResponse(
                     response.text(),

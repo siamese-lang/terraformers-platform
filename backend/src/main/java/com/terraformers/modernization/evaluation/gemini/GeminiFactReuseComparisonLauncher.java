@@ -3,6 +3,7 @@ package com.terraformers.modernization.evaluation.gemini;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.genai.Client;
+import com.google.genai.ClientOptions;
 import com.google.genai.types.HttpOptions;
 import com.terraformers.modernization.analysis.vertex.VertexGenerationStage;
 import com.terraformers.modernization.analysis.vertex.VertexPromptBuilder;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 public final class GeminiFactReuseComparisonLauncher {
 
-    public static final String SCHEMA_VERSION = "gemini-fact-reuse-comparison-v1";
+    public static final String SCHEMA_VERSION = "gemini-fact-reuse-comparison-v2";
     public static final String FIXTURE_SCHEMA_VERSION = "opus-generation-fixture-v1";
     public static final String MODEL_ID = "gemini-3.8-flash";
     public static final String LOCATION = "global";
@@ -45,11 +46,15 @@ public final class GeminiFactReuseComparisonLauncher {
                 GeminiGenerationComparisonLauncher.requiredPath(env, "CORPUS_DOCUMENTS")
         );
 
+        GeminiLatencyTelemetry telemetry = new GeminiLatencyTelemetry(mapper);
         Client client = Client.builder()
                 .project(project)
                 .location(LOCATION)
                 .vertexAI(true)
                 .httpOptions(HttpOptions.builder().apiVersion("v1").build())
+                .clientOptions(ClientOptions.builder()
+                        .customHttpClient(telemetry.instrumentedHttpClient())
+                        .build())
                 .build();
 
         VertexRuntimeProperties runtime = new VertexRuntimeProperties();
@@ -63,25 +68,37 @@ public final class GeminiFactReuseComparisonLauncher {
 
         GeminiCurrentImagePipelineStage control = new GeminiCurrentImagePipelineStage(
                 new VertexArchitectureFactsExtractor(client, mapper, runtime),
-                new VertexGenerationStage(client, runtime, promptBuilder, parser)
+                new VertexGenerationStage(client, runtime, promptBuilder, parser),
+                telemetry,
+                new GeminiLatencyTelemetry.RequestIdentity(
+                        MODEL_ID, LOCATION, "LOW", VertexArchitectureFactsExtractor.MAX_FACT_TOKENS),
+                new GeminiLatencyTelemetry.RequestIdentity(
+                        MODEL_ID, LOCATION, "DEFAULT", GENERATION_MAX_OUTPUT_TOKENS)
         );
 
         GeminiFactReusePipelineStage candidate = new GeminiFactReusePipelineStage(
-                new GeminiCanonicalEnvelopeExtractor(client, mapper, MODEL_ID),
+                new GeminiCanonicalEnvelopeExtractor(client, mapper, MODEL_ID, telemetry),
                 new GeminiFactReuseGenerationStage(
                         client,
                         MODEL_ID,
                         GENERATION_MAX_OUTPUT_TOKENS,
                         mapper,
                         promptBuilder,
-                        parser
-                )
+                        parser,
+                        telemetry
+                ),
+                telemetry,
+                new GeminiLatencyTelemetry.RequestIdentity(
+                        MODEL_ID, LOCATION, "LOW", GeminiCanonicalEnvelopeExtractor.MAX_OUTPUT_TOKENS),
+                new GeminiLatencyTelemetry.RequestIdentity(
+                        MODEL_ID, LOCATION, "MEDIUM", GENERATION_MAX_OUTPUT_TOKENS)
         );
 
         GeminiFactReuseComparisonRunner runner = new GeminiFactReuseComparisonRunner(
                 control,
                 candidate,
-                MODEL_ID
+                MODEL_ID,
+                telemetry
         );
 
         List<GeminiFactReuseComparisonRunner.CaseEvidence> cases = new ArrayList<>();

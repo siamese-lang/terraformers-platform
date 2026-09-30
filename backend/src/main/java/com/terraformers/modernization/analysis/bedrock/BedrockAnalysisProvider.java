@@ -161,7 +161,7 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
             long factsElapsedMs = (System.nanoTime() - factsStartedAt) / 1_000_000;
             long searchStartedAt = System.nanoTime();
             List<ReferenceDocument> references = observability.recordAoss(() -> referenceRetriever.retrieve(
-                    new ReferenceQuery(queryTextBuilder.build(facts), properties.getOpensearchTopK())
+                    new ReferenceQuery(queryTextBuilder.build(facts), properties.getOpensearchMaxEvidence())
             ));
             observability.retrievedHits(references.size());
             long searchElapsedMs = (System.nanoTime() - searchStartedAt) / 1_000_000;

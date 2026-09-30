@@ -1,0 +1,182 @@
+work_package:
+  id: adaptive-retrieval-v1
+  status: ACTIVE
+  approved_base_sha: "14efbf08fcb7bb9e62cb3bb8f00cbfa00a4182dd"
+  execution_base_sha: "14efbf08fcb7bb9e62cb3bb8f00cbfa00a4182dd"
+
+  goal: >
+    Remove the hidden 8-resource retrieval ceiling while preserving deterministic,
+    bounded evidence selection and the existing retrieval semantics for simpler inputs.
+
+  engineering_axis:
+    - AI/RAG evaluation and targeted improvement
+    - Retrieval generalization
+
+  contract_file_immutable_after_first_production_write: true
+
+  allowed_paths:
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisRuntimeProperties.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProvider.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/bedrock/BedrockAnalysisProvider.java
+    - backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java
+    - backend/src/main/java/com/terraformers/modernization/reference/ReferenceQuery.java
+    - backend/src/main/java/com/terraformers/modernization/reference/RetrievalModeReferenceRetriever.java
+    - backend/src/main/java/com/terraformers/modernization/reference/opensearch/OpenSearchReferenceRetriever.java
+    - backend/src/main/java/com/terraformers/modernization/reference/opensearch/ReferenceEvidenceSelector.java
+    - backend/src/test/java/com/terraformers/modernization/reference/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/bedrock/**
+
+  prohibited_paths:
+    - .github/**
+    - infra/**
+    - frontend/**
+    - evaluation/**
+    - docs/**
+    - AGENTS.md
+    - backend/Dockerfile
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformDraftValidator.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformCliValidator.java
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - modify_allowed_paths
+    - run_existing_tests
+    - add_regression_tests_for_changed_behavior
+    - create_pull_request
+    - inspect_ci
+    - repair_same_failure_once
+
+  auto_repair_limit: 1
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - create_or_modify_github_workflow
+    - live_ai_model_call
+    - live_opensearch_evaluation
+    - corpus_change
+    - model_change
+    - embedding_change
+    - prompt_tuning_beyond_fact_list_bound
+    - terraform_plan
+    - terraform_apply
+    - cloud_credential_use
+    - kubectl_mutation
+    - iam_change
+    - next_work_package_start
+    - acceptance_criteria_change
+
+  selected_design:
+    base_evidence_budget:
+      property: terraformers.analysis.opensearch-top-k
+      semantics: >
+        Existing search top-k remains the initial/familiar evidence budget.
+        Current GCP evaluation configuration uses 8.
+    max_evidence_budget:
+      property: terraformers.analysis.opensearch-max-evidence
+      default: 16
+      validation:
+        - positive
+        - greater_than_or_equal_to_opensearch_top_k
+    reference_query_limit:
+      semantics: hard ceiling for a caller
+      production_provider_value: opensearch-max-evidence
+    resource_type_bound:
+      max: 16
+      facts_prompt:
+        components_max: 8
+        relationships_max: 8
+        resource_types_max: 16
+    adaptive_selection:
+      - begin with at most the base evidence budget from global semantic results
+      - supplement missing requested resource coverage deterministically
+      - prefer safe replacement while existing coverage can be preserved
+      - only when coverage cannot be preserved by replacement may selection grow above the base budget
+      - growth stops when requested coverage is complete, no candidate can improve coverage, or the hard max is reached
+      - project decisions must not themselves cause growth above the post-coverage budget
+      - preserve existing decision comparator and deduplication semantics
+    search_behavior:
+      - embed query exactly once
+      - keep one global semantic search
+      - keep one bounded semantic search per requested resource type
+      - keep one project-decision search
+      - per-search size remains bounded by the base top-k
+      - maximum requested resource types is 16
+
+  acceptance_criteria:
+    - id: no_hidden_eight_resource_truncation
+      requirement: >
+        ReferenceQuery preserves up to 16 distinct canonical resource types from explicit facts
+        and text extraction, rather than silently stopping at 8.
+    - id: facts_resource_type_bound
+      requirement: >
+        Vertex fact extraction keeps components and relationships bounded at 8 while allowing
+        resourceTypes up to 16.
+    - id: adaptive_growth_only_when_needed
+      requirement: >
+        With base budget 8 and 12 requested resources, evidence grows above 8 only if preserving
+        all available requested-resource coverage cannot be achieved by replacement within 8.
+    - id: no_growth_when_base_suffices
+      requirement: >
+        A 12-resource request whose requested-resource coverage already fits within 8 selected
+        documents remains within the base budget.
+    - id: hard_max
+      requirement: >
+        Final selected evidence never exceeds the caller hard limit or opensearch-max-evidence,
+        and resourceTypes never exceed 16.
+    - id: deterministic
+      requirement: >
+        Repeated selection over identical candidates returns identical ordering without duplicate IDs.
+    - id: decision_semantics_preserved
+      requirement: >
+        Project-decision promotion retains the existing structural comparator and cannot expand the
+        evidence set beyond the budget established after coverage supplementation.
+    - id: simple_path_preserved
+      requirement: >
+        Empty-resource and <=8-resource retrieval behavior preserves one embedding, bounded searches,
+        deduplication, and existing ordering/coverage expectations.
+    - id: config_fail_closed
+      requirement: >
+        Active retrieval rejects non-positive max evidence or max evidence smaller than base top-k.
+    - id: no_external_change
+      requirement: >
+        No workflow, corpus, model, embedding, generation, Terraform validation, infrastructure, or
+        cloud configuration changes are made.
+
+  verification:
+    evidence_sources:
+      - GitHub remote base/head SHA
+      - PR diff
+      - targeted ReferenceQuery and facts-extractor tests
+      - targeted selector and OpenSearch retriever tests
+      - existing backend test suite
+      - CI results
+    required_regressions:
+      - synthetic 12-resource case that must expand above base 8
+      - synthetic 12-resource case that must remain at or below base 8
+      - explicit/text resource-type bound at 16
+      - configuration validation for max evidence
+    verifier_outcomes:
+      - PASS
+      - FAIL
+      - INCONCLUSIVE
+    implementer_self_report_is_evidence: false
+
+  stop_on:
+    - unexpected_main_change
+    - scope_drift
+    - same_failure_repeated
+    - failure_class_changed
+    - auto_repair_limit_exceeded
+    - architecture_decision_required
+    - allowed_path_insufficient
+    - acceptance_criteria_change_required
+    - live_cloud_action_required
+
+  completion:
+    merge_requires_user_approval: true
+    live_evaluation_requires_user_approval: true
+    next_work_package_start_requires_user_approval: true

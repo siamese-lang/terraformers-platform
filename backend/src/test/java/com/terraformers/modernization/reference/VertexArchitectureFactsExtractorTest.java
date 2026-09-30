@@ -27,7 +27,9 @@ class VertexArchitectureFactsExtractorTest {
                     .contains("Terraform AWS provider resource type identifiers")
                     .contains("aws_[a-z0-9_]+", "aws_vpc", "aws_db_instance", "aws_security_group", "aws_lb")
                     .contains("AWS::EC2::VPC", "AWS::RDS::DBInstance")
-                    .contains("empty", "resourceTypes");
+                    .contains("empty", "resourceTypes")
+                    .contains("components and relationships to at most 8")
+                    .contains("resourceTypes to at most 16");
             return response("""
                     {"summary":"Three tier","components":["ALB","API"],
                      "relationships":["ALB -> API"],"resourceTypes":["aws_lb"]}
@@ -35,6 +37,33 @@ class VertexArchitectureFactsExtractorTest {
         });
 
         extractor.extract(source());
+    }
+
+    @Test
+    void boundsFactArraysWhileAllowingSixteenResourceTypes() {
+        String components = java.util.stream.IntStream.rangeClosed(1, 10)
+                .mapToObj(index -> "\"component-" + index + "\"")
+                .collect(java.util.stream.Collectors.joining(","));
+        String relationships = java.util.stream.IntStream.rangeClosed(1, 10)
+                .mapToObj(index -> "\"relationship-" + index + "\"")
+                .collect(java.util.stream.Collectors.joining(","));
+        String resources = java.util.stream.IntStream.rangeClosed(1, 17)
+                .mapToObj(index -> "\"aws_service_" + index + "\"")
+                .collect(java.util.stream.Collectors.joining(","));
+        VertexArchitectureFactsExtractor extractor = extractor((modelId, content, config) ->
+                response("""
+                        {"summary":"Large architecture","components":[%s],
+                         "relationships":[%s],"resourceTypes":[%s]}
+                        """.formatted(components, relationships, resources)));
+
+        ArchitectureRetrievalFacts facts = extractor.extract(source());
+
+        assertThat(facts.components()).hasSize(VertexArchitectureFactsExtractor.MAX_FACT_LIST_ITEMS);
+        assertThat(facts.relationships()).hasSize(VertexArchitectureFactsExtractor.MAX_FACT_LIST_ITEMS);
+        assertThat(facts.resourceTypes())
+                .hasSize(ReferenceQuery.MAX_RESOURCE_TYPES)
+                .contains("aws_service_16")
+                .doesNotContain("aws_service_17");
     }
 
     @Test

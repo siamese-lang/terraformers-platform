@@ -75,6 +75,7 @@ class VertexAnalysisProviderTest {
         assertThat(receivedQuery.get().text()).doesNotContain("aws_");
         assertThat(receivedQuery.get().resourceTypes())
                 .containsExactly("aws_vpc", "aws_db_instance", "aws_security_group");
+        assertThat(receivedQuery.get().limit()).isEqualTo(properties.getOpensearchMaxEvidence());
     }
 
     @Test

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.types.GenerateContentResponse;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -16,6 +18,7 @@ import okhttp3.Call;
 import okhttp3.EventListener;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okio.Buffer;
@@ -93,7 +96,7 @@ final class GeminiLatencyTelemetry {
         return phase == null ? null : phase.currentRequest;
     }
 
-    private void callStart() {
+    void callStart() {
         ActivePhase phase = active.get();
         if (phase == null) return;
         ActiveRequest request = new ActiveRequest(requestOrdinal.incrementAndGet(), now(), System.nanoTime());
@@ -104,25 +107,25 @@ final class GeminiLatencyTelemetry {
     private void requestHeadersStart() {
         ActiveRequest request = currentRequest();
         if (request == null) return;
-        request.attempts.add(new ActiveAttempt(request.attempts.size() + 1, now()));
+        request.exchanges.add(new ActiveExchange(request.exchanges.size() + 1, now()));
     }
 
     private void requestBodyEnd() {
-        ActiveAttempt attempt = currentAttempt();
-        if (attempt != null) attempt.requestBodyCompletedAt = now();
+        ActiveExchange exchange = currentExchange();
+        if (exchange != null) exchange.requestBodyCompletedAt = now();
     }
 
     private void responseHeadersEnd(int status) {
-        ActiveAttempt attempt = currentAttempt();
-        if (attempt != null) {
-            attempt.responseHeadersReceivedAt = now();
-            attempt.httpStatus = status;
+        ActiveExchange exchange = currentExchange();
+        if (exchange != null) {
+            exchange.responseHeadersReceivedAt = now();
+            exchange.httpStatus = status;
         }
     }
 
     private void responseBodyEnd() {
-        ActiveAttempt attempt = currentAttempt();
-        if (attempt != null) attempt.responseBodyCompletedAt = now();
+        ActiveExchange exchange = currentExchange();
+        if (exchange != null) exchange.responseBodyCompletedAt = now();
     }
 
     private void callEnd() {
@@ -136,13 +139,24 @@ final class GeminiLatencyTelemetry {
             request.endedAt = now();
             request.errorType = safeType(failure);
             request.timeout = failure instanceof java.net.SocketTimeoutException;
+            if (request.exchanges.isEmpty() && request.networkFailures.isEmpty()) {
+                request.networkFailures.add(new NetworkFailureEvidence(
+                        "CALL_FAILED_BEFORE_HTTP_EXCHANGE", safeType(failure)));
+            }
         }
     }
 
-    private ActiveAttempt currentAttempt() {
+    void connectFailed(IOException failure) {
         ActiveRequest request = currentRequest();
-        return request == null || request.attempts.isEmpty()
-                ? null : request.attempts.get(request.attempts.size() - 1);
+        if (request != null) {
+            request.networkFailures.add(new NetworkFailureEvidence("CONNECT_FAILED", safeType(failure)));
+        }
+    }
+
+    private ActiveExchange currentExchange() {
+        ActiveRequest request = currentRequest();
+        return request == null || request.exchanges.isEmpty()
+                ? null : request.exchanges.get(request.exchanges.size() - 1);
     }
 
     private void captureResponseMetadata(Response response) {
@@ -217,6 +231,9 @@ final class GeminiLatencyTelemetry {
     private void complete(ActivePhase phase, Throwable failure) {
         if (active.get() != phase) throw new IllegalStateException("Gemini telemetry phase context changed");
         active.remove();
+        if (failure != null && phase.currentRequest != null && phase.currentRequest.errorType == null) {
+            phase.currentRequest.errorType = safeType(failure);
+        }
         Instant endedAt = now();
         long elapsedMs = (System.nanoTime() - phase.startedNanos) / 1_000_000;
         List<RequestEvidence> requests = phase.requests.stream().map(this::snapshot).toList();
@@ -232,8 +249,9 @@ final class GeminiLatencyTelemetry {
         Instant ended = request.endedAt == null ? now() : request.endedAt;
         return new RequestEvidence(request.ordinal, request.startedAt, ended,
                 Math.max(0, java.time.Duration.between(request.startedAt, ended).toMillis()),
-                request.attempts.isEmpty() ? null : request.attempts.size(),
-                request.attempts.stream().map(ActiveAttempt::snapshot).toList(),
+                request.exchanges.size(),
+                request.exchanges.stream().map(ActiveExchange::snapshot).toList(),
+                request.networkFailures.size(), List.copyOf(request.networkFailures),
                 request.httpStatus, request.timeout, request.errorType, request.finishReason, request.usage);
     }
 
@@ -267,8 +285,8 @@ final class GeminiLatencyTelemetry {
     }
 
     record RequestIdentity(String modelId, String location, String configuredThinkingLevel, int maxOutputTokens) {}
-    record PayloadShape(String inputModality, int imageByteCount, int promptTextCharCount,
-                        int promptTextByteCount, int referenceCount, int referenceTextCharCount,
+    record PayloadShape(String inputModality, int imageByteCount, int requestTextCharCount,
+                        int requestTextByteCount, int referenceCount, int referenceTextCharCount,
                         int referenceTextByteCount) {
         static PayloadShape of(String modality, int imageBytes, String prompt, List<String> references) {
             String safePrompt = prompt == null ? "" : prompt;
@@ -282,10 +300,14 @@ final class GeminiLatencyTelemetry {
     record UsageEvidence(Integer promptTokenCount, Integer candidatesTokenCount, Integer thoughtsTokenCount,
                          Integer totalTokenCount, Object promptTokensDetails, Object candidatesTokensDetails,
                          String trafficType) {}
-    record AttemptEvidence(int physicalAttemptOrdinal, Instant requestStartedAt, Instant requestBodyCompletedAt,
-                           Instant responseHeadersReceivedAt, Instant responseBodyCompletedAt, Integer httpStatus) {}
+    record HttpExchangeEvidence(int observedHttpExchangeOrdinal, Instant requestHeadersStartedAt,
+                                Instant requestBodyCompletedAt, Instant responseHeadersReceivedAt,
+                                Instant responseBodyCompletedAt, Integer httpStatus) {}
+    record NetworkFailureEvidence(String eventType, String errorType) {}
     record RequestEvidence(int logicalRequestOrdinal, Instant requestStartedAt, Instant responseCompletedAt,
-                           long elapsedMs, Integer physicalAttemptCount, List<AttemptEvidence> physicalAttempts,
+                           long elapsedMs, int observedHttpExchangeCount,
+                           List<HttpExchangeEvidence> observedHttpExchanges,
+                           int networkFailureCount, List<NetworkFailureEvidence> networkFailures,
                            Integer httpStatus, Boolean timeout, String errorType, String finishReason,
                            UsageEvidence usage) {}
     record PhaseEvidence(String caseId, Arm arm, Phase phase, Instant startedAt, Instant endedAt, long elapsedMs,
@@ -302,15 +324,17 @@ final class GeminiLatencyTelemetry {
     }
     private static final class ShapeCounts { int imageBytes; int textChars; int textBytes; }
     private static final class ActiveRequest {
-        final int ordinal; final Instant startedAt; final long startedNanos; final List<ActiveAttempt> attempts = new ArrayList<>();
+        final int ordinal; final Instant startedAt; final long startedNanos;
+        final List<ActiveExchange> exchanges = new ArrayList<>();
+        final List<NetworkFailureEvidence> networkFailures = new ArrayList<>();
         Instant endedAt; Integer httpStatus; Boolean timeout; String errorType; String finishReason; UsageEvidence usage;
         ActiveRequest(int ordinal, Instant startedAt, long startedNanos) { this.ordinal = ordinal; this.startedAt = startedAt; this.startedNanos = startedNanos; }
     }
-    private static final class ActiveAttempt {
+    private static final class ActiveExchange {
         final int ordinal; final Instant requestStartedAt; Instant requestBodyCompletedAt;
         Instant responseHeadersReceivedAt; Instant responseBodyCompletedAt; Integer httpStatus;
-        ActiveAttempt(int ordinal, Instant startedAt) { this.ordinal = ordinal; this.requestStartedAt = startedAt; }
-        AttemptEvidence snapshot() { return new AttemptEvidence(ordinal, requestStartedAt, requestBodyCompletedAt,
+        ActiveExchange(int ordinal, Instant startedAt) { this.ordinal = ordinal; this.requestStartedAt = startedAt; }
+        HttpExchangeEvidence snapshot() { return new HttpExchangeEvidence(ordinal, requestStartedAt, requestBodyCompletedAt,
                 responseHeadersReceivedAt, responseBodyCompletedAt, httpStatus); }
     }
 
@@ -324,6 +348,10 @@ final class GeminiLatencyTelemetry {
         @Override public void responseBodyEnd(Call call, long byteCount) { telemetry.responseBodyEnd(); }
         @Override public void callEnd(Call call) { telemetry.callEnd(); }
         @Override public void callFailed(Call call, IOException ioe) { telemetry.callFailed(ioe); }
+        @Override public void connectFailed(Call call, InetSocketAddress address, Proxy proxy,
+                                            Protocol protocol, IOException ioe) {
+            telemetry.connectFailed(ioe);
+        }
     }
     private static final class ResponseMetadataInterceptor implements Interceptor {
         private final GeminiLatencyTelemetry telemetry;

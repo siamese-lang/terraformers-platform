@@ -55,7 +55,7 @@ work_package:
     - candidate canonical extraction and optional text generation phases are timed directly
     - negative candidate cases have no generation phase
     - each request records identity, safe payload sizes, optional usage, completion, error, and supported transport evidence
-    - physical attempts remain distinct from compact application retry
+    - observed HTTP exchanges and pre-header network failures remain distinct from compact application retry; exact SDK attempt count is unknown
     - progress logs contain case arm phase and timing but no request or response content
     - production sources and request semantics remain unchanged
     - no live inference occurs

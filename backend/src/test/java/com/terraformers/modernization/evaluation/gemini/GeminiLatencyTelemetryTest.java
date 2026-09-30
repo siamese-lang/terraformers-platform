@@ -21,7 +21,7 @@ class GeminiLatencyTelemetryTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void clonedClientPreservesListenerAndCapturesAttemptsTimingPayloadAndUsage() throws Exception {
+    void clonedClientPreservesListenerAndCapturesObservedExchangesTimingPayloadAndUsage() throws Exception {
         AtomicInteger calls = new AtomicInteger();
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/generate", exchange -> {
@@ -69,14 +69,15 @@ class GeminiLatencyTelemetryTest {
             var phase = telemetry.evidenceFor("case", GeminiLatencyTelemetry.Arm.CONTROL).get(0);
             assertThat(phase.requests()).hasSize(1);
             var request = phase.requests().get(0);
-            assertThat(request.physicalAttemptCount()).isEqualTo(2);
-            assertThat(request.physicalAttempts()).extracting(GeminiLatencyTelemetry.AttemptEvidence::httpStatus)
+            assertThat(request.observedHttpExchangeCount()).isEqualTo(2);
+            assertThat(request.observedHttpExchanges())
+                    .extracting(GeminiLatencyTelemetry.HttpExchangeEvidence::httpStatus)
                     .containsExactly(503, 200);
             assertThat(request.usage().promptTokenCount()).isEqualTo(12);
             assertThat(request.usage().thoughtsTokenCount()).isEqualTo(3);
             assertThat(request.usage().totalTokenCount()).isEqualTo(22);
             assertThat(request.finishReason()).isEqualTo("STOP");
-            assertThat(phase.payload().promptTextCharCount()).isPositive();
+            assertThat(phase.payload().requestTextCharCount()).isPositive();
             assertThat(phase.payload().imageByteCount()).isEqualTo(3);
         } finally {
             server.stop(0);
@@ -109,6 +110,40 @@ class GeminiLatencyTelemetryTest {
         } finally {
             server.stop(0);
         }
+    }
+
+    @Test
+    void preHeaderConnectFailureIsNetworkEvidenceNotAnHttpExchangeOrExactAttemptCount() {
+        GeminiLatencyTelemetry telemetry = new GeminiLatencyTelemetry(mapper);
+        var scope = telemetry.start("case", GeminiLatencyTelemetry.Arm.CONTROL,
+                GeminiLatencyTelemetry.Phase.FACT_EXTRACTION, identity(),
+                GeminiLatencyTelemetry.PayloadShape.of("IMAGE_AND_TEXT", 3, "", List.of()));
+        telemetry.callStart();
+        telemetry.connectFailed(new java.net.ConnectException("sensitive endpoint detail"));
+        scope.close(new IllegalStateException("sensitive provider detail"));
+
+        var request = telemetry.evidenceFor("case", GeminiLatencyTelemetry.Arm.CONTROL)
+                .get(0).requests().get(0);
+        assertThat(request.observedHttpExchangeCount()).isZero();
+        assertThat(request.networkFailureCount()).isEqualTo(1);
+        assertThat(request.networkFailures()).containsExactly(
+                new GeminiLatencyTelemetry.NetworkFailureEvidence("CONNECT_FAILED", "ConnectException"));
+        assertThat(request.toString()).doesNotContain("sensitive endpoint detail");
+    }
+
+    @Test
+    void propagatedProviderFailurePopulatesLastRequestSafeErrorType() {
+        GeminiLatencyTelemetry telemetry = new GeminiLatencyTelemetry(mapper);
+        var scope = telemetry.start("case", GeminiLatencyTelemetry.Arm.CANDIDATE,
+                GeminiLatencyTelemetry.Phase.GENERATION, identity(),
+                GeminiLatencyTelemetry.PayloadShape.of("TEXT", 0, "", List.of()));
+        telemetry.callStart();
+        scope.close(new IllegalStateException("sensitive provider detail"));
+
+        var request = telemetry.evidenceFor("case", GeminiLatencyTelemetry.Arm.CANDIDATE)
+                .get(0).requests().get(0);
+        assertThat(request.errorType()).isEqualTo("IllegalStateException");
+        assertThat(request.toString()).doesNotContain("sensitive provider detail");
     }
 
     private Request request(int port) {

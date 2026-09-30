@@ -3,7 +3,7 @@ package com.terraformers.modernization.evaluation.gemini;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.genai.Client;
-import com.google.genai.ClientOptions;
+import com.google.genai.types.ClientOptions;
 import com.google.genai.types.HttpOptions;
 import com.terraformers.modernization.analysis.vertex.VertexGenerationStage;
 import com.terraformers.modernization.analysis.vertex.VertexPromptBuilder;

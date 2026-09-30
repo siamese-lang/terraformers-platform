@@ -102,7 +102,7 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         ReferenceQuery query = new ReferenceQuery(
                 queryTextBuilder.build(facts),
                 facts.resourceTypes(),
-                properties.getOpensearchTopK()
+                properties.getOpensearchMaxEvidence()
         );
         try {
             List<ReferenceDocument> references = referenceRetriever.retrieve(query);

@@ -83,6 +83,15 @@ target runtime을 한 번 구축하고 계속 확장·재사용하는 것**이�
 - active milestone plan의 TODO 목록은 **자동 실행 큐가 아니다**. 첫 미완료 항목이라는 이유만으로
   다음 구현을 시작하지 않는다.
 - 한 작업은 하나의 논리적으로 검증 가능한 결과로 제한한다.
+- 작업 승인 단위는 **Atomic Task** 또는 **Approved Work Package**다.
+  - Atomic Task는 하나의 작은 구현/수정/평가처럼 기존 방식의 단일 작업이다.
+  - Approved Work Package는 하나의 logical outcome과 고정 acceptance criteria 안에서 branch 생성,
+    허용 경로 수정, test, PR 생성, CI 확인, evidence 수집, 동일 failure에 대한 bounded repair까지를
+    하나의 승인 범위로 묶을 수 있다.
+  - Work Package는 `approved_base_sha`, `allowed_paths`, `allowed_actions`, `prohibited_actions`,
+    `acceptance_criteria`, `auto_repair_limit`, `stop_on`을 명시해야 한다.
+  - Work Package가 끝나면 다음 Work Package를 자동 시작하지 않는다. 다음 후보는 제안할 수 있지만
+    상태는 `AWAITING_APPROVAL`이어야 한다.
 - 사용자가 승인한 **현재 한 작업만** 수행한다. 한 작업이 끝났다고 다음 branch/PR/subtask/milestone을
   자동으로 시작하지 않는다.
 - 사용자의 `다음 작업 진행`은 직전 완료 보고에서 명시한 **immediate next single task 하나**에 대한
@@ -119,11 +128,15 @@ ChatGPT의 기본 역할은 **read/analysis/review**다.
 - 승인된 결정을 Codex가 구현할 수 있는 bounded implementation spec으로 변환한다.
 - Codex 결과를 원래 decision/acceptance criteria와 대조해 review한다.
 - portfolio case depth와 residual risk를 판정한다.
-- GitHub write는 반드시 명시적 사용자 승인을 요구한다. 가능한 경우 ChatGPT GitHub 연결은
-  read를 허용하되 write마다 사용자 승인을 요구하는 `ask_before_writes` 모드로 유지한다.
+- GitHub write는 기본적으로 명시적 사용자 승인을 요구한다. 다만 사용자가 Approved Work Package를
+  승인했고 그 계약의 `allowed_actions` / `allowed_writes`에 branch 생성, work branch 수정, PR 생성이
+  명시된 경우에는 그 bounded write를 사전 승인으로 본다.
+- Work Package 승인으로도 `merge`, `main` 직접 수정, ruleset/IAM/security boundary 변경,
+  live apply/deploy, destructive operation, 비용 증가 작업은 자동 승인되지 않는다. 이 작업들은 별도
+  사용자 checkpoint를 요구한다.
 - 이 문서만으로 실제 connector permission 상태를 추정하지 않는다. 권한 설정은 외부 enforcement layer이며
   작업 시작 시 필요한 경우 실제 연결 상태를 확인한다.
-- 사용자 승인 없이 branch 생성, source 수정, PR 생성/수정, merge를 수행하지 않는다.
+- Atomic Task 또는 승인된 Work Package 범위 밖의 branch 생성, source 수정, PR 생성/수정, merge를 수행하지 않는다.
 
 ### Codex — bounded implementation agent
 
@@ -141,7 +154,10 @@ Codex task에는 최소한 다음이 포함되어야 한다.
 - 다음 milestone/subtask로 자동 진행 금지.
 
 Codex는 "backend reliability 개선", "AI/RAG 고도화"처럼 열린 목표를 받지 않는다. 한 번에 승인된
-implementation unit 하나만 수행한다.
+implementation unit 하나만 수행한다. Approved Work Package의 동일 implementation unit 안에서는
+고정된 acceptance를 충족하기 위한 bounded corrective iteration을 허용할 수 있으나, 초기 기본값은
+`auto_repair_limit = 1`이다. failure class가 바뀌거나 새 설계/새 범위가 필요하면 같은 unit으로
+계속 수정하지 않고 즉시 중단한다.
 
 ### User — decision and merge checkpoint
 
@@ -161,11 +177,22 @@ implementation unit 하나만 수행한다.
 
 대화가 길어지거나 새 대화로 전환되어도 agent가 독자적으로 작업 범위를 넓히지 않도록 다음을 지킨다.
 
+**Interactive ChatGPT execution**에서는:
 - 하나의 응답에서 외부 CI/workflow 완료를 기다리며 장시간 반복 polling하지 않는다.
 - PR/CI가 아직 실행 중이면 필요한 상태를 한 번 확인하고, 완료되지 않았을 경우 현재 상태를 사용자에게
   보고한 뒤 응답을 종료한다. 다음 사용자 입력에서 이어간다.
 - 실패가 발생하면 최초 실패 원인까지 확인할 수 있지만, 여러 차례 수정→CI→수정→CI를 사용자에게
   알리지 않고 같은 응답에서 반복하지 않는다.
+
+**Explicitly approved automated Work Package execution**에서는:
+- 동일 allowed scope와 동일 acceptance 안의 기계적 repair만 `auto_repair_limit`까지 수행할 수 있다.
+- 초기 기본값은 1회다.
+- 같은 failure 반복, failure class 변화, allowed path 밖 수정 필요, architecture/technical decision 필요,
+  acceptance criteria 수정 필요, live/cost/security action 필요, approved base와 current GitHub `main`
+  불일치가 발생하면 즉시 `HUMAN_REQUIRED` 또는 `INCONCLUSIVE`로 STOP한다.
+- CI PASS는 acceptance PASS가 아니다. Verifier가 contract와 외부 evidence를 기준으로 별도 판정한다.
+
+공통으로:
 - 예상하지 못한 다른 PR/commit이 `main`에 병합되면 즉시 작업을 멈추고 scope drift를 보고한다.
 - 사용자가 방향 재검토를 요구하면 새 기능 구현/merge보다 재감사와 decision 정리가 우선한다.
 
@@ -270,6 +297,7 @@ Evidence는 의사결정과 완료 주장을 제한하는 조건이지, reposito
 - performed validation
 - result
 - unresolved blockers (`none`인 경우에도 명시)
-- immediate next single task
+- immediate next single task 또는 `next_candidate_work_package`
+- 다음 후보 Work Package를 기록하더라도 자동 실행 권한으로 해석하지 않으며 `AWAITING_APPROVAL`로 둔다.
 
 완료 보고 전에 diff와 repository 상태를 확인하여 작업 범위를 벗어난 변경이 없는지 검증한다.

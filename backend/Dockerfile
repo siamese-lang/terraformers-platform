@@ -34,6 +34,50 @@ RUN apt-get update \
     && find "$TERRAFORM_VALIDATION_PLUGIN_DIR" -maxdepth 1 -type f -name 'terraform-provider-aws*' -exec chmod 0755 {} + \
     && terraform version
 
+RUN set -eux; \
+    validation_dir="$(mktemp -d)"; \
+    trap 'rm -rf "$validation_dir"' EXIT; \
+    printf '%s\n' \
+      'terraform {' \
+      '  required_providers {' \
+      '    aws = {' \
+      '      source  = "hashicorp/aws"' \
+      '      version = "= 5.100.0"' \
+      '    }' \
+      '  }' \
+      '}' \
+      'resource "aws_vpc" "valid" {' \
+      '  cidr_block = "10.0.0.0/16"' \
+      '}' > "$validation_dir/main.tf"; \
+    env -i PATH=/usr/local/bin:/usr/bin:/bin HOME="$validation_dir" \
+      TF_IN_AUTOMATION=1 TF_DATA_DIR="$validation_dir/.terraform-data" AWS_EC2_METADATA_DISABLED=true \
+      terraform -chdir="$validation_dir" init -backend=false -input=false -get=false -no-color \
+        -plugin-dir="$TERRAFORM_VALIDATION_PLUGIN_DIR"; \
+    env -i PATH=/usr/local/bin:/usr/bin:/bin HOME="$validation_dir" \
+      TF_IN_AUTOMATION=1 TF_DATA_DIR="$validation_dir/.terraform-data" AWS_EC2_METADATA_DISABLED=true \
+      terraform -chdir="$validation_dir" validate -json > "$validation_dir/valid.json"; \
+    grep -Eq '"valid"[[:space:]]*:[[:space:]]*true' "$validation_dir/valid.json"; \
+    printf '%s\n' \
+      'terraform {' \
+      '  required_providers {' \
+      '    aws = {' \
+      '      source  = "hashicorp/aws"' \
+      '      version = "= 5.100.0"' \
+      '    }' \
+      '  }' \
+      '}' \
+      'resource "aws_vpc" "invalid" {' \
+      '  cidr_block = "10.0.0.0/16"' \
+      '  definitely_not_a_real_argument = true' \
+      '}' > "$validation_dir/main.tf"; \
+    if env -i PATH=/usr/local/bin:/usr/bin:/bin HOME="$validation_dir" \
+      TF_IN_AUTOMATION=1 TF_DATA_DIR="$validation_dir/.terraform-data" AWS_EC2_METADATA_DISABLED=true \
+      terraform -chdir="$validation_dir" validate -json > "$validation_dir/invalid.json"; then \
+        echo 'expected invalid provider schema to fail terraform validate' >&2; \
+        exit 1; \
+    fi; \
+    grep -Eq '"valid"[[:space:]]*:[[:space:]]*false' "$validation_dir/invalid.json"
+
 RUN useradd --system --uid 10001 --create-home appuser
 COPY --from=build /workspace/target/*.jar /tmp/
 RUN set -eux; \

@@ -25,13 +25,14 @@ RUN apt-get update \
     && echo "${TERRAFORM_SHA256}  /tmp/terraform.zip" | sha256sum -c - \
     && unzip /tmp/terraform.zip -d /usr/local/bin \
     && rm -f /tmp/terraform.zip \
-    && mkdir -p "$TERRAFORM_VALIDATION_PLUGIN_DIR" \
+    && AWS_PROVIDER_PLUGIN_DIR="$TERRAFORM_VALIDATION_PLUGIN_DIR/registry.terraform.io/hashicorp/aws/${AWS_PROVIDER_VERSION}/linux_amd64" \
+    && mkdir -p "$AWS_PROVIDER_PLUGIN_DIR" \
     && curl -fsSLo /tmp/aws-provider.zip "https://releases.hashicorp.com/terraform-provider-aws/${AWS_PROVIDER_VERSION}/terraform-provider-aws_${AWS_PROVIDER_VERSION}_linux_amd64.zip" \
     && echo "${AWS_PROVIDER_SHA256}  /tmp/aws-provider.zip" | sha256sum -c - \
-    && unzip -q /tmp/aws-provider.zip -d "$TERRAFORM_VALIDATION_PLUGIN_DIR" \
+    && unzip -q /tmp/aws-provider.zip -d "$AWS_PROVIDER_PLUGIN_DIR" \
     && rm -f /tmp/aws-provider.zip \
-    && test "$(find "$TERRAFORM_VALIDATION_PLUGIN_DIR" -maxdepth 1 -type f -name 'terraform-provider-aws*' | wc -l)" -eq 1 \
-    && find "$TERRAFORM_VALIDATION_PLUGIN_DIR" -maxdepth 1 -type f -name 'terraform-provider-aws*' -exec chmod 0755 {} + \
+    && test "$(find "$AWS_PROVIDER_PLUGIN_DIR" -maxdepth 1 -type f -name 'terraform-provider-aws*' | wc -l)" -eq 1 \
+    && find "$AWS_PROVIDER_PLUGIN_DIR" -maxdepth 1 -type f -name 'terraform-provider-aws*' -exec chmod 0755 {} + \
     && terraform version
 
 RUN set -eux; \

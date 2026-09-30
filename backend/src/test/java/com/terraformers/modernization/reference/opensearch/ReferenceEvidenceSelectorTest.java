@@ -129,6 +129,58 @@ class ReferenceEvidenceSelectorTest {
     }
 
     @Test
+    void replacesBroaderPartiallyUnsupportedDecisionWithSelfContainedDecisionAtSaturatedLimit() {
+        ReferenceDocument providerAlpha = document("provider-alpha", "PROVIDER_SCHEMA", 1, 1, "aws_alpha");
+        ReferenceDocument providerBeta = document("provider-beta", "PROVIDER_SCHEMA", 1, 1, "aws_beta");
+        ReferenceDocument providerGamma = document("provider-gamma", "PROVIDER_SCHEMA", 1, 1, "aws_gamma");
+        ReferenceDocument providerDelta = document("provider-delta", "PROVIDER_SCHEMA", 1, 1, "aws_delta");
+        ReferenceDocument broad = document(
+                "broad-decision", "PROJECT_DECISION", 0.99, 100,
+                "aws_alpha", "aws_beta", "aws_gamma", "aws_external");
+        ReferenceDocument coherent = document(
+                "coherent-decision", "PROJECT_DECISION", 0.1, 1, "aws_delta");
+        List<ReferenceEvidenceSelector.Candidate> candidates = List.of(
+                candidate(providerAlpha, true, true, 0),
+                candidate(providerBeta, true, true, 1),
+                candidate(providerGamma, true, true, 2),
+                candidate(providerDelta, true, true, 3),
+                candidate(broad, true, true, 4),
+                candidate(coherent, false, false, 5));
+        List<ReferenceDocument> selected =
+                List.of(providerAlpha, providerBeta, providerGamma, providerDelta, broad);
+        List<String> resources = List.of("aws_alpha", "aws_beta", "aws_gamma", "aws_delta");
+
+        List<ReferenceDocument> firstRun = select(candidates, selected, resources, 5);
+        List<ReferenceDocument> secondRun = select(candidates, selected, resources, 5);
+
+        assertThat(firstRun).extracting(ReferenceDocument::id).containsExactly(
+                "provider-alpha", "provider-beta", "provider-gamma", "provider-delta", "coherent-decision");
+        assertThat(firstRun).extracting(ReferenceDocument::resourceTypes)
+                .anySatisfy(types -> assertThat(types).contains("aws_alpha"))
+                .anySatisfy(types -> assertThat(types).contains("aws_beta"))
+                .anySatisfy(types -> assertThat(types).contains("aws_gamma"))
+                .anySatisfy(types -> assertThat(types).contains("aws_delta"));
+        assertThat(firstRun).extracting(ReferenceDocument::authority)
+                .containsOnly("PROVIDER_SCHEMA", "PROJECT_DECISION");
+        assertThat(secondRun).isEqualTo(firstRun);
+        assertThat(firstRun).hasSize(5);
+    }
+
+    @Test
+    void prefersGreaterMatchedCountWhenUnsupportedCountsAreEqual() {
+        ReferenceDocument base = document("base", "PROVIDER_SCHEMA", 1, 1, "aws_alpha", "aws_beta");
+        ReferenceDocument narrow = document("narrow", "PROJECT_DECISION", 0.99, 100, "aws_alpha");
+        ReferenceDocument wider = document("wider", "PROJECT_DECISION", 0.1, 1, "aws_alpha", "aws_beta");
+
+        List<ReferenceDocument> result = select(
+                List.of(candidate(base, true, true, 0), candidate(narrow, true, false, 1),
+                        candidate(wider, true, false, 2)),
+                List.of(base), List.of("aws_alpha", "aws_beta"), 2);
+
+        assertThat(result).extracting(ReferenceDocument::id).containsExactly("base", "wider");
+    }
+
+    @Test
     void retainsA4SupplementationWhenThereIsNoEligibleDecision() {
         ReferenceDocument alpha = document("alpha", "", 1, 1, "aws_alpha");
         ReferenceDocument unrelated = document("unrelated", "", 1, 1, "aws_gamma");

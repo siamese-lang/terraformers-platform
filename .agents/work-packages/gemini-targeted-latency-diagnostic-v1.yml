@@ -1,0 +1,95 @@
+work_package:
+  id: gemini-targeted-latency-diagnostic-v1
+  status: DIAGNOSTIC_READY_CI_VALIDATION_PENDING
+  approved_base_sha: "462bf92cecc10b7f092a3eca110d3af229c22e67"
+  execution_base_sha: "462bf92cecc10b7f092a3eca110d3af229c22e67"
+  goal: Select exactly the two anomalous FACT_REUSE cases once per arm for a future instrumented live diagnostic while preserving the full six-case comparison.
+  engineering_axis:
+    - AI/RAG evaluation and targeted improvement
+    - Observability based on real failure diagnosis
+  observed_problem: The full FACT_REUSE launcher always evaluates six cases even though follow-up latency diagnosis only needs the two cases with previously observed tails.
+  selected_design:
+    workflow_mode: FACT_REUSE_DIAGNOSTIC
+    selector: package-private bounded selector in the existing launcher
+    default_behavior: absent or blank selection retains all six fixture cases in fixture order
+    diagnostic_behavior: frozen two-case ordered selection with one evaluation per case and both arms
+    artifact_schema: gemini-fact-reuse-comparison-v2
+    repetition: none
+  target_case_ids:
+    - arch-cloudfront-private-alb
+    - arch-private-aoss
+  allowed_paths:
+    - .agents/work-packages/gemini-targeted-latency-diagnostic-v1.yml
+    - .github/workflows/gcp-gemini-generation-comparison.yml
+    - backend/src/main/java/com/terraformers/modernization/evaluation/gemini/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/gemini/**
+  prohibited_paths:
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/main/java/com/terraformers/modernization/storage/**
+    - backend/pom.xml
+    - AGENTS.md
+    - docs/**
+    - evaluation/**
+    - corpus/**
+    - infra/**
+    - frontend/**
+  allowed_actions:
+    - inspect_repository
+    - create_bounded_branch
+    - add_evaluation_only_case_selection
+    - add_deterministic_tests
+    - minimally_update_existing_workflow
+    - create_pull_request
+    - inspect_ci_once
+    - repair_same_failure_once
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - live_gemini_call
+    - workflow_dispatch
+    - gke_evaluation_run
+    - cloud_resource_change
+    - sdk_upgrade
+    - timeout_policy_change
+    - retry_policy_change
+    - prompt_or_thinking_change
+    - fixture_or_corpus_change
+    - telemetry_schema_redesign
+    - arbitrary_repeat_runner
+    - create_new_workflow
+    - next_work_package_start
+  acceptance_criteria:
+    - absent or blank selector preserves the existing ordered six-case FACT_REUSE behavior
+    - diagnostic mode selects exactly arch-cloudfront-private-alb then arch-private-aoss
+    - each selected case is evaluated once through both control and candidate arms
+    - unknown and duplicate IDs fail before model client construction
+    - selection does not mutate fixture data
+    - existing artifact schema and six-case frozen acceptance semantics remain unchanged
+    - diagnostic workflow validation checks identity, exact case order, phase order, and request evidence
+    - no live inference occurs
+  verification:
+    - targeted selector unit tests
+    - GeminiLatencyTelemetryTest
+    - GeminiCurrentImagePipelineStageTest
+    - GeminiFactReusePipelineStageTest
+    - related existing evaluation Gemini tests
+    - workflow syntax and scope diff audit
+    - existing normal pull request CI
+  auto_repair_limit: 1
+  stop_on:
+    - current_main_drift
+    - production_path_change_required
+    - fixture_or_corpus_change_required
+    - telemetry_redesign_required
+    - sdk_change_required
+    - architecture_decision_required
+    - live_call_required
+    - failure_class_changed
+    - second_automatic_repair_required
+  completion:
+    result_before_ci: DIAGNOSTIC_READY_CI_VALIDATION_PENDING
+    merge_requires_user_approval: true
+    live_diagnostic_requires_new_user_approval: true
+    next_candidate_work_package: single instrumented FACT_REUSE_DIAGNOSTIC live run proposal
+    next_work_package_status: AWAITING_APPROVAL

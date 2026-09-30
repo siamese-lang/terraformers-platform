@@ -15,8 +15,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class GeminiFactReuseComparisonLauncher {
 
@@ -27,6 +29,11 @@ public final class GeminiFactReuseComparisonLauncher {
     public static final int GENERATION_MAX_OUTPUT_TOKENS = 8192;
     public static final String CONTROL_MODE = "CURRENT_IMAGE_TWICE";
     public static final String CANDIDATE_MODE = "CANONICAL_FACT_REUSE";
+    static final String CASE_IDS_ENV = "FACT_REUSE_CASE_IDS";
+    static final List<String> DIAGNOSTIC_CASE_IDS = List.of(
+            "arch-cloudfront-private-alb",
+            "arch-private-aoss"
+    );
 
     private GeminiFactReuseComparisonLauncher() {}
 
@@ -45,6 +52,8 @@ public final class GeminiFactReuseComparisonLauncher {
                 GeminiGenerationComparisonLauncher.requiredPath(env, "EVALUATION_DATASET"),
                 GeminiGenerationComparisonLauncher.requiredPath(env, "CORPUS_DOCUMENTS")
         );
+        List<OpusGenerationFixtureLoader.FixtureCase> selectedCases =
+                selectCases(fixture.cases(), env.get(CASE_IDS_ENV));
 
         GeminiLatencyTelemetry telemetry = new GeminiLatencyTelemetry(mapper);
         Client client = Client.builder()
@@ -102,7 +111,7 @@ public final class GeminiFactReuseComparisonLauncher {
         );
 
         List<GeminiFactReuseComparisonRunner.CaseEvidence> cases = new ArrayList<>();
-        for (var fixtureCase : fixture.cases()) {
+        for (var fixtureCase : selectedCases) {
             cases.add(runner.evaluate(fixtureCase));
         }
 
@@ -133,6 +142,34 @@ public final class GeminiFactReuseComparisonLauncher {
             Files.createDirectories(output.toAbsolutePath().getParent());
         }
         mapper.writeValue(output.toFile(), artifact);
+    }
+
+    static List<OpusGenerationFixtureLoader.FixtureCase> selectCases(
+            List<OpusGenerationFixtureLoader.FixtureCase> fixtureCases,
+            String requestedCaseIds
+    ) {
+        if (requestedCaseIds == null || requestedCaseIds.isBlank()) {
+            return List.copyOf(fixtureCases);
+        }
+
+        List<String> requested = List.of(requestedCaseIds.split(",", -1)).stream()
+                .map(String::trim)
+                .toList();
+        Set<String> unique = new HashSet<>(requested);
+        if (unique.size() != requested.size()) {
+            throw new IllegalArgumentException("FACT_REUSE case IDs must not contain duplicates");
+        }
+        Map<String, OpusGenerationFixtureLoader.FixtureCase> byId = fixtureCases.stream()
+                .collect(java.util.stream.Collectors.toMap(c -> c.definition().caseId(), c -> c));
+        List<String> unknown = requested.stream().filter(id -> !byId.containsKey(id)).toList();
+        if (!unknown.isEmpty()) {
+            throw new IllegalArgumentException("Unknown FACT_REUSE case IDs: " + unknown);
+        }
+        if (!requested.equals(DIAGNOSTIC_CASE_IDS)) {
+            throw new IllegalArgumentException(
+                    "FACT_REUSE targeted selection must match the frozen diagnostic case IDs");
+        }
+        return requested.stream().map(byId::get).toList();
     }
 
     static boolean armAccepted(

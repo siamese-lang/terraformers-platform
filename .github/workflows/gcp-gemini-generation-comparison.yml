@@ -5,6 +5,14 @@ on:
     inputs:
       expected_sha: {description: Exact trusted main SHA, required: true, type: string}
       confirmation: {description: Type RUN_GEMINI_GENERATION_COMPARISON, required: true, type: string}
+      comparison_mode:
+        description: Frozen comparison mode
+        required: true
+        default: MODEL
+        type: choice
+        options:
+          - MODEL
+          - THINKING
 
 permissions: {contents: read, id-token: write}
 concurrency: {group: gcp-gemini-generation-comparison, cancel-in-progress: false}
@@ -23,8 +31,12 @@ jobs:
       POD: terraformers-gemini-generation-comparison
       GOOGLE_CLOUD_PROJECT: terraformers-platform
       GOOGLE_CLOUD_LOCATION: global
+      COMPARISON_MODE: '${{ inputs.comparison_mode }}'
       CONTROL_MODEL_ID: gemini-3.8-flash
       CANDIDATE_MODEL_ID: gemini-3.1-pro-preview
+      THINKING_MODEL_ID: gemini-3.8-flash
+      CONTROL_THINKING_LEVEL: MEDIUM
+      CANDIDATE_THINKING_LEVEL: LOW
       GENERATION_MAX_OUTPUT_TOKENS: '8192'
     steps:
       - uses: actions/checkout@v5
@@ -36,7 +48,13 @@ jobs:
           [[ "$CONFIRMATION" == RUN_GEMINI_GENERATION_COMPARISON ]]
           [[ "$GITHUB_REF" == refs/heads/main ]]
           [[ "$GOOGLE_CLOUD_PROJECT" == terraformers-platform && "$GOOGLE_CLOUD_LOCATION" == global ]]
-          [[ "$CONTROL_MODEL_ID" == gemini-3.8-flash && "$CANDIDATE_MODEL_ID" == gemini-3.1-pro-preview ]]
+          [[ "$COMPARISON_MODE" == MODEL || "$COMPARISON_MODE" == THINKING ]]
+          if [[ "$COMPARISON_MODE" == MODEL ]]; then
+            [[ "$CONTROL_MODEL_ID" == gemini-3.8-flash && "$CANDIDATE_MODEL_ID" == gemini-3.1-pro-preview ]]
+          else
+            [[ "$THINKING_MODEL_ID" == gemini-3.8-flash ]]
+            [[ "$CONTROL_THINKING_LEVEL" == MEDIUM && "$CANDIDATE_THINKING_LEVEL" == LOW ]]
+          fi
           [[ "$GENERATION_MAX_OUTPUT_TOKENS" == 8192 ]]
       - uses: actions/setup-java@v5
         with: {distribution: temurin, java-version: '17', cache: maven}
@@ -64,10 +82,25 @@ jobs:
           kubectl run "$POD" -n "$NAMESPACE" --image=eclipse-temurin:17-jre --restart=Never --overrides='{"spec":{"serviceAccountName":"terraformers-backend","containers":[{"name":"'$POD'","image":"eclipse-temurin:17-jre","command":["sleep","1800"]}]}}'
           kubectl wait -n "$NAMESPACE" --for=condition=Ready "pod/$POD" --timeout=180s
           kubectl cp bundle/. "$NAMESPACE/$POD:/work"
-          kubectl exec -n "$NAMESPACE" "$POD" -- env OPUS_FIXTURE_MANIFEST=/work/evaluation/opus-generation-v1/manifest.json EVALUATION_DATASET=/work/evaluation/terraformers-eval-v1/dataset.json CORPUS_DOCUMENTS=/work/corpus/v3/documents.jsonl EVALUATION_OUTPUT=/work/output.json EVALUATION_RUN_ID="$GITHUB_RUN_ID" SOURCE_COMMIT="$GITHUB_SHA" GOOGLE_CLOUD_PROJECT="$GOOGLE_CLOUD_PROJECT" GOOGLE_CLOUD_LOCATION="$GOOGLE_CLOUD_LOCATION" CONTROL_MODEL_ID="$CONTROL_MODEL_ID" CANDIDATE_MODEL_ID="$CANDIDATE_MODEL_ID" GENERATION_MAX_OUTPUT_TOKENS="$GENERATION_MAX_OUTPUT_TOKENS" java -cp '/work/classes:/work/dependency/*' com.terraformers.modernization.evaluation.gemini.GeminiGenerationComparisonLauncher
-          kubectl cp "$NAMESPACE/$POD:/work/output.json" gemini-generation-comparison-${GITHUB_RUN_ID}.json
+          if [[ "$COMPARISON_MODE" == MODEL ]]; then
+            MAIN_CLASS=com.terraformers.modernization.evaluation.gemini.GeminiGenerationComparisonLauncher
+            OUTPUT_FILE=gemini-generation-comparison-${GITHUB_RUN_ID}.json
+          else
+            MAIN_CLASS=com.terraformers.modernization.evaluation.gemini.GeminiThinkingComparisonLauncher
+            OUTPUT_FILE=gemini-thinking-comparison-${GITHUB_RUN_ID}.json
+          fi
+          kubectl exec -n "$NAMESPACE" "$POD" -- env OPUS_FIXTURE_MANIFEST=/work/evaluation/opus-generation-v1/manifest.json EVALUATION_DATASET=/work/evaluation/terraformers-eval-v1/dataset.json CORPUS_DOCUMENTS=/work/corpus/v3/documents.jsonl EVALUATION_OUTPUT=/work/output.json EVALUATION_RUN_ID="$GITHUB_RUN_ID" SOURCE_COMMIT="$GITHUB_SHA" GOOGLE_CLOUD_PROJECT="$GOOGLE_CLOUD_PROJECT" GOOGLE_CLOUD_LOCATION="$GOOGLE_CLOUD_LOCATION" CONTROL_MODEL_ID="$CONTROL_MODEL_ID" CANDIDATE_MODEL_ID="$CANDIDATE_MODEL_ID" THINKING_MODEL_ID="$THINKING_MODEL_ID" CONTROL_THINKING_LEVEL="$CONTROL_THINKING_LEVEL" CANDIDATE_THINKING_LEVEL="$CANDIDATE_THINKING_LEVEL" GENERATION_MAX_OUTPUT_TOKENS="$GENERATION_MAX_OUTPUT_TOKENS" java -cp '/work/classes:/work/dependency/*' "$MAIN_CLASS"
+          kubectl cp "$NAMESPACE/$POD:/work/output.json" "$OUTPUT_FILE"
       - name: Validate artifact identity
         run: |
-          jq -e '.schemaVersion=="gemini-generation-comparison-v1" and .fixtureSchemaVersion=="opus-generation-fixture-v1" and .controlModelId=="gemini-3.8-flash" and .candidateModelId=="gemini-3.1-pro-preview" and .location=="global" and .maxOutputTokens==8192 and .caseCount==6 and ([.cases[] | (.control.renderedPromptSha256 == .candidate.renderedPromptSha256)] | all)' gemini-generation-comparison-*.json
+          set -euo pipefail
+          if [[ "$COMPARISON_MODE" == MODEL ]]; then
+            jq -e '.schemaVersion=="gemini-generation-comparison-v1" and .fixtureSchemaVersion=="opus-generation-fixture-v1" and .controlModelId=="gemini-3.8-flash" and .candidateModelId=="gemini-3.1-pro-preview" and .location=="global" and .maxOutputTokens==8192 and .caseCount==6 and ([.cases[] | (.control.renderedPromptSha256 == .candidate.renderedPromptSha256)] | all)' gemini-generation-comparison-*.json
+          else
+            jq -e '.schemaVersion=="gemini-thinking-comparison-v1" and .fixtureSchemaVersion=="opus-generation-fixture-v1" and .modelId=="gemini-3.8-flash" and .controlThinkingLevel=="MEDIUM" and .candidateThinkingLevel=="LOW" and .location=="global" and .maxOutputTokens==8192 and .caseCount==6 and ([.cases[] | (.control.modelId == .candidate.modelId and .control.renderedPromptSha256 == .candidate.renderedPromptSha256)] | all)' gemini-thinking-comparison-*.json
+          fi
       - uses: actions/upload-artifact@v4
-        with: {name: 'gemini-generation-comparison-${{ github.run_id }}', path: 'gemini-generation-comparison-*.json', if-no-files-found: error}
+        with:
+          name: 'gemini-generation-comparison-${{ inputs.comparison_mode }}-${{ github.run_id }}'
+          path: 'gemini-*-comparison-*.json'
+          if-no-files-found: error

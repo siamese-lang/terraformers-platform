@@ -1,4 +1,4 @@
-package com.terraformers.modernization.analysis.vertex;
+package com.terraformers.modernization.evaluation.gemini;
 
 import com.google.genai.Client;
 import com.google.genai.types.Content;
@@ -6,34 +6,46 @@ import com.google.genai.types.FinishReason;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
-import com.google.genai.types.ThinkingConfig;
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisGenerationStage;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
+import com.terraformers.modernization.analysis.vertex.VertexOutputTruncatedException;
+import com.terraformers.modernization.analysis.vertex.VertexPromptBuilder;
+import com.terraformers.modernization.analysis.vertex.VertexResponseFormatException;
+import com.terraformers.modernization.analysis.vertex.VertexResponseParser;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.util.List;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
-@Component
-@Lazy
-public class VertexGenerationStage implements AnalysisGenerationStage {
+/**
+ * Evaluation-only reproduction of the original frozen MODEL comparison generation settings.
+ *
+ * <p>Production Gemini 3.8 generation intentionally no longer sends temperature. This class exists
+ * only so the historical Flash-vs-Pro comparison can still be rerun with its original standard
+ * temperature 0.2 and compact-retry temperature 0.1 contract.
+ */
+final class LegacyGeminiModelComparisonStage implements AnalysisGenerationStage {
+
+    static final float STANDARD_TEMPERATURE = 0.2f;
+    static final float COMPACT_TEMPERATURE = 0.1f;
 
     private final Client client;
-    private final VertexRuntimeProperties properties;
+    private final String modelId;
+    private final int maxOutputTokens;
     private final VertexPromptBuilder promptBuilder;
     private final VertexResponseParser responseParser;
 
-    public VertexGenerationStage(
-            @Lazy Client client,
-            VertexRuntimeProperties properties,
+    LegacyGeminiModelComparisonStage(
+            Client client,
+            String modelId,
+            int maxOutputTokens,
             VertexPromptBuilder promptBuilder,
             VertexResponseParser responseParser
     ) {
         this.client = client;
-        this.properties = properties;
+        this.modelId = modelId;
+        this.maxOutputTokens = maxOutputTokens;
         this.promptBuilder = promptBuilder;
         this.responseParser = responseParser;
     }
@@ -52,14 +64,13 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
         }
     }
 
-    GenerateContentConfig generationConfig() {
-        var builder = GenerateContentConfig.builder()
-                .maxOutputTokens(properties.requireMaxOutputTokens())
+    GenerateContentConfig generationConfig(boolean compact) {
+        return GenerateContentConfig.builder()
+                .temperature(compact ? COMPACT_TEMPERATURE : STANDARD_TEMPERATURE)
+                .maxOutputTokens(maxOutputTokens)
                 .responseMimeType("application/json")
-                .responseJsonSchema(promptBuilder.responseJsonSchema());
-        properties.resolvedGenerationThinkingLevel().ifPresent(level ->
-                builder.thinkingConfig(ThinkingConfig.builder().thinkingLevel(level)));
-        return builder.build();
+                .responseJsonSchema(promptBuilder.responseJsonSchema())
+                .build();
     }
 
     private AnalysisGenerationResult invoke(
@@ -67,9 +78,7 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
             List<ReferenceDocument> references,
             boolean compact
     ) {
-        String modelId = properties.requireGenerationModelId();
-        GenerateContentConfig config = generationConfig();
-
+        GenerateContentConfig config = generationConfig(compact);
         Content content = Content.fromParts(
                 Part.fromBytes(source.bytes(), source.metadata().contentType()),
                 Part.fromText(promptBuilder.build(source, references, compact))

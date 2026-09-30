@@ -65,12 +65,13 @@ public final class GeminiGenerationComparisonLauncher {
 
     private static AnalysisGenerationStage stage(Client client, String modelId, VertexPromptBuilder prompts,
                                                   VertexResponseParser parser) {
-        VertexRuntimeProperties properties = new VertexRuntimeProperties();
-        properties.setProjectId("evaluation-only");
-        properties.setLocation(LOCATION);
-        properties.setGenerationModelId(modelId);
-        properties.setMaxOutputTokens(MAX_OUTPUT_TOKENS);
-        return new VertexGenerationStage(client, properties, prompts, parser);
+        return new LegacyGeminiModelComparisonStage(
+                client,
+                modelId,
+                MAX_OUTPUT_TOKENS,
+                prompts,
+                parser
+        );
     }
 
     static void requireIdentity(String location, String control, String candidate, int max) {

@@ -20,17 +20,46 @@ public final class GeminiGenerationComparisonRunner {
 
     private final AnalysisGenerationStage control;
     private final AnalysisGenerationStage candidate;
+    private final String controlModelId;
+    private final String candidateModelId;
     private final VertexPromptBuilder prompts;
     private final TerraformDraftValidator validator;
 
     public GeminiGenerationComparisonRunner(AnalysisGenerationStage control, AnalysisGenerationStage candidate) {
-        this(control, candidate, new VertexPromptBuilder(), new TerraformDraftValidator());
+        this(control, candidate, CONTROL_MODEL_ID, CANDIDATE_MODEL_ID);
     }
 
-    GeminiGenerationComparisonRunner(AnalysisGenerationStage control, AnalysisGenerationStage candidate,
-                                     VertexPromptBuilder prompts, TerraformDraftValidator validator) {
+    public GeminiGenerationComparisonRunner(
+            AnalysisGenerationStage control,
+            AnalysisGenerationStage candidate,
+            String controlModelId,
+            String candidateModelId
+    ) {
+        this(control, candidate, controlModelId, candidateModelId,
+                new VertexPromptBuilder(), new TerraformDraftValidator());
+    }
+
+    GeminiGenerationComparisonRunner(
+            AnalysisGenerationStage control,
+            AnalysisGenerationStage candidate,
+            VertexPromptBuilder prompts,
+            TerraformDraftValidator validator
+    ) {
+        this(control, candidate, CONTROL_MODEL_ID, CANDIDATE_MODEL_ID, prompts, validator);
+    }
+
+    private GeminiGenerationComparisonRunner(
+            AnalysisGenerationStage control,
+            AnalysisGenerationStage candidate,
+            String controlModelId,
+            String candidateModelId,
+            VertexPromptBuilder prompts,
+            TerraformDraftValidator validator
+    ) {
         this.control = Objects.requireNonNull(control);
         this.candidate = Objects.requireNonNull(candidate);
+        this.controlModelId = requireArmId(controlModelId);
+        this.candidateModelId = requireArmId(candidateModelId);
         this.prompts = Objects.requireNonNull(prompts);
         this.validator = Objects.requireNonNull(validator);
     }
@@ -44,8 +73,8 @@ public final class GeminiGenerationComparisonRunner {
         if (!controlPrompt.equals(candidatePrompt) || !controlHash.equals(candidateHash)) {
             throw new IllegalStateException("SETUP_OR_FIXTURE: model arms received different semantic prompts");
         }
-        ArmEvidence controlEvidence = invoke(CONTROL_MODEL_ID, control, fixture, source, controlHash);
-        ArmEvidence candidateEvidence = invoke(CANDIDATE_MODEL_ID, candidate, fixture, source, candidateHash);
+        ArmEvidence controlEvidence = invoke(controlModelId, control, fixture, source, controlHash);
+        ArmEvidence candidateEvidence = invoke(candidateModelId, candidate, fixture, source, candidateHash);
         return new PairedCaseEvidence(fixture.definition().caseId(), fixture.definition().expectedClassification().name(),
                 fixture.referenceIds(), controlHash, controlEvidence, candidateEvidence);
     }
@@ -127,6 +156,13 @@ public final class GeminiGenerationComparisonRunner {
         if (fixture.definition().generation().terraformExpected() && !scoring.validation().valid())
             return "TERRAFORM_STRUCTURAL_VALIDATION";
         return "NONE";
+    }
+
+    private static String requireArmId(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("comparison arm model ID must not be blank");
+        }
+        return value.strip();
     }
 
     private static ObjectContent source(OpusGenerationFixtureLoader.FixtureCase fixture) {

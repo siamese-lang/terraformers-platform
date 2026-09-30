@@ -1,0 +1,178 @@
+work_package:
+  id: generation-thinking-latency-v1
+  status: ACTIVE
+  approved_base_sha: "1fbe0a319b57798f278d4d38ad8e9426e1a9da21"
+  execution_base_sha: "1fbe0a319b57798f278d4d38ad8e9426e1a9da21"
+
+  goal: >
+    Prepare one bounded same-model MEDIUM-vs-LOW thinking comparison for Gemini 3.8 Flash
+    without changing production behavior before evidence exists.
+
+  engineering_axis:
+    - AI/RAG evaluation and targeted improvement
+    - Generation latency
+
+  contract_file_immutable_after_first_production_write: true
+
+  allowed_paths:
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeProperties.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java
+    - backend/src/main/java/com/terraformers/modernization/evaluation/gemini/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/gemini/**
+    - .github/workflows/gcp-gemini-generation-comparison.yml
+
+  prohibited_paths:
+    - infra/**
+    - frontend/**
+    - evaluation/**
+    - corpus/**
+    - docs/**
+    - AGENTS.md
+    - backend/Dockerfile
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformDraftValidator.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformCliValidator.java
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - modify_allowed_paths
+    - run_existing_tests
+    - add_regression_tests_for_changed_behavior
+    - reuse_existing_manual_workflow
+    - create_pull_request
+    - inspect_ci
+    - repair_same_failure_once
+
+  auto_repair_limit: 1
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - create_new_github_workflow
+    - dispatch_workflow
+    - live_ai_model_call
+    - live_opensearch_evaluation
+    - corpus_change
+    - model_routing_change
+    - embedding_change
+    - prompt_change
+    - retrieval_change
+    - terraform_plan
+    - terraform_apply
+    - cloud_credential_use_outside_existing_manual_workflow
+    - kubectl_mutation_outside_existing_manual_workflow
+    - iam_change
+    - next_work_package_start
+    - acceptance_criteria_change
+
+  selected_design:
+    production_behavior:
+      - generation thinking level remains unset by default
+      - unset means preserve the model's existing default thinking behavior
+      - production does not adopt LOW in this work package
+      - deprecated/ignored temperature configuration is removed from Gemini 3.8 generation requests
+    optional_runtime_property:
+      name: terraformers.analysis.vertex.generation-thinking-level
+      allowed_values:
+        - LOW
+        - MEDIUM
+        - HIGH
+      unset_behavior: omit thinkingConfig from request
+    thinking_comparison:
+      model_id: gemini-3.8-flash
+      location: global
+      max_output_tokens: 8192
+      control_thinking_level: MEDIUM
+      candidate_thinking_level: LOW
+      fixture: evaluation/opus-generation-v1/manifest.json
+      cases: 6
+      prompt_contract_source_commit: 3fc610f1e9d601a4d5f79f281b358b783342c4ce
+      retry_policy: existing single compact retry only on output truncation
+      same_inputs:
+        - image bytes
+        - ordered references
+        - semantic prompt
+        - response schema
+        - parser
+        - TerraformDraftValidator
+    workflow_reuse:
+      workflow: .github/workflows/gcp-gemini-generation-comparison.yml
+      existing_mode: MODEL
+      added_mode: THINKING
+      requirement: >
+        MODEL mode must preserve the existing Flash-vs-Pro frozen comparison behavior.
+        THINKING mode must invoke the same-model MEDIUM-vs-LOW launcher.
+      no_new_workflow: true
+
+  acceptance_criteria:
+    - id: production_default_preserved
+      requirement: >
+        Without generation-thinking-level configured, VertexGenerationStage omits thinkingConfig and
+        preserves the current model-default thinking behavior.
+    - id: explicit_thinking_supported
+      requirement: >
+        LOW, MEDIUM, and HIGH map to the Google Gen AI SDK ThinkingLevel values; invalid configured
+        values fail before provider invocation.
+    - id: ignored_temperature_removed
+      requirement: >
+        VertexGenerationStage no longer sends temperature for standard or compact generation requests.
+    - id: retry_semantics_preserved
+      requirement: >
+        The existing single compact retry remains triggered only by MAX_TOKENS and uses the same
+        configured thinking level as the first request.
+    - id: same_model_paired_fixture
+      requirement: >
+        THINKING comparison runs gemini-3.8-flash for both arms over the same six frozen fixture cases,
+        differing only in MEDIUM versus LOW thinking level.
+    - id: prompt_identity
+      requirement: >
+        Both thinking arms receive identical rendered semantic prompts, image bytes, ordered references,
+        response schema, location, and max output tokens.
+    - id: evidence_complete
+      requirement: >
+        Artifact records per-arm latency, output tokens, compact retry, classification, generated resources,
+        TerraformDraftValidator result, first failure category, model ID, and thinking level.
+    - id: existing_model_mode_preserved
+      requirement: >
+        Existing MODEL comparison still uses gemini-3.8-flash versus gemini-3.1-pro-preview and its
+        previous frozen identity checks.
+    - id: no_live_run
+      requirement: >
+        No workflow is dispatched and no model inference occurs in this PR.
+    - id: no_external_change
+      requirement: >
+        No new workflow, prompt, corpus, dataset, retrieval, Terraform validation, infrastructure,
+        IAM, or production model-routing change is made.
+
+  verification:
+    evidence_sources:
+      - GitHub remote base/head SHA
+      - PR diff
+      - Vertex generation configuration unit tests
+      - Gemini comparison harness tests
+      - existing backend test suite
+      - CI results
+    verifier_outcomes:
+      - PASS
+      - FAIL
+      - INCONCLUSIVE
+    implementer_self_report_is_evidence: false
+
+  stop_on:
+    - unexpected_main_change
+    - scope_drift
+    - same_failure_repeated
+    - failure_class_changed
+    - auto_repair_limit_exceeded
+    - architecture_decision_required
+    - allowed_path_insufficient
+    - acceptance_criteria_change_required
+    - live_cloud_action_required
+
+  completion:
+    merge_requires_user_approval: true
+    live_comparison_requires_user_approval: true
+    production_low_adoption_requires_user_approval: true
+    next_work_package_start_requires_user_approval: true

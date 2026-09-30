@@ -11,11 +11,12 @@ public class TerraformDraftValidator {
     private static final Pattern ONLY_META_BLOCKS = Pattern.compile("(?s)^(\\s*(terraform|provider)\\s*(\\\"[^\\\"]+\\\")?\\s*\\{[^{}]*(?:\\{[^{}]*}[^{}]*)*}\\s*)+$");
     private static final Pattern STRUCTURED_RESOURCE_OR_MODULE = Pattern.compile("(?ms)^\\s*(resource|module)\\s+\"[^\"]+\"(?:\\s+\"[^\"]+\")?\\s*\\{.*?(=|^\\s*[A-Za-z_][A-Za-z0-9_-]*\\s*\\{).*?\\}");
     private static final Pattern SENSITIVE_LITERAL_ASSIGNMENT = Pattern.compile(
-            "(?im)^\\s*(?:[a-z0-9_]*password(?:_wo)?|secret_access_key|access_key(?:_id)?|client_secret|api_key|auth_token|private_key(?:_pem)?)\\s*=\\s*\"([^\"]*)\"");
+            "(?i)(?<![A-Za-z0-9_])(?:[a-z0-9_]*password(?:_wo)?|secret_access_key|access_key(?:_id)?|client_secret|secret(?:_string)?|api_key|(?:[a-z0-9_]*_)?token|private_key(?:_pem)?)\\s*=\\s*\"([^\"]*)\"");
+    private static final Pattern PURE_INTERPOLATION = Pattern.compile("^\\$\\{[^\\r\\n]+}$");
     private static final Pattern AWS_ACCOUNT_SCOPED_ARN = Pattern.compile(
             "arn:(?:aws|aws-us-gov|aws-cn):[A-Za-z0-9-]+:[A-Za-z0-9-]*:\\d{12}:[^\\s\"']+");
     private static final Pattern AWS_ACCOUNT_ID_LITERAL = Pattern.compile(
-            "(?im)^\\s*(?:account_id|aws_account_id)\\s*=\\s*\"\\d{12}\"");
+            "(?i)(?<![A-Za-z0-9_])(?:account_id|aws_account_id)\\s*=\\s*\"\\d{12}\"");
 
     public TerraformDraftValidation validate(String candidate) {
         String sanitized = stripMarkdownFences(candidate);
@@ -70,8 +71,7 @@ public class TerraformDraftValidator {
     private boolean containsHardCodedSensitiveCredential(String candidate) {
         var matcher = SENSITIVE_LITERAL_ASSIGNMENT.matcher(candidate);
         while (matcher.find()) {
-            String value = matcher.group(1);
-            if (!value.contains("${") && !value.contains("%{")) {
+            if (!PURE_INTERPOLATION.matcher(matcher.group(1)).matches()) {
                 return true;
             }
         }

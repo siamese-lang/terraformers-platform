@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case A A5 live-evaluation readiness (A5 NOT RUN)**
+- Current single task: **Fact-reuse latency diagnostic closure; next candidate Work Package = adaptive retrieval live-measurement readiness (AWAITING_APPROVAL)**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -34,6 +34,16 @@ The project success criterion is now explicit: complete three technically defens
 cases with repository-backed technical decisions, not merely a sequence of completed milestones.
 
 Case A — AI/RAG quality, performance and reliability:
+- latest latency side-investigation is **CLOSED** in
+  [Gemini Fact-Reuse Latency Diagnostic Closure](evaluation/gemini-fact-reuse-latency-diagnostic-closure.md);
+  the three successful instrumented attempts in run `36758290144` reproduced a text-only
+  CloudFront candidate generation tail of `109773 ms` with one HTTP exchange, zero network
+  failures, and HTTP 200; the delay accumulated before response headers, so production fact-reuse
+  adoption is **HOLD**, generic retry is not selected, and the diagnostic must not be repeated until
+  lucky;
+- PR #127 adaptive retrieval is merged, but `terraformers-eval-v1` does not contain a >8-resource
+  acceptance case; a separate frozen evaluation-only >8-resource measurement scenario is therefore
+  the next candidate Work Package and remains `AWAITING_APPROVAL`;
 - retain M3 fixed baseline/provenance and M4 failure evidence;
 - do not treat M4 as portfolio-closed;
 - primary problem selected: **retrieval grounding / required-evidence coverage**;
@@ -53,8 +63,13 @@ Case A — AI/RAG quality, performance and reliability:
   context. A4 therefore selects resource-aware acquisition plus bounded deterministic coverage
   selection and rejects global K24 widening, unfiltered retrieval, relationship-first retrieval,
   and pure global priority reranking;
-- the A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`. A5 is **NOT RUN**,
-  no production improvement or holdout pass is proven, and Case A remains **OPEN**.
+- the A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`; subsequent A5
+  canonical N=3 evaluations progressed through the PROJECT_DECISION ordering correction in PR #118,
+  where VPC decision coverage reached `3/3`, VPC resource coverage stayed `4/4 × 3`, grounding
+  gaps fell to `0/12`, and positive validation passed `12/12`, but negative controls were
+  `5/6`; PR #119 then corrected the zero-hit REQUIRED-grounding/classification lifecycle boundary.
+  A fresh canonical N=3 after that correction and the frozen holdout are not recorded as complete,
+  so Case A remains **OPEN**.
 
 Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim and rollback-safe compensation;
@@ -419,10 +434,12 @@ No remaining M1 work.
 
 ## Immediate next work
 
-After the A5 readiness PR merges, the next single task is **A5 same-shape production evaluation** on
-the existing live target: canonical after-state `N=3`, frozen holdout once, artifact review, and
-before/after comparison. Only then make the Case A closure decision. A5 is **NOT RUN** and Case A
-remains **OPEN**.
+The fact-reuse latency side-investigation is closed with production adoption **HOLD**. Case A remains
+**OPEN**, and the frozen holdout is still not recorded as complete. The next candidate Work Package
+is **adaptive retrieval live-measurement readiness (AWAITING_APPROVAL)**: freeze a separate
+evaluation-only scenario that requires more than eight resource types so PR #127's adaptive evidence
+expansion can be measured against the operating problem it was designed to solve. Do not start that
+Work Package automatically.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query
@@ -492,4 +509,6 @@ Evidence](evaluation/case-a-retrieval-grounding-a2-baseline.md). The VPC groundi
 outlier was **NOT reproduced in N=3**. Non-empty VPC resource filters in every run invalidate absent
 filters as an established A2 root cause. At that checkpoint vector ranking was not proven causal and
 A3 was the next candidate. A3 has since completed, A4 was merged at
-`34c9dbecfbecdf4bca2be47b64d771c9e68549ca`, and Case A remains **OPEN** pending A5 evaluation.
+`34c9dbecfbecdf4bca2be47b64d771c9e68549ca`, and later A5 canonical evaluations progressed
+through the PR #118 ordering correction and PR #119 zero-hit REQUIRED-grounding/classification
+correction. The frozen holdout is still not recorded as complete, so Case A remains **OPEN**.

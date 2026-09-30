@@ -731,3 +731,33 @@ failures remain fail-closed in `REQUIRED` mode, while an empty successful result
 After classification, `REQUIRED` plus `ARCHITECTURE_DIAGRAM` plus zero references fails closed;
 `NON_ARCHITECTURE_IMAGE` and `AMBIGUOUS` continue through their existing rejection semantics. A
 fresh canonical evaluation is still required after implementation, and the holdout remains unrun.
+
+
+## Secondary latency investigation closure
+
+The earlier AOSS `130489 ms` observation is no longer only a one-run measurement item. A separate
+FACT_REUSE diagnostic line instrumented two anomalous cases without changing the selected Case A
+retrieval-grounding problem.
+
+The authoritative closure is
+[Gemini Fact-Reuse Latency Diagnostic Closure](../../evaluation/gemini-fact-reuse-latency-diagnostic-closure.md).
+Run `36758290144`, source `b7de917d1c97c591f863f3e473f99c3d670161ef`, was repeated exactly
+three successful instrumented attempts. Attempt 3 reproduced a CloudFront candidate text-only
+generation tail of `109773 ms`. Across all 24 logical requests in the three attempts, each request
+had one observed HTTP exchange, zero network failures, and HTTP 200. The tail interval accumulated
+after request-body completion and before response headers.
+
+This supports a client/provider boundary conclusion, not a provider-internal queue-versus-compute
+claim. It also means removing the second image does not remove tail exposure. Production fact-reuse
+adoption is therefore **HOLD** under its own frozen latency gate. Generic retry and an arbitrary
+timeout are not selected.
+
+This secondary closure does not replace Case A's primary retrieval-grounding objective and does not
+authorize a holdout run, model change, prompt change, retry change, timeout change, or production
+fact-reuse routing change.
+
+PR #127 later removed the hidden eight-resource retrieval ceiling in production code. The canonical
+six-case `terraformers-eval-v1` acceptance contract does not contain a case requiring more than
+eight resource types, so a claim that adaptive expansion solves its intended >8-resource operating
+scenario requires a separate frozen evaluation-only measurement case. That candidate task remains
+`AWAITING_APPROVAL`; it is not started by this closure.

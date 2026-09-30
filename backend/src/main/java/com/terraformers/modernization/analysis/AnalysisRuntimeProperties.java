@@ -23,6 +23,7 @@ public class AnalysisRuntimeProperties {
     private String providerVersion = "5.100.0";
     private Integer expectedVectorDimension;
     private int opensearchTopK = 3;
+    private int opensearchMaxEvidence = 16;
     private String resultBucketName;
     private String resultKeyPrefix = "analysis-results";
     private boolean dispatchEnabled = true;
@@ -151,6 +152,14 @@ public class AnalysisRuntimeProperties {
 
     public void setOpensearchTopK(int opensearchTopK) {
         this.opensearchTopK = opensearchTopK;
+    }
+
+    public int getOpensearchMaxEvidence() {
+        return opensearchMaxEvidence;
+    }
+
+    public void setOpensearchMaxEvidence(int opensearchMaxEvidence) {
+        this.opensearchMaxEvidence = opensearchMaxEvidence;
     }
 
     public String getResultBucketName() {

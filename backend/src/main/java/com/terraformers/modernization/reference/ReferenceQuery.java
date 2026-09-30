@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 /** Corpus-independent retrieval request derived solely from architecture facts. */
 public record ReferenceQuery(String text, List<String> resourceTypes, int limit) {
 
+    public static final int MAX_RESOURCE_TYPES = 16;
     private static final Pattern RESOURCE_TYPE = Pattern.compile("\\baws_[a-z0-9_]+\\b");
 
     public ReferenceQuery {
@@ -18,7 +19,7 @@ public record ReferenceQuery(String text, List<String> resourceTypes, int limit)
                         .map(String::strip)
                         .peek(ReferenceQuery::requireCanonicalResourceType)
                         .distinct()
-                        .limit(8)
+                        .limit(MAX_RESOURCE_TYPES)
                         .toList();
         if (text.isBlank()) {
             throw new IllegalArgumentException("reference query text must not be blank");
@@ -38,7 +39,7 @@ public record ReferenceQuery(String text, List<String> resourceTypes, int limit)
         }
         Matcher matcher = RESOURCE_TYPE.matcher(text);
         java.util.ArrayList<String> resources = new java.util.ArrayList<>();
-        while (matcher.find() && resources.size() < 8) {
+        while (matcher.find() && resources.size() < MAX_RESOURCE_TYPES) {
             String value = matcher.group();
             if (!resources.contains(value)) {
                 resources.add(value);

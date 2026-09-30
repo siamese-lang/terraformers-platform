@@ -2,14 +2,17 @@
 
 ## Status
 
-**A3 LIVE COMPARISON COMPLETE — A4 MERGED — A5 NOT RUN — CASE A OPEN**
+**A5 CANONICAL N=3 COMPLETE — HARD GATES NOT MET — HOLDOUT NOT RUN — CASE A OPEN**
 
 A1 measurement readiness, A2 repeated baseline, and A3 protected live comparison are complete. A3
 run `36600868601` used source `ab1ae4b1db6011b2fe72a7c5a2b3913232d63857`; artifact
 `case-a-a3-retrieval-probe-36600868601` has digest
 `sha256:7052c94eac9f00f4d80514f534d5b701ea2f0985493faea487c473e975d51c74`.
-The A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`; it has not been
-live-evaluated.
+The A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`. After the integration
+contract correction merged at `33769a220f8265270bd3bb842922640c73caedcf`, A5 completed its valid
+canonical after-state `N=3`. A4 materially improved required-resource coverage, but A5 did not meet
+the project-decision consistency and validation non-regression gates. The frozen holdout remains
+unrun.
 
 ## Decision checkpoint
 
@@ -366,13 +369,14 @@ grounding improvement only when explicitly measured and frozen before implementa
 3. **A3 — retrieval alternative comparison / decision:** fixed retrieval probe, credible
    alternatives, explicit selection.
 4. **A4 — minimal selected production change:** only after user approval.
-5. **A5 — same-shape after evaluation:** canonical `N=3`, holdout evaluation, and
-   latency/token/quality comparison.
+5. **A5 — same-shape after evaluation:** canonical `N=3`, then holdout evaluation only after the
+   canonical hard gates pass, with latency/token/quality comparison.
 6. **A6 — Case A integrated closure.**
 
 No stage automatically authorizes the next. A1, A2, and A3 are complete; A4 was separately approved
-and merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`. A5 is **NOT RUN** and requires
-separate execution after this readiness change is reviewed and merged.
+and merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`. The valid A5 canonical `N=3` is complete,
+but its hard gates were not met. The frozen holdout was not run and remains gated on a corrective
+candidate passing a fresh canonical `N=3`.
 
 The existing single target runtime must be reused. Later live work must verify main SHA,
 billing/quota/model access, and absence of a duplicate runtime; activate the protected target; run
@@ -418,15 +422,252 @@ global priority reranking. The selected candidate gives every distinct query res
 singleton-filtered, final-limit-bounded search opportunity while reusing the single query embedding,
 then deduplicates by document ID and applies bounded deterministic resource-coverage selection.
 Global results remain the fill baseline and remain unchanged when already adequate. The A4 candidate
-was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`; A5 is **NOT RUN**, improvement is not
-proven, and Case A remains **OPEN**.
+was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`. This was the decision at that time; the A5
+evidence below now establishes which part improved and which acceptance conditions remain open.
+
+## A5 canonical after-state and corrective decision checkpoint
+
+### Valid-run boundary and frozen identity
+
+An initial attempted canonical run, workflow `36654267799` from source
+`21167c57b0b51643890d80ce2364318655c050c1`, is **not** a valid A5 after-state sample. Structured
+fact resource types were lost before reaching the A4 resource-aware path:
+
+```text
+facts.resourceTypes
+→ serialized query text
+→ aws_* regex reconstruction
+→ resourceTypeFilters=[]
+→ A4 targeted resource searches bypassed
+```
+
+PR #115 corrected that integration contract and merged at
+`33769a220f8265270bd3bb842922640c73caedcf`. The valid A5 canonical after-state `N=3` consists of
+workflow runs `36661209926`, `36661894427`, and `36661979115`, all from that source commit. All
+three used `terraformers-eval-v1`, `terraformers-reference-v3`, provider version `5.100.0`, Vertex
+analysis and Vertex embeddings, retrieval mode `REQUIRED`, `topK=8`, `gemini-3.8-flash`,
+`gemini-embedding-001`, fact-extraction thinking `LOW`, fact-extraction max output tokens `800`, and
+generation max output tokens `8192`. They retained canonical configuration fingerprint
+`sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`.
+
+### A5 evidence and acceptance result
+
+| Run | `tfref-v2-sg-relations` | Required VPC resource coverage | Terraform validation |
+|---|---|---|---|
+| `36661209926` | missing, decision coverage `0/1` | `4/4` | PASS |
+| `36661894427` | present at rank 8, decision coverage `1/1` | `4/4` | FAIL |
+| `36661979115` | present at rank 6, decision coverage `1/1` | `4/4` | PASS |
+
+A2 VPC required-resource coverage was `3/4`, `2/4`, and `3/4`; A5 coverage was `4/4`, `4/4`, and
+`4/4`. A4 therefore materially improved and stabilized required resource-type coverage. Its
+resource-aware candidate acquisition is live and functioning after PR #115: it receives structured
+Terraform AWS resource types, performs one global bounded search and one singleton-filtered bounded
+search per distinct query resource type, reuses one embedding, and keeps final K bounded at 8. A4
+must not be characterized as wholly failed or bypassed.
+
+A5 nevertheless failed final acceptance. The hard gate requires `tfref-v2-sg-relations` and
+project-decision coverage `1/1` in every comparable successful VPC retrieval; A5 achieved that in
+only `2/3` runs. It also requires previously successful deterministic Terraform validation
+regression `= 0`, while this `N=3` had one positive regression. Run `36661894427` failed validation
+because generation emitted placeholder/example output, including a placeholder ACM certificate
+ARN. This is a generation/validation stochastic observation: the evidence neither attributes it to
+the retrieval change nor authorizes generation changes from one observation. The gates are not
+weakened. The frozen holdout has **not** been run and must remain unrun until a corrective candidate
+passes a fresh canonical `N=3`.
+
+### Remaining selector defect
+
+The remaining retrieval problem is the final evidence-selection objective, not an OpenSearch
+failure or a missing corpus document. The current selector treats requested resource-type coverage
+as its main preservation objective. Once a requested type such as `aws_security_group` is
+represented by a provider document, that resource is considered covered. It does not separately
+model the evidence roles generation may require:
+
+```text
+provider/schema evidence
+→ how the Terraform resource is expressed
+
+project-decision evidence
+→ which repository-owned architectural/security constraint should govern it
+```
+
+Consequently, a provider `aws_security_group` document can satisfy resource coverage while the
+applicable `PROJECT_DECISION` evidence is omitted from final K8. This explains why
+`tfref-v2-sg-relations` was retained in only `2/3` A5 VPC runs even though VPC resource coverage was
+`4/4` in `3/3`. Simply increasing K is not the selected correction.
+
+### Selected corrective candidate: evidence-role-aware bounded retrieval
+
+The selected corrective candidate is a **general evidence-role-aware bounded retrieval design**. It
+must be validated and does not yet prove holdout generalization. Production retrieval may use only
+normal runtime facts and corpus metadata:
+
+- from `ArchitectureRetrievalFacts` / `ReferenceQuery`: summary, components, relationships, and
+  canonical Terraform `resourceTypes`;
+- from retrieved corpus documents: semantic score, `authority`, `resourceTypes`, `priority`,
+  `riskTags`, and document identity for deduplication only, never expected-ID matching.
+
+Production code must not receive or inspect evaluation case IDs, `requiredProjectDecisionIds`,
+`requiredReferenceIds`, holdout IDs, `arch-vpc-three-tier`, or `tfref-v2-sg-relations` as a special
+constant. Evaluation expectations remain evaluation-only.
+
+#### Candidate acquisition contract
+
+Retain the current single embedding, the bounded global semantic search, and one bounded singleton
+resource search per distinct query resource type. Add one bounded **project-decision candidate
+lane**, using the same embedding and filtered by:
+
+```text
+authority = PROJECT_DECISION
+resourceTypes intersects query.resourceTypes
+```
+
+The implementation may minimally extend the existing OpenSearch metadata-filter mechanism for
+authority filtering. This lane is necessary because selection cannot preserve a relevant decision
+that corpus growth excludes from both the global and singleton-resource top-K candidate sets. The
+lane's resource intersection is **candidate acquisition only**; overlap alone is not sufficient
+evidence that a decision is applicable or eligible for forced promotion. Each candidate search
+remains bounded by the existing final K, and final selected context remains bounded by K8. This does
+not authorize a second embedding call, an LLM reranker, a judge call, a new retrieval service,
+global K24, or a larger final generation context.
+
+#### Evidence-role-aware selection contract
+
+The final selector must reason about three separate dimensions:
+
+```text
+1. required/requested resource coverage
+
+2. provider evidence coverage
+   authority in:
+   - PROVIDER_SCHEMA
+   - PROVIDER_DOCUMENTATION
+
+3. applicable project-decision evidence
+   authority:
+   - PROJECT_DECISION
+```
+
+The correction must preserve required resource coverage while admitting applicable
+project-decision evidence where capacity permits. Provider evidence and project-decision evidence
+serve different roles; this design does not make every `PROJECT_DECISION` document more important
+than provider evidence. Project-decision coverage is modeled as distinct documents / distinct
+decision evidence, not as a boolean coverage state per resource type. Two different applicable
+decisions may both be valuable even when both reference the same requested resource. Resource
+overlap and new-resource coverage are relevance signals, but they are not a stopping condition that
+declares all decision evidence for a resource satisfied.
+
+For each `PROJECT_DECISION` candidate, compare metadata with the runtime query resource set using
+general signals equivalent to:
+
+```text
+matchedResources = candidate.resourceTypes ∩ query.resourceTypes
+unsupportedResources = candidate.resourceTypes - query.resourceTypes
+```
+
+A `PROJECT_DECISION` candidate may be force-promoted only when it intersects the query resource set
+and at least one of these generic eligibility conditions holds:
+
+1. its `resourceTypes` are a subset of `query.resourceTypes`, so it has no unsupported resource
+   dependency; or
+2. the same document was independently retrieved through the normal global or per-resource
+   semantic lane.
+
+Within that eligible set, consider distinct decision documents in deterministic relevance order:
+(1) greater overlap with the runtime query resource set; (2) fewer unsupported candidate resource
+types; (3) higher semantic similarity; (4) higher corpus priority; and (5) stable discovery order as
+the final tie-break. New-resource coverage may contribute as a relevance signal, but does not merge
+distinct decisions into resource-level boolean coverage. The unsupported-resource signal and
+eligibility guard prevent a broad, partially related project pattern from being force-promoted
+solely because one resource overlaps or its score or priority is high. Neither case IDs, document
+IDs, nor expected IDs may participate in eligibility or ordering.
+
+#### Safe replacement and context-budget saturation
+
+After protecting requested resource coverage and provider anchors, distinct eligible decision
+candidates are considered in the deterministic relevance order above and admitted only while safe K
+capacity exists. A project-decision candidate may enter final K only if replacing an existing
+selected document does not reduce requested resource coverage or provider evidence coverage already
+secured for requested resources. Prefer replacing redundant evidence before unique evidence. The
+only provider anchor for a requested resource must not be removed merely to add a project decision,
+and no decision may be inserted if required resource coverage would decrease. Already selected
+distinct decision evidence must not be lost merely to replace it with another decision having
+equivalent resource overlap. The result must never exceed configured final K.
+
+Some future architecture may require more independent provider and decision evidence than final K
+can hold. The implementation must therefore distinguish conceptually between:
+
+```text
+candidate not found
+candidate found but final context budget cannot safely admit it
+```
+
+This is a residual condition to expose through existing or new bounded selection diagnostics if
+implementation requires it, not a reason to increase K now. Any future K, token-budget, or
+compression decision requires separate evidence.
+
+### Explicitly rejected or forbidden corrective paths
+
+The prior A3 conclusions remain in force. This corrective decision does not authorize VPC-specific
+logic; `tfref-v2-sg-relations` hardcoding; holdout-specific logic; passing evaluation expectations
+into production retrieval; global K24; increasing final K8; corpus expansion to force a pass; global
+unfiltered retrieval; relationship-only retrieval replacing the current query; pure global priority
+reranking; “PROJECT_DECISION always wins” sorting; LLM reranking; judge/model expansion; LangChain;
+LangGraph; prompt tuning to hide the selector defect; generation tuning for the one placeholder
+observation; or new GCP/runtime topology. Rejected alternatives require new evidence before they can
+be reopened.
+
+### Later implementation validation contract
+
+This docs-only decision freezes, but does not implement, later unit-test coverage. Tests must use
+synthetic resource names such as `aws_alpha` and `aws_beta`, not Case A fixture names, and cover:
+
+1. empty resource types preserve the existing single global semantic-search behavior;
+2. one embedding is still reused for the resource-aware path;
+3. project-decision acquisition is generic and authority-filtered;
+4. an applicable decision can be admitted when global results already cover all resource types;
+5. redundant provider evidence may be replaced by applicable decision evidence;
+6. the only provider anchor for a requested resource is protected;
+7. required/requested resource coverage never decreases during decision promotion;
+8. a project decision sharing only one query resource while depending on several unsupported
+   resources is not force-promoted solely because of that overlap;
+9. that same candidate may become eligible when independently retrieved by a normal global or
+   per-resource semantic lane;
+10. an unrelated or broad project decision cannot win solely because its priority is high;
+11. resource-coherent decisions outrank less coherent alternatives under the frozen comparator;
+12. one decision covering several requested resources is deduplicated and credited once;
+13. two distinct applicable decisions for the same requested resource may both be retained when
+   safe final K capacity exists;
+14. multiple applicable decisions may be retained when final K capacity permits;
+15. no decision candidate preserves prior A4 behavior;
+16. final results never exceed K; and
+17. no case-ID, document-ID, or expected-ID rule exists.
+
+No live Vertex test and no new verifier or workflow is authorized by this contract.
 
 ## Immediate next task
 
-After the A5 readiness PR is reviewed and merged, run A5 on the existing live target: canonical
-after-state `N=3`, frozen holdout once, artifact review, and same-shape before/after comparison. Only
-then make the Case A closure decision. Do not start A5 before the readiness merge and do not start
-Case C.
+After this docs-only decision PR is reviewed and merged, the sequence is:
+
+1. implement the bounded evidence-role-aware correction;
+2. review and merge that implementation separately;
+3. run a fresh canonical `terraformers-eval-v1` `N=3`;
+4. evaluate all existing hard regression gates;
+5. only if canonical `N=3` passes, run frozen `terraformers-eval-holdout-v1` once; and
+6. then perform the Case A closure decision.
+
+For every comparable successful VPC retrieval in the corrected `N=3`, the unchanged acceptance
+contract requires `tfref-v2-sg-relations` present in `3/3`, project-decision coverage `1/1` in every
+run, and `aws_vpc`, `aws_lb`, `aws_db_instance`, and `aws_security_group` present with resource-type
+coverage `4/4` in every run. Across the canonical `N=3`, negative-control classification regression,
+previously successful deterministic Terraform validation regression, and new systematic
+first-divergence class must each equal zero.
+
+Do not run the frozen holdout before those canonical gates pass. Run `36661894427` does not weaken
+them. If placeholder behavior reproduces after the selector correction, treat it as a separate
+generation-reliability investigation rather than folding it into this retrieval change. Only after
+the canonical gates pass may the frozen holdout run once. Do not proceed automatically to this
+implementation or to Case C.
 
 ## A1 measurement-readiness checkpoint
 
@@ -435,4 +676,5 @@ A1 is **COMPLETE** as documented in [Case A Retrieval-Grounding Measurement Read
 At A1 closure, no production retrieval change was authorized or performed and no live GCP
 evaluation had run; A2 was the next candidate. Those were historical A1 boundaries. A2 and A3 are
 now complete, the A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`, and
-Case A remains open pending A5 evaluation.
+the valid A5 canonical `N=3` did not meet its hard gates. Case A remains open pending a separately
+reviewed corrective implementation and validation.

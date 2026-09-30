@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       evaluation_scope:
-        description: Run M3, one M4-2 reproduction, one Case A baseline/holdout, or the A3 retrieval probe.
+        description: Run M3, one M4-2 reproduction, one Case A baseline/holdout, the A3 probe, or the adaptive retrieval probe.
         required: true
         type: choice
         default: m3-full-baseline
@@ -19,6 +19,7 @@ on:
           - case-a-full-baseline
           - case-a-holdout
           - case-a-a3-retrieval-probe
+          - adaptive-retrieval-probe
       confirmation:
         description: Use the scope-specific explicit confirmation token.
         required: true
@@ -109,6 +110,12 @@ jobs:
                 exit 1
               }
               ;;
+            adaptive-retrieval-probe)
+              [[ "$CONFIRMATION" == RUN_ADAPTIVE_RETRIEVAL_PROBE ]] || {
+                echo 'Adaptive retrieval probe requires confirmation RUN_ADAPTIVE_RETRIEVAL_PROBE.' >&2
+                exit 1
+              }
+              ;;
             *)
               echo "Unsupported evaluation scope: $EVALUATION_SCOPE" >&2
               exit 1
@@ -142,6 +149,7 @@ jobs:
           cp -a evaluation/terraformers-eval-v1 "$bundle_root/evaluation/"
           cp -a evaluation/terraformers-eval-holdout-v1 "$bundle_root/evaluation/"
           cp evaluation/case-a-a3-fixed-facts-v1.json "$bundle_root/evaluation/"
+          cp -a evaluation/adaptive-retrieval-v1 "$bundle_root/evaluation/"
 
           (
             cd "$bundle_root"
@@ -610,6 +618,77 @@ jobs:
         with:
           name: case-a-a3-retrieval-probe-${{ github.run_id }}
           path: ${{ runner.temp }}/case-a-a3-retrieval-probe.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Run adaptive retrieval live measurement probe
+        if: inputs.evaluation_scope == 'adaptive-retrieval-probe'
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- env \
+            ADAPTIVE_RETRIEVAL_FIXTURE=/tmp/workspace/evaluation/adaptive-retrieval-v1/fixed-facts.json \
+            ADAPTIVE_RETRIEVAL_OUTPUT=/tmp/adaptive-retrieval-probe.json \
+            SOURCE_COMMIT="$GITHUB_SHA" \
+            GOOGLE_CLOUD_PROJECT=terraformers-platform GOOGLE_CLOUD_LOCATION=global \
+            VERTEX_EMBEDDING_MODEL_ID=gemini-embedding-001 \
+            OPENSEARCH_ENDPOINT="http://${OPENSEARCH_SERVICE}:9200" INDEX_NAME=terraformers-reference-v3 \
+            VECTOR_FIELD_NAME=embedding CONTENT_FIELD_NAME=content CORPUS_VERSION=terraformers-reference-v3 \
+            PROVIDER_VERSION=5.100.0 EXPECTED_VECTOR_DIMENSION=1024 \
+            java -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+            com.terraformers.modernization.evaluation.adaptive.AdaptiveRetrievalProbeLauncher
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- \
+            cat /tmp/adaptive-retrieval-probe.json > "${RUNNER_TEMP}/adaptive-retrieval-probe.json"
+
+      - name: Verify adaptive retrieval probe identity and bounded coverage
+        if: inputs.evaluation_scope == 'adaptive-retrieval-probe'
+        run: |
+          set -euo pipefail
+          result="${RUNNER_TEMP}/adaptive-retrieval-probe.json"
+          jq -e --arg sha "$GITHUB_SHA" '
+            .schemaVersion == "adaptive-retrieval-live-probe-v1"
+            and .sourceCommit == $sha
+            and .scenarioId == "large-vpc-eks-rds-s3"
+            and .corpusVersion == "terraformers-reference-v3"
+            and .providerVersion == "5.100.0"
+            and .embeddingModel == "gemini-embedding-001"
+            and .embeddingDimension == 1024
+            and .baseTopK == 8
+            and .controlMaxEvidence == 8
+            and .adaptiveMaxEvidence == 16
+            and .minimumCorpusDocumentCover == 10
+            and .queryResourceTypes == [
+              "aws_vpc",
+              "aws_subnet",
+              "aws_internet_gateway",
+              "aws_nat_gateway",
+              "aws_route_table",
+              "aws_security_group",
+              "aws_lb",
+              "aws_lb_listener",
+              "aws_lb_target_group",
+              "aws_eks_cluster",
+              "aws_db_instance",
+              "aws_s3_bucket"
+            ]
+            and .embeddingDelegateCalls == 1
+            and .control.coverageTotal == 12
+            and .control.coverageMatched < 12
+            and .control.evidenceCount <= 8
+            and .adaptive.coverageTotal == 12
+            and .adaptive.coverageMatched == 12
+            and .adaptive.evidenceCount > 8
+            and .adaptive.evidenceCount <= 16
+            and (.adaptive.missingResourceTypes | length) == 0
+            and (.adaptive.selectedDocumentIds | length) == .adaptive.evidenceCount
+            and (.adaptive.selectedDocumentIds | unique | length) == .adaptive.evidenceCount
+          ' "$result" >/dev/null
+
+      - name: Upload adaptive retrieval probe artifact
+        if: always() && inputs.evaluation_scope == 'adaptive-retrieval-probe'
+        uses: actions/upload-artifact@v4
+        with:
+          name: adaptive-retrieval-probe-${{ github.run_id }}
+          path: ${{ runner.temp }}/adaptive-retrieval-probe.json
           if-no-files-found: warn
           retention-days: 90
 

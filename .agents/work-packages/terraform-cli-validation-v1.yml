@@ -1,7 +1,11 @@
 work_package:
   id: terraform-cli-validation-v1
   status: AWAITING_EXECUTION
-  approved_base_sha: "933855989295ac875aab413957883b6885c3d51d"
+  approved_base_sha: "BIND_AT_ACTIVATION"
+  activation:
+    bind_remote_main_once: true
+    persist_as: execution_base_sha
+    stop_if_main_changes_after_binding: true
 
   goal: >
     Validate generated Terraform with the real Terraform CLI before result persistence,

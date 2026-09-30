@@ -426,6 +426,30 @@ evidence below now establishes which part improved and which acceptance conditio
 
 ## A5 canonical after-state and corrective decision checkpoint
 
+### Historical A5 run continuity
+
+The pre-PR #115 attempted run `36654267799`, from source
+`21167c57b0b51643890d80ce2364318655c050c1`, is not a valid A5 after-state. Structured resource
+types were lost along the integration path and `resourceTypeFilters` became empty, so the
+resource-aware retrieval path was bypassed. PR #115 corrected that integration contract and merged
+at source `33769a220f8265270bd3bb842922640c73caedcf`.
+
+The first valid A5 canonical `N=3` after that correction consisted of runs `36661209926`,
+`36661894427`, and `36661979115`:
+
+| Canonical result | First valid A5 `N=3` result |
+|---|---|
+| VPC required-resource coverage | `4/4` in `3/3` |
+| VPC `tfref-v2-sg-relations` | `2/3` |
+| Grounding gaps | `1/12` |
+| Positive Terraform validation | PASS `11/12` |
+| Negative controls | correct `6/6` |
+
+Run `36661894427` failed validation because the generated Terraform contained placeholder/example
+output, including a placeholder ACM certificate ARN. That observation was not attributed to
+retrieval. The later PR #117 fresh canonical `N=3` below did not reproduce this validation
+regression and passed positive validation `12/12`.
+
 ### Fresh canonical boundary and frozen identity
 
 The evidence-role-aware selector implementation was evaluated with a fresh canonical

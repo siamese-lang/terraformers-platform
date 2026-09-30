@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       evaluation_scope:
-        description: Run M3, one M4-2 reproduction, one Case A baseline, or the A3 retrieval probe.
+        description: Run M3, one M4-2 reproduction, one Case A baseline/holdout, or the A3 retrieval probe.
         required: true
         type: choice
         default: m3-full-baseline
@@ -17,6 +17,7 @@ on:
           - m4-arch-vpc-three-tier
           - m4-arch-private-aoss
           - case-a-full-baseline
+          - case-a-holdout
           - case-a-a3-retrieval-probe
       confirmation:
         description: Use the scope-specific explicit confirmation token.
@@ -96,6 +97,12 @@ jobs:
                 exit 1
               }
               ;;
+            case-a-holdout)
+              [[ "$CONFIRMATION" == RUN_CASE_A_HOLDOUT ]] || {
+                echo 'Case A holdout requires confirmation RUN_CASE_A_HOLDOUT.' >&2
+                exit 1
+              }
+              ;;
             case-a-a3-retrieval-probe)
               [[ "$CONFIRMATION" == RUN_CASE_A_A3_PROBE ]] || {
                 echo 'Case A A3 probe requires confirmation RUN_CASE_A_A3_PROBE.' >&2
@@ -133,6 +140,7 @@ jobs:
           cp -a backend/target/classes/. "$bundle_root/classes/"
           cp -a backend/target/dependency/. "$bundle_root/dependency/"
           cp -a evaluation/terraformers-eval-v1 "$bundle_root/evaluation/"
+          cp -a evaluation/terraformers-eval-holdout-v1 "$bundle_root/evaluation/"
           cp evaluation/case-a-a3-fixed-facts-v1.json "$bundle_root/evaluation/"
 
           (
@@ -482,6 +490,85 @@ jobs:
         with:
           name: case-a-grounding-report-${{ github.run_id }}
           path: ${{ runner.temp }}/case-a-grounding-report.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Run one Case A frozen holdout and deterministic scoring
+        if: inputs.evaluation_scope == 'case-a-holdout'
+        run: |
+          set -euo pipefail
+          run_id="case-a-holdout-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- env \
+            EVALUATION_DATASET=/tmp/workspace/evaluation/terraformers-eval-holdout-v1/dataset.json \
+            EVALUATION_OUTPUT=/tmp/case-a-holdout.json EVALUATION_RUN_ID="$run_id" EVALUATION_MODE=full \
+            GOOGLE_CLOUD_PROJECT=terraformers-platform GOOGLE_CLOUD_LOCATION=global \
+            ANALYSIS_PROVIDER=vertex EMBEDDING_PROVIDER=vertex RETRIEVAL_MODE=REQUIRED \
+            VERTEX_GENERATION_MODEL_ID=gemini-3.8-flash VERTEX_EMBEDDING_MODEL_ID=gemini-embedding-001 \
+            OPENSEARCH_ENDPOINT="http://${OPENSEARCH_SERVICE}:9200" INDEX_NAME=terraformers-reference-v3 \
+            VECTOR_FIELD_NAME=embedding CONTENT_FIELD_NAME=content CORPUS_VERSION=terraformers-reference-v3 \
+            PROVIDER_VERSION=5.100.0 EXPECTED_VECTOR_DIMENSION=1024 OPENSEARCH_TOP_K=8 \
+            VERTEX_MAX_OUTPUT_TOKENS=8192 java -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+            com.terraformers.modernization.evaluation.LiveEvaluationLauncher
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+            -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+            com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+            --mode=report --result=/tmp/case-a-holdout.json \
+            --dataset=/tmp/workspace/evaluation/terraformers-eval-holdout-v1/dataset.json \
+            --output=/tmp/case-a-holdout-grounding-report.json
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat /tmp/case-a-holdout.json > "${RUNNER_TEMP}/case-a-holdout.json"
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat /tmp/case-a-holdout-grounding-report.json > "${RUNNER_TEMP}/case-a-holdout-grounding-report.json"
+
+      - name: Verify Case A holdout identity and report
+        if: inputs.evaluation_scope == 'case-a-holdout'
+        run: |
+          set -euo pipefail
+          raw="${RUNNER_TEMP}/case-a-holdout.json"
+          report="${RUNNER_TEMP}/case-a-holdout-grounding-report.json"
+          jq -e '
+            . as $root
+            | .datasetVersion == "terraformers-eval-holdout-v1"
+            and (.traces | length == 4)
+            and ([.traces[].caseId] == [
+              "holdout-eks-irsa",
+              "holdout-workload-rds-sg",
+              "holdout-ambiguous-obscured-flow",
+              "holdout-non-architecture-status-board"
+            ])
+            and .configuration.corpusVersion == "terraformers-reference-v3"
+            and .configuration.providerVersion == "5.100.0"
+            and .configuration.analysisProvider == "vertex"
+            and .configuration.embeddingProvider == "vertex"
+            and .configuration.retrievalMode == "REQUIRED"
+            and .configuration.topK == 8
+            and .configuration.generationModelId == "gemini-3.8-flash"
+            and .configuration.embeddingModelId == "gemini-embedding-001"
+            and .configuration.factExtractionThinkingLevel == "LOW"
+            and .configuration.factExtractionMaxOutputTokens == 800
+            and .configuration.generationMaxOutputTokens == 8192
+            and (.configuration.configurationFingerprint | startswith("sha256:"))
+            and all(.traces[]; .configuration == $root.configuration)
+          ' "$raw" >/dev/null
+          jq -e --arg run_id "$(jq -r .runId "$raw")" '
+            .reportSchemaVersion == "case-a-retrieval-grounding-report-v1"
+            and .sourceRunId == $run_id and .datasetVersion == "terraformers-eval-holdout-v1"
+            and .caseCount == 4 and (.cases | length == 4)
+          ' "$report" >/dev/null
+
+      - name: Upload Case A holdout raw artifact
+        if: always() && inputs.evaluation_scope == 'case-a-holdout'
+        uses: actions/upload-artifact@v4
+        with:
+          name: case-a-holdout-${{ github.run_id }}
+          path: ${{ runner.temp }}/case-a-holdout.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Upload Case A holdout grounding report artifact
+        if: always() && inputs.evaluation_scope == 'case-a-holdout'
+        uses: actions/upload-artifact@v4
+        with:
+          name: case-a-holdout-grounding-report-${{ github.run_id }}
+          path: ${{ runner.temp }}/case-a-holdout-grounding-report.json
           if-no-files-found: warn
           retention-days: 90
 

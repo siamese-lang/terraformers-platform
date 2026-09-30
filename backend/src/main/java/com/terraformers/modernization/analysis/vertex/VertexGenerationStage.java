@@ -6,6 +6,7 @@ import com.google.genai.types.FinishReason;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
+import com.google.genai.types.ThinkingConfig;
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisGenerationStage;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
@@ -51,18 +52,23 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
         }
     }
 
+    GenerateContentConfig generationConfig() {
+        var builder = GenerateContentConfig.builder()
+                .maxOutputTokens(properties.requireMaxOutputTokens())
+                .responseMimeType("application/json")
+                .responseJsonSchema(promptBuilder.responseJsonSchema());
+        properties.resolvedGenerationThinkingLevel().ifPresent(level ->
+                builder.thinkingConfig(ThinkingConfig.builder().thinkingLevel(level)));
+        return builder.build();
+    }
+
     private AnalysisGenerationResult invoke(
             ObjectContent source,
             List<ReferenceDocument> references,
             boolean compact
     ) {
         String modelId = properties.requireGenerationModelId();
-        GenerateContentConfig config = GenerateContentConfig.builder()
-                .temperature(compact ? 0.1f : 0.2f)
-                .maxOutputTokens(properties.requireMaxOutputTokens())
-                .responseMimeType("application/json")
-                .responseJsonSchema(promptBuilder.responseJsonSchema())
-                .build();
+        GenerateContentConfig config = generationConfig();
 
         Content content = Content.fromParts(
                 Part.fromBytes(source.bytes(), source.metadata().contentType()),

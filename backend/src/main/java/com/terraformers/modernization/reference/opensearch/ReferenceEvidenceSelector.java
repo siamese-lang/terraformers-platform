@@ -104,8 +104,9 @@ final class ReferenceEvidenceSelector {
 
     private Comparator<Candidate> decisionComparator(Set<String> requested) {
         return Comparator
-                .<Candidate>comparingInt(candidate -> coverage(candidate.document(), requested)).reversed()
-                .thenComparingInt(candidate -> unsupported(candidate.document(), requested))
+                .<Candidate>comparingInt(candidate -> unsupported(candidate.document(), requested))
+                .thenComparing(Comparator.comparingInt(
+                        (Candidate candidate) -> coverage(candidate.document(), requested)).reversed())
                 .thenComparing(Comparator.comparingDouble(
                         (Candidate candidate) -> candidate.document().score()).reversed())
                 .thenComparing(Comparator.comparingInt(
@@ -169,11 +170,13 @@ final class ReferenceEvidenceSelector {
 
     private boolean structurallyBetter(
             ReferenceDocument replacement, ReferenceDocument existing, Set<String> requested) {
+        int replacementUnsupported = unsupported(replacement, requested);
+        int existingUnsupported = unsupported(existing, requested);
         int replacementMatches = coverage(replacement, requested);
         int existingMatches = coverage(existing, requested);
-        return replacementMatches > existingMatches
-                || (replacementMatches == existingMatches
-                        && unsupported(replacement, requested) < unsupported(existing, requested));
+        return replacementUnsupported < existingUnsupported
+                || (replacementUnsupported == existingUnsupported
+                        && replacementMatches > existingMatches);
     }
 
     private boolean preservesCoverage(

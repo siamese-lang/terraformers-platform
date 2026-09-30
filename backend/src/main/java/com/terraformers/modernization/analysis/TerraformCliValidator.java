@@ -181,16 +181,27 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
                 Process process = builder.start();
                 boolean completed = process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
                 if (!completed) {
-                    process.destroy();
-                    if (!process.waitFor(1, TimeUnit.SECONDS)) {
-                        process.destroyForcibly();
-                        process.waitFor(1, TimeUnit.SECONDS);
-                    }
+                    terminate(process);
                     return new CommandResult(-1, true, readBounded(outputFile));
                 }
                 return new CommandResult(process.exitValue(), false, readBounded(outputFile));
             } finally {
                 Files.deleteIfExists(outputFile);
+            }
+        }
+
+        private void terminate(Process process) throws InterruptedException {
+            process.descendants().forEach(handle -> {
+                handle.destroy();
+                if (handle.isAlive()) {
+                    handle.destroyForcibly();
+                }
+            });
+            process.destroy();
+            if (!process.waitFor(1, TimeUnit.SECONDS)) {
+                process.descendants().forEach(ProcessHandle::destroyForcibly);
+                process.destroyForcibly();
+                process.waitFor(1, TimeUnit.SECONDS);
             }
         }
 

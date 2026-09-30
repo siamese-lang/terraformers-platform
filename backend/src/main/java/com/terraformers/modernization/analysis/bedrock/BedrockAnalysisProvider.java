@@ -10,6 +10,7 @@ import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
+import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
 import com.terraformers.modernization.reference.ArchitectureFactsExtractor;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.BedrockArchitectureFactsExtractor;
@@ -123,6 +124,8 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
 
         List<ReferenceDocument> references = retrieveReferences(source);
         AnalysisGenerationResult generated = generationStage.generate(context, source, references);
+        RequiredGroundingPolicy.requireForArchitecture(
+                properties.getRetrievalMode(), generated, references);
 
         AnalysisResult result = new AnalysisResult(
                 generated.provider(),

@@ -11,6 +11,9 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.terraformers.modernization.analysis.AnalysisMode;
+import com.terraformers.modernization.analysis.AnalysisGenerationResult;
+import com.terraformers.modernization.analysis.AnalysisInputClassification;
+import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisObservability;
 import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
 import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
@@ -19,9 +22,11 @@ import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.reference.BedrockArchitectureFactsExtractor;
+import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceRetriever;
 import com.terraformers.modernization.reference.RetrievalQueryTextBuilder;
+import com.terraformers.modernization.reference.RetrievalMode;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
 import com.terraformers.modernization.storage.ObjectReader;
@@ -182,6 +187,52 @@ class BedrockAnalysisProviderTest {
                         failure -> assertThat(failure.reason()).isEqualTo(AnalysisProviderFailureReason.INPUT_REJECTED))
                 .hasCauseInstanceOf(ArchitectureInputRejectedException.class);
         verify(client, times(2)).invokeModel(any(InvokeModelRequest.class));
+    }
+
+    @Test
+    void requiredArchitectureGenerationFailsClosedWhenRetrievalIsEmpty() {
+        BedrockGenerationStage generationStage = mock(BedrockGenerationStage.class);
+        when(generationStage.generate(any(), any(), any())).thenReturn(new AnalysisGenerationResult(
+                "bedrock:test", AnalysisInputClassification.ARCHITECTURE_DIAGRAM, 0.95,
+                "resource \"aws_vpc\" \"main\" {}", "VPC", List.of("VPC"), List.of(), List.of(),
+                "end_turn", 10, false));
+
+        assertThatThrownBy(() -> requiredProvider(query -> List.of(), generationStage).analyze(context()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("required grounding");
+    }
+
+    @Test
+    void requiredEmptyRetrievalPreservesInputRejection() {
+        for (AnalysisInputClassification classification : List.of(
+                AnalysisInputClassification.NON_ARCHITECTURE_IMAGE,
+                AnalysisInputClassification.AMBIGUOUS)) {
+            BedrockGenerationStage generationStage = mock(BedrockGenerationStage.class);
+            when(generationStage.generate(any(), any(), any())).thenThrow(
+                    new AnalysisInputRejectedException(classification, 0.9, false, null));
+
+            assertThatThrownBy(() -> requiredProvider(query -> List.of(), generationStage).analyze(context()))
+                    .isInstanceOfSatisfying(AnalysisProviderFailureException.class,
+                            failure -> assertThat(failure.reason())
+                                    .isEqualTo(AnalysisProviderFailureReason.INPUT_REJECTED))
+                    .hasCauseInstanceOf(AnalysisInputRejectedException.class);
+        }
+    }
+
+    private BedrockAnalysisProvider requiredProvider(
+            ReferenceRetriever retriever,
+            BedrockGenerationStage generationStage
+    ) {
+        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        properties.setRetrievalMode(RetrievalMode.REQUIRED);
+        BedrockRuntimeProperties bedrockProperties = new BedrockRuntimeProperties();
+        bedrockProperties.setModelId("configured-model-id");
+        BedrockArchitectureFactsExtractor factsExtractor = mock(BedrockArchitectureFactsExtractor.class);
+        when(factsExtractor.extract(any())).thenReturn(new ArchitectureRetrievalFacts(
+                "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
+        return new BedrockAnalysisProvider(
+                objectReader(), retriever, properties, bedrockProperties, factsExtractor,
+                new RetrievalQueryTextBuilder(), observability(), generationStage);
     }
 
     private BedrockAnalysisProvider provider(BedrockRuntimeClient client) {

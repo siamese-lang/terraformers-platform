@@ -154,6 +154,57 @@ class EvaluationRunnerTest {
     }
 
     @Test
+    void successfulEmptyRetrievalAllowsNegativeControlsToReachClassification() {
+        LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
+        AtomicInteger generationCalls = new AtomicInteger();
+        AnalysisGenerationStage countingGenerator = (context, source, references) -> {
+            generationCalls.incrementAndGet();
+            return generator().generate(context, source, references);
+        };
+
+        EvaluationRunResult result = runner(query -> List.of(), countingGenerator)
+                .run(dataset, "empty-negative-controls");
+
+        EvaluationTrace nonArchitecture = trace(result, "non-architecture-deployment-dashboard");
+        assertThat(nonArchitecture.retrieval().status()).isEqualTo(EvaluationStageStatus.PASS);
+        assertThat(nonArchitecture.retrieval().evidence().hits()).isEmpty();
+        assertThat(nonArchitecture.generation().status()).isEqualTo(EvaluationStageStatus.PASS);
+        assertThat(nonArchitecture.generation().evidence().observedClassification())
+                .isEqualTo(EvaluationCase.InputClassification.NON_ARCHITECTURE_IMAGE);
+        assertThat(nonArchitecture.firstDivergence()).isNull();
+
+        EvaluationTrace ambiguous = trace(result, "ambiguous-cropped-service-sketch");
+        assertThat(ambiguous.retrieval().status()).isEqualTo(EvaluationStageStatus.PASS);
+        assertThat(ambiguous.retrieval().evidence().hits()).isEmpty();
+        assertThat(ambiguous.generation().status()).isEqualTo(EvaluationStageStatus.PASS);
+        assertThat(ambiguous.generation().evidence().observedClassification())
+                .isEqualTo(EvaluationCase.InputClassification.AMBIGUOUS);
+        assertThat(ambiguous.firstDivergence()).isNull();
+        assertThat(generationCalls).hasValue(dataset.dataset().cases().size());
+    }
+
+    @Test
+    void requiredEmptyRetrievalFailsClosedAfterArchitectureClassification() {
+        LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
+
+        EvaluationTrace trace = trace(
+                runner(query -> List.of(), generator()).run(dataset, "empty-architecture"),
+                "arch-vpc-three-tier"
+        );
+
+        assertThat(trace.retrieval().status()).isEqualTo(EvaluationStageStatus.PASS);
+        assertThat(trace.retrieval().evidence().hits()).isEmpty();
+        assertThat(trace.generation().status()).isEqualTo(EvaluationStageStatus.FAIL);
+        assertThat(trace.generation().evidence().observedClassification())
+                .isEqualTo(EvaluationCase.InputClassification.ARCHITECTURE_DIAGRAM);
+        assertThat(trace.generation().failures().get(0).category())
+                .isEqualTo(EvaluationFailureCategory.RETRIEVAL_EMPTY);
+        assertThat(trace.validation().status()).isEqualTo(EvaluationStageStatus.NOT_RUN);
+        assertThat(trace.firstDivergence().stage()).isEqualTo(EvaluationStage.GENERATION);
+        assertThat(trace.firstDivergence().category()).isEqualTo(EvaluationFailureCategory.RETRIEVAL_EMPTY);
+    }
+
+    @Test
     void recordsSanitizedFactFailureAndStopsRequiredPipelineAtFactExtraction() {
         LoadedEvaluationDataset dataset = new EvaluationDatasetLoader(objectMapper).load(datasetPath());
         String sensitive = "Bearer secret-token prompt image-base64";

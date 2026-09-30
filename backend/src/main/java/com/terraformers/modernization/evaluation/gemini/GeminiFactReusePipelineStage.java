@@ -29,6 +29,7 @@ final class GeminiFactReusePipelineStage implements AnalysisGenerationStage {
             ObjectContent source,
             List<ReferenceDocument> references
     ) {
+        lastTrace = null;
         long started = System.nanoTime();
         GeminiCanonicalEnvelope envelope = extractor.extract(source);
         long extractionLatencyMs = elapsed(started);
@@ -52,8 +53,7 @@ final class GeminiFactReusePipelineStage implements AnalysisGenerationStage {
         return generationStage.generate(context, envelope, references);
     }
 
-    Trace lastTrace() {
-        if (lastTrace == null) throw new IllegalStateException("candidate trace is unavailable");
+    Trace lastTraceOrNull() {
         return lastTrace;
     }
 

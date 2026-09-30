@@ -434,10 +434,12 @@ No remaining M1 work.
 
 ## Immediate next work
 
-After the A5 readiness PR merges, the next single task is **A5 same-shape production evaluation** on
-the existing live target: canonical after-state `N=3`, frozen holdout once, artifact review, and
-before/after comparison. Only then make the Case A closure decision. A5 is **NOT RUN** and Case A
-remains **OPEN**.
+The fact-reuse latency side-investigation is closed with production adoption **HOLD**. Case A remains
+**OPEN**, and the frozen holdout is still not recorded as complete. The next candidate Work Package
+is **adaptive retrieval live-measurement readiness (AWAITING_APPROVAL)**: freeze a separate
+evaluation-only scenario that requires more than eight resource types so PR #127's adaptive evidence
+expansion can be measured against the operating problem it was designed to solve. Do not start that
+Work Package automatically.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query
@@ -507,4 +509,6 @@ Evidence](evaluation/case-a-retrieval-grounding-a2-baseline.md). The VPC groundi
 outlier was **NOT reproduced in N=3**. Non-empty VPC resource filters in every run invalidate absent
 filters as an established A2 root cause. At that checkpoint vector ranking was not proven causal and
 A3 was the next candidate. A3 has since completed, A4 was merged at
-`34c9dbecfbecdf4bca2be47b64d771c9e68549ca`, and Case A remains **OPEN** pending A5 evaluation.
+`34c9dbecfbecdf4bca2be47b64d771c9e68549ca`, and later A5 canonical evaluations progressed
+through the PR #118 ordering correction and PR #119 zero-hit REQUIRED-grounding/classification
+correction. The frozen holdout is still not recorded as complete, so Case A remains **OPEN**.

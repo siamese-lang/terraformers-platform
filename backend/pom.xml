@@ -20,6 +20,7 @@
         <java.version>17</java.version>
         <aws.sdk.version>2.28.21</aws.sdk.version>
         <google.genai.version>1.72.0</google.genai.version>
+        <google.auth.version>1.53.0</google.auth.version>
     </properties>
 
     <dependencyManagement>
@@ -123,6 +124,11 @@
             <groupId>com.google.genai</groupId>
             <artifactId>google-genai</artifactId>
             <version>${google.genai.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>${google.auth.version}</version>
         </dependency>
 
         <dependency>

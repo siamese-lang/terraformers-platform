@@ -35,9 +35,6 @@ public class RetrievalModeReferenceRetriever implements ReferenceRetriever {
         long started = System.nanoTime();
         try {
             List<ReferenceDocument> documents = vectorRetriever.retrieve(query);
-            if (mode == RetrievalMode.REQUIRED && documents.isEmpty()) {
-                throw new IllegalStateException("required reference retrieval returned no documents");
-            }
             log.info("reference retrieval outcome={} mode={} embeddingProvider={} index={} topK={} hitCount={} documentIds={} elapsedMs={}",
                     documents.isEmpty() ? "empty" : "success", mode,
                     properties.resolvedEmbeddingProvider(), properties.getIndexName(), properties.getOpensearchTopK(),

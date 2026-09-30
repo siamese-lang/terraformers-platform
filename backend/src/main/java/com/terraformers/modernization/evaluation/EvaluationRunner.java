@@ -8,6 +8,7 @@ import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisMode;
 import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
+import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
 import com.terraformers.modernization.analysis.TerraformDraftValidation;
 import com.terraformers.modernization.analysis.TerraformDraftValidator;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationCase;
@@ -288,6 +289,28 @@ public class EvaluationRunner {
                                 EvaluationFailureCategory.INPUT_CLASSIFICATION,
                                 "observed classification " + observed + " but expected "
                                         + definition.expectedClassification()
+                        )
+                );
+                return trace(
+                        loadedDataset,
+                        definition,
+                        runId,
+                        input,
+                        factTrace,
+                        retrievalTrace,
+                        generationTrace,
+                        StageTrace.notRun(EvaluationStage.VALIDATION)
+                );
+            }
+            if (RequiredGroundingPolicy.isMissing(retrievalMode, generated.inputClassification(), references)) {
+                generationTrace = StageTrace.fail(
+                        EvaluationStage.GENERATION,
+                        elapsedMillis(generationStartedAt),
+                        evidence,
+                        new EvaluationFailure(
+                                EvaluationStage.GENERATION,
+                                EvaluationFailureCategory.RETRIEVAL_EMPTY,
+                                "required grounding is missing for architecture analysis"
                         )
                 );
                 return trace(

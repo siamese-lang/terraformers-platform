@@ -696,3 +696,38 @@ evaluation had run; A2 was the next candidate. Those were historical A1 boundari
 now complete, the A4 candidate was merged at `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`, and
 the valid A5 canonical `N=3` did not meet its hard gates. Case A remains open pending a separately
 reviewed corrective implementation and validation.
+
+## Canonical N=3 checkpoint after PROJECT_DECISION ordering correction
+
+The fresh canonical `terraformers-eval-v1` runs `36678421069`, `36678439743`, and `36679694645`
+all evaluated source `edd291a0e5b00e3e37d2b35b52531b3acd07a835`. Their aggregate result was:
+
+```text
+VPC decision coverage: 3/3
+VPC resource coverage: 4/4 × 3
+grounding gaps: 0/12
+positive validation: 12/12
+negative controls: 5/6
+holdout: NOT RUN
+```
+
+PR #118 closed the selected `PROJECT_DECISION` ordering defect. The selector correction therefore
+met its decision-coverage, resource-coverage, grounding-gap, and positive-validation gates; its
+ordering and acquisition semantics remain unchanged by the next correction.
+
+The sole hard-gate failure was run `36678439743`, case
+`non-architecture-deployment-dashboard`. Fact extraction succeeded, but the four extracted resource
+types (`aws_ecs_service`, `aws_ecs_cluster`, `aws_ecs_task_definition`, and
+`aws_cloudwatch_dashboard`) had no matching document in `terraformers-reference-v3`, so filtered
+retrieval completed successfully with zero usable documents. The remaining failure is:
+
+> REQUIRED grounding is enforced before input classification, so a successful zero-hit retrieval
+> can prevent a non-architecture input from reaching its classification stage.
+
+This was not an OpenSearch outage or a corpus defect. Corpus coverage exposed the lifecycle
+boundary, but adding ECS/dashboard documents is not the selected correction. The selected semantic
+contract distinguishes retrieval execution failure from successful empty retrieval: execution
+failures remain fail-closed in `REQUIRED` mode, while an empty successful result reaches generation.
+After classification, `REQUIRED` plus `ARCHITECTURE_DIAGRAM` plus zero references fails closed;
+`NON_ARCHITECTURE_IMAGE` and `AMBIGUOUS` continue through their existing rejection semantics. A
+fresh canonical evaluation is still required after implementation, and the holdout remains unrun.

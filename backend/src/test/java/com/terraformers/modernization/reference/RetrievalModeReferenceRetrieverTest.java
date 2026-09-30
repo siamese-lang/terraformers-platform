@@ -25,11 +25,31 @@ class RetrievalModeReferenceRetrieverTest {
     }
 
     @Test
-    void requiredRejectsEmptyResults() {
+    void requiredPropagatesParserFailure() {
+        OpenSearchReferenceRetriever vector = mock(OpenSearchReferenceRetriever.class);
+        IllegalArgumentException parserFailure = new IllegalArgumentException("invalid search response");
+        when(vector.retrieve(any())).thenThrow(parserFailure);
+
+        assertThatThrownBy(() -> retriever(vector, properties(RetrievalMode.REQUIRED)).retrieve(query))
+                .isSameAs(parserFailure);
+    }
+
+    @Test
+    void requiredAllowsSuccessfulEmptyResults() {
         OpenSearchReferenceRetriever vector = mock(OpenSearchReferenceRetriever.class);
         when(vector.retrieve(any())).thenReturn(List.of());
         AnalysisRuntimeProperties properties = properties(RetrievalMode.REQUIRED);
-        assertThatThrownBy(() -> retriever(vector, properties).retrieve(query)).hasMessageContaining("no documents");
+        assertThat(retriever(vector, properties).retrieve(query)).isEmpty();
+    }
+
+    @Test
+    void requiredReturnsSuccessfulNonEmptyResults() {
+        OpenSearchReferenceRetriever vector = mock(OpenSearchReferenceRetriever.class);
+        ReferenceDocument document = new ReferenceDocument("ref", "title", "content", 1.0);
+        when(vector.retrieve(any())).thenReturn(List.of(document));
+
+        assertThat(retriever(vector, properties(RetrievalMode.REQUIRED)).retrieve(query))
+                .containsExactly(document);
     }
 
     @Test

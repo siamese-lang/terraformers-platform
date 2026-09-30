@@ -36,23 +36,6 @@ public class AnalysisJobOrchestrator {
         this.terraformExecutableValidator = terraformExecutableValidator;
     }
 
-    AnalysisJobOrchestrator(
-            AnalysisProvider analysisProvider,
-            ProgressPublisher progressPublisher,
-            AnalysisResultStorage resultStorage,
-            ProjectArtifactService projectArtifactService,
-            TerraformDraftValidator terraformDraftValidator
-    ) {
-        this(
-                analysisProvider,
-                progressPublisher,
-                resultStorage,
-                projectArtifactService,
-                terraformDraftValidator,
-                candidate -> new TerraformDraftValidation(true, candidate, null)
-        );
-    }
-
     public AnalysisResult executeProviderAndValidate(AnalysisJobEntity entity) {
         AnalysisResult result;
         try {

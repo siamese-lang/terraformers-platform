@@ -38,8 +38,9 @@ public class OpenSearchReferenceRetriever {
         requireRuntimeConfig();
 
         List<Float> vector = embeddingProvider.embed(query.text());
-        int topK = Math.min(query.limit(), properties.getOpensearchTopK());
-        List<ReferenceDocument> global = search(vector, topK, query.resourceTypes());
+        int baseTopK = Math.min(query.limit(), properties.getOpensearchTopK());
+        int maxEvidence = Math.min(query.limit(), properties.getOpensearchMaxEvidence());
+        List<ReferenceDocument> global = search(vector, baseTopK, query.resourceTypes());
         if (query.resourceTypes().isEmpty()) {
             return global;
         }
@@ -47,10 +48,15 @@ public class OpenSearchReferenceRetriever {
         Map<String, ReferenceEvidenceSelector.Candidate> candidates = new LinkedHashMap<>();
         addCandidates(candidates, global, true, true);
         for (String resourceType : query.resourceTypes().stream().distinct().toList()) {
-            addCandidates(candidates, search(vector, topK, List.of(resourceType), List.of()), true, false);
+            addCandidates(candidates, search(vector, baseTopK, List.of(resourceType), List.of()), true, false);
         }
-        addCandidates(candidates, search(vector, topK, query.resourceTypes(), List.of("PROJECT_DECISION")), false, false);
-        return selector.select(candidates.values(), global, query.resourceTypes(), topK);
+        addCandidates(
+                candidates,
+                search(vector, baseTopK, query.resourceTypes(), List.of("PROJECT_DECISION")),
+                false,
+                false
+        );
+        return selector.select(candidates.values(), global, query.resourceTypes(), baseTopK, maxEvidence);
     }
 
     private List<ReferenceDocument> search(List<Float> vector, int topK, List<String> resourceTypes) {
@@ -117,6 +123,14 @@ public class OpenSearchReferenceRetriever {
         }
         if (properties.getOpensearchTopK() <= 0) {
             throw new IllegalStateException("terraformers.analysis.opensearch-top-k must be positive for active retrieval");
+        }
+        if (properties.getOpensearchMaxEvidence() <= 0) {
+            throw new IllegalStateException(
+                    "terraformers.analysis.opensearch-max-evidence must be positive for active retrieval");
+        }
+        if (properties.getOpensearchMaxEvidence() < properties.getOpensearchTopK()) {
+            throw new IllegalStateException(
+                    "terraformers.analysis.opensearch-max-evidence must be greater than or equal to opensearch-top-k");
         }
         if (properties.getExpectedVectorDimension() != null && properties.getExpectedVectorDimension() <= 0) {
             throw new IllegalStateException("terraformers.analysis.expected-vector-dimension must be positive when set");

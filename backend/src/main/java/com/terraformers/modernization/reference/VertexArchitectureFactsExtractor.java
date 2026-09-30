@@ -25,10 +25,12 @@ import org.springframework.stereotype.Component;
 public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtractor {
 
     public static final int MAX_FACT_TOKENS = 800;
+    public static final int MAX_FACT_LIST_ITEMS = 8;
     public static final ThinkingLevel.Known FACT_EXTRACTION_THINKING_LEVEL = ThinkingLevel.Known.LOW;
     static final String FACTS_PROMPT = """
             Return one compact JSON object only with keys summary, components, relationships, resourceTypes.
-            Keep summary under 160 characters. Keep each array to at most 8 strings and each string under 60 characters.
+            Keep summary under 160 characters. Keep components and relationships to at most 8 strings each.
+            Keep resourceTypes to at most 16 strings. Keep every array string under 60 characters.
             resourceTypes must contain only Terraform AWS provider resource type identifiers matching aws_[a-z0-9_]+,
             for example aws_vpc, aws_db_instance, aws_security_group, or aws_lb.
             Never return CloudFormation-style identifiers such as AWS::EC2::VPC or AWS::RDS::DBInstance.
@@ -110,9 +112,9 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
             }
             ArchitectureRetrievalFacts result = new ArchitectureRetrievalFacts(
                     text(facts, "summary"),
-                    strings(facts, "components"),
-                    strings(facts, "relationships"),
-                    strings(facts, "resourceTypes")
+                    strings(facts, "components", MAX_FACT_LIST_ITEMS),
+                    strings(facts, "relationships", MAX_FACT_LIST_ITEMS),
+                    strings(facts, "resourceTypes", ReferenceQuery.MAX_RESOURCE_TYPES)
             );
             if (result.isEmpty()) {
                 throw ArchitectureFactsExtractionException.response(
@@ -149,7 +151,7 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
         return value.asText().strip();
     }
 
-    private List<String> strings(JsonNode root, String field) {
+    private List<String> strings(JsonNode root, String field, int maxItems) {
         JsonNode node = root.path(field);
         if (!node.isArray()) {
             throw invalidResponse(null);
@@ -160,7 +162,7 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
                 throw invalidResponse(null);
             }
             String text = value.asText().strip();
-            if (!text.isBlank()) values.add(text);
+            if (!text.isBlank() && values.size() < maxItems) values.add(text);
         }
         return List.copyOf(values);
     }

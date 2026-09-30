@@ -145,6 +145,14 @@ class TerraformCliValidatorTest {
         });
     }
 
+    private void assertTempRootEmpty() {
+        try (var paths = Files.list(tempRoot)) {
+            assertThat(paths.toList()).isEmpty();
+        } catch (Exception exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
     private TerraformCliValidator validator(RecordingExecutor executor) {
         return new TerraformCliValidator(
                 new ObjectMapper(),

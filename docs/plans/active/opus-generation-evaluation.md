@@ -378,3 +378,39 @@ The immediate work stops after:
 No automatic follow-on PR is authorized.
 
 The next action after O2 must be a human decision based on the recorded result.
+
+## O1 implementation checkpoint — 2026-09-30
+
+O1 adds an evaluation-only Java harness under
+`backend/src/main/java/com/terraformers/modernization/evaluation/opus/`. The standalone
+`OpusGenerationEvaluationLauncher` validates the frozen manifest, canonical dataset image bytes and
+checksums, exact ordered v3 corpus documents, and fixed model/location identity before using an
+ADC-backed `ClaudeVertexClient`. It preserves `VertexPromptBuilder` prompt semantics, removes only
+Claude-unsupported schema bounds, uses Claude structured output, permits one compact truncation
+retry, reuses `VertexResponseParser` semantics, runs `TerraformDraftValidator`, and writes an
+`opus-generation-evaluation-v1` artifact with deterministic generation-only failure precedence.
+The artifact fixes `promptContractSourceCommit` to
+`3fc610f1e9d601a4d5f79f281b358b783342c4ce` and records the SHA-256 of each exact rendered standard
+prompt (and the compact prompt when truncation causes the single retry), without retaining image
+bytes or full request bodies.
+
+Bounded per-case provider failures are evidence rather than whole-run aborts: authentication,
+authorization, and unavailable-model responses are recorded as `MODEL_ACCESS`; quota, HTTP 5xx,
+timeout, and transport failures are recorded as `PROVIDER_RUNTIME`. Safe reasons and HTTP status
+when available are retained, all six cases continue, and no response body, token, header, or
+credential material is written to the artifact.
+
+The dedicated manual launcher is `.github/workflows/gcp-opus-generation-evaluation.yml`. It is
+`workflow_dispatch`-only, requires `RUN_OPUS_GENERATION_EVALUATION`, runs an ephemeral pod as the
+existing `terraformers-backend` Kubernetes ServiceAccount, and neither checks OpenSearch nor creates
+cloud resources or IAM bindings.
+
+O1 validation commands:
+
+- `mvn -q -f backend/pom.xml -Dtest='*OpusGeneration*,VertexPromptBuilderTest,VertexResponseParserTest,TerraformDraftValidatorTest' test`
+- `mvn -q -f backend/pom.xml test`
+- `git diff --check`
+
+No live Claude/Opus model call or evaluation workflow dispatch occurred during O1. Production
+provider routing and the existing Case A workflow are unchanged. O2 remains a separate,
+explicitly-authorized one-run activity; this checkpoint does not authorize or begin O2.

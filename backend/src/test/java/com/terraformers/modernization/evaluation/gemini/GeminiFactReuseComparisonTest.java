@@ -56,7 +56,7 @@ class GeminiFactReuseComparisonTest {
                             List.of()
                     );
                 },
-                (context, envelope, references) -> passing(caseById(fixture, context.targetName()))
+                (context, envelope, references) -> passing(caseById(fixture, context.correlationId()))
         );
 
         GeminiFactReuseComparisonRunner runner =

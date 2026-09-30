@@ -524,10 +524,12 @@ resourceTypes intersects query.resourceTypes
 
 The implementation may minimally extend the existing OpenSearch metadata-filter mechanism for
 authority filtering. This lane is necessary because selection cannot preserve a relevant decision
-that corpus growth excludes from both the global and singleton-resource top-K candidate sets. Each
-candidate search remains bounded by the existing final K, and final selected context remains
-bounded by K8. This does not authorize a second embedding call, an LLM reranker, a judge call, a new
-retrieval service, global K24, or a larger final generation context.
+that corpus growth excludes from both the global and singleton-resource top-K candidate sets. The
+lane's resource intersection is **candidate acquisition only**; overlap alone is not sufficient
+evidence that a decision is applicable or eligible for forced promotion. Each candidate search
+remains bounded by the existing final K, and final selected context remains bounded by K8. This does
+not authorize a second embedding call, an LLM reranker, a judge call, a new retrieval service,
+global K24, or a larger final generation context.
 
 #### Evidence-role-aware selection contract
 
@@ -549,7 +551,11 @@ The final selector must reason about three separate dimensions:
 The correction must preserve required resource coverage while admitting applicable
 project-decision evidence where capacity permits. Provider evidence and project-decision evidence
 serve different roles; this design does not make every `PROJECT_DECISION` document more important
-than provider evidence.
+than provider evidence. Project-decision coverage is modeled as distinct documents / distinct
+decision evidence, not as a boolean coverage state per resource type. Two different applicable
+decisions may both be valuable even when both reference the same requested resource. Resource
+overlap and new-resource coverage are relevance signals, but they are not a stopping condition that
+declares all decision evidence for a resource satisfied.
 
 For each `PROJECT_DECISION` candidate, compare metadata with the runtime query resource set using
 general signals equivalent to:
@@ -559,21 +565,34 @@ matchedResources = candidate.resourceTypes ∩ query.resourceTypes
 unsupportedResources = candidate.resourceTypes - query.resourceTypes
 ```
 
-Prefer candidates deterministically by: (1) greater new decision coverage over requested
-resources; (2) greater overlap with the runtime query resource set; (3) fewer unsupported candidate
-resource types; (4) higher semantic similarity; (5) higher corpus priority; and (6) stable discovery
-order as the final tie-break. The unsupported-resource signal prevents a broad, partially related
-project pattern from displacing a structurally coherent decision solely because score or priority
-is high. Neither document IDs nor fixture-specific branches may participate in this comparator.
+A `PROJECT_DECISION` candidate may be force-promoted only when it intersects the query resource set
+and at least one of these generic eligibility conditions holds:
+
+1. its `resourceTypes` are a subset of `query.resourceTypes`, so it has no unsupported resource
+   dependency; or
+2. the same document was independently retrieved through the normal global or per-resource
+   semantic lane.
+
+Within that eligible set, consider distinct decision documents in deterministic relevance order:
+(1) greater overlap with the runtime query resource set; (2) fewer unsupported candidate resource
+types; (3) higher semantic similarity; (4) higher corpus priority; and (5) stable discovery order as
+the final tie-break. New-resource coverage may contribute as a relevance signal, but does not merge
+distinct decisions into resource-level boolean coverage. The unsupported-resource signal and
+eligibility guard prevent a broad, partially related project pattern from being force-promoted
+solely because one resource overlaps or its score or priority is high. Neither case IDs, document
+IDs, nor expected IDs may participate in eligibility or ordering.
 
 #### Safe replacement and context-budget saturation
 
-A project-decision candidate may enter final K only if replacing an existing selected document does
-not reduce requested resource coverage, provider evidence coverage already secured for requested
-resources, or project-decision coverage already secured. Prefer replacing redundant evidence before
-unique evidence. The only provider anchor for a requested resource must not be removed merely to add
-a project decision, and no decision may be inserted if required resource coverage would decrease.
-The result must never exceed configured final K.
+After protecting requested resource coverage and provider anchors, distinct eligible decision
+candidates are considered in the deterministic relevance order above and admitted only while safe K
+capacity exists. A project-decision candidate may enter final K only if replacing an existing
+selected document does not reduce requested resource coverage or provider evidence coverage already
+secured for requested resources. Prefer replacing redundant evidence before unique evidence. The
+only provider anchor for a requested resource must not be removed merely to add a project decision,
+and no decision may be inserted if required resource coverage would decrease. Already selected
+distinct decision evidence must not be lost merely to replace it with another decision having
+equivalent resource overlap. The result must never exceed configured final K.
 
 Some future architecture may require more independent provider and decision evidence than final K
 can hold. The implementation must therefore distinguish conceptually between:
@@ -610,13 +629,19 @@ synthetic resource names such as `aws_alpha` and `aws_beta`, not Case A fixture 
 5. redundant provider evidence may be replaced by applicable decision evidence;
 6. the only provider anchor for a requested resource is protected;
 7. required/requested resource coverage never decreases during decision promotion;
-8. an unrelated or broad project decision cannot win solely because its priority is high;
-9. resource-coherent decisions outrank less coherent alternatives under the frozen comparator;
-10. one decision covering several requested resources is deduplicated and credited once;
-11. multiple applicable decisions may be retained when final K capacity permits;
-12. no decision candidate preserves prior A4 behavior;
-13. final results never exceed K; and
-14. no case-ID, document-ID, or expected-ID rule exists.
+8. a project decision sharing only one query resource while depending on several unsupported
+   resources is not force-promoted solely because of that overlap;
+9. that same candidate may become eligible when independently retrieved by a normal global or
+   per-resource semantic lane;
+10. an unrelated or broad project decision cannot win solely because its priority is high;
+11. resource-coherent decisions outrank less coherent alternatives under the frozen comparator;
+12. one decision covering several requested resources is deduplicated and credited once;
+13. two distinct applicable decisions for the same requested resource may both be retained when
+   safe final K capacity exists;
+14. multiple applicable decisions may be retained when final K capacity permits;
+15. no decision candidate preserves prior A4 behavior;
+16. final results never exceed K; and
+17. no case-ID, document-ID, or expected-ID rule exists.
 
 No live Vertex test and no new verifier or workflow is authorized by this contract.
 

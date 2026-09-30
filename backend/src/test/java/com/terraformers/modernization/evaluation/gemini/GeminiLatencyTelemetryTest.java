@@ -113,6 +113,54 @@ class GeminiLatencyTelemetryTest {
     }
 
     @Test
+    void preservesPayloadShapeForEachLogicalRequestWithinOnePhase() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/generate", exchange -> {
+            exchange.getRequestBody().readAllBytes();
+            byte[] body = "{\"candidates\":[{\"finishReason\":\"STOP\"}]}"
+                    .getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        server.start();
+        try {
+            GeminiLatencyTelemetry telemetry = new GeminiLatencyTelemetry(mapper);
+            OkHttpClient client = telemetry.instrumentedHttpClient();
+            var scope = telemetry.start("case", GeminiLatencyTelemetry.Arm.CANDIDATE,
+                    GeminiLatencyTelemetry.Phase.GENERATION, identity(),
+                    GeminiLatencyTelemetry.PayloadShape.of("TEXT", 0, "", List.of()));
+            try {
+                try (Response ignored = client.newCall(
+                        textRequest(server.getAddress().getPort(), "first request prompt")).execute()) {
+                    // no-op
+                }
+                try (Response ignored = client.newCall(
+                        textRequest(server.getAddress().getPort(), "x")).execute()) {
+                    // no-op
+                }
+            } finally {
+                scope.close(null);
+            }
+
+            var requests = telemetry.evidenceFor("case", GeminiLatencyTelemetry.Arm.CANDIDATE)
+                    .get(0).requests();
+            assertThat(requests).hasSize(2);
+            assertThat(requests.get(0).payload().requestTextCharCount())
+                    .isEqualTo("first request prompt".length());
+            assertThat(requests.get(1).payload().requestTextCharCount())
+                    .isEqualTo("x".length());
+            assertThat(requests.get(0).payload().requestTextCharCount())
+                    .isGreaterThan(requests.get(1).payload().requestTextCharCount());
+            assertThat(requests)
+                    .extracting(request -> request.payload().imageByteCount())
+                    .containsExactly(0, 0);
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
     void preHeaderConnectFailureIsNetworkEvidenceNotAnHttpExchangeOrExactAttemptCount() {
         GeminiLatencyTelemetry telemetry = new GeminiLatencyTelemetry(mapper);
         var scope = telemetry.start("case", GeminiLatencyTelemetry.Arm.CONTROL,
@@ -150,6 +198,12 @@ class GeminiLatencyTelemetryTest {
         String body = """
                 {"contents":[{"parts":[{"inlineData":{"data":"YWJj"}},{"text":"safe prompt"}]}]}
                 """;
+        return new Request.Builder().url("http://127.0.0.1:" + port + "/generate")
+                .post(RequestBody.create(body, MediaType.get("application/json"))).build();
+    }
+
+    private Request textRequest(int port, String text) {
+        String body = "{\"contents\":[{\"parts\":[{\"text\":\"" + text + "\"}]}]}";
         return new Request.Builder().url("http://127.0.0.1:" + port + "/generate")
                 .post(RequestBody.create(body, MediaType.get("application/json"))).build();
     }

@@ -242,7 +242,11 @@ class AnalysisJobRestartBaselineTest {
     }
 
     private ConfigurableApplicationContext start(String url, String ddl, String pollInterval) {
-        return new SpringApplicationBuilder(TerraformersBackendApplication.class, CapturingExecutorConfig.class)
+        return new SpringApplicationBuilder(
+                TerraformersBackendApplication.class,
+                CapturingExecutorConfig.class,
+                PassThroughTerraformExecutableValidatorTestConfig.class
+        )
                 .profiles("test").web(WebApplicationType.SERVLET).run("--server.port=0",
                         "--spring.datasource.url=" + url, "--spring.jpa.hibernate.ddl-auto=" + ddl,
                         "--spring.flyway.enabled=false", "--terraformers.security.jwt.enabled=false",

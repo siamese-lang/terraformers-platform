@@ -109,7 +109,22 @@ class OpenSearchReferenceRetrieverTest {
                 response(document("low-priority", 10, "aws_alpha"), document("high-priority", 90, "aws_alpha")));
         assertThat(missingGlobally.retriever().retrieve(
                 new ReferenceQuery("architecture summary", List.of("aws_alpha"), 2)))
-                .extracting(ReferenceDocument::id).startsWith("high-priority");
+                .extracting(ReferenceDocument::id).containsExactly("unrelated-one", "high-priority");
+    }
+
+    @Test
+    void supplementsMissingCoverageWithoutReplacingUsefulGlobalEvidence() {
+        Fixture fixture = fixture(2,
+                response(
+                        document("global-alpha", 1, "aws_alpha"),
+                        document("semantic-unrelated", 1, "aws_other")),
+                response(document("high-priority-alpha", 100, "aws_alpha")),
+                response(document("targeted-beta", 1, "aws_beta")));
+
+        assertThat(fixture.retriever().retrieve(new ReferenceQuery(
+                "architecture summary", List.of("aws_alpha", "aws_beta"), 2)))
+                .extracting(ReferenceDocument::id)
+                .containsExactly("global-alpha", "targeted-beta");
     }
 
     @Test

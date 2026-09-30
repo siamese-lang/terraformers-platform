@@ -5,7 +5,6 @@ import com.terraformers.modernization.reference.EmbeddingProvider;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceQuery;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -87,21 +86,26 @@ public class OpenSearchReferenceRetriever {
             List<String> resourceTypes,
             int limit
     ) {
-        Set<String> uncovered = new LinkedHashSet<>(resourceTypes);
-        global.forEach(document -> uncovered.removeAll(document.resourceTypes()));
-        if (uncovered.isEmpty()) {
+        List<ReferenceDocument> selected = new java.util.ArrayList<>(global.stream().limit(limit).toList());
+        Set<String> missing = new LinkedHashSet<>(resourceTypes);
+        for (ReferenceDocument document : selected) {
+            missing.removeAll(document.resourceTypes());
+        }
+        if (missing.isEmpty()) {
             return global.stream().limit(limit).toList();
         }
 
-        uncovered = new LinkedHashSet<>(resourceTypes);
-        List<Candidate> remaining = new ArrayList<>(candidates);
-        List<ReferenceDocument> selected = new ArrayList<>();
-        while (selected.size() < limit) {
-            Set<String> currentUncovered = uncovered;
-            Candidate best = remaining.stream()
-                    .filter(candidate -> coverage(candidate.document(), currentUncovered) > 0)
+        List<Candidate> targeted = candidates.stream().filter(candidate -> !candidate.global()).toList();
+        Set<String> selectedIds = selected.stream()
+                .map(ReferenceDocument::id)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        while (!missing.isEmpty()) {
+            Set<String> currentMissing = missing;
+            Candidate best = targeted.stream()
+                    .filter(candidate -> !selectedIds.contains(candidate.document().id()))
+                    .filter(candidate -> coverage(candidate.document(), currentMissing) > 0)
                     .min(Comparator
-                            .<Candidate>comparingInt(candidate -> coverage(candidate.document(), currentUncovered))
+                            .<Candidate>comparingInt(candidate -> coverage(candidate.document(), currentMissing))
                             .reversed()
                             .thenComparing(Comparator.comparingInt(
                                     (Candidate candidate) -> candidate.document().priority()).reversed())
@@ -110,29 +114,49 @@ public class OpenSearchReferenceRetriever {
             if (best == null) {
                 break;
             }
-            selected.add(best.document());
-            remaining.remove(best);
-            uncovered.removeAll(best.document().resourceTypes());
-        }
-
-        Set<String> selectedIds = selected.stream()
-                .map(ReferenceDocument::id)
-                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-        for (ReferenceDocument document : global) {
-            if (selected.size() == limit) {
-                break;
+            if (selected.size() < limit) {
+                selected.add(best.document());
+            } else {
+                int replacement = replacementIndex(selected, best.document(), resourceTypes);
+                if (replacement < 0) {
+                    break;
+                }
+                selectedIds.remove(selected.get(replacement).id());
+                selected.set(replacement, best.document());
             }
-            if (selectedIds.add(document.id())) {
-                selected.add(document);
-            }
+            selectedIds.add(best.document().id());
+            missing.removeAll(best.document().resourceTypes());
         }
-        remaining.stream()
-                .sorted(Comparator.comparingInt(Candidate::discoveryOrder))
-                .map(Candidate::document)
-                .filter(document -> selectedIds.add(document.id()))
-                .limit(limit - selected.size())
-                .forEach(selected::add);
         return List.copyOf(selected);
+    }
+
+    private int replacementIndex(
+            List<ReferenceDocument> selected,
+            ReferenceDocument replacement,
+            List<String> resourceTypes
+    ) {
+        Set<String> existingCoverage = coveredResourceTypes(selected, resourceTypes);
+        for (int index = selected.size() - 1; index >= 0; index--) {
+            List<ReferenceDocument> proposed = new java.util.ArrayList<>(selected);
+            proposed.set(index, replacement);
+            if (coveredResourceTypes(proposed, resourceTypes).containsAll(existingCoverage)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private Set<String> coveredResourceTypes(List<ReferenceDocument> documents, List<String> resourceTypes) {
+        Set<String> covered = new LinkedHashSet<>();
+        Set<String> requested = new LinkedHashSet<>(resourceTypes);
+        for (ReferenceDocument document : documents) {
+            for (String resourceType : document.resourceTypes()) {
+                if (requested.contains(resourceType)) {
+                    covered.add(resourceType);
+                }
+            }
+        }
+        return covered;
     }
 
     private int coverage(ReferenceDocument document, Set<String> uncovered) {

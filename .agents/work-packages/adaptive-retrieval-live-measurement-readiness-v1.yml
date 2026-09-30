@@ -1,0 +1,225 @@
+work_package:
+  id: adaptive-retrieval-live-measurement-readiness-v1
+  status: ACTIVE
+  approved_base_sha: "5e3cf972ffc2d2243844728ccbb46d711be96714"
+  execution_base_sha: "5e3cf972ffc2d2243844728ccbb46d711be96714"
+
+  goal: >
+    Prepare one bounded live retrieval measurement that proves whether the adaptive evidence
+    expansion merged in PR #127 can recover complete grounding coverage for a realistic
+    architecture whose required resource evidence cannot fit in the base K8 budget.
+
+  engineering_axis:
+    - AI/RAG evaluation and targeted improvement
+    - Retrieval generalization
+
+  representative_case:
+    - Case A retrieval grounding
+
+  contract_file_immutable_after_first_implementation_write: true
+
+  allowed_paths:
+    - .agents/work-packages/adaptive-retrieval-live-measurement-readiness-v1.yml
+    - evaluation/adaptive-retrieval-v1/**
+    - backend/src/main/java/com/terraformers/modernization/evaluation/adaptive/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/adaptive/**
+    - .github/workflows/gcp-target-evaluation-baseline.yml
+    - docs/evaluation/adaptive-retrieval-live-measurement-readiness.md
+    - docs/AI_PROJECT_STATE.md
+
+  prohibited_paths:
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/test/java/com/terraformers/modernization/reference/**
+    - corpus/**
+    - evaluation/terraformers-eval-v1/**
+    - evaluation/terraformers-eval-holdout-v1/**
+    - infra/**
+    - frontend/**
+    - AGENTS.md
+    - docs/architecture/**
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - add_evaluation_only_fixture
+    - add_evaluation_only_harness
+    - add_deterministic_tests
+    - extend_existing_manual_workflow
+    - update_readiness_docs
+    - create_pull_request
+    - inspect_ci
+    - repair_same_failure_once
+
+  auto_repair_limit: 1
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - create_new_github_workflow
+    - dispatch_workflow
+    - live_ai_model_call
+    - live_opensearch_evaluation
+    - production_retrieval_change
+    - production_fact_extraction_change
+    - production_generation_change
+    - corpus_change
+    - canonical_dataset_change
+    - holdout_change
+    - model_change
+    - embedding_change
+    - prompt_change
+    - terraform_plan
+    - terraform_apply
+    - iam_change
+    - infrastructure_change
+    - next_work_package_start
+    - acceptance_criteria_change
+
+  frozen_scenario:
+    scenario_id: large-vpc-eks-rds-s3
+    rationale: >
+      Current terraformers-reference-v3 metadata requires at least ten corpus documents to cover
+      this twelve-resource set, so complete coverage is structurally impossible inside K8 and
+      adaptive growth above the base budget is necessary.
+    facts:
+      summary: >
+        Internet-facing EKS application in a VPC with public and private subnets, controlled
+        internet egress, RDS persistence, and S3 object storage.
+      components:
+        - Internet
+        - VPC
+        - Public subnets
+        - Private subnets
+        - Application Load Balancer
+        - EKS application
+        - RDS database
+        - S3 bucket
+      relationships:
+        - Internet -> Application Load Balancer
+        - Application Load Balancer -> EKS application
+        - EKS application -> RDS database
+        - EKS application -> S3 bucket
+        - VPC contains public subnets
+        - VPC contains private subnets
+        - Private subnets -> NAT gateway
+        - Public subnets -> Internet gateway
+      resource_types:
+        - aws_vpc
+        - aws_subnet
+        - aws_internet_gateway
+        - aws_nat_gateway
+        - aws_route_table
+        - aws_security_group
+        - aws_lb
+        - aws_lb_listener
+        - aws_lb_target_group
+        - aws_eks_cluster
+        - aws_db_instance
+        - aws_s3_bucket
+    corpus_version: terraformers-reference-v3
+    provider_version: "5.100.0"
+    minimum_corpus_document_cover: 10
+
+  comparison:
+    shared:
+      query_facts: frozen_scenario
+      query_limit: 16
+      base_top_k: 8
+      embedding_model: gemini-embedding-001
+      embedding_dimension: 1024
+      one_embedding_vector_reused_across_both_arms: true
+      production_retriever: OpenSearchReferenceRetriever
+      production_selector: ReferenceEvidenceSelector
+    control:
+      opensearch_max_evidence: 8
+    adaptive:
+      opensearch_max_evidence: 16
+
+  artifact:
+    schema: adaptive-retrieval-live-probe-v1
+    required_identity:
+      - sourceCommit
+      - scenarioId
+      - corpusVersion
+      - providerVersion
+      - embeddingModel
+      - embeddingDimension
+      - baseTopK
+      - controlMaxEvidence
+      - adaptiveMaxEvidence
+      - queryResourceTypes
+      - embeddingDelegateCalls
+    required_per_arm_evidence:
+      - latencyMs
+      - evidenceCount
+      - selectedDocumentIds
+      - coveredResourceTypes
+      - missingResourceTypes
+      - coverageMatched
+      - coverageTotal
+
+  acceptance_criteria:
+    - id: fixture_is_real_corpus_constrained
+      requirement: >
+        The frozen twelve-resource scenario uses only resource types present in the committed
+        terraformers-reference-v3 corpus and records a corpus minimum document cover of ten.
+    - id: base_k8_is_structurally_insufficient
+      requirement: >
+        The control arm uses base top-K 8 and max evidence 8 and cannot report complete 12/12
+        resource coverage.
+    - id: adaptive_growth_is_required_and_bounded
+      requirement: >
+        The adaptive arm uses the same query and base top-K 8 with max evidence 16, reaches
+        complete 12/12 resource coverage, selects more than 8 and no more than 16 documents,
+        and contains no duplicate document IDs.
+    - id: same_embedding
+      requirement: >
+        Both arms reuse exactly one delegated Vertex query embedding for the identical query text.
+    - id: production_retrieval_semantics_reused
+      requirement: >
+        Both arms call the current production OpenSearchReferenceRetriever and therefore exercise
+        the current production query/search/selector behavior rather than a parallel reimplementation.
+    - id: no_quality_or_generation_claim
+      requirement: >
+        The readiness harness performs retrieval measurement only; it does not call Gemini
+        generation and does not claim Terraform quality improvement.
+    - id: current_production_unchanged
+      requirement: >
+        No production analysis, reference/retrieval, generation, corpus, canonical dataset,
+        holdout, infrastructure, or IAM file changes occur.
+    - id: no_live_run
+      requirement: >
+        This Work Package prepares the manual workflow scope and artifact contract but performs
+        no live Vertex embedding or OpenSearch evaluation before separate user approval.
+
+  verification:
+    evidence_sources:
+      - GitHub remote base/head SHA
+      - PR diff
+      - deterministic evaluation harness tests
+      - fixture/corpus compatibility test
+      - existing backend regression through normal CI
+      - existing workflow policy check
+    verifier_outcomes:
+      - PASS
+      - FAIL
+      - INCONCLUSIVE
+    implementer_self_report_is_evidence: false
+
+  stop_on:
+    - unexpected_main_change
+    - scope_drift
+    - production_path_change_required
+    - corpus_or_dataset_change_required
+    - same_failure_repeated
+    - failure_class_changed
+    - auto_repair_limit_exceeded
+    - architecture_decision_required
+    - acceptance_criteria_change_required
+    - live_cloud_action_required
+
+  completion:
+    merge_requires_user_approval: true
+    live_evaluation_requires_user_approval: true
+    next_work_package_start_requires_user_approval: true

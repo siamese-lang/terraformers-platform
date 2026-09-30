@@ -98,6 +98,7 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         ArchitectureRetrievalFacts facts = factsExtractor.extract(source);
         ReferenceQuery query = new ReferenceQuery(
                 queryTextBuilder.build(facts),
+                facts.resourceTypes(),
                 properties.getOpensearchTopK()
         );
         try {

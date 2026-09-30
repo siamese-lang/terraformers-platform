@@ -18,7 +18,7 @@ public class OpenSearchKnnQueryBuilder {
     }
 
     public String build(String vectorFieldName, String contentFieldName, List<Float> vector, int topK) {
-        return build(vectorFieldName, contentFieldName, vector, topK, "", "", List.of());
+        return build(vectorFieldName, contentFieldName, vector, topK, "", "", List.of(), List.of());
     }
 
     public String build(
@@ -29,6 +29,20 @@ public class OpenSearchKnnQueryBuilder {
             String corpusVersion,
             String providerVersion,
             List<String> resourceTypes
+    ) {
+        return build(vectorFieldName, contentFieldName, vector, topK, corpusVersion, providerVersion,
+                resourceTypes, List.of());
+    }
+
+    public String build(
+            String vectorFieldName,
+            String contentFieldName,
+            List<Float> vector,
+            int topK,
+            String corpusVersion,
+            String providerVersion,
+            List<String> resourceTypes,
+            List<String> authorities
     ) {
         if (vectorFieldName == null || vectorFieldName.isBlank()) {
             throw new IllegalArgumentException("vector field name must be set");
@@ -55,6 +69,10 @@ public class OpenSearchKnnQueryBuilder {
                         .toList();
         if (!normalizedResourceTypes.isEmpty()) {
             filters.add(Map.of("terms", Map.of("resourceTypes", normalizedResourceTypes)));
+        }
+        List<String> normalizedAuthorities = normalize(authorities);
+        if (!normalizedAuthorities.isEmpty()) {
+            filters.add(Map.of("terms", Map.of("authority", normalizedAuthorities)));
         }
 
         Map<String, Object> knnParameters = new LinkedHashMap<>();
@@ -96,6 +114,16 @@ public class OpenSearchKnnQueryBuilder {
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("failed to build OpenSearch k-NN query", exception);
         }
+    }
+
+    private List<String> normalize(List<String> values) {
+        return values == null
+                ? List.of()
+                : values.stream()
+                        .filter(value -> value != null && !value.isBlank())
+                        .map(String::strip)
+                        .distinct()
+                        .toList();
     }
 
     private void addTermFilter(List<Map<String, Object>> filters, String field, String value) {

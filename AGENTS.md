@@ -90,6 +90,10 @@ target runtime을 한 번 구축하고 계속 확장·재사용하는 것**이�
     하나의 승인 범위로 묶을 수 있다.
   - Work Package는 `approved_base_sha`, `allowed_paths`, `allowed_actions`, `prohibited_actions`,
     `acceptance_criteria`, `auto_repair_limit`, `stop_on`을 명시해야 한다.
+  - Work Package 계약 자체가 먼저 main에 병합되어야 해서 구현 base SHA를 사전에 알 수 없는 경우
+    `approved_base_sha: BIND_AT_ACTIVATION`을 사용할 수 있다. 이 값은 "항상 최신 main 사용" 권한이
+    아니다. 첫 implementation write 전에 GitHub remote `main`을 정확히 한 번 읽어
+    `execution_base_sha`로 바인딩하고, 이후 current main이 그 SHA와 달라지면 즉시 STOP한다.
   - Work Package가 끝나면 다음 Work Package를 자동 시작하지 않는다. 다음 후보는 제안할 수 있지만
     상태는 `AWAITING_APPROVAL`이어야 한다.
 - 사용자가 승인한 **현재 한 작업만** 수행한다. 한 작업이 끝났다고 다음 branch/PR/subtask/milestone을
@@ -188,8 +192,10 @@ implementation unit 하나만 수행한다. Approved Work Package의 동일 impl
 - 동일 allowed scope와 동일 acceptance 안의 기계적 repair만 `auto_repair_limit`까지 수행할 수 있다.
 - 초기 기본값은 1회다.
 - 같은 failure 반복, failure class 변화, allowed path 밖 수정 필요, architecture/technical decision 필요,
-  acceptance criteria 수정 필요, live/cost/security action 필요, approved base와 current GitHub `main`
-  불일치가 발생하면 즉시 `HUMAN_REQUIRED` 또는 `INCONCLUSIVE`로 STOP한다.
+  acceptance criteria 수정 필요, live/cost/security action 필요, activation 후 `execution_base_sha`와
+  current GitHub `main` 불일치가 발생하면 즉시 `HUMAN_REQUIRED` 또는 `INCONCLUSIVE`로 STOP한다.
+- `BIND_AT_ACTIVATION` Work Package는 branch 생성 직전에 remote main을 바인딩하고 그 SHA를 PR body와
+  completion evidence에 기록한다. 이후 자동 refresh/rebase로 새 main을 따라가지 않는다.
 - CI PASS는 acceptance PASS가 아니다. Verifier가 contract와 외부 evidence를 기준으로 별도 판정한다.
 
 공통으로:

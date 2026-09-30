@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Import({
         AnalysisJobStateService.class,
         AnalysisJobOrchestrator.class,
+        PassThroughTerraformExecutableValidatorTestConfig.class,
         AnalysisJobPartialSuccessBaselineTest.BaselineConfig.class
 })
 class AnalysisJobPartialSuccessBaselineTest {

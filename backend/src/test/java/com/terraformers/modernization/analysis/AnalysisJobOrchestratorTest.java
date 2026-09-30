@@ -91,7 +91,8 @@ class AnalysisJobOrchestratorTest {
                 progressPublisher,
                 resultStorage,
                 artifactService,
-                new TerraformDraftValidator()
+                new TerraformDraftValidator(),
+                passThroughExecutableValidator()
         );
 
         AnalysisJobEntity job = sampleEntity(101L);
@@ -121,6 +122,46 @@ class AnalysisJobOrchestratorTest {
     }
 
     @Test
+    void executableValidationRunsAfterSafetySanitizationAndBlocksFinalization() {
+        AnalysisProvider provider = context -> new AnalysisResult(
+                "test-provider",
+                """
+                ```hcl
+                resource "aws_s3_bucket" "accepted" {
+                  bucket_prefix = "accepted-"
+                }
+                ```
+                """,
+                "test explanation",
+                List.of("S3"),
+                List.of(),
+                List.of(),
+                List.of()
+        );
+        TerraformExecutableValidator executableValidator = mock(TerraformExecutableValidator.class);
+        when(executableValidator.validate(anyString())).thenReturn(
+                new TerraformDraftValidation(false, "", "generated Terraform failed Terraform CLI validation"));
+        AnalysisJobOrchestrator orchestrator = new AnalysisJobOrchestrator(
+                provider,
+                mock(ProgressPublisher.class),
+                mock(AnalysisResultStorage.class),
+                mock(ProjectArtifactService.class),
+                new TerraformDraftValidator(),
+                executableValidator
+        );
+
+        assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(sampleEntity(105L)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("generated Terraform failed Terraform CLI validation");
+
+        verify(executableValidator).validate("""
+                resource "aws_s3_bucket" "accepted" {
+                  bucket_prefix = "accepted-"
+                }
+                """.strip());
+    }
+
+    @Test
     void marksFailedWhenAnalysisProviderFails() {
         AnalysisProvider provider = context -> {
             throw new IllegalStateException("provider failure");
@@ -133,7 +174,8 @@ class AnalysisJobOrchestratorTest {
                 progressPublisher,
                 resultStorage,
                 artifactService,
-                new TerraformDraftValidator()
+                new TerraformDraftValidator(),
+                passThroughExecutableValidator()
         );
 
         AnalysisJobEntity job = sampleEntity(102L);
@@ -164,7 +206,8 @@ class AnalysisJobOrchestratorTest {
                 progressPublisher,
                 resultStorage,
                 artifactService,
-                new TerraformDraftValidator()
+                new TerraformDraftValidator(),
+                passThroughExecutableValidator()
         );
 
         AnalysisJobEntity job = sampleEntity(103L);
@@ -181,15 +224,22 @@ class AnalysisJobOrchestratorTest {
                 ArchitectureInputType.NON_ARCHITECTURE_IMAGE, 0.98);
         AnalysisProvider provider = context -> { throw rejection; };
         TerraformDraftValidator validator = mock(TerraformDraftValidator.class);
+        TerraformExecutableValidator executableValidator = mock(TerraformExecutableValidator.class);
         AnalysisResultStorage resultStorage = mock(AnalysisResultStorage.class);
         ProjectArtifactService artifactService = mock(ProjectArtifactService.class);
         AnalysisJobOrchestrator orchestrator = new AnalysisJobOrchestrator(
-                provider, mock(ProgressPublisher.class), resultStorage, artifactService, validator);
+                provider,
+                mock(ProgressPublisher.class),
+                resultStorage,
+                artifactService,
+                validator,
+                executableValidator
+        );
 
         assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(sampleEntity(104L)))
                 .isSameAs(rejection);
 
-        verifyNoInteractions(validator, resultStorage, artifactService);
+        verifyNoInteractions(validator, executableValidator, resultStorage, artifactService);
     }
 
     private AnalysisJobEntity sampleEntity(Long projectId) {
@@ -205,8 +255,18 @@ class AnalysisJobOrchestratorTest {
     }
 
     private AnalysisJobOrchestrator orchestrator(AnalysisProvider provider, AnalysisResultStorage storage) {
-        return new AnalysisJobOrchestrator(provider, mock(ProgressPublisher.class), storage,
-                mock(ProjectArtifactService.class), new TerraformDraftValidator());
+        return new AnalysisJobOrchestrator(
+                provider,
+                mock(ProgressPublisher.class),
+                storage,
+                mock(ProjectArtifactService.class),
+                new TerraformDraftValidator(),
+                passThroughExecutableValidator()
+        );
+    }
+
+    private TerraformExecutableValidator passThroughExecutableValidator() {
+        return candidate -> new TerraformDraftValidation(true, candidate, null);
     }
 
     private AnalysisResult validResult() {

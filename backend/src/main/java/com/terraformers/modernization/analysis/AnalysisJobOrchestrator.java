@@ -6,6 +6,7 @@ import com.terraformers.modernization.storage.ObjectWriteResult;
 import com.terraformers.modernization.storage.ObjectReference;
 import java.net.SocketTimeoutException;
 import java.net.http.HttpTimeoutException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,19 +17,23 @@ public class AnalysisJobOrchestrator {
     private final AnalysisResultStorage resultStorage;
     private final ProjectArtifactService projectArtifactService;
     private final TerraformDraftValidator terraformDraftValidator;
+    private final TerraformExecutableValidator terraformExecutableValidator;
 
+    @Autowired
     public AnalysisJobOrchestrator(
             AnalysisProvider analysisProvider,
             ProgressPublisher progressPublisher,
             AnalysisResultStorage resultStorage,
             ProjectArtifactService projectArtifactService,
-            TerraformDraftValidator terraformDraftValidator
+            TerraformDraftValidator terraformDraftValidator,
+            TerraformExecutableValidator terraformExecutableValidator
     ) {
         this.analysisProvider = analysisProvider;
         this.progressPublisher = progressPublisher;
         this.resultStorage = resultStorage;
         this.projectArtifactService = projectArtifactService;
         this.terraformDraftValidator = terraformDraftValidator;
+        this.terraformExecutableValidator = terraformExecutableValidator;
     }
 
     public AnalysisResult executeProviderAndValidate(AnalysisJobEntity entity) {
@@ -49,7 +54,12 @@ public class AnalysisJobOrchestrator {
         if (!validation.valid()) {
             throw new IllegalStateException(validation.reason());
         }
-        return result.withTerraformCode(validation.sanitizedContent());
+        TerraformDraftValidation executableValidation =
+                terraformExecutableValidator.validate(validation.sanitizedContent());
+        if (!executableValidation.valid()) {
+            throw new IllegalStateException(executableValidation.reason());
+        }
+        return result.withTerraformCode(executableValidation.sanitizedContent());
     }
 
     private boolean hasStandardNetworkTimeout(Throwable exception) {

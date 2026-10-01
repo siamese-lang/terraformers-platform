@@ -553,6 +553,32 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         result = gate.validate_plan(plan, "capacity-scale-out")
         self.assertEqual(result["resource_change_count"], 1)
 
+    def test_capacity_scale_out_rejects_node_config_change(self) -> None:
+        before = {
+            "name": "terraformers-target-primary",
+            "location": "asia-northeast3-a",
+            "node_count": 1,
+            "node_config": [node_config()],
+        }
+        after = dict(before)
+        after["node_count"] = 2
+        changed_config = node_config()
+        changed_config["machine_type"] = "e2-standard-4"
+        after["node_config"] = [changed_config]
+        plan = {
+            "resource_changes": [
+                resource(
+                    "google_container_node_pool.target",
+                    "google_container_node_pool",
+                    ["update"],
+                    after,
+                    before,
+                )
+            ]
+        }
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "capacity-scale-out")
+
     def test_capacity_scale_in_accepts_only_two_to_one_node_pool_update(self) -> None:
         before = {
             "name": "terraformers-target-primary",

@@ -20,11 +20,11 @@ work_package:
 
   delivery_foundation_contract:
     exact_create_resources:
-      - google_project_service.artifact_registry
-      - google_artifact_registry_repository.backend
-      - google_artifact_registry_repository_iam_member.publisher_writer
-      - google_artifact_registry_repository_iam_member.gke_node_reader
-      - google_artifact_registry_repository_iam_member.plan_reader
+      - google_project_service.artifact_registry[0]
+      - google_artifact_registry_repository.backend[0]
+      - google_artifact_registry_repository_iam_member.publisher_writer[0]
+      - google_artifact_registry_repository_iam_member.gke_node_reader[0]
+      - google_artifact_registry_repository_iam_member.plan_reader[0]
     repository:
       id: terraformers-backend
       location: asia-northeast3
@@ -132,6 +132,8 @@ work_package:
   result:
     implementation: COMPLETE
     ci: PENDING
+    auto_repair_used: 1
+    auto_repair_reason: preserve_historical_12_resource_foundation_and_pre_post_delivery_runtime_checks
     main_drift: false
     live_cloud_or_iam_mutation: false
     registry_created: false

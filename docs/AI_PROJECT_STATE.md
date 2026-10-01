@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Adaptive retrieval live-measurement readiness implemented; live adaptive retrieval probe AWAITING_APPROVAL**
+- Current single task: **Adaptive retrieval >8-resource live measurement CLOSED; Case A remains OPEN pending the next approved canonical/holdout validation checkpoint**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -34,13 +34,13 @@ The project success criterion is now explicit: complete three technically defens
 cases with repository-backed technical decisions, not merely a sequence of completed milestones.
 
 Case A — AI/RAG quality, performance and reliability:
-- adaptive retrieval live-measurement readiness is implemented in
-  [Adaptive Retrieval Live Measurement Readiness](evaluation/adaptive-retrieval-live-measurement-readiness.md):
-  the frozen `large-vpc-eks-rds-s3` facts require 12 resource types that need a minimum of 10
-  committed v3 corpus documents for complete coverage, so K8 is structurally insufficient; the
-  readiness harness compares production `OpenSearchReferenceRetriever` at maxEvidence 8 vs 16
-  while reusing one delegated Vertex embedding, and the manual live run remains
-  **AWAITING_APPROVAL**;
+- adaptive retrieval >8-resource live measurement is **CLOSED / PASS** in
+  [Adaptive Retrieval Live Measurement Closure](evaluation/adaptive-retrieval-live-measurement-closure.md):
+  run `36799722509` on source `9d54fe27bbc24347c9eff09193c7aeaec3171ff6` reused one delegated
+  `gemini-embedding-001` vector and the production `OpenSearchReferenceRetriever`; control
+  maxEvidence 8 selected 8 documents and covered `10/12` resources, missing
+  `aws_route_table` and `aws_db_instance`, while adaptive maxEvidence 16 selected exactly 10
+  documents and reached `12/12` by admitting the two missing provider-schema anchors;
 - latest latency side-investigation is **CLOSED** in
   [Gemini Fact-Reuse Latency Diagnostic Closure](evaluation/gemini-fact-reuse-latency-diagnostic-closure.md);
   the three successful instrumented attempts in run `36758290144` reproduced a text-only
@@ -48,9 +48,6 @@ Case A — AI/RAG quality, performance and reliability:
   failures, and HTTP 200; the delay accumulated before response headers, so production fact-reuse
   adoption is **HOLD**, generic retry is not selected, and the diagnostic must not be repeated until
   lucky;
-- PR #127 adaptive retrieval is merged, but `terraformers-eval-v1` does not contain a >8-resource
-  acceptance case; a separate frozen evaluation-only >8-resource measurement scenario is therefore
-  the next candidate Work Package and remains `AWAITING_APPROVAL`;
 - retain M3 fixed baseline/provenance and M4 failure evidence;
 - do not treat M4 as portfolio-closed;
 - primary problem selected: **retrieval grounding / required-evidence coverage**;

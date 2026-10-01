@@ -1,0 +1,94 @@
+work_package:
+  id: cloud-only-agent-execution-protocol-v1
+  status: COMPLETE
+  approved_base_sha: "03a4ab209d62ad8c5e3aecd275ddb3ff1e264a53"
+  execution_base_sha: "03a4ab209d62ad8c5e3aecd275ddb3ff1e264a53"
+
+  goal: >
+    Adopt a cloud-only execution protocol so approved Terraformers work can be
+    implemented, validated, reviewed and resumed without depending on the user's
+    local computer or one conversation remaining alive.
+
+  problem:
+    - interactive CI waiting causes repeated manual status turns
+    - local hardware is not a reliable persistent agent/Docker host
+    - long conversations and handoffs can lose execution context
+    - uncontrolled automation can widen scope or continue after a new failure class
+
+  selected_model:
+    - GitHub is the durable source of truth and orchestration ledger
+    - ChatGPT/Work is the technical lead/reviewer and optional PR-event coordinator
+    - Codex Cloud is the preferred bounded implementation executor
+    - GitHub Actions remains CI and repository-backed cloud execution
+    - Cloud Shell remains break-glass/bootstrap tooling only
+    - no local persistent runtime is required
+
+  allowed_paths:
+    - .agents/work-packages/cloud-only-agent-execution-protocol-v1.yml
+    - AGENTS.md
+    - docs/runbooks/cloud-only-agent-execution-protocol.md
+
+  prohibited_paths:
+    - backend/**
+    - frontend/**
+    - infra/**
+    - .github/workflows/**
+    - evaluation/**
+    - corpus/**
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-*
+    - docs/evaluation/**
+
+  allowed_actions:
+    - inspect_repository
+    - inspect_official_openai_documentation
+    - inspect_official_github_documentation
+    - document_cloud_only_execution_protocol
+    - update_agent_instructions
+    - create_pull_request
+    - inspect_ci_once
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - create_or_modify_ci_workflow
+    - create_scheduled_or_event_task
+    - dispatch_codex_task
+    - install_mcp_server
+    - install_n8n
+    - mutate_gcp
+    - mutate_iam
+    - terraform_plan
+    - terraform_apply
+    - kubernetes_apply
+    - start_next_work_package
+
+  acceptance_criteria:
+    - repository instructions explicitly prohibit mandatory local persistent runtime
+    - GitHub is named as the durable state source
+    - exact execution_base_sha binding remains mandatory
+    - Codex Cloud is the preferred implementation executor for cloud-only work
+    - Work GitHub PR event automation is optional and cannot merge or start next work
+    - event-driven continuation is preferred over long interactive polling
+    - auto_repair_limit and failure-class stop rules remain authoritative
+    - live cost destructive and security boundary actions retain human checkpoints
+    - MCP and n8n are explicitly optional and evidence-driven
+    - a new session can resume from GitHub without prior chat context
+    - no production code infrastructure workflow or Case C decision is changed
+
+  evidence:
+    protocol: docs/runbooks/cloud-only-agent-execution-protocol.md
+    authoritative_external_sources:
+      - OpenAI ChatGPT Work and Codex
+      - OpenAI Connecting GitHub to ChatGPT
+      - GitHub Actions event documentation
+
+  result:
+    protocol_defined: true
+    new_runtime_dependency: false
+    new_workflow: false
+    local_runtime_required: false
+    mcp_required: false
+    n8n_required: false
+    merge_requires_user_approval: true
+    next_work_package_requires_user_approval: true

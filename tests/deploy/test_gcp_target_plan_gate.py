@@ -650,6 +650,14 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "runtime-host-firewall-repair")
 
+    def test_runtime_host_firewall_repair_rejects_unreviewed_vm_field_change(self) -> None:
+        plan = runtime_host_firewall_repair_plan()
+        instance = plan["resource_changes"][0]
+        instance["change"]["before"]["labels"] = {"runtime": "mariadb"}
+        instance["change"]["after"]["labels"] = {"runtime": "changed"}
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-host-firewall-repair")
+
     def test_runtime_host_firewall_repair_rejects_extra_change(self) -> None:
         plan = runtime_host_firewall_repair_plan()
         plan["resource_changes"].append(

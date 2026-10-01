@@ -1,0 +1,130 @@
+work_package:
+  id: case-c-immutable-backend-image-delivery-readiness-v1
+  status: ACTIVE
+  approved_base_sha: "488f9c2b216f7f863ebb1d09bedf9716ccdef2b9"
+  execution_base_sha: "488f9c2b216f7f863ebb1d09bedf9716ccdef2b9"
+
+  goal: >
+    Prepare one fail-closed, repository-owned delivery path for immutable backend images
+    without creating Artifact Registry resources, mutating IAM, publishing an image, or
+    deploying the backend.
+
+  selected_decision:
+    terraform_root: existing_gcp_target_runtime
+    terraform_state: existing_gcp_target_runtime_remote_state
+    delivery_operation: delivery-foundation
+    publisher_identity: dedicated_terraformers-image-publish
+    publisher_authentication: existing_GitHub_OIDC_WIF_provider
+    image_identity: full_source_SHA_plus_resolved_sha256_digest
+    deployment_identity: digest_only_future_step
+
+  delivery_foundation_contract:
+    exact_create_resources:
+      - google_project_service.artifact_registry
+      - google_artifact_registry_repository.backend
+      - google_artifact_registry_repository_iam_member.publisher_writer
+      - google_artifact_registry_repository_iam_member.gke_node_reader
+      - google_artifact_registry_repository_iam_member.plan_reader
+    repository:
+      id: terraformers-backend
+      location: asia-northeast3
+      format: DOCKER
+    publisher:
+      service_account: terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com
+      repository_role: roles/artifactregistry.writer
+    puller:
+      service_account: terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com
+      repository_role: roles/artifactregistry.reader
+    plan_identity:
+      service_account: terraformers-plan@terraformers-platform.iam.gserviceaccount.com
+      repository_role: roles/artifactregistry.reader
+
+  allowed_paths:
+    - .agents/work-packages/case-c-immutable-backend-image-delivery-readiness-v1.yml
+    - infra/terraform/envs/gcp-target-runtime/main.tf
+    - infra/terraform/envs/gcp-target-runtime/outputs.tf
+    - infra/terraform/envs/gcp-target-runtime/README.md
+    - scripts/deploy/gcp_target_plan_gate.py
+    - tests/deploy/test_gcp_target_plan_gate.py
+    - scripts/deploy/bootstrap_gcp_target_apply.sh
+    - scripts/deploy/bootstrap_gcp_image_publish.sh
+    - scripts/deploy/bootstrap_github_image_publish_environment.sh
+    - .github/workflows/gcp-target-terraform-apply.yml
+    - .github/workflows/gcp-backend-image-publish.yml
+    - .github/workflows/terraform-static-verification.yml
+    - scripts/checks/ci_changed_scope.py
+    - docs/runbooks/gcp-backend-image-delivery-bootstrap.md
+    - docs/evaluation/case-c-immutable-backend-image-delivery-readiness.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/portfolio-case-reassessment.md
+
+  prohibited_paths:
+    - backend/**
+    - frontend/**
+    - infra/kubernetes/**
+    - backend/src/main/resources/db/migration/**
+    - evaluation/**
+    - corpus/**
+    - AGENTS.md
+
+  allowed_actions:
+    - add_artifact_registry_desired_state
+    - extend_fail_closed_plan_gate
+    - add_dedicated_publisher_bootstrap_scripts
+    - add_manual_only_image_publish_workflow
+    - add_static_contract_tests
+    - update_case_c_state_and_evidence
+    - create_pull_request
+    - inspect_ci_once
+
+  prohibited_actions:
+    - merge
+    - execute_bootstrap_script_in_apply_mode
+    - create_or_modify_GCP_resource
+    - mutate_IAM
+    - dispatch_delivery_foundation
+    - publish_image
+    - kubernetes_apply
+    - deploy_backend
+    - create_database
+    - create_application_bucket
+    - change_database_secret_delivery
+    - start_next_work_package
+
+  acceptance_criteria:
+    - canonical_gcp_target_root_and_remote_state_are_reused
+    - delivery_foundation_gate_accepts_exactly_five_create_only_resources
+    - delivery_foundation_gate_rejects_additional_update_delete_or_replace_actions
+    - artifact_registry_is_DOCKER_in_asia_northeast3_with_repository_id_terraformers-backend
+    - publisher_writer_is_repository_scoped_and_uses_dedicated_service_account
+    - gke_node_reader_is_repository_scoped
+    - terraform_plan_identity_gets_repository_scoped_reader_only
+    - publisher_bootstrap_reuses_existing_WIF_provider_and_exact_gcp-image-publish_environment_subject
+    - publisher_bootstrap_creates_no_service_account_key
+    - publisher_has_no_direct_project_resource_role
+    - image_publish_workflow_is_manual_only_and_main_only
+    - image_publish_requires_exact_full_main_SHA_and_explicit_confirmation
+    - backend_image_build_sets_BUILD_SOURCE_REVISION_to_full_SHA
+    - published_tag_is_full_source_SHA_without_latest_tag
+    - workflow_resolves_and_validates_remote_sha256_digest
+    - workflow_does_not_modify_Kubernetes_or_Terraform
+    - terraform_static_verification_covers_new_gate_bootstrap_and_workflow_contract
+    - no_live_cloud_IAM_registry_image_or_deployment_change_occurs
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - main_drift
+    - second_failure_after_bounded_repair
+    - failure_class_changes
+    - application_secret_or_database_decision_becomes_required
+    - additional_GCP_product_or_public_endpoint_becomes_required
+    - acceptance_criteria_would_need_to_change
+    - any_live_cloud_or_IAM_action_becomes_required_for_static_acceptance
+
+  completion:
+    merge_requires_user_approval: true
+    live_identity_bootstrap_requires_user_approval: true
+    delivery_foundation_apply_requires_user_approval: true
+    image_publish_requires_user_approval: true
+    next_work_package_requires_user_approval: true

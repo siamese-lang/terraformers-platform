@@ -378,6 +378,50 @@ def runtime_dependencies_plan() -> dict:
     }
 
 
+def runtime_host_firewall_repair_plan() -> dict:
+    digest = "a" * 64
+    common = {
+        "name": "terraformers-mariadb",
+        "machine_type": "e2-medium",
+        "zone": "asia-northeast3-a",
+        "allow_stopping_for_update": True,
+        "attached_disk": [{"device_name": "terraformers-mariadb-data"}],
+        "network_interface": [{
+            "subnetwork": "https://www.googleapis.com/compute/v1/projects/terraformers-platform/"
+                          "regions/asia-northeast3/subnetworks/terraformers-target",
+            "access_config": [{}],
+        }],
+        "service_account": [{
+            "email": "terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com",
+            "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+        }],
+    }
+    before = dict(common)
+    before["metadata_startup_script"] = (
+        f'MARIADB_IMAGE="mariadb:11.4@sha256:{digest}"\n'
+        'docker run --network host mariadb\n'
+    )
+    after = dict(common)
+    after["metadata_startup_script"] = (
+        f'MARIADB_IMAGE="mariadb:11.4@sha256:{digest}"\n'
+        'MARIADB_ALLOWED_SOURCE_RANGES=("10.40.0.0/20" "10.136.0.0/14")\n'
+        'iptables -w 5 -C INPUT -p tcp -s "$source_range" --dport 3306 -j ACCEPT\n'
+        'iptables -w 5 -I INPUT 1 -p tcp -s "$source_range" --dport 3306 -j ACCEPT\n'
+        'docker run --network host mariadb\n'
+    )
+    return {
+        "resource_changes": [
+            resource(
+                "google_compute_instance.mariadb[0]",
+                "google_compute_instance",
+                ["update"],
+                after,
+                before,
+            )
+        ]
+    }
+
+
 class GcpTargetPlanGateTest(unittest.TestCase):
     def test_foundation_accepts_reviewed_contract(self) -> None:
         result = gate.validate_plan(foundation_plan(), "foundation")
@@ -594,6 +638,39 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         )
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "runtime-secret-foundation")
+
+    def test_runtime_host_firewall_repair_accepts_exact_vm_update(self) -> None:
+        result = gate.validate_plan(runtime_host_firewall_repair_plan(), "runtime-host-firewall-repair")
+        self.assertEqual(result["resource_change_count"], 1)
+
+    def test_runtime_host_firewall_repair_rejects_public_source(self) -> None:
+        plan = runtime_host_firewall_repair_plan()
+        instance = plan["resource_changes"][0]
+        instance["change"]["after"]["metadata_startup_script"] += "0.0.0.0/0\n"
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-host-firewall-repair")
+
+    def test_runtime_host_firewall_repair_rejects_unreviewed_vm_field_change(self) -> None:
+        plan = runtime_host_firewall_repair_plan()
+        instance = plan["resource_changes"][0]
+        instance["change"]["before"]["labels"] = {"runtime": "mariadb"}
+        instance["change"]["after"]["labels"] = {"runtime": "changed"}
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-host-firewall-repair")
+
+    def test_runtime_host_firewall_repair_rejects_extra_change(self) -> None:
+        plan = runtime_host_firewall_repair_plan()
+        plan["resource_changes"].append(
+            resource(
+                "google_compute_firewall.unreviewed",
+                "google_compute_firewall",
+                ["update"],
+                {"name": "unexpected"},
+                {"name": "unexpected"},
+            )
+        )
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-host-firewall-repair")
 
     def test_runtime_dependencies_accepts_exact_ten_change_contract(self) -> None:
         result = gate.validate_plan(runtime_dependencies_plan(), "runtime-dependencies")

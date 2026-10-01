@@ -382,6 +382,17 @@ resource "google_compute_instance" "mariadb" {
     APP_PASSWORD="$(access_secret terraformers-mariadb-app-password)"
     [[ -n "$ROOT_PASSWORD" && -n "$APP_PASSWORD" ]]
 
+    # Container-Optimized OS drops non-SSH inbound traffic at the guest firewall.
+    # Mirror the existing VPC MariaDB boundary before using host networking.
+    MARIADB_ALLOWED_SOURCE_RANGES=(
+      "${var.subnet_cidr}"
+      "${google_container_cluster.target.ip_allocation_policy[0].cluster_ipv4_cidr_block}"
+    )
+    for source_range in "$${MARIADB_ALLOWED_SOURCE_RANGES[@]}"; do
+      iptables -w 5 -C INPUT -p tcp -s "$source_range" --dport 3306 -j ACCEPT 2>/dev/null || \
+        iptables -w 5 -I INPUT 1 -p tcp -s "$source_range" --dport 3306 -j ACCEPT
+    done
+
     docker pull "$MARIADB_IMAGE"
     docker rm -f terraformers-mariadb >/dev/null 2>&1 || true
     docker run -d       --name terraformers-mariadb       --restart unless-stopped       --network host       -e MARIADB_ROOT_PASSWORD="$ROOT_PASSWORD"       -e MARIADB_DATABASE=terraformers       -e MARIADB_USER=terraformers       -e MARIADB_PASSWORD="$APP_PASSWORD"       -v "$DATA_MOUNT:/var/lib/mysql"       "$MARIADB_IMAGE"

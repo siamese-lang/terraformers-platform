@@ -73,7 +73,7 @@ Default construction uses:
 so the production path uses Application Default Credentials rather than a service-account key.
 
 Google documents that Cloud Java client libraries use ADC in Google Cloud environments, including
-GKE, without application code needing a key file. cite placeholder removed in repository copy
+GKE, without application code needing a key file.
 
 ### Reader mapping
 

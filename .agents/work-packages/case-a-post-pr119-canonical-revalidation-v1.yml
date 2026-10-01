@@ -1,0 +1,199 @@
+work_package:
+  id: case-a-post-pr119-canonical-revalidation-v1
+  status: ACTIVE
+  approved_base_sha: "3535cd77a46154fc0a771699d0537e997a1c6ef5"
+  execution_base_sha: "3535cd77a46154fc0a771699d0537e997a1c6ef5"
+
+  goal: >
+    Freeze the exact post-PR119 canonical N=3 live revalidation contract for Case A,
+    using the existing case-a-full-baseline workflow and existing Case A report/aggregate
+    tooling without changing production code, workflow semantics, dataset, corpus, model,
+    prompt, retrieval behavior, or holdout contents.
+
+  engineering_axis:
+    - AI/RAG evaluation and targeted improvement
+    - Case A closure readiness
+
+  representative_case:
+    - Case A retrieval grounding
+
+  contract_file_immutable_after_first_implementation_write: true
+
+  allowed_paths:
+    - .agents/work-packages/case-a-post-pr119-canonical-revalidation-v1.yml
+    - docs/evaluation/case-a-post-pr119-canonical-revalidation-readiness.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-a-retrieval-grounding-decision.md
+
+  prohibited_paths:
+    - backend/**
+    - frontend/**
+    - corpus/**
+    - evaluation/terraformers-eval-v1/**
+    - evaluation/terraformers-eval-holdout-v1/**
+    - .github/workflows/**
+    - infra/**
+    - AGENTS.md
+    - docs/architecture/**
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - freeze_live_measurement_contract
+    - document_acceptance_and_stopping_rules
+    - create_pull_request
+    - inspect_ci
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - dispatch_workflow
+    - live_ai_model_call
+    - live_opensearch_evaluation
+    - holdout_run
+    - production_code_change
+    - workflow_change
+    - corpus_change
+    - canonical_dataset_change
+    - holdout_change
+    - model_change
+    - embedding_change
+    - prompt_change
+    - retrieval_change
+    - validator_change
+    - terraform_plan
+    - terraform_apply
+    - iam_change
+    - infrastructure_change
+    - next_work_package_start
+    - acceptance_criteria_change
+
+  current_known_boundary:
+    selected_correction:
+      pull_request: 119
+      meaning: >
+        A successful zero-hit retrieval may proceed to input classification; REQUIRED grounding
+        still fails closed for architecture input after classification, while NON_ARCHITECTURE_IMAGE
+        and AMBIGUOUS retain their rejection semantics.
+    last_recorded_canonical_n3:
+      source_sha: "edd291a0e5b00e3e37d2b35b52531b3acd07a835"
+      runs:
+        - 36678421069
+        - 36678439743
+        - 36679694645
+      result:
+        vpc_project_decision_coverage: "3/3"
+        vpc_required_resource_coverage: "4/4 x 3"
+        grounding_gaps: "0/12"
+        positive_validation: "12/12"
+        negative_controls: "5/6"
+      blocking_case: non-architecture-deployment-dashboard
+      holdout: NOT_RUN
+
+  live_execution_contract:
+    live_source_sha: RESOLVE_EXACT_MERGED_MAIN_SHA_AFTER_READINESS_MERGE
+    workflow: .github/workflows/gcp-target-evaluation-baseline.yml
+    evaluation_scope: case-a-full-baseline
+    confirmation: RUN_CASE_A_BASELINE
+    independent_dispatches: 3
+    required_run_attempt: 1
+    no_n4: true
+    do_not_rerun_until_lucky: true
+    dataset_version: terraformers-eval-v1
+    cases_per_run: 6
+    artifacts_per_run:
+      - case-a-baseline-<github_run_id>
+      - case-a-grounding-report-<github_run_id>
+    aggregate_tool:
+      class: com.terraformers.modernization.evaluation.CaseAMeasurementLauncher
+      mode: aggregate
+      reuse_existing_tool_only: true
+
+  frozen_configuration_identity:
+    corpus_version: terraformers-reference-v3
+    provider_version: "5.100.0"
+    analysis_provider: vertex
+    embedding_provider: vertex
+    retrieval_mode: REQUIRED
+    top_k: 8
+    generation_model_id: gemini-3.8-flash
+    embedding_model_id: gemini-embedding-001
+    fact_extraction_thinking_level: LOW
+    fact_extraction_max_output_tokens: 800
+    generation_max_output_tokens: 8192
+    configuration_fingerprint_rule: >
+      Do not hard-code a historical fingerprint. Require each of the three live runs to report
+      the same non-empty sha256 configurationFingerprint because the current production
+      configuration includes changes after the earlier M3 baseline.
+
+  canonical_n3_hard_gates:
+    - id: exact_source_and_identity
+      requirement: >
+        All three successful evaluation artifacts come from the exact same separately approved
+        merged main SHA, each is workflow attempt 1, each contains six terraformers-eval-v1 traces,
+        and all three have comparable configuration identity and the same configuration fingerprint.
+    - id: fact_extraction_non_regression
+      requirement: >
+        Fact extraction passes all 18 canonical traces across N=3.
+    - id: retrieval_non_regression
+      requirement: >
+        Retrieval passes all 18 canonical traces across N=3, including successful zero-hit
+        retrieval when applicable to a negative-control input.
+    - id: vpc_project_decision_consistency
+      requirement: >
+        For arch-vpc-three-tier in every run, projectDecisionCoverage is 1/1 and
+        tfref-v2-sg-relations is present; frequency is 3/3.
+    - id: vpc_required_resource_coverage
+      requirement: >
+        For arch-vpc-three-tier in every run, required resource coverage is 4/4 for aws_vpc,
+        aws_lb, aws_db_instance, and aws_security_group.
+    - id: grounding_gap_zero
+      requirement: >
+        Across the 12 applicable architecture-case observations in N=3, groundingGap is 0/12.
+    - id: positive_validation_non_regression
+      requirement: >
+        All 12 architecture-case observations pass the existing deterministic Terraform validation.
+    - id: negative_control_non_regression
+      requirement: >
+        Both canonical negative controls are classified correctly in every run, for 6/6 correct
+        negative-control observations across N=3.
+    - id: no_first_divergence
+      requirement: >
+        No canonical trace records a new first-divergence failure in the accepted N=3 after-state.
+
+  stopping_rules:
+    - Run exactly three independent canonical evaluations; do not add N=4 to chase a pass.
+    - A model/evaluation hard-gate failure is evidence and is not rerun away.
+    - A pre-evaluation infrastructure or identity failure is a blocker to classify before any continuation;
+      do not silently discard it and substitute a new attempt.
+    - If source main drifts between approved dispatches, stop and re-freeze the source SHA before continuing.
+    - If any artifact is missing, identity-mismatched, or configuration-incompatible, the N=3 is INCONCLUSIVE.
+    - Do not change corpus, prompts, model, retrieval, validator, dataset, or workflow during this N=3.
+
+  holdout_gate:
+    status: NOT_AUTHORIZED_IN_THIS_WORK_PACKAGE
+    entry_condition: >
+      Only if the exact canonical N=3 hard gates above all pass may the frozen
+      terraformers-eval-holdout-v1 run once under a separate user-approved checkpoint.
+    no_automatic_progression: true
+
+  interpretation_rules:
+    - Passing canonical N=3 proves post-PR119 canonical non-regression only; it does not by itself close Case A.
+    - A holdout run is still required before Case A closure.
+    - Do not fold the already-closed adaptive >8-resource probe or fact-reuse latency investigation into this gate.
+    - Do not claim latency improvement from these three runs unless a separately frozen latency contract exists.
+
+  verification:
+    evidence_sources:
+      - GitHub remote main SHA
+      - three workflow run identities
+      - three raw Case A artifacts
+      - three grounding-report artifacts
+      - existing CaseAMeasurementLauncher aggregate output
+    implementer_self_report_is_evidence: false
+
+  completion:
+    merge_requires_user_approval: true
+    live_canonical_n3_requires_user_approval: true
+    holdout_requires_separate_user_approval: true
+    next_work_package_start_requires_user_approval: true

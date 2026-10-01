@@ -773,3 +773,31 @@ and reached `12/12` requested-resource coverage with no duplicates.
 This closes the >8-resource adaptive-retrieval side investigation. It does not replace the primary
 Case A canonical/holdout closure contract, does not prove generation quality, and does not authorize
 repeating the probe for latency sampling.
+
+## Post-PR119 canonical N=3 revalidation readiness
+
+The next primary Case A checkpoint is now frozen in
+[Case A Post-PR119 Canonical N=3 Revalidation Readiness](../../evaluation/case-a-post-pr119-canonical-revalidation-readiness.md).
+
+No new workflow or verifier is selected. The existing `case-a-full-baseline` scope already emits
+the raw six-case result and deterministic grounding report, and the existing
+`CaseAMeasurementLauncher --mode=aggregate` can aggregate the three grounding reports.
+
+The live contract is exactly N=3 independent dispatches on one exact merged `main` SHA. Do not
+hard-code the historical M3 configuration fingerprint; require the three current runs to expose the
+same non-empty `sha256:` fingerprint and otherwise comparable configuration identity.
+
+The unchanged hard gates are made explicit for the post-PR119 after-state:
+
+- fact extraction PASS `18/18`;
+- retrieval PASS `18/18`;
+- VPC `tfref-v2-sg-relations` / project-decision coverage `3/3`;
+- VPC required-resource coverage `4/4 × 3`;
+- grounding gaps `0/12`;
+- positive Terraform validation `12/12`;
+- canonical negative controls correct `6/6`;
+- no new first-divergence failure.
+
+Run exactly three samples and do not add N=4 to chase a pass. A hard-gate failure remains evidence.
+The frozen holdout stays blocked until all canonical N=3 gates pass and then still requires separate
+user approval. This readiness document does not dispatch the canonical runs or the holdout.

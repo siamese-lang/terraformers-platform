@@ -99,3 +99,63 @@ jobs:
             backend/target/mariadb-schema-validation.log
             backend/target/mariadb-repository-smoke.log
             backend/target/surefire-reports
+
+  mysql84-schema-validation:
+    name: MySQL 8.4 schema and repository compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: terraformers
+          MYSQL_USER: terraformers
+          MYSQL_PASSWORD: terraformers
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://127.0.0.1:3306/terraformers
+      SPRING_DATASOURCE_USERNAME: terraformers
+      SPRING_DATASOURCE_PASSWORD: terraformers
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+      JWT_PROVIDER: cognito
+      JWT_ISSUER_URI: https://identity.example.test/validation-pool
+      JWT_JWK_SET_URI: http://127.0.0.1:65535/.well-known/jwks.json
+      TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID: validation-client
+      UPLOAD_SOURCE_BUCKET: validation-upload-bucket
+      SERVER_PORT: '18080'
+      DB_VALIDATION_LABEL: mysql-8.4
+      DB_VALIDATION_LOG_PREFIX: mysql-8.4
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Validate schema and canonical repository queries
+        run: bash scripts/checks/mariadb-schema-validation.sh
+
+      - name: Upload MySQL 8.4 validation diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mysql84-schema-validation-diagnostics
+          path: |
+            backend/target/mysql-8.4-schema-validation.log
+            backend/target/mysql-8.4-repository-smoke.log
+            backend/target/surefire-reports
+

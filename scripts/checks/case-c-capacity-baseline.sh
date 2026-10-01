@@ -203,6 +203,17 @@ provider_rate_limit_total() {
   rm -f "$response"
 }
 
+job_has_provider_rate_limit_log() {
+  local job_id="$1" since_time="$2" log_file
+  log_file="$ARTIFACT_DIR/tmp/provider-log-${job_id}.txt"
+  jsonpath logs deployment/terraformers-backend -c backend --since-time="$since_time" > "$log_file"
+  awk -v job="analysisJobId=${job_id}" '
+    index($0, job) && index($0, "analysis stage outcome=failure") &&
+      index($0, "category=provider_rate_limited") { found=1 }
+    END { exit(found ? 0 : 1) }
+  ' "$log_file"
+}
+
 mark_fatal() {
   local step="$1" slot="$2" sequence="$3" category="$4" detail="$5" tmp
   tmp="$ARTIFACT_DIR/tmp/fatal-${step}-${slot}-${sequence}.json"
@@ -228,13 +239,13 @@ hash_gcs_result() {
 }
 
 slot_worker() {
-  local step="$1" slot="$2" active_deadline="$3" drain_deadline="$4" provider_baseline="$5" sequence=0 token project_name
+  local step="$1" slot="$2" active_deadline="$3" drain_deadline="$4" sequence=0 token project_name
   token="$(cat "$TOKEN_FILE")"
   while (( $(date +%s) < active_deadline )) && [[ ! -e "$FATAL_MARKER" ]]; do
     sequence=$((sequence + 1))
     project_name="case-c-capacity-${GITHUB_RUN_ID}-c${step}-s${slot}-n${sequence}"
     local request_start accepted_at terminal_at upload_ms code response job_file job_id project_id status failure category created updated end_ms
-    local result_file_id=null result_object_key=null integrity_status=NOT_APPLICABLE integrity_detail=null draft_hash=null gcs_hash=null
+    local result_file_id=null result_object_key=null integrity_status=NOT_APPLICABLE integrity_detail=null draft_hash=null gcs_hash=null classification_evidence=null
     request_start="$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
     response="$ARTIFACT_DIR/tmp/upload-${step}-${slot}-${sequence}.json"
     job_file="$ARTIFACT_DIR/tmp/job-${step}-${slot}-${sequence}.json"
@@ -278,16 +289,9 @@ slot_worker() {
           else integrity_status=FAIL; integrity_detail=gcs_or_draft_hash_mismatch; category=correctness_failure; fi
         else integrity_status=FAIL; integrity_detail=result_identity_or_read_failure; category=correctness_failure; fi
       elif [[ "$status" == FAILED ]]; then
-        current_provider=null
-        for _ in 1 2 3; do
-          current_provider="$(provider_rate_limit_total)"
-          [[ "$current_provider" != null && "$provider_baseline" != null ]] && \
-            (( $(awk -v a="$current_provider" -v b="$provider_baseline" 'BEGIN{print a>b}') )) && break
-          sleep 1
-        done
-        if [[ "$current_provider" != null && "$provider_baseline" != null ]] && \
-          (( $(awk -v a="$current_provider" -v b="$provider_baseline" 'BEGIN{print a>b}') )); then category=external_provider_saturation
-        else category=application_failure; fi
+        if job_has_provider_rate_limit_log "$job_id" "$request_start"; then
+          category=external_provider_saturation; classification_evidence=correlated_analysisJobId_provider_rate_limited_log
+        else category=application_failure; classification_evidence=no_correlated_provider_rate_limit_log; fi
       elif [[ "$status" != AUTHENTICATION_FAILED ]]; then status=DRAIN_TIMEOUT; failure=drain_timeout; category=capacity_failure; fi
     fi
     terminal_at="$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
@@ -305,7 +309,7 @@ PY
       --arg failureCategory "$category" --arg createdAt "$created" --arg updatedAt "$updated" \
       --arg resultFileId "$result_file_id" --arg resultObjectKey "$result_object_key" \
       --arg integrityStatus "$integrity_status" --arg integrityDetail "$integrity_detail" \
-      --arg draftHash "$draft_hash" --arg gcsHash "$gcs_hash" --argjson endToEndMs "$end_ms" '
+      --arg draftHash "$draft_hash" --arg gcsHash "$gcs_hash" --arg classificationEvidence "$classification_evidence" --argjson endToEndMs "$end_ms" '
       {step:$step,slot:$slot,sequence:$sequence,project_name:$projectName,request_started_at:$requestStartedAt,
        upload_accepted_at:$acceptedAt,terminal_at:$terminalAt,http_status:($httpStatus|tonumber? // $httpStatus),
        acceptance_latency_ms:(($acceptanceSeconds|tonumber? // 0)*1000|round),project_id:($projectId|tonumber? // $projectId),
@@ -313,7 +317,7 @@ PY
        result_file_id:($resultFileId|tonumber? // $resultFileId),result_object_key:$resultObjectKey,
        integrity:{status:$integrityStatus,detail:$integrityDetail,draft_sha256:$draftHash,gcs_result_sha256:$gcsHash},
        queue_wait_ms:null,queue_wait_source:"aggregate_prometheus_only",end_to_end_ms:$endToEndMs,
-       failure_reason:$failureReason,failure_category:$failureCategory}' \
+       failure_reason:$failureReason,failure_category:$failureCategory,failure_classification_evidence:$classificationEvidence}' \
       | flock "$ARTIFACT_DIR/requests.lock" tee -a "$ARTIFACT_DIR/requests.jsonl" >/dev/null
     if [[ "$category" == acceptance_failure || "$category" == authentication_failure || "$category" == application_failure || "$category" == correctness_failure ]]; then
       mark_fatal "$step" "$slot" "$sequence" "$category" "$failure/$integrity_detail"
@@ -334,11 +338,13 @@ lat=[x['acceptance_latency_ms'] for x in r]; end=[x['end_to_end_ms'] for x in r]
 active=[x for x in m if x['phase']=='active']
 pressure=sum(x['executor']['active_workers']==4 and (x['executor']['queue_depth'] or 0)>0 for x in active)
 first,last=(active[0] if active else None),(active[-1] if active else None)
+step_first,step_last=(m[0] if m else None),(m[-1] if m else None)
 delta=lambda path: None if not first or path(first) is None or path(last) is None else path(last)-path(first)
+step_delta=lambda path: None if not step_first or path(step_first) is None or path(step_last) is None else path(step_last)-path(step_first)
 rejections=delta(lambda x:x['executor']['rejections_total'])
 os_rejections=delta(lambda x:x['opensearch']['thread_pool_rejected'])
-provider_delta=delta(lambda x:x['jobs']['provider_rate_limited_total'])
-provider=(provider_delta or 0)>0
+provider_delta=step_delta(lambda x:x['jobs']['provider_rate_limited_total'])
+provider=(provider_delta or 0)>0 or any(x['failure_category']=='external_provider_saturation' for x in r)
 capacity=any(x['failure_category']=='capacity_failure' for x in r)
 restart=any(x['backend']['restarts'] != m[0]['backend']['restarts'] or x['backend']['pod_uid'] != m[0]['backend']['pod_uid'] for x in m)
 queue_sat=bool(active) and pressure*2>=len(active)
@@ -371,10 +377,9 @@ for step in "${STEPS[@]}"; do
   : > "$metrics"
   collect_metrics "$step" pre_sample "$PRESAMPLE_SECONDS" "$metrics"
   active_deadline=$(( $(date +%s) + ACTIVE_SECONDS )); drain_deadline=$(( active_deadline + DRAIN_SECONDS ))
-  provider_baseline="$(provider_rate_limit_total)"
   collect_metrics "$step" active "$ACTIVE_SECONDS" "$metrics" & collector=$!; PIDS+=("$collector")
   workers=()
-  for slot in $(seq 1 "$step"); do slot_worker "$step" "$slot" "$active_deadline" "$drain_deadline" "$provider_baseline" & workers+=("$!"); PIDS+=("$!"); done
+  for slot in $(seq 1 "$step"); do slot_worker "$step" "$slot" "$active_deadline" "$drain_deadline" & workers+=("$!"); PIDS+=("$!"); done
   while kill -0 "$collector" >/dev/null 2>&1; do
     if [[ -s "$FATAL_MARKER" ]]; then
       kill "$collector" "${workers[@]}" >/dev/null 2>&1 || true

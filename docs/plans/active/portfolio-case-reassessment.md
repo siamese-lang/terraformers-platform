@@ -475,7 +475,7 @@ existing Prometheus/GKE/OpenSearch collection, sanitized machine-readable artifa
 saturation stopping rule. It performs no tuning and adds no monitoring platform. Detailed readiness
 is recorded in [Case C Capacity Baseline Harness Readiness](../../evaluation/case-c-capacity-baseline.md).
 
-The corrective readiness implementation adds cause-chain-safe provider HTTP 429 classification to the existing failure metrics, correctness fail-stop, and per-success DB/result/GCS integrity checks. Executor `2 / 4 / 50` values are source-bound compile-time invariants, not dynamically read configuration.
+The corrective readiness implementation adds cause-chain-safe provider HTTP 429 classification to the existing failure metrics, per-job attribution only from the matching `analysisJobId` correlated failure log, correctness fail-stop, and per-success DB/result/GCS integrity checks. Executor `2 / 4 / 50` values are source-bound compile-time invariants, not dynamically read configuration.
 
 The live capacity baseline is **NOT YET EXECUTED**, so no first bottleneck or capacity result exists.
 The next single checkpoint is one separately approved protected live run and is

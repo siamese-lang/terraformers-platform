@@ -93,11 +93,15 @@ latency.
 ## Saturation and stopping classification
 
 Hard signals are executor rejection, capacity-attributable terminal failure, backend restart/OOM,
-OpenSearch rejection, and provider rate limiting. Provider HTTP 429 is detected through the existing
-`terraformers.analysis.failures{category="provider_rate_limited"}` counter delta and classified as
-`EXTERNAL_PROVIDER_SATURATION`, never backend saturation; user-facing job failure text is not used.
-Authentication, unrelated application, and result-integrity failures preserve request evidence and
-then fail-stop all workers and metric collection without being classified as saturation.
+OpenSearch rejection, and provider rate limiting. A FAILED job is attributed to
+`EXTERNAL_PROVIDER_SATURATION` only when an existing correlated backend failure log contains both
+that exact `analysisJobId` MDC value and `category=provider_rate_limited`; the shared counter is not
+used for per-job attribution. At step level, either a
+`terraformers.analysis.failures{category="provider_rate_limited"}` counter delta or a correlated
+external-provider request record is sufficient, including a 429 completed during drain. User-facing
+job failure text is not used. Authentication, unrelated application, and result-integrity failures
+preserve request evidence and then fail-stop all workers and metric collection without being
+classified as saturation.
 
 Queue pressure requires executor active workers equal to four and queue depth greater than zero for
 at least half of active 5-second samples. After the first signal, exactly one next frozen step runs

@@ -623,7 +623,7 @@ manual-only `capacity-baseline` operation to the existing runtime-dependency wor
 steps are `1 → 2 → 4 → 6 → 8`; no runtime tuning or new monitoring platform is included. See
 [Case C Capacity Baseline Harness Readiness](evaluation/case-c-capacity-baseline.md).
 
-The corrective readiness implementation adds cause-chain-safe provider HTTP 429 classification to the existing failure metrics, correctness fail-stop, and per-success DB/result/GCS integrity checks. Executor `2 / 4 / 50` values are source-bound compile-time invariants, not dynamically read configuration.
+The corrective readiness implementation adds cause-chain-safe provider HTTP 429 classification to the existing failure metrics, per-job attribution only from the matching `analysisJobId` correlated failure log, correctness fail-stop, and per-success DB/result/GCS integrity checks. Executor `2 / 4 / 50` values are source-bound compile-time invariants, not dynamically read configuration.
 
 The live capacity baseline is **NOT YET EXECUTED**. No bottleneck or performance threshold is
 claimed. The immediate next single checkpoint is explicit user approval for one protected live run;

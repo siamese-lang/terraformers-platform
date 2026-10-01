@@ -344,6 +344,17 @@ work_package:
       - shellcheck: UNAVAILABLE_IN_EXECUTION_ENVIRONMENT
       - targeted_analysis_observability_test: BLOCKED_BY_MAVEN_CENTRAL_403
     corrective_readiness:
+      user_scope_amendment:
+        approved_on: "2026-10-01"
+        approval: >
+          User approved the bounded corrective iteration on PR #170, limited to the existing
+          harness/document paths and the two explicit AnalysisObservability backend paths.
+        selected_decision: >
+          Attribute an individual FAILED AnalysisJob to external-provider saturation only when one
+          existing backend log line contains both its analysisJobId MDC value and
+          category=provider_rate_limited. Retain the global provider_rate_limited metric delta only
+          as step-level saturation evidence because a shared counter cannot safely attribute a
+          concurrent failure to one job.
       provider_429_existing_metric_category: provider_rate_limited
       correctness_fail_stop: IMPLEMENTED
       successful_result_integrity: IMPLEMENTED

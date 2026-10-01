@@ -373,8 +373,7 @@ The read-only **GCP quota/cost preflight** has executed as workflow run `3682385
 Quota/machine checks are **PASS** for the selected active shape: one existing `e2-standard-2` GKE
 node plus one additional `e2-medium` MariaDB VM and a 30 GiB balanced-disk envelope. The run used
 the existing `terraformers-plan` WIF identity and performed no Terraform init/plan/apply or cloud
-mutation. The only remaining preflight gate is **HUMAN_REQUIRED** confirmation that sufficient
-Free Trial promotional credit remains. Runtime implementation is still unauthorized.
+mutation. The user confirmed sufficient Free Trial promotional credit on 2026-10-01. The preflight is therefore **COMPLETE / PASS**. Runtime implementation remains a separate Work Package and is not automatically authorized.
 
 ## Case A A1 measurement-readiness checkpoint
 

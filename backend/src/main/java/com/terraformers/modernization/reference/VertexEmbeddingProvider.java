@@ -16,7 +16,7 @@ public class VertexEmbeddingProvider implements EmbeddingProvider {
     private final Client client;
     private final VertexRuntimeProperties properties;
 
-    public VertexEmbeddingProvider(@Lazy Client client, VertexRuntimeProperties properties) {
+    public VertexEmbeddingProvider(Client client, VertexRuntimeProperties properties) {
         this.client = client;
         this.properties = properties;
     }

@@ -1,8 +1,8 @@
 work_package:
   id: case-c-runtime-dependency-deployment-readiness-v1
-  status: AWAITING_APPROVAL
+  status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: null
+  execution_base_sha: "8ada2368b85c210c2c50b0d42370454efe0d499c"
 
   goal: >
     Prepare the repository-owned GCP runtime dependencies required to make the already-published
@@ -11,7 +11,7 @@ work_package:
 
   decision_source:
     path: docs/plans/active/case-c-runtime-dependency-deployment-readiness-decision.md
-    status: PROPOSED_AWAITING_USER_DECISION
+    status: SELECTED
 
   selected_direction:
     gcs:
@@ -168,8 +168,8 @@ work_package:
     next_work_package_requires_user_approval: true
 
   result:
-    implementation: NOT_STARTED
+    implementation: IN_PROGRESS
     ci: NOT_STARTED
     live_mutation: false
     backend_deployed: false
-    next_gate: user_decision_and_work_package_approval
+    next_gate: repository_implementation_and_static_acceptance

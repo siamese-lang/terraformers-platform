@@ -70,6 +70,10 @@ Later runner diagnostics do not overwrite the canonical M3 source commit or base
 
 ## Case A — AI/RAG quality, performance and reliability
 
+**Current status: PORTFOLIO-CLOSED / PASS.** The authoritative final evidence is
+[Case A Final Closure](../../evaluation/case-a-final-closure.md). The sections below retain the
+historical reassessment path that led to the final decision.
+
 ### Existing evidence worth retaining
 
 - canonical M3 live baseline: fact extraction PASS 4/6, 2 first divergences;
@@ -321,14 +325,18 @@ This reassessment is complete only when:
 
 ## Immediate next single task
 
-After the A3 evaluation-only pacing correction is reviewed and merged, seek separate user approval
-for one protected **A3 fixed-facts retrieval alternative comparison rerun**. It must isolate upstream
-fact/query variability from retrieval/ranking behavior, must not preselect an alternative, and must
-not change production retrieval semantics. Do not start it automatically or start Case C.
+Case B and Case A are now portfolio-closed. The next representative case is **Case C — cloud runtime
+capacity and safe delivery**.
+
+The next candidate task is a bounded Case C baseline-definition audit against the current integrated
+runtime: freeze representative workload identity, concurrency steps, collection method, rollout
+observation method, and stopping criteria before any tuning. Do not preselect replicas, HPA, node
+size, OpenSearch size, executor changes, or rollout strategy, and do not begin a live load/rollout
+experiment automatically.
 
 ## Case A A1 measurement-readiness checkpoint
 
-Case A remains **OPEN** around retrieval grounding / required-evidence coverage. A1 measurement readiness is **COMPLETE** with exact deterministic scoring, complete configuration provenance, per-run and multi-run reports, an evaluation-only fixed-facts probe, and frozen `terraformers-eval-holdout-v1`; see [Case A Retrieval-Grounding Measurement Readiness](../../evaluation/case-a-retrieval-grounding-measurement-readiness.md). This is measurement support, not a retrieval-quality improvement claim. At A1 closure, production retrieval change was **NOT AUTHORIZED / NOT PERFORMED** and A2 was the next candidate. A2 has since completed; see the A2 checkpoint below. Production retrieval behavior remains unchanged, and the current next candidate is **A3 fixed-facts retrieval alternative comparison / decision**, requiring separate user approval.
+At the A1 checkpoint, Case A remained **OPEN** around retrieval grounding / required-evidence coverage. A1 measurement readiness is **COMPLETE** with exact deterministic scoring, complete configuration provenance, per-run and multi-run reports, an evaluation-only fixed-facts probe, and frozen `terraformers-eval-holdout-v1`; see [Case A Retrieval-Grounding Measurement Readiness](../../evaluation/case-a-retrieval-grounding-measurement-readiness.md). This is measurement support, not a retrieval-quality improvement claim. At A1 closure, production retrieval change was **NOT AUTHORIZED / NOT PERFORMED** and A2 was the next candidate. A2 has since completed; see the A2 checkpoint below. Production retrieval behavior remains unchanged, and the current next candidate is **A3 fixed-facts retrieval alternative comparison / decision**, requiring separate user approval.
 
 
 ## Case A A2 repeated current baseline checkpoint
@@ -340,7 +348,7 @@ run had non-empty relevant resource filters, so the earlier filter-loss mechanis
 explain A2. Variable retrieval coverage/ranking and variable upstream fact/query wording remain to be
 isolated; root cause is **NOT YET SELECTED**, and vector ranking is not proven causal. The historical
 AOSS `130489 ms` latency outlier was **NOT reproduced in N=3**, so no latency/model/timeout/topology
-work is authorized. Case A remains **OPEN**. The next candidate is **A3 fixed-facts retrieval
+work is authorized. At the A2 checkpoint, Case A remained **OPEN**. The next candidate then was **A3 fixed-facts retrieval
 alternative comparison / decision**, requiring separate user approval.
 
 ## Case A A3 probe-readiness checkpoint
@@ -351,5 +359,28 @@ Protected run `36592590562` aborted before comparison on Vertex embedding `429 R
 under the applied 5 requests/minute `gemini-embedding` quota, and no machine-readable comparison
 artifact was produced. Evaluation-only 13-second pacing is implemented, but the live comparison is
 **INCOMPLETE**. No retrieval alternative is selected, production retrieval is **UNCHANGED**, and
-Case A remains **OPEN**. The next single task after review and merge is one separately approved
-protected A3 live probe rerun; A4 is not authorized.
+At the A3 readiness checkpoint, Case A remained **OPEN**. The next task then was one separately
+approved protected A3 live probe rerun; A4 was not yet authorized.
+
+## Case A final closure checkpoint
+
+Case A is **PORTFOLIO-CLOSED / PASS** on source
+`32d62e21821ed303555ade5e26b03cb669db94ef`.
+
+Final canonical runs `36803174654`, `36803781744`, and `36804600570` passed the frozen N=3
+contract: fact extraction `18/18`, retrieval `18/18`, VPC project-decision coverage `3/3`, VPC
+required-resource coverage `4/4 × 3`, grounding gaps `0/12`, positive validation `12/12`,
+negative controls `6/6`, and no new first divergence.
+
+The frozen holdout then ran exactly once as `36805478708` on the same source/configuration.
+`holdout-eks-irsa` retrieved `tfref-v2-eks-irsa` at rank 1 with resource coverage `3/3`;
+`holdout-workload-rds-sg` retrieved `tfref-v2-sg-relations` at rank 1 with resource coverage
+`2/2`; both positive cases passed generation requirements and Terraform validation, and both
+negative controls classified correctly with empty Terraform. Grounding gaps and first divergence
+remained zero.
+
+The retained provider-latency side investigation remains closed with FACT_REUSE adoption **HOLD**;
+Case A closure does not claim latency optimization. See
+[Case A Final Closure](../../evaluation/case-a-final-closure.md) for the full evidence chain,
+trade-offs, and residual risks.
+

@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Post-PR119 Case A canonical N=3 revalidation readiness frozen; live canonical N=3 AWAITING_APPROVAL**
+- Current single task: **Case A PORTFOLIO-CLOSED; next candidate is Case C current-capacity / safe-delivery baseline definition, not tuning**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -34,12 +34,16 @@ The project success criterion is now explicit: complete three technically defens
 cases with repository-backed technical decisions, not merely a sequence of completed milestones.
 
 Case A — AI/RAG quality, performance and reliability:
-- post-PR119 canonical revalidation readiness is frozen in
-  [Case A Post-PR119 Canonical N=3 Revalidation Readiness](evaluation/case-a-post-pr119-canonical-revalidation-readiness.md):
-  reuse the existing `case-a-full-baseline` workflow exactly three times on one merged source SHA,
-  require comparable configuration identity, VPC decision coverage `3/3`, VPC required-resource
-  coverage `4/4 × 3`, grounding gaps `0/12`, positive validation `12/12`, negative controls
-  `6/6`, and no new first divergence; no N=4 and no holdout until all gates pass;
+- **PORTFOLIO-CLOSED / PASS** in
+  [Case A Final Closure](evaluation/case-a-final-closure.md);
+- final post-PR119 canonical N=3 runs `36803174654`, `36803781744`, and `36804600570` all used
+  source `32d62e21821ed303555ade5e26b03cb669db94ef` and the same configuration fingerprint;
+  fact extraction passed `18/18`, retrieval `18/18`, VPC decision coverage `3/3`, VPC required
+  resource coverage `4/4 × 3`, grounding gaps `0/12`, positive validation `12/12`, negative
+  controls `6/6`, and first divergence remained zero;
+- frozen holdout run `36805478708` passed on the same source/configuration: both positive holdout
+  cases had complete project-decision/resource grounding and validation, both negative controls were
+  correct, grounding gaps were zero, and first divergence remained zero;
 - adaptive retrieval >8-resource live measurement is **CLOSED / PASS** in
   [Adaptive Retrieval Live Measurement Closure](evaluation/adaptive-retrieval-live-measurement-closure.md):
   run `36799722509` on source `9d54fe27bbc24347c9eff09193c7aeaec3171ff6` reused one delegated
@@ -78,8 +82,7 @@ Case A — AI/RAG quality, performance and reliability:
   where VPC decision coverage reached `3/3`, VPC resource coverage stayed `4/4 × 3`, grounding
   gaps fell to `0/12`, and positive validation passed `12/12`, but negative controls were
   `5/6`; PR #119 then corrected the zero-hit REQUIRED-grounding/classification lifecycle boundary.
-  A fresh canonical N=3 after that correction and the frozen holdout are not recorded as complete,
-  so Case A remains **OPEN**.
+  The final post-PR119 N=3 and frozen holdout have now passed and Case A is **PORTFOLIO-CLOSED**.
 
 Case B — Backend durable asynchronous processing:
 - retain M5 failure evidence and useful M6 primitives such as atomic claim and rollback-safe compensation;
@@ -444,13 +447,15 @@ No remaining M1 work.
 
 ## Immediate next work
 
-The fact-reuse latency side-investigation is closed with production adoption **HOLD**, and the
-adaptive retrieval >8-resource side-investigation is **CLOSED / PASS** in run `36799722509`.
-The post-PR119 canonical N=3 contract is now frozen in
-[Case A Post-PR119 Canonical N=3 Revalidation Readiness](evaluation/case-a-post-pr119-canonical-revalidation-readiness.md).
-The next candidate live checkpoint is exactly three independent `case-a-full-baseline` dispatches
-on one exact merged `main` SHA, with no N=4. Those live runs remain **AWAITING_APPROVAL**.
-The frozen holdout remains unauthorized until every canonical N=3 hard gate passes.
+Case B and Case A are now **portfolio-closed**. Case A final evidence is recorded in
+[Case A Final Closure](evaluation/case-a-final-closure.md); do not add more canonical or holdout
+runs without a newly reproduced defect or changed requirement.
+
+The next representative portfolio case is **Case C — Cloud Runtime Capacity & Safe Delivery**.
+The next candidate task is to re-read its existing measurement contract against the current runtime
+and freeze the smallest representative load / rollout baseline needed to locate the first bottleneck.
+Do not preselect HPA, replicas, node sizing, OpenSearch sizing, or rollout changes before that
+baseline, and do not start live load or rollout experiments automatically.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query
@@ -522,4 +527,4 @@ filters as an established A2 root cause. At that checkpoint vector ranking was n
 A3 was the next candidate. A3 has since completed, A4 was merged at
 `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`, and later A5 canonical evaluations progressed
 through the PR #118 ordering correction and PR #119 zero-hit REQUIRED-grounding/classification
-correction. The frozen holdout is still not recorded as complete, so Case A remains **OPEN**.
+correction. The final post-PR119 canonical N=3 and frozen holdout are complete; Case A is **PORTFOLIO-CLOSED**.

@@ -801,3 +801,52 @@ The unchanged hard gates are made explicit for the post-PR119 after-state:
 Run exactly three samples and do not add N=4 to chase a pass. A hard-gate failure remains evidence.
 The frozen holdout stays blocked until all canonical N=3 gates pass and then still requires separate
 user approval. This readiness document does not dispatch the canonical runs or the holdout.
+
+
+## Final Case A closure decision
+
+The validation sequence frozen by this decision is now complete.
+
+Canonical post-PR119 N=3:
+
+- runs: `36803174654`, `36803781744`, `36804600570`
+- source: `32d62e21821ed303555ade5e26b03cb669db94ef`
+- shared fingerprint:
+  `sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66`
+- fact extraction: `18/18 PASS`
+- retrieval: `18/18 PASS`
+- VPC project-decision coverage: `3/3`
+- VPC required-resource coverage: `4/4 × 3`
+- grounding gaps: `0/12`
+- positive validation: `12/12 PASS`
+- negative controls: `6/6 correct`
+- first divergence: `0`
+
+Frozen holdout:
+
+- run: `36805478708`
+- same source/configuration fingerprint
+- fact extraction: `4/4 PASS`
+- retrieval: `4/4 PASS`
+- positive validation: `2/2 PASS`
+- negative controls: `2/2 correct`
+- grounding gaps: `0`
+- first divergence: `0`
+- `tfref-v2-eks-irsa`: rank 1, holdout EKS resource coverage `3/3`
+- `tfref-v2-sg-relations`: rank 1, holdout workload/RDS resource coverage `2/2`
+
+The final N=3 did not reproduce PR #119's successful-zero-hit negative-control branch because the
+dashboard received global retrieval evidence in those runs. That does not invalidate the canonical
+acceptance result, but the closure does not claim repeated live reproduction of that exact branch.
+
+The adaptive >8-resource side measurement and FACT_REUSE latency diagnostic retain their independent
+conclusions: adaptive bounded evidence growth passed its frozen scenario, while production FACT_REUSE
+adoption remains **HOLD** because provider response-tail exposure was not eliminated.
+
+**Decision: the retrieval-grounding Case A is PORTFOLIO-CLOSED.**
+
+The authoritative closure is
+[Case A Final Closure](../../evaluation/case-a-final-closure.md). Do not add another canonical,
+holdout, zero-hit, or latency rerun merely to accumulate successful samples. Reopen only with new
+production evidence, a newly reproduced defect, or a material requirement change.
+

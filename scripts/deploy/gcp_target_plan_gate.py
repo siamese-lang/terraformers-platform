@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!
+RUNTIME_HOST_FIREWALL_REPAIR_ACTIONS = {
+    "google_compute_instance.mariadb[0]": ("google_compute_instance", ["update"]),
+}
+/usr/bin/env python3
 from __future__ import annotations
 
 import argparse
@@ -401,6 +405,50 @@ def validate_runtime_dependencies(changes: dict[str, dict[str, Any]]) -> None:
     require(ranges == {"10.40.0.0/20", pod_cidr}, "MariaDB firewall source ranges changed")
 
 
+def validate_runtime_host_firewall_repair(changes: dict[str, dict[str, Any]]) -> None:
+    require(
+        set(changes) == set(RUNTIME_HOST_FIREWALL_REPAIR_ACTIONS),
+        "runtime-host-firewall-repair may only update the MariaDB VM",
+    )
+    resource = changes["google_compute_instance.mariadb[0]"]
+    require(resource.get("type") == "google_compute_instance", "runtime host-firewall repair changed resource type")
+    change = resource.get("change", {})
+    require(
+        list(change.get("actions", [])) == ["update"],
+        "runtime host-firewall repair must be an in-place VM update",
+    )
+    before = change.get("before") or {}
+    after = change.get("after") or {}
+
+    for key in (
+        "name",
+        "machine_type",
+        "zone",
+        "attached_disk",
+        "boot_disk",
+        "network_interface",
+        "service_account",
+        "allow_stopping_for_update",
+    ):
+        require(before.get(key) == after.get(key), f"runtime host-firewall repair changed MariaDB VM {key}")
+
+    before_startup = str(before.get("metadata_startup_script") or "")
+    after_startup = str(after.get("metadata_startup_script") or "")
+    require(before_startup != after_startup, "runtime host-firewall repair must change only startup-script behavior")
+    require("--network host" in after_startup, "MariaDB host-network contract changed")
+    require("10.40.0.0/20" in after_startup, "MariaDB guest firewall is missing the target subnet")
+    require("10.136.0.0/14" in after_startup, "MariaDB guest firewall is missing the current GKE Pod CIDR")
+    require("0.0.0.0/0" not in after_startup, "MariaDB guest firewall must not allow public ingress")
+    require(
+        'iptables -w 5 -C INPUT -p tcp -s "$source_range" --dport 3306 -j ACCEPT' in after_startup,
+        "MariaDB guest firewall idempotence check is missing",
+    )
+    require(
+        'iptables -w 5 -I INPUT 1 -p tcp -s "$source_range" --dport 3306 -j ACCEPT' in after_startup,
+        "MariaDB guest firewall allow rule is missing",
+    )
+
+
 def validate_node_pool_transition(
     changes: dict[str, dict[str, Any]],
     operation: str,
@@ -466,6 +514,8 @@ def validate_plan(plan: dict[str, Any], operation: str) -> dict[str, Any]:
         validate_runtime_secret_foundation(changes)
     elif operation == "runtime-dependencies":
         validate_runtime_dependencies(changes)
+    elif operation == "runtime-host-firewall-repair":
+        validate_runtime_host_firewall_repair(changes)
     elif operation == "activate":
         validate_activate(changes)
     elif operation == "idle":
@@ -528,7 +578,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--operation",
         required=True,
-        choices=("foundation", "delivery-foundation", "runtime-secret-foundation", "runtime-dependencies", "activate", "idle"),
+        choices=("foundation", "delivery-foundation", "runtime-secret-foundation", "runtime-dependencies", "runtime-host-firewall-repair", "activate", "idle"),
     )
     return parser.parse_args()
 

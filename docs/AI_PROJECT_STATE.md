@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case A PORTFOLIO-CLOSED; next candidate is Case C current-capacity / safe-delivery baseline definition, not tuning**
+- Current single task: **Case C measurement readiness audit complete: live baseline NOT READY; next candidate is the representative benchmark-runtime decision**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -123,12 +123,23 @@ Case B — Backend durable asynchronous processing:
   in [Case B Integrated Durable-Processing Closure](evaluation/case-b-integrated-closure.md).
 
 Case C — Cloud runtime capacity and safe delivery:
-- use the existing GKE/Vertex/OpenSearch target runtime as the baseline;
-- measure saturation and identify the first bottleneck before tuning replicas, HPA, executor, node,
-  or OpenSearch resources;
-- validate healthy rollout and faulty-release rollback under representative workload;
-- freeze latency/availability thresholds only after the before baseline exists;
-- treat observability/load tooling as case measurement dependencies, not independent milestones.
+- measurement readiness audit is **COMPLETE / NOT READY FOR LIVE BASELINE** in
+  [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md);
+- the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
+  but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
+  persistence path that Case C must measure;
+- the canonical GCP overlay explicitly leaves the full backend Deployment deferred because database,
+  object-storage and JWT dependencies are not supplied in the live target boundary;
+- existing portable MariaDB/JWKS/filesystem fixtures are reusable patterns, but MariaDB `emptyDir`
+  and filesystem `/tmp` are not valid rollout-durability evidence;
+- the target backend image is still a registry placeholder and ADR-006 does not select an image
+  registry, so immutable-revision rollout evidence is not yet possible;
+- do **not** load-test the Case A evaluation pod: it would omit API acceptance, durable job queueing,
+  executor saturation, persistence, accepted-work survival and rollout/rollback behavior;
+- the next candidate is a **representative benchmark-runtime decision** comparing benchmark-only
+  reuse on the existing GKE target with completing the broader GCP application runtime first;
+- no load harness, concurrency steps, HPA, replicas, executor tuning, node/OpenSearch sizing or
+  rollout changes are authorized before that decision.
 
 Observability and failure/load work may continue only when it closes a measurement gap for Case A,
 Case B, or Case C. PR #86/#88 evidence is retained but is not independent permission to advance M7.
@@ -452,10 +463,13 @@ Case B and Case A are now **portfolio-closed**. Case A final evidence is recorde
 runs without a newly reproduced defect or changed requirement.
 
 The next representative portfolio case is **Case C — Cloud Runtime Capacity & Safe Delivery**.
-The next candidate task is to re-read its existing measurement contract against the current runtime
-and freeze the smallest representative load / rollout baseline needed to locate the first bottleneck.
-Do not preselect HPA, replicas, node sizing, OpenSearch sizing, or rollout changes before that
-baseline, and do not start live load or rollout experiments automatically.
+The [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md) found the
+live baseline **NOT READY** because the GCP target does not yet provide a persistent, authenticated,
+immutable-release backend service path. The next candidate task is the **Case C representative
+benchmark-runtime decision**. It must choose the smallest runtime that can exercise the real
+API/durable-job/Vertex/OpenSearch/persistence path and survive backend rollout without pretending
+that benchmark fixtures are final production hosting choices. Do not start a load harness or live
+rollout experiment automatically.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query

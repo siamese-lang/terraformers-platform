@@ -372,7 +372,7 @@ resource "google_compute_instance" "mariadb" {
       )"
       [[ -n "$token" ]]
       payload="$(
-        curl -fsS           -H "Authorization: Bearer ${token}"           "https://secretmanager.googleapis.com/v1/projects/${PROJECT_ID}/secrets/${secret_name}/versions/latest:access"           | sed -n 's/.*"data"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+        curl -fsS           -H "Authorization: Bearer $${token}"           "https://secretmanager.googleapis.com/v1/projects/$${PROJECT_ID}/secrets/$${secret_name}/versions/latest:access"           | sed -n 's/.*"data"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
       )"
       [[ -n "$payload" ]]
       printf '%s' "$payload" | base64 -d

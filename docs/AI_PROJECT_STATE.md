@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Adaptive retrieval >8-resource live measurement CLOSED; Case A remains OPEN pending the next approved canonical/holdout validation checkpoint**
+- Current single task: **Post-PR119 Case A canonical N=3 revalidation readiness frozen; live canonical N=3 AWAITING_APPROVAL**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -34,6 +34,12 @@ The project success criterion is now explicit: complete three technically defens
 cases with repository-backed technical decisions, not merely a sequence of completed milestones.
 
 Case A — AI/RAG quality, performance and reliability:
+- post-PR119 canonical revalidation readiness is frozen in
+  [Case A Post-PR119 Canonical N=3 Revalidation Readiness](evaluation/case-a-post-pr119-canonical-revalidation-readiness.md):
+  reuse the existing `case-a-full-baseline` workflow exactly three times on one merged source SHA,
+  require comparable configuration identity, VPC decision coverage `3/3`, VPC required-resource
+  coverage `4/4 × 3`, grounding gaps `0/12`, positive validation `12/12`, negative controls
+  `6/6`, and no new first divergence; no N=4 and no holdout until all gates pass;
 - adaptive retrieval >8-resource live measurement is **CLOSED / PASS** in
   [Adaptive Retrieval Live Measurement Closure](evaluation/adaptive-retrieval-live-measurement-closure.md):
   run `36799722509` on source `9d54fe27bbc24347c9eff09193c7aeaec3171ff6` reused one delegated
@@ -439,11 +445,12 @@ No remaining M1 work.
 ## Immediate next work
 
 The fact-reuse latency side-investigation is closed with production adoption **HOLD**, and the
-adaptive retrieval >8-resource side-investigation is now **CLOSED / PASS** in run `36799722509`.
-Case A remains **OPEN** because a fresh canonical `terraformers-eval-v1` N=3 after the PR #119
-lifecycle correction and the frozen holdout are still not recorded as complete. That canonical
-revalidation is the next candidate validation checkpoint, but it requires a separate reviewed
-Work Package / user approval and must not start automatically.
+adaptive retrieval >8-resource side-investigation is **CLOSED / PASS** in run `36799722509`.
+The post-PR119 canonical N=3 contract is now frozen in
+[Case A Post-PR119 Canonical N=3 Revalidation Readiness](evaluation/case-a-post-pr119-canonical-revalidation-readiness.md).
+The next candidate live checkpoint is exactly three independent `case-a-full-baseline` dispatches
+on one exact merged `main` SHA, with no N=4. Those live runs remain **AWAITING_APPROVAL**.
+The frozen holdout remains unauthorized until every canonical N=3 hard gate passes.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query

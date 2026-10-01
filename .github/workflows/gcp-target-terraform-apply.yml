@@ -613,6 +613,12 @@ jobs:
               echo 'Runtime scale operation requires the canonical node pool in remote state.' >&2
               exit 1
             }
+
+            if printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_artifact_registry_repository.backend[0]'; then
+              echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
+            else
+              echo 'TF_VAR_enable_delivery_foundation=false' >> "$GITHUB_ENV"
+            fi
           fi
 
       - name: Create saved plan

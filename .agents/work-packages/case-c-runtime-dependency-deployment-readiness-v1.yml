@@ -171,7 +171,8 @@ work_package:
 
   result:
     implementation: COMPLETE
-    ci: PASS
+    base_implementation_ci: PASS
+    live_acceptance_ci: PENDING
     capability_gate:
       gke_control_plane: "1.35.8-gke.1225000"
       gke_node_pool: "1.35.8-gke.1225000"

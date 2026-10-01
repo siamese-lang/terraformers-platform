@@ -191,10 +191,18 @@ portable MariaDB/JWKS/filesystem fixtures can reduce scope, but their current `e
 forms are not valid safe-rollout persistence evidence. Therefore the evaluation pod must not be
 substituted for the Case C system under test.
 
-The next decision is the representative benchmark runtime: compare a benchmark-only persistent
-reuse of existing fixture patterns on the same GKE target against completing the broader GCP
-application-runtime product selections first. No load harness or tuning is authorized before that
-decision.
+The representative-runtime decision is now documented in
+[Case C Production-Representative Runtime Decision Gate](case-c-representative-benchmark-runtime-decision.md)
+and is **COMPATIBILITY GATE OPEN**.
+
+The portfolio objective now prefers a production-representative backend runtime over the earlier
+benchmark-only MariaDB/filesystem shape, because dependency topology can distort bottleneck
+attribution. However, the repository does not yet authorize Cloud SQL for MySQL, Cloud Storage or
+Artifact Registry by convention. Each candidate must first pass its explicit compatibility gate:
+MySQL 8.4 Flyway/JPA/Case B semantics, Cloud Storage object-contract mapping, and Artifact Registry
+least-privilege GitHub/GKE identity. The benchmark-only runtime remains a fallback if those gates do
+not justify the managed components. No implementation, cloud mutation, live load or tuning is
+authorized yet.
 
 ## Case B measurement-readiness checkpoint
 
@@ -341,11 +349,18 @@ This reassessment is complete only when:
 Case B and Case A are now portfolio-closed. The next representative case is **Case C — cloud runtime
 capacity and safe delivery**.
 
-The Case C measurement-readiness audit is complete and found the live baseline **NOT READY**. The
-next candidate task is a bounded **Case C representative benchmark-runtime decision**. Compare the
-minimum benchmark-only persistent/authenticated runtime on the existing GKE target with completing
-the broader GCP application runtime first. Select no tuning and start no live load/rollout experiment
-until that decision is reviewed and merged.
+The Case C runtime decision is **NOT YET FINAL**. A production-representative backend runtime is the
+preferred candidate, but product choices remain gated by compatibility.
+
+The next single task is one bounded **Case C compatibility verification Work Package** covering
+repository/local/CI evidence only:
+
+1. MySQL 8.4 clean migration + JPA + Case B durable-processing compatibility;
+2. Cloud Storage adapter-contract compatibility;
+3. Artifact Registry least-privilege publisher/puller identity design compatibility.
+
+Do not create any Cloud SQL, bucket or registry resource and do not mutate IAM in that Work Package.
+The final Case C runtime selection occurs only after those results are reviewed.
 
 ## Case A A1 measurement-readiness checkpoint
 

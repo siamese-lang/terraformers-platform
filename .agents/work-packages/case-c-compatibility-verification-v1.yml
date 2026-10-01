@@ -1,0 +1,276 @@
+work_package:
+  id: case-c-compatibility-verification-v1
+  status: AWAITING_MERGE
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: null
+
+  goal: >
+    Resolve the three compatibility gates required before selecting the Case C
+    production-representative backend runtime: MySQL 8.4 relational semantics,
+    Cloud Storage application-contract fit, and Artifact Registry least-privilege
+    delivery identity. Produce a PASS/FAIL/INCONCLUSIVE result for each gate without
+    creating or mutating live GCP resources.
+
+  engineering_axis:
+    - cloud portability
+    - cloud runtime capacity readiness
+    - safe delivery readiness
+
+  representative_case:
+    - Case C Cloud Runtime Capacity & Safe Delivery
+
+  source_decision:
+    - docs/plans/active/case-c-representative-benchmark-runtime-decision.md
+    - docs/evaluation/case-c-measurement-readiness-audit.md
+
+  activation:
+    bind_rule: >
+      After this Work Package is merged to main, read remote GitHub main exactly once
+      immediately before the first implementation write and bind that exact SHA as
+      execution_base_sha. If current main changes afterwards, STOP.
+    no_automatic_rebase: true
+
+  logical_outcome: >
+    Determine whether Alternative C can be selected without relying on product-name
+    similarity or untested cloud assumptions. The outcome is compatibility evidence,
+    not runtime implementation.
+
+  allowed_paths:
+    - .agents/work-packages/case-c-compatibility-verification-v1.yml
+    - .github/workflows/backend-local-verification.yml
+    - scripts/checks/mariadb-schema-validation.sh
+    - backend/pom.xml
+    - backend/src/test/java/com/terraformers/modernization/verification/**
+    - docs/evaluation/case-c-compatibility-verification.md
+    - docs/plans/active/case-c-representative-benchmark-runtime-decision.md
+    - docs/plans/active/portfolio-case-reassessment.md
+    - docs/AI_PROJECT_STATE.md
+
+  prohibited_paths:
+    - backend/src/main/java/**
+    - backend/src/main/resources/db/migration/**
+    - backend/src/main/resources/application-prod.yml
+    - frontend/**
+    - infra/**
+    - corpus/**
+    - evaluation/**
+    - AGENTS.md
+    - docs/architecture/**
+
+  allowed_actions:
+    - inspect_repository
+    - inspect_official_product_documentation
+    - bind_execution_base_sha
+    - reuse_existing_backend_local_verification
+    - add_mysql_8_4_service_job_to_existing_workflow
+    - parameterize_existing_schema_validation_output_if_required
+    - run_existing_maven_tests
+    - run_existing_mariadb_real_db_validation
+    - run_mysql_8_4_real_db_validation
+    - document_gcs_contract_mapping
+    - document_artifact_registry_identity_mapping
+    - document_pass_fail_inconclusive_results
+    - update_case_c_decision_status
+    - create_pull_request
+    - inspect_ci
+    - bounded_repair_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - create_new_github_actions_workflow
+    - create_cloud_sql_instance
+    - create_gcs_bucket
+    - create_artifact_registry_repository
+    - create_service_account
+    - mutate_iam
+    - terraform_plan
+    - terraform_apply
+    - kubernetes_apply
+    - activate_gke_node_pool
+    - image_push
+    - live_gcs_round_trip
+    - live_vertex_call
+    - live_load_test
+    - rollout_experiment
+    - production_storage_adapter_implementation
+    - production_database_migration
+    - production_registry_integration
+    - change_case_c_capacity_thresholds
+    - change_case_c_runtime_resources
+    - start_next_work_package
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_bound_execution_base_sha
+    - same_failure_repeats_after_one_bounded_repair
+    - failure_class_changes
+    - production_code_change_required
+    - database_migration_change_required
+    - live_gcp_resource_or_iam_change_required
+    - new_workflow_required
+    - compatibility_requires_domain_contract_change
+    - acceptance_criteria_change_required
+    - any_security_boundary_broadening
+
+  gate_1_mysql_8_4:
+    purpose: >
+      Prove or reject server-level compatibility of the current MariaDB-oriented
+      Flyway/JPA/Case B persistence contract against MySQL 8.4 before Cloud SQL for
+      MySQL can be selected.
+    method:
+      - >
+        Reuse the existing Backend Local Verification workflow and
+        scripts/checks/mariadb-schema-validation.sh; do not create a parallel
+        workflow/harness.
+      - >
+        Add a MySQL 8.4 service job using a clean empty terraformers database.
+      - >
+        Use the current MariaDB Connector/J against the MySQL 8.4 server unless the
+        existing driver cannot establish the connection. Override Hibernate dialect
+        to MySQLDialect only through test/job configuration; do not change the
+        production profile in this Work Package.
+      - >
+        Execute the same packaged prod-profile startup, Flyway migration, Hibernate
+        ddl-auto validation and canonical real-database repository smoke used for
+        MariaDB.
+      - >
+        Keep the authoritative MariaDB 11.4 job green in the same PR.
+    required_evidence:
+      - clean Flyway migrations 001_through_006 PASS
+      - prod-profile application startup PASS
+      - Hibernate schema validation PASS
+      - canonical repository CRUD smoke PASS
+      - concurrent single-winner initial claim PASS
+      - concurrent single-winner expired-lease reclaim PASS
+      - deterministic result-intent ownership/fencing checks PASS
+      - failed-job pending-cleanup discovery PASS
+      - MariaDB 11.4 regression PASS
+    pass_rule: >
+      MySQL 8.4 receives PASS only if the unchanged migration files and current
+      repository semantics pass the real MySQL service without production schema or
+      domain changes. Test-only configuration differences must be documented.
+    fail_rule: >
+      FAIL if compatibility requires migration rewrites, domain/repository semantic
+      changes, weakened fencing/locking semantics, or a different durable ownership
+      model.
+    inconclusive_rule: >
+      INCONCLUSIVE if CI/environment/tooling failure prevents the database contract
+      from being exercised without indicating SQL/transaction incompatibility.
+
+  gate_2_cloud_storage:
+    purpose: >
+      Determine whether Google Cloud Storage can implement the existing
+      ObjectReader/ObjectWriter/ObjectRemover contract without domain/schema changes
+      before a production GCS adapter is authorized.
+    method:
+      - inspect current storage interfaces and S3/filesystem semantics
+      - inspect official Google Cloud Storage Java/IAM semantics
+      - build an operation-by-operation compatibility matrix
+      - do not add a production GCS adapter or create a bucket
+    required_contract_rows:
+      - write_binary_preserves_requested_bucket_and_key
+      - write_text_preserves_requested_bucket_and_key
+      - read_metadata_content_type_length_last_modified
+      - read_exact_bytes
+      - overwrite_same_deterministic_key
+      - delete_existing_object
+      - delete_absent_object_is_idempotent_from_application_view
+      - not_found_maps_to_object_storage_not_found
+      - upstream_failure_maps_without_domain_change
+      - provider_metadata_identifier_does_not_replace_application_checksum
+      - adc_workload_identity_authentication_requires_no_long_lived_key
+      - bucket_scoped_create_read_update_delete_permission_can_be_expressed
+    pass_rule: >
+      PASS if every required application behavior has a direct GCS API/IAM mapping
+      and no domain/schema contract must change. Differences such as provider eTag
+      semantics are acceptable only when the repository already treats application
+      checksum as the integrity authority.
+    fail_rule: >
+      FAIL if a required behavior cannot be represented without changing the
+      application storage contract or durable result-accountability semantics.
+    inconclusive_rule: >
+      INCONCLUSIVE if a material API/IAM behavior cannot be established from
+      repository evidence and authoritative product documentation without a live
+      resource.
+
+  gate_3_artifact_registry:
+    purpose: >
+      Determine whether Artifact Registry can provide immutable backend image
+      delivery while preserving current GitHub OIDC and GKE identity separation with
+      least privilege.
+    method:
+      - inspect current GitHub GCP WIF/plan/apply contracts
+      - inspect current GKE node service account contract
+      - inspect official Artifact Registry push/pull IAM requirements
+      - produce a proposed identity/permission matrix only
+      - do not create repository, service account or IAM bindings
+    required_identity_rows:
+      - dedicated_image_publisher_not_terraform_plan_identity
+      - dedicated_image_publisher_not_broad_terraform_apply_reuse
+      - short_lived_github_oidc_authentication
+      - no_json_service_account_key
+      - no_pat_or_long_lived_registry_secret
+      - repository_scoped_writer_permission
+      - gke_node_identity_read_only_permission
+      - full_source_sha_recorded_at_build
+      - resolved_sha256_digest_recorded_after_publish
+      - kubernetes_deployment_by_digest_not_mutable_tag
+      - publisher_cannot_mutate_gke_compute_iam_or_unrelated_artifact_repositories
+    pass_rule: >
+      PASS if a bounded identity design exists using short-lived GitHub OIDC and
+      repository-scoped Artifact Registry permissions, while the GKE node identity
+      receives read-only pull access and no existing plan/apply identity needs its
+      broad runtime authority expanded.
+    fail_rule: >
+      FAIL if Artifact Registry requires broadening Terraform plan/apply authority,
+      long-lived credentials, or project-wide artifact mutation for this repository.
+    inconclusive_rule: >
+      INCONCLUSIVE if repository-level permissions or identity constraints cannot be
+      established without mutating live IAM.
+
+  aggregate_decision_rule:
+    alternative_c_selectable: >
+      Only if MySQL 8.4 = PASS, Cloud Storage = PASS, and Artifact Registry = PASS.
+    partial_failure:
+      - >
+        DB FAIL with storage/registry PASS: do not force MySQL; reopen relational
+        hosting decision while retaining other compatible candidates.
+      - >
+        Cloud Storage FAIL: do not rewrite the domain for GCS; retain existing
+        provider-neutral storage contract and reconsider storage candidate.
+      - >
+        Artifact Registry FAIL: compare GHCR before broadening GCP apply/runtime IAM.
+      - >
+        multiple FAIL: reconsider benchmark-only Alternative A.
+    no_product_selection_on_inconclusive: true
+
+  acceptance_criteria:
+    - execution_base_sha is bound once from remote main after contract merge
+    - no prohibited path changed
+    - no new workflow created
+    - authoritative MariaDB 11.4 real-DB verification remains PASS
+    - MySQL 8.4 gate has PASS FAIL or INCONCLUSIVE with direct evidence
+    - Cloud Storage gate has PASS FAIL or INCONCLUSIVE with complete required matrix
+    - Artifact Registry gate has PASS FAIL or INCONCLUSIVE with complete required matrix
+    - no live GCP resource or IAM mutation occurred
+    - no production adapter or schema migration was added
+    - Case C runtime decision document reflects the gate results without overstating selection
+    - final report states whether Alternative C is selectable under the 3_of_3 rule
+
+  evidence_output:
+    permanent:
+      - docs/evaluation/case-c-compatibility-verification.md
+    ci:
+      - existing Backend Local Verification run
+      - MySQL 8.4 job logs within the same workflow
+    not_required_in_repository:
+      - raw docker service logs unless needed to explain a failure
+      - copied official documentation
+      - one-off local command output
+
+  completion:
+    merge_requires_user_approval: true
+    final_runtime_selection_requires_user_approval: true
+    next_work_package_start_requires_user_approval: true

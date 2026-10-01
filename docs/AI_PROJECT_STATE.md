@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C measurement readiness audit complete: live baseline NOT READY; next candidate is the representative benchmark-runtime decision**
+- Current single task: **Case C production-representative runtime is the preferred candidate; MySQL 8.4 / Cloud Storage / Artifact Registry compatibility verification REQUIRED before final selection**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -125,6 +125,11 @@ Case B — Backend durable asynchronous processing:
 Case C — Cloud runtime capacity and safe delivery:
 - measurement readiness audit is **COMPLETE / NOT READY FOR LIVE BASELINE** in
   [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md);
+- the representative-runtime decision is **COMPATIBILITY GATE OPEN** in
+  [Case C Production-Representative Runtime Decision Gate](plans/active/case-c-representative-benchmark-runtime-decision.md);
+  a production-representative backend runtime is now the preferred candidate, but Cloud SQL for
+  MySQL, Cloud Storage and Artifact Registry are not selected until repository compatibility and
+  least-privilege identity checks pass;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;
@@ -464,12 +469,23 @@ runs without a newly reproduced defect or changed requirement.
 
 The next representative portfolio case is **Case C — Cloud Runtime Capacity & Safe Delivery**.
 The [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md) found the
-live baseline **NOT READY** because the GCP target does not yet provide a persistent, authenticated,
-immutable-release backend service path. The next candidate task is the **Case C representative
-benchmark-runtime decision**. It must choose the smallest runtime that can exercise the real
-API/durable-job/Vertex/OpenSearch/persistence path and survive backend rollout without pretending
-that benchmark fixtures are final production hosting choices. Do not start a load harness or live
-rollout experiment automatically.
+live baseline **NOT READY**. The
+[Case C Production-Representative Runtime Decision Gate](plans/active/case-c-representative-benchmark-runtime-decision.md)
+now records the production-representative backend runtime as the **preferred candidate**, not a
+final product selection.
+
+Before the runtime direction can be approved, three compatibility gates must be closed:
+
+1. MySQL 8.4 must run the full Flyway/JPA/Case B durable-processing contract;
+2. Cloud Storage must preserve the existing ObjectReader/ObjectWriter/ObjectRemover contract and
+   integrity semantics without domain/schema rewrites;
+3. Artifact Registry must fit the existing GitHub OIDC + GKE identity model with a dedicated,
+   least-privilege publisher/read path rather than reusing broad Terraform apply authority.
+
+Do not create the representative-runtime implementation Work Package, publish an image, create
+Cloud SQL/Storage/Artifact Registry resources, mutate IAM, apply Kubernetes resources, activate the
+node pool, generate load, or run rollout/rollback experiments until those compatibility results are
+reviewed and the final runtime selection is approved.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query

@@ -1,0 +1,327 @@
+work_package:
+  id: case-c-capacity-baseline-v1
+  status: AWAITING_ACTIVATION
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  goal: >
+    Freeze and implement the smallest reproducible Case C capacity-baseline harness for the
+    already-proven production-representative GCP backend runtime, then collect one separately
+    approved live saturation curve without tuning the runtime. The baseline must identify the
+    first observed saturation mechanism and preserve exact workload/runtime identity for the later
+    same-load after comparison.
+
+  engineering_axis:
+    - cloud runtime capacity
+    - observability from real failure diagnosis
+    - safe delivery prerequisite evidence
+
+  representative_case:
+    - Case C Cloud Runtime Capacity & Safe Delivery
+
+  prerequisite_evidence:
+    integrated_live_validation:
+      run_id: 36889896239
+      conclusion: PASS
+      proven:
+        - authenticated upload
+        - durable AnalysisJob acceptance
+        - real Vertex fact extraction and generation
+        - real Vertex embedding
+        - OpenSearch retrieval
+        - GCS source/result persistence
+        - terminal SUCCEEDED
+        - Terraform draft read
+    backend_replacement_durability:
+      run_id: 36891629279
+      conclusion: PASS
+      proven:
+        - backend pod replacement
+        - immutable backend image/source identity preserved
+        - durable AnalysisJob identity preserved
+        - source GCS bytes preserved
+        - result GCS bytes preserved
+        - Terraform draft bytes preserved
+        - Actuator/Prometheus reachable before and after replacement
+    runtime_readiness_gate: PASS
+
+  activation:
+    bind_rule: >
+      Immediately before the first implementation write, read GitHub remote main exactly once and
+      bind that exact SHA to execution_base_sha. Do not rebase or refresh automatically afterward.
+    stop_on_main_drift: true
+    live_execution_requires_separate_user_checkpoint: true
+
+  allowed_paths:
+    - .agents/work-packages/case-c-capacity-baseline-v1.yml
+    - scripts/checks/case-c-capacity-baseline.sh
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+    - docs/evaluation/case-c-capacity-baseline.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/portfolio-case-reassessment.md
+
+  prohibited_paths:
+    - backend/**
+    - frontend/**
+    - infra/terraform/**
+    - infra/kubernetes/**
+    - evaluation/**
+    - corpus/**
+    - AGENTS.md
+    - docs/architecture/**
+    - docs/plans/active/portfolio-case-measurement-contract.md
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - bind_execution_base_once
+    - implement_reproducible_load_driver
+    - add_one_protected_capacity_baseline_workflow_operation
+    - reuse_existing_JWT_JWKS_fixture_pattern
+    - reuse_existing_GKE_backend_service_path
+    - reuse_existing_Actuator_Prometheus_metrics
+    - collect_GKE_native_resource_evidence
+    - collect_OpenSearch_internal_stats
+    - collect_job_and_stage_metrics
+    - emit_machine_readable_baseline_artifact
+    - document_baseline_evidence
+    - create_pull_request
+    - inspect_CI_once
+    - perform_one_bounded_corrective_iteration_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - live_load_execution_without_explicit_user_checkpoint
+    - capacity_tuning
+    - backend_replica_change
+    - executor_tuning
+    - backend_CPU_or_memory_change
+    - OpenSearch_sizing_change
+    - GKE_node_count_or_shape_change
+    - HPA_change
+    - rollout_strategy_change
+    - Terraform_plan
+    - Terraform_apply
+    - IAM_change
+    - cloud_resource_creation
+    - image_publication
+    - backend_revision_rollout
+    - faulty_revision_rollout
+    - rollback_experiment
+    - second_GKE_environment
+    - monitoring_platform_addition
+    - acceptance_threshold_invention_before_baseline
+    - next_work_package_start
+
+  frozen_runtime_identity:
+    backend_replicas: 1
+    backend_cpu_request: 250m
+    backend_cpu_limit: "1"
+    backend_memory_request: 512Mi
+    backend_memory_limit: 1Gi
+    executor_core_threads: 2
+    executor_max_threads: 4
+    executor_queue_capacity: 50
+    dispatcher_poll_interval: 2s
+    dispatcher_batch_size: 4
+    opensearch_replicas: 1
+    opensearch_heap: 1Gi
+    opensearch_cpu_request: "1"
+    opensearch_cpu_limit: "2"
+    opensearch_memory_request: 2Gi
+    opensearch_memory_limit: 4Gi
+    deployment_max_unavailable: 1
+    deployment_max_surge: 0
+    gke_nodes_at_baseline_start: 2
+    gke_node_shape: e2-standard-2
+    mariadb_vm_shape: e2-medium
+    tuning_before_baseline: forbidden
+
+  workload_contract:
+    fixture: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
+    reason: >
+      Reuse the already-live-proven positive architecture fixture so capacity evidence is not
+      confounded by a new input/classification path.
+    request_path: authenticated /api/upload
+    analysis_mode: INTEGRATED_JAVA
+    storage_provider: gcs
+    analysis_provider: vertex
+    embedding_provider: vertex
+    retrieval_mode: REQUIRED
+    opensearch_index: terraformers-reference-v3
+    client_model: >
+      Closed-loop target in-flight AnalysisJob concurrency. A slot submits a replacement request
+      only after its current job reaches a terminal state. This measures durable processing capacity
+      rather than a burst of asynchronous HTTP accepts.
+    project_identity: >
+      Each request must use a unique run/step/slot/sequence project name so job/result correlation
+      remains deterministic and no prior project state is overwritten.
+
+  load_profile:
+    concurrency_steps:
+      - 1
+      - 2
+      - 4
+      - 6
+      - 8
+    rationale: >
+      1 is the low-load reference, 2 matches executor core parallelism, 4 matches executor maximum
+      worker parallelism, and 6/8 deliberately exceed worker parallelism to reveal queueing or an
+      external provider bottleneck without jumping to an arbitrary TPS target.
+    metrics_presample_seconds: 30
+    active_step_seconds: 240
+    drain_timeout_seconds: 600
+    max_concurrency_without_new_approval: 8
+    burst_test: disabled
+    automatic_extension_beyond_8: forbidden
+
+  collection_contract:
+    sample_interval_seconds: 5
+    API_and_job:
+      - accepted_request_count
+      - HTTP_status_counts
+      - acceptance_latency_ms
+      - terminal_job_count
+      - job_success_count
+      - job_failure_count
+      - job_queue_wait_ms
+      - job_end_to_end_ms
+      - executor_rejection_count
+    backend:
+      - pod_CPU
+      - pod_memory
+      - active_analysis_workers
+      - executor_queue_depth
+      - analysis_stage_duration
+      - analysis_stage_failure_count
+    AI_RAG:
+      - fact_extraction_duration
+      - retrieval_duration
+      - generation_duration
+      - provider_failure_count_and_category
+    OpenSearch:
+      - pod_CPU
+      - pod_memory
+      - JVM_heap_used
+      - search_or_thread_pool_rejection_when_available
+      - request_or_query_latency_when_available
+    runtime_identity:
+      - workflow_main_SHA
+      - backend_image_digest
+      - embedded_backend_source_SHA
+      - backend_pod_UID
+      - GKE_node_names_and_shapes
+      - MariaDB_VM_identity_and_shape
+      - workload_fixture_SHA256
+      - effective_runtime_configuration
+    cost_resource:
+      - GKE_node_count_and_shape
+      - backend_requests_and_limits
+      - OpenSearch_requests_and_limits
+      - MariaDB_shape
+      - count_of_live_analysis_requests
+
+  saturation_classification:
+    hard_signals:
+      - executor_rejection_count_greater_than_zero
+      - capacity_or_quota_attributable_terminal_job_failure
+      - backend_OOM_or_restart
+      - OpenSearch_rejection
+      - provider_RESOURCE_EXHAUSTED_or_equivalent_quota_failure
+    queue_pressure_signal: >
+      During an active step, executor active workers equal the configured maximum while queue depth
+      remains greater than zero for at least half of the collected 5-second samples.
+    attribution_rule: >
+      A provider quota/rate-limit failure is classified as external provider saturation, not backend
+      saturation. Queue pressure with workers pinned at max is repository-owned executor saturation.
+      CPU/memory/OpenSearch evidence must be recorded before attributing the first bottleneck.
+    latency_rule: >
+      Latency distributions are recorded at baseline but no latency SLO or percentage-regression
+      threshold is invented before observing this baseline.
+
+  stopping_rule:
+    normal: >
+      Execute frozen concurrency steps in order. When the first hard saturation or queue-pressure
+      saturation is observed, execute exactly one next listed concurrency step, then stop.
+    no_saturation_by_8: >
+      Stop as INCONCLUSIVE_FOR_SATURATION_EXTENSION. Do not continue above concurrency 8 without a
+      new user-approved Work Package or explicit extension decision.
+    correctness_failure: >
+      Stop immediately if persistent DB/result corruption, authentication boundary failure,
+      unexpected runtime identity drift, or a failure class unrelated to load/capacity appears.
+    infrastructure_drift: >
+      Stop immediately if main, backend image digest, runtime configuration, node count/shape,
+      MariaDB shape, or OpenSearch/backend sizing changes during the baseline.
+
+  baseline_outputs:
+    machine_readable:
+      - exact per-request correlation and timestamps
+      - per-step aggregate latency and outcome distribution
+      - per-step metrics samples
+      - saturation classification and first observed signal
+      - runtime/workload identity
+    human_evidence:
+      path: docs/evaluation/case-c-capacity-baseline.md
+      must_record:
+        - operating_scenario
+        - exact_workload_and_runtime_identity
+        - per_step_results
+        - first_saturation_signal
+        - first_bottleneck_hypothesis_with_evidence
+        - external_vs_repository_owned_attribution
+        - resource_and_cost_baseline
+        - limitations
+        - next_decision_boundary
+
+  acceptance_criteria:
+    harness_readiness:
+      - one fixed workload fixture and SHA256 are recorded
+      - closed_loop_in_flight_concurrency_is_enforced
+      - exact concurrency sequence_1_2_4_6_8_is_encoded
+      - 240_second_active_step_and_600_second_drain_limits_are_encoded
+      - runtime_identity_is_fail_closed
+      - per_request_job_correlation_is_machine_readable
+      - existing_Actuator_Prometheus_is_reused
+      - OpenSearch_and_GKE_resource_collection_are_bounded
+      - no_runtime_tuning_or_new_monitoring_platform_is_added
+      - live_execution_is_blocked_by_exact_confirmation_and_current_main_SHA
+    live_baseline:
+      - every_executed_step_records_request_job_and_resource_evidence
+      - first_saturation_signal_is_classified_or_run_stops_inconclusive_at_concurrency_8
+      - one_step_beyond_first_saturation_is_measured_when_a_next_frozen_step_exists
+      - persistent_DB_or_result_corruption_equals_zero
+      - runtime_identity_drift_equals_zero
+      - no_tuning_occurs_during_baseline
+      - performance_thresholds_are_not_retrofitted_to_fit_results
+
+  after_baseline_decision_boundary:
+    purpose: >
+      Freeze performance acceptance thresholds from the observed baseline and compare at least two
+      realistic remedies for the measured first bottleneck before any capacity/deployment tuning.
+    candidate_examples_only:
+      - retain_one_replica_and_adjust_executor_if_executor_is_proven_first_bottleneck
+      - add_backend_replica_capacity_if_backend_parallelism_is_proven_first_bottleneck
+      - adjust_backend_CPU_or_memory_if_compute_is_proven_first_bottleneck
+      - adjust_OpenSearch_resources_if_OpenSearch_is_proven_first_bottleneck
+      - change_GKE_node_capacity_if_scheduler_or_node_capacity_is_proven_first_bottleneck
+      - no_repository_tuning_if_external_Vertex_quota_or_latency_is_first_bottleneck
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_bound_execution_base
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - allowed_path_outside_scope_is_required
+    - production_runtime_tuning_becomes_required
+    - cloud_or_IAM_mutation_becomes_required
+    - live_execution_is_requested_without_user_checkpoint
+    - workload_or_concurrency_contract_would_need_to_change
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    activation_after_contract_merge_requires_user_approval: true
+    live_baseline_execution_requires_user_approval: true
+    next_work_package_requires_user_approval: true

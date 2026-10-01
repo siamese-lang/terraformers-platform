@@ -104,15 +104,18 @@ jobs:
               "workflow_dispatch:",
               "runtime-secret-foundation",
               "runtime-dependencies",
+              "runtime-host-firewall-repair",
               "kubernetes-prerequisites",
               "runtime-live-acceptance",
               "APPLY_REVIEWED_GCP_RUNTIME_SECRET_FOUNDATION_3",
               "APPLY_REVIEWED_GCP_RUNTIME_DEPENDENCIES_10",
+              "APPLY_REVIEWED_GCP_RUNTIME_HOST_FIREWALL_REPAIR_1",
               "APPLY_REVIEWED_GCP_RUNTIME_K8S_PREREQUISITES",
               "RUN_REVIEWED_GCP_RUNTIME_LIVE_ACCEPTANCE_RESTART",
               "mariadb:11.4@sha256:",
               "kubectl apply -k infra/kubernetes/overlays/gcp-target/runtime-dependencies",
               "gcloud compute instances stop",
+              "timeout 8 mariadb --connect-timeout=5",
           ]:
               if marker not in runtime_workflow:
                   raise SystemExit(f"missing runtime dependency workflow marker: {marker}")
@@ -122,6 +125,12 @@ jobs:
           runtime_tf = Path("infra/terraform/envs/gcp-target-runtime/main.tf").read_text(encoding="utf-8")
           if "google_secret_manager_secret_version" in runtime_tf:
               raise SystemExit("secret payload versions must not be managed by Terraform")
+          for marker in [
+              'iptables -w 5 -C INPUT -p tcp -s "$source_range" --dport 3306 -j ACCEPT',
+              'iptables -w 5 -I INPUT 1 -p tcp -s "$source_range" --dport 3306 -j ACCEPT',
+          ]:
+              if marker not in runtime_tf:
+                  raise SystemExit(f"missing MariaDB COS guest-firewall marker: {marker}")
 
           runtime_kustomization = Path(
               "infra/kubernetes/overlays/gcp-target/runtime-dependencies/kustomization.yaml"

@@ -1,6 +1,6 @@
 work_package:
   id: case-c-compatibility-verification-v1
-  status: ACTIVE
+  status: COMPLETE
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: "03a4ab209d62ad8c5e3aecd275ddb3ff1e264a53"
 
@@ -274,3 +274,20 @@ work_package:
     merge_requires_user_approval: true
     final_runtime_selection_requires_user_approval: true
     next_work_package_start_requires_user_approval: true
+
+
+  result:
+    mysql_8_4: FAIL
+    cloud_storage: PASS
+    artifact_registry: PASS
+    alternative_c_selectable: false
+    auto_repair_used: 1
+    stop_reason: >
+      MySQL 8.4 accepted the dedicated MySQL driver and applied migrations 001 and 002, then
+      rejected V20260714_003 at ALTER TABLE ... ADD COLUMN IF NOT EXISTS with SQL syntax
+      error 1064. Passing the gate would require changing an existing production migration,
+      which is explicitly outside this Work Package and matches the gate FAIL rule.
+    authoritative_runs:
+      - 36816910868
+      - 36817194503
+    no_further_automatic_repair: true

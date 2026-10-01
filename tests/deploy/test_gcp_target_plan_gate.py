@@ -357,7 +357,7 @@ def runtime_dependencies_plan() -> dict:
                         "email": "terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com",
                         "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
                     }],
-                    "metadata_startup_script": startup,
+                    "metadata": {"startup-script": startup},
                 },
             ),
             resource(
@@ -721,7 +721,7 @@ class GcpTargetPlanGateTest(unittest.TestCase):
             item for item in plan["resource_changes"]
             if item["address"] == "google_compute_instance.mariadb[0]"
         )
-        instance["change"]["after"]["metadata_startup_script"] = (
+        instance["change"]["after"]["metadata"]["startup-script"] = (
             'MARIADB_IMAGE="mariadb:11.4"\n/var/lib/mysql\nversions/latest:access\n'
         )
         with self.assertRaises(gate.ContractError):

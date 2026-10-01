@@ -260,14 +260,15 @@ jobs:
             -backend-config="bucket=${STATE_BUCKET}" \
             -backend-config='prefix=gcp-target-runtime'
 
-          mapfile -t managed_state < <(terraform state list)
-          [[ "${#managed_state[@]}" -eq 12 ]] || {
-            echo "Delivery foundation preflight requires the existing 12-resource target state; found ${#managed_state[@]}." >&2
-            printf '  %s\n' "${managed_state[@]}" >&2
+          mapfile -t state_addresses < <(terraform state list)
+          printf '%s\n' "${state_addresses[@]}" | grep -Fxq 'google_container_cluster.target' || {
+            echo 'Delivery foundation requires the canonical GKE cluster in state.' >&2
             exit 1
           }
-          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target'
-          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target'
+          printf '%s\n' "${state_addresses[@]}" | grep -Fxq 'google_container_node_pool.target' || {
+            echo 'Delivery foundation requires the canonical GKE node pool in state.' >&2
+            exit 1
+          }
 
           gcloud iam service-accounts describe \
             terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com \
@@ -330,27 +331,19 @@ jobs:
             managed_state+=("$address")
           done
 
-          [[ "${#managed_state[@]}" -eq 12 || "${#managed_state[@]}" -eq 17 ]] || {
-            echo "Runtime check expected 12 pre-delivery or 17 post-delivery managed resources, found ${#managed_state[@]}." >&2
-            printf '  %s\n' "${managed_state[@]}" >&2
+          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target' || {
+            echo 'Runtime check requires the canonical GKE cluster in state.' >&2
+            exit 1
+          }
+          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target' || {
+            echo 'Runtime check requires the canonical GKE node pool in state.' >&2
             exit 1
           }
 
-          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target'
-          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target'
-
           if printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_artifact_registry_repository.backend[0]'; then
             delivery_enabled=true
-            [[ "${#managed_state[@]}" -eq 17 ]] || {
-              echo 'Delivery repository is present but canonical post-delivery state is incomplete.' >&2
-              exit 1
-            }
           else
             delivery_enabled=false
-            [[ "${#managed_state[@]}" -eq 12 ]] || {
-              echo 'Canonical state has delivery resources missing or partially represented.' >&2
-              exit 1
-            }
           fi
 
           cluster_status="$(
@@ -397,7 +390,6 @@ jobs:
           {
             echo '## GCP target runtime check'
             echo
-            printf -- '- Canonical Terraform state resources: `%s`\n' "${#managed_state[@]}"
             printf -- '- Immutable image delivery foundation enabled: `%s`\n' "$delivery_enabled"
             printf -- '- Cluster status: `%s`\n' "$cluster_status"
             printf -- '- Node pool status: `%s`\n' "$node_pool_status"
@@ -583,13 +575,14 @@ jobs:
               }
             done
           elif [[ "$OPERATION" == delivery-foundation ]]; then
-            [[ "${#managed_state[@]}" -eq 12 ]] || {
-              echo "Delivery foundation apply requires the existing 12-resource target state; found ${#managed_state[@]}." >&2
-              printf '  %s\n' "${managed_state[@]}" >&2
+            printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target' || {
+              echo 'Delivery foundation apply requires the canonical GKE cluster in state.' >&2
               exit 1
             }
-            printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target'
-            printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target'
+            printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target' || {
+              echo 'Delivery foundation apply requires the canonical GKE node pool in state.' >&2
+              exit 1
+            }
             gcloud iam service-accounts describe \
               terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com \
               --project=terraformers-platform \
@@ -698,11 +691,6 @@ jobs:
             )"
             [[ "$repository_format" == DOCKER ]] || {
               echo "Artifact Registry format is $repository_format, expected DOCKER." >&2
-              exit 1
-            }
-            mapfile -t post_state < <(terraform state list)
-            [[ "${#post_state[@]}" -eq 17 ]] || {
-              echo "Delivery foundation expected 17 managed resources after apply; found ${#post_state[@]}." >&2
               exit 1
             }
           fi

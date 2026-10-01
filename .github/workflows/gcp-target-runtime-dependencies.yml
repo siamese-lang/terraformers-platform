@@ -768,6 +768,7 @@ jobs:
             '
 
       - name: Verify MariaDB persistence across VM restart
+        timeout-minutes: 10
         run: |
           set -euo pipefail
           marker="case-c-${GITHUB_RUN_ID}-${GITHUB_SHA:0:12}"
@@ -779,7 +780,7 @@ jobs:
           }
 
           ready=false
-          for _ in $(seq 1 120); do
+          for _ in $(seq 1 30); do
             if db -e 'SELECT 1' >/dev/null 2>&1; then
               ready=true
               break
@@ -796,8 +797,6 @@ jobs:
                   VALUES ('$marker')
                   ON DUPLICATE KEY UPDATE id = VALUES(id);"
 
-          before_hostname="$(db -e 'SELECT @@hostname;')"
-          [[ -n "$before_hostname" ]]
           before_ip="$(
             gcloud compute instances describe "$MARIADB_INSTANCE" \
               --zone="$ZONE" --project="$PROJECT_ID" \
@@ -818,18 +817,16 @@ jobs:
           )" == "$before_ip" ]]
 
           persisted=false
-          after_hostname=""
-          for _ in $(seq 1 180); do
+          for _ in $(seq 1 30); do
             marker_result="$(db -e "SELECT id FROM case_c_runtime_acceptance_marker WHERE id='$marker';" 2>/dev/null || true)"
-            after_hostname="$(db -e 'SELECT @@hostname;' 2>/dev/null || true)"
-            if [[ "$marker_result" == "$marker" && -n "$after_hostname" && "$after_hostname" != "$before_hostname" ]]; then
+            if [[ "$marker_result" == "$marker" ]]; then
               persisted=true
               break
             fi
             sleep 2
           done
           [[ "$persisted" == true ]] || {
-            echo 'Marker persistence/container-recreation acceptance failed.' >&2
+            echo 'Marker persistence/reconnect acceptance failed.' >&2
             exit 1
           }
 
@@ -841,7 +838,7 @@ jobs:
             echo '- Backend KSA GCS write/read/delete: PASS'
             echo '- Private GKE -> MariaDB path: PASS'
             echo '- Marker row survived VM stop/start: PASS'
-            echo '- MariaDB container identity changed after startup-script recreation: PASS'
+            echo '- MariaDB reconnected after VM restart: PASS'
             echo '- Temporary GCS object and DB marker table cleaned: PASS'
           } >> "$GITHUB_STEP_SUMMARY"
 

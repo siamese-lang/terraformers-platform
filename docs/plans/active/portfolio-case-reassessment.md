@@ -395,19 +395,25 @@ and resolved remote digest
 `sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae`.
 No Kubernetes backend Deployment has been performed.
 
-The bounded **Case C runtime-dependency/deployment readiness** decision is now proposed in
-[Case C Runtime Dependency / Deployment Readiness Decision](case-c-runtime-dependency-deployment-readiness-decision.md)
-with Work Package `.agents/work-packages/case-c-runtime-dependency-deployment-readiness-v1.yml`.
-The proposal selects one private Seoul GCS bucket for upload/result objects, Google Secret Manager as
-the MariaDB credential authority, native GKE Secret Sync only if the existing cluster already satisfies
-the >=1.33 capability gate, the previously selected dedicated MariaDB 11.4 VM/PD, and an internal
-deterministic JWKS fixture for authenticated Case C requests. It deliberately rejects External Secrets
-Operator for this baseline and does not select a new external identity product or deployment identity.
+The bounded **Case C runtime-dependency/deployment readiness** decision is **SELECTED** and
+the repository implementation is **IMPLEMENTED / CI PENDING** in Work Package
+`.agents/work-packages/case-c-runtime-dependency-deployment-readiness-v1.yml`, bound once to
+`8ada2368b85c210c2c50b0d42370454efe0d499c`. The mandatory read-only capability gate observed GKE
+control plane and node pool `1.35.8-gke.1225000`, so native Secret Sync satisfies the >=1.33 gate
+without a cluster upgrade.
 
-Status is **AWAITING USER DECISION / WORK PACKAGE APPROVAL**. No secret version, VM, disk, bucket,
-IAM, GKE Secret Sync, Kubernetes prerequisite, backend Deployment, load generation, rollout, rollback,
-HPA/replica/executor/node/OpenSearch tuning, or additional product choice is authorized by this
-decision PR.
+The canonical GCP Terraform root now declares one private Seoul GCS runtime-object bucket, Secret
+Manager secret containers without Terraform-managed payload versions, native Secret Sync without
+automatic rotation, and the selected dedicated MariaDB 11.4 `e2-medium` VM + 20 GiB balanced data
+disk. The implementation corrected the live ordering to
+`empty secret containers -> operator secret versions -> remaining dependencies`; that bounded repair
+consumed the Work Package repair allowance. The isolated Kubernetes prerequisite surface does not
+include the backend Deployment.
+
+No live IAM bootstrap, secret version, VM, disk, bucket, Secret Sync, Kubernetes prerequisite,
+backend Deployment, load generation, rollout, rollback, HPA/replica/executor/node/OpenSearch tuning,
+or additional product choice has been executed by this implementation. Static CI and independent
+acceptance review remain before merge; every live mutation remains a separate user checkpoint.
 
 ## Case A A1 measurement-readiness checkpoint
 

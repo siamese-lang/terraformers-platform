@@ -952,11 +952,11 @@ jobs:
 
       - name: Validate trusted backend replacement durability request
         env:
-          EXPECTED_SHA: \${{ inputs.expected_sha }}
-          CONFIRMATION: \${{ inputs.confirmation }}
-          BACKEND_IMAGE: \${{ inputs.backend_image }}
-          BACKEND_SOURCE_SHA: \${{ inputs.backend_source_sha }}
-          SOURCE_VALIDATION_RUN_ID: \${{ inputs.source_validation_run_id }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          SOURCE_VALIDATION_RUN_ID: ${{ inputs.source_validation_run_id }}
         run: |
           set -euo pipefail
           [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
@@ -974,8 +974,8 @@ jobs:
       - uses: google-github-actions/auth@v3
         with:
           project_id: terraformers-platform
-          workload_identity_provider: \${{ vars.GCP_WIF_PROVIDER }}
-          service_account: \${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
 
       - uses: google-github-actions/setup-gcloud@v3
         with:
@@ -989,8 +989,8 @@ jobs:
 
       - name: Verify replacement boundary
         env:
-          BACKEND_IMAGE: \${{ inputs.backend_image }}
-          BACKEND_SOURCE_SHA: \${{ inputs.backend_source_sha }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
         run: |
           set -euo pipefail
           actual_image="$(
@@ -1017,17 +1017,17 @@ jobs:
 
       - name: Prepare durable-project authentication fixture
         env:
-          SOURCE_VALIDATION_RUN_ID: \${{ inputs.source_validation_run_id }}
+          SOURCE_VALIDATION_RUN_ID: ${{ inputs.source_validation_run_id }}
         run: |
           set -euo pipefail
-          previous_jwks="\${RUNNER_TEMP}/previous-jwks.json"
-          private_key="\${RUNNER_TEMP}/case-c-private.pem"
-          modulus_bin="\${RUNNER_TEMP}/case-c-modulus.bin"
-          jwks="\${RUNNER_TEMP}/case-c-jwks.json"
-          token_file="\${RUNNER_TEMP}/case-c-access.token"
-          unsigned="\${RUNNER_TEMP}/case-c-unsigned.token"
-          signature="\${RUNNER_TEMP}/case-c-signature.bin"
-          kid="case-c-\${GITHUB_RUN_ID}"
+          previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
+          private_key="${RUNNER_TEMP}/case-c-private.pem"
+          modulus_bin="${RUNNER_TEMP}/case-c-modulus.bin"
+          jwks="${RUNNER_TEMP}/case-c-jwks.json"
+          token_file="${RUNNER_TEMP}/case-c-access.token"
+          unsigned="${RUNNER_TEMP}/case-c-unsigned.token"
+          signature="${RUNNER_TEMP}/case-c-signature.bin"
+          kid="case-c-${GITHUB_RUN_ID}"
 
           kubectl -n "$NAMESPACE" get configmap terraformers-jwks \
             -o jsonpath='{.data.jwks\.json}' > "$previous_jwks"
@@ -1088,7 +1088,7 @@ jobs:
           }
 
           now="$(date +%s)"
-          subject="case-c-\${SOURCE_VALIDATION_RUN_ID}"
+          subject="case-c-${SOURCE_VALIDATION_RUN_ID}"
           header="$(
             printf '{"alg":"RS256","kid":"%s","typ":"JWT"}' "$kid" \
               | openssl base64 -A | tr '+/' '-_' | tr -d '='
@@ -1097,7 +1097,7 @@ jobs:
             printf '{"iss":"%s","sub":"%s","email":"%s","token_use":"access","client_id":"%s","iat":%s,"exp":%s}' \
               "$ISSUER_URI" \
               "$subject" \
-              "\${subject}@example.test" \
+              "${subject}@example.test" \
               "$CLIENT_ID" \
               "$now" \
               "$((now + 900))" \
@@ -1109,21 +1109,21 @@ jobs:
 
       - name: Prove result identity survives backend pod replacement
         env:
-          BACKEND_IMAGE: \${{ inputs.backend_image }}
-          BACKEND_SOURCE_SHA: \${{ inputs.backend_source_sha }}
-          SOURCE_VALIDATION_RUN_ID: \${{ inputs.source_validation_run_id }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          SOURCE_VALIDATION_RUN_ID: ${{ inputs.source_validation_run_id }}
         run: |
           set -euo pipefail
-          token="$(cat "\${RUNNER_TEMP}/case-c-access.token")"
-          project_name="case-c-live-\${SOURCE_VALIDATION_RUN_ID}"
-          projects_before="\${RUNNER_TEMP}/projects-before.json"
-          job_before="\${RUNNER_TEMP}/job-before.json"
-          tree_before="\${RUNNER_TEMP}/tree-before.json"
-          draft_before="\${RUNNER_TEMP}/draft-before.json"
-          job_after="\${RUNNER_TEMP}/job-after.json"
-          tree_after="\${RUNNER_TEMP}/tree-after.json"
-          draft_after="\${RUNNER_TEMP}/draft-after.json"
-          pf_log="\${RUNNER_TEMP}/case-c-replacement-port-forward.log"
+          token="$(cat "${RUNNER_TEMP}/case-c-access.token")"
+          project_name="case-c-live-${SOURCE_VALIDATION_RUN_ID}"
+          projects_before="${RUNNER_TEMP}/projects-before.json"
+          job_before="${RUNNER_TEMP}/job-before.json"
+          tree_before="${RUNNER_TEMP}/tree-before.json"
+          draft_before="${RUNNER_TEMP}/draft-before.json"
+          job_after="${RUNNER_TEMP}/job-after.json"
+          tree_after="${RUNNER_TEMP}/tree-after.json"
+          draft_after="${RUNNER_TEMP}/draft-after.json"
+          pf_log="${RUNNER_TEMP}/case-c-replacement-port-forward.log"
           pf_pid=""
 
           stop_pf() {
@@ -1159,7 +1159,7 @@ jobs:
           start_pf
 
           curl -fsS \
-            -H "Authorization: Bearer \${token}" \
+            -H "Authorization: Bearer ${token}" \
             http://127.0.0.1:18080/api/projects > "$projects_before"
 
           jq -e --arg name "$project_name" \
@@ -1218,8 +1218,8 @@ jobs:
             "$projects_before" >/dev/null
 
           curl -fsS \
-            -H "Authorization: Bearer \${token}" \
-            "http://127.0.0.1:18080/api/analysis/jobs/\${job_id}" > "$job_before"
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/analysis/jobs/${job_id}" > "$job_before"
           jq -e \
             --arg job_id "$job_id" \
             --arg result_key "$result_key" \
@@ -1235,8 +1235,8 @@ jobs:
             ' "$job_before" >/dev/null
 
           curl -fsS \
-            -H "Authorization: Bearer \${token}" \
-            "http://127.0.0.1:18080/api/project-tree/\${project_id}" > "$tree_before"
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/project-tree/${project_id}" > "$tree_before"
           jq -e \
             --arg job_id "$job_id" \
             --arg result_key "$result_key" \
@@ -1248,8 +1248,8 @@ jobs:
             ' "$tree_before" >/dev/null
 
           curl -fsS \
-            -H "Authorization: Bearer \${token}" \
-            "http://127.0.0.1:18080/api/projects/\${project_id}/terraform/main.tf" > "$draft_before"
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/projects/${project_id}/terraform/main.tf" > "$draft_before"
           jq -e \
             --arg job_id "$job_id" \
             --arg result_key "$result_key" \
@@ -1309,8 +1309,8 @@ jobs:
           start_pf
 
           curl -fsS \
-            -H "Authorization: Bearer \${token}" \
-            "http://127.0.0.1:18080/api/analysis/jobs/\${job_id}" > "$job_after"
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/analysis/jobs/${job_id}" > "$job_after"
           jq -e \
             --arg job_id "$job_id" \
             --arg result_key "$result_key" \
@@ -1326,8 +1326,8 @@ jobs:
             ' "$job_after" >/dev/null
 
           curl -fsS \
-            -H "Authorization: Bearer \${token}" \
-            "http://127.0.0.1:18080/api/project-tree/\${project_id}" > "$tree_after"
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/project-tree/${project_id}" > "$tree_after"
           jq -e \
             --arg job_id "$job_id" \
             --arg result_key "$result_key" \
@@ -1339,8 +1339,8 @@ jobs:
             ' "$tree_after" >/dev/null
 
           curl -fsS \
-            -H "Authorization: Bearer \${token}" \
-            "http://127.0.0.1:18080/api/projects/\${project_id}/terraform/main.tf" > "$draft_after"
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/projects/${project_id}/terraform/main.tf" > "$draft_after"
           jq -e \
             --arg job_id "$job_id" \
             --arg result_key "$result_key" \
@@ -1381,7 +1381,7 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          previous_jwks="\${RUNNER_TEMP}/previous-jwks.json"
+          previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
           if [[ -s "$previous_jwks" ]]; then
             kubectl -n "$NAMESPACE" create configmap terraformers-jwks \
               --from-file=jwks.json="$previous_jwks" \

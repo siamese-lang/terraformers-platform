@@ -1169,13 +1169,13 @@ jobs:
                     | sed -nE "s/.*\"access_token\"[[:space:]]*:[[:space:]]*\"([^\"]+)\".*/\1/p"
                 )"
                 test -n "$token"
-                tmp="/tmp/case-c-object-$"
-                trap 'rm -f "$tmp"' EXIT
+                tmp="$(mktemp /tmp/case-c-object.XXXXXX)"
                 curl -fsS \
                   -H "Authorization: Bearer $token" \
                   "https://storage.googleapis.com/${OBJECT_BUCKET}/${OBJECT_KEY}" \
                   -o "$tmp"
                 sha256sum "$tmp" | awk "{print \$1}"
+                rm -f "$tmp"
               '
           }
 

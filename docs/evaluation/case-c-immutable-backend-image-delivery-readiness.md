@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTED / CI PENDING — NO LIVE CLOUD OR IAM ACTION**
+**LIVE-CLOSED / PASS — IMMUTABLE IMAGE PUBLISHED, BACKEND NOT DEPLOYED**
 
 Execution base:
 
@@ -90,24 +90,46 @@ therefore adds Artifact Registry administration for this infrastructure path. Th
 publisher and GKE puller remain repository-scoped, and the delivery-foundation plan gate limits the
 reviewed Terraform mutation to the exact five resources above.
 
-## Validation pending
+## Acceptance evidence
 
-Static acceptance requires:
+Repository/static acceptance passed before live execution. PR #147 was independently reviewed and
+merged as `0774c80bb3cf9f684567e30c1e329fc27dc05d04`. Terraform Static Verification run
+`36832747254` passed on the final PR head after the brittle total-state-count gates were removed.
 
-- Python compile/unit tests for the extended plan gate;
-- automatic PR workflow-policy PASS;
-- shell syntax checks for both new bootstrap scripts;
-- static checks proving image publication is manual-only, source-SHA bound, digest-resolving and
-  contains no Terraform apply or kubectl action;
-- Terraform static verification PASS.
+The user then separately approved each live checkpoint on 2026-10-01.
 
-No live Artifact Registry API enable, repository creation, IAM mutation, image push or backend
-deployment is part of this Work Package.
+1. **Publisher identity and GitHub environment bootstrap — PASS**
+   - `terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com` was created;
+   - the exact `gcp-image-publish` GitHub environment WIF subject was bound;
+   - the publisher had no direct project resource role and no user-managed service-account key;
+   - the GitHub environment was restricted to `main` and the required non-secret variables matched.
+2. **Terraform apply identity refresh — PASS**
+   - the existing protected `terraformers-apply` identity received
+     `roles/artifactregistry.admin` for repository creation/IAM management;
+   - the existing apply roles and state-bucket roles remained present;
+   - no forbidden Owner/Editor/key/token-creator role was present.
+3. **Delivery foundation — PASS**
+   - workflow run `36833957446` used source
+     `0774c80bb3cf9f684567e30c1e329fc27dc05d04`;
+   - the reviewed plan was exactly `5 to add, 0 to change, 0 to destroy`;
+   - the exact saved plan applied successfully: `5 added, 0 changed, 0 destroyed`;
+   - Artifact Registry API, the Seoul `terraformers-backend` Docker repository, publisher writer,
+     GKE node reader, and Terraform plan reader were created;
+   - the post-apply runtime boundary passed and repository format was `DOCKER`.
+4. **First immutable backend image publication — PASS**
+   - workflow run `36834457170` used the same source SHA;
+   - `BUILD_SOURCE_REVISION` inside the built image matched that exact source SHA;
+   - only the full-source-SHA tag was pushed; no mutable `latest` tag was published;
+   - the remote digest was resolved and revalidated as
+     `sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae`;
+   - the immutable deployment reference is
+     `asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae`.
 
-## Next gate
+No Kubernetes backend Deployment was created by these checkpoints.
 
-After CI and independent PR review pass, merge still requires user approval.
+## Closure boundary
 
-After merge, live publisher bootstrap, delivery-foundation apply, and first immutable image
-publication remain three separately approved actions. MariaDB/GCS application-runtime integration
-does not start automatically.
+This unit proves an immutable source-to-registry delivery path with separated publisher and
+infrastructure identities. It does **not** prove backend startup, MariaDB/GCS/JWT runtime
+integration, rollout availability, rollback, accepted-job survival, or load/capacity behavior.
+Those remain Case C work and require a separate approved Work Package.

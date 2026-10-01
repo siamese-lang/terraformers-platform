@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C GCP full-backend adapter readiness COMPLETE / PASS; next runtime-substrate/integration Work Package is unapproved**
+- Current single task: **Case C immutable backend image delivery readiness IMPLEMENTED / CI PENDING; live bootstrap/apply/publish remain unapproved**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -148,6 +148,13 @@ Case C — Cloud runtime capacity and safe delivery:
   for active retrieval, GCS reader/writer/remover adapters implement the provider-neutral storage
   boundary through ADC, and the canonical GCP overlay selects `gcs`; no GCP resource/IAM mutation
   occurred;
+- [Case C Immutable Backend Image Delivery Readiness](evaluation/case-c-immutable-backend-image-delivery-readiness.md)
+  is **IMPLEMENTED / CI PENDING** on execution base `488f9c2b216f7f863ebb1d09bedf9716ccdef2b9`:
+  the existing canonical Terraform root/state now declares a five-resource Artifact Registry delivery
+  foundation; a fail-closed `delivery-foundation` gate preserves current GKE node count and rejects
+  all unreviewed mutation; the dedicated `terraformers-image-publish` WIF path and manual full-SHA
+  image publication workflow are repository-defined; no GCP/IAM/registry/image/Kubernetes action has
+  been executed;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;

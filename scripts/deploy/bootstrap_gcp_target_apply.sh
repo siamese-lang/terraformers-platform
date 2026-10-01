@@ -18,6 +18,7 @@ GCP_APPLY_SA="terraformers-apply@${GCP_PROJECT}.iam.gserviceaccount.com"
 GITHUB_APPLY_SUBJECT="repo:siamese-lang@174786754/terraformers-platform@1374031315:environment:gcp-target-apply"
 
 PROJECT_ROLES=(
+  roles/artifactregistry.admin
   roles/browser
   roles/compute.networkAdmin
   roles/container.clusterAdmin

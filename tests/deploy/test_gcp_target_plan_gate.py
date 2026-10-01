@@ -397,18 +397,21 @@ def runtime_host_firewall_repair_plan() -> dict:
         }],
     }
     before = dict(common)
+    before["metadata"] = {}
     before["metadata_startup_script"] = (
         f'MARIADB_IMAGE="mariadb:11.4@sha256:{digest}"\n'
         'docker run --network host mariadb\n'
     )
     after = dict(common)
-    after["metadata_startup_script"] = (
-        f'MARIADB_IMAGE="mariadb:11.4@sha256:{digest}"\n'
-        'MARIADB_ALLOWED_SOURCE_RANGES=("10.40.0.0/20" "10.136.0.0/14")\n'
-        'iptables -w 5 -C INPUT -p tcp -s "$source_range" --dport 3306 -j ACCEPT\n'
-        'iptables -w 5 -I INPUT 1 -p tcp -s "$source_range" --dport 3306 -j ACCEPT\n'
-        'docker run --network host mariadb\n'
-    )
+    after["metadata"] = {
+        "startup-script": (
+            f'MARIADB_IMAGE="mariadb:11.4@sha256:{digest}"\n'
+            'MARIADB_ALLOWED_SOURCE_RANGES=("10.40.0.0/20" "10.136.0.0/14")\n'
+            'iptables -w 5 -C INPUT -p tcp -s "$source_range" --dport 3306 -j ACCEPT\n'
+            'iptables -w 5 -I INPUT 1 -p tcp -s "$source_range" --dport 3306 -j ACCEPT\n'
+            'docker run --network host mariadb\n'
+        )
+    }
     return {
         "resource_changes": [
             resource(
@@ -647,6 +650,13 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         plan = runtime_host_firewall_repair_plan()
         instance = plan["resource_changes"][0]
         instance["change"]["after"]["metadata_startup_script"] += "0.0.0.0/0\n"
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-host-firewall-repair")
+
+    def test_runtime_host_firewall_repair_rejects_extra_metadata(self) -> None:
+        plan = runtime_host_firewall_repair_plan()
+        instance = plan["resource_changes"][0]
+        instance["change"]["after"]["metadata"]["unexpected"] = "value"
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "runtime-host-firewall-repair")
 

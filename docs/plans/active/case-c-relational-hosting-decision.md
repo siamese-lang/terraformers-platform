@@ -285,11 +285,11 @@ Rejected for first baseline:
 
 ## 13. Immediate next single task
 
-**Case C GCP quota/cost preflight — QUOTA / MACHINE PASS; FREE TRIAL CREDIT HUMAN_REQUIRED.**
+**Case C GCP quota/cost preflight — COMPLETE / PASS.**
 
 See [Case C GCP Quota / Cost Preflight](../../evaluation/case-c-gcp-quota-cost-preflight.md).
 
-The read-only preflight executed automatically as workflow run `36823850490`. Current project and Seoul quota support the selected active shape. No Terraform init/plan/apply or GCP mutation occurred. The only remaining gate is human confirmation that sufficient Free Trial promotional credit remains.
+The read-only preflight executed automatically as workflow run `36823850490`. Current project and Seoul quota support the selected active shape. No Terraform init/plan/apply or GCP mutation occurred. The user confirmed sufficient Free Trial promotional credit on 2026-10-01, so the preflight is COMPLETE / PASS.
 
 Its only outcome is to determine whether the candidate:
 

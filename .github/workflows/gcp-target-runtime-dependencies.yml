@@ -4,13 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Apply one separately approved Case C runtime dependency checkpoint.
+        description: Apply one separately approved Case C runtime dependency or live-acceptance checkpoint.
         required: true
         type: choice
         options:
           - runtime-secret-foundation
           - runtime-dependencies
           - kubernetes-prerequisites
+          - runtime-live-acceptance
       expected_sha:
         description: Exact trusted main commit SHA being approved.
         required: true
@@ -20,7 +21,7 @@ on:
         required: true
         type: string
       mariadb_image:
-        description: Exact mariadb:11.4@sha256:<digest>; required only for runtime-dependencies.
+        description: Exact mariadb:11.4@sha256:<digest>; required for runtime-dependencies and runtime-live-acceptance.
         required: false
         type: string
 
@@ -37,7 +38,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch' &&
-      inputs.operation != 'kubernetes-prerequisites'
+      (inputs.operation == 'runtime-secret-foundation' || inputs.operation == 'runtime-dependencies')
     runs-on: ubuntu-latest
     environment: gcp-target-plan
     timeout-minutes: 30
@@ -250,7 +251,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch' &&
-      inputs.operation != 'kubernetes-prerequisites' &&
+      (inputs.operation == 'runtime-secret-foundation' || inputs.operation == 'runtime-dependencies') &&
       needs.terraform-preflight.result == 'success'
     runs-on: ubuntu-latest
     environment: gcp-target-apply
@@ -539,3 +540,442 @@ jobs:
             echo '- Internal JWKS service: ready'
             echo '- Backend Deployment: absent'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  runtime-live-acceptance:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'runtime-live-acceptance'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 30
+    env:
+      PROJECT_ID: terraformers-platform
+      ZONE: asia-northeast3-a
+      NAMESPACE: terraformers-target
+      MARIADB_INSTANCE: terraformers-mariadb
+      RUNTIME_BUCKET: terraformers-runtime-objects-21647422237
+      BACKEND_IMAGE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae
+      MARIADB_IMAGE: ${{ inputs.mariadb_image }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted live-acceptance request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match checked-out main.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == RUN_REVIEWED_GCP_RUNTIME_LIVE_ACCEPTANCE_RESTART ]]
+          [[ "$MARIADB_IMAGE" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]] || {
+            echo 'runtime-live-acceptance requires exact mariadb:11.4@sha256:<digest>.' >&2
+            exit 1
+          }
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify live-acceptance boundary
+        run: |
+          set -euo pipefail
+
+          [[ "$(
+            gcloud container clusters describe terraformers-target \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(secretSyncConfig.enabled)'
+          )" == True ]]
+
+          [[ "$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(status)'
+          )" == RUNNING ]]
+
+          startup="$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" --format=json \
+              | jq -r '.metadata.items[]? | select(.key == "startup-script") | .value'
+          )"
+          grep -Fq "MARIADB_IMAGE=\"$MARIADB_IMAGE\"" <<< "$startup" || {
+            echo 'MariaDB VM startup script does not match the approved immutable digest.' >&2
+            exit 1
+          }
+          grep -Fq '/var/lib/mysql' <<< "$startup"
+          grep -Fq 'docker rm -f terraformers-mariadb' <<< "$startup"
+          grep -Fq 'docker run -d' <<< "$startup"
+
+          [[ "$(
+            gcloud storage buckets describe "gs://$RUNTIME_BUCKET" \
+              --format='value(public_access_prevention)'
+          )" == enforced ]]
+          [[ "$(
+            gcloud storage buckets describe "gs://$RUNTIME_BUCKET" \
+              --format='value(uniform_bucket_level_access)'
+          )" == True ]]
+
+          bucket_policy="$(mktemp)"
+          gcloud storage buckets get-iam-policy "gs://$RUNTIME_BUCKET" --format=json > "$bucket_policy"
+          if jq -e '
+            any(.bindings[]?.members[]?;
+              . == "allUsers" or . == "allAuthenticatedUsers"
+            )
+          ' "$bucket_policy" >/dev/null; then
+            echo 'Runtime bucket unexpectedly has a public IAM principal.' >&2
+            exit 1
+          fi
+
+          kubectl -n "$NAMESPACE" get secret terraformers-backend-runtime-secrets -o json \
+            | jq -e '.data.SPRING_DATASOURCE_PASSWORD | type == "string" and length > 0' >/dev/null
+          kubectl -n "$NAMESPACE" get endpointslice terraformers-mariadb >/dev/null
+
+          if kubectl -n "$NAMESPACE" get deployment terraformers-backend >/dev/null 2>&1; then
+            echo 'Backend Deployment must remain absent during runtime live acceptance.' >&2
+            exit 1
+          fi
+
+          for pair in \
+            'create serviceaccounts' \
+            'create pods' \
+            'delete pods'
+          do
+            verb="${pair%% *}"
+            resource="${pair#* }"
+            kubectl auth can-i "$verb" "$resource" -n "$NAMESPACE" | grep -Fxq yes || {
+              echo "Missing Kubernetes permission: $verb $resource" >&2
+              exit 1
+            }
+          done
+
+      - name: Ensure backend workload identity service account
+        run: |
+          set -euo pipefail
+          kubectl -n "$NAMESPACE" apply -f infra/kubernetes/base/backend-serviceaccount.yaml
+          kubectl -n "$NAMESPACE" get serviceaccount terraformers-backend >/dev/null
+          if kubectl -n "$NAMESPACE" get deployment terraformers-backend >/dev/null 2>&1; then
+            echo 'Backend Deployment was unexpectedly created.' >&2
+            exit 1
+          fi
+
+      - name: Verify GCS through backend workload identity
+        run: |
+          set -euo pipefail
+          pod="case-c-gcs-${GITHUB_RUN_ID}"
+          object="case-c-live-acceptance-${GITHUB_RUN_ID}.txt"
+          payload="case-c-live-acceptance-${GITHUB_SHA}"
+
+          kubectl -n "$NAMESPACE" delete pod "$pod" --ignore-not-found --wait=false >/dev/null 2>&1 || true
+
+          kubectl -n "$NAMESPACE" run "$pod" \
+            --image="$BACKEND_IMAGE" \
+            --restart=Never \
+            --overrides='{"spec":{"serviceAccountName":"terraformers-backend"}}' \
+            --env="BUCKET=$RUNTIME_BUCKET" \
+            --env="OBJECT=$object" \
+            --env="PAYLOAD=$payload" \
+            --command -- /bin/sh -ec '
+              metadata_url="http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
+              token_json="$(curl -fsS --retry 20 --retry-delay 2 -H "Metadata-Flavor: Google" "$metadata_url")"
+              access_token="$(printf "%s" "$token_json" | sed -n "s/.*\"access_token\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p")"
+              test -n "$access_token"
+
+              printf "%s" "$PAYLOAD" \
+                | curl -fsS -X POST \
+                    -H "Authorization: Bearer $access_token" \
+                    -H "Content-Type: text/plain" \
+                    --data-binary @- \
+                    "https://storage.googleapis.com/upload/storage/v1/b/$BUCKET/o?uploadType=media&name=$OBJECT" \
+                    >/dev/null
+
+              actual="$(
+                curl -fsS \
+                  -H "Authorization: Bearer $access_token" \
+                  "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/$OBJECT?alt=media"
+              )"
+              test "$actual" = "$PAYLOAD"
+
+              curl -fsS -X DELETE \
+                -H "Authorization: Bearer $access_token" \
+                "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/$OBJECT" \
+                >/dev/null
+
+              status="$(
+                curl -sS -o /dev/null -w "%{http_code}" \
+                  -H "Authorization: Bearer $access_token" \
+                  "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/$OBJECT"
+              )"
+              test "$status" = 404
+              echo "PASS: GCS write/read/delete through backend workload identity"
+            '
+
+          phase=""
+          for _ in $(seq 1 120); do
+            phase="$(kubectl -n "$NAMESPACE" get pod "$pod" -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+            case "$phase" in
+              Succeeded) break ;;
+              Failed)
+                kubectl -n "$NAMESPACE" logs "$pod" >&2 || true
+                exit 1
+                ;;
+            esac
+            sleep 2
+          done
+          [[ "$phase" == Succeeded ]] || {
+            kubectl -n "$NAMESPACE" logs "$pod" >&2 || true
+            echo 'GCS workload-identity probe did not complete successfully.' >&2
+            exit 1
+          }
+          kubectl -n "$NAMESPACE" logs "$pod"
+          kubectl -n "$NAMESPACE" delete pod "$pod" --wait=true >/dev/null
+
+      - name: Verify MariaDB restart and persistent-data contract
+        run: |
+          set -euo pipefail
+
+          marker="case-c-${GITHUB_RUN_ID}-${GITHUB_SHA:0:12}"
+          before_pod="case-c-db-before-${GITHUB_RUN_ID}"
+          after_pod="case-c-db-after-${GITHUB_RUN_ID}"
+          before_ip="$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(networkInterfaces[0].networkIP)'
+          )"
+          endpoint_ip="$(kubectl -n "$NAMESPACE" get endpointslice terraformers-mariadb -o jsonpath='{.endpoints[0].addresses[0]}')"
+          [[ "$before_ip" == "$endpoint_ip" ]] || {
+            echo "MariaDB EndpointSlice does not match VM private IP: endpoint=$endpoint_ip vm=$before_ip" >&2
+            exit 1
+          }
+
+          wait_for_pod() {
+            local pod="$1"
+            local phase=""
+            for _ in $(seq 1 120); do
+              phase="$(kubectl -n "$NAMESPACE" get pod "$pod" -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+              case "$phase" in
+                Succeeded) return 0 ;;
+                Failed)
+                  kubectl -n "$NAMESPACE" logs "$pod" >&2 || true
+                  return 1
+                  ;;
+              esac
+              sleep 2
+            done
+            kubectl -n "$NAMESPACE" logs "$pod" >&2 || true
+            return 1
+          }
+
+          run_db_probe() {
+            local pod="$1"
+            local mode="$2"
+            local before_hostname="$3"
+            local manifest
+            manifest="$(mktemp)"
+            cat > "$manifest" <<'YAML'
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: __POD__
+            namespace: terraformers-target
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: mariadb-client
+                image: __IMAGE__
+                imagePullPolicy: IfNotPresent
+                env:
+                  - name: MYSQL_PWD
+                    valueFrom:
+                      secretKeyRef:
+                        name: terraformers-backend-runtime-secrets
+                        key: SPRING_DATASOURCE_PASSWORD
+                  - name: MARKER_ID
+                    value: "__MARKER__"
+                  - name: MODE
+                    value: "__MODE__"
+                  - name: BEFORE_HOSTNAME
+                    value: "__BEFORE_HOSTNAME__"
+                command:
+                  - /bin/sh
+                  - -ec
+                args:
+                  - |
+                    ready=false
+                    i=0
+                    while [ "$i" -lt 120 ]; do
+                      if mariadb --protocol=TCP -h terraformers-mariadb -P 3306 \
+                          -u terraformers terraformers --batch --skip-column-names \
+                          -e 'SELECT 1' >/dev/null 2>&1; then
+                        ready=true
+                        break
+                      fi
+                      i=$((i + 1))
+                      sleep 2
+                    done
+                    [ "$ready" = true ]
+
+                    if [ "$MODE" = create ]; then
+                      mariadb --protocol=TCP -h terraformers-mariadb -P 3306 \
+                        -u terraformers terraformers --batch --skip-column-names \
+                        -e "CREATE TABLE IF NOT EXISTS case_c_runtime_acceptance_marker (
+                              id VARCHAR(128) PRIMARY KEY,
+                              created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                            );
+                            INSERT INTO case_c_runtime_acceptance_marker(id)
+                            VALUES ('$MARKER_ID')
+                            ON DUPLICATE KEY UPDATE id = VALUES(id);"
+                    fi
+
+                    i=0
+                    while [ "$i" -lt 120 ]; do
+                      marker="$(
+                        mariadb --protocol=TCP -h terraformers-mariadb -P 3306 \
+                          -u terraformers terraformers --batch --skip-column-names \
+                          -e "SELECT id FROM case_c_runtime_acceptance_marker WHERE id='$MARKER_ID';" \
+                          2>/dev/null || true
+                      )"
+                      hostname="$(
+                        mariadb --protocol=TCP -h terraformers-mariadb -P 3306 \
+                          -u terraformers terraformers --batch --skip-column-names \
+                          -e 'SELECT @@hostname;' 2>/dev/null || true
+                      )"
+                      if [ "$marker" = "$MARKER_ID" ]; then
+                        if [ "$MODE" = create ] || { [ -n "$BEFORE_HOSTNAME" ] && [ "$hostname" != "$BEFORE_HOSTNAME" ]; }; then
+                          echo "marker=$marker"
+                          echo "hostname=$hostname"
+                          if [ "$MODE" = verify ]; then
+                            mariadb --protocol=TCP -h terraformers-mariadb -P 3306 \
+                              -u terraformers terraformers --batch --skip-column-names \
+                              -e "DROP TABLE IF EXISTS case_c_runtime_acceptance_marker;"
+                          fi
+                          exit 0
+                        fi
+                      fi
+                      i=$((i + 1))
+                      sleep 2
+                    done
+
+                    echo 'Marker persistence/container-replacement condition was not satisfied.' >&2
+                    exit 1
+          YAML
+            sed -i \
+              -e "s|__POD__|$pod|g" \
+              -e "s|__IMAGE__|$MARIADB_IMAGE|g" \
+              -e "s|__MARKER__|$marker|g" \
+              -e "s|__MODE__|$mode|g" \
+              -e "s|__BEFORE_HOSTNAME__|$before_hostname|g" \
+              "$manifest"
+
+            kubectl -n "$NAMESPACE" delete pod "$pod" --ignore-not-found --wait=false >/dev/null 2>&1 || true
+            kubectl apply -f "$manifest" >/dev/null
+            wait_for_pod "$pod"
+            kubectl -n "$NAMESPACE" logs "$pod"
+          }
+
+          run_db_probe "$before_pod" create ""
+          before_log="$(kubectl -n "$NAMESPACE" logs "$before_pod")"
+          grep -Fxq "marker=$marker" <<< "$before_log"
+          before_hostname="$(sed -n 's/^hostname=//p' <<< "$before_log" | tail -n1)"
+          [[ -n "$before_hostname" ]]
+          kubectl -n "$NAMESPACE" delete pod "$before_pod" --wait=true >/dev/null
+
+          gcloud compute instances stop "$MARIADB_INSTANCE" \
+            --zone="$ZONE" --project="$PROJECT_ID" --quiet
+          [[ "$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" --format='value(status)'
+          )" == TERMINATED ]]
+
+          gcloud compute instances start "$MARIADB_INSTANCE" \
+            --zone="$ZONE" --project="$PROJECT_ID" --quiet
+          [[ "$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" --format='value(status)'
+          )" == RUNNING ]]
+
+          after_ip="$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(networkInterfaces[0].networkIP)'
+          )"
+          [[ "$after_ip" == "$before_ip" ]] || {
+            echo "MariaDB private IP changed across stop/start: before=$before_ip after=$after_ip" >&2
+            exit 1
+          }
+
+          run_db_probe "$after_pod" verify "$before_hostname"
+          after_log="$(kubectl -n "$NAMESPACE" logs "$after_pod")"
+          grep -Fxq "marker=$marker" <<< "$after_log"
+          after_hostname="$(sed -n 's/^hostname=//p' <<< "$after_log" | tail -n1)"
+          [[ -n "$after_hostname" && "$after_hostname" != "$before_hostname" ]] || {
+            echo 'MariaDB container identity did not change after VM restart/startup-script execution.' >&2
+            exit 1
+          }
+          kubectl -n "$NAMESPACE" delete pod "$after_pod" --wait=true >/dev/null
+
+          {
+            echo '## Case C runtime live acceptance'
+            echo
+            echo '- Private GKE -> MariaDB TCP/database path: PASS'
+            echo '- Marker row survived VM stop/start: PASS'
+            echo '- Startup-script container recreation observed via changed MariaDB container hostname: PASS'
+            echo '- Marker table cleaned after verification: PASS'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify final runtime boundary
+        run: |
+          set -euo pipefail
+          [[ "$(
+            gcloud storage buckets describe "gs://$RUNTIME_BUCKET" \
+              --format='value(public_access_prevention)'
+          )" == enforced ]]
+          [[ "$(
+            gcloud storage buckets describe "gs://$RUNTIME_BUCKET" \
+              --format='value(uniform_bucket_level_access)'
+          )" == True ]]
+          kubectl -n "$NAMESPACE" get secret terraformers-backend-runtime-secrets -o json \
+            | jq -e '.data.SPRING_DATASOURCE_PASSWORD | type == "string" and length > 0' >/dev/null
+          kubectl -n "$NAMESPACE" get serviceaccount terraformers-backend >/dev/null
+          kubectl -n "$NAMESPACE" get endpointslice terraformers-mariadb >/dev/null
+          if kubectl -n "$NAMESPACE" get deployment terraformers-backend >/dev/null 2>&1; then
+            echo 'Backend Deployment was unexpectedly created.' >&2
+            exit 1
+          fi
+
+          {
+            echo '- GCS backend workload identity write/read/delete: PASS'
+            echo '- Runtime bucket private / UBLA / public access prevention: PASS'
+            echo '- Secret Sync DB-password key: present (value not printed)'
+            echo '- Backend workload ServiceAccount: present'
+            echo '- Backend Deployment: absent'
+            echo '- Secret payloads: not printed or uploaded'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup temporary acceptance pods
+        if: always()
+        run: |
+          kubectl -n "$NAMESPACE" delete pod \
+            "case-c-gcs-${GITHUB_RUN_ID}" \
+            "case-c-db-before-${GITHUB_RUN_ID}" \
+            "case-c-db-after-${GITHUB_RUN_ID}" \
+            --ignore-not-found --wait=false >/dev/null 2>&1 || true
+

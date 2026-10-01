@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Authenticate only, run read-only preflight/runtime verification, create the reviewed foundation, activate the existing node pool to one, or return it to zero.
+        description: Authenticate only, run read-only verification, create the reviewed GKE foundation or immutable-image delivery foundation, activate the node pool, or return it to zero.
         required: true
         type: choice
         options:
@@ -12,6 +12,7 @@ on:
           - preflight
           - runtime-check
           - foundation
+          - delivery-foundation
           - activate
           - idle
       expected_sha:
@@ -19,7 +20,7 @@ on:
         required: true
         type: string
       confirmation:
-        description: Use IDENTITY_CHECK, PREFLIGHT_ONLY, RUNTIME_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_12, ACTIVATE_GCP_TARGET_ONE, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
+        description: Use IDENTITY_CHECK, PREFLIGHT_ONLY, RUNTIME_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_12, APPLY_REVIEWED_GCP_DELIVERY_FOUNDATION_5, ACTIVATE_GCP_TARGET_ONE, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
         required: true
         type: string
 
@@ -86,6 +87,9 @@ jobs:
             foundation)
               [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_FOUNDATION_12 ]] || exit 1
               ;;
+            delivery-foundation)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_DELIVERY_FOUNDATION_5 ]] || exit 1
+              ;;
             activate)
               [[ "$CONFIRMATION" == ACTIVATE_GCP_TARGET_ONE ]] || exit 1
               ;;
@@ -98,7 +102,7 @@ jobs:
               ;;
           esac
 
-          if [[ "$OPERATION" == preflight || "$OPERATION" == runtime-check || "$OPERATION" == foundation ]]; then
+          if [[ "$OPERATION" == preflight || "$OPERATION" == runtime-check || "$OPERATION" == foundation || "$OPERATION" == delivery-foundation ]]; then
             [[ -n "$STATE_BUCKET" && -n "$WIF_PROVIDER" && -n "$PLAN_SERVICE_ACCOUNT" ]] || {
               echo 'gcp-target-plan environment variables are incomplete.' >&2
               exit 1
@@ -114,22 +118,22 @@ jobs:
           fi
 
       - uses: google-github-actions/auth@v3
-        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation' || inputs.operation == 'delivery-foundation'
         with:
           project_id: terraformers-platform
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
 
       - uses: google-github-actions/setup-gcloud@v3
-        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation' || inputs.operation == 'delivery-foundation'
 
       - name: Reconfirm plan identity is non-mutating
-        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation' || inputs.operation == 'delivery-foundation'
         run: |
           set -euo pipefail
           access_token="$(gcloud auth print-access-token)"
           response="$(
-            curl -fsS -X POST               -H "Authorization: Bearer ${access_token}"               -H 'Content-Type: application/json'               -d '{"permissions":["compute.networks.create","compute.subnetworks.create","container.clusters.create","container.clusters.update","iam.serviceAccounts.create","iam.serviceAccounts.actAs","resourcemanager.projects.setIamPolicy","serviceusage.services.enable"]}'               "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
+            curl -fsS -X POST               -H "Authorization: Bearer ${access_token}"               -H 'Content-Type: application/json'               -d '{"permissions":["artifactregistry.repositories.create","artifactregistry.repositories.setIamPolicy","compute.networks.create","compute.subnetworks.create","container.clusters.create","container.clusters.update","iam.serviceAccounts.create","iam.serviceAccounts.actAs","resourcemanager.projects.setIamPolicy","serviceusage.services.enable"]}'               "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
           )"
           granted="$(jq -r '.permissions // [] | join(",")' <<< "$response")"
           [[ -z "$granted" ]] || {
@@ -180,7 +184,7 @@ jobs:
           cat "${RUNNER_TEMP}/gcp-foundation-preflight.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check canonical state bucket protection
-        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation' || inputs.operation == 'delivery-foundation'
         env:
           STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
         run: |
@@ -197,7 +201,7 @@ jobs:
           }
 
       - uses: hashicorp/setup-terraform@v3
-        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation'
+        if: inputs.operation == 'preflight' || inputs.operation == 'runtime-check' || inputs.operation == 'foundation' || inputs.operation == 'delivery-foundation'
         with:
           terraform_version: 1.15.8
           terraform_wrapper: false
@@ -239,6 +243,71 @@ jobs:
             echo '- Delete/replacement/additional managed resources: `forbidden`.'
             echo '- Raw plan/state are not uploaded.'
             echo '- Remaining Free Trial promotional credit is confirmed by the operator at the single protected foundation approval.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+      - name: Verify immutable-image delivery foundation plan
+        if: inputs.operation == 'delivery-foundation'
+        env:
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+
+          terraform init -no-color -reconfigure -input=false \
+            -backend-config="bucket=${STATE_BUCKET}" \
+            -backend-config='prefix=gcp-target-runtime'
+
+          mapfile -t managed_state < <(terraform state list)
+          [[ "${#managed_state[@]}" -eq 12 ]] || {
+            echo "Delivery foundation preflight requires the existing 12-resource target state; found ${#managed_state[@]}." >&2
+            printf '  %s\n' "${managed_state[@]}" >&2
+            exit 1
+          }
+          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target'
+          printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target'
+
+          gcloud iam service-accounts describe \
+            terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com \
+            --project=terraformers-platform \
+            --format='value(email)' >/dev/null || {
+              echo 'Dedicated image publisher identity must be bootstrapped before delivery-foundation apply.' >&2
+              exit 1
+            }
+
+          terraform show -json > "${RUNNER_TEMP}/gcp-target-delivery-state.json"
+          current_node_count="$(
+            jq -r '
+              .values.root_module.resources[]
+              | select(.address == "google_container_node_pool.target")
+              | .values.node_count
+            ' "${RUNNER_TEMP}/gcp-target-delivery-state.json"
+          )"
+          [[ "$current_node_count" =~ ^[01]$ ]] || {
+            echo "Unexpected target node count: $current_node_count" >&2
+            exit 1
+          }
+
+          terraform plan -no-color -input=false -lock-timeout=5m \
+            -var="node_count=${current_node_count}" \
+            -out="${RUNNER_TEMP}/gcp-target-delivery-preflight.tfplan"
+
+          terraform show -json "${RUNNER_TEMP}/gcp-target-delivery-preflight.tfplan" \
+            > "${RUNNER_TEMP}/gcp-target-delivery-preflight-plan.json"
+
+          python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_target_plan_gate.py" \
+            --plan-json "${RUNNER_TEMP}/gcp-target-delivery-preflight-plan.json" \
+            --operation delivery-foundation
+
+          {
+            echo
+            echo '### Immutable backend image delivery pre-approval boundary'
+            echo
+            echo '- Canonical runtime state is reused; no second Terraform root/state is introduced.'
+            echo '- Reviewed contract: exactly `5 create` resources.'
+            echo '- Artifact Registry API + Docker repository + three repository-scoped IAM members only.'
+            echo '- Delete/replacement/update/additional managed resources: `forbidden`.'
+            echo '- Publisher service account must already exist, but no image is published here.'
+            echo '- Raw plan/state are not uploaded.'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify existing runtime without mutation
@@ -386,6 +455,14 @@ jobs:
               [[ "$STATE_BUCKET" != *..* ]] || exit 1
               echo 'TF_VAR_node_count=1' >> "$GITHUB_ENV"
               ;;
+            delivery-foundation)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_DELIVERY_FOUNDATION_5 ]] || {
+                echo 'delivery-foundation requires confirmation APPLY_REVIEWED_GCP_DELIVERY_FOUNDATION_5.' >&2
+                exit 1
+              }
+              [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
+              [[ "$STATE_BUCKET" != *..* ]] || exit 1
+              ;;
             activate)
               [[ "$CONFIRMATION" == ACTIVATE_GCP_TARGET_ONE ]] || {
                 echo 'activate requires confirmation ACTIVATE_GCP_TARGET_ONE.' >&2
@@ -482,6 +559,35 @@ jobs:
                 exit 1
               }
             done
+          elif [[ "$OPERATION" == delivery-foundation ]]; then
+            [[ "${#managed_state[@]}" -eq 12 ]] || {
+              echo "Delivery foundation apply requires the existing 12-resource target state; found ${#managed_state[@]}." >&2
+              printf '  %s\n' "${managed_state[@]}" >&2
+              exit 1
+            }
+            printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target'
+            printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target'
+            gcloud iam service-accounts describe \
+              terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com \
+              --project=terraformers-platform \
+              --format='value(email)' >/dev/null || {
+                echo 'Dedicated image publisher identity must be bootstrapped before delivery-foundation apply.' >&2
+                exit 1
+              }
+
+            terraform show -json > "${RUNNER_TEMP}/gcp-target-delivery-state.json"
+            current_node_count="$(
+              jq -r '
+                .values.root_module.resources[]
+                | select(.address == "google_container_node_pool.target")
+                | .values.node_count
+              ' "${RUNNER_TEMP}/gcp-target-delivery-state.json"
+            )"
+            [[ "$current_node_count" =~ ^[01]$ ]] || {
+              echo "Unexpected target node count: $current_node_count" >&2
+              exit 1
+            }
+            echo "TF_VAR_node_count=$current_node_count" >> "$GITHUB_ENV"
           else
             printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target' || {
               echo 'Runtime scale operation requires the canonical GKE cluster in remote state.' >&2
@@ -549,6 +655,8 @@ jobs:
 
           if [[ "$OPERATION" == foundation || "$OPERATION" == activate ]]; then
             expected_nodes=1
+          elif [[ "$OPERATION" == delivery-foundation ]]; then
+            expected_nodes="${TF_VAR_node_count}"
           else
             expected_nodes=0
           fi
@@ -557,6 +665,24 @@ jobs:
             echo "Expected Terraform node_count=$expected_nodes, got $node_count." >&2
             exit 1
           }
+
+          if [[ "$OPERATION" == delivery-foundation ]]; then
+            repository_format="$(
+              gcloud artifacts repositories describe terraformers-backend \
+                --project=terraformers-platform \
+                --location=asia-northeast3 \
+                --format='value(format)'
+            )"
+            [[ "$repository_format" == DOCKER ]] || {
+              echo "Artifact Registry format is $repository_format, expected DOCKER." >&2
+              exit 1
+            }
+            mapfile -t post_state < <(terraform state list)
+            [[ "${#post_state[@]}" -eq 17 ]] || {
+              echo "Delivery foundation expected 17 managed resources after apply; found ${#post_state[@]}." >&2
+              exit 1
+            }
+          fi
 
           {
             echo '## GCP target apply result'

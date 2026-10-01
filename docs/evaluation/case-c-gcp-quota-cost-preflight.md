@@ -2,7 +2,7 @@
 
 ## Status
 
-**QUOTA / MACHINE PASS — FREE TRIAL CREDIT CONFIRMATION HUMAN_REQUIRED**
+**PASS — QUOTA / MACHINE / FREE TRIAL BUDGET GATES COMPLETE**
 
 Execution base:
 
@@ -185,11 +185,11 @@ project-scoped plan identity:
 
 - billing query: `unavailable`;
 - billing enabled: `unknown`;
-- remaining Free Trial promotional-credit balance: **HUMAN_REQUIRED**.
+- remaining Free Trial promotional-credit balance: not exposed to the plan identity.
 
-This does **not** justify granting billing-account administration to the plan identity. The only
-remaining preflight action is a human confirmation that sufficient promotional credit remains for
-the bounded Case C implementation and evidence session.
+This does **not** justify granting billing-account administration to the plan identity. The user
+confirmed on 2026-10-01 that sufficient Free Trial promotional credit remains for the bounded
+Case C implementation and evidence session. Therefore the budget gate is **PASS**.
 
 ## External references
 
@@ -201,3 +201,16 @@ the bounded Case C implementation and evidence session.
   https://docs.cloud.google.com/compute/docs/general-purpose-machines
 - Persistent Disk creation and minimum sizes:
   https://docs.cloud.google.com/compute/docs/disks/add-persistent-disk
+
+## Final acceptance
+
+The preflight is **COMPLETE / PASS**.
+
+- quota and machine availability: PASS;
+- read-only identity boundary: PASS;
+- no cloud mutation: PASS;
+- Free Trial budget checkpoint: PASS by explicit user confirmation;
+- runtime implementation: still separately gated.
+
+The next candidate Work Package may implement the production-representative Case C runtime, but it
+must not start until explicitly approved.

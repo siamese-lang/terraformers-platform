@@ -845,12 +845,7 @@ jobs:
             openssl rsa -pubin -in "$public_key" -modulus -noout | cut -d= -f2
           )"
           modulus_b64="$(
-            python3 - "$modulus_hex" <<'PY'
-import base64
-import sys
-raw = bytes.fromhex(sys.argv[1])
-print(base64.urlsafe_b64encode(raw).rstrip(b"=").decode())
-PY
+            python3 -c 'import base64,sys; raw=bytes.fromhex(sys.argv[1]); print(base64.urlsafe_b64encode(raw).rstrip(b"=").decode())' "$modulus_hex"
           )"
           kid="case-c-${GITHUB_RUN_ID}"
           jq -n --arg kid "$kid" --arg n "$modulus_b64"             '{keys:[{kty:"RSA",use:"sig",alg:"RS256",kid:$kid,n:$n,e:"AQAB"}]}'             > "$jwks"

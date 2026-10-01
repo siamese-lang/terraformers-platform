@@ -47,6 +47,40 @@ class AdaptiveRetrievalProbeTest {
     }
 
     @Test
+    void excludesSharedEmbeddingTimeFromBothArmLatencies() {
+        AdaptiveRetrievalProbeFixture fixture = fixture();
+        AtomicInteger embeddingCalls = new AtomicInteger();
+        List<String> responses = queuedResponses(fixture.facts().resourceTypes());
+        int[] responseIndex = {0};
+        long[] now = {0L};
+
+        AdaptiveRetrievalProbeRunner runner = new AdaptiveRetrievalProbeRunner(
+                text -> {
+                    embeddingCalls.incrementAndGet();
+                    now[0] += 1_000_000_000L;
+                    return java.util.Collections.nCopies(1024, 0.25f);
+                },
+                new OpenSearchKnnQueryBuilder(mapper),
+                new OpenSearchResponseParser(mapper),
+                (uri, body) -> {
+                    now[0] += 10_000_000L;
+                    return responses.get(responseIndex[0]++);
+                },
+                properties(),
+                new RetrievalQueryTextBuilder(),
+                () -> now[0]
+        );
+
+        AdaptiveRetrievalProbeReport report = runner.run(
+                fixture, "a".repeat(40), "gemini-embedding-001", 1024);
+
+        assertThat(embeddingCalls).hasValue(1);
+        assertThat(report.embeddingDelegateCalls()).isEqualTo(1);
+        assertThat(report.control().latencyMs()).isEqualTo(140L);
+        assertThat(report.adaptive().latencyMs()).isEqualTo(140L);
+    }
+
+    @Test
     void productionRetrieverRecoversTwelveResourceCoverageOnlyWithAdaptiveGrowth() {
         AdaptiveRetrievalProbeFixture fixture = fixture();
         AtomicInteger embeddingCalls = new AtomicInteger();

@@ -1,0 +1,150 @@
+work_package:
+  id: case-c-gcp-quota-cost-preflight-v1
+  status: ACTIVE
+  approved_base_sha: "a5316f399b4ae71d0b319d264be81766dbf87951"
+  execution_base_sha: "a5316f399b4ae71d0b319d264be81766dbf87951"
+
+  goal: >
+    Prove, using read-only GCP evidence, whether the selected Case C candidate
+    can coexist within the current terraformers-platform quota and Free Trial
+    budget before any VM, disk, bucket, registry or IAM resource is created.
+
+  selected_candidate:
+    gke_active_node:
+      machine_type: e2-standard-2
+      guest_vcpus: 2
+      boot_disk_type: pd-standard
+      boot_disk_gib: 30
+      desired_count: 1
+    mariadb_vm:
+      machine_type: e2-medium
+      guest_vcpus: 2
+      memory_gib: 4
+      desired_count: 1
+      boot_disk_budget_gib: 10
+      data_disk_type: pd-balanced
+      data_disk_gib: 20
+    opensearch:
+      existing_pvc_gib: 15
+
+  execution_model:
+    - reuse_existing_gcp_target_terraform_plan_workflow
+    - add_read_only_case_c_preflight_mode
+    - authenticate_with_existing_terraformers_plan_WIF_identity
+    - automatically_run_on_main_merge_of_this_work_package
+    - publish_only_step_summary_and_logs
+    - do_not_write_GCP_state
+
+  allowed_paths:
+    - .agents/work-packages/case-c-gcp-quota-cost-preflight-v1.yml
+    - .github/workflows/gcp-target-terraform-plan.yml
+    - docs/evaluation/case-c-gcp-quota-cost-preflight.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-c-relational-hosting-decision.md
+    - docs/plans/active/portfolio-case-reassessment.md
+
+  prohibited_paths:
+    - backend/**
+    - frontend/**
+    - infra/**
+    - corpus/**
+    - evaluation/**
+    - AGENTS.md
+
+  allowed_actions:
+    - inspect_GCP_quota_read_only
+    - inspect_project_billing_link_read_only
+    - inspect_current_target_node_count
+    - inspect_machine_type_availability
+    - calculate_candidate_quota_headroom
+    - update_existing_manual_plan_workflow
+    - add_push_trigger_scoped_to_this_work_package
+    - publish_GitHub_step_summary
+    - document_preflight_contract
+    - create_pull_request
+    - inspect_ci_once
+
+  prohibited_actions:
+    - merge
+    - create_VM
+    - create_disk
+    - create_bucket
+    - create_registry
+    - create_service_account
+    - mutate_IAM
+    - terraform_plan
+    - terraform_apply
+    - kubernetes_apply
+    - activate_GKE_node_pool
+    - live_Vertex_call
+    - load_test
+    - start_next_work_package
+
+  quota_contract:
+    principle: >
+      Use actual regional/project quota and current target node count. The
+      active Case C before-state must fit one e2-standard-2 GKE node and one
+      e2-medium DB VM simultaneously.
+    required_metrics:
+      global:
+        - CPUS_ALL_REGIONS
+      regional:
+        - CPUS
+        - E2_CPUS
+        - INSTANCES
+        - DISKS_TOTAL_GB
+        - SSD_TOTAL_GB
+        - IN_USE_ADDRESSES
+    disk_budget:
+      standard_increment_if_target_node_idle_gib: 30
+      balanced_candidate_increment_gib: 30
+      note: >
+        pd-balanced consumes the SSD_TOTAL_GB regional quota. The 30 GiB
+        candidate budget is 10 GiB VM boot plus 20 GiB MariaDB data disk.
+    stop_if:
+      - required_quota_metric_missing
+      - e2_standard_2_not_available_in_asia_northeast3_a
+      - e2_medium_not_available_in_asia_northeast3_a
+      - target_cluster_missing
+      - current_target_node_count_not_0_or_1
+      - candidate_CPU_or_instance_headroom_insufficient
+      - candidate_standard_or_balanced_disk_headroom_insufficient
+      - required_address_headroom_insufficient
+      - billing_explicitly_disabled
+
+  free_trial_contract:
+    billing_link: query_if_current_plan_identity_can_read_it
+    remaining_promotional_credit: >
+      Do not invent or infer an amount. If the project-scoped identity cannot
+      read the actual remaining promotional credit, record HUMAN_REQUIRED for
+      final budget confirmation.
+    always_free_assumption: false
+
+  acceptance_criteria:
+    - existing_GCP_plan_workflow_is_reused
+    - no_new_workflow_is_created
+    - preflight_mode_has_no_Terraform_init_plan_or_apply
+    - preflight_mode_has_no_GCP_mutation_permission
+    - actual_global_and_Seoul_quota_are_read
+    - current_target_node_count_is_read
+    - e2_standard_2_and_e2_medium_are_read_from_selected_zone
+    - candidate_CPU_instance_and_disk_headroom_are_calculated
+    - billing_disabled_blocks
+    - unknown_credit_balance_is_reported_not_guessed
+    - merge_to_main_triggers_exactly_the_read_only_preflight_for_this_WP_path
+    - no_cloud_resource_or_IAM_change_occurs
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - main_drift
+    - read_identity_requires_new_write_permission
+    - quota_check_requires_cloud_mutation
+    - workflow_scope_must_expand_beyond_existing_plan_identity
+    - failure_class_changes_after_one_bounded_repair
+    - candidate_topology_must_change
+
+  completion:
+    merge_requires_user_approval: true
+    preflight_result_requires_review: true
+    runtime_implementation_requires_user_approval: true

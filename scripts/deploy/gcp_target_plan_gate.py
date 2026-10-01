@@ -24,6 +24,20 @@ FOUNDATION_ACTIONS = {
     "google_service_account.gke_nodes": ("google_service_account", ["create"]),
 }
 
+DELIVERY_FOUNDATION_ACTIONS = {
+    "google_project_service.artifact_registry[0]": ("google_project_service", ["create"]),
+    "google_artifact_registry_repository.backend[0]": ("google_artifact_registry_repository", ["create"]),
+    "google_artifact_registry_repository_iam_member.publisher_writer[0]": (
+        "google_artifact_registry_repository_iam_member", ["create"]
+    ),
+    "google_artifact_registry_repository_iam_member.gke_node_reader[0]": (
+        "google_artifact_registry_repository_iam_member", ["create"]
+    ),
+    "google_artifact_registry_repository_iam_member.plan_reader[0]": (
+        "google_artifact_registry_repository_iam_member", ["create"]
+    ),
+}
+
 EXPECTED_SERVICES = {
     "aiplatform.googleapis.com",
     "compute.googleapis.com",
@@ -160,6 +174,52 @@ def validate_foundation(changes: dict[str, dict[str, Any]]) -> None:
     require(node_sa.get("account_id") == "terraformers-gke-nodes", "unexpected node service account id")
 
 
+def validate_delivery_foundation(changes: dict[str, dict[str, Any]]) -> None:
+    require(
+        set(changes) == set(DELIVERY_FOUNDATION_ACTIONS),
+        "delivery-foundation plan does not match the reviewed five-resource address set",
+    )
+
+    for address, (expected_type, expected_actions) in DELIVERY_FOUNDATION_ACTIONS.items():
+        resource = changes[address]
+        require(resource.get("type") == expected_type, f"{address}: unexpected type {resource.get('type')}")
+        actions = list(resource.get("change", {}).get("actions", []))
+        require(actions == expected_actions, f"{address}: expected {expected_actions}, got {actions}")
+
+    service = changes["google_project_service.artifact_registry[0]"]["change"]["after"]
+    require(service.get("service") == "artifactregistry.googleapis.com", "unexpected delivery API")
+    require(service.get("disable_on_destroy") is False, "Artifact Registry API must not be disabled on destroy")
+
+    repository = changes["google_artifact_registry_repository.backend[0]"]["change"]["after"]
+    require(repository.get("project") == "terraformers-platform", "unexpected Artifact Registry project")
+    require(repository.get("location") == "asia-northeast3", "unexpected Artifact Registry location")
+    require(repository.get("repository_id") == "terraformers-backend", "unexpected Artifact Registry repository id")
+    require(repository.get("format") == "DOCKER", "Artifact Registry repository must remain Docker format")
+
+    expected_members = {
+        "google_artifact_registry_repository_iam_member.publisher_writer[0]": (
+            "roles/artifactregistry.writer",
+            "serviceAccount:terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com",
+        ),
+        "google_artifact_registry_repository_iam_member.gke_node_reader[0]": (
+            "roles/artifactregistry.reader",
+            "serviceAccount:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
+        ),
+        "google_artifact_registry_repository_iam_member.plan_reader[0]": (
+            "roles/artifactregistry.reader",
+            "serviceAccount:terraformers-plan@terraformers-platform.iam.gserviceaccount.com",
+        ),
+    }
+
+    for address, (role, member) in expected_members.items():
+        after = changes[address]["change"]["after"]
+        require(after.get("project") == "terraformers-platform", f"{address}: unexpected project")
+        require(after.get("location") == "asia-northeast3", f"{address}: unexpected location")
+        require(after.get("repository") == "terraformers-backend", f"{address}: unexpected repository")
+        require(after.get("role") == role, f"{address}: unexpected role")
+        require(after.get("member") == member, f"{address}: unexpected member")
+
+
 def validate_node_pool_transition(
     changes: dict[str, dict[str, Any]],
     operation: str,
@@ -219,6 +279,8 @@ def validate_plan(plan: dict[str, Any], operation: str) -> dict[str, Any]:
 
     if operation == "foundation":
         validate_foundation(changes)
+    elif operation == "delivery-foundation":
+        validate_delivery_foundation(changes)
     elif operation == "activate":
         validate_activate(changes)
     elif operation == "idle":
@@ -278,7 +340,11 @@ def append_summary(result: dict[str, Any], plan_hash: str) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fail-closed contract gate for the GCP target Terraform apply plan.")
     parser.add_argument("--plan-json", required=True, type=Path)
-    parser.add_argument("--operation", required=True, choices=("foundation", "activate", "idle"))
+    parser.add_argument(
+        "--operation",
+        required=True,
+        choices=("foundation", "delivery-foundation", "activate", "idle"),
+    )
     return parser.parse_args()
 
 

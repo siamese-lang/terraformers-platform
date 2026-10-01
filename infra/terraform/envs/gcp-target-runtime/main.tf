@@ -143,3 +143,63 @@ resource "google_project_iam_member" "backend_service_usage" {
 
   depends_on = [google_container_cluster.target]
 }
+
+
+# Case C immutable backend image delivery foundation. The default is enabled so
+# the canonical desired state retains the resources after first delivery apply. Historical
+# foundation operations explicitly set this false to preserve their reviewed 12-resource contract.
+variable "enable_delivery_foundation" {
+  description = "Include the immutable backend image delivery foundation in canonical target state."
+  type        = bool
+  default     = true
+}
+
+resource "google_project_service" "artifact_registry" {
+  count = var.enable_delivery_foundation ? 1 : 0
+
+  project            = var.project_id
+  service            = "artifactregistry.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_artifact_registry_repository" "backend" {
+  count = var.enable_delivery_foundation ? 1 : 0
+
+  project       = var.project_id
+  location      = var.region
+  repository_id = "terraformers-backend"
+  description   = "Immutable Terraformers backend images"
+  format        = "DOCKER"
+
+  depends_on = [google_project_service.artifact_registry[0]]
+}
+
+resource "google_artifact_registry_repository_iam_member" "publisher_writer" {
+  count = var.enable_delivery_foundation ? 1 : 0
+
+  project    = var.project_id
+  location   = google_artifact_registry_repository.backend[0].location
+  repository = google_artifact_registry_repository.backend[0].repository_id
+  role       = "roles/artifactregistry.writer"
+  member     = "serviceAccount:terraformers-image-publish@${var.project_id}.iam.gserviceaccount.com"
+}
+
+resource "google_artifact_registry_repository_iam_member" "gke_node_reader" {
+  count = var.enable_delivery_foundation ? 1 : 0
+
+  project    = var.project_id
+  location   = google_artifact_registry_repository.backend[0].location
+  repository = google_artifact_registry_repository.backend[0].repository_id
+  role       = "roles/artifactregistry.reader"
+  member     = "serviceAccount:${google_service_account.gke_nodes.email}"
+}
+
+resource "google_artifact_registry_repository_iam_member" "plan_reader" {
+  count = var.enable_delivery_foundation ? 1 : 0
+
+  project    = var.project_id
+  location   = google_artifact_registry_repository.backend[0].location
+  repository = google_artifact_registry_repository.backend[0].repository_id
+  role       = "roles/artifactregistry.reader"
+  member     = "serviceAccount:terraformers-plan@${var.project_id}.iam.gserviceaccount.com"
+}

@@ -146,6 +146,66 @@ def foundation_plan() -> dict:
     return {"resource_changes": changes}
 
 
+def delivery_foundation_plan() -> dict:
+    return {
+        "resource_changes": [
+            resource(
+                "google_project_service.artifact_registry[0]",
+                "google_project_service",
+                ["create"],
+                {"service": "artifactregistry.googleapis.com", "disable_on_destroy": False},
+            ),
+            resource(
+                "google_artifact_registry_repository.backend[0]",
+                "google_artifact_registry_repository",
+                ["create"],
+                {
+                    "project": "terraformers-platform",
+                    "location": "asia-northeast3",
+                    "repository_id": "terraformers-backend",
+                    "format": "DOCKER",
+                },
+            ),
+            resource(
+                "google_artifact_registry_repository_iam_member.publisher_writer[0]",
+                "google_artifact_registry_repository_iam_member",
+                ["create"],
+                {
+                    "project": "terraformers-platform",
+                    "location": "asia-northeast3",
+                    "repository": "terraformers-backend",
+                    "role": "roles/artifactregistry.writer",
+                    "member": "serviceAccount:terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com",
+                },
+            ),
+            resource(
+                "google_artifact_registry_repository_iam_member.gke_node_reader[0]",
+                "google_artifact_registry_repository_iam_member",
+                ["create"],
+                {
+                    "project": "terraformers-platform",
+                    "location": "asia-northeast3",
+                    "repository": "terraformers-backend",
+                    "role": "roles/artifactregistry.reader",
+                    "member": "serviceAccount:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
+                },
+            ),
+            resource(
+                "google_artifact_registry_repository_iam_member.plan_reader[0]",
+                "google_artifact_registry_repository_iam_member",
+                ["create"],
+                {
+                    "project": "terraformers-platform",
+                    "location": "asia-northeast3",
+                    "repository": "terraformers-backend",
+                    "role": "roles/artifactregistry.reader",
+                    "member": "serviceAccount:terraformers-plan@terraformers-platform.iam.gserviceaccount.com",
+                },
+            ),
+        ]
+    }
+
+
 class GcpTargetPlanGateTest(unittest.TestCase):
     def test_foundation_accepts_reviewed_contract(self) -> None:
         result = gate.validate_plan(foundation_plan(), "foundation")
@@ -302,6 +362,48 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         }
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "idle")
+
+    def test_delivery_foundation_accepts_exact_five_create_contract(self) -> None:
+        result = gate.validate_plan(delivery_foundation_plan(), "delivery-foundation")
+        self.assertEqual(result["resource_change_count"], 5)
+
+    def test_delivery_foundation_rejects_unreviewed_resource(self) -> None:
+        plan = delivery_foundation_plan()
+        plan["resource_changes"].append(
+            resource(
+                "google_artifact_registry_repository.unreviewed",
+                "google_artifact_registry_repository",
+                ["create"],
+                {
+                    "project": "terraformers-platform",
+                    "location": "asia-northeast3",
+                    "repository_id": "unexpected",
+                    "format": "DOCKER",
+                },
+            )
+        )
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "delivery-foundation")
+
+    def test_delivery_foundation_rejects_repository_update(self) -> None:
+        plan = delivery_foundation_plan()
+        repository = next(
+            item for item in plan["resource_changes"]
+            if item["address"] == "google_artifact_registry_repository.backend[0]"
+        )
+        repository["change"]["actions"] = ["update"]
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "delivery-foundation")
+
+    def test_delivery_foundation_rejects_broad_publisher_role(self) -> None:
+        plan = delivery_foundation_plan()
+        writer = next(
+            item for item in plan["resource_changes"]
+            if item["address"] == "google_artifact_registry_repository_iam_member.publisher_writer[0]"
+        )
+        writer["change"]["after"]["role"] = "roles/artifactregistry.admin"
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "delivery-foundation")
 
 
 if __name__ == "__main__":

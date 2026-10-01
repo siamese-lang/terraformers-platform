@@ -191,15 +191,18 @@ portable MariaDB/JWKS/filesystem fixtures can reduce scope, but their current `e
 forms are not valid safe-rollout persistence evidence. Therefore the evaluation pod must not be
 substituted for the Case C system under test.
 
-The representative benchmark-runtime decision is now documented in
-[Case C Representative Benchmark Runtime Decision](case-c-representative-benchmark-runtime-decision.md)
-and is **READY / AWAITING_USER_DECISION_APPROVAL**.
+The representative-runtime decision is now documented in
+[Case C Production-Representative Runtime Decision Gate](case-c-representative-benchmark-runtime-decision.md)
+and is **COMPATIBILITY GATE OPEN**.
 
-It selects benchmark-only persistent reuse on the same GKE target: real Spring Boot + Case B durable
-jobs + real Vertex/OpenSearch, persistent benchmark MariaDB and filesystem object bytes, deterministic
-JWT/JWKS authentication, internal-only traffic, and digest-pinned GHCR images. It rejects both
-load-testing the evaluation pod and completing the full GCP application runtime before the baseline.
-No implementation, live load or tuning is authorized until the user approves the selected direction.
+The portfolio objective now prefers a production-representative backend runtime over the earlier
+benchmark-only MariaDB/filesystem shape, because dependency topology can distort bottleneck
+attribution. However, the repository does not yet authorize Cloud SQL for MySQL, Cloud Storage or
+Artifact Registry by convention. Each candidate must first pass its explicit compatibility gate:
+MySQL 8.4 Flyway/JPA/Case B semantics, Cloud Storage object-contract mapping, and Artifact Registry
+least-privilege GitHub/GKE identity. The benchmark-only runtime remains a fallback if those gates do
+not justify the managed components. No implementation, cloud mutation, live load or tuning is
+authorized yet.
 
 ## Case B measurement-readiness checkpoint
 
@@ -346,15 +349,18 @@ This reassessment is complete only when:
 Case B and Case A are now portfolio-closed. The next representative case is **Case C — cloud runtime
 capacity and safe delivery**.
 
-The Case C representative benchmark-runtime decision is
-**READY / AWAITING_USER_DECISION_APPROVAL**. The selected direction is the minimum benchmark-only
-persistent/authenticated runtime on the existing GKE target, not completion of the broader GCP
-application runtime.
+The Case C runtime decision is **NOT YET FINAL**. A production-representative backend runtime is the
+preferred candidate, but product choices remain gated by compatibility.
 
-If the user approves the direction, the next single task is to create one bounded implementation Work
-Package whose only outcome is: one authenticated end-to-end analysis on the real backend survives a
-backend pod replacement with MariaDB state and source/result bytes intact. Do not include load testing
-in that implementation unit.
+The next single task is one bounded **Case C compatibility verification Work Package** covering
+repository/local/CI evidence only:
+
+1. MySQL 8.4 clean migration + JPA + Case B durable-processing compatibility;
+2. Cloud Storage adapter-contract compatibility;
+3. Artifact Registry least-privilege publisher/puller identity design compatibility.
+
+Do not create any Cloud SQL, bucket or registry resource and do not mutate IAM in that Work Package.
+The final Case C runtime selection occurs only after those results are reviewed.
 
 ## Case A A1 measurement-readiness checkpoint
 

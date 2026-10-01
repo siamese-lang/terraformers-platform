@@ -1,8 +1,8 @@
-# Case C Representative Benchmark Runtime Decision
+# Case C Production-Representative Runtime Decision Gate
 
 ## Status
 
-**DECISION READY — USER APPROVAL REQUIRED BEFORE IMPLEMENTATION**
+**COMPATIBILITY GATE OPEN — PRODUCTION-REPRESENTATIVE BACKEND RUNTIME IS THE PREFERRED CANDIDATE, NOT YET THE FINAL SELECTION**
 
 Decision source:
 
@@ -10,9 +10,19 @@ Decision source:
 - readiness audit: `docs/evaluation/case-c-measurement-readiness-audit.md`
 - audited main: `1086165ae527a9e87ba3bf0a9b66c18e234b1275`
 
-This document selects the smallest representative runtime for Case C measurement. It does **not**
-authorize cloud resource creation, image publication, Kubernetes apply, load generation, rollout,
-rollback, tuning, IAM changes or live Vertex calls.
+This document replaces the earlier benchmark-only selection on this PR.
+
+The user-facing objective is stronger than merely obtaining a runnable benchmark: Case C should
+produce capacity and safe-delivery evidence in a backend environment close enough to realistic cloud
+operation that the observed bottleneck and rollout behavior are technically defensible in a
+portfolio discussion.
+
+That makes a production-representative GCP backend runtime the preferred direction, but **individual
+cloud products are not selected merely because they are GCP-native**. Database, object storage and
+image delivery must each pass a compatibility gate against the current repository contract first.
+
+No cloud resource creation, image publication, Kubernetes apply, load generation, rollout, rollback,
+tuning, IAM change or live Vertex call is authorized by this document.
 
 ## 1. Operating scenario
 
@@ -20,256 +30,350 @@ Case C must measure the real integrated service path under representative concur
 
 `authenticated API → durable AnalysisJob → dispatcher/worker → Vertex/OpenSearch → result persistence → terminal state`
 
-The same runtime must then support:
+The same runtime must later support:
 
-- a healthy backend revision rollout while requests/jobs are active;
+- a healthy immutable backend revision rollout while requests/jobs are active;
 - one deterministic revision that cannot become ready;
 - rollback to the last healthy revision;
-- verification that accepted durable work is neither silently lost nor corrupted.
+- verification that already accepted durable work is neither silently lost nor corrupted.
 
-The purpose is to locate the first saturation bottleneck and demonstrate delivery safety. It is not
-to finish every production deployment capability before measurement begins.
+The environment should be production-representative at the backend/dependency boundary without
+forcing unrelated frontend/public-access work into the case.
 
-## 2. Observed problem
+## 2. Confirmed current gap
 
-The live GCP target currently proves:
+The live GCP target already proves:
 
-- the GKE Standard target foundation;
-- Workload Identity to Vertex AI;
+- one GKE Standard target foundation;
+- Workload Identity Federation for GKE;
 - Vertex generation and embedding;
 - in-cluster OpenSearch;
-- evaluation-only Java execution.
+- evaluation Java execution.
 
-It does **not** yet provide a live full backend service path. Repository evidence confirms:
+It does **not** yet provide the full backend service path. Repository evidence confirms:
 
-- the GCP overlay has intentionally not applied the backend Deployment because database, object
-  storage and JWT dependencies were outside the M3 live boundary;
+- the GCP overlay intentionally did not apply the full backend Deployment because database,
+  object-storage and JWT dependencies were outside the M3 live boundary;
 - the portable MariaDB fixture uses `emptyDir`;
 - the filesystem object-store fixture uses backend-local `/tmp`;
 - the target backend image remains a registry placeholder.
 
-Therefore no valid Case C saturation or rollout baseline exists yet.
+Therefore a Case C load result does not yet have a representative system under test.
 
-## 3. Impact
+## 3. Why the earlier benchmark-only selection is withdrawn
 
-Running a load test before closing that runtime gap would produce misleading evidence.
+The earlier proposal kept MariaDB and filesystem object storage inside the benchmark environment
+using persistent disks.
 
-An evaluation-pod load result cannot answer:
+That would have made the test executable, but it has an attribution problem:
 
-- API acceptance capacity;
-- durable job queue wait;
-- dispatcher/executor pressure;
-- rejection behavior;
-- result/source persistence;
-- accepted-job survival across backend replacement;
-- healthy rollout availability;
-- failed-readiness rollback behavior.
+- backend CPU/memory;
+- OpenSearch CPU/memory;
+- MariaDB CPU/I/O;
+- filesystem/PVC I/O
 
-Conversely, completing every still-gated GCP product choice first would expand Case C into a broad
-migration/deployment project and make it harder to attribute measured bottlenecks to the service
-under test.
+could all compete inside the same small GKE runtime.
 
-## 4. Root mechanism
+A bottleneck found under that shape could therefore reflect the benchmark fixture topology rather
+than the operational shape of a cloud service.
 
-The blocker is not primarily missing load tooling.
+For portfolio-quality capacity evidence, the preferred direction is now to move dependencies that
+have a compatible managed GCP representation out of the backend node **only after compatibility is
+proven**.
 
-The blocker is the absence of one **persistent, authenticated, immutable-release backend runtime
-boundary** on the already selected GKE target.
+## 4. Candidate runtime shape
 
-Case A could use ephemeral evaluation pods because its unit of evidence was AI/RAG behavior.
-Case C cannot, because its unit of evidence includes durable application state and Deployment
-replacement semantics.
+The preferred **candidate**, subject to the gates below, is:
 
-## 5. Alternatives
+```text
+Internal authenticated load driver
+              |
+              v
+        GKE Spring Backend
+          |      |      \
+          |      |       \--> Vertex AI
+          |      |
+          |      +----------> OpenSearch on GKE
+          |
+          +-----------------> managed relational DB candidate
+          |
+          +-----------------> managed object storage candidate
 
-### Alternative 0 — keep the current target and load-test the evaluation pod
+GitHub Actions
+      |
+      v
+managed container registry candidate
+      |
+      v
+digest-pinned GKE Deployment
+```
+
+The following remain intentionally outside the initial Case C runtime unless later evidence requires
+them:
+
+- public HTTPS ingress;
+- frontend delivery;
+- permanent external IdP;
+- multi-zone HA;
+- HPA;
+- replicas > 1;
+- new observability platform.
+
+Internal deterministic JWT/JWKS authentication remains acceptable for the first backend capacity
+baseline because authentication correctness, not IdP capacity, is the Case C question.
+
+## 5. Candidate alternatives
+
+### Alternative 0 — load-test the existing evaluation pod
+
+**REJECT.**
+
+It omits API acceptance, durable queue/worker behavior, persistence, accepted-work survival and
+Deployment rollout/rollback.
+
+### Alternative A — benchmark-only persistent runtime
 
 Shape:
 
-- existing ephemeral evaluation runner;
-- Vertex/OpenSearch only;
-- no full backend Deployment.
+- GKE backend;
+- in-cluster MariaDB on persistent disk;
+- filesystem object storage on persistent disk;
+- GHCR or another simple image source.
 
-Advantages:
+**RETAIN AS FALLBACK, NOT SELECTED.**
 
-- no new runtime work;
-- fastest to execute.
+It is much better than the evaluation pod, but its DB/storage topology can distort the first
+bottleneck and is less representative of real cloud operation.
 
-Disadvantages:
+Use it only if the production-representative candidates below fail compatibility or their required
+scope is disproportionate to Case C.
 
-- omits most Case C boundaries;
-- cannot measure durable queue/worker behavior;
-- cannot validate accepted-work survival;
-- cannot validate backend rollout/rollback.
+### Alternative C — production-representative backend runtime
 
-**Decision: REJECT.** It produces numbers but not Case C evidence.
+Preferred candidate:
 
-### Alternative A — benchmark-only representative runtime on the existing GKE target
+- existing GKE backend;
+- existing Vertex/OpenSearch path;
+- managed relational database **only if current MariaDB/JPA/Flyway/Case B semantics are proven
+  compatible**;
+- managed object storage **only if the ObjectReader/ObjectWriter/ObjectRemover contract is proven
+  compatible**;
+- managed immutable image registry **only if it fits the existing GitHub OIDC/GKE identity model
+  with bounded least privilege**;
+- internal JWT/JWKS and ClusterIP traffic for the first baseline.
 
-Reuse the current target and production application code, while adapting existing deterministic
-fixtures only enough to make the benchmark persistent across backend rollout.
+**STATUS: PREFERRED CANDIDATE / NOT YET SELECTED.**
 
-Selected shape:
+### Alternative B — complete the entire GCP application runtime first
 
-1. **GKE / AI-RAG**
-   - existing target GKE cluster;
-   - existing one-node activation lifecycle;
-   - existing Vertex and OpenSearch production adapters;
-   - existing OpenSearch StatefulSet/PVC.
+**REJECT FOR CASE C.**
 
-2. **Backend**
-   - actual Spring Boot production application;
-   - Case B durable AnalysisJob dispatcher/lease/retry/result-accountability implementation;
-   - one backend replica for the first baseline;
-   - existing `maxUnavailable: 1`, `maxSurge: 0` rollout strategy unchanged for the before-state.
+Selecting public ingress, frontend delivery, permanent external identity and full production
+hardening before measuring the backend would add unrelated architecture and make the capacity case
+harder to attribute.
 
-3. **Benchmark MariaDB**
-   - MariaDB 11.4 fixture pattern retained;
-   - convert only the benchmark deployment to persistent storage using the already selected
-     `terraformers-pd-standard` StorageClass;
-   - one MariaDB instance;
-   - Flyway and the current MariaDB application contract remain unchanged;
-   - this is a benchmark dependency, **not** a claim that in-cluster MariaDB is the final production
-     database hosting architecture.
+## 6. Compatibility Gate 1 — relational database
 
-4. **Benchmark object-byte persistence**
-   - reuse the existing `FileSystemObjectStore` implementation;
-   - mount its root on a dedicated persistent volume instead of pod-local `/tmp`;
-   - source and result bytes must survive backend pod replacement;
-   - this is a benchmark dependency, **not** the selected production object-storage architecture.
+### Candidate
 
-5. **Authentication**
-   - reuse the existing deterministic JWT/JWKS fixture pattern;
-   - authenticated requests are generated inside the cluster;
-   - no public ingress or permanent external IdP is required for Case C baseline measurement.
+**Cloud SQL for MySQL** is a candidate because Cloud SQL does not provide a managed MariaDB engine.
 
-6. **Immutable backend image delivery**
-   - publish the public-repository backend image to GitHub Container Registry (GHCR);
-   - publish from GitHub Actions using the repository `GITHUB_TOKEN`;
-   - package visibility for the benchmark image must be public so the GKE node does not need a
-     long-lived registry secret or new registry IAM;
-   - build with `BUILD_SOURCE_REVISION=<full commit SHA>`;
-   - record image digest;
-   - Kubernetes must deploy `ghcr.io/...@sha256:<digest>`, not a mutable tag.
+Current Google documentation lists Cloud SQL MySQL 8.4 as the default MySQL major version, with
+MySQL 8.0 also supported.
 
-   The backend repository is public and the current Dockerfile copies application artifacts and
-   public tool/provider binaries only; runtime secrets remain external. If the image cannot be made
-   public under repository/package policy, **STOP** and open a separate registry decision rather
-   than adding a PAT/imagePullSecret workaround.
+### Repository evidence in favor
 
-7. **Network**
-   - keep the backend Service `ClusterIP`;
-   - run the later load driver inside the same cluster;
-   - do not select a public load balancer or ingress merely for benchmark traffic.
+The repository is already strongly MySQL-family oriented:
 
-8. **Observability**
-   - reuse Actuator/Prometheus application metrics;
-   - reuse bounded analysis job/stage metrics;
-   - use Kubernetes/GKE resource observations and OpenSearch node/query stats where available;
-   - do not deploy a new monitoring platform before the first baseline.
+- `flyway-mysql` is already a backend dependency;
+- schema uses InnoDB;
+- DDL uses MySQL-family constructs such as `AUTO_INCREMENT`, `TIMESTAMP(6)`, index-prefix length,
+  `MODIFY COLUMN` and utf8mb4 collations;
+- the Case B durable-job implementation uses JPA/JPQL repository updates, pessimistic locking and
+  MariaDB transactions rather than a separate MariaDB-specific queue product;
+- MariaDB Connector/J documentation states that the driver supports MariaDB and MySQL servers.
 
-9. **Failed revision**
-   - use a deterministic Deployment/config revision that cannot become ready without changing or
-     corrupting persistent data;
-   - rollback must restore the last known healthy image/config revision;
-   - do not add application failure code merely to manufacture the rollout scenario.
+MySQL 8.0 release notes record `IF NOT EXISTS` support added in the MySQL 8.0.29 line, so the
+repository's `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` migrations are not automatically ruled out
+by current MySQL 8.4.
 
-Advantages:
+### Repository evidence preventing immediate selection
 
-- directly exercises the real service path;
-- preserves Case B semantics;
-- reuses the single live target;
-- avoids production product selection unrelated to the capacity question;
-- permits deterministic rollout/rollback evidence;
-- small enough to dismantle/idle after evidence;
-- makes the existing one-replica rollout strategy measurable rather than declaring it defective.
+The production profile is explicitly MariaDB-bound today:
 
-Limitations:
+- runtime driver dependency: `org.mariadb.jdbc:mariadb-java-client`;
+- Hibernate dialect: `org.hibernate.dialect.MariaDBDialect`;
+- existing authoritative persistence verification is against MariaDB;
+- no authoritative test has executed all six Flyway migrations plus Case B claim/lease/fencing/
+  retry/cleanup behavior on MySQL 8.4.
 
-- in-cluster benchmark MariaDB is not a managed production DB;
-- filesystem-on-PD is not the final object-storage design;
-- single-node storage/topology may itself appear in the first bottleneck;
-- if later tuning requires a topology that the benchmark storage cannot support, that constraint
-  must be reported and the storage boundary revisited rather than hidden.
+Therefore "MariaDB and MySQL are similar" is not sufficient evidence.
 
-### Alternative B — complete the broader GCP application runtime first
+### Required proof before selection
 
-Select and implement permanent choices for:
+Run one deterministic **MySQL 8.4 compatibility verification** without Cloud SQL first.
 
-- database hosting;
-- object storage;
-- external identity;
-- image registry;
-- public ingress / HTTPS;
-- associated IAM/networking.
+It must prove on a clean MySQL 8.4 instance:
 
-Advantages:
+1. Flyway migrations `001` through `006` all apply from empty schema;
+2. Spring Boot starts with the MySQL-target database configuration and
+   `hibernate.ddl-auto=validate`;
+3. existing user/project/file CRUD required by the analysis path works;
+4. AnalysisJob create/read works;
+5. Case B ownership semantics work:
+   - atomic eligible claim;
+   - lease renewal;
+   - expired-lease reclaim;
+   - generation fencing;
+   - retry scheduling;
+   - result-intent/finalization;
+   - pending-cleanup recovery;
+6. the existing MariaDB baseline remains green;
+7. any required dialect/driver configuration change is explicit and bounded.
 
-- closer to a complete deployable product;
-- fewer benchmark-only components.
+If this proof fails because of SQL/dialect/transaction semantics, Cloud SQL for MySQL is **not
+selected** and Alternative A or another compatible managed relational option must be reconsidered.
 
-Disadvantages:
+**Current status: COMPATIBILITY PLAUSIBLE / NOT PROVEN / NOT SELECTED.**
 
-- introduces several architecture decisions before Case C has measured a bottleneck;
-- higher cost and longer implementation path;
-- confounds the capacity case with migration/product-selection work;
-- external IdP and public ingress are unnecessary for an internal backend benchmark;
-- the retained relational contract is MariaDB, while Google Cloud SQL currently offers MySQL,
-  PostgreSQL and SQL Server rather than managed MariaDB; choosing Cloud SQL would therefore require
-  a separate compatibility/migration decision rather than being a drop-in completion step.
+## 7. Compatibility Gate 2 — object storage
 
-**Decision: REJECT FOR CURRENT CASE C.** These capabilities may be selected later if production
-requirements independently justify them.
+### Candidate
 
-## 6. Decision criteria
+**Google Cloud Storage** is the preferred managed-object-storage candidate.
 
-| Criterion | Alternative 0: evaluation pod | Alternative A: benchmark runtime | Alternative B: full GCP runtime |
-|---|---|---|---|
-| real API/durable-job path | FAIL | PASS | PASS |
-| Case B semantics exercised | FAIL | PASS | PASS |
-| persistence across backend rollout | FAIL | PASS by benchmark PVCs | PASS if completed |
-| Vertex/OpenSearch real adapters | PASS | PASS | PASS |
-| immutable backend revisions | FAIL | PASS via digest-pinned GHCR | PASS after registry selection |
-| public ingress required | no | no | likely yes / separately designed |
-| permanent DB/storage product decision | no | no | yes |
-| implementation scope | low but invalid | bounded | high |
-| cloud cost/operational expansion | low | bounded | high |
-| attribution of first bottleneck | poor | strong enough for Case C | stronger realism but more confounders |
-| portfolio explanation value | weak | strong: evidence-driven minimum runtime | broad but risks becoming migration narrative |
+### Repository evidence in favor
 
-## 7. Selected decision
+The application already depends on provider-neutral contracts:
 
-**Select Alternative A — benchmark-only representative runtime on the existing GKE target.**
+- `ObjectReader.readMetadata`;
+- `ObjectReader.readContent`;
+- `ObjectWriter.writeText`;
+- `ObjectWriter.writeBytes`;
+- `ObjectRemover.remove`.
 
-The selection is based on one principle:
+The stored application identity is logical `bucket + key`; the domain does not require S3 request
+types.
 
-> Add only the runtime capabilities required to make the Case C evidence valid; do not complete
-> unrelated production architecture before the baseline tells us what actually limits the system.
+The required metadata shape is also portable:
 
-This is consistent with the single-live-target rule. It extends the same target rather than creating
-a second cloud environment.
+- content type;
+- content length;
+- provider metadata/eTag field;
+- last-modified time.
 
-## 8. Why GHCR is selected for the benchmark image
+Generated Terraform checksum integrity is calculated separately in the application, so an object
+provider eTag is not treated as the canonical SHA-256 checksum.
 
-The benchmark needs immutable backend images, but a permanent GCP registry is not itself the Case C
-problem.
+Google's Java Cloud Storage client uses Application Default Credentials by default. The current GKE
+Workload Identity Federation model can grant a Kubernetes workload principal access directly to a
+specific Cloud Storage bucket.
 
-GHCR is selected because:
+The backend needs create/read/replace/delete object behavior. Google documents
+`roles/storage.objectUser` as including create/read/update/delete object access, and replacing an
+existing object requires both create and delete permissions.
 
-- the source repository and CI already live on GitHub;
-- GitHub Actions can publish a repository-associated container package using `GITHUB_TOKEN`;
-- public GHCR container packages can be pulled anonymously;
-- deployment can be pinned to the immutable image digest;
-- this avoids adding a GCP registry repository plus writer/reader IAM solely to enable the benchmark.
+### Remaining gaps
 
-Artifact Registry remains a valid future production candidate. Google documents that a private
-Artifact Registry repository pulled by GKE requires the node service account to have
-`roles/artifactregistry.reader`; that is reasonable for a production selection but unnecessary
-for this benchmark-only boundary.
+- no Google Cloud Storage Java dependency exists in `backend/pom.xml`;
+- no `gcs` ObjectReader/ObjectWriter/ObjectRemover adapter exists;
+- `StorageRuntimeProperties` does not currently accept `gcs`;
+- no application data bucket is declared in the GCP target Terraform;
+- no bucket-scoped IAM exists for the backend workload principal;
+- no authoritative live GCS byte round-trip or idempotent-removal evidence exists.
 
-## 9. Baseline invariants before any tuning
+### Required proof before selection
 
-The first valid Case C baseline must retain the current runtime behavior rather than pre-fix it:
+Before Cloud Storage is selected:
+
+1. demonstrate an adapter mapping that preserves the existing ObjectReader/ObjectWriter/ObjectRemover
+   contract without domain/schema changes;
+2. deterministic tests must cover binary upload, text result write, metadata read, byte read,
+   overwrite of the same deterministic result key, and idempotent delete;
+3. confirm the application uses its own checksum where integrity equality is required and does not
+   rely on provider eTag semantics;
+4. define the minimum bucket-scoped workload IAM required;
+5. only after the adapter contract passes may a separately approved bounded live object
+   create/read/overwrite/delete round-trip be used to prove GKE Workload Identity access.
+
+**Current status: CONTRACT FIT HIGH / IMPLEMENTATION ABSENT / NOT SELECTED.**
+
+## 8. Compatibility Gate 3 — immutable image registry
+
+### Candidate
+
+**Artifact Registry** is the preferred production-representative image-registry candidate.
+
+### Repository evidence in favor
+
+The repository already has:
+
+- an immutable backend Dockerfile;
+- build source revision injection;
+- digest-oriented historical release semantics;
+- GitHub → GCP Workload Identity Federation;
+- separate GCP plan/apply identities;
+- one GKE node service account.
+
+GitHub Actions can authenticate to Google Cloud through the existing Workload Identity Federation
+pattern without a long-lived service-account key.
+
+Google documents that GKE pulls from Artifact Registry using the node pool's IAM service account and
+that this identity needs Artifact Registry Reader access where not already granted.
+
+### Why it is not selected yet
+
+The current identity contract intentionally separates plan and apply responsibilities. Neither
+identity should silently become an image-publisher identity.
+
+Current GCP target Terraform also does not:
+
+- enable Artifact Registry API;
+- create an Artifact Registry repository;
+- grant a dedicated publisher `roles/artifactregistry.writer`;
+- grant the GKE node service account repository read access.
+
+Therefore Artifact Registry is compatible in principle, but its least-privilege delivery identity
+must be designed before selection.
+
+### Required proof before selection
+
+1. define whether a dedicated image-publish service account or direct WIF principal will publish;
+2. prove the publisher cannot mutate unrelated runtime resources;
+3. restrict publish permission to the selected repository;
+4. grant the existing GKE node service account read-only access to that repository;
+5. retain full source SHA + image digest identity;
+6. refuse mutable-tag-only deployment;
+7. verify no JSON service-account key or long-lived registry credential is required.
+
+If those permissions cannot be kept narrow, compare GHCR as the fallback registry rather than
+broadening the Terraform apply identity.
+
+**Current status: IDENTITY PATH PLAUSIBLE / IAM DESIGN NOT PROVEN / NOT SELECTED.**
+
+## 9. Components already accepted for the candidate runtime
+
+The following do not need to be reopened merely because Alternative C is under review:
+
+- one existing GKE Standard target runtime;
+- Vertex `gemini-3.8-flash`;
+- `gemini-embedding-001`;
+- in-cluster OpenSearch;
+- Workload Identity Federation for GKE;
+- Spring Boot application;
+- Case B durable AnalysisJob ownership semantics;
+- one backend replica as the first before-state;
+- current backend executor values;
+- current OpenSearch resources;
+- current Deployment strategy;
+- internal ClusterIP service;
+- deterministic JWT/JWKS fixture for initial internal benchmark authentication.
+
+These are baseline inputs, not claims that they are already capacity-optimal.
+
+## 10. Baseline invariants if Alternative C is eventually selected
+
+No tuning is allowed before the first valid baseline:
 
 - backend replicas: `1`;
 - backend CPU request/limit: `250m / 1 CPU`;
@@ -283,118 +387,110 @@ The first valid Case C baseline must retain the current runtime behavior rather 
 - OpenSearch CPU request/limit: `1 / 2`;
 - OpenSearch memory request/limit: `2Gi / 4Gi`;
 - Deployment strategy: `maxUnavailable: 1`, `maxSurge: 0`;
-- target node shape: unchanged from the existing target activation contract.
+- target node shape: unchanged until a valid pre-baseline scheduling check says otherwise.
 
-Do not add HPA, more replicas, larger nodes, executor changes, OpenSearch changes or rollout changes
-before the first baseline.
+If the current node cannot schedule the final representative runtime, record that as a
+**pre-baseline capacity blocker**. Do not silently resize and call the resized runtime the original
+before-state.
 
-If the current node cannot schedule the representative benchmark runtime, record that as a
-**pre-baseline capacity blocker** and stop. Do not silently resize the node and call the resized
-runtime the before-state.
+## 11. Decision rule after compatibility verification
 
-## 10. Data durability boundary
+Alternative C may be selected only when all three gates are resolved:
 
-The benchmark must verify before load testing that:
+| Gate | Required result |
+|---|---|
+| MySQL 8.4 / relational contract | PASS |
+| Cloud Storage application contract | PASS |
+| Artifact Registry least-privilege delivery identity | PASS |
 
-1. an authenticated upload creates source bytes and relational records;
-2. the source bytes can be read by the worker;
-3. a successful analysis stores result bytes and relational result identity;
-4. backend pod replacement preserves source bytes, result bytes and MariaDB state;
-5. a restarted backend can continue to observe and process durable job state according to Case B.
+Possible outcomes:
 
-This is a readiness proof for the benchmark runtime, not the capacity experiment itself.
+- **3/3 PASS** → select Alternative C as the Case C production-representative backend runtime;
+- **DB FAIL, storage/registry PASS** → do not force MySQL; reconsider benchmark MariaDB or another
+  relational hosting path;
+- **storage FAIL** → do not rewrite the domain merely for GCS; reconsider persistent filesystem or
+  another adapter-compatible object store;
+- **registry IAM FAIL** → compare GHCR fallback before broadening apply/runtime privileges;
+- **multiple FAIL** → Alternative A becomes the safer representative fallback.
 
-## 11. Safe-delivery boundary
+This prevents cloud-product preference from overriding application compatibility.
 
-The later Case C delivery baseline must measure the existing rollout behavior first.
+## 12. Validation boundary after a final selection
 
-Healthy revision:
+Whichever representative runtime is ultimately selected must prove, before load testing:
 
-- deploy a different immutable backend image digest;
-- preserve runtime configuration and persistent dependencies;
-- observe ready replica count, request failures, accepted jobs and completion/recovery.
-
-Faulty revision:
-
-- use a deterministic revision/configuration that cannot become ready;
-- do not corrupt the database or object volume;
-- record unavailable interval and accepted-work state;
-- explicitly roll back to the prior known-good digest/configuration;
-- confirm health and durable-job processing after rollback.
-
-Do not change the rollout strategy until this before-state exists.
-
-## 12. Validation plan after implementation approval
-
-Implementation is not accepted merely because pods become Ready.
-
-The representative benchmark runtime must demonstrate, before load-harness work begins:
-
-- backend image built from the exact implementation source SHA;
-- GHCR digest resolved and Kubernetes image pinned by digest;
-- authenticated internal request succeeds;
-- MariaDB state survives backend pod replacement;
-- source/result bytes survive backend pod replacement;
+- exact immutable backend source/image identity;
+- authenticated internal upload request succeeds;
+- source bytes persist outside backend pod lifetime;
+- MariaDB/MySQL relational state persists outside backend pod lifetime;
 - real Vertex/OpenSearch adapters are active;
 - one normal analysis reaches terminal `SUCCEEDED`;
-- the same job/result identity remains valid after backend replacement;
+- result bytes and relational result identity remain readable after backend pod replacement;
+- Case B durable job state remains coherent after backend replacement;
 - Actuator/Prometheus metrics are reachable internally;
-- no public ingress is created;
 - no second GKE environment is created.
 
-Only after these gates pass may a separate Work Package freeze the load profile, concurrency steps,
-step duration, resource collection and stopping rule.
+Only after this runtime-readiness proof may a separate Work Package freeze the load profile,
+concurrency steps, duration, collection method and stopping rule.
 
 ## 13. Explicit non-decisions
 
-This decision does **not** select:
+This PR does **not** yet select:
 
-- production MariaDB hosting;
-- Cloud SQL migration;
-- production object storage;
-- GCS adapter implementation;
-- production external identity;
+- Cloud SQL for MySQL;
+- MySQL as a replacement relational contract;
+- Cloud Storage;
+- an application data bucket;
+- Artifact Registry;
+- an image-publisher service account;
 - public ingress;
-- Artifact Registry for production;
-- production monitoring backend;
-- replicas > 1;
+- production external identity;
+- frontend hosting;
+- Cloud SQL HA;
+- GCS retention/versioning policy;
 - HPA;
-- executor sizing changes;
-- OpenSearch sizing changes;
+- replicas > 1;
 - node sizing changes;
+- executor tuning;
+- OpenSearch sizing changes;
 - capacity thresholds;
 - latency SLOs.
 
-## 14. Residual risks
+## 14. Immediate next single task
 
-- benchmark-local database/storage topology can influence measured saturation;
-- public GHCR availability becomes a deployment dependency for the benchmark;
-- a one-node target cannot establish multi-node scheduling/HA behavior;
-- external Vertex latency remains stochastic and must be separated from repository-owned saturation;
-- the first valid baseline may show that the current node cannot host the representative runtime;
-- later multi-node or multi-replica tuning may require replacing the benchmark filesystem boundary.
+The next task is **compatibility verification**, not implementation of the target runtime.
 
-These are reasons to label the evidence correctly, not reasons to complete every production product
-decision in advance.
+The smallest useful sequence is:
+
+1. MySQL 8.4 repository compatibility proof;
+2. Cloud Storage adapter-contract proof;
+3. Artifact Registry least-privilege identity/permission proof.
+
+These checks may be grouped into one bounded compatibility Work Package only if they remain
+read-only/local/CI design verification. Any live GCP resource creation or IAM mutation remains a
+separate user checkpoint.
 
 ## 15. Approval boundary
 
-**Implementation status: AWAITING_USER_DECISION_APPROVAL**
+**Runtime selection status: COMPATIBILITY_VERIFICATION_REQUIRED**
 
-User approval of this selected direction is required before any implementation Work Package is
-created or any of the following occurs:
+No implementation Work Package for the production-representative runtime may be created until the
+compatibility evidence above is reviewed.
 
-- GHCR image publication;
-- persistent MariaDB/object-store manifest changes;
-- backend GCP-target Deployment enablement;
-- Kubernetes apply;
-- node activation for this benchmark;
-- load generation;
-- rollout/rollback experiment.
+No cloud apply, image push, bucket/Cloud SQL/Artifact Registry creation, IAM grant, Kubernetes apply,
+load generation or rollout/rollback experiment is authorized by this PR.
 
-After approval, the first implementation unit should be only:
+## References
 
-> assemble and deterministically verify the representative benchmark runtime until one authenticated
-> end-to-end analysis survives backend pod replacement.
-
-Do not start the load baseline in the same implementation unit.
+- Cloud SQL for MySQL database versions:
+  https://docs.cloud.google.com/sql/docs/mysql/db-versions
+- Cloud Storage Java client authentication:
+  https://docs.cloud.google.com/storage/docs/reference/libraries
+- Workload Identity Federation for GKE:
+  https://docs.cloud.google.com/kubernetes-engine/docs/concepts/workload-identity
+- Cloud Storage IAM roles:
+  https://docs.cloud.google.com/storage/docs/access-control/iam-roles
+- Artifact Registry / GKE integration:
+  https://docs.cloud.google.com/artifact-registry/docs/integrate-gke
+- MariaDB Connector/J server compatibility:
+  https://mariadb.com/docs/connectors/mariadb-connector-j/about-mariadb-connector-j

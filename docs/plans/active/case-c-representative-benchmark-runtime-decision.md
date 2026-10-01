@@ -2,7 +2,7 @@
 
 ## Status
 
-**COMPATIBILITY GATE OPEN — PRODUCTION-REPRESENTATIVE BACKEND RUNTIME IS THE PREFERRED CANDIDATE, NOT YET THE FINAL SELECTION**
+**COMPATIBILITY VERIFICATION ACTIVE — GCS PASS / ARTIFACT REGISTRY PASS / MYSQL 8.4 EXECUTABLE PROOF PENDING**
 
 Decision source:
 
@@ -296,7 +296,7 @@ Before Cloud Storage is selected:
 5. only after the adapter contract passes may a separately approved bounded live object
    create/read/overwrite/delete round-trip be used to prove GKE Workload Identity access.
 
-**Current status: CONTRACT FIT HIGH / IMPLEMENTATION ABSENT / NOT SELECTED.**
+**Current compatibility result: PASS.** The application contract maps cleanly to GCS without a domain/schema rewrite. This is not yet a live adapter/runtime proof.
 
 ## 8. Compatibility Gate 3 — immutable image registry
 
@@ -349,7 +349,7 @@ must be designed before selection.
 If those permissions cannot be kept narrow, compare GHCR as the fallback registry rather than
 broadening the Terraform apply identity.
 
-**Current status: IDENTITY PATH PLAUSIBLE / IAM DESIGN NOT PROVEN / NOT SELECTED.**
+**Current compatibility result: PASS.** A dedicated image-publisher identity can use existing GitHub OIDC/WIF with repository-scoped Writer, while the existing GKE node service account receives repository-scoped Reader. This is not yet a live registry/IAM proof.
 
 ## 9. Components already accepted for the candidate runtime
 
@@ -458,21 +458,23 @@ This PR does **not** yet select:
 
 ## 14. Immediate next single task
 
-The next task is **compatibility verification**, not implementation of the target runtime.
+Compatibility verification is active under
+`.agents/work-packages/case-c-compatibility-verification-v1.yml`.
 
-The smallest useful sequence is:
+Completed design gates:
 
-1. MySQL 8.4 repository compatibility proof;
-2. Cloud Storage adapter-contract proof;
-3. Artifact Registry least-privilege identity/permission proof.
+- Cloud Storage application-contract compatibility: **PASS**;
+- Artifact Registry least-privilege delivery identity compatibility: **PASS**.
 
-These checks may be grouped into one bounded compatibility Work Package only if they remain
-read-only/local/CI design verification. Any live GCP resource creation or IAM mutation remains a
-separate user checkpoint.
+The remaining gate is the **MySQL 8.4 real-database compatibility proof** using the existing Backend
+Local Verification harness. Alternative C remains unselected until that executable gate passes and
+the authoritative MariaDB 11.4 job remains green.
+
+No live GCP resource creation or IAM mutation is authorized by this compatibility Work Package.
 
 ## 15. Approval boundary
 
-**Runtime selection status: COMPATIBILITY_VERIFICATION_REQUIRED**
+**Runtime selection status: COMPATIBILITY_VERIFICATION_ACTIVE — 2/3 PASS, MYSQL 8.4 PENDING**
 
 No implementation Work Package for the production-representative runtime may be created until the
 compatibility evidence above is reviewed.

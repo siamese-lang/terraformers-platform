@@ -34,3 +34,24 @@ output "backend_artifact_repository" {
 output "backend_image_base" {
   value = var.enable_delivery_foundation ? "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.backend[0].repository_id}/terraformers-backend" : null
 }
+
+
+output "runtime_object_bucket_name" {
+  value = var.enable_runtime_dependencies ? google_storage_bucket.runtime_objects[0].name : null
+}
+
+output "mariadb_instance_name" {
+  value = var.enable_runtime_dependencies ? google_compute_instance.mariadb[0].name : null
+}
+
+output "mariadb_private_ip" {
+  value = var.enable_runtime_dependencies ? google_compute_instance.mariadb[0].network_interface[0].network_ip : null
+}
+
+output "mariadb_root_secret_id" {
+  value = var.enable_runtime_secret_foundation ? google_secret_manager_secret.mariadb_root[0].secret_id : null
+}
+
+output "mariadb_app_secret_id" {
+  value = var.enable_runtime_secret_foundation ? google_secret_manager_secret.mariadb_app[0].secret_id : null
+}

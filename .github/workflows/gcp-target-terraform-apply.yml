@@ -346,6 +346,18 @@ jobs:
             delivery_enabled=false
           fi
 
+          if printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_secret_manager_secret.mariadb_app[0]'; then
+            runtime_secret_enabled=true
+          else
+            runtime_secret_enabled=false
+          fi
+
+          if printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_compute_instance.mariadb[0]'; then
+            runtime_dependencies_enabled=true
+          else
+            runtime_dependencies_enabled=false
+          fi
+
           cluster_status="$(
             gcloud container clusters describe terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform               --format='value(status)'
           )"
@@ -375,9 +387,30 @@ jobs:
             exit 1
           }
 
+          runtime_image_args=()
+          if [[ "$runtime_dependencies_enabled" == true ]]; then
+            runtime_image="$(
+              jq -r '
+                .values.root_module.resources[]
+                | select(.address == "google_compute_instance.mariadb[0]")
+                | .values.metadata_startup_script
+              ' "${RUNNER_TEMP}/gcp-target-runtime-state.json" \
+              | sed -n 's/.*MARIADB_IMAGE="\(mariadb:11\.4@sha256:[0-9a-f]\{64\}\)".*/\1/p' \
+              | head -n1
+            )"
+            [[ "$runtime_image" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]] || {
+              echo 'Could not recover the current immutable MariaDB image from state.' >&2
+              exit 1
+            }
+            runtime_image_args+=("-var=mariadb_image=${runtime_image}")
+          fi
+
           set +e
           terraform plan -no-color -input=false -lock-timeout=5m -detailed-exitcode \
             -var="enable_delivery_foundation=${delivery_enabled}" \
+            -var="enable_runtime_secret_foundation=${runtime_secret_enabled}" \
+            -var="enable_runtime_dependencies=${runtime_dependencies_enabled}" \
+            "${runtime_image_args[@]}" \
             > "${RUNNER_TEMP}/gcp-target-runtime-check-plan.txt"
           plan_rc=$?
           set -e
@@ -391,6 +424,8 @@ jobs:
             echo '## GCP target runtime check'
             echo
             printf -- '- Immutable image delivery foundation enabled: `%s`\n' "$delivery_enabled"
+            printf -- '- Runtime secret foundation enabled: `%s`\n' "$runtime_secret_enabled"
+            printf -- '- Runtime dependencies enabled: `%s`\n' "$runtime_dependencies_enabled"
             printf -- '- Cluster status: `%s`\n' "$cluster_status"
             printf -- '- Node pool status: `%s`\n' "$node_pool_status"
             printf -- '- Terraform node count: `%s`\n' "$node_count"
@@ -618,6 +653,33 @@ jobs:
               echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
             else
               echo 'TF_VAR_enable_delivery_foundation=false' >> "$GITHUB_ENV"
+            fi
+
+            if printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_secret_manager_secret.mariadb_app[0]'; then
+              echo 'TF_VAR_enable_runtime_secret_foundation=true' >> "$GITHUB_ENV"
+            else
+              echo 'TF_VAR_enable_runtime_secret_foundation=false' >> "$GITHUB_ENV"
+            fi
+
+            if printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_compute_instance.mariadb[0]'; then
+              echo 'TF_VAR_enable_runtime_dependencies=true' >> "$GITHUB_ENV"
+              terraform show -json > "${RUNNER_TEMP}/gcp-target-preserve-runtime-state.json"
+              runtime_image="$(
+                jq -r '
+                  .values.root_module.resources[]
+                  | select(.address == "google_compute_instance.mariadb[0]")
+                  | .values.metadata_startup_script
+                ' "${RUNNER_TEMP}/gcp-target-preserve-runtime-state.json" \
+                | sed -n 's/.*MARIADB_IMAGE="\(mariadb:11\.4@sha256:[0-9a-f]\{64\}\)".*/\1/p' \
+                | head -n1
+              )"
+              [[ "$runtime_image" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]] || {
+                echo 'Could not recover immutable MariaDB image while preserving runtime dependencies.' >&2
+                exit 1
+              }
+              echo "TF_VAR_mariadb_image=$runtime_image" >> "$GITHUB_ENV"
+            else
+              echo 'TF_VAR_enable_runtime_dependencies=false' >> "$GITHUB_ENV"
             fi
           fi
 

@@ -10,6 +10,7 @@ on:
         options:
           - runtime-secret-foundation
           - runtime-dependencies
+          - runtime-host-firewall-repair
           - kubernetes-prerequisites
           - runtime-live-acceptance
       expected_sha:
@@ -21,7 +22,7 @@ on:
         required: true
         type: string
       mariadb_image:
-        description: Exact mariadb:11.4@sha256:<digest>; required for runtime-dependencies and runtime-live-acceptance.
+        description: Exact mariadb:11.4@sha256:<digest>; required for runtime dependency, host-firewall repair, and live-acceptance operations.
         required: false
         type: string
 
@@ -38,7 +39,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch' &&
-      (inputs.operation == 'runtime-secret-foundation' || inputs.operation == 'runtime-dependencies')
+      (inputs.operation == 'runtime-secret-foundation' || inputs.operation == 'runtime-dependencies' || inputs.operation == 'runtime-host-firewall-repair')
     runs-on: ubuntu-latest
     environment: gcp-target-plan
     timeout-minutes: 30
@@ -87,6 +88,17 @@ jobs:
               [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_RUNTIME_DEPENDENCIES_10 ]]
               [[ "$MARIADB_IMAGE" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]] || {
                 echo 'runtime-dependencies requires exact mariadb:11.4@sha256:<digest>.' >&2
+                exit 1
+              }
+              echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_secret_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_dependencies=true' >> "$GITHUB_ENV"
+              echo "TF_VAR_mariadb_image=$MARIADB_IMAGE" >> "$GITHUB_ENV"
+              ;;
+            runtime-host-firewall-repair)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_RUNTIME_HOST_FIREWALL_REPAIR_1 ]]
+              [[ "$MARIADB_IMAGE" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]] || {
+                echo 'runtime-host-firewall-repair requires exact mariadb:11.4@sha256:<digest>.' >&2
                 exit 1
               }
               echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
@@ -251,7 +263,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch' &&
-      (inputs.operation == 'runtime-secret-foundation' || inputs.operation == 'runtime-dependencies') &&
+      (inputs.operation == 'runtime-secret-foundation' || inputs.operation == 'runtime-dependencies' || inputs.operation == 'runtime-host-firewall-repair') &&
       needs.terraform-preflight.result == 'success'
     runs-on: ubuntu-latest
     environment: gcp-target-apply
@@ -287,6 +299,14 @@ jobs:
               ;;
             runtime-dependencies)
               [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_RUNTIME_DEPENDENCIES_10 ]]
+              [[ "$MARIADB_IMAGE" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]]
+              echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_secret_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_dependencies=true' >> "$GITHUB_ENV"
+              echo "TF_VAR_mariadb_image=$MARIADB_IMAGE" >> "$GITHUB_ENV"
+              ;;
+            runtime-host-firewall-repair)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_RUNTIME_HOST_FIREWALL_REPAIR_1 ]]
               [[ "$MARIADB_IMAGE" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]]
               echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
               echo 'TF_VAR_enable_runtime_secret_foundation=true' >> "$GITHUB_ENV"
@@ -334,7 +354,7 @@ jobs:
           echo "TF_VAR_node_count=$node_count" >> "$GITHUB_ENV"
           export TF_VAR_node_count="$node_count"
 
-          if [[ "$OPERATION" == runtime-dependencies ]]; then
+          if [[ "$OPERATION" == runtime-dependencies || "$OPERATION" == runtime-host-firewall-repair ]]; then
             for secret in terraformers-mariadb-root-password terraformers-mariadb-app-password; do
               enabled="$(
                 gcloud secrets versions list "$secret" \
@@ -360,6 +380,24 @@ jobs:
 
       - name: Apply exact saved plan
         run: terraform apply -no-color -input=false "${RUNNER_TEMP}/runtime.tfplan"
+
+      - name: Activate MariaDB host-firewall repair
+        if: inputs.operation == 'runtime-host-firewall-repair'
+        run: |
+          set -euo pipefail
+          gcloud compute instances stop terraformers-mariadb \
+            --zone=asia-northeast3-a --project=terraformers-platform --quiet
+          gcloud compute instances start terraformers-mariadb \
+            --zone=asia-northeast3-a --project=terraformers-platform --quiet
+          for _ in $(seq 1 90); do
+            status="$(gcloud compute instances describe terraformers-mariadb \
+              --zone=asia-northeast3-a --project=terraformers-platform \
+              --format='value(status)')"
+            [[ "$status" == RUNNING ]] && break
+            sleep 2
+          done
+          [[ "$status" == RUNNING ]]
+          echo '- MariaDB VM restarted once to activate the repaired COS startup-script firewall.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify resulting runtime dependency boundary
         env:
@@ -736,7 +774,7 @@ jobs:
 
           db() {
             kubectl -n "$NAMESPACE" exec "$DB_POD" -- \
-              mariadb --protocol=TCP -h terraformers-mariadb -P 3306 \
+              timeout 8 mariadb --connect-timeout=5 --protocol=TCP -h terraformers-mariadb -P 3306 \
                 -u terraformers terraformers --batch --skip-column-names "$@"
           }
 
@@ -883,7 +921,7 @@ jobs:
           if kubectl -n "$NAMESPACE" get pod "$db_pod" >/dev/null 2>&1; then
             for _ in $(seq 1 60); do
               if kubectl -n "$NAMESPACE" exec "$db_pod" -- \
-                mariadb --protocol=TCP -h terraformers-mariadb -P 3306 \
+                timeout 8 mariadb --connect-timeout=5 --protocol=TCP -h terraformers-mariadb -P 3306 \
                   -u terraformers terraformers --batch --skip-column-names \
                   -e 'DROP TABLE IF EXISTS case_c_runtime_acceptance_marker;' \
                   >/dev/null 2>&1; then

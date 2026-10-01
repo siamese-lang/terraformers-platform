@@ -47,7 +47,7 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
 
     @Autowired
     public VertexArchitectureFactsExtractor(
-            @Lazy Client client,
+            Client client,
             ObjectMapper objectMapper,
             VertexRuntimeProperties properties
     ) {

@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
@@ -33,6 +35,40 @@ class AnalysisObservabilityTest {
         assertThat(failureCount(registry, "rejected_input")).isEqualTo(1);
         assertThat(failureCount(registry, "response_format")).isEqualTo(1);
         assertThat(failureCount(registry, "timeout")).isEqualTo(1);
+    }
+
+
+    @Test
+    void classifiesGoogleProvider429AcrossCauseChainAndPublishesExistingMetricTags() {
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        AnalysisObservability observability = new AnalysisObservability(registry);
+        com.google.genai.errors.ClientException rateLimited = mock(com.google.genai.errors.ClientException.class);
+        when(rateLimited.code()).thenReturn(429);
+        RuntimeException wrapped = new IllegalStateException("bounded wrapper", rateLimited);
+
+        assertThat(observability.category(wrapped)).isEqualTo("provider_rate_limited");
+        observability.jobFailed(wrapped);
+        assertThat(failureCount(registry, "provider_rate_limited")).isEqualTo(1);
+
+        try {
+            observability.recordStage(AnalysisTelemetryStage.ANALYSIS_EXECUTION, () -> {
+                throw wrapped;
+            });
+        } catch (IllegalStateException ignored) {
+        }
+        assertThat(registry.find("terraformers.analysis.stage.failures")
+                .tag("stage", AnalysisTelemetryStage.ANALYSIS_EXECUTION.tag())
+                .tag("category", "provider_rate_limited").counter().count()).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotClassifyNon429ProviderRuntimeAsRateLimited() {
+        AnalysisObservability observability = new AnalysisObservability(
+                new PrometheusMeterRegistry(PrometheusConfig.DEFAULT));
+        com.google.genai.errors.ClientException unavailable = mock(com.google.genai.errors.ClientException.class);
+        when(unavailable.code()).thenReturn(503);
+
+        assertThat(observability.category(new RuntimeException(unavailable))).isEqualTo("other");
     }
 
     private AnalysisProviderFailureException providerFailure(AnalysisProviderFailureReason reason) {

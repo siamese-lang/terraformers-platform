@@ -1,8 +1,8 @@
 work_package:
   id: case-c-capacity-baseline-v1
-  status: AWAITING_ACTIVATION
-  approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  status: HARNESS_IMPLEMENTED_STATIC_VALIDATION_PASS
+  approved_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
+  execution_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
 
   goal: >
     Freeze and implement the smallest reproducible Case C capacity-baseline harness for the
@@ -59,9 +59,11 @@ work_package:
     - docs/evaluation/case-c-capacity-baseline.md
     - docs/AI_PROJECT_STATE.md
     - docs/plans/active/portfolio-case-reassessment.md
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisObservabilityTest.java
 
   prohibited_paths:
-    - backend/**
+    - backend/** except the two explicit AnalysisObservability corrective paths above
     - frontend/**
     - infra/terraform/**
     - infra/kubernetes/**
@@ -325,3 +327,26 @@ work_package:
     activation_after_contract_merge_requires_user_approval: true
     live_baseline_execution_requires_user_approval: true
     next_work_package_requires_user_approval: true
+
+  implementation_evidence:
+    harness_readiness: PASS
+    live_baseline: NOT_EXECUTED
+    authoritative_main_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
+    implementation_paths:
+      - scripts/checks/case-c-capacity-baseline.sh
+      - .github/workflows/gcp-target-runtime-dependencies.yml
+      - docs/evaluation/case-c-capacity-baseline.md
+    static_validation:
+      - bash_syntax: PASS
+      - workflow_yaml_parse: PASS
+      - automatic_workflow_policy: PASS
+      - git_diff_check: PASS
+      - shellcheck: UNAVAILABLE_IN_EXECUTION_ENVIRONMENT
+      - targeted_analysis_observability_test: BLOCKED_BY_MAVEN_CENTRAL_403
+    corrective_readiness:
+      provider_429_existing_metric_category: provider_rate_limited
+      correctness_fail_stop: IMPLEMENTED
+      successful_result_integrity: IMPLEMENTED
+      executor_identity: SOURCE_BOUND_COMPILE_TIME
+    live_execution_requires_separate_user_checkpoint: true
+    next_checkpoint: AWAITING_APPROVAL

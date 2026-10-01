@@ -613,3 +613,18 @@ A3 was the next candidate. A3 has since completed, A4 was merged at
 `34c9dbecfbecdf4bca2be47b64d771c9e68549ca`, and later A5 canonical evaluations progressed
 through the PR #118 ordering correction and PR #119 zero-hit REQUIRED-grounding/classification
 correction. The final post-PR119 canonical N=3 and frozen holdout are complete; Case A is **PORTFOLIO-CLOSED**.
+
+## Case C capacity-baseline harness checkpoint
+
+The bounded `case-c-capacity-baseline-v1` Work Package is **IMPLEMENTED / STATIC VALIDATION
+PASS** on the authoritative execution base `b96120a8f065d54f05183d9f9642af5d0e860375`.
+The implementation adds a fail-closed, closed-loop AnalysisJob capacity harness and one protected,
+manual-only `capacity-baseline` operation to the existing runtime-dependency workflow. The frozen
+steps are `1 → 2 → 4 → 6 → 8`; no runtime tuning or new monitoring platform is included. See
+[Case C Capacity Baseline Harness Readiness](evaluation/case-c-capacity-baseline.md).
+
+The corrective readiness implementation adds cause-chain-safe provider HTTP 429 classification to the existing failure metrics, correctness fail-stop, and per-success DB/result/GCS integrity checks. Executor `2 / 4 / 50` values are source-bound compile-time invariants, not dynamically read configuration.
+
+The live capacity baseline is **NOT YET EXECUTED**. No bottleneck or performance threshold is
+claimed. The immediate next single checkpoint is explicit user approval for one protected live run;
+it remains `AWAITING_APPROVAL` and must not be started automatically.

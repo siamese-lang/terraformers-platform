@@ -465,3 +465,18 @@ Case A closure does not claim latency optimization. See
 [Case A Final Closure](../../evaluation/case-a-final-closure.md) for the full evidence chain,
 trade-offs, and residual risks.
 
+
+## Case C capacity-baseline harness checkpoint
+
+The bounded `case-c-capacity-baseline-v1` implementation is **IMPLEMENTED / STATIC VALIDATION
+PASS** against execution base `b96120a8f065d54f05183d9f9642af5d0e860375`. It prepares the
+reviewed closed-loop authenticated AnalysisJob experiment, fail-closed runtime identity checks,
+existing Prometheus/GKE/OpenSearch collection, sanitized machine-readable artifacts, and the frozen
+saturation stopping rule. It performs no tuning and adds no monitoring platform. Detailed readiness
+is recorded in [Case C Capacity Baseline Harness Readiness](../../evaluation/case-c-capacity-baseline.md).
+
+The corrective readiness implementation adds cause-chain-safe provider HTTP 429 classification to the existing failure metrics, correctness fail-stop, and per-success DB/result/GCS integrity checks. Executor `2 / 4 / 50` values are source-bound compile-time invariants, not dynamically read configuration.
+
+The live capacity baseline is **NOT YET EXECUTED**, so no first bottleneck or capacity result exists.
+The next single checkpoint is one separately approved protected live run and is
+`AWAITING_APPROVAL`; it is not authorized by harness implementation or merge.

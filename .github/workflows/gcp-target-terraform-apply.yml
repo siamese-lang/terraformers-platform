@@ -711,9 +711,15 @@ jobs:
 
       - name: Create saved plan
         if: inputs.operation != 'identity-check'
+        env:
+          OPERATION: ${{ inputs.operation }}
         run: |
           set -euo pipefail
-          terraform plan -no-color -input=false -lock-timeout=5m             -out="${RUNNER_TEMP}/gcp-target.tfplan"
+          plan_args=()
+          if [[ "$OPERATION" == capacity-scale-out || "$OPERATION" == capacity-scale-in ]]; then
+            plan_args+=('-target=google_container_node_pool.target')
+          fi
+          terraform plan -no-color -input=false -lock-timeout=5m             "${plan_args[@]}"             -out="${RUNNER_TEMP}/gcp-target.tfplan"
           terraform show -json "${RUNNER_TEMP}/gcp-target.tfplan"             > "${RUNNER_TEMP}/gcp-target-plan.json"
 
       - name: Enforce reviewed plan contract

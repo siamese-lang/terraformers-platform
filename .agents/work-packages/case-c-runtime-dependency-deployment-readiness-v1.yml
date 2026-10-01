@@ -1,8 +1,8 @@
 work_package:
   id: case-c-runtime-dependency-deployment-readiness-v1
-  status: AWAITING_APPROVAL
+  status: IMPLEMENTED_CI_PENDING
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: null
+  execution_base_sha: "8ada2368b85c210c2c50b0d42370454efe0d499c"
 
   goal: >
     Prepare the repository-owned GCP runtime dependencies required to make the already-published
@@ -11,7 +11,7 @@ work_package:
 
   decision_source:
     path: docs/plans/active/case-c-runtime-dependency-deployment-readiness-decision.md
-    status: PROPOSED_AWAITING_USER_DECISION
+    status: SELECTED
 
   selected_direction:
     gcs:
@@ -134,6 +134,7 @@ work_package:
     - no_backend_Deployment_is_applied_or_started
 
   live_acceptance_after_separate_approval:
+    - secret_container_foundation_plan_matches_reviewed_contract
     - secret_versions_added_without_value_output
     - dependency_foundation_plan_matches_reviewed_contract
     - mariadb_private_startup_succeeds
@@ -161,6 +162,7 @@ work_package:
 
   completion:
     merge_requires_user_approval: true
+    terraform_secret_container_apply_requires_user_approval: true
     secret_version_bootstrap_requires_user_approval: true
     terraform_dependency_apply_requires_user_approval: true
     kubernetes_prerequisite_apply_requires_user_approval: true
@@ -168,8 +170,15 @@ work_package:
     next_work_package_requires_user_approval: true
 
   result:
-    implementation: NOT_STARTED
-    ci: NOT_STARTED
+    implementation: COMPLETE
+    ci: PENDING
+    capability_gate:
+      gke_control_plane: "1.35.8-gke.1225000"
+      gke_node_pool: "1.35.8-gke.1225000"
+      required_minimum: "1.33"
+      result: PASS
+    auto_repair_used: 1
+    auto_repair_reason: split_secret_container_creation_before_secret_version_bootstrap
     live_mutation: false
     backend_deployed: false
-    next_gate: user_decision_and_work_package_approval
+    next_gate: independent_acceptance_review_after_CI

@@ -78,3 +78,30 @@ variable "backend_service_account" {
   type        = string
   default     = "terraformers-backend"
 }
+
+
+variable "enable_runtime_secret_foundation" {
+  description = "Manage the Case C Secret Manager API and empty MariaDB secret containers."
+  type        = bool
+  default     = false
+}
+
+variable "enable_runtime_dependencies" {
+  description = "Manage the Case C GCS, MariaDB VM/PD, IAM, firewall and GKE Secret Sync dependencies."
+  type        = bool
+  default     = false
+}
+
+variable "mariadb_image" {
+  description = "Exact MariaDB 11.4 container image in mariadb:11.4@sha256:<digest> form. Required only when runtime dependencies are enabled."
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      var.mariadb_image == ""
+      || can(regex("^mariadb:11\\.4@sha256:[0-9a-f]{64}$", var.mariadb_image))
+    )
+    error_message = "mariadb_image must be empty or an exact mariadb:11.4@sha256:<64 lowercase hex> reference."
+  }
+}

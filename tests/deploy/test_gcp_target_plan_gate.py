@@ -206,6 +206,178 @@ def delivery_foundation_plan() -> dict:
     }
 
 
+def runtime_secret_foundation_plan() -> dict:
+    return {
+        "resource_changes": [
+            resource(
+                "google_project_service.secret_manager[0]",
+                "google_project_service",
+                ["create"],
+                {"service": "secretmanager.googleapis.com", "disable_on_destroy": False},
+            ),
+            resource(
+                "google_secret_manager_secret.mariadb_root[0]",
+                "google_secret_manager_secret",
+                ["create"],
+                {"project": "terraformers-platform", "secret_id": "terraformers-mariadb-root-password"},
+            ),
+            resource(
+                "google_secret_manager_secret.mariadb_app[0]",
+                "google_secret_manager_secret",
+                ["create"],
+                {"project": "terraformers-platform", "secret_id": "terraformers-mariadb-app-password"},
+            ),
+        ]
+    }
+
+
+def runtime_dependencies_plan() -> dict:
+    pod_cidr = "10.44.0.0/14"
+    cluster_before = {
+        "name": "terraformers-target",
+        "location": "asia-northeast3-a",
+        "network": "terraformers-target",
+        "subnetwork": "terraformers-target",
+        "workload_identity_config": [{"workload_pool": "terraformers-platform.svc.id.goog"}],
+        "addons_config": [{"gce_persistent_disk_csi_driver_config": [{"enabled": True}]}],
+        "release_channel": [{"channel": "REGULAR"}],
+        "ip_allocation_policy": [{"cluster_ipv4_cidr_block": pod_cidr}],
+        "secret_sync_config": [],
+    }
+    cluster_after = dict(cluster_before)
+    cluster_after["secret_sync_config"] = [{"enabled": True, "rotation_config": []}]
+    digest = "a" * 64
+    startup = (
+        '#!/bin/bash\n'
+        f'MARIADB_IMAGE="mariadb:11.4@sha256:{digest}"\n'
+        'echo /var/lib/mysql >/dev/null\n'
+        'echo versions/latest:access >/dev/null\n'
+    )
+    return {
+        "resource_changes": [
+            resource(
+                "google_container_cluster.target",
+                "google_container_cluster",
+                ["update"],
+                cluster_after,
+                cluster_before,
+            ),
+            resource(
+                "google_storage_bucket.runtime_objects[0]",
+                "google_storage_bucket",
+                ["create"],
+                {
+                    "name": "terraformers-runtime-objects-21647422237",
+                    "project": "terraformers-platform",
+                    "location": "ASIA-NORTHEAST3",
+                    "uniform_bucket_level_access": True,
+                    "public_access_prevention": "enforced",
+                    "force_destroy": False,
+                },
+            ),
+            resource(
+                "google_storage_bucket_iam_member.backend_object_user[0]",
+                "google_storage_bucket_iam_member",
+                ["create"],
+                {
+                    "bucket": "terraformers-runtime-objects-21647422237",
+                    "role": "roles/storage.objectUser",
+                    "member": BACKEND_PRINCIPAL,
+                },
+            ),
+            resource(
+                "google_service_account.mariadb[0]",
+                "google_service_account",
+                ["create"],
+                {"account_id": "terraformers-mariadb"},
+            ),
+            resource(
+                "google_secret_manager_secret_iam_member.mariadb_root_accessor[0]",
+                "google_secret_manager_secret_iam_member",
+                ["create"],
+                {
+                    "project": "terraformers-platform",
+                    "secret_id": "terraformers-mariadb-root-password",
+                    "role": "roles/secretmanager.secretAccessor",
+                    "member": "serviceAccount:terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com",
+                },
+            ),
+            resource(
+                "google_secret_manager_secret_iam_member.mariadb_app_accessor[0]",
+                "google_secret_manager_secret_iam_member",
+                ["create"],
+                {
+                    "project": "terraformers-platform",
+                    "secret_id": "terraformers-mariadb-app-password",
+                    "role": "roles/secretmanager.secretAccessor",
+                    "member": "serviceAccount:terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com",
+                },
+            ),
+            resource(
+                "google_secret_manager_secret_iam_member.secret_sync_app_accessor[0]",
+                "google_secret_manager_secret_iam_member",
+                ["create"],
+                {
+                    "project": "terraformers-platform",
+                    "secret_id": "terraformers-mariadb-app-password",
+                    "role": "roles/secretmanager.secretAccessor",
+                    "member": (
+                        "principal://iam.googleapis.com/projects/21647422237/locations/global/"
+                        "workloadIdentityPools/terraformers-platform.svc.id.goog/subject/"
+                        "ns/terraformers-target/sa/terraformers-secret-sync"
+                    ),
+                },
+            ),
+            resource(
+                "google_compute_disk.mariadb_data[0]",
+                "google_compute_disk",
+                ["create"],
+                {
+                    "name": "terraformers-mariadb-data",
+                    "type": "pd-balanced",
+                    "zone": "asia-northeast3-a",
+                    "size": 20,
+                },
+            ),
+            resource(
+                "google_compute_instance.mariadb[0]",
+                "google_compute_instance",
+                ["create"],
+                {
+                    "name": "terraformers-mariadb",
+                    "machine_type": "e2-medium",
+                    "zone": "asia-northeast3-a",
+                    "attached_disk": [{"device_name": "terraformers-mariadb-data"}],
+                    "network_interface": [{
+                        "subnetwork": "https://www.googleapis.com/compute/v1/projects/terraformers-platform/"
+                                      "regions/asia-northeast3/subnetworks/terraformers-target",
+                        "access_config": [{}],
+                    }],
+                    "service_account": [{
+                        "email": "terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com",
+                        "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+                    }],
+                    "metadata_startup_script": startup,
+                },
+            ),
+            resource(
+                "google_compute_firewall.mariadb_from_gke[0]",
+                "google_compute_firewall",
+                ["create"],
+                {
+                    "name": "terraformers-mariadb-from-gke",
+                    "direction": "INGRESS",
+                    "allow": [{"protocol": "tcp", "ports": ["3306"]}],
+                    "source_ranges": ["10.40.0.0/20", pod_cidr],
+                    "target_service_accounts": [
+                        "terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com"
+                    ],
+                },
+            ),
+        ]
+    }
+
+
 class GcpTargetPlanGateTest(unittest.TestCase):
     def test_foundation_accepts_reviewed_contract(self) -> None:
         result = gate.validate_plan(foundation_plan(), "foundation")
@@ -404,6 +576,78 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         writer["change"]["after"]["role"] = "roles/artifactregistry.admin"
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "delivery-foundation")
+
+
+    def test_runtime_secret_foundation_accepts_exact_three_create_contract(self) -> None:
+        result = gate.validate_plan(runtime_secret_foundation_plan(), "runtime-secret-foundation")
+        self.assertEqual(result["resource_change_count"], 3)
+
+    def test_runtime_secret_foundation_rejects_secret_version_payload_resource(self) -> None:
+        plan = runtime_secret_foundation_plan()
+        plan["resource_changes"].append(
+            resource(
+                "google_secret_manager_secret_version.mariadb_app",
+                "google_secret_manager_secret_version",
+                ["create"],
+                {"secret": "terraformers-mariadb-app-password"},
+            )
+        )
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-secret-foundation")
+
+    def test_runtime_dependencies_accepts_exact_ten_change_contract(self) -> None:
+        result = gate.validate_plan(runtime_dependencies_plan(), "runtime-dependencies")
+        self.assertEqual(result["resource_change_count"], 10)
+
+    def test_runtime_dependencies_rejects_extra_resource(self) -> None:
+        plan = runtime_dependencies_plan()
+        plan["resource_changes"].append(
+            resource("google_compute_address.unreviewed", "google_compute_address", ["create"], {"name": "unexpected"})
+        )
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-dependencies")
+
+    def test_runtime_dependencies_rejects_broad_bucket_role(self) -> None:
+        plan = runtime_dependencies_plan()
+        binding = next(
+            item for item in plan["resource_changes"]
+            if item["address"] == "google_storage_bucket_iam_member.backend_object_user[0]"
+        )
+        binding["change"]["after"]["role"] = "roles/storage.admin"
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-dependencies")
+
+    def test_runtime_dependencies_rejects_public_database_firewall(self) -> None:
+        plan = runtime_dependencies_plan()
+        firewall = next(
+            item for item in plan["resource_changes"]
+            if item["address"] == "google_compute_firewall.mariadb_from_gke[0]"
+        )
+        firewall["change"]["after"]["source_ranges"] = ["0.0.0.0/0"]
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-dependencies")
+
+    def test_runtime_dependencies_rejects_mutable_mariadb_image(self) -> None:
+        plan = runtime_dependencies_plan()
+        instance = next(
+            item for item in plan["resource_changes"]
+            if item["address"] == "google_compute_instance.mariadb[0]"
+        )
+        instance["change"]["after"]["metadata_startup_script"] = (
+            'MARIADB_IMAGE="mariadb:11.4"\n/var/lib/mysql\nversions/latest:access\n'
+        )
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-dependencies")
+
+    def test_runtime_dependencies_rejects_secret_sync_rotation(self) -> None:
+        plan = runtime_dependencies_plan()
+        cluster = next(
+            item for item in plan["resource_changes"]
+            if item["address"] == "google_container_cluster.target"
+        )
+        cluster["change"]["after"]["secret_sync_config"][0]["rotation_config"] = [{"enabled": True}]
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "runtime-dependencies")
 
 
 if __name__ == "__main__":

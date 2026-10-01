@@ -38,6 +38,34 @@ DELIVERY_FOUNDATION_ACTIONS = {
     ),
 }
 
+
+RUNTIME_SECRET_FOUNDATION_ACTIONS = {
+    "google_project_service.secret_manager[0]": ("google_project_service", ["create"]),
+    "google_secret_manager_secret.mariadb_root[0]": ("google_secret_manager_secret", ["create"]),
+    "google_secret_manager_secret.mariadb_app[0]": ("google_secret_manager_secret", ["create"]),
+}
+
+RUNTIME_DEPENDENCY_ACTIONS = {
+    "google_container_cluster.target": ("google_container_cluster", ["update"]),
+    "google_storage_bucket.runtime_objects[0]": ("google_storage_bucket", ["create"]),
+    "google_storage_bucket_iam_member.backend_object_user[0]": (
+        "google_storage_bucket_iam_member", ["create"]
+    ),
+    "google_service_account.mariadb[0]": ("google_service_account", ["create"]),
+    "google_secret_manager_secret_iam_member.mariadb_root_accessor[0]": (
+        "google_secret_manager_secret_iam_member", ["create"]
+    ),
+    "google_secret_manager_secret_iam_member.mariadb_app_accessor[0]": (
+        "google_secret_manager_secret_iam_member", ["create"]
+    ),
+    "google_secret_manager_secret_iam_member.secret_sync_app_accessor[0]": (
+        "google_secret_manager_secret_iam_member", ["create"]
+    ),
+    "google_compute_disk.mariadb_data[0]": ("google_compute_disk", ["create"]),
+    "google_compute_instance.mariadb[0]": ("google_compute_instance", ["create"]),
+    "google_compute_firewall.mariadb_from_gke[0]": ("google_compute_firewall", ["create"]),
+}
+
 EXPECTED_SERVICES = {
     "aiplatform.googleapis.com",
     "compute.googleapis.com",
@@ -220,6 +248,159 @@ def validate_delivery_foundation(changes: dict[str, dict[str, Any]]) -> None:
         require(after.get("member") == member, f"{address}: unexpected member")
 
 
+def validate_runtime_secret_foundation(changes: dict[str, dict[str, Any]]) -> None:
+    require(
+        set(changes) == set(RUNTIME_SECRET_FOUNDATION_ACTIONS),
+        "runtime-secret-foundation plan does not match the reviewed three-resource address set",
+    )
+    for address, (expected_type, expected_actions) in RUNTIME_SECRET_FOUNDATION_ACTIONS.items():
+        resource = changes[address]
+        require(resource.get("type") == expected_type, f"{address}: unexpected type {resource.get('type')}")
+        actions = list(resource.get("change", {}).get("actions", []))
+        require(actions == expected_actions, f"{address}: expected {expected_actions}, got {actions}")
+
+    service = changes["google_project_service.secret_manager[0]"]["change"]["after"]
+    require(service.get("service") == "secretmanager.googleapis.com", "unexpected Secret Manager API")
+    require(service.get("disable_on_destroy") is False, "Secret Manager API must not be disabled on destroy")
+
+    expected_ids = {
+        "google_secret_manager_secret.mariadb_root[0]": "terraformers-mariadb-root-password",
+        "google_secret_manager_secret.mariadb_app[0]": "terraformers-mariadb-app-password",
+    }
+    for address, secret_id in expected_ids.items():
+        after = changes[address]["change"]["after"]
+        require(after.get("project") == "terraformers-platform", f"{address}: unexpected project")
+        require(after.get("secret_id") == secret_id, f"{address}: unexpected secret id")
+
+
+def validate_runtime_dependencies(changes: dict[str, dict[str, Any]]) -> None:
+    require(
+        set(changes) == set(RUNTIME_DEPENDENCY_ACTIONS),
+        "runtime-dependencies plan does not match the reviewed ten-resource change set",
+    )
+    for address, (expected_type, expected_actions) in RUNTIME_DEPENDENCY_ACTIONS.items():
+        resource = changes[address]
+        require(resource.get("type") == expected_type, f"{address}: unexpected type {resource.get('type')}")
+        actions = list(resource.get("change", {}).get("actions", []))
+        require(actions == expected_actions, f"{address}: expected {expected_actions}, got {actions}")
+
+    cluster_change = changes["google_container_cluster.target"]["change"]
+    before_cluster = cluster_change.get("before") or {}
+    after_cluster = cluster_change.get("after") or {}
+    for key in ("name", "location", "network", "subnetwork"):
+        require(before_cluster.get(key) == after_cluster.get(key), f"GKE {key} changed outside Secret Sync enablement")
+    for key in ("workload_identity_config", "addons_config", "release_channel", "ip_allocation_policy"):
+        require(before_cluster.get(key) == after_cluster.get(key), f"GKE {key} changed outside Secret Sync enablement")
+    before_sync = before_cluster.get("secret_sync_config") or []
+    require(
+        before_sync == [] or (
+            len(before_sync) == 1
+            and isinstance(before_sync[0], dict)
+            and before_sync[0].get("enabled") is False
+        ),
+        "GKE Secret Sync was already enabled or had an unexpected before-state",
+    )
+    after_sync = single_block(after_cluster, "secret_sync_config")
+    require(after_sync.get("enabled") is True, "GKE Secret Sync must be enabled")
+    rotation = after_sync.get("rotation_config") or []
+    require(rotation == [], "automatic Secret Sync rotation is not selected")
+
+    bucket = changes["google_storage_bucket.runtime_objects[0]"]["change"]["after"]
+    require(bucket.get("name") == "terraformers-runtime-objects-21647422237", "unexpected runtime bucket name")
+    require(bucket.get("project") == "terraformers-platform", "unexpected runtime bucket project")
+    require(bucket.get("location") == "ASIA-NORTHEAST3" or bucket.get("location") == "asia-northeast3",
+            "runtime bucket must stay in asia-northeast3")
+    require(bucket.get("uniform_bucket_level_access") is True, "runtime bucket must use uniform bucket-level access")
+    require(bucket.get("public_access_prevention") == "enforced", "runtime bucket public access prevention must be enforced")
+    require(bucket.get("force_destroy") is False, "runtime bucket force_destroy must remain false")
+
+    bucket_iam = changes["google_storage_bucket_iam_member.backend_object_user[0]"]["change"]["after"]
+    require(bucket_iam.get("bucket") == "terraformers-runtime-objects-21647422237", "unexpected runtime bucket IAM target")
+    require(bucket_iam.get("role") == "roles/storage.objectUser", "backend runtime bucket role changed")
+    require(
+        bucket_iam.get("member")
+        == "principal://iam.googleapis.com/projects/21647422237/locations/global/workloadIdentityPools/"
+           "terraformers-platform.svc.id.goog/subject/ns/terraformers-target/sa/terraformers-backend",
+        "unexpected backend runtime bucket principal",
+    )
+
+    mariadb_sa = changes["google_service_account.mariadb[0]"]["change"]["after"]
+    require(mariadb_sa.get("account_id") == "terraformers-mariadb", "unexpected MariaDB service account id")
+
+    expected_secret_members = {
+        "google_secret_manager_secret_iam_member.mariadb_root_accessor[0]": (
+            "terraformers-mariadb-root-password",
+            "serviceAccount:terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com",
+        ),
+        "google_secret_manager_secret_iam_member.mariadb_app_accessor[0]": (
+            "terraformers-mariadb-app-password",
+            "serviceAccount:terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com",
+        ),
+        "google_secret_manager_secret_iam_member.secret_sync_app_accessor[0]": (
+            "terraformers-mariadb-app-password",
+            "principal://iam.googleapis.com/projects/21647422237/locations/global/workloadIdentityPools/"
+            "terraformers-platform.svc.id.goog/subject/ns/terraformers-target/sa/terraformers-secret-sync",
+        ),
+    }
+    for address, (secret_id, member) in expected_secret_members.items():
+        after = changes[address]["change"]["after"]
+        require(after.get("project") == "terraformers-platform", f"{address}: unexpected project")
+        require(after.get("secret_id") == secret_id, f"{address}: unexpected secret id")
+        require(after.get("role") == "roles/secretmanager.secretAccessor", f"{address}: unexpected secret role")
+        require(after.get("member") == member, f"{address}: unexpected secret principal")
+
+    disk = changes["google_compute_disk.mariadb_data[0]"]["change"]["after"]
+    require(disk.get("name") == "terraformers-mariadb-data", "unexpected MariaDB data disk name")
+    require(disk.get("type") == "pd-balanced", "MariaDB data disk must remain pd-balanced")
+    require(disk.get("zone") == "asia-northeast3-a", "unexpected MariaDB data disk zone")
+    require(disk.get("size") == 20, "MariaDB data disk must remain 20 GiB")
+
+    instance = changes["google_compute_instance.mariadb[0]"]["change"]["after"]
+    require(instance.get("name") == "terraformers-mariadb", "unexpected MariaDB VM name")
+    require(instance.get("machine_type") == "e2-medium", "MariaDB VM must remain e2-medium")
+    require(instance.get("zone") == "asia-northeast3-a", "unexpected MariaDB VM zone")
+    attached = single_block(instance, "attached_disk")
+    require(attached.get("device_name") == "terraformers-mariadb-data", "unexpected MariaDB attached disk")
+    interface = single_block(instance, "network_interface")
+    subnetwork = str(interface.get("subnetwork") or "")
+    require(subnetwork.endswith("/subnetworks/terraformers-target") or subnetwork == "terraformers-target",
+            "MariaDB VM must use the canonical target subnet")
+    access_config = interface.get("access_config")
+    require(isinstance(access_config, list) and len(access_config) == 1, "MariaDB VM requires one outbound bootstrap IPv4 access config")
+    service_account = single_block(instance, "service_account")
+    require(
+        service_account.get("email") == "terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com",
+        "unexpected MariaDB VM service account",
+    )
+    require(
+        service_account.get("scopes") == ["https://www.googleapis.com/auth/cloud-platform"],
+        "MariaDB VM OAuth scope changed",
+    )
+    startup = str(instance.get("metadata_startup_script") or "")
+    require(
+        __import__("re").search(r'MARIADB_IMAGE="mariadb:11\.4@sha256:[0-9a-f]{64}"', startup) is not None,
+        "MariaDB startup script must pin an exact 11.4 image digest",
+    )
+    require("/var/lib/mysql" in startup, "MariaDB startup script must mount the dedicated data path")
+    require("versions/latest:access" in startup, "MariaDB startup script must retrieve secrets from Secret Manager")
+
+    firewall = changes["google_compute_firewall.mariadb_from_gke[0]"]["change"]["after"]
+    require(firewall.get("name") == "terraformers-mariadb-from-gke", "unexpected MariaDB firewall name")
+    require(firewall.get("direction") == "INGRESS", "MariaDB firewall must remain ingress-only")
+    allow = single_block(firewall, "allow")
+    require(allow.get("protocol") == "tcp" and allow.get("ports") == ["3306"], "MariaDB firewall must allow TCP/3306 only")
+    targets = firewall.get("target_service_accounts") or []
+    require(
+        targets == ["terraformers-mariadb@terraformers-platform.iam.gserviceaccount.com"],
+        "MariaDB firewall target service account changed",
+    )
+    ranges = set(firewall.get("source_ranges") or [])
+    ip_alloc = single_block(after_cluster, "ip_allocation_policy")
+    pod_cidr = ip_alloc.get("cluster_ipv4_cidr_block")
+    require(isinstance(pod_cidr, str) and pod_cidr, "GKE Pod CIDR is unavailable for MariaDB firewall validation")
+    require(ranges == {"10.40.0.0/20", pod_cidr}, "MariaDB firewall source ranges changed")
+
+
 def validate_node_pool_transition(
     changes: dict[str, dict[str, Any]],
     operation: str,
@@ -281,6 +462,10 @@ def validate_plan(plan: dict[str, Any], operation: str) -> dict[str, Any]:
         validate_foundation(changes)
     elif operation == "delivery-foundation":
         validate_delivery_foundation(changes)
+    elif operation == "runtime-secret-foundation":
+        validate_runtime_secret_foundation(changes)
+    elif operation == "runtime-dependencies":
+        validate_runtime_dependencies(changes)
     elif operation == "activate":
         validate_activate(changes)
     elif operation == "idle":
@@ -343,7 +528,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--operation",
         required=True,
-        choices=("foundation", "delivery-foundation", "activate", "idle"),
+        choices=("foundation", "delivery-foundation", "runtime-secret-foundation", "runtime-dependencies", "activate", "idle"),
     )
     return parser.parse_args()
 

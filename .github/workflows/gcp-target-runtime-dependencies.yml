@@ -1,0 +1,541 @@
+name: GCP Target Runtime Dependencies
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Apply one separately approved Case C runtime dependency checkpoint.
+        required: true
+        type: choice
+        options:
+          - runtime-secret-foundation
+          - runtime-dependencies
+          - kubernetes-prerequisites
+      expected_sha:
+        description: Exact trusted main commit SHA being approved.
+        required: true
+        type: string
+      confirmation:
+        description: Exact confirmation token for the selected operation.
+        required: true
+        type: string
+      mariadb_image:
+        description: Exact mariadb:11.4@sha256:<digest>; required only for runtime-dependencies.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: gcp-target-terraform-state
+  cancel-in-progress: false
+
+jobs:
+  terraform-preflight:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation != 'kubernetes-prerequisites'
+    runs-on: ubuntu-latest
+    environment: gcp-target-plan
+    timeout-minutes: 30
+    env:
+      TF_IN_AUTOMATION: 'true'
+      TF_INPUT: 'false'
+      TF_VAR_project_id: terraformers-platform
+      TF_VAR_subnet_cidr: 10.40.0.0/20
+    defaults:
+      run:
+        shell: bash
+        working-directory: infra/terraform/envs/gcp-target-runtime
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted runtime dependency request
+        env:
+          OPERATION: ${{ inputs.operation }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          MARIADB_IMAGE: ${{ inputs.mariadb_image }}
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          PLAN_SERVICE_ACCOUNT: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match checked-out main.' >&2
+            exit 1
+          }
+          [[ "$STATE_BUCKET" == terraformers-platform-tfstate-21647422237 ]]
+          [[ "$PLAN_SERVICE_ACCOUNT" == terraformers-plan@terraformers-platform.iam.gserviceaccount.com ]]
+          [[ -n "$WIF_PROVIDER" ]]
+          case "$OPERATION" in
+            runtime-secret-foundation)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_RUNTIME_SECRET_FOUNDATION_3 ]]
+              echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_secret_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_dependencies=false' >> "$GITHUB_ENV"
+              ;;
+            runtime-dependencies)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_RUNTIME_DEPENDENCIES_10 ]]
+              [[ "$MARIADB_IMAGE" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]] || {
+                echo 'runtime-dependencies requires exact mariadb:11.4@sha256:<digest>.' >&2
+                exit 1
+              }
+              echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_secret_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_dependencies=true' >> "$GITHUB_ENV"
+              echo "TF_VAR_mariadb_image=$MARIADB_IMAGE" >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "Unsupported Terraform operation: $OPERATION" >&2
+              exit 1
+              ;;
+          esac
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Reconfirm plan identity is non-mutating
+        run: |
+          set -euo pipefail
+          access_token="$(gcloud auth print-access-token)"
+          response="$(
+            curl -fsS -X POST \
+              -H "Authorization: Bearer ${access_token}" \
+              -H 'Content-Type: application/json' \
+              -d '{"permissions":["compute.disks.create","compute.firewalls.create","compute.instances.create","container.clusters.update","iam.serviceAccounts.create","resourcemanager.projects.setIamPolicy","secretmanager.secrets.create","secretmanager.secrets.setIamPolicy","secretmanager.versions.access","serviceusage.services.enable","storage.buckets.create","storage.buckets.setIamPolicy"]}' \
+              'https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions'
+          )"
+          granted="$(jq -r '.permissions // [] | join(",")' <<< "$response")"
+          [[ -z "$granted" ]] || {
+            echo "Plan identity unexpectedly has runtime mutation/secret-access permissions: $granted" >&2
+            exit 1
+          }
+
+      - name: Verify required plan read roles
+        run: |
+          set -euo pipefail
+          policy="$(mktemp)"
+          gcloud projects get-iam-policy terraformers-platform --format=json > "$policy"
+          member='serviceAccount:terraformers-plan@terraformers-platform.iam.gserviceaccount.com'
+          for role in \
+            roles/browser \
+            roles/compute.viewer \
+            roles/container.viewer \
+            roles/iam.serviceAccountViewer \
+            roles/iam.securityReviewer \
+            roles/serviceusage.serviceUsageConsumer \
+            roles/secretmanager.viewer \
+            roles/storage.bucketViewer
+          do
+            jq -e --arg role "$role" --arg member "$member" '
+              any(.bindings[]?;
+                .role == $role and any(.members[]?; . == $member)
+              )
+            ' "$policy" >/dev/null || {
+              echo "Plan identity is missing runtime read role: $role" >&2
+              echo 'Run the separately approved runtime IAM bootstrap first.' >&2
+              exit 1
+            }
+          done
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: Plan exact reviewed runtime dependency operation
+        env:
+          OPERATION: ${{ inputs.operation }}
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+          terraform init -no-color -reconfigure -input=false \
+            -backend-config="bucket=${STATE_BUCKET}" \
+            -backend-config='prefix=gcp-target-runtime'
+
+          mapfile -t state_addresses < <(terraform state list)
+          for required in \
+            'google_container_cluster.target' \
+            'google_container_node_pool.target' \
+            'google_artifact_registry_repository.backend[0]'
+          do
+            printf '%s\n' "${state_addresses[@]}" | grep -Fxq "$required" || {
+              echo "Missing canonical runtime state address: $required" >&2
+              exit 1
+            }
+          done
+
+          terraform show -json > "${RUNNER_TEMP}/state.json"
+          node_count="$(
+            jq -r '
+              .values.root_module.resources[]
+              | select(.address == "google_container_node_pool.target")
+              | .values.node_count
+            ' "${RUNNER_TEMP}/state.json"
+          )"
+          [[ "$node_count" =~ ^[01]$ ]]
+          echo "TF_VAR_node_count=$node_count" >> "$GITHUB_ENV"
+          export TF_VAR_node_count="$node_count"
+
+          if [[ "$OPERATION" == runtime-secret-foundation ]]; then
+            for address in \
+              'google_project_service.secret_manager[0]' \
+              'google_secret_manager_secret.mariadb_root[0]' \
+              'google_secret_manager_secret.mariadb_app[0]'
+            do
+              if printf '%s\n' "${state_addresses[@]}" | grep -Fxq "$address"; then
+                echo "Runtime secret foundation already exists in state: $address" >&2
+                exit 1
+              fi
+            done
+          else
+            master_version="$(
+              gcloud container clusters describe terraformers-target \
+                --zone=asia-northeast3-a \
+                --project=terraformers-platform \
+                --format='value(currentMasterVersion)'
+            )"
+            [[ "$master_version" =~ ^1\.([0-9]+)[.-] ]]
+            (( BASH_REMATCH[1] >= 33 )) || {
+              echo "GKE Secret Sync requires 1.33+; current=$master_version" >&2
+              exit 1
+            }
+            for required in \
+              'google_project_service.secret_manager[0]' \
+              'google_secret_manager_secret.mariadb_root[0]' \
+              'google_secret_manager_secret.mariadb_app[0]'
+            do
+              printf '%s\n' "${state_addresses[@]}" | grep -Fxq "$required" || {
+                echo "Runtime dependencies require secret foundation state: $required" >&2
+                exit 1
+              }
+            done
+            for secret in terraformers-mariadb-root-password terraformers-mariadb-app-password; do
+              enabled="$(
+                gcloud secrets versions list "$secret" \
+                  --project=terraformers-platform \
+                  --filter='state=ENABLED' \
+                  --format='value(name)' \
+                  --limit=1
+              )"
+              [[ -n "$enabled" ]] || {
+                echo "Runtime dependencies require an enabled secret version: $secret" >&2
+                exit 1
+              }
+            done
+          fi
+
+          terraform plan -no-color -input=false -lock-timeout=5m \
+            -out="${RUNNER_TEMP}/runtime.tfplan"
+          terraform show -json "${RUNNER_TEMP}/runtime.tfplan" > "${RUNNER_TEMP}/runtime-plan.json"
+          python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_target_plan_gate.py" \
+            --plan-json "${RUNNER_TEMP}/runtime-plan.json" \
+            --operation "$OPERATION"
+
+  terraform-apply:
+    needs: terraform-preflight
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation != 'kubernetes-prerequisites' &&
+      needs.terraform-preflight.result == 'success'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 60
+    env:
+      TF_IN_AUTOMATION: 'true'
+      TF_INPUT: 'false'
+      TF_VAR_project_id: terraformers-platform
+      TF_VAR_subnet_cidr: 10.40.0.0/20
+    defaults:
+      run:
+        shell: bash
+        working-directory: infra/terraform/envs/gcp-target-runtime
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted apply request
+        env:
+          OPERATION: ${{ inputs.operation }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          MARIADB_IMAGE: ${{ inputs.mariadb_image }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
+          case "$OPERATION" in
+            runtime-secret-foundation)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_RUNTIME_SECRET_FOUNDATION_3 ]]
+              echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_secret_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_dependencies=false' >> "$GITHUB_ENV"
+              ;;
+            runtime-dependencies)
+              [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_RUNTIME_DEPENDENCIES_10 ]]
+              [[ "$MARIADB_IMAGE" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]]
+              echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_secret_foundation=true' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_runtime_dependencies=true' >> "$GITHUB_ENV"
+              echo "TF_VAR_mariadb_image=$MARIADB_IMAGE" >> "$GITHUB_ENV"
+              ;;
+          esac
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Verify runtime dependency IAM bootstrap
+        working-directory: ${{ github.workspace }}
+        run: bash scripts/deploy/bootstrap_gcp_runtime_secrets.sh check
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: Recreate and gate exact saved plan
+        env:
+          OPERATION: ${{ inputs.operation }}
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+          terraform init -no-color -reconfigure -input=false \
+            -backend-config="bucket=${STATE_BUCKET}" \
+            -backend-config='prefix=gcp-target-runtime'
+
+          terraform show -json > "${RUNNER_TEMP}/state.json"
+          node_count="$(
+            jq -r '
+              .values.root_module.resources[]
+              | select(.address == "google_container_node_pool.target")
+              | .values.node_count
+            ' "${RUNNER_TEMP}/state.json"
+          )"
+          [[ "$node_count" =~ ^[01]$ ]]
+          echo "TF_VAR_node_count=$node_count" >> "$GITHUB_ENV"
+          export TF_VAR_node_count="$node_count"
+
+          if [[ "$OPERATION" == runtime-dependencies ]]; then
+            for secret in terraformers-mariadb-root-password terraformers-mariadb-app-password; do
+              enabled="$(
+                gcloud secrets versions list "$secret" \
+                  --project=terraformers-platform \
+                  --filter='state=ENABLED' \
+                  --format='value(name)' \
+                  --limit=1
+              )"
+              [[ -n "$enabled" ]] || {
+                echo "Missing enabled secret version: $secret" >&2
+                exit 1
+              }
+            done
+          fi
+
+          terraform plan -no-color -input=false -lock-timeout=5m \
+            -out="${RUNNER_TEMP}/runtime.tfplan"
+          terraform show -json "${RUNNER_TEMP}/runtime.tfplan" > "${RUNNER_TEMP}/runtime-plan.json"
+          python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_target_plan_gate.py" \
+            --plan-json "${RUNNER_TEMP}/runtime-plan.json" \
+            --operation "$OPERATION"
+          sha256sum "${RUNNER_TEMP}/runtime.tfplan" | awk '{print "- Saved plan SHA-256: `"$1"`"}' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply exact saved plan
+        run: terraform apply -no-color -input=false "${RUNNER_TEMP}/runtime.tfplan"
+
+      - name: Verify resulting runtime dependency boundary
+        env:
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          if [[ "$OPERATION" == runtime-secret-foundation ]]; then
+            for secret in terraformers-mariadb-root-password terraformers-mariadb-app-password; do
+              gcloud secrets describe "$secret" --project=terraformers-platform --format='value(name)' >/dev/null
+            done
+            echo 'Secret containers exist; no secret version was created by Terraform.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            [[ "$(
+              gcloud container clusters describe terraformers-target \
+                --zone=asia-northeast3-a --project=terraformers-platform \
+                --format='value(secretSyncConfig.enabled)'
+            )" == True ]]
+            [[ "$(
+              gcloud storage buckets describe gs://terraformers-runtime-objects-21647422237 \
+                --format='value(public_access_prevention)'
+            )" == enforced ]]
+            [[ "$(
+              gcloud storage buckets describe gs://terraformers-runtime-objects-21647422237 \
+                --format='value(uniform_bucket_level_access)'
+            )" == True ]]
+            [[ "$(
+              gcloud compute instances describe terraformers-mariadb \
+                --zone=asia-northeast3-a --project=terraformers-platform \
+                --format='value(status)'
+            )" == RUNNING ]]
+            {
+              echo '## Case C runtime dependency apply'
+              echo
+              echo '- GKE Secret Sync: `enabled`'
+              echo '- Runtime object bucket: private / UBLA / public access prevention enforced'
+              echo '- MariaDB VM: `RUNNING`'
+              echo '- Backend Deployment: not applied by this workflow'
+              echo '- Secret payloads: not printed or uploaded'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  kubernetes-prerequisites:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'kubernetes-prerequisites'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted Kubernetes prerequisite request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
+          [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_RUNTIME_K8S_PREREQUISITES ]]
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify prerequisite boundary
+        run: |
+          set -euo pipefail
+          [[ "$(
+            gcloud container clusters describe terraformers-target \
+              --zone=asia-northeast3-a --project=terraformers-platform \
+              --format='value(secretSyncConfig.enabled)'
+          )" == True ]]
+          [[ "$(
+            gcloud compute instances describe terraformers-mariadb \
+              --zone=asia-northeast3-a --project=terraformers-platform \
+              --format='value(status)'
+          )" == RUNNING ]]
+          if kubectl -n terraformers-target get deployment terraformers-backend >/dev/null 2>&1; then
+            echo 'Backend Deployment already exists; prerequisite workflow must not mutate around it.' >&2
+            exit 1
+          fi
+          for pair in \
+            'create serviceaccounts' \
+            'create secretproviderclasses.secrets-store.csi.x-k8s.io' \
+            'create secretsyncs.secret-sync.gke.io' \
+            'create configmaps' \
+            'create deployments.apps' \
+            'create services' \
+            'create endpointslices.discovery.k8s.io'
+          do
+            verb="${pair%% *}"
+            resource="${pair#* }"
+            kubectl auth can-i "$verb" "$resource" -n terraformers-target | grep -Fxq yes || {
+              echo "Missing Kubernetes permission: $verb $resource" >&2
+              exit 1
+            }
+          done
+
+      - name: Apply isolated runtime prerequisites
+        run: |
+          set -euo pipefail
+          kubectl apply -k infra/kubernetes/overlays/gcp-target/runtime-dependencies
+
+          mariadb_ip="$(
+            gcloud compute instances describe terraformers-mariadb \
+              --zone=asia-northeast3-a \
+              --project=terraformers-platform \
+              --format='value(networkInterfaces[0].networkIP)'
+          )"
+          [[ "$mariadb_ip" =~ ^10\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Unexpected MariaDB private IP: $mariadb_ip" >&2
+            exit 1
+          }
+
+          cat <<EOF | kubectl apply -f -
+          apiVersion: discovery.k8s.io/v1
+          kind: EndpointSlice
+          metadata:
+            name: terraformers-mariadb
+            namespace: terraformers-target
+            labels:
+              kubernetes.io/service-name: terraformers-mariadb
+          addressType: IPv4
+          ports:
+            - name: mariadb
+              protocol: TCP
+              port: 3306
+          endpoints:
+            - addresses:
+                - "$mariadb_ip"
+          EOF
+
+      - name: Verify Secret Sync and JWKS prerequisites
+        run: |
+          set -euo pipefail
+          kubectl -n terraformers-target rollout status deployment/terraformers-jwks --timeout=3m
+
+          ready=false
+          for _ in $(seq 1 60); do
+            if kubectl -n terraformers-target get secret terraformers-backend-runtime-secrets -o json 2>/dev/null \
+              | jq -e '.data.SPRING_DATASOURCE_PASSWORD | type == "string" and length > 0' >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          [[ "$ready" == true ]] || {
+            echo 'Secret Sync did not create the expected backend DB-password key.' >&2
+            exit 1
+          }
+
+          kubectl -n terraformers-target get endpointslice terraformers-mariadb >/dev/null
+          if kubectl -n terraformers-target get deployment terraformers-backend >/dev/null 2>&1; then
+            echo 'Backend Deployment was unexpectedly created.' >&2
+            exit 1
+          fi
+
+          {
+            echo '## Case C Kubernetes runtime prerequisites'
+            echo
+            echo '- Secret Sync target key: present (value not printed)'
+            echo '- MariaDB Kubernetes service/EndpointSlice: present'
+            echo '- Internal JWKS service: ready'
+            echo '- Backend Deployment: absent'
+          } >> "$GITHUB_STEP_SUMMARY"

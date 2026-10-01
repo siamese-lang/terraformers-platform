@@ -6,7 +6,8 @@ locals {
     "iamcredentials.googleapis.com",
   ])
 
-  backend_workload_principal = "principal://iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${var.project_id}.svc.id.goog/subject/ns/${var.backend_namespace}/sa/${var.backend_service_account}"
+  backend_workload_principal     = "principal://iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${var.project_id}.svc.id.goog/subject/ns/${var.backend_namespace}/sa/${var.backend_service_account}"
+  secret_sync_workload_principal = "principal://iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${var.project_id}.svc.id.goog/subject/ns/${var.backend_namespace}/sa/terraformers-secret-sync"
 
   node_roles = toset([
     "roles/container.defaultNodeServiceAccount",
@@ -77,6 +78,13 @@ resource "google_container_cluster" "target" {
 
   addons_config {
     gce_persistent_disk_csi_driver_config {
+      enabled = true
+    }
+  }
+
+  dynamic "secret_sync_config" {
+    for_each = var.enable_runtime_dependencies ? [1] : []
+    content {
       enabled = true
     }
   }
@@ -202,4 +210,208 @@ resource "google_artifact_registry_repository_iam_member" "plan_reader" {
   repository = google_artifact_registry_repository.backend[0].repository_id
   role       = "roles/artifactregistry.reader"
   member     = "serviceAccount:terraformers-plan@${var.project_id}.iam.gserviceaccount.com"
+}
+
+
+# Case C runtime dependency foundation. Secret containers are created in a
+# separate first apply so secret payloads never need to enter Terraform state.
+resource "google_project_service" "secret_manager" {
+  count = var.enable_runtime_secret_foundation ? 1 : 0
+
+  project            = var.project_id
+  service            = "secretmanager.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_secret_manager_secret" "mariadb_root" {
+  count = var.enable_runtime_secret_foundation ? 1 : 0
+
+  project   = var.project_id
+  secret_id = "terraformers-mariadb-root-password"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.secret_manager[0]]
+}
+
+resource "google_secret_manager_secret" "mariadb_app" {
+  count = var.enable_runtime_secret_foundation ? 1 : 0
+
+  project   = var.project_id
+  secret_id = "terraformers-mariadb-app-password"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.secret_manager[0]]
+}
+
+resource "google_storage_bucket" "runtime_objects" {
+  count = var.enable_runtime_dependencies ? 1 : 0
+
+  name                        = "terraformers-runtime-objects-${data.google_project.current.number}"
+  project                     = var.project_id
+  location                    = var.region
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+  force_destroy               = false
+}
+
+resource "google_storage_bucket_iam_member" "backend_object_user" {
+  count = var.enable_runtime_dependencies ? 1 : 0
+
+  bucket = google_storage_bucket.runtime_objects[0].name
+  role   = "roles/storage.objectUser"
+  member = local.backend_workload_principal
+}
+
+resource "google_service_account" "mariadb" {
+  count = var.enable_runtime_dependencies ? 1 : 0
+
+  account_id   = "terraformers-mariadb"
+  display_name = "Terraformers MariaDB runtime"
+}
+
+resource "google_secret_manager_secret_iam_member" "mariadb_root_accessor" {
+  count = var.enable_runtime_dependencies ? 1 : 0
+
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.mariadb_root[0].secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.mariadb[0].email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "mariadb_app_accessor" {
+  count = var.enable_runtime_dependencies ? 1 : 0
+
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.mariadb_app[0].secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.mariadb[0].email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "secret_sync_app_accessor" {
+  count = var.enable_runtime_dependencies ? 1 : 0
+
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.mariadb_app[0].secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = local.secret_sync_workload_principal
+}
+
+resource "google_compute_disk" "mariadb_data" {
+  count = var.enable_runtime_dependencies ? 1 : 0
+
+  name = "terraformers-mariadb-data"
+  type = "pd-balanced"
+  zone = var.zone
+  size = 20
+}
+
+resource "google_compute_instance" "mariadb" {
+  count = var.enable_runtime_dependencies ? 1 : 0
+
+  name                      = "terraformers-mariadb"
+  machine_type              = "e2-medium"
+  zone                      = var.zone
+  allow_stopping_for_update = true
+
+  boot_disk {
+    initialize_params {
+      image = "cos-cloud/cos-stable"
+      size  = 10
+      type  = "pd-balanced"
+    }
+  }
+
+  attached_disk {
+    source      = google_compute_disk.mariadb_data[0].id
+    device_name = "terraformers-mariadb-data"
+  }
+
+  network_interface {
+    subnetwork = google_compute_subnetwork.target.id
+
+    # Ephemeral IPv4 is outbound bootstrap only. No public ingress firewall rule exists.
+    access_config {}
+  }
+
+  service_account {
+    email  = google_service_account.mariadb[0].email
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+  }
+
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    set -euo pipefail
+
+    PROJECT_ID="terraformers-platform"
+    DATA_DEVICE="/dev/disk/by-id/google-terraformers-mariadb-data"
+    DATA_MOUNT="/mnt/disks/terraformers-mariadb"
+    MARIADB_IMAGE="${var.mariadb_image}"
+
+    [[ "$MARIADB_IMAGE" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]] || {
+      echo "MariaDB image must be an exact 11.4 digest reference." >&2
+      exit 1
+    }
+
+    mkdir -p "$DATA_MOUNT"
+    if ! blkid "$DATA_DEVICE" >/dev/null 2>&1; then
+      mkfs.ext4 -m 0 -F "$DATA_DEVICE"
+    fi
+    mountpoint -q "$DATA_MOUNT" || mount -o discard,defaults "$DATA_DEVICE" "$DATA_MOUNT"
+
+    access_secret() {
+      local secret_name="$1"
+      local token payload
+      token="$(
+        curl -fsS -H 'Metadata-Flavor: Google'           'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token'           | sed -n 's/.*"access_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+      )"
+      [[ -n "$token" ]]
+      payload="$(
+        curl -fsS           -H "Authorization: Bearer $${token}"           "https://secretmanager.googleapis.com/v1/projects/$${PROJECT_ID}/secrets/$${secret_name}/versions/latest:access"           | sed -n 's/.*"data"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+      )"
+      [[ -n "$payload" ]]
+      printf '%s' "$payload" | base64 -d
+    }
+
+    ROOT_PASSWORD="$(access_secret terraformers-mariadb-root-password)"
+    APP_PASSWORD="$(access_secret terraformers-mariadb-app-password)"
+    [[ -n "$ROOT_PASSWORD" && -n "$APP_PASSWORD" ]]
+
+    docker pull "$MARIADB_IMAGE"
+    docker rm -f terraformers-mariadb >/dev/null 2>&1 || true
+    docker run -d       --name terraformers-mariadb       --restart unless-stopped       --network host       -e MARIADB_ROOT_PASSWORD="$ROOT_PASSWORD"       -e MARIADB_DATABASE=terraformers       -e MARIADB_USER=terraformers       -e MARIADB_PASSWORD="$APP_PASSWORD"       -v "$DATA_MOUNT:/var/lib/mysql"       "$MARIADB_IMAGE"
+
+    unset ROOT_PASSWORD APP_PASSWORD
+  EOT
+
+  depends_on = [
+    google_secret_manager_secret_iam_member.mariadb_root_accessor,
+    google_secret_manager_secret_iam_member.mariadb_app_accessor,
+  ]
+}
+
+resource "google_compute_firewall" "mariadb_from_gke" {
+  count = var.enable_runtime_dependencies ? 1 : 0
+
+  name        = "terraformers-mariadb-from-gke"
+  network     = google_compute_network.target.name
+  direction   = "INGRESS"
+  description = "Allow MariaDB only from the target GKE subnet and Pod address range."
+
+  allow {
+    protocol = "tcp"
+    ports    = ["3306"]
+  }
+
+  source_ranges = distinct([
+    var.subnet_cidr,
+    google_container_cluster.target.ip_allocation_policy[0].cluster_ipv4_cidr_block,
+  ])
+
+  target_service_accounts = [google_service_account.mariadb[0].email]
 }

@@ -2,7 +2,7 @@
 
 ## Status
 
-**PROPOSED / AWAITING USER DECISION — NO LIVE CLOUD OR KUBERNETES MUTATION**
+**SELECTED / IMPLEMENTATION AUTHORIZED — NO LIVE CLOUD OR KUBERNETES MUTATION**
 
 Decision base:
 
@@ -308,7 +308,7 @@ Those remain outside this dependency-readiness unit.
 
 ## 12. Decision gate
 
-Implementation is blocked until the user approves this selected direction.
+The user approved this selected direction by merging PR #149 and issuing `다음 작업 진행` on 2026-10-01. Repository implementation is authorized under the bounded Work Package; live mutation remains separately approval-gated.
 
 In particular, approval must cover:
 

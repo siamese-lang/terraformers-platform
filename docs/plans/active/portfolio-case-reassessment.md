@@ -384,8 +384,14 @@ Storage adapter compatibility is implemented as concrete GCS reader/writer/remov
 ADC, and the GCP overlay selects `gcs`. Backend Local Verification run `36825659118` and
 Terraform Static Verification run `36825659010` succeeded. No cloud/IAM mutation occurred.
 
-The next production-representative runtime substrate/integration Work Package is only a candidate
-and remains unapproved until explicit user authorization.
+The next approved implementation unit is **Case C immutable backend image delivery readiness**.
+It reuses the canonical `gcp-target-runtime` Terraform root/state, adds an exact five-create
+`delivery-foundation` contract for Artifact Registry, separates a dedicated GitHub WIF image
+publisher from the Terraform apply identity, and defines a manual full-source-SHA publication path
+that resolves a remote `sha256` digest without deploying Kubernetes. Repository implementation is
+complete and CI is pending. No GCP resource/IAM mutation, image publication or backend deployment has
+been executed. Live identity bootstrap, delivery-foundation apply and first image publication remain
+separate user approval gates.
 
 ## Case A A1 measurement-readiness checkpoint
 

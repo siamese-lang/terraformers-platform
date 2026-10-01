@@ -25,15 +25,15 @@ FOUNDATION_ACTIONS = {
 }
 
 DELIVERY_FOUNDATION_ACTIONS = {
-    "google_project_service.artifact_registry": ("google_project_service", ["create"]),
-    "google_artifact_registry_repository.backend": ("google_artifact_registry_repository", ["create"]),
-    "google_artifact_registry_repository_iam_member.publisher_writer": (
+    "google_project_service.artifact_registry[0]": ("google_project_service", ["create"]),
+    "google_artifact_registry_repository.backend[0]": ("google_artifact_registry_repository", ["create"]),
+    "google_artifact_registry_repository_iam_member.publisher_writer[0]": (
         "google_artifact_registry_repository_iam_member", ["create"]
     ),
-    "google_artifact_registry_repository_iam_member.gke_node_reader": (
+    "google_artifact_registry_repository_iam_member.gke_node_reader[0]": (
         "google_artifact_registry_repository_iam_member", ["create"]
     ),
-    "google_artifact_registry_repository_iam_member.plan_reader": (
+    "google_artifact_registry_repository_iam_member.plan_reader[0]": (
         "google_artifact_registry_repository_iam_member", ["create"]
     ),
 }
@@ -186,26 +186,26 @@ def validate_delivery_foundation(changes: dict[str, dict[str, Any]]) -> None:
         actions = list(resource.get("change", {}).get("actions", []))
         require(actions == expected_actions, f"{address}: expected {expected_actions}, got {actions}")
 
-    service = changes["google_project_service.artifact_registry"]["change"]["after"]
+    service = changes["google_project_service.artifact_registry[0]"]["change"]["after"]
     require(service.get("service") == "artifactregistry.googleapis.com", "unexpected delivery API")
     require(service.get("disable_on_destroy") is False, "Artifact Registry API must not be disabled on destroy")
 
-    repository = changes["google_artifact_registry_repository.backend"]["change"]["after"]
+    repository = changes["google_artifact_registry_repository.backend[0]"]["change"]["after"]
     require(repository.get("project") == "terraformers-platform", "unexpected Artifact Registry project")
     require(repository.get("location") == "asia-northeast3", "unexpected Artifact Registry location")
     require(repository.get("repository_id") == "terraformers-backend", "unexpected Artifact Registry repository id")
     require(repository.get("format") == "DOCKER", "Artifact Registry repository must remain Docker format")
 
     expected_members = {
-        "google_artifact_registry_repository_iam_member.publisher_writer": (
+        "google_artifact_registry_repository_iam_member.publisher_writer[0]": (
             "roles/artifactregistry.writer",
             "serviceAccount:terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com",
         ),
-        "google_artifact_registry_repository_iam_member.gke_node_reader": (
+        "google_artifact_registry_repository_iam_member.gke_node_reader[0]": (
             "roles/artifactregistry.reader",
             "serviceAccount:terraformers-gke-nodes@terraformers-platform.iam.gserviceaccount.com",
         ),
-        "google_artifact_registry_repository_iam_member.plan_reader": (
+        "google_artifact_registry_repository_iam_member.plan_reader[0]": (
             "roles/artifactregistry.reader",
             "serviceAccount:terraformers-plan@terraformers-platform.iam.gserviceaccount.com",
         ),

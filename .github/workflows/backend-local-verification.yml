@@ -122,7 +122,8 @@ jobs:
           --health-retries=20
 
     env:
-      SPRING_DATASOURCE_URL: jdbc:mariadb://127.0.0.1:3306/terraformers
+      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/terraformers?sslMode=PREFERRED
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       SPRING_DATASOURCE_USERNAME: terraformers
       SPRING_DATASOURCE_PASSWORD: terraformers
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect

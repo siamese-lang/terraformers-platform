@@ -191,10 +191,15 @@ portable MariaDB/JWKS/filesystem fixtures can reduce scope, but their current `e
 forms are not valid safe-rollout persistence evidence. Therefore the evaluation pod must not be
 substituted for the Case C system under test.
 
-The next decision is the representative benchmark runtime: compare a benchmark-only persistent
-reuse of existing fixture patterns on the same GKE target against completing the broader GCP
-application-runtime product selections first. No load harness or tuning is authorized before that
-decision.
+The representative benchmark-runtime decision is now documented in
+[Case C Representative Benchmark Runtime Decision](case-c-representative-benchmark-runtime-decision.md)
+and is **READY / AWAITING_USER_DECISION_APPROVAL**.
+
+It selects benchmark-only persistent reuse on the same GKE target: real Spring Boot + Case B durable
+jobs + real Vertex/OpenSearch, persistent benchmark MariaDB and filesystem object bytes, deterministic
+JWT/JWKS authentication, internal-only traffic, and digest-pinned GHCR images. It rejects both
+load-testing the evaluation pod and completing the full GCP application runtime before the baseline.
+No implementation, live load or tuning is authorized until the user approves the selected direction.
 
 ## Case B measurement-readiness checkpoint
 
@@ -341,11 +346,15 @@ This reassessment is complete only when:
 Case B and Case A are now portfolio-closed. The next representative case is **Case C — cloud runtime
 capacity and safe delivery**.
 
-The Case C measurement-readiness audit is complete and found the live baseline **NOT READY**. The
-next candidate task is a bounded **Case C representative benchmark-runtime decision**. Compare the
-minimum benchmark-only persistent/authenticated runtime on the existing GKE target with completing
-the broader GCP application runtime first. Select no tuning and start no live load/rollout experiment
-until that decision is reviewed and merged.
+The Case C representative benchmark-runtime decision is
+**READY / AWAITING_USER_DECISION_APPROVAL**. The selected direction is the minimum benchmark-only
+persistent/authenticated runtime on the existing GKE target, not completion of the broader GCP
+application runtime.
+
+If the user approves the direction, the next single task is to create one bounded implementation Work
+Package whose only outcome is: one authenticated end-to-end analysis on the real backend survives a
+backend pod replacement with MariaDB state and source/result bytes intact. Do not include load testing
+in that implementation unit.
 
 ## Case A A1 measurement-readiness checkpoint
 

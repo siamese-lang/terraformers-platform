@@ -1,0 +1,84 @@
+work_package:
+  id: case-c-relational-hosting-decision-v1
+  status: COMPLETE
+  approved_base_sha: "f5f92508efdafbfc25e672cfa68976193dbd9024"
+  execution_base_sha: "f5f92508efdafbfc25e672cfa68976193dbd9024"
+
+  goal: >
+    Close the Case C relational-hosting decision after MySQL 8.4 failed the
+    unchanged-migration compatibility gate.
+
+  selected:
+    engine: MariaDB 11.4
+    hosting: dedicated Compute Engine VM
+    packaging: containerized
+    data_storage: dedicated Persistent Disk
+    network: private application path; no public MariaDB exposure
+    initial_machine_candidate: e2-medium
+    initial_data_disk_candidate: 20_GiB_pd-balanced
+
+  deferred:
+    - MariaDB_to_MySQL_migration
+    - Cloud_SQL_for_MySQL
+    - MariaDB_replication
+    - automatic_failover
+    - multi_zone_database_HA
+
+  rejected_for_first_baseline:
+    - MariaDB_StatefulSet_in_current_GKE_cluster
+
+  hard_gate_before_implementation:
+    - read_actual_asia_northeast3_compute_quota
+    - read_project_wide_compute_quota
+    - verify_GKE_plus_DB_VM_CPU_headroom
+    - verify_VM_instance_quota
+    - verify_disk_quota
+    - verify_address_quota_if_required
+    - verify_Free_Trial_or_credit_headroom
+    - stop_if_quota_or_budget_is_insufficient
+
+  allowed_paths:
+    - .agents/work-packages/case-c-relational-hosting-decision-v1.yml
+    - docs/plans/active/case-c-relational-hosting-decision.md
+    - docs/plans/active/case-c-representative-benchmark-runtime-decision.md
+    - docs/plans/active/portfolio-case-reassessment.md
+    - docs/AI_PROJECT_STATE.md
+
+  prohibited_paths:
+    - backend/**
+    - frontend/**
+    - infra/**
+    - .github/**
+    - evaluation/**
+    - corpus/**
+    - AGENTS.md
+
+  prohibited_actions:
+    - merge
+    - create_VM
+    - create_disk
+    - create_bucket
+    - create_registry
+    - mutate_IAM
+    - terraform_plan
+    - terraform_apply
+    - kubernetes_apply
+    - start_load_test
+    - start_next_work_package
+
+  acceptance_criteria:
+    - MySQL_8_4_failure_is_preserved_as_the_reason_Cloud_SQL_is_not_drop_in
+    - MariaDB_contract_is_retained
+    - dedicated_VM_is_selected_over_GKE_StatefulSet_for_bottleneck_attribution
+    - containerized_MariaDB_is_selected_over_direct_host_package_install
+    - persistent_DB_disk_is_required
+    - public_MariaDB_exposure_is_forbidden
+    - e2_medium_and_20_GiB_pd_balanced_are_candidates_only_until_preflight
+    - read_only_quota_cost_preflight_is_the_only_next_task
+    - no_cloud_resource_or_IAM_change_occurs
+
+  result:
+    relational_hosting_decision_closed: true
+    implementation_authorized: false
+    next_candidate_work_package: case-c-gcp-quota-cost-preflight
+    next_work_package_requires_user_approval: true

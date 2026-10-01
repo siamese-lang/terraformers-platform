@@ -125,6 +125,14 @@ jobs:
           runtime_tf = Path("infra/terraform/envs/gcp-target-runtime/main.tf").read_text(encoding="utf-8")
           if "google_secret_manager_secret_version" in runtime_tf:
               raise SystemExit("secret payload versions must not be managed by Terraform")
+          if "metadata_startup_script =" in runtime_tf:
+              raise SystemExit("MariaDB startup script must use ordinary metadata to avoid VM replacement on edits")
+          for marker in [
+              'metadata = {',
+              '"startup-script" = <<-EOT',
+          ]:
+              if marker not in runtime_tf:
+                  raise SystemExit(f"missing in-place MariaDB startup metadata marker: {marker}")
           for marker in [
               'iptables -w 5 -C INPUT -p tcp -s "$source_range" --dport 3306 -j ACCEPT',
               'iptables -w 5 -I INPUT 1 -p tcp -s "$source_range" --dport 3306 -j ACCEPT',

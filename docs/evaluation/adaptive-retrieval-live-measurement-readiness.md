@@ -2,11 +2,17 @@
 
 ## Status
 
-**READINESS IMPLEMENTED — LIVE RUN NOT AUTHORIZED**
+**LIVE MEASUREMENT COMPLETE — PASS**
 
-This readiness package measures the production adaptive retrieval behavior introduced by PR #127
-without changing production retrieval, corpus, canonical datasets, generation, model routing, or
-infrastructure.
+This readiness package defined the bounded live measurement for the production adaptive retrieval
+behavior introduced by PR #127. That measurement has now completed successfully in run
+`36799722509`.
+
+The authoritative result is
+[Adaptive Retrieval Live Measurement Closure](adaptive-retrieval-live-measurement-closure.md).
+
+The measurement changed no production retrieval, corpus, canonical dataset, generation, model
+routing, or infrastructure.
 
 The measurement is intentionally retrieval-only:
 
@@ -188,10 +194,22 @@ This readiness task does not:
 - activate/idle infrastructure;
 - introduce rerankers, LangChain, LangGraph, or another vector store.
 
-## Next checkpoint
+## Completed checkpoint
 
-After this readiness PR is independently reviewed and merged, the next candidate single task is one
-manual `adaptive-retrieval-probe` live run on the exact merged `main` SHA.
+The planned manual `adaptive-retrieval-probe` ran once on merged source
+`9d54fe27bbc24347c9eff09193c7aeaec3171ff6` as workflow run `36799722509`.
 
-That live Vertex/OpenSearch action remains **AWAITING_APPROVAL** and is not authorized by this
-readiness implementation.
+The result passed the frozen acceptance contract:
+
+- control: 8 evidence, 10/12 requested-resource coverage;
+- adaptive: 10 evidence, 12/12 requested-resource coverage;
+- delegated Vertex embedding calls: 1;
+- adaptive missing resource types: 0;
+- adaptive duplicate document IDs: 0.
+
+The exact evidence, selected document IDs, artifact digest, latency interpretation, and residual
+boundaries are recorded in
+[Adaptive Retrieval Live Measurement Closure](adaptive-retrieval-live-measurement-closure.md).
+
+Do not repeat the probe merely to obtain another latency sample. The broader Case A canonical and
+holdout closure sequence remains separate.

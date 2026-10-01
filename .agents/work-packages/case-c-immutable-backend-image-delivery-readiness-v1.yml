@@ -1,6 +1,6 @@
 work_package:
   id: case-c-immutable-backend-image-delivery-readiness-v1
-  status: IMPLEMENTED_CI_PENDING
+  status: COMPLETE
   approved_base_sha: "488f9c2b216f7f863ebb1d09bedf9716ccdef2b9"
   execution_base_sha: "488f9c2b216f7f863ebb1d09bedf9716ccdef2b9"
 
@@ -131,14 +131,25 @@ work_package:
 
   result:
     implementation: COMPLETE
-    ci: PENDING
+    ci: PASS
+    static_ci_run: 36832747254
+    merged_main_sha: "0774c80bb3cf9f684567e30c1e329fc27dc05d04"
     auto_repair_used: 1
     auto_repair_reason: preserve_historical_foundation_contract_with_conditional_delivery_resources
     main_drift: false
-    live_cloud_or_iam_mutation: false
-    registry_created: false
-    image_published: false
+    live_cloud_or_iam_mutation: true
+    separately_user_approved_live_followups: true
+    publisher_identity_bootstrap: PASS
+    apply_identity_artifact_registry_admin_bootstrap: PASS
+    delivery_foundation_run: 36833957446
+    delivery_foundation_result: "5_added_0_changed_0_destroyed"
+    registry_created: true
+    image_publish_run: 36834457170
+    published_source_sha: "0774c80bb3cf9f684567e30c1e329fc27dc05d04"
+    published_image_digest: "sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae"
+    immutable_image_ref: "asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae"
+    image_published: true
     backend_deployed: false
     apply_identity_artifact_registry_admin_project_scope: true
     human_directed_correction_after_stop: remove_total_state_count_gates_and_keep_only_direct_prerequisites
-    next_gate: independent_acceptance_review_after_CI
+    next_gate: next_work_package_requires_user_approval

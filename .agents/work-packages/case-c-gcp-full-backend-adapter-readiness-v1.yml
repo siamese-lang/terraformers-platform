@@ -1,0 +1,126 @@
+work_package:
+  id: case-c-gcp-full-backend-adapter-readiness-v1
+  status: COMPLETE
+  approved_base_sha: "2a58b35b22e1faf9b841a987cd158b3d0a47a6ae"
+  execution_base_sha: "2a58b35b22e1faf9b841a987cd158b3d0a47a6ae"
+
+  goal: >
+    Make the full prod,gcp-target backend application contract capable of
+    selecting the already-approved Vertex/OpenSearch and GCS adapters before
+    any production-representative cloud substrate is created.
+
+  problem:
+    - RuntimeAdapterContractValidator incorrectly requires BEDROCK whenever retrieval is enabled
+    - gcp-target selects Vertex with REQUIRED retrieval, so the full prod profile can fail startup
+    - Cloud Storage compatibility passed, but no GCS production adapter/runtime selector exists
+    - gcp-target overlay does not yet select a persistent object-store adapter
+
+  selected_scope:
+    - correct provider-neutral retrieval validation
+    - add Google Cloud Storage Java client
+    - add GCS reader/writer/remover adapters using ADC
+    - add gcs reader/writer runtime selectors
+    - wire gcp-target overlay to gcs storage providers
+    - add deterministic unit tests
+    - record readiness evidence
+
+  allowed_paths:
+    - .agents/work-packages/case-c-gcp-full-backend-adapter-readiness-v1.yml
+    - backend/pom.xml
+    - backend/src/main/java/com/terraformers/modernization/config/RuntimeAdapterContractValidator.java
+    - backend/src/main/java/com/terraformers/modernization/storage/**
+    - backend/src/test/java/com/terraformers/modernization/config/RuntimeAdapterContractValidatorTest.java
+    - backend/src/test/java/com/terraformers/modernization/storage/**
+    - infra/kubernetes/overlays/gcp-target/backend-configmap-patch.yaml
+    - docs/evaluation/case-c-gcp-full-backend-adapter-readiness.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/portfolio-case-reassessment.md
+
+  prohibited_paths:
+    - infra/terraform/**
+    - .github/workflows/**
+    - infra/kubernetes/base/backend-secret.example.yaml
+    - infra/kubernetes/overlays/portable-*/**
+    - evaluation/**
+    - corpus/**
+    - AGENTS.md
+
+  allowed_actions:
+    - modify_backend_runtime_contract
+    - add_gcs_application_adapter
+    - add_dependency
+    - add_deterministic_tests
+    - modify_gcp_target_configmap
+    - run_targeted_backend_tests
+    - run_backend_verification
+    - create_pull_request
+    - inspect_ci_once
+
+  prohibited_actions:
+    - merge
+    - create_or_modify_GCP_resource
+    - mutate_IAM
+    - create_secret
+    - create_Artifact_Registry_repository
+    - publish_image
+    - deploy_backend
+    - terraform_plan
+    - terraform_apply
+    - kubernetes_apply
+    - live_GCS_round_trip
+    - live_Vertex_call
+    - start_next_work_package
+
+  dependency_contract:
+    google_cloud_storage_version: "2.74.0"
+    authentication: Application_Default_Credentials
+    service_account_key_file: forbidden
+
+  acceptance_criteria:
+    - Vertex_plus_Vertex_embedding_plus_REQUIRED_retrieval_no_longer_requires_Bedrock
+    - Bedrock_specific_model_requirements_remain_enforced_when_Bedrock_is_selected
+    - unsupported_analysis_or_embedding_provider_values_remain_rejected
+    - storage_reader_provider_accepts_gcs
+    - storage_writer_provider_accepts_gcs
+    - gcs_reader_maps_absent_object_to_NOT_FOUND
+    - gcs_reader_maps_storage_failure_to_UPSTREAM_FAILURE
+    - gcs_reader_preserves_bucket_key_content_type_size_etag_last_modified_and_exact_bytes
+    - gcs_writer_supports_text_and_binary_write
+    - gcs_writer_preserves_bucket_key_and_returns_provider_etag_metadata_only
+    - gcs_writer_overwrite_uses_the_same_logical_bucket_key
+    - gcs_remover_succeeds_when_object_is_already_absent
+    - gcs_write_or_delete_failure_maps_to_UPSTREAM_FAILURE
+    - default_gcs_client_uses_ADC_without_key_material
+    - gcp_target_overlay_selects_gcs_reader_and_writer
+    - no_cloud_resource_or_IAM_change_occurs
+    - targeted_tests_pass
+    - backend_verification_CI_passes
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - main_drift
+    - second_failure_after_bounded_repair
+    - failure_class_changes
+    - cloud_or_IAM_change_becomes_required
+    - domain_schema_change_becomes_required
+    - secret_delivery_decision_becomes_required
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    next_work_package_requires_user_approval: true
+
+
+  result:
+    acceptance: PASS
+    backend_local_verification_run: 36825659118
+    backend_local_verification_conclusion: SUCCESS
+    terraform_static_verification_run: 36825659010
+    terraform_static_verification_conclusion: SUCCESS
+    main_drift: false
+    cloud_or_iam_mutation: false
+    auto_repair_used: 0
+    next_candidate: >
+      Production-representative Case C runtime substrate/integration Work Package.
+      It remains unapproved until explicit user authorization.

@@ -64,7 +64,6 @@ public class RuntimeAdapterContractValidator implements ApplicationRunner {
             requireText(missing, "BEDROCK_MODEL_ID", bedrockProperties.getModelId());
         }
         if (properties.getRetrievalMode() != null && properties.getRetrievalMode() != RetrievalMode.DISABLED) {
-            if (properties.resolvedProvider() != AnalysisProviderType.BEDROCK) missing.add("ANALYSIS_PROVIDER_BEDROCK");
             if (properties.resolvedEmbeddingProvider() == EmbeddingProviderType.DISABLED) {
                 missing.add("EMBEDDING_PROVIDER");
             } else if (properties.resolvedEmbeddingProvider() == EmbeddingProviderType.BEDROCK) {

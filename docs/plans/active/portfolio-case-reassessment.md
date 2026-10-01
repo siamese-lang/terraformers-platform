@@ -373,7 +373,19 @@ The read-only **GCP quota/cost preflight** has executed as workflow run `3682385
 Quota/machine checks are **PASS** for the selected active shape: one existing `e2-standard-2` GKE
 node plus one additional `e2-medium` MariaDB VM and a 30 GiB balanced-disk envelope. The run used
 the existing `terraformers-plan` WIF identity and performed no Terraform init/plan/apply or cloud
-mutation. The user confirmed sufficient Free Trial promotional credit on 2026-10-01. The preflight is therefore **COMPLETE / PASS**. Runtime implementation remains a separate Work Package and is not automatically authorized.
+mutation. The user confirmed sufficient Free Trial promotional credit on 2026-10-01. The preflight
+is therefore **COMPLETE / PASS**.
+
+The first production-runtime implementation unit, **Case C GCP full-backend adapter
+readiness**, is **COMPLETE / PASS**. Repository inspection found that the `prod` startup validator
+still required Bedrock for any active retrieval even though `gcp-target` selects Vertex + REQUIRED
+retrieval. That stale AWS-era invariant is corrected without changing the domain contract. Cloud
+Storage adapter compatibility is implemented as concrete GCS reader/writer/remover adapters using
+ADC, and the GCP overlay selects `gcs`. Backend Local Verification run `36825659118` and
+Terraform Static Verification run `36825659010` succeeded. No cloud/IAM mutation occurred.
+
+The next production-representative runtime substrate/integration Work Package is only a candidate
+and remains unapproved until explicit user authorization.
 
 ## Case A A1 measurement-readiness checkpoint
 

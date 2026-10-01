@@ -403,6 +403,7 @@ def runtime_host_firewall_repair_plan() -> dict:
         'docker run --network host mariadb\n'
     )
     after = dict(common)
+    after["metadata_startup_script"] = None
     after["metadata"] = {
         "startup-script": (
             f'MARIADB_IMAGE="mariadb:11.4@sha256:{digest}"\n'

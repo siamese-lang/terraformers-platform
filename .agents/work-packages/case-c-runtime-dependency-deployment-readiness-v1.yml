@@ -1,6 +1,6 @@
 work_package:
   id: case-c-runtime-dependency-deployment-readiness-v1
-  status: IMPLEMENTED_CI_PENDING
+  status: LIVE_ACCEPTANCE_IMPLEMENTED_CI_PENDING
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: "8ada2368b85c210c2c50b0d42370454efe0d499c"
 
@@ -171,7 +171,8 @@ work_package:
 
   result:
     implementation: COMPLETE
-    ci: PENDING
+    base_implementation_ci: PASS
+    live_acceptance_ci: PENDING
     capability_gate:
       gke_control_plane: "1.35.8-gke.1225000"
       gke_node_pool: "1.35.8-gke.1225000"
@@ -179,6 +180,18 @@ work_package:
       result: PASS
     auto_repair_used: 1
     auto_repair_reason: split_secret_container_creation_before_secret_version_bootstrap
-    live_mutation: false
+    live_mutation: true
+    live_checkpoints:
+      iam_bootstrap: PASS
+      runtime_secret_foundation:
+        run_id: "36847201560"
+        result: PASS
+      initial_secret_versions: PASS
+      runtime_dependencies:
+        run_id: "36851221194"
+        result: PASS
+      kubernetes_prerequisites:
+        run_id: "36854218346"
+        result: PASS
     backend_deployed: false
-    next_gate: independent_acceptance_review_after_CI
+    next_gate: runtime_live_acceptance_PR_CI_and_review_before_VM_restart

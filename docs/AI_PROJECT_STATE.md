@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C runtime dependency/deployment readiness IMPLEMENTED / CI PENDING; all live IAM/secret/cloud/Kubernetes actions remain separately approval-gated**
+- Current single task: **Case C runtime dependency/deployment readiness live prerequisites PASS; final runtime-live-acceptance workflow implemented on a review branch, with the actual MariaDB VM restart still separately approval-gated**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -174,24 +174,32 @@ Case C — Cloud runtime capacity and safe delivery:
 - do **not** load-test the Case A evaluation pod: it would omit API acceptance, durable job queueing,
   executor saturation, persistence, accepted-work survival and rollout/rollback behavior;
 - [Case C Runtime Dependency / Deployment Readiness Decision](plans/active/case-c-runtime-dependency-deployment-readiness-decision.md)
-  is **SELECTED** and the bounded implementation Work Package is **IMPLEMENTED / CI PENDING** on
-  execution base `8ada2368b85c210c2c50b0d42370454efe0d499c`;
+  is **SELECTED**; repository implementation, static CI, IAM bootstrap, secret-container foundation,
+  initial secret versions, runtime dependency apply, and isolated Kubernetes prerequisites are now
+  complete;
 - the mandatory read-only capability gate passed on GKE control plane and node pool
   `1.35.8-gke.1225000`, satisfying the native Secret Sync >=1.33 requirement without a cluster upgrade;
-- the canonical target Terraform root now declares opt-in runtime dependency desired state for one
-  private Seoul GCS runtime-object bucket, Secret Manager secret containers without Terraform-managed
-  versions, native GKE Secret Sync without automatic rotation, and the selected dedicated
-  `e2-medium` MariaDB VM + 20 GiB `pd-balanced` data disk;
-- live execution is intentionally split into empty secret-container creation -> operator secret-version
-  bootstrap -> remaining runtime dependency apply -> isolated Kubernetes prerequisite apply; this
-  corrected ordering consumed the Work Package's one bounded repair;
-- the Kubernetes prerequisite surface is isolated from the backend Deployment and contains only the
-  secret-sync KSA/SPC/SecretSync, stable MariaDB Service + workflow-owned EndpointSlice, and internal
-  JWKS fixture surface; backend Deployment, load generation and capacity tuning remain excluded;
-- all IAM bootstrap, secret-version creation, Terraform apply, Kubernetes apply and backend Deployment
-  remain **NOT AUTHORIZED / NOT PERFORMED** by this repository implementation;
-- no load harness, concurrency steps, HPA, replicas, executor tuning, node/OpenSearch sizing or
-  rollout changes are authorized before that decision.
+- IAM bootstrap was verified after PR #151 hardened quota-project selection and fail-closed policy
+  reads; Terraform Static Verification run `36846676527` passed;
+- protected run `36847201560` applied exactly `3 added, 0 changed, 0 destroyed` for Secret Manager
+  API enablement plus the two empty MariaDB secret containers; the separately approved operator
+  bootstrap then created initial version `1` for both secrets without printing payloads;
+- protected run `36851221194` applied exactly `9 added, 1 changed, 0 destroyed` using immutable
+  MariaDB image `mariadb:11.4@sha256:70cc072b29b4a89ae07abb2d4da2c64678a7f2dfe092751bb51c87d67dc1338b`;
+  the only update enabled native Secret Sync, while the creates established the reviewed private GCS,
+  MariaDB VM/PD/firewall/service-account, and secret-access boundary;
+- protected run `36854218346` applied only the isolated Kubernetes prerequisite surface; Secret Sync
+  produced the expected DB-password key without printing it, the internal JWKS Deployment rolled out,
+  the MariaDB Service/EndpointSlice exists, and the backend Deployment remained absent;
+- the current bounded implementation adds one `runtime-live-acceptance` operation to the existing
+  runtime-dependency workflow rather than creating another workflow. It reuses the published backend
+  image for a backend-KSA GCS write/read/delete probe and the exact MariaDB image for a private DB
+  marker-row test across one reviewed VM stop/start; marker survival plus changed MariaDB container
+  hostname is the acceptance evidence for PD-backed `/var/lib/mysql` persistence and startup-script
+  container recreation;
+- the live-acceptance workflow implementation must pass PR CI and review before the actual VM restart;
+  backend Deployment, load generation, rollout/rollback, HPA/replicas, executor tuning, node/OpenSearch
+  resizing and external IdP remain excluded.
 
 Observability and failure/load work may continue only when it closes a measurement gap for Case A,
 Case B, or Case C. PR #86/#88 evidence is retained but is not independent permission to advance M7.

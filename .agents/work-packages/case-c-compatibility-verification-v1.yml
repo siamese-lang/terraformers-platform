@@ -1,8 +1,8 @@
 work_package:
   id: case-c-compatibility-verification-v1
-  status: AWAITING_MERGE
+  status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: null
+  execution_base_sha: "03a4ab209d62ad8c5e3aecd275ddb3ff1e264a53"
 
   goal: >
     Resolve the three compatibility gates required before selecting the Case C

@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C quota/machine preflight PASS; Free Trial remaining-credit confirmation HUMAN_REQUIRED before runtime implementation**
+- Current single task: **Case C GCP quota/cost preflight COMPLETE / PASS; next candidate is production-representative runtime implementation Work Package**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -141,7 +141,7 @@ Case C — Cloud runtime capacity and safe delivery:
   preflight passes;
 - [Case C GCP Quota / Cost Preflight](evaluation/case-c-gcp-quota-cost-preflight.md) is
   **QUOTA / MACHINE PASS** in workflow run `36823850490`; it reused the existing GCP plan workflow and the
-  existing read-only plan identity; current quota supports the additional `e2-medium` DB VM and 30 GiB balanced-disk envelope without Terraform init/plan/apply or resource mutation; remaining Free Trial promotional credit is the only human checkpoint;
+  existing read-only plan identity; current quota supports the additional `e2-medium` DB VM and 30 GiB balanced-disk envelope without Terraform init/plan/apply or resource mutation; Free Trial budget gate passed by explicit user confirmation on 2026-10-01;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;

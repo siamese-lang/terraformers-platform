@@ -689,8 +689,9 @@ jobs:
           ! grep -Fq 'immutable-target-sha' "$rendered"
 
           grep -Fq 'GOOGLE_CLOUD_PROJECT: terraformers-platform' "$rendered"
-          grep -Fq 'COGNITO_USER_POOL_CLIENT_ID: case-c-runtime-client' "$rendered"
+          grep -Fq 'TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID: case-c-runtime-client' "$rendered"
           ! grep -Fq 'JWT_COGNITO_CLIENT_ID:' "$rendered"
+          ! grep -Fq 'COGNITO_USER_POOL_CLIENT_ID:' "$rendered"
 
       - name: Apply only backend-labeled resources
         run: |

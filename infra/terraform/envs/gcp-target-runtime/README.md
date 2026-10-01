@@ -25,6 +25,45 @@ The dedicated publisher service account/WIF trust is bootstrapped separately and
 that apply. This Terraform root does not publish an image or deploy the backend; Kubernetes
 manifests own workload deployment.
 
+
+## Case C runtime dependency foundation
+
+The same canonical root also owns the bounded runtime dependencies required before the immutable
+backend image can be deployed:
+
+- Secret Manager API plus two empty MariaDB secret containers;
+- one private Seoul runtime-object bucket used for upload and result objects;
+- bucket-scoped `roles/storage.objectUser` for the backend Workload Identity principal;
+- one dedicated `terraformers-mariadb` service account;
+- one `e2-medium` MariaDB VM with a dedicated 20 GiB `pd-balanced` data disk;
+- a TCP/3306 firewall limited to the target GKE subnet and Pod CIDR;
+- GKE native Secret Sync, without automatic rotation.
+
+Secret payload versions are deliberately excluded from Terraform. Live execution is split into
+separate approvals:
+
+1. bootstrap the additional plan/apply IAM needed by this unit;
+2. apply `runtime-secret-foundation` (Secret Manager API + two empty secret containers);
+3. add initial secret versions with `scripts/deploy/bootstrap_gcp_runtime_secrets.sh add-versions`;
+4. apply `runtime-dependencies` with an exact `mariadb:11.4@sha256:<digest>` input;
+5. apply isolated Kubernetes prerequisites with the manual
+   `GCP Target Runtime Dependencies` workflow.
+
+The runtime dependency workflow rechecks the current GKE version and stops below 1.33. The operator
+gate on 2026-10-01 observed control plane and node pool version `1.35.8-gke.1225000`, so the
+selected Secret Sync path is currently compatible.
+
+The isolated Kubernetes prerequisite surface lives under
+`infra/kubernetes/overlays/gcp-target/runtime-dependencies`. It creates the secret-sync
+ServiceAccount, SecretProviderClass/SecretSync, a stable in-cluster MariaDB Service whose
+EndpointSlice is populated from the VM private IP, and the internal JWKS fixture surface. It does
+not include or apply `terraformers-backend` Deployment.
+
+The ordinary target `activate` / `idle` / `runtime-check` workflow detects whether these runtime
+resources already exist in canonical state and preserves their enable flags and immutable MariaDB
+digest. It must not plan deletion of Case C dependencies merely because a scale operation is being
+performed.
+
 ## Free Trial operating profile
 
 This root is designed to be usable with a Google Cloud Free Trial account, not to claim that the

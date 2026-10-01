@@ -46,7 +46,11 @@ extra resources, updates, deletes, replacements, wrong repository/location/forma
 publisher repository role.
 
 The operation preserves the current target node count rather than coupling registry creation to
-GKE activation or idling.
+GKE activation or idling. One bounded repository-side repair was required before PR creation:
+unconditional delivery resources would have invalidated the historical 12-resource foundation and
+pre-delivery runtime-check contracts. The delivery resources are therefore conditionally enabled;
+foundation explicitly keeps them disabled, delivery-foundation enables them, and runtime-check
+matches the pre-delivery 12-resource or post-delivery 17-resource state without planning deletion.
 
 ### Publisher identity
 

@@ -1166,21 +1166,25 @@ jobs:
                 token="$(
                   curl -fsS -H "Metadata-Flavor: Google" \
                     http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token \
-                    | sed -n "s/.*\"access_token\":\"([^\"]*)\".*/\1/p"
+                    | sed -nE "s/.*\"access_token\"[[:space:]]*:[[:space:]]*\"([^\"]+)\".*/\1/p"
                 )"
                 test -n "$token"
+                tmp="/tmp/case-c-object-$"
+                trap 'rm -f "$tmp"' EXIT
                 curl -fsS \
                   -H "Authorization: Bearer $token" \
                   "https://storage.googleapis.com/${OBJECT_BUCKET}/${OBJECT_KEY}" \
-                  | sha256sum | awk "{print \$1}"
+                  -o "$tmp"
+                sha256sum "$tmp" | awk "{print \$1}"
               '
           }
 
           trap stop_pf EXIT
           start_pf
 
-          curl -fsS http://127.0.0.1:18080/actuator/prometheus \
-            | grep -Eq '^(jvm_|process_|http_server_requests)'
+          metrics_before="${RUNNER_TEMP}/metrics-before.txt"
+          curl -fsS http://127.0.0.1:18080/actuator/prometheus > "$metrics_before"
+          grep -Eq '^(jvm_|process_|http_server_requests)' "$metrics_before"
 
           curl -fsS \
             -H "Authorization: Bearer ${token}" \
@@ -1355,8 +1359,9 @@ jobs:
           }
 
           start_pf
-          curl -fsS http://127.0.0.1:18080/actuator/prometheus \
-            | grep -Eq '^(jvm_|process_|http_server_requests)'
+          metrics_after="${RUNNER_TEMP}/metrics-after.txt"
+          curl -fsS http://127.0.0.1:18080/actuator/prometheus > "$metrics_after"
+          grep -Eq '^(jvm_|process_|http_server_requests)' "$metrics_after"
 
           curl -fsS \
             -H "Authorization: Bearer ${token}" \

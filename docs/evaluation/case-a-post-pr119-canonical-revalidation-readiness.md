@@ -2,15 +2,19 @@
 
 ## Status
 
-**READINESS FROZEN — LIVE N=3 NOT YET RUN**
+**COMPLETE — CANONICAL N=3 PASS; HOLDOUT PASS**
 
 This readiness checkpoint freezes the next Case A validation step after the PR #119 lifecycle
 correction. It does not change production code, the evaluation workflow, the canonical dataset,
 the holdout, corpus, model, prompt, retrieval behavior, validator, infrastructure, or IAM.
 
-The next live action is exactly three independent `case-a-full-baseline` workflow dispatches on
-one exact merged `main` SHA. Those runs remain separately user-approved and are not started by
-this documentation task.
+The frozen execution has completed. Canonical runs `36803174654`, `36803781744`, and
+`36804600570` all used source `32d62e21821ed303555ade5e26b03cb669db94ef`, workflow attempt 1,
+and the same configuration fingerprint. Every canonical hard gate passed. The separately approved
+frozen holdout then ran once as `36805478708` on the same source/configuration and also passed.
+
+The authoritative final interpretation is
+[Case A Final Closure](case-a-final-closure.md).
 
 ## Why this checkpoint exists
 
@@ -248,8 +252,21 @@ Their artifacts remain evidence but are not additional canonical gates.
 
 ## Completion boundary
 
-This readiness task is complete when the contract is merged.
+This checkpoint is **COMPLETE**.
 
-The next candidate live task is the exact canonical N=3 described here. Even if N=3 passes, Case A
-is still not portfolio-closed until the separately approved frozen holdout runs once and the final
-Case A closure decision is documented.
+Final canonical result:
+
+- fact extraction: `18/18 PASS`
+- retrieval: `18/18 PASS`
+- VPC decision coverage: `3/3`
+- VPC required-resource coverage: `4/4 × 3`
+- grounding gaps: `0/12`
+- positive Terraform validation: `12/12 PASS`
+- negative controls: `6/6 correct`
+- new first divergence: `0`
+
+Frozen holdout run `36805478708` also passed: fact extraction `4/4`, retrieval `4/4`,
+positive validation `2/2`, negative controls `2/2`, grounding gaps `0`, first divergence `0`.
+
+Do not repeat these runs for another successful sample. See
+[Case A Final Closure](case-a-final-closure.md).

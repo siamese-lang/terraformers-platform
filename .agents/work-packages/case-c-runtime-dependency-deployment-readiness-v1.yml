@@ -1,6 +1,6 @@
 work_package:
   id: case-c-runtime-dependency-deployment-readiness-v1
-  status: LIVE_ACCEPTANCE_IMPLEMENTED_CI_PENDING
+  status: SECOND_BOUNDED_REPAIR_IMPLEMENTED_CI_PENDING
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: "8ada2368b85c210c2c50b0d42370454efe0d499c"
 
@@ -89,6 +89,7 @@ work_package:
     - create_pull_request
     - inspect_ci_once
     - bounded_repair_once
+    - second_bounded_repair_after_explicit_user_approval
 
   prohibited_actions:
     - merge
@@ -172,7 +173,7 @@ work_package:
   result:
     implementation: COMPLETE
     base_implementation_ci: PASS
-    live_acceptance_ci: PENDING
+    live_acceptance_ci: FAIL_RUNTIME_CONNECTIVITY_36857449268
     capability_gate:
       gke_control_plane: "1.35.8-gke.1225000"
       gke_node_pool: "1.35.8-gke.1225000"
@@ -180,6 +181,9 @@ work_package:
       result: PASS
     auto_repair_used: 1
     auto_repair_reason: split_secret_container_creation_before_secret_version_bootstrap
+    second_bounded_repair_user_approved: true
+    second_bounded_repair_reason: COS_guest_firewall_blocked_GKE_to_MariaDB_TCP_3306_and_probe_connect_timeout_was_unbounded
+    second_bounded_repair_base_sha: "feb5beabdce327a55267f391ca74987268e9d9a1"
     live_mutation: true
     live_checkpoints:
       iam_bootstrap: PASS
@@ -193,5 +197,9 @@ work_package:
       kubernetes_prerequisites:
         run_id: "36854218346"
         result: PASS
+      runtime_live_acceptance:
+        run_id: "36857449268"
+        result: FAIL_PRE_RESTART_CONNECTIVITY
+        root_cause: COS_GUEST_FIREWALL_BLOCKED_TCP_3306
     backend_deployed: false
-    next_gate: runtime_live_acceptance_PR_CI_and_review_before_VM_restart
+    next_gate: second_bounded_repair_PR_CI_review_then_separate_live_apply_and_restart

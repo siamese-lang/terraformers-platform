@@ -21,6 +21,7 @@
         <aws.sdk.version>2.28.21</aws.sdk.version>
         <google.genai.version>1.72.0</google.genai.version>
         <google.auth.version>1.53.0</google.auth.version>
+        <google.cloud.storage.version>2.74.0</google.cloud.storage.version>
     </properties>
 
     <dependencyManagement>
@@ -129,6 +130,11 @@
             <groupId>com.google.auth</groupId>
             <artifactId>google-auth-library-oauth2-http</artifactId>
             <version>${google.auth.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+            <version>${google.cloud.storage.version}</version>
         </dependency>
 
         <dependency>

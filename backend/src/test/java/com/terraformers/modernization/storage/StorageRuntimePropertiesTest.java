@@ -22,6 +22,11 @@ class StorageRuntimePropertiesTest {
         properties.setWriterProvider("filesystem");
         assertThat(properties.resolvedReaderProvider()).isEqualTo("filesystem");
         assertThat(properties.resolvedWriterProvider()).isEqualTo("filesystem");
+
+        properties.setReaderProvider(" GCS ");
+        properties.setWriterProvider("gcs");
+        assertThat(properties.resolvedReaderProvider()).isEqualTo("gcs");
+        assertThat(properties.resolvedWriterProvider()).isEqualTo("gcs");
     }
 
     @Test

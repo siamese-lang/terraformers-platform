@@ -942,7 +942,6 @@ jobs:
       NAMESPACE: terraformers-target
       ISSUER_URI: https://identity.example.test/case-c
       CLIENT_ID: case-c-runtime-client
-      BACKEND_IMAGE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae
       FIXTURE: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
 
     steps:

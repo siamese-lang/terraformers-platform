@@ -70,6 +70,34 @@ jobs:
             tests/deploy/test_gcp_foundation_preflight.py
           bash -n scripts/deploy/bootstrap_gcp_target_apply.sh
           bash -n scripts/deploy/bootstrap_github_target_apply_environment.sh
+          bash -n scripts/deploy/bootstrap_gcp_image_publish.sh
+          bash -n scripts/deploy/bootstrap_github_image_publish_environment.sh
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow = Path(".github/workflows/gcp-backend-image-publish.yml").read_text(encoding="utf-8")
+          required = [
+              "workflow_dispatch:",
+              "environment: gcp-image-publish",
+              "PUBLISH_REVIEWED_BACKEND_IMAGE",
+              "BUILD_SOURCE_REVISION=${GITHUB_SHA}",
+              "Source-SHA tag already exists and will not be moved",
+              "value(image_summary.digest)",
+              "Mutable `latest` tag: not published",
+          ]
+          for marker in required:
+              if marker not in workflow:
+                  raise SystemExit(f"missing image publish contract marker: {marker}")
+
+          for marker in ["pull_request:", "kubectl ", "terraform apply"]:
+              if marker in workflow:
+                  raise SystemExit(f"image publish workflow contains forbidden action/trigger: {marker}")
+
+          apply_bootstrap = Path("scripts/deploy/bootstrap_gcp_target_apply.sh").read_text(encoding="utf-8")
+          if "roles/artifactregistry.admin" not in apply_bootstrap:
+              raise SystemExit("apply bootstrap is missing Artifact Registry administration required for repository creation")
+          PY
 
       - name: Verify destroy-plan summary contract
         run: |

@@ -380,7 +380,10 @@ def validate_runtime_dependencies(changes: dict[str, dict[str, Any]]) -> None:
         service_account.get("scopes") == ["https://www.googleapis.com/auth/cloud-platform"],
         "MariaDB VM OAuth scope changed",
     )
-    startup = str(instance.get("metadata_startup_script") or "")
+    metadata = instance.get("metadata") or {}
+    require(isinstance(metadata, dict), "MariaDB VM metadata must be a map")
+    require(set(metadata) == {"startup-script"}, "MariaDB VM metadata may contain only startup-script")
+    startup = str(metadata.get("startup-script") or "")
     require(
         __import__("re").search(r'MARIADB_IMAGE="mariadb:11\.4@sha256:[0-9a-f]{64}"', startup) is not None,
         "MariaDB startup script must pin an exact 11.4 image digest",

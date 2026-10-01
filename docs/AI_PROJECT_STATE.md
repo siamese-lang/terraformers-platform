@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C representative benchmark-runtime decision READY; selected benchmark-only persistent runtime is AWAITING_USER_DECISION_APPROVAL**
+- Current single task: **Case C production-representative runtime is the preferred candidate; MySQL 8.4 / Cloud Storage / Artifact Registry compatibility verification REQUIRED before final selection**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -125,10 +125,11 @@ Case B — Backend durable asynchronous processing:
 Case C — Cloud runtime capacity and safe delivery:
 - measurement readiness audit is **COMPLETE / NOT READY FOR LIVE BASELINE** in
   [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md);
-- the representative-runtime decision is **READY / AWAITING_USER_DECISION_APPROVAL** in
-  [Case C Representative Benchmark Runtime Decision](plans/active/case-c-representative-benchmark-runtime-decision.md);
-  it selects a benchmark-only persistent runtime on the existing GKE target rather than completing
-  the full GCP application runtime first;
+- the representative-runtime decision is **COMPATIBILITY GATE OPEN** in
+  [Case C Production-Representative Runtime Decision Gate](plans/active/case-c-representative-benchmark-runtime-decision.md);
+  a production-representative backend runtime is now the preferred candidate, but Cloud SQL for
+  MySQL, Cloud Storage and Artifact Registry are not selected until repository compatibility and
+  least-privilege identity checks pass;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;
@@ -469,17 +470,22 @@ runs without a newly reproduced defect or changed requirement.
 The next representative portfolio case is **Case C — Cloud Runtime Capacity & Safe Delivery**.
 The [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md) found the
 live baseline **NOT READY**. The
-[Case C Representative Benchmark Runtime Decision](plans/active/case-c-representative-benchmark-runtime-decision.md)
-is now **READY / AWAITING_USER_DECISION_APPROVAL**.
+[Case C Production-Representative Runtime Decision Gate](plans/active/case-c-representative-benchmark-runtime-decision.md)
+now records the production-representative backend runtime as the **preferred candidate**, not a
+final product selection.
 
-Selected direction: extend the same GKE target with benchmark-only persistent MariaDB and
-filesystem-object-store volumes, deterministic JWT/JWKS authentication, real Case B durable jobs,
-real Vertex/OpenSearch adapters, and digest-pinned GHCR backend images. This is explicitly not a
-final production DB/object-storage/identity architecture.
+Before the runtime direction can be approved, three compatibility gates must be closed:
 
-Do not create an implementation Work Package, publish an image, apply Kubernetes resources, activate
-the node pool, generate load, or run rollout/rollback experiments until the user approves this
-decision.
+1. MySQL 8.4 must run the full Flyway/JPA/Case B durable-processing contract;
+2. Cloud Storage must preserve the existing ObjectReader/ObjectWriter/ObjectRemover contract and
+   integrity semantics without domain/schema rewrites;
+3. Artifact Registry must fit the existing GitHub OIDC + GKE identity model with a dedicated,
+   least-privilege publisher/read path rather than reusing broad Terraform apply authority.
+
+Do not create the representative-runtime implementation Work Package, publish an image, create
+Cloud SQL/Storage/Artifact Registry resources, mutate IAM, apply Kubernetes resources, activate the
+node pool, generate load, or run rollout/rollback experiments until those compatibility results are
+reviewed and the final runtime selection is approved.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.LongSupplier;
 
 public final class AdaptiveRetrievalProbeRunner {
     public static final int BASE_TOP_K = 8;
@@ -25,6 +26,7 @@ public final class AdaptiveRetrievalProbeRunner {
     private final OpenSearchTransport transport;
     private final AnalysisRuntimeProperties commonProperties;
     private final RetrievalQueryTextBuilder queryTextBuilder;
+    private final LongSupplier nanoTime;
 
     public AdaptiveRetrievalProbeRunner(
             EmbeddingProvider embeddingDelegate,
@@ -34,12 +36,26 @@ public final class AdaptiveRetrievalProbeRunner {
             AnalysisRuntimeProperties commonProperties,
             RetrievalQueryTextBuilder queryTextBuilder
     ) {
+        this(embeddingDelegate, queryBuilder, responseParser, transport, commonProperties, queryTextBuilder,
+                System::nanoTime);
+    }
+
+    AdaptiveRetrievalProbeRunner(
+            EmbeddingProvider embeddingDelegate,
+            OpenSearchKnnQueryBuilder queryBuilder,
+            OpenSearchResponseParser responseParser,
+            OpenSearchTransport transport,
+            AnalysisRuntimeProperties commonProperties,
+            RetrievalQueryTextBuilder queryTextBuilder,
+            LongSupplier nanoTime
+    ) {
         this.embeddingDelegate = embeddingDelegate;
         this.queryBuilder = queryBuilder;
         this.responseParser = responseParser;
         this.transport = transport;
         this.commonProperties = commonProperties;
         this.queryTextBuilder = queryTextBuilder;
+        this.nanoTime = nanoTime;
     }
 
     public AdaptiveRetrievalProbeReport run(
@@ -60,6 +76,7 @@ public final class AdaptiveRetrievalProbeRunner {
         String queryText = queryTextBuilder.build(fixture.facts());
         ReferenceQuery query = new ReferenceQuery(queryText, fixture.facts().resourceTypes(), ADAPTIVE_MAX_EVIDENCE);
         MemoizingEmbeddingProvider sharedEmbedding = new MemoizingEmbeddingProvider(embeddingDelegate);
+        sharedEmbedding.embed(queryText);
 
         AdaptiveRetrievalProbeReport.ArmEvidence control = runArm(
                 query,
@@ -98,9 +115,9 @@ public final class AdaptiveRetrievalProbeRunner {
     ) {
         OpenSearchReferenceRetriever retriever = new OpenSearchReferenceRetriever(
                 embedding, queryBuilder, responseParser, transport, properties);
-        long started = System.nanoTime();
+        long started = nanoTime.getAsLong();
         List<ReferenceDocument> documents = retriever.retrieve(query);
-        long latencyMs = (System.nanoTime() - started) / 1_000_000;
+        long latencyMs = (nanoTime.getAsLong() - started) / 1_000_000;
 
         Set<String> coveredSet = new LinkedHashSet<>();
         for (ReferenceDocument document : documents) {

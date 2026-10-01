@@ -1,0 +1,175 @@
+work_package:
+  id: case-c-runtime-dependency-deployment-readiness-v1
+  status: AWAITING_APPROVAL
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: null
+
+  goal: >
+    Prepare the repository-owned GCP runtime dependencies required to make the already-published
+    immutable backend image deployable, without deploying the backend, starting load generation,
+    or changing rollout/capacity behavior.
+
+  decision_source:
+    path: docs/plans/active/case-c-runtime-dependency-deployment-readiness-decision.md
+    status: PROPOSED_AWAITING_USER_DECISION
+
+  selected_direction:
+    gcs:
+      bucket_count: 1
+      bucket_name: terraformers-runtime-objects-21647422237
+      location: asia-northeast3
+      public_access_prevention: enforced
+      uniform_bucket_level_access: true
+      backend_role: roles/storage.objectUser
+      upload_prefix: browser-uploads
+      result_prefix: analysis-results
+    secrets:
+      authority: google_secret_manager
+      delivery: gke_native_secret_sync
+      cluster_version_gate: ">=1.33"
+      automatic_rotation: false
+      external_secrets_operator: false
+      terraform_manages_secret_versions: false
+      secret_names:
+        - terraformers-mariadb-root-password
+        - terraformers-mariadb-app-password
+      backend_direct_secret_manager_access: false
+    mariadb:
+      engine: MariaDB 11.4
+      compute: one_e2-medium_vm
+      data_disk: 20Gi_pd-balanced
+      container_image: exact_digest_required_before_live_apply
+      public_mariadb_ingress: false
+      dedicated_vm_service_account: true
+      high_availability: false
+    authentication:
+      case_c_identity: deterministic_internal_jwks_fixture
+      production_external_idp_selected: false
+    kubernetes_execution_identity:
+      reuse_existing: terraformers-apply
+      new_deploy_identity: false
+
+  allowed_paths:
+    - .agents/work-packages/case-c-runtime-dependency-deployment-readiness-v1.yml
+    - infra/terraform/envs/gcp-target-runtime/main.tf
+    - infra/terraform/envs/gcp-target-runtime/variables.tf
+    - infra/terraform/envs/gcp-target-runtime/outputs.tf
+    - infra/terraform/envs/gcp-target-runtime/README.md
+    - scripts/deploy/gcp_target_plan_gate.py
+    - tests/deploy/test_gcp_target_plan_gate.py
+    - scripts/deploy/bootstrap_gcp_runtime_secrets.sh
+    - .github/workflows/gcp-target-terraform-apply.yml
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+    - infra/kubernetes/overlays/gcp-target/runtime-dependencies/**
+    - infra/kubernetes/overlays/gcp-target/backend-configmap-patch.yaml
+    - scripts/checks/ci_changed_scope.py
+    - .github/workflows/terraform-static-verification.yml
+    - docs/evaluation/case-c-runtime-dependency-deployment-readiness.md
+    - docs/plans/active/case-c-runtime-dependency-deployment-readiness-decision.md
+    - docs/plans/active/portfolio-case-reassessment.md
+    - docs/AI_PROJECT_STATE.md
+
+  prohibited_paths:
+    - backend/src/main/java/**
+    - backend/src/main/resources/db/migration/**
+    - frontend/**
+    - evaluation/**
+    - corpus/**
+    - AGENTS.md
+
+  allowed_actions:
+    - bind_execution_base_to_current_main_once
+    - add_runtime_dependency_desired_state
+    - add_exact_operation_plan_gate
+    - add_secret_version_bootstrap_script_without_executing_it
+    - add_isolated_kubernetes_prerequisite_manifests
+    - add_manual_only_runtime_dependency_workflow
+    - add_static_contract_tests
+    - update_case_c_state_and_evidence
+    - create_pull_request
+    - inspect_ci_once
+    - bounded_repair_once
+
+  prohibited_actions:
+    - merge
+    - create_secret_version_live
+    - terraform_apply
+    - kubernetes_apply
+    - deploy_backend
+    - publish_or_republish_backend_image
+    - create_public_database_ingress
+    - create_external_identity_provider
+    - add_external_secrets_operator
+    - start_load_test
+    - change_rollout_strategy
+    - change_backend_replicas
+    - add_HPA
+    - tune_executor
+    - resize_GKE_node
+    - resize_OpenSearch
+    - start_next_work_package
+
+  acceptance_criteria:
+    - execution_base_is_bound_once_and_main_drift_stops_execution
+    - current_GKE_version_is_checked_read_only_before_secret_sync_is_selectable
+    - cluster_below_1_33_stops_without_upgrade
+    - one_private_GCS_bucket_is_declared_for_upload_and_result_objects
+    - GCS_bucket_has_UBLA_and_public_access_prevention
+    - backend_workload_principal_gets_bucket_scoped_storage_objectUser_only
+    - secret_manager_is_authority_for_mariadb_root_and_app_passwords
+    - terraform_declares_secret_containers_but_not_secret_versions_or_secret_payloads
+    - dedicated_mariadb_VM_identity_has_only_required_secret_accessor_bindings
+    - dedicated_secret_sync_KSA_can_access_only_the_app_DB_password
+    - backend_KSA_has_no_direct_secret_manager_role
+    - GKE_native_secret_sync_is_enabled_without_auto_rotation
+    - no_external_secrets_operator_is_added
+    - mariadb_VM_is_e2_medium_with_20Gi_pd_balanced_data_disk
+    - mariadb_container_requires_exact_digest
+    - mariadb_has_no_public_ingress
+    - database_firewall_is_limited_to_required_existing_GKE_source_boundary
+    - kubernetes_prerequisites_are_isolated_from_the_full_backend_overlay
+    - deterministic_internal_JWKS_fixture_is_used_without_selecting_external_IdP
+    - exact_saved_plan_gate_rejects_unreviewed_update_delete_replace_or_extra_actions
+    - no_live_secret_cloud_kubernetes_or_backend_mutation_occurs_in_PR_execution
+    - no_backend_Deployment_is_applied_or_started
+
+  live_acceptance_after_separate_approval:
+    - secret_versions_added_without_value_output
+    - dependency_foundation_plan_matches_reviewed_contract
+    - mariadb_private_startup_succeeds
+    - mariadb_PD_contains_var_lib_mysql
+    - mariadb_container_replacement_preserves_marker_row
+    - VM_restart_preserves_marker_row
+    - secret_sync_creates_expected_Kubernetes_secret_key_without_printing_value
+    - GCS_write_read_delete_succeeds_through_backend_workload_principal
+    - bucket_remains_private
+    - backend_deployment_absent
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - main_drift
+    - gke_version_below_1_33
+    - second_failure_after_bounded_repair
+    - failure_class_changes
+    - secret_payload_would_enter_terraform_state_or_repository
+    - additional_cloud_product_is_required
+    - public_database_ingress_is_required
+    - external_identity_product_is_required
+    - acceptance_criteria_would_need_to_change
+    - live_cloud_IAM_secret_or_kubernetes_action_is_required_for_static_acceptance
+
+  completion:
+    merge_requires_user_approval: true
+    secret_version_bootstrap_requires_user_approval: true
+    terraform_dependency_apply_requires_user_approval: true
+    kubernetes_prerequisite_apply_requires_user_approval: true
+    backend_deployment_requires_later_work_package: true
+    next_work_package_requires_user_approval: true
+
+  result:
+    implementation: NOT_STARTED
+    ci: NOT_STARTED
+    live_mutation: false
+    backend_deployed: false
+    next_gate: user_decision_and_work_package_approval

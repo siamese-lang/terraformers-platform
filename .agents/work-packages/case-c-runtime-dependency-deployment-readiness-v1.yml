@@ -134,6 +134,7 @@ work_package:
     - no_backend_Deployment_is_applied_or_started
 
   live_acceptance_after_separate_approval:
+    - secret_container_foundation_plan_matches_reviewed_contract
     - secret_versions_added_without_value_output
     - dependency_foundation_plan_matches_reviewed_contract
     - mariadb_private_startup_succeeds
@@ -161,6 +162,7 @@ work_package:
 
   completion:
     merge_requires_user_approval: true
+    terraform_secret_container_apply_requires_user_approval: true
     secret_version_bootstrap_requires_user_approval: true
     terraform_dependency_apply_requires_user_approval: true
     kubernetes_prerequisite_apply_requires_user_approval: true
@@ -170,6 +172,8 @@ work_package:
   result:
     implementation: IN_PROGRESS
     ci: NOT_STARTED
+    auto_repair_used: 1
+    auto_repair_reason: split_secret_container_creation_before_secret_version_bootstrap
     live_mutation: false
     backend_deployed: false
     next_gate: repository_implementation_and_static_acceptance

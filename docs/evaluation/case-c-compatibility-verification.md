@@ -20,7 +20,7 @@ verification.
 
 ### Current status
 
-**PENDING EXECUTABLE PROOF**
+**PENDING EXECUTABLE PROOF — ONE BOUNDED DRIVER/AUTH REPAIR APPLIED**
 
 The repository already has an authoritative real-MariaDB verification path:
 
@@ -48,6 +48,32 @@ Required result:
 - authoritative MariaDB 11.4 job remains green.
 
 Cloud SQL for MySQL is not selected until this job passes.
+
+### First execution result
+
+Workflow run `36816910868` reached the MySQL 8.4 service successfully, while the authoritative
+MariaDB 11.4 job and backend local smoke both passed.
+
+The MySQL job failed **before Flyway executed**:
+
+`RSA public key is not available client side (option serverRsaPublicKeyFile not set)`
+
+The stack trace came from MariaDB Connector/J's `CachingSha2PasswordPlugin` while connecting to
+MySQL 8.4's default authentication mechanism. This is classified as **DRIVER/AUTHENTICATION
+COMPATIBILITY**, not SQL/migration/transaction incompatibility.
+
+The Work Package permits one bounded repair within the same failure class. That repair is now used:
+
+- add MySQL Connector/J alongside the retained MariaDB Connector/J;
+- MySQL verification job only uses `jdbc:mysql:`;
+- MySQL verification job only overrides the datasource driver to
+  `com.mysql.cj.jdbc.Driver`;
+- MySQL verification job retains the test-only `MySQLDialect` override;
+- production `application-prod.yml`, MariaDB URL/dialect, migrations and repository code remain
+  unchanged.
+
+No further automatic repair is authorized. If the next execution fails, classify the new failure
+and stop.
 
 ## Gate 2 — Google Cloud Storage contract compatibility
 

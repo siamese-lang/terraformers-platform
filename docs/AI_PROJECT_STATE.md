@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C compatibility verification ACTIVE; Cloud Storage PASS, Artifact Registry PASS, MySQL 8.4 executable proof pending**
+- Current single task: **Case C compatibility verification COMPLETE: Cloud Storage PASS, Artifact Registry PASS, MySQL 8.4 FAIL; next candidate is relational hosting decision**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -125,11 +125,13 @@ Case B — Backend durable asynchronous processing:
 Case C — Cloud runtime capacity and safe delivery:
 - measurement readiness audit is **COMPLETE / NOT READY FOR LIVE BASELINE** in
   [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md);
-- the representative-runtime decision is **COMPATIBILITY VERIFICATION ACTIVE** in
-  [Case C Production-Representative Runtime Decision Gate](plans/active/case-c-representative-benchmark-runtime-decision.md);
-  Cloud Storage application-contract compatibility is **PASS** and Artifact Registry
-  least-privilege delivery identity compatibility is **PASS**; MySQL 8.4 real-database compatibility
-  is the remaining executable gate before Alternative C can be selected;
+- the representative-runtime compatibility verification is **COMPLETE** in
+  [Case C Production-Representative Runtime Decision Gate](plans/active/case-c-representative-benchmark-runtime-decision.md)
+  and [Case C Compatibility Verification](evaluation/case-c-compatibility-verification.md):
+  Cloud Storage **PASS**, Artifact Registry **PASS**, MySQL 8.4 **FAIL**;
+- MySQL 8.4 connected successfully and applied migrations 001–002, then V003 failed on
+  `ADD COLUMN IF NOT EXISTS` syntax while MariaDB 11.4 remained green; therefore Cloud SQL for
+  MySQL is not a drop-in relational choice under the unchanged-migration gate;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;

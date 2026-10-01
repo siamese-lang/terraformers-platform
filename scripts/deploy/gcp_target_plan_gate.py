@@ -502,6 +502,14 @@ def validate_activate(changes: dict[str, dict[str, Any]]) -> None:
     validate_node_pool_transition(changes, "activate", 0, 1)
 
 
+def validate_capacity_scale_out(changes: dict[str, dict[str, Any]]) -> None:
+    validate_node_pool_transition(changes, "capacity-scale-out", 1, 2)
+
+
+def validate_capacity_scale_in(changes: dict[str, dict[str, Any]]) -> None:
+    validate_node_pool_transition(changes, "capacity-scale-in", 2, 1)
+
+
 def validate_idle(changes: dict[str, dict[str, Any]]) -> None:
     validate_node_pool_transition(changes, "idle", 1, 0)
 
@@ -524,6 +532,10 @@ def validate_plan(plan: dict[str, Any], operation: str) -> dict[str, Any]:
         validate_runtime_host_firewall_repair(changes)
     elif operation == "activate":
         validate_activate(changes)
+    elif operation == "capacity-scale-out":
+        validate_capacity_scale_out(changes)
+    elif operation == "capacity-scale-in":
+        validate_capacity_scale_in(changes)
     elif operation == "idle":
         validate_idle(changes)
     else:
@@ -584,7 +596,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--operation",
         required=True,
-        choices=("foundation", "delivery-foundation", "runtime-secret-foundation", "runtime-dependencies", "runtime-host-firewall-repair", "activate", "idle"),
+        choices=("foundation", "delivery-foundation", "runtime-secret-foundation", "runtime-dependencies", "runtime-host-firewall-repair", "activate", "capacity-scale-out", "capacity-scale-in", "idle"),
     )
     return parser.parse_args()
 

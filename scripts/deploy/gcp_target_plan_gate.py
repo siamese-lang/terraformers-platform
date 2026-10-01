@@ -1,8 +1,4 @@
-#!
-RUNTIME_HOST_FIREWALL_REPAIR_ACTIONS = {
-    "google_compute_instance.mariadb[0]": ("google_compute_instance", ["update"]),
-}
-/usr/bin/env python3
+#!/usr/bin/env python3
 from __future__ import annotations
 
 import argparse
@@ -68,6 +64,10 @@ RUNTIME_DEPENDENCY_ACTIONS = {
     "google_compute_disk.mariadb_data[0]": ("google_compute_disk", ["create"]),
     "google_compute_instance.mariadb[0]": ("google_compute_instance", ["create"]),
     "google_compute_firewall.mariadb_from_gke[0]": ("google_compute_firewall", ["create"]),
+}
+
+RUNTIME_HOST_FIREWALL_REPAIR_ACTIONS = {
+    "google_compute_instance.mariadb[0]": ("google_compute_instance", ["update"]),
 }
 
 EXPECTED_SERVICES = {

@@ -25,3 +25,12 @@ output "subnet_name" {
 output "backend_workload_principal" {
   value = local.backend_workload_principal
 }
+
+
+output "backend_artifact_repository" {
+  value = google_artifact_registry_repository.backend.name
+}
+
+output "backend_image_base" {
+  value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.backend.repository_id}/terraformers-backend"
+}

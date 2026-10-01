@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — GCS PASS / ARTIFACT REGISTRY PASS / MYSQL 8.4 PENDING EXECUTABLE PROOF**
+**COMPLETE — GCS PASS / ARTIFACT REGISTRY PASS / MYSQL 8.4 FAIL**
 
 Execution base:
 
@@ -20,7 +20,7 @@ verification.
 
 ### Current status
 
-**PENDING EXECUTABLE PROOF — ONE BOUNDED DRIVER/AUTH REPAIR APPLIED**
+**FAIL — SQL MIGRATION INCOMPATIBILITY CONFIRMED AFTER ONE BOUNDED DRIVER/AUTH REPAIR**
 
 The repository already has an authoritative real-MariaDB verification path:
 
@@ -72,8 +72,46 @@ The Work Package permits one bounded repair within the same failure class. That 
 - production `application-prod.yml`, MariaDB URL/dialect, migrations and repository code remain
   unchanged.
 
-No further automatic repair is authorized. If the next execution fails, classify the new failure
-and stop.
+No further automatic repair is authorized. The second execution has now failed in a different,
+material failure class, so the Work Package stops here.
+
+### Second execution result
+
+Workflow run `36817194503` used MySQL Connector/J and `jdbc:mysql:`. Connection succeeded and
+Flyway recognized the server as **MySQL 8.4**.
+
+Observed sequence:
+
+- migration `20260714.001`: applied;
+- migration `20260714.002`: applied;
+- migration `20260714.003`: **FAILED**;
+- SQL state: `42000`;
+- error code: `1064`.
+
+Failing statement:
+
+`ALTER TABLE analysis_jobs ADD COLUMN IF NOT EXISTS ...`
+
+The MySQL 8.4 reference grammar for `ALTER TABLE ... ADD COLUMN` does not include
+`IF NOT EXISTS` for column addition. The repository migration is valid for the retained MariaDB
+baseline but is not accepted unchanged by MySQL 8.4.
+
+This is therefore **SQL/MIGRATION COMPATIBILITY**, not CI/tooling noise and not a driver problem.
+
+The frozen gate requires the existing migration set and repository semantics to pass unchanged.
+Making Cloud SQL for MySQL pass would require changing an existing production migration or adding a
+database-specific migration strategy. That is outside this Work Package and satisfies its FAIL rule.
+
+The temporary MySQL validation job, log-label parameterization and MySQL Connector/J dependency were
+removed again after evidence capture so main is not left with an intentionally failing compatibility
+job or an unused runtime dependency.
+
+Authoritative execution evidence:
+
+- first run: `36816910868` — driver/authentication failure before Flyway;
+- second run: `36817194503` — MySQL connection succeeds; V003 syntax incompatibility reproduced;
+- MariaDB 11.4 remained **PASS** in both runs;
+- backend local smoke remained **PASS** in both runs.
 
 ## Gate 2 — Google Cloud Storage contract compatibility
 
@@ -193,14 +231,17 @@ Authoritative references:
 
 | Gate | Current result |
 |---|---|
-| MySQL 8.4 relational compatibility | PENDING EXECUTABLE PROOF |
-| Cloud Storage application contract | PASS |
-| Artifact Registry least-privilege identity | PASS |
+| MySQL 8.4 relational compatibility | **FAIL** |
+| Cloud Storage application contract | **PASS** |
+| Artifact Registry least-privilege identity | **PASS** |
 
-Alternative C is **NOT YET SELECTABLE** because the Work Package requires all three gates to PASS.
+Alternative C as originally defined is **NOT SELECTABLE** under the frozen 3/3 rule.
 
-If MySQL 8.4 passes the same real-database verification while MariaDB remains green, Alternative C
-becomes technically selectable and returns to the user for final runtime-direction approval.
+The failure is narrow: Cloud Storage and Artifact Registry remain compatible candidates, while
+Cloud SQL for MySQL cannot be treated as a drop-in relational replacement for the current MariaDB
+contract.
 
-If MySQL 8.4 fails because migrations or durable ownership semantics require production
-schema/domain changes, Cloud SQL for MySQL is not selected merely to keep the preferred architecture.
+The next Case C decision must therefore reopen only the **relational hosting** part of the runtime.
+It should compare the cost/scope of intentionally migrating the persistence contract to MySQL against
+retaining MariaDB in a production-representative hosting shape. It must not discard the two passing
+managed-service compatibility results or silently rewrite migration history.

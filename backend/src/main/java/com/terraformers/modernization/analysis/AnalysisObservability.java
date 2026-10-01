@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.RejectedExecutionException;
@@ -176,6 +177,7 @@ public class AnalysisObservability {
     }
 
     public String category(Throwable exception) {
+        if (hasGoogleProviderStatus(exception, 429)) return "provider_rate_limited";
         if (exception instanceof AnalysisResultFinalizationException) return "result_finalization";
         if (exception instanceof AnalysisProviderFailureException providerFailure) {
             return switch (providerFailure.reason()) {
@@ -193,6 +195,23 @@ public class AnalysisObservability {
         if (simple.contains("format")) return "response_format";
         if (simple.contains("truncated")) return "truncated_output";
         return "other";
+    }
+
+    private boolean hasGoogleProviderStatus(Throwable exception, int expectedStatus) {
+        for (Throwable current = exception; current != null; current = current.getCause()) {
+            Package typePackage = current.getClass().getPackage();
+            if (typePackage == null || !typePackage.getName().startsWith("com.google")) continue;
+            for (String methodName : java.util.List.of("code", "statusCode", "getStatusCode")) {
+                try {
+                    Method method = current.getClass().getMethod(methodName);
+                    Object value = method.invoke(current);
+                    if (value instanceof Number number && number.intValue() == expectedStatus) return true;
+                } catch (ReflectiveOperationException | SecurityException ignored) {
+                    // The SDK exception does not expose this bounded status accessor.
+                }
+            }
+        }
+        return false;
     }
 
     private long elapsedMs(long startedAt) {

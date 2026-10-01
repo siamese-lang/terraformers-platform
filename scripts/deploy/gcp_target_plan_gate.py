@@ -482,6 +482,12 @@ def validate_node_pool_transition(
         after.get("node_count") == after_count,
         f"{operation} transition must end at node_count={after_count}",
     )
+    require(before.get("name") == after.get("name"), f"{operation} changes node-pool name")
+    require(before.get("location") == after.get("location"), f"{operation} changes node-pool location")
+    require(
+        before.get("node_config") == after.get("node_config"),
+        f"{operation} may change only node_count, not node_config",
+    )
     require(
         after.get("name") == "terraformers-target-primary",
         f"{operation} plan targets an unexpected node pool",
@@ -500,6 +506,14 @@ def validate_node_pool_transition(
 
 def validate_activate(changes: dict[str, dict[str, Any]]) -> None:
     validate_node_pool_transition(changes, "activate", 0, 1)
+
+
+def validate_capacity_scale_out(changes: dict[str, dict[str, Any]]) -> None:
+    validate_node_pool_transition(changes, "capacity-scale-out", 1, 2)
+
+
+def validate_capacity_scale_in(changes: dict[str, dict[str, Any]]) -> None:
+    validate_node_pool_transition(changes, "capacity-scale-in", 2, 1)
 
 
 def validate_idle(changes: dict[str, dict[str, Any]]) -> None:
@@ -524,6 +538,10 @@ def validate_plan(plan: dict[str, Any], operation: str) -> dict[str, Any]:
         validate_runtime_host_firewall_repair(changes)
     elif operation == "activate":
         validate_activate(changes)
+    elif operation == "capacity-scale-out":
+        validate_capacity_scale_out(changes)
+    elif operation == "capacity-scale-in":
+        validate_capacity_scale_in(changes)
     elif operation == "idle":
         validate_idle(changes)
     else:
@@ -584,7 +602,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--operation",
         required=True,
-        choices=("foundation", "delivery-foundation", "runtime-secret-foundation", "runtime-dependencies", "runtime-host-firewall-repair", "activate", "idle"),
+        choices=("foundation", "delivery-foundation", "runtime-secret-foundation", "runtime-dependencies", "runtime-host-firewall-repair", "activate", "capacity-scale-out", "capacity-scale-in", "idle"),
     )
     return parser.parse_args()
 

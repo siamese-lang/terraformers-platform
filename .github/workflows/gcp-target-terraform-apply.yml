@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Authenticate only, run read-only verification, create the reviewed GKE foundation or immutable-image delivery foundation, activate the node pool, or return it to zero.
+        description: Authenticate only, run read-only verification, create the reviewed GKE foundation or immutable-image delivery foundation, activate or capacity-scale the node pool, or return it to zero.
         required: true
         type: choice
         options:
@@ -14,13 +14,15 @@ on:
           - foundation
           - delivery-foundation
           - activate
+          - capacity-scale-out
+          - capacity-scale-in
           - idle
       expected_sha:
         description: Exact trusted main commit SHA being approved.
         required: true
         type: string
       confirmation:
-        description: Use IDENTITY_CHECK, PREFLIGHT_ONLY, RUNTIME_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_12, APPLY_REVIEWED_GCP_DELIVERY_FOUNDATION_5, ACTIVATE_GCP_TARGET_ONE, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
+        description: Use IDENTITY_CHECK, PREFLIGHT_ONLY, RUNTIME_CHECK, APPLY_REVIEWED_GCP_FOUNDATION_12, APPLY_REVIEWED_GCP_DELIVERY_FOUNDATION_5, ACTIVATE_GCP_TARGET_ONE, SCALE_GCP_TARGET_TO_TWO, SCALE_GCP_TARGET_TO_ONE, or SCALE_GCP_TARGET_TO_ZERO as appropriate.
         required: true
         type: string
 
@@ -95,6 +97,12 @@ jobs:
               ;;
             activate)
               [[ "$CONFIRMATION" == ACTIVATE_GCP_TARGET_ONE ]] || exit 1
+              ;;
+            capacity-scale-out)
+              [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_TWO ]] || exit 1
+              ;;
+            capacity-scale-in)
+              [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_ONE ]] || exit 1
               ;;
             idle)
               [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_ZERO ]] || exit 1
@@ -522,6 +530,24 @@ jobs:
               [[ "$STATE_BUCKET" != *..* ]] || exit 1
               echo 'TF_VAR_node_count=1' >> "$GITHUB_ENV"
               ;;
+            capacity-scale-out)
+              [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_TWO ]] || {
+                echo 'capacity-scale-out requires confirmation SCALE_GCP_TARGET_TO_TWO.' >&2
+                exit 1
+              }
+              [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
+              [[ "$STATE_BUCKET" != *..* ]] || exit 1
+              echo 'TF_VAR_node_count=2' >> "$GITHUB_ENV"
+              ;;
+            capacity-scale-in)
+              [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_ONE ]] || {
+                echo 'capacity-scale-in requires confirmation SCALE_GCP_TARGET_TO_ONE.' >&2
+                exit 1
+              }
+              [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
+              [[ "$STATE_BUCKET" != *..* ]] || exit 1
+              echo 'TF_VAR_node_count=1' >> "$GITHUB_ENV"
+              ;;
             idle)
               [[ "$CONFIRMATION" == SCALE_GCP_TARGET_TO_ZERO ]] || {
                 echo 'idle requires confirmation SCALE_GCP_TARGET_TO_ZERO.' >&2
@@ -737,8 +763,10 @@ jobs:
             ' "${RUNNER_TEMP}/gcp-target-runtime-state.json"
           )"
 
-          if [[ "$OPERATION" == foundation || "$OPERATION" == activate ]]; then
+          if [[ "$OPERATION" == foundation || "$OPERATION" == activate || "$OPERATION" == capacity-scale-in ]]; then
             expected_nodes=1
+          elif [[ "$OPERATION" == capacity-scale-out ]]; then
+            expected_nodes=2
           elif [[ "$OPERATION" == delivery-foundation ]]; then
             expected_nodes="${TF_VAR_node_count}"
           else

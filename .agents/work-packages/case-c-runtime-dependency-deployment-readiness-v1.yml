@@ -1,6 +1,6 @@
 work_package:
   id: case-c-runtime-dependency-deployment-readiness-v1
-  status: ACTIVE
+  status: IMPLEMENTED_CI_PENDING
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: "8ada2368b85c210c2c50b0d42370454efe0d499c"
 
@@ -170,10 +170,15 @@ work_package:
     next_work_package_requires_user_approval: true
 
   result:
-    implementation: IN_PROGRESS
-    ci: NOT_STARTED
+    implementation: COMPLETE
+    ci: PENDING
+    capability_gate:
+      gke_control_plane: "1.35.8-gke.1225000"
+      gke_node_pool: "1.35.8-gke.1225000"
+      required_minimum: "1.33"
+      result: PASS
     auto_repair_used: 1
     auto_repair_reason: split_secret_container_creation_before_secret_version_bootstrap
     live_mutation: false
     backend_deployed: false
-    next_gate: repository_implementation_and_static_acceptance
+    next_gate: independent_acceptance_review_after_CI

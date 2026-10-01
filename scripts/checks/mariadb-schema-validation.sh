@@ -3,8 +3,10 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BACKEND_DIR="${REPO_ROOT}/backend"
-LOG_FILE="${BACKEND_DIR}/target/mariadb-schema-validation.log"
-REPOSITORY_SMOKE_LOG="${BACKEND_DIR}/target/mariadb-repository-smoke.log"
+DB_VALIDATION_LABEL="${DB_VALIDATION_LABEL:-mariadb}"
+DB_VALIDATION_LOG_PREFIX="${DB_VALIDATION_LOG_PREFIX:-mariadb}"
+LOG_FILE="${BACKEND_DIR}/target/${DB_VALIDATION_LOG_PREFIX}-schema-validation.log"
+REPOSITORY_SMOKE_LOG="${BACKEND_DIR}/target/${DB_VALIDATION_LOG_PREFIX}-repository-smoke.log"
 PORT="${SERVER_PORT:-18080}"
 HEALTH_URL="http://127.0.0.1:${PORT}/actuator/health"
 APP_PID=""
@@ -30,7 +32,7 @@ required_env=(
 
 for name in "${required_env[@]}"; do
   if [[ -z "${!name:-}" ]]; then
-    echo "[mariadb] required environment variable is missing: ${name}" >&2
+    echo "[${DB_VALIDATION_LABEL}] required environment variable is missing: ${name}" >&2
     exit 1
   fi
 done
@@ -38,16 +40,16 @@ done
 mkdir -p "${BACKEND_DIR}/target"
 cd "${BACKEND_DIR}"
 
-echo "[mariadb] packaging backend without compiling or running tests"
+echo "[${DB_VALIDATION_LABEL}] packaging backend without compiling or running tests"
 mvn -q -Dmaven.test.skip=true package
 
 jar_file="$(find target -maxdepth 1 -type f -name '*.jar' ! -name '*.original' | head -n 1)"
 if [[ -z "${jar_file}" ]]; then
-  echo "[mariadb] packaged application jar not found" >&2
+  echo "[${DB_VALIDATION_LABEL}] packaged application jar not found" >&2
   exit 1
 fi
 
-echo "[mariadb] starting production profile with Flyway and ddl-auto=validate"
+echo "[${DB_VALIDATION_LABEL}] starting production profile with Flyway and ddl-auto=validate"
 SERVER_PORT="${PORT}" \
 OBJECT_READER_PROVIDER=disabled \
 OBJECT_WRITER_PROVIDER=metadata-only \
@@ -61,13 +63,13 @@ APP_PID=$!
 healthy=false
 for attempt in $(seq 1 60); do
   if ! kill -0 "${APP_PID}" 2>/dev/null; then
-    echo "[mariadb] application exited before becoming healthy" >&2
+    echo "[${DB_VALIDATION_LABEL}] application exited before becoming healthy" >&2
     tail -n 200 "${LOG_FILE}" >&2 || true
     exit 1
   fi
 
   if curl --fail --silent --show-error "${HEALTH_URL}" >/tmp/terraformers-mariadb-health.json 2>/dev/null; then
-    echo "[mariadb] application health check passed"
+    echo "[${DB_VALIDATION_LABEL}] application health check passed"
     cat /tmp/terraformers-mariadb-health.json
     echo
     healthy=true
@@ -78,22 +80,22 @@ for attempt in $(seq 1 60); do
 done
 
 if [[ "${healthy}" != "true" ]]; then
-  echo "[mariadb] application did not become healthy" >&2
+  echo "[${DB_VALIDATION_LABEL}] application did not become healthy" >&2
   tail -n 200 "${LOG_FILE}" >&2 || true
   exit 1
 fi
 
-echo "[mariadb] Flyway migration and Hibernate schema validation passed"
+echo "[${DB_VALIDATION_LABEL}] Flyway migration and Hibernate schema validation passed"
 
 kill "${APP_PID}" 2>/dev/null || true
 wait "${APP_PID}" 2>/dev/null || true
 APP_PID=""
 
-echo "[mariadb] running canonical repository smoke queries"
+echo "[${DB_VALIDATION_LABEL}] running canonical repository smoke queries"
 if ! mvn -q -Dtest=MariaDbRepositorySmokeTest test >"${REPOSITORY_SMOKE_LOG}" 2>&1; then
-  echo "[mariadb] repository smoke queries failed" >&2
+  echo "[${DB_VALIDATION_LABEL}] repository smoke queries failed" >&2
   tail -n 200 "${REPOSITORY_SMOKE_LOG}" >&2 || true
   exit 1
 fi
 
-echo "[mariadb] canonical repository smoke queries passed"
+echo "[${DB_VALIDATION_LABEL}] canonical repository smoke queries passed"

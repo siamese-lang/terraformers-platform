@@ -833,6 +833,10 @@ jobs:
 
           kubectl -n "$NAMESPACE" get configmap terraformers-jwks             -o jsonpath='{.data.jwks\.json}' > "$previous_jwks"
           test -s "$previous_jwks"
+          jq -e '.keys == []' "$previous_jwks" >/dev/null || {
+            echo 'Refusing to replace a non-placeholder JWKS configuration.' >&2
+            exit 1
+          }
 
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048             -out "$private_key" >/dev/null 2>&1
           openssl pkey -in "$private_key" -pubout -out "$public_key" >/dev/null 2>&1
@@ -935,7 +939,7 @@ PY
           project_id="$(jq -r '.projectId' "$upload_json")"
 
           terminal_status=""
-          for _ in $(seq 1 180); do
+          for _ in $(seq 1 240); do
             job_code="$(
               curl -sS -o "$job_json" -w '%{http_code}'                 -H "Authorization: Bearer ${token}"                 "http://127.0.0.1:18080/api/analysis/jobs/${job_id}"
             )"

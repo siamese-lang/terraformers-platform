@@ -80,15 +80,18 @@ jobs:
               ;;
             preflight)
               [[ "$CONFIRMATION" == PREFLIGHT_ONLY ]] || exit 1
+              echo 'TF_VAR_enable_delivery_foundation=false' >> "$GITHUB_ENV"
               ;;
             runtime-check)
               [[ "$CONFIRMATION" == RUNTIME_CHECK ]] || exit 1
               ;;
             foundation)
               [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_FOUNDATION_12 ]] || exit 1
+              echo 'TF_VAR_enable_delivery_foundation=false' >> "$GITHUB_ENV"
               ;;
             delivery-foundation)
               [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_DELIVERY_FOUNDATION_5 ]] || exit 1
+              echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
               ;;
             activate)
               [[ "$CONFIRMATION" == ACTIVATE_GCP_TARGET_ONE ]] || exit 1
@@ -289,6 +292,7 @@ jobs:
 
           terraform plan -no-color -input=false -lock-timeout=5m \
             -var="node_count=${current_node_count}" \
+            -var="enable_delivery_foundation=true" \
             -out="${RUNNER_TEMP}/gcp-target-delivery-preflight.tfplan"
 
           terraform show -json "${RUNNER_TEMP}/gcp-target-delivery-preflight.tfplan" \
@@ -326,14 +330,28 @@ jobs:
             managed_state+=("$address")
           done
 
-          [[ "${#managed_state[@]}" -eq 12 ]] || {
-            echo "Runtime check expected 12 managed resources, found ${#managed_state[@]}." >&2
+          [[ "${#managed_state[@]}" -eq 12 || "${#managed_state[@]}" -eq 17 ]] || {
+            echo "Runtime check expected 12 pre-delivery or 17 post-delivery managed resources, found ${#managed_state[@]}." >&2
             printf '  %s\n' "${managed_state[@]}" >&2
             exit 1
           }
 
           printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_cluster.target'
           printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_container_node_pool.target'
+
+          if printf '%s\n' "${managed_state[@]}" | grep -Fxq 'google_artifact_registry_repository.backend[0]'; then
+            delivery_enabled=true
+            [[ "${#managed_state[@]}" -eq 17 ]] || {
+              echo 'Delivery repository is present but canonical post-delivery state is incomplete.' >&2
+              exit 1
+            }
+          else
+            delivery_enabled=false
+            [[ "${#managed_state[@]}" -eq 12 ]] || {
+              echo 'Canonical state has delivery resources missing or partially represented.' >&2
+              exit 1
+            }
+          fi
 
           cluster_status="$(
             gcloud container clusters describe terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform               --format='value(status)'
@@ -365,7 +383,9 @@ jobs:
           }
 
           set +e
-          terraform plan -no-color -input=false -lock-timeout=5m -detailed-exitcode             > "${RUNNER_TEMP}/gcp-target-runtime-check-plan.txt"
+          terraform plan -no-color -input=false -lock-timeout=5m -detailed-exitcode \
+            -var="enable_delivery_foundation=${delivery_enabled}" \
+            > "${RUNNER_TEMP}/gcp-target-runtime-check-plan.txt"
           plan_rc=$?
           set -e
           [[ "$plan_rc" -eq 0 ]] || {
@@ -377,7 +397,8 @@ jobs:
           {
             echo '## GCP target runtime check'
             echo
-            echo '- Canonical Terraform state resources: `12`'
+            printf -- '- Canonical Terraform state resources: `%s`\n' "${#managed_state[@]}"
+            printf -- '- Immutable image delivery foundation enabled: `%s`\n' "$delivery_enabled"
             printf -- '- Cluster status: `%s`\n' "$cluster_status"
             printf -- '- Node pool status: `%s`\n' "$node_pool_status"
             printf -- '- Terraform node count: `%s`\n' "$node_count"
@@ -454,6 +475,7 @@ jobs:
               [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
               [[ "$STATE_BUCKET" != *..* ]] || exit 1
               echo 'TF_VAR_node_count=1' >> "$GITHUB_ENV"
+              echo 'TF_VAR_enable_delivery_foundation=false' >> "$GITHUB_ENV"
               ;;
             delivery-foundation)
               [[ "$CONFIRMATION" == APPLY_REVIEWED_GCP_DELIVERY_FOUNDATION_5 ]] || {
@@ -462,6 +484,7 @@ jobs:
               }
               [[ "$STATE_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{2,62}$ ]] || exit 1
               [[ "$STATE_BUCKET" != *..* ]] || exit 1
+              echo 'TF_VAR_enable_delivery_foundation=true' >> "$GITHUB_ENV"
               ;;
             activate)
               [[ "$CONFIRMATION" == ACTIVATE_GCP_TARGET_ONE ]] || {

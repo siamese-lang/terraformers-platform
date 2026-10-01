@@ -344,7 +344,8 @@ resource "google_compute_instance" "mariadb" {
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 
-  metadata_startup_script = <<-EOT
+  metadata = {
+    "startup-script" = <<-EOT
     #!/bin/bash
     set -euo pipefail
 
@@ -398,7 +399,8 @@ resource "google_compute_instance" "mariadb" {
     docker run -d       --name terraformers-mariadb       --restart unless-stopped       --network host       -e MARIADB_ROOT_PASSWORD="$ROOT_PASSWORD"       -e MARIADB_DATABASE=terraformers       -e MARIADB_USER=terraformers       -e MARIADB_PASSWORD="$APP_PASSWORD"       -v "$DATA_MOUNT:/var/lib/mysql"       "$MARIADB_IMAGE"
 
     unset ROOT_PASSWORD APP_PASSWORD
-  EOT
+    EOT
+  }
 
   depends_on = [
     google_secret_manager_secret_iam_member.mariadb_root_accessor,

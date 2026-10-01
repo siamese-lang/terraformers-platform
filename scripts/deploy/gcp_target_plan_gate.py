@@ -380,7 +380,10 @@ def validate_runtime_dependencies(changes: dict[str, dict[str, Any]]) -> None:
         service_account.get("scopes") == ["https://www.googleapis.com/auth/cloud-platform"],
         "MariaDB VM OAuth scope changed",
     )
-    startup = str(instance.get("metadata_startup_script") or "")
+    metadata = instance.get("metadata") or {}
+    require(isinstance(metadata, dict), "MariaDB VM metadata must be a map")
+    require(set(metadata) == {"startup-script"}, "MariaDB VM metadata may contain only startup-script")
+    startup = str(metadata.get("startup-script") or "")
     require(
         __import__("re").search(r'MARIADB_IMAGE="mariadb:11\.4@sha256:[0-9a-f]{64}"', startup) is not None,
         "MariaDB startup script must pin an exact 11.4 image digest",
@@ -422,11 +425,19 @@ def validate_runtime_host_firewall_repair(changes: dict[str, dict[str, Any]]) ->
 
     before_without_startup = dict(before)
     after_without_startup = dict(after)
-    before_startup = str(before_without_startup.pop("metadata_startup_script", "") or "")
-    after_startup = str(after_without_startup.pop("metadata_startup_script", "") or "")
+
+    before_metadata = dict(before_without_startup.pop("metadata", {}) or {})
+    after_metadata = dict(after_without_startup.pop("metadata", {}) or {})
+    before_legacy_startup = str(before_without_startup.pop("metadata_startup_script", "") or "")
+    after_legacy_startup = str(after_without_startup.pop("metadata_startup_script", "") or "")
+    before_startup = str(before_metadata.pop("startup-script", "") or before_legacy_startup or "")
+    after_startup = str(after_metadata.pop("startup-script", "") or after_legacy_startup or "")
+
+    require(not before_metadata, "runtime-host-firewall-repair found unexpected existing VM metadata")
+    require(not after_metadata, "runtime-host-firewall-repair may add only startup-script metadata")
     require(
         before_without_startup == after_without_startup,
-        "runtime-host-firewall-repair may change only metadata_startup_script",
+        "runtime-host-firewall-repair may change only startup-script metadata representation/content",
     )
 
     require(before_startup != after_startup, "runtime host-firewall repair must change only startup-script behavior")

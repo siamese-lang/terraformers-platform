@@ -1,6 +1,6 @@
 work_package:
   id: case-c-gcp-quota-cost-preflight-v1
-  status: ACTIVE
+  status: HUMAN_REQUIRED
   approved_base_sha: "a5316f399b4ae71d0b319d264be81766dbf87951"
   execution_base_sha: "a5316f399b4ae71d0b319d264be81766dbf87951"
 
@@ -148,3 +148,61 @@ work_package:
     merge_requires_user_approval: true
     preflight_result_requires_review: true
     runtime_implementation_requires_user_approval: true
+
+
+  result:
+    workflow_run: 36823850490
+    workflow_event: push
+    workflow_head_sha: "576d343e207aa98486e386a66782890ebe7dd3bd"
+    oidc_exchange: PASS
+    plan_identity_mutation_permission_check: PASS
+    quota_machine_preflight: PASS
+    current_target_gke_nodes: 1
+    required_additional_e2_vcpus: 2
+    required_additional_instances: 1
+    required_additional_pd_standard_gib: 0
+    required_additional_pd_balanced_ssd_gib: 30
+    required_additional_in_use_addresses: 0
+    observed_quota:
+      global_CPUS_ALL_REGIONS:
+        limit: 12
+        usage: 2
+        available: 10
+        required_additional: 2
+      regional_CPUS:
+        limit: 32
+        usage: 2
+        available: 30
+        required_additional: 2
+      regional_E2_CPUS:
+        limit: 8
+        usage: 0
+        available: 8
+        required_additional: 2
+      regional_INSTANCES:
+        limit: 8
+        usage: 1
+        available: 7
+        required_additional: 1
+      regional_DISKS_TOTAL_GB:
+        limit: 2048
+        usage: 45
+        available: 2003
+        required_additional: 0
+      regional_SSD_TOTAL_GB:
+        limit: 250
+        usage: 0
+        available: 250
+        required_additional: 30
+      regional_IN_USE_ADDRESSES:
+        limit: 4
+        usage: 1
+        available: 3
+        required_additional: 0
+    billing_query: unavailable
+    billing_enabled: unknown
+    remaining_free_trial_credit: HUMAN_REQUIRED
+    cloud_mutation_observed: false
+    next_state: >
+      Await human confirmation that sufficient Free Trial promotional credit remains.
+      Do not start runtime implementation until that confirmation is recorded.

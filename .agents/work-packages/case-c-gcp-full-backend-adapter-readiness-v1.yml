@@ -1,6 +1,6 @@
 work_package:
   id: case-c-gcp-full-backend-adapter-readiness-v1
-  status: ACTIVE
+  status: COMPLETE
   approved_base_sha: "2a58b35b22e1faf9b841a987cd158b3d0a47a6ae"
   execution_base_sha: "2a58b35b22e1faf9b841a987cd158b3d0a47a6ae"
 
@@ -110,3 +110,17 @@ work_package:
   completion:
     merge_requires_user_approval: true
     next_work_package_requires_user_approval: true
+
+
+  result:
+    acceptance: PASS
+    backend_local_verification_run: 36825659118
+    backend_local_verification_conclusion: SUCCESS
+    terraform_static_verification_run: 36825659010
+    terraform_static_verification_conclusion: SUCCESS
+    main_drift: false
+    cloud_or_iam_mutation: false
+    auto_repair_used: 0
+    next_candidate: >
+      Production-representative Case C runtime substrate/integration Work Package.
+      It remains unapproved until explicit user authorization.

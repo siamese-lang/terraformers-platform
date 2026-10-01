@@ -482,6 +482,12 @@ def validate_node_pool_transition(
         after.get("node_count") == after_count,
         f"{operation} transition must end at node_count={after_count}",
     )
+    require(before.get("name") == after.get("name"), f"{operation} changes node-pool name")
+    require(before.get("location") == after.get("location"), f"{operation} changes node-pool location")
+    require(
+        before.get("node_config") == after.get("node_config"),
+        f"{operation} may change only node_count, not node_config",
+    )
     require(
         after.get("name") == "terraformers-target-primary",
         f"{operation} plan targets an unexpected node pool",

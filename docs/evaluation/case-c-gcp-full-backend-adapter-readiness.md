@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTED / CI PENDING**
+**COMPLETE / PASS**
 
 Execution base:
 
@@ -140,16 +140,33 @@ This Work Package intentionally does **not**:
 
 Those remain later, separately gated runtime-substrate/readiness work.
 
-## 7. Acceptance pending
+## 7. Acceptance result
 
-Repository implementation is complete. Acceptance requires:
+**PASS**
 
-1. targeted/new tests compile and pass;
-2. existing backend verification remains green;
-3. no production/domain schema change appears;
-4. no cloud/IAM mutation is introduced.
+Authoritative CI:
 
-CI is the next evidence source. No second implementation Work Package is authorized automatically.
+- Backend Local Verification run `36825659118`: **SUCCESS**;
+  - Maven clean test/package: PASS;
+  - MariaDB 11.4 Flyway/Hibernate schema validation: PASS;
+  - canonical repository smoke: PASS.
+- Terraform Static Verification run `36825659010`: **SUCCESS**;
+  - automatic PR workflow policy / changed-file scope: PASS;
+  - Terraform verification job: SKIPPED as expected because this Work Package changed no Terraform.
+
+Independent acceptance review confirmed:
+
+1. Vertex + Vertex embedding + REQUIRED retrieval no longer requires Bedrock placeholder settings;
+2. Bedrock-specific settings remain required when Bedrock generation/embedding is selected;
+3. GCS reader/writer/remover behavior is covered by deterministic tests and the full backend regression is green;
+4. the GCP overlay selects `gcs`;
+5. no production/domain schema, GCP resource, IAM, workflow, or live provider change occurred;
+6. `main` remained at the bound execution base during this Work Package.
+
+No bounded repair was required.
+
+This Work Package is **COMPLETE**. The next Case C runtime-substrate/integration Work Package remains
+separately gated and must not start automatically.
 
 ## External references
 

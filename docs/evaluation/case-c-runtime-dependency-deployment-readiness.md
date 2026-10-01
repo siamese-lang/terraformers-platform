@@ -2,7 +2,7 @@
 
 ## Status
 
-**LIVE PREREQUISITES COMPLETE / FINAL RUNTIME LIVE ACCEPTANCE IMPLEMENTED — RESTART NOT YET EXECUTED**
+**LIVE ACCEPTANCE FAILED BEFORE RESTART / SECOND BOUNDED REPAIR IMPLEMENTED — LIVE REPAIR NOT YET APPLIED**
 
 Original implementation base:
 
@@ -187,12 +187,56 @@ A successful live-acceptance run must still prove:
 - backend Deployment remains absent;
 - temporary acceptance Pods and objects are cleaned.
 
+## First live-acceptance failure and root cause
+
+Protected workflow run `36857449268` reached the live MariaDB acceptance path after the backend-KSA
+GCS write/read/delete probe passed. The MariaDB VM had not yet been stopped when the workflow stalled:
+the pre-restart client could not connect to `terraformers-mariadb:3306`. A bounded operator probe to
+the VM private IP `10.40.0.11:3306` also timed out.
+
+Read-only diagnosis established:
+
+- MariaDB container `terraformers-mariadb` remained `running`;
+- the guest listened on `0.0.0.0:3306` and `[::]:3306`;
+- MariaDB completed initialization and reported `ready for connections`;
+- the GCP effective firewall allowed TCP/3306 from both `10.40.0.0/20` and `10.136.0.0/14`;
+- no Kubernetes NetworkPolicy existed;
+- a hostNetwork probe sourced through the GKE node path still timed out to `10.40.0.11:3306`.
+
+The reproduced mechanism is the Container-Optimized OS guest firewall: the MariaDB container uses
+`--network host`, but the startup script had no guest `iptables` allow rule for TCP/3306. The GCP
+VPC firewall alone therefore did not make the host-networked MariaDB listener reachable.
+
+The same run also exposed a workflow defect: MariaDB client attempts had no explicit connect timeout,
+so a single blocked TCP attempt defeated the intended bounded retry windows and also delayed the
+`always()` cleanup path. The run was force-cancelled before any MariaDB VM stop occurred; temporary
+probe Pods were then removed.
+
+## Second bounded repair
+
+The explicitly approved second repair keeps the selected topology and public-ingress prohibition:
+
+- the MariaDB startup script idempotently allows guest TCP/3306 only from the existing target subnet
+  `10.40.0.0/20` and current GKE Pod range `10.136.0.0/14`;
+- the existing VPC firewall remains unchanged and retains the same two-source boundary;
+- live-acceptance and cleanup MariaDB client calls gain an outer command timeout plus
+  `--connect-timeout=5`;
+- a fail-closed `runtime-host-firewall-repair` plan gate permits only one in-place update to the
+  existing MariaDB VM startup script;
+- the repair operation must restart that VM once after the reviewed Terraform apply so COS executes
+  the repaired startup script.
+
+No new IAM role, cloud product, public database ingress, SSH/IAP management path, backend Deployment,
+capacity tuning, or load generation is introduced.
+
 ## Remaining gate
 
-The workflow implementation itself must pass PR CI and independent review first.
+This second bounded repair must pass PR CI and independent review first. Merge is still a user
+checkpoint.
 
-The actual VM stop/start is a separate live checkpoint and has **not** been executed by this
-implementation branch.
+After merge, live application of `runtime-host-firewall-repair` is a separate checkpoint because it
+updates the MariaDB VM metadata and performs one stop/start to activate the guest-firewall rule.
+Only after that activation may the same `runtime-live-acceptance` scenario be rerun.
 
-Only after that reviewed live-acceptance run passes can this runtime-dependency/deployment-readiness
-unit be closed and the later backend Deployment Work Package be considered.
+The runtime-dependency/deployment-readiness unit closes only when that same-scenario live acceptance
+passes; the later backend Deployment Work Package remains out of scope.

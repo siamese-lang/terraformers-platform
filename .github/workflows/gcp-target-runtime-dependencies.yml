@@ -2122,7 +2122,6 @@ jobs:
       ISSUER_URI: https://identity.example.test/case-c
       CLIENT_ID: case-c-runtime-client
       FIXTURE: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
-      ARTIFACT_DIR: ${{ runner.temp }}/case-c-capacity-baseline
 
     steps:
       - uses: actions/checkout@v5
@@ -2238,6 +2237,8 @@ jobs:
           TOKEN_FILE: ${{ runner.temp }}/case-c-access.token
         run: |
           set -euo pipefail
+          ARTIFACT_DIR="${RUNNER_TEMP}/case-c-capacity-baseline"
+          export ARTIFACT_DIR
           pf_log="${RUNNER_TEMP}/case-c-capacity-port-forward.log"
           kubectl -n "$NAMESPACE" port-forward service/terraformers-backend 18080:80 >"$pf_log" 2>&1 &
           pf_pid=$!
@@ -2277,6 +2278,7 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
+          ARTIFACT_DIR="${RUNNER_TEMP}/case-c-capacity-baseline"
           summary="${ARTIFACT_DIR}/summary.json"
           saturation="${ARTIFACT_DIR}/saturation-classification.json"
           {

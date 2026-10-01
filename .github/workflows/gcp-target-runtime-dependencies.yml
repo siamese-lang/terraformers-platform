@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Apply one separately approved Case C runtime dependency or live-acceptance checkpoint.
+        description: Apply one separately approved Case C runtime dependency, backend deployment, or live-acceptance checkpoint.
         required: true
         type: choice
         options:
@@ -12,6 +12,7 @@ on:
           - runtime-dependencies
           - runtime-host-firewall-repair
           - kubernetes-prerequisites
+          - backend-deployment
           - runtime-live-acceptance
       expected_sha:
         description: Exact trusted main commit SHA being approved.
@@ -577,6 +578,529 @@ jobs:
             echo '- MariaDB Kubernetes service/EndpointSlice: present'
             echo '- Internal JWKS service: ready'
             echo '- Backend Deployment: absent'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+  backend-deployment:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'backend-deployment'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 15
+    env:
+      PROJECT_ID: terraformers-platform
+      ZONE: asia-northeast3-a
+      NAMESPACE: terraformers-target
+      BACKEND_IMAGE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted backend deployment request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match checked-out main.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == APPLY_REVIEWED_CASE_C_BACKEND_DEPLOYMENT_1 ]]
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify backend deployment prerequisites
+        run: |
+          set -euo pipefail
+
+          [[ "$(
+            gcloud compute instances describe terraformers-mariadb \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(status)'
+          )" == RUNNING ]]
+
+          ready_nodes="$(
+            kubectl get nodes \
+              -o jsonpath='{range .items[*]}{range .status.conditions[?(@.type=="Ready")]}{.status}{"\n"}{end}{end}' \
+              | grep -c '^True    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'runtime-live-acceptance'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 30
+    env:
+      PROJECT_ID: terraformers-platform
+      ZONE: asia-northeast3-a
+      NAMESPACE: terraformers-target
+      MARIADB_INSTANCE: terraformers-mariadb
+      RUNTIME_BUCKET: terraformers-runtime-objects-21647422237
+      BACKEND_IMAGE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae
+      MARIADB_IMAGE: ${{ inputs.mariadb_image }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted live-acceptance request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
+          [[ "$CONFIRMATION" == RUN_REVIEWED_GCP_RUNTIME_LIVE_ACCEPTANCE_RESTART ]]
+          [[ "$MARIADB_IMAGE" =~ ^mariadb:11\.4@sha256:[0-9a-f]{64}$ ]]
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify boundary and prepare probes
+        run: |
+          set -euo pipefail
+
+          [[ "$(
+            gcloud container clusters describe terraformers-target \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(secretSyncConfig.enabled)'
+          )" == True ]]
+          [[ "$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(status)'
+          )" == RUNNING ]]
+          [[ "$(
+            gcloud container node-pools describe terraformers-target-primary \
+              --cluster=terraformers-target --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(config.workloadMetadataConfig.mode)'
+          )" == GKE_METADATA ]]
+          [[ "$(
+            gcloud storage buckets describe "gs://$RUNTIME_BUCKET" \
+              --format='value(public_access_prevention)'
+          )" == enforced ]]
+          [[ "$(
+            gcloud storage buckets describe "gs://$RUNTIME_BUCKET" \
+              --format='value(uniform_bucket_level_access)'
+          )" == True ]]
+
+          bucket_policy="$(mktemp)"
+          gcloud storage buckets get-iam-policy "gs://$RUNTIME_BUCKET" --format=json > "$bucket_policy"
+          if jq -e '
+            any(.bindings[]?.members[]?;
+              . == "allUsers" or . == "allAuthenticatedUsers"
+            )
+          ' "$bucket_policy" >/dev/null; then
+            echo 'Runtime bucket unexpectedly has a public IAM principal.' >&2
+            exit 1
+          fi
+
+          startup="$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" --format=json \
+              | jq -r '.metadata.items[]? | select(.key == "startup-script") | .value'
+          )"
+          grep -Fq "MARIADB_IMAGE=\"$MARIADB_IMAGE\"" <<< "$startup"
+          grep -Fq '/var/lib/mysql' <<< "$startup"
+          grep -Fq 'docker rm -f terraformers-mariadb' <<< "$startup"
+
+          kubectl -n "$NAMESPACE" get secret terraformers-backend-runtime-secrets -o json \
+            | jq -e '.data.SPRING_DATASOURCE_PASSWORD | type == "string" and length > 0' >/dev/null
+          kubectl -n "$NAMESPACE" get endpointslice terraformers-mariadb >/dev/null
+          if kubectl -n "$NAMESPACE" get deployment terraformers-backend >/dev/null 2>&1; then
+            echo 'Backend Deployment must remain absent during live acceptance.' >&2
+            exit 1
+          fi
+
+          kubectl -n "$NAMESPACE" apply -f infra/kubernetes/base/backend-serviceaccount.yaml >/dev/null
+
+          gcs_pod="case-c-gcs-${GITHUB_RUN_ID}"
+          db_pod="case-c-db-${GITHUB_RUN_ID}"
+          echo "GCS_POD=$gcs_pod" >> "$GITHUB_ENV"
+          echo "DB_POD=$db_pod" >> "$GITHUB_ENV"
+
+          kubectl -n "$NAMESPACE" delete pod "$gcs_pod" "$db_pod" \
+            --ignore-not-found --wait=false >/dev/null 2>&1 || true
+
+          kubectl -n "$NAMESPACE" run "$gcs_pod" \
+            --image="$BACKEND_IMAGE" \
+            --restart=Never \
+            --overrides='{"spec":{"serviceAccountName":"terraformers-backend"}}' \
+            --command -- /bin/sh -c 'sleep 1800'
+
+          cat <<EOF | kubectl apply -f - >/dev/null
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: $db_pod
+            namespace: $NAMESPACE
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: mariadb-client
+                image: $MARIADB_IMAGE
+                imagePullPolicy: IfNotPresent
+                env:
+                  - name: MYSQL_PWD
+                    valueFrom:
+                      secretKeyRef:
+                        name: terraformers-backend-runtime-secrets
+                        key: SPRING_DATASOURCE_PASSWORD
+                command: ["/bin/sh", "-c", "sleep 1800"]
+          EOF
+
+          kubectl -n "$NAMESPACE" wait --for=condition=Ready "pod/$gcs_pod" --timeout=3m
+          kubectl -n "$NAMESPACE" wait --for=condition=Ready "pod/$db_pod" --timeout=3m
+
+      - name: Verify GCS through backend workload identity
+        run: |
+          set -euo pipefail
+          object="case-c-live-acceptance-${GITHUB_RUN_ID}.txt"
+          payload="case-c-live-acceptance-${GITHUB_SHA}"
+
+          kubectl -n "$NAMESPACE" exec "$GCS_POD" -- \
+            env BUCKET="$RUNTIME_BUCKET" OBJECT="$object" PAYLOAD="$payload" /bin/sh -ec '
+              token_json="$(
+                curl -fsS --retry 20 --retry-delay 2 \
+                  -H "Metadata-Flavor: Google" \
+                  "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
+              )"
+              access_token="$(printf "%s" "$token_json" | sed -n "s/.*\"access_token\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p")"
+              test -n "$access_token"
+
+              printf "%s" "$PAYLOAD" \
+                | curl -fsS -X POST \
+                    -H "Authorization: Bearer $access_token" \
+                    -H "Content-Type: text/plain" \
+                    --data-binary @- \
+                    "https://storage.googleapis.com/upload/storage/v1/b/$BUCKET/o?uploadType=media&name=$OBJECT" \
+                    >/dev/null
+
+              actual="$(
+                curl -fsS -H "Authorization: Bearer $access_token" \
+                  "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/$OBJECT?alt=media"
+              )"
+              test "$actual" = "$PAYLOAD"
+
+              curl -fsS -X DELETE \
+                -H "Authorization: Bearer $access_token" \
+                "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/$OBJECT" \
+                >/dev/null
+
+              status="$(
+                curl -sS -o /dev/null -w "%{http_code}" \
+                  -H "Authorization: Bearer $access_token" \
+                  "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/$OBJECT"
+              )"
+              test "$status" = 404
+            '
+
+      - name: Verify MariaDB persistence across VM restart
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          marker="case-c-${GITHUB_RUN_ID}-${GITHUB_SHA:0:12}"
+
+          db() {
+            kubectl -n "$NAMESPACE" exec "$DB_POD" -- \
+              timeout 8 mariadb --connect-timeout=5 --protocol=TCP -h terraformers-mariadb -P 3306 \
+                -u terraformers terraformers --batch --skip-column-names "$@"
+          }
+
+          ready=false
+          for _ in $(seq 1 30); do
+            if db -e 'SELECT 1' >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          [[ "$ready" == true ]]
+
+          db -e "CREATE TABLE IF NOT EXISTS case_c_runtime_acceptance_marker (
+                    id VARCHAR(128) PRIMARY KEY,
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                  );
+                  INSERT INTO case_c_runtime_acceptance_marker(id)
+                  VALUES ('$marker')
+                  ON DUPLICATE KEY UPDATE id = VALUES(id);"
+
+          before_ip="$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(networkInterfaces[0].networkIP)'
+          )"
+          endpoint_ip="$(kubectl -n "$NAMESPACE" get endpointslice terraformers-mariadb -o jsonpath='{.endpoints[0].addresses[0]}')"
+          [[ "$before_ip" == "$endpoint_ip" ]]
+
+          gcloud compute instances stop "$MARIADB_INSTANCE" \
+            --zone="$ZONE" --project="$PROJECT_ID" --quiet
+          gcloud compute instances start "$MARIADB_INSTANCE" \
+            --zone="$ZONE" --project="$PROJECT_ID" --quiet
+
+          [[ "$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(networkInterfaces[0].networkIP)'
+          )" == "$before_ip" ]]
+
+          persisted=false
+          for _ in $(seq 1 30); do
+            marker_result="$(db -e "SELECT id FROM case_c_runtime_acceptance_marker WHERE id='$marker';" 2>/dev/null || true)"
+            if [[ "$marker_result" == "$marker" ]]; then
+              persisted=true
+              break
+            fi
+            sleep 2
+          done
+          [[ "$persisted" == true ]] || {
+            echo 'Marker persistence/reconnect acceptance failed.' >&2
+            exit 1
+          }
+
+          db -e 'DROP TABLE IF EXISTS case_c_runtime_acceptance_marker;'
+
+          {
+            echo '## Case C runtime live acceptance'
+            echo
+            echo '- Backend KSA GCS write/read/delete: PASS'
+            echo '- Private GKE -> MariaDB path: PASS'
+            echo '- Marker row survived VM stop/start: PASS'
+            echo '- MariaDB reconnected after VM restart: PASS'
+            echo '- Temporary GCS object and DB marker table cleaned: PASS'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify final runtime boundary
+        run: |
+          set -euo pipefail
+          [[ "$(
+            gcloud storage buckets describe "gs://$RUNTIME_BUCKET" \
+              --format='value(public_access_prevention)'
+          )" == enforced ]]
+          [[ "$(
+            gcloud storage buckets describe "gs://$RUNTIME_BUCKET" \
+              --format='value(uniform_bucket_level_access)'
+          )" == True ]]
+          kubectl -n "$NAMESPACE" get secret terraformers-backend-runtime-secrets -o json \
+            | jq -e '.data.SPRING_DATASOURCE_PASSWORD | type == "string" and length > 0' >/dev/null
+          kubectl -n "$NAMESPACE" get serviceaccount terraformers-backend >/dev/null
+          kubectl -n "$NAMESPACE" get endpointslice terraformers-mariadb >/dev/null
+          if kubectl -n "$NAMESPACE" get deployment terraformers-backend >/dev/null 2>&1; then
+            echo 'Backend Deployment was unexpectedly created.' >&2
+            exit 1
+          fi
+          {
+            echo '- Runtime bucket private/PAP/UBLA: PASS'
+            echo '- Secret Sync DB-password key present; value not printed'
+            echo '- Backend Deployment absent'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Recover runtime and clean temporary acceptance state
+        if: always()
+        run: |
+          set +e
+
+          object="case-c-live-acceptance-${GITHUB_RUN_ID}.txt"
+          gcloud storage rm "gs://$RUNTIME_BUCKET/$object" --quiet >/dev/null 2>&1 || true
+
+          status="$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(status)' 2>/dev/null
+          )"
+
+          if [[ "$status" == STOPPING ]]; then
+            for _ in $(seq 1 60); do
+              status="$(
+                gcloud compute instances describe "$MARIADB_INSTANCE" \
+                  --zone="$ZONE" --project="$PROJECT_ID" \
+                  --format='value(status)' 2>/dev/null
+              )"
+              [[ "$status" == TERMINATED ]] && break
+              sleep 2
+            done
+          fi
+
+          if [[ "$status" == TERMINATED ]]; then
+            for _ in 1 2 3; do
+              gcloud compute instances start "$MARIADB_INSTANCE" \
+                --zone="$ZONE" --project="$PROJECT_ID" --quiet && break
+              sleep 5
+            done
+          fi
+
+          for _ in $(seq 1 60); do
+            status="$(
+              gcloud compute instances describe "$MARIADB_INSTANCE" \
+                --zone="$ZONE" --project="$PROJECT_ID" \
+                --format='value(status)' 2>/dev/null
+            )"
+            [[ "$status" == RUNNING ]] && break
+            sleep 2
+          done
+          if [[ "$status" != RUNNING ]]; then
+            echo "ERROR: MariaDB VM recovery did not reach RUNNING; status=$status" >&2
+          fi
+
+          db_pod="${DB_POD:-case-c-db-${GITHUB_RUN_ID}}"
+          if kubectl -n "$NAMESPACE" get pod "$db_pod" >/dev/null 2>&1; then
+            for _ in $(seq 1 60); do
+              if kubectl -n "$NAMESPACE" exec "$db_pod" -- \
+                timeout 8 mariadb --connect-timeout=5 --protocol=TCP -h terraformers-mariadb -P 3306 \
+                  -u terraformers terraformers --batch --skip-column-names \
+                  -e 'DROP TABLE IF EXISTS case_c_runtime_acceptance_marker;' \
+                  >/dev/null 2>&1; then
+                break
+              fi
+              sleep 2
+            done
+          fi
+
+          kubectl -n "$NAMESPACE" delete pod \
+            "${GCS_POD:-case-c-gcs-${GITHUB_RUN_ID}}" \
+            "$db_pod" \
+            --ignore-not-found --wait=false >/dev/null 2>&1 || true
+
+          [[ "$status" == RUNNING ]] || exit 1
+
+ || true
+          )"
+          (( ready_nodes >= 1 )) || {
+            echo 'No Ready GKE node is available for the backend Deployment.' >&2
+            exit 1
+          }
+
+          kubectl -n "$NAMESPACE" rollout status statefulset/terraformers-opensearch --timeout=2m
+          kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
+          kubectl -n "$NAMESPACE" get secret terraformers-backend-runtime-secrets -o json \
+            | jq -e '.data.SPRING_DATASOURCE_PASSWORD | type == "string" and length > 0' >/dev/null
+          kubectl -n "$NAMESPACE" get endpointslice terraformers-mariadb >/dev/null
+
+          if kubectl -n "$NAMESPACE" get deployment terraformers-backend >/dev/null 2>&1; then
+            echo 'Backend Deployment already exists; first deployment checkpoint refuses to overwrite it.' >&2
+            exit 1
+          fi
+
+          for pair in \
+            'create serviceaccounts' \
+            'patch serviceaccounts' \
+            'create configmaps' \
+            'patch configmaps' \
+            'create services' \
+            'patch services' \
+            'create deployments.apps' \
+            'patch deployments.apps'
+          do
+            verb="${pair%% *}"
+            resource="${pair#* }"
+            kubectl auth can-i "$verb" "$resource" -n "$NAMESPACE" | grep -Fxq yes || {
+              echo "Missing Kubernetes permission: $verb $resource" >&2
+              exit 1
+            }
+          done
+
+      - name: Render and verify exact backend deployment
+        run: |
+          set -euo pipefail
+          rendered="${RUNNER_TEMP}/gcp-target-rendered.yaml"
+          kubectl kustomize infra/kubernetes/overlays/gcp-target > "$rendered"
+
+          grep -Fq "image: $BACKEND_IMAGE" "$rendered"
+          ! grep -Fq 'registry.example.com/terraformers-backend' "$rendered"
+          ! grep -Fq 'immutable-target-sha' "$rendered"
+
+          grep -Fq 'GOOGLE_CLOUD_PROJECT: terraformers-platform' "$rendered"
+          grep -Fq 'COGNITO_USER_POOL_CLIENT_ID: case-c-runtime-client' "$rendered"
+          ! grep -Fq 'JWT_COGNITO_CLIENT_ID:' "$rendered"
+
+      - name: Apply only backend-labeled resources
+        run: |
+          set -euo pipefail
+          rendered="${RUNNER_TEMP}/gcp-target-rendered.yaml"
+
+          kubectl apply \
+            -f "$rendered" \
+            -l app.kubernetes.io/name=terraformers-backend
+
+          if ! kubectl -n "$NAMESPACE" rollout status \
+              deployment/terraformers-backend --timeout=5m; then
+            echo 'Backend Deployment did not become Ready; capturing bounded diagnostics.' >&2
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend -o wide || true
+            kubectl -n "$NAMESPACE" get pods \
+              -l app.kubernetes.io/name=terraformers-backend -o wide || true
+            kubectl -n "$NAMESPACE" describe deployment terraformers-backend || true
+            kubectl -n "$NAMESPACE" logs \
+              -l app.kubernetes.io/name=terraformers-backend \
+              --all-containers=true --tail=200 || true
+            exit 1
+          fi
+
+      - name: Verify deployed backend boundary
+        run: |
+          set -euo pipefail
+
+          actual_image="$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend \
+              -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}'
+          )"
+          [[ "$actual_image" == "$BACKEND_IMAGE" ]]
+
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend \
+              -o jsonpath='{.status.readyReplicas}'
+          )" == 1 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend \
+              -o jsonpath='{.status.availableReplicas}'
+          )" == 1 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get service terraformers-backend \
+              -o jsonpath='{.spec.type}'
+          )" == ClusterIP ]]
+
+          {
+            echo '## Case C backend deployment'
+            echo
+            printf -- '- Source SHA: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Immutable backend image: `%s`\n' "$actual_image"
+            echo '- Ready replicas: 1/1'
+            echo '- Service exposure: ClusterIP'
+            echo '- Runtime prerequisites reused; no new IAM/cloud resource mutation'
+            echo '- Load generation / rollout / rollback: not executed in this checkpoint'
           } >> "$GITHUB_STEP_SUMMARY"
 
   runtime-live-acceptance:

@@ -285,9 +285,13 @@ Rejected for first baseline:
 
 ## 13. Immediate next single task
 
-**Case C GCP quota/cost preflight.**
+**Case C GCP quota/cost preflight — ACTIVE.**
 
-It is read-only.
+See [Case C GCP Quota / Cost Preflight](../../evaluation/case-c-gcp-quota-cost-preflight.md).
+
+It is read-only and reuses the existing GCP plan workflow / plan identity. Merging the active
+Work Package automatically triggers the preflight on `main`; no manual Cloud Shell command or
+resource creation is required.
 
 Its only outcome is to determine whether the candidate:
 

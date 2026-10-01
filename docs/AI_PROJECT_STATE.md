@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C compatibility verification COMPLETE: Cloud Storage PASS, Artifact Registry PASS, MySQL 8.4 FAIL; next candidate is relational hosting decision**
+- Current single task: **Case C relational hosting SELECTED: MariaDB 11.4 on dedicated Compute Engine VM; next candidate is read-only GCP quota/cost preflight**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -132,6 +132,13 @@ Case C — Cloud runtime capacity and safe delivery:
 - MySQL 8.4 connected successfully and applied migrations 001–002, then V003 failed on
   `ADD COLUMN IF NOT EXISTS` syntax while MariaDB 11.4 remained green; therefore Cloud SQL for
   MySQL is not a drop-in relational choice under the unchanged-migration gate;
+- [Case C Relational Hosting Decision](plans/active/case-c-relational-hosting-decision.md) is
+  **SELECTED**: retain MariaDB 11.4 on one dedicated Compute Engine VM, containerized with an exact
+  image digest and a dedicated Persistent Disk for DB data; do not place MariaDB in the current GKE
+  cluster for the first baseline;
+- `e2-medium` plus a 20 GiB `pd-balanced` data disk are initial candidates only; no cloud creation
+  is authorized until a read-only `asia-northeast3` quota / project quota / Free Trial-credit
+  preflight passes;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;

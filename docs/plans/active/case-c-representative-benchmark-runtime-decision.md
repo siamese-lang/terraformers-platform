@@ -475,16 +475,25 @@ Flyway applied migrations 001 and 002, but migration 003 failed on MariaDB-speci
 Therefore Alternative C in its original 3/3 form is **NOT SELECTABLE**. Cloud Storage and Artifact
 Registry remain passing candidates; only relational hosting must be reopened.
 
-The next decision must compare:
-- intentionally migrating the persistence contract to MySQL/Cloud SQL, including migration-history
-  compatibility and Case B semantics; versus
-- retaining MariaDB in a production-representative hosting shape.
+The relational branch has now been closed by
+[Case C Relational Hosting Decision](case-c-relational-hosting-decision.md):
 
-No live GCP resource creation or IAM mutation is authorized by this completed compatibility Work Package.
+- retain MariaDB 11.4;
+- run it on one dedicated Compute Engine VM rather than the current GKE cluster;
+- package MariaDB as a digest-pinned container;
+- place `/var/lib/mysql` on a dedicated Persistent Disk;
+- keep database service traffic on the private application path and prohibit public MariaDB exposure;
+- defer MariaDB→MySQL/Cloud SQL migration.
+
+The initial `e2-medium` / 20 GiB `pd-balanced` sizing is not yet an authorized cloud apply
+parameter. The immediate next task is a read-only quota/cost preflight against the actual
+`terraformers-platform` project and Free Trial headroom.
+
+No live GCP resource creation or IAM mutation is authorized by this decision.
 
 ## 15. Approval boundary
 
-**Runtime selection status: COMPATIBILITY_VERIFICATION_COMPLETE — 2/3 PASS, MYSQL 8.4 FAIL; RELATIONAL HOSTING DECISION REOPENED**
+**Runtime selection status: RELATIONAL HOSTING SELECTED — MARIA DB VM; QUOTA/COST PREFLIGHT REQUIRED BEFORE IMPLEMENTATION**
 
 No implementation Work Package for the production-representative runtime may be created until the
 compatibility evidence above is reviewed.

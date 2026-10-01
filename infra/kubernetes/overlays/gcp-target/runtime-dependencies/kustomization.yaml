@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: terraformers-target
+resources:
+  - secret-sync-serviceaccount.yaml
+  - secret-provider-class.yaml
+  - secret-sync.yaml
+  - mariadb-service.yaml
+  - jwks-server.yaml

@@ -105,11 +105,14 @@ jobs:
               "runtime-secret-foundation",
               "runtime-dependencies",
               "kubernetes-prerequisites",
+              "runtime-live-acceptance",
               "APPLY_REVIEWED_GCP_RUNTIME_SECRET_FOUNDATION_3",
               "APPLY_REVIEWED_GCP_RUNTIME_DEPENDENCIES_10",
               "APPLY_REVIEWED_GCP_RUNTIME_K8S_PREREQUISITES",
+              "RUN_REVIEWED_GCP_RUNTIME_LIVE_ACCEPTANCE_RESTART",
               "mariadb:11.4@sha256:",
               "kubectl apply -k infra/kubernetes/overlays/gcp-target/runtime-dependencies",
+              "gcloud compute instances stop",
           ]:
               if marker not in runtime_workflow:
                   raise SystemExit(f"missing runtime dependency workflow marker: {marker}")

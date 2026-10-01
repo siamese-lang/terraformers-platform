@@ -16,6 +16,7 @@ on:
           - backend-revision-rollout
           - backend-replacement-durability
           - backend-live-validation
+          - capacity-baseline
           - runtime-live-acceptance
       expected_sha:
         description: Exact trusted main commit SHA being approved.
@@ -30,11 +31,11 @@ on:
         required: false
         type: string
       backend_image:
-        description: Exact immutable Artifact Registry backend image; required for backend rollout and live validation.
+        description: Exact immutable Artifact Registry backend image; required for backend rollout, live validation, and capacity baseline.
         required: false
         type: string
       backend_source_sha:
-        description: Full source commit SHA embedded in the backend image; required for backend rollout.
+        description: Full source commit SHA embedded in the backend image; required for backend rollout and capacity baseline.
         required: false
         type: string
       expected_current_backend_image:
@@ -2105,3 +2106,190 @@ jobs:
 
           [[ "$status" == RUNNING ]] || exit 1
 
+
+  capacity-baseline:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'capacity-baseline'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 120
+    env:
+      PROJECT_ID: terraformers-platform
+      ZONE: asia-northeast3-a
+      NAMESPACE: terraformers-target
+      ISSUER_URI: https://identity.example.test/case-c
+      CLIENT_ID: case-c-runtime-client
+      FIXTURE: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
+      ARTIFACT_DIR: ${{ runner.temp }}/case-c-capacity-baseline
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate protected capacity-baseline request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match checked-out main.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == RUN_REVIEWED_CASE_C_CAPACITY_BASELINE_1 ]] || {
+            echo 'Capacity baseline requires confirmation RUN_REVIEWED_CASE_C_CAPACITY_BASELINE_1.' >&2
+            exit 1
+          }
+          [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]] || {
+            echo 'capacity-baseline requires an exact immutable backend_image.' >&2
+            exit 1
+          }
+          [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'capacity-baseline requires an exact backend_source_sha.' >&2
+            exit 1
+          }
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Prepare temporary authenticated JWT fixture
+        run: |
+          set -euo pipefail
+          previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
+          private_key="${RUNNER_TEMP}/case-c-private.pem"
+          modulus_bin="${RUNNER_TEMP}/case-c-modulus.bin"
+          jwks="${RUNNER_TEMP}/case-c-jwks.json"
+          token_file="${RUNNER_TEMP}/case-c-access.token"
+          unsigned="${RUNNER_TEMP}/case-c-unsigned.token"
+          signature="${RUNNER_TEMP}/case-c-signature.bin"
+          kid="case-c-capacity-${GITHUB_RUN_ID}"
+
+          kubectl -n "$NAMESPACE" get configmap terraformers-jwks \
+            -o jsonpath='{.data.jwks\.json}' > "$previous_jwks"
+          test -s "$previous_jwks"
+          jq -e '.keys == []' "$previous_jwks" >/dev/null || {
+            echo 'Refusing to replace a non-placeholder JWKS configuration.' >&2
+            exit 1
+          }
+
+          b64url_file() { openssl base64 -A <"$1" | tr '+/' '-_' | tr -d '='; }
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
+            -pkeyopt rsa_keygen_pubexp:65537 -out "$private_key" 2>/dev/null
+          modulus_hex="$(openssl rsa -in "$private_key" -noout -modulus 2>/dev/null | cut -d= -f2)"
+          printf '%s' "$modulus_hex" | xxd -r -p > "$modulus_bin"
+          modulus="$(b64url_file "$modulus_bin")"
+          printf '{"keys":[{"kid":"%s","kty":"RSA","alg":"RS256","use":"sig","n":"%s","e":"AQAB"}]}' \
+            "$kid" "$modulus" > "$jwks"
+
+          kubectl -n "$NAMESPACE" create configmap terraformers-jwks \
+            --from-file=jwks.json="$jwks" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n "$NAMESPACE" rollout restart deployment/terraformers-jwks
+          kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
+
+          service_visible=false
+          for _ in $(seq 1 30); do
+            backend_seen_jwks="$(kubectl -n "$NAMESPACE" exec deployment/terraformers-backend \
+              -c backend -- curl -fsS http://terraformers-jwks:8080/jwks.json 2>/dev/null || true)"
+            if jq -e --arg kid "$kid" --arg modulus "$modulus" '
+              .keys | length == 1 and .[0].kid == $kid and .[0].alg == "RS256"
+              and .[0].n == $modulus and .[0].e == "AQAB"
+            ' <<< "$backend_seen_jwks" >/dev/null 2>&1; then service_visible=true; break; fi
+            sleep 1
+          done
+          [[ "$service_visible" == true ]] || {
+            echo 'Backend pod did not observe the new JWKS through the Service path.' >&2
+            exit 1
+          }
+
+          now="$(date +%s)"
+          header="$(printf '{"alg":"RS256","kid":"%s","typ":"JWT"}' "$kid" | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
+          payload="$(printf '{"iss":"%s","sub":"%s","email":"%s","token_use":"access","client_id":"%s","iat":%s,"exp":%s}' \
+            "$ISSUER_URI" "case-c-capacity-${GITHUB_RUN_ID}" "case-c-capacity-${GITHUB_RUN_ID}@example.test" \
+            "$CLIENT_ID" "$now" "$((now + 10800))" | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
+          printf '%s.%s' "$header" "$payload" > "$unsigned"
+          openssl dgst -sha256 -sign "$private_key" -out "$signature" "$unsigned"
+          printf '%s.%s' "$(cat "$unsigned")" "$(b64url_file "$signature")" > "$token_file"
+          chmod 600 "$token_file"
+
+      - name: Run frozen closed-loop capacity baseline
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_sha }}
+          EXPECTED_BACKEND_IMAGE: ${{ inputs.backend_image }}
+          EXPECTED_BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          TOKEN_FILE: ${{ runner.temp }}/case-c-access.token
+        run: |
+          set -euo pipefail
+          pf_log="${RUNNER_TEMP}/case-c-capacity-port-forward.log"
+          kubectl -n "$NAMESPACE" port-forward service/terraformers-backend 18080:80 >"$pf_log" 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid" >/dev/null 2>&1 || true; wait "$pf_pid" >/dev/null 2>&1 || true' EXIT
+          ready=false
+          for _ in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:18080/actuator/health > /dev/null 2>&1; then ready=true; break; fi
+            sleep 1
+          done
+          [[ "$ready" == true ]] || { cat "$pf_log" >&2; exit 1; }
+          bash scripts/checks/case-c-capacity-baseline.sh
+
+      - name: Restore placeholder JWKS fixture
+        if: always()
+        run: |
+          set -euo pipefail
+          previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
+          if [[ -s "$previous_jwks" ]]; then
+            kubectl -n "$NAMESPACE" create configmap terraformers-jwks \
+              --from-file=jwks.json="$previous_jwks" --dry-run=client -o yaml | kubectl apply -f -
+            kubectl -n "$NAMESPACE" rollout restart deployment/terraformers-jwks
+            kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
+          fi
+          rm -f "${RUNNER_TEMP}/case-c-private.pem" "${RUNNER_TEMP}/case-c-access.token" \
+            "${RUNNER_TEMP}/case-c-unsigned.token" "${RUNNER_TEMP}/case-c-signature.bin"
+
+      - name: Upload sanitized capacity evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: case-c-capacity-baseline-${{ github.run_id }}
+          path: ${{ runner.temp }}/case-c-capacity-baseline
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summarize capacity baseline
+        if: always()
+        run: |
+          set -euo pipefail
+          summary="${ARTIFACT_DIR}/summary.json"
+          saturation="${ARTIFACT_DIR}/saturation-classification.json"
+          {
+            echo '## Case C capacity baseline'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            echo '- Workload: closed-loop AnalysisJob concurrency `1 → 2 → 4 → 6 → 8`'
+            echo '- Timing: 30s pre-sample / 240s active / 600s drain / 5s metrics sample'
+            if [[ -s "$summary" && -s "$saturation" ]]; then
+              printf -- '- Real analysis requests: `%s`\n' "$(jq -r '.real_analysis_requests' "$summary")"
+              printf -- '- Classification: `%s`\n' "$(jq -r '.classification' "$saturation")"
+              printf -- '- Executed steps: `%s`\n' "$(jq -r '.executed_steps | join(",")' "$saturation")"
+            else
+              echo '- Result: `INCOMPLETE`; inspect the sanitized artifact and failed step.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

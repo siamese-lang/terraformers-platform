@@ -27,7 +27,12 @@ APPLY_PROJECT_ROLES=(
 )
 
 PLAN_PROJECT_ROLES=(
+  roles/browser
+  roles/compute.viewer
+  roles/container.viewer
+  roles/iam.serviceAccountViewer
   roles/iam.securityReviewer
+  roles/serviceusage.serviceUsageConsumer
   roles/secretmanager.viewer
   roles/storage.bucketViewer
 )

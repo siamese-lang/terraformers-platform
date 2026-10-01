@@ -193,9 +193,11 @@ The repository is already strongly MySQL-family oriented:
   MariaDB transactions rather than a separate MariaDB-specific queue product;
 - MariaDB Connector/J documentation states that the driver supports MariaDB and MySQL servers.
 
-MySQL 8.0 release notes record `IF NOT EXISTS` support added in the MySQL 8.0.29 line, so the
-repository's `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` migrations are not automatically ruled out
-by current MySQL 8.4.
+The compatibility run disproved the earlier assumption that the repository's
+`ALTER TABLE ... ADD COLUMN IF NOT EXISTS` migration would be accepted unchanged by MySQL 8.4.
+MySQL 8.4 accepted migrations 001 and 002, then rejected V003 at that construct with SQL syntax
+error 1064. The MySQL 8.4 `ALTER TABLE` grammar documents `ADD [COLUMN] col_name ...` without an
+`IF NOT EXISTS` form for column addition.
 
 ### Repository evidence preventing immediate selection
 

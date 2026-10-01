@@ -530,6 +530,52 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "activate")
 
+    def test_capacity_scale_out_accepts_only_one_to_two_node_pool_update(self) -> None:
+        before = {
+            "name": "terraformers-target-primary",
+            "location": "asia-northeast3-a",
+            "node_count": 1,
+            "node_config": [node_config()],
+        }
+        after = dict(before)
+        after["node_count"] = 2
+        plan = {
+            "resource_changes": [
+                resource(
+                    "google_container_node_pool.target",
+                    "google_container_node_pool",
+                    ["update"],
+                    after,
+                    before,
+                )
+            ]
+        }
+        result = gate.validate_plan(plan, "capacity-scale-out")
+        self.assertEqual(result["resource_change_count"], 1)
+
+    def test_capacity_scale_in_accepts_only_two_to_one_node_pool_update(self) -> None:
+        before = {
+            "name": "terraformers-target-primary",
+            "location": "asia-northeast3-a",
+            "node_count": 2,
+            "node_config": [node_config()],
+        }
+        after = dict(before)
+        after["node_count"] = 1
+        plan = {
+            "resource_changes": [
+                resource(
+                    "google_container_node_pool.target",
+                    "google_container_node_pool",
+                    ["update"],
+                    after,
+                    before,
+                )
+            ]
+        }
+        result = gate.validate_plan(plan, "capacity-scale-in")
+        self.assertEqual(result["resource_change_count"], 1)
+
     def test_idle_accepts_only_one_to_zero_node_pool_update(self) -> None:
         before = {
             "name": "terraformers-target-primary",

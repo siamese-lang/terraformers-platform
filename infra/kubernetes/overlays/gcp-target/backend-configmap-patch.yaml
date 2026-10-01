@@ -1,6 +1,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  SPRING_DATASOURCE_URL: jdbc:mariadb://terraformers-mariadb:3306/terraformers
+  SPRING_DATASOURCE_USERNAME: terraformers
+  UPLOAD_SOURCE_BUCKET: terraformers-runtime-objects-21647422237
+  ANALYSIS_RESULT_BUCKET_NAME: terraformers-runtime-objects-21647422237
+  JWT_ISSUER_URI: https://identity.example.test/case-c
+  JWT_JWK_SET_URI: http://terraformers-jwks:8080/jwks.json
+  JWT_COGNITO_CLIENT_ID: case-c-runtime-client
   name: terraformers-backend-runtime-config
 data:
   SPRING_PROFILES_ACTIVE: "prod,gcp-target"

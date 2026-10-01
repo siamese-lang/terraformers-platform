@@ -27,6 +27,7 @@ APPLY_PROJECT_ROLES=(
 )
 
 PLAN_PROJECT_ROLES=(
+  roles/iam.securityReviewer
   roles/secretmanager.viewer
   roles/storage.bucketViewer
 )

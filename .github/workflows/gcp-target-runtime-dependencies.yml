@@ -13,6 +13,7 @@ on:
           - runtime-host-firewall-repair
           - kubernetes-prerequisites
           - backend-deployment
+          - backend-live-validation
           - runtime-live-acceptance
       expected_sha:
         description: Exact trusted main commit SHA being approved.
@@ -748,6 +749,282 @@ jobs:
             echo '- Runtime prerequisites reused; no new IAM/cloud resource mutation'
             echo '- Load generation / rollout / rollback: not executed in this checkpoint'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  backend-live-validation:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'backend-live-validation'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 30
+    env:
+      PROJECT_ID: terraformers-platform
+      ZONE: asia-northeast3-a
+      NAMESPACE: terraformers-target
+      ISSUER_URI: https://identity.example.test/case-c
+      CLIENT_ID: case-c-runtime-client
+      BACKEND_IMAGE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae
+      FIXTURE: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted backend live-validation request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == 'refs/heads/main' ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match checked-out main.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == RUN_REVIEWED_CASE_C_BACKEND_LIVE_VALIDATION_1 ]] || {
+            echo 'Backend live validation requires confirmation RUN_REVIEWED_CASE_C_BACKEND_LIVE_VALIDATION_1.' >&2
+            exit 1
+          }
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify deployed backend boundary
+        run: |
+          set -euo pipefail
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.readyReplicas}'
+          )" == 1 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.availableReplicas}'
+          )" == 1 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}'
+          )" == "$BACKEND_IMAGE" ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get service terraformers-backend               -o jsonpath='{.spec.type}'
+          )" == ClusterIP ]]
+          kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
+          test -s "$FIXTURE"
+
+      - name: Prepare ephemeral authenticated JWT fixture
+        run: |
+          set -euo pipefail
+          previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
+          private_key="${RUNNER_TEMP}/case-c-private.pem"
+          public_key="${RUNNER_TEMP}/case-c-public.pem"
+          jwks="${RUNNER_TEMP}/case-c-jwks.json"
+          token_file="${RUNNER_TEMP}/case-c-access.token"
+
+          kubectl -n "$NAMESPACE" get configmap terraformers-jwks             -o jsonpath='{.data.jwks\.json}' > "$previous_jwks"
+          test -s "$previous_jwks"
+          jq -e '.keys == []' "$previous_jwks" >/dev/null || {
+            echo 'Refusing to replace a non-placeholder JWKS configuration.' >&2
+            exit 1
+          }
+
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048             -out "$private_key" >/dev/null 2>&1
+          openssl pkey -in "$private_key" -pubout -out "$public_key" >/dev/null 2>&1
+
+          modulus_hex="$(
+            openssl rsa -pubin -in "$public_key" -modulus -noout | cut -d= -f2
+          )"
+          modulus_b64="$(
+            python3 - "$modulus_hex" <<'PY'
+import base64
+import sys
+raw = bytes.fromhex(sys.argv[1])
+print(base64.urlsafe_b64encode(raw).rstrip(b"=").decode())
+PY
+          )"
+          kid="case-c-${GITHUB_RUN_ID}"
+          jq -n --arg kid "$kid" --arg n "$modulus_b64"             '{keys:[{kty:"RSA",use:"sig",alg:"RS256",kid:$kid,n:$n,e:"AQAB"}]}'             > "$jwks"
+
+          kubectl -n "$NAMESPACE" create configmap terraformers-jwks             --from-file=jwks.json="$jwks"             --dry-run=client -o yaml             | kubectl apply -f -
+          kubectl -n "$NAMESPACE" rollout restart deployment/terraformers-jwks
+          kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
+
+          now="$(date +%s)"
+          exp="$((now + 1800))"
+          header="$(
+            jq -nc --arg kid "$kid" '{alg:"RS256",typ:"JWT",kid:$kid}'
+          )"
+          payload="$(
+            jq -nc               --arg iss "$ISSUER_URI"               --arg sub "case-c-${GITHUB_RUN_ID}"               --arg email "case-c-${GITHUB_RUN_ID}@example.test"               --arg client_id "$CLIENT_ID"               --argjson iat "$now"               --argjson exp "$exp"               '{
+                iss:$iss,
+                sub:$sub,
+                email:$email,
+                "cognito:username":$sub,
+                token_use:"access",
+                client_id:$client_id,
+                iat:$iat,
+                exp:$exp
+              }'
+          )"
+
+          b64url() {
+            python3 -c 'import base64,sys; data=sys.stdin.buffer.read(); print(base64.urlsafe_b64encode(data).rstrip(b"=").decode())'
+          }
+
+          header_b64="$(printf '%s' "$header" | b64url)"
+          payload_b64="$(printf '%s' "$payload" | b64url)"
+          signing_input="${header_b64}.${payload_b64}"
+          signature="$(
+            printf '%s' "$signing_input"               | openssl dgst -sha256 -sign "$private_key"               | b64url
+          )"
+          printf '%s.%s' "$signing_input" "$signature" > "$token_file"
+
+      - name: Run authenticated integrated backend path
+        run: |
+          set -euo pipefail
+          token="$(cat "${RUNNER_TEMP}/case-c-access.token")"
+          upload_json="${RUNNER_TEMP}/case-c-upload.json"
+          job_json="${RUNNER_TEMP}/case-c-job.json"
+          draft_json="${RUNNER_TEMP}/case-c-draft.json"
+          pf_log="${RUNNER_TEMP}/case-c-port-forward.log"
+
+          kubectl -n "$NAMESPACE" port-forward service/terraformers-backend 18080:80             >"$pf_log" 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid" >/dev/null 2>&1 || true' EXIT
+
+          ready=false
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/actuator/health               | jq -e '.status == "UP"' >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          [[ "$ready" == true ]] || {
+            cat "$pf_log" >&2
+            echo 'Backend port-forward did not become healthy.' >&2
+            exit 1
+          }
+
+          upload_code="$(
+            curl -sS -o "$upload_json" -w '%{http_code}'               -H "Authorization: Bearer ${token}"               -F "file=@${FIXTURE};type=image/webp"               -F "projectName=case-c-live-${GITHUB_RUN_ID}"               http://127.0.0.1:18080/api/upload
+          )"
+          [[ "$upload_code" == 201 ]] || {
+            cat "$upload_json" >&2 || true
+            echo "Authenticated upload returned HTTP ${upload_code}, expected 201." >&2
+            exit 1
+          }
+
+          jq -e '
+            .storageProvider == "gcs"
+            and .binaryPersisted == true
+            and (.analysisJobId | type == "string" and length > 0)
+            and (.projectId | type == "number")
+            and (.sourceFileId | type == "number")
+            and (.sourceBucket == "terraformers-runtime-objects-21647422237")
+            and (.sourceKey | type == "string" and length > 0)
+          ' "$upload_json" >/dev/null
+
+          job_id="$(jq -r '.analysisJobId' "$upload_json")"
+          project_id="$(jq -r '.projectId' "$upload_json")"
+
+          terminal_status=""
+          for _ in $(seq 1 240); do
+            job_code="$(
+              curl -sS -o "$job_json" -w '%{http_code}'                 -H "Authorization: Bearer ${token}"                 "http://127.0.0.1:18080/api/analysis/jobs/${job_id}"
+            )"
+            [[ "$job_code" == 200 ]] || {
+              cat "$job_json" >&2 || true
+              echo "AnalysisJob read returned HTTP ${job_code}, expected 200." >&2
+              exit 1
+            }
+
+            terminal_status="$(jq -r '.status' "$job_json")"
+            case "$terminal_status" in
+              SUCCEEDED)
+                break
+                ;;
+              FAILED)
+                cat "$job_json" >&2
+                echo 'Integrated analysis reached FAILED.' >&2
+                exit 1
+                ;;
+              PENDING|RUNNING)
+                sleep 5
+                ;;
+              *)
+                cat "$job_json" >&2
+                echo "Unexpected AnalysisJob status: ${terminal_status}" >&2
+                exit 1
+                ;;
+            esac
+          done
+          [[ "$terminal_status" == SUCCEEDED ]] || {
+            cat "$job_json" >&2 || true
+            echo "AnalysisJob did not reach SUCCEEDED; final status=${terminal_status}." >&2
+            exit 1
+          }
+
+          jq -e             --arg job_id "$job_id"             --argjson project_id "$project_id" '
+              .id == $job_id
+              and .projectId == $project_id
+              and .status == "SUCCEEDED"
+              and (.provider | type == "string" and length > 0)
+              and (.resultFileId | type == "number")
+              and (.resultObjectKey | type == "string" and length > 0)
+              and (.failureReason == null)
+            ' "$job_json" >/dev/null
+
+          draft_code="$(
+            curl -sS -o "$draft_json" -w '%{http_code}'               -H "Authorization: Bearer ${token}"               "http://127.0.0.1:18080/api/projects/${project_id}/terraform/main.tf"
+          )"
+          [[ "$draft_code" == 200 ]] || {
+            cat "$draft_json" >&2 || true
+            echo "Terraform draft read returned HTTP ${draft_code}, expected 200." >&2
+            exit 1
+          }
+          result_key="$(jq -r '.resultObjectKey' "$job_json")"
+          jq -e             --arg job_id "$job_id"             --arg result_key "$result_key" '
+              .latestAnalysisJobId == $job_id
+              and .latestResultObjectKey == $result_key
+              and (.content | type == "string" and length > 0)
+            ' "$draft_json" >/dev/null
+
+          {
+            echo '## Case C authenticated backend live validation'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            echo '- Backend health: `UP`'
+            echo '- Authenticated upload: `HTTP 201`'
+            echo '- Source object provider: `gcs`'
+            echo '- Source bytes persisted: `true`'
+            printf -- '- AnalysisJob: `%s`\n' "$job_id"
+            echo '- Terminal state: `SUCCEEDED`'
+            printf -- '- Provider: `%s`\n' "$(jq -r '.provider' "$job_json")"
+            printf -- '- Result object key: `%s`\n' "$result_key"
+            echo '- Generated Terraform read through backend: `PASS`'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Restore placeholder JWKS fixture
+        if: always()
+        run: |
+          set -euo pipefail
+          previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
+          if [[ -s "$previous_jwks" ]]; then
+            kubectl -n "$NAMESPACE" create configmap terraformers-jwks               --from-file=jwks.json="$previous_jwks"               --dry-run=client -o yaml               | kubectl apply -f -
+            kubectl -n "$NAMESPACE" rollout restart deployment/terraformers-jwks
+            kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
+          fi
 
   runtime-live-acceptance:
     if: >-

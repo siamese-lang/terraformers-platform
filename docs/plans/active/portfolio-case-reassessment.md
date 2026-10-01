@@ -362,9 +362,16 @@ Results:
 2. Artifact Registry least-privilege publisher/puller identity design compatibility: **PASS**.
 3. MySQL 8.4 unchanged-migration compatibility: **FAIL**.
 
-The next candidate task is a bounded **Case C relational-hosting decision** comparing an intentional
-MariaDB→MySQL migration against retaining MariaDB in a production-representative hosting shape.
-Do not implement either direction or create cloud resources until that decision is reviewed.
+The [Case C Relational Hosting Decision](case-c-relational-hosting-decision.md) is now
+**SELECTED**. Case C retains MariaDB 11.4 on one dedicated Compute Engine VM, containerized with an
+exact image digest and a dedicated Persistent Disk. MariaDB-in-GKE is rejected for the first baseline
+because it would couple DB resource pressure to the Backend/OpenSearch node and weaken bottleneck
+attribution. MariaDB→MySQL/Cloud SQL migration is deferred because it would require intentional
+migration-history and Case B revalidation work.
+
+The next single task is a read-only **GCP quota/cost preflight**. `e2-medium` and a 20 GiB
+`pd-balanced` data disk are candidates only until actual `asia-northeast3` / project quota and
+Free Trial credit headroom are checked. Do not create cloud resources in the preflight.
 
 ## Case A A1 measurement-readiness checkpoint
 

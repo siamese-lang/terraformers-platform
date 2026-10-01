@@ -756,8 +756,20 @@ This secondary closure does not replace Case A's primary retrieval-grounding obj
 authorize a holdout run, model change, prompt change, retry change, timeout change, or production
 fact-reuse routing change.
 
-PR #127 later removed the hidden eight-resource retrieval ceiling in production code. The canonical
-six-case `terraformers-eval-v1` acceptance contract does not contain a case requiring more than
-eight resource types, so a claim that adaptive expansion solves its intended >8-resource operating
-scenario requires a separate frozen evaluation-only measurement case. That candidate task remains
-`AWAITING_APPROVAL`; it is not started by this closure.
+PR #127 later removed the hidden eight-resource retrieval ceiling in production code. Because the
+canonical six-case `terraformers-eval-v1` acceptance contract does not contain a case requiring
+more than eight resource types, that behavior was validated separately with the frozen
+`large-vpc-eks-rds-s3` evaluation-only scenario.
+
+The authoritative evidence is
+[Adaptive Retrieval Live Measurement Closure](../../evaluation/adaptive-retrieval-live-measurement-closure.md).
+Run `36799722509`, source `9d54fe27bbc24347c9eff09193c7aeaec3171ff6`, used one delegated
+Vertex query embedding and the production OpenSearch retrieval path. The fixed maxEvidence-8
+control selected eight documents and covered `10/12` requested resource types, missing
+`aws_route_table` and `aws_db_instance`. The adaptive maxEvidence-16 arm retained those eight
+documents, admitted exactly the two missing provider-schema anchors, selected ten documents total,
+and reached `12/12` requested-resource coverage with no duplicates.
+
+This closes the >8-resource adaptive-retrieval side investigation. It does not replace the primary
+Case A canonical/holdout closure contract, does not prove generation quality, and does not authorize
+repeating the probe for latency sampling.

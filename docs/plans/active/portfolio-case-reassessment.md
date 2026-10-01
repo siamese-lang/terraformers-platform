@@ -369,12 +369,11 @@ because it would couple DB resource pressure to the Backend/OpenSearch node and 
 attribution. MariaDB→MySQL/Cloud SQL migration is deferred because it would require intentional
 migration-history and Case B revalidation work.
 
-The read-only **GCP quota/cost preflight** is now ACTIVE under
-`case-c-gcp-quota-cost-preflight-v1`. It reuses the existing GCP Target Terraform Plan workflow and
-`terraformers-plan` WIF identity. The Work Package merge to `main` automatically triggers the
-read-only quota/machine check. `e2-medium` and a 20 GiB `pd-balanced` data disk remain candidates
-until actual `asia-northeast3` / project quota is checked and remaining Free Trial credit is
-confirmed. Do not create cloud resources in the preflight.
+The read-only **GCP quota/cost preflight** has executed as workflow run `36823850490`.
+Quota/machine checks are **PASS** for the selected active shape: one existing `e2-standard-2` GKE
+node plus one additional `e2-medium` MariaDB VM and a 30 GiB balanced-disk envelope. The run used
+the existing `terraformers-plan` WIF identity and performed no Terraform init/plan/apply or cloud
+mutation. The user confirmed sufficient Free Trial promotional credit on 2026-10-01. The preflight is therefore **COMPLETE / PASS**. Runtime implementation remains a separate Work Package and is not automatically authorized.
 
 ## Case A A1 measurement-readiness checkpoint
 

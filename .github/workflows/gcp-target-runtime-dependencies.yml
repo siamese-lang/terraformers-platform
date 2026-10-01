@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Apply one separately approved Case C runtime dependency or live-acceptance checkpoint.
+        description: Apply one separately approved Case C runtime dependency, backend deployment, or live-acceptance checkpoint.
         required: true
         type: choice
         options:
@@ -12,6 +12,7 @@ on:
           - runtime-dependencies
           - runtime-host-firewall-repair
           - kubernetes-prerequisites
+          - backend-deployment
           - runtime-live-acceptance
       expected_sha:
         description: Exact trusted main commit SHA being approved.
@@ -577,6 +578,175 @@ jobs:
             echo '- MariaDB Kubernetes service/EndpointSlice: present'
             echo '- Internal JWKS service: ready'
             echo '- Backend Deployment: absent'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+  backend-deployment:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'backend-deployment'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 15
+    env:
+      PROJECT_ID: terraformers-platform
+      ZONE: asia-northeast3-a
+      NAMESPACE: terraformers-target
+      BACKEND_IMAGE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted backend deployment request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved SHA does not match checked-out main.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == APPLY_REVIEWED_CASE_C_BACKEND_DEPLOYMENT_1 ]]
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify backend deployment prerequisites
+        run: |
+          set -euo pipefail
+
+          [[ "$(
+            gcloud compute instances describe terraformers-mariadb \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(status)'
+          )" == RUNNING ]]
+
+          ready_nodes="$(
+            kubectl get nodes \
+              -o jsonpath='{range .items[*]}{range .status.conditions[?(@.type=="Ready")]}{.status}{"\n"}{end}{end}' \
+              | grep -c '^True$' || true
+          )"
+          (( ready_nodes >= 1 )) || {
+            echo 'No Ready GKE node is available for the backend Deployment.' >&2
+            exit 1
+          }
+
+          kubectl -n "$NAMESPACE" rollout status statefulset/terraformers-opensearch --timeout=2m
+          kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
+          kubectl -n "$NAMESPACE" get secret terraformers-backend-runtime-secrets -o json \
+            | jq -e '.data.SPRING_DATASOURCE_PASSWORD | type == "string" and length > 0' >/dev/null
+          kubectl -n "$NAMESPACE" get endpointslice terraformers-mariadb >/dev/null
+
+          if kubectl -n "$NAMESPACE" get deployment terraformers-backend >/dev/null 2>&1; then
+            echo 'Backend Deployment already exists; first deployment checkpoint refuses to overwrite it.' >&2
+            exit 1
+          fi
+
+          for pair in \
+            'create serviceaccounts' \
+            'patch serviceaccounts' \
+            'create configmaps' \
+            'patch configmaps' \
+            'create services' \
+            'patch services' \
+            'create deployments.apps' \
+            'patch deployments.apps'
+          do
+            verb="${pair%% *}"
+            resource="${pair#* }"
+            kubectl auth can-i "$verb" "$resource" -n "$NAMESPACE" | grep -Fxq yes || {
+              echo "Missing Kubernetes permission: $verb $resource" >&2
+              exit 1
+            }
+          done
+
+      - name: Render and verify exact backend deployment
+        run: |
+          set -euo pipefail
+          rendered="${RUNNER_TEMP}/gcp-target-rendered.yaml"
+          kubectl kustomize infra/kubernetes/overlays/gcp-target > "$rendered"
+
+          grep -Fq "image: $BACKEND_IMAGE" "$rendered"
+          ! grep -Fq 'registry.example.com/terraformers-backend' "$rendered"
+          ! grep -Fq 'immutable-target-sha' "$rendered"
+
+          grep -Fq 'GOOGLE_CLOUD_PROJECT: terraformers-platform' "$rendered"
+          grep -Fq 'TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID: case-c-runtime-client' "$rendered"
+          ! grep -Fq 'JWT_COGNITO_CLIENT_ID:' "$rendered"
+          ! grep -Fq 'COGNITO_USER_POOL_CLIENT_ID:' "$rendered"
+
+      - name: Apply only backend-labeled resources
+        run: |
+          set -euo pipefail
+          rendered="${RUNNER_TEMP}/gcp-target-rendered.yaml"
+
+          kubectl apply \
+            -f "$rendered" \
+            -l app.kubernetes.io/name=terraformers-backend
+
+          if ! kubectl -n "$NAMESPACE" rollout status \
+              deployment/terraformers-backend --timeout=5m; then
+            echo 'Backend Deployment did not become Ready; capturing bounded diagnostics.' >&2
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend -o wide || true
+            kubectl -n "$NAMESPACE" get pods \
+              -l app.kubernetes.io/name=terraformers-backend -o wide || true
+            kubectl -n "$NAMESPACE" describe deployment terraformers-backend || true
+            kubectl -n "$NAMESPACE" logs \
+              -l app.kubernetes.io/name=terraformers-backend \
+              --all-containers=true --tail=200 || true
+            exit 1
+          fi
+
+      - name: Verify deployed backend boundary
+        run: |
+          set -euo pipefail
+
+          actual_image="$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend \
+              -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}'
+          )"
+          [[ "$actual_image" == "$BACKEND_IMAGE" ]]
+
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend \
+              -o jsonpath='{.status.readyReplicas}'
+          )" == 1 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend \
+              -o jsonpath='{.status.availableReplicas}'
+          )" == 1 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get service terraformers-backend \
+              -o jsonpath='{.spec.type}'
+          )" == ClusterIP ]]
+
+          {
+            echo '## Case C backend deployment'
+            echo
+            printf -- '- Source SHA: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Immutable backend image: `%s`\n' "$actual_image"
+            echo '- Ready replicas: 1/1'
+            echo '- Service exposure: ClusterIP'
+            echo '- Runtime prerequisites reused; no new IAM/cloud resource mutation'
+            echo '- Load generation / rollout / rollback: not executed in this checkpoint'
           } >> "$GITHUB_STEP_SUMMARY"
 
   runtime-live-acceptance:

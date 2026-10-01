@@ -197,12 +197,11 @@ and is **COMPATIBILITY GATE OPEN**.
 
 The portfolio objective now prefers a production-representative backend runtime over the earlier
 benchmark-only MariaDB/filesystem shape, because dependency topology can distort bottleneck
-attribution. However, the repository does not yet authorize Cloud SQL for MySQL, Cloud Storage or
-Artifact Registry by convention. Each candidate must first pass its explicit compatibility gate:
-MySQL 8.4 Flyway/JPA/Case B semantics, Cloud Storage object-contract mapping, and Artifact Registry
-least-privilege GitHub/GKE identity. The benchmark-only runtime remains a fallback if those gates do
-not justify the managed components. No implementation, cloud mutation, live load or tuning is
-authorized yet.
+attribution. Compatibility verification is active. Cloud Storage application-contract mapping is
+**PASS**, and Artifact Registry least-privilege GitHub/GKE delivery identity is **PASS**. MySQL 8.4
+Flyway/JPA/Case B real-database compatibility remains the final executable gate. The benchmark-only
+runtime remains a fallback if MySQL compatibility does not justify the managed relational path.
+No implementation, cloud mutation, live load or tuning is authorized yet.
 
 ## Case B measurement-readiness checkpoint
 
@@ -352,15 +351,17 @@ capacity and safe delivery**.
 The Case C runtime decision is **NOT YET FINAL**. A production-representative backend runtime is the
 preferred candidate, but product choices remain gated by compatibility.
 
-The next single task is one bounded **Case C compatibility verification Work Package** covering
-repository/local/CI evidence only:
+The bounded **Case C compatibility verification Work Package** is active.
 
-1. MySQL 8.4 clean migration + JPA + Case B durable-processing compatibility;
-2. Cloud Storage adapter-contract compatibility;
-3. Artifact Registry least-privilege publisher/puller identity design compatibility.
+Completed:
+1. Cloud Storage adapter-contract compatibility: **PASS**.
+2. Artifact Registry least-privilege publisher/puller identity design compatibility: **PASS**.
 
-Do not create any Cloud SQL, bucket or registry resource and do not mutate IAM in that Work Package.
-The final Case C runtime selection occurs only after those results are reviewed.
+Remaining:
+3. MySQL 8.4 clean migration + JPA + Case B durable-processing compatibility: **PENDING CI**.
+
+Do not create any Cloud SQL, bucket or registry resource and do not mutate IAM in this Work Package.
+The final Case C runtime selection occurs only after the MySQL result and aggregate 3/3 decision are reviewed.
 
 ## Case A A1 measurement-readiness checkpoint
 

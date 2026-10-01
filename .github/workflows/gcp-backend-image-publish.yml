@@ -83,7 +83,7 @@ jobs:
             curl -fsS -X POST \
               -H "Authorization: Bearer ${access_token}" \
               -H 'Content-Type: application/json' \
-              -d '{"permissions":["artifactregistry.repositories.create","compute.instances.create","container.deployments.create","resourcemanager.projects.setIamPolicy"]}' \
+              -d '{"permissions":["artifactregistry.repositories.create","compute.instances.create","container.clusters.update","resourcemanager.projects.setIamPolicy"]}' \
               "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
           )"
           granted="$(jq -r '.permissions // [] | join(",")' <<<"$response")"

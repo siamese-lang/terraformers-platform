@@ -72,6 +72,7 @@ jobs:
           bash -n scripts/deploy/bootstrap_github_target_apply_environment.sh
           bash -n scripts/deploy/bootstrap_gcp_image_publish.sh
           bash -n scripts/deploy/bootstrap_github_image_publish_environment.sh
+          bash -n scripts/deploy/bootstrap_gcp_runtime_secrets.sh
 
           python3 - <<'PY'
           from pathlib import Path
@@ -97,6 +98,44 @@ jobs:
           apply_bootstrap = Path("scripts/deploy/bootstrap_gcp_target_apply.sh").read_text(encoding="utf-8")
           if "roles/artifactregistry.admin" not in apply_bootstrap:
               raise SystemExit("apply bootstrap is missing Artifact Registry administration required for repository creation")
+
+          runtime_workflow = Path(".github/workflows/gcp-target-runtime-dependencies.yml").read_text(encoding="utf-8")
+          for marker in [
+              "workflow_dispatch:",
+              "runtime-secret-foundation",
+              "runtime-dependencies",
+              "kubernetes-prerequisites",
+              "APPLY_REVIEWED_GCP_RUNTIME_SECRET_FOUNDATION_3",
+              "APPLY_REVIEWED_GCP_RUNTIME_DEPENDENCIES_10",
+              "APPLY_REVIEWED_GCP_RUNTIME_K8S_PREREQUISITES",
+              "mariadb:11.4@sha256:",
+              "kubectl apply -k infra/kubernetes/overlays/gcp-target/runtime-dependencies",
+          ]:
+              if marker not in runtime_workflow:
+                  raise SystemExit(f"missing runtime dependency workflow marker: {marker}")
+          if "pull_request:" in runtime_workflow:
+              raise SystemExit("runtime dependency workflow must remain manual-only")
+
+          runtime_tf = Path("infra/terraform/envs/gcp-target-runtime/main.tf").read_text(encoding="utf-8")
+          if "google_secret_manager_secret_version" in runtime_tf:
+              raise SystemExit("secret payload versions must not be managed by Terraform")
+
+          runtime_kustomization = Path(
+              "infra/kubernetes/overlays/gcp-target/runtime-dependencies/kustomization.yaml"
+          ).read_text(encoding="utf-8")
+          if "../../base" in runtime_kustomization or "backend-deployment" in runtime_kustomization:
+              raise SystemExit("runtime dependency prerequisites must remain isolated from backend Deployment")
+
+          secret_sync = Path(
+              "infra/kubernetes/overlays/gcp-target/runtime-dependencies/secret-sync.yaml"
+          ).read_text(encoding="utf-8")
+          for marker in [
+              "apiVersion: secret-sync.gke.io/v1",
+              "serviceAccountName: terraformers-secret-sync",
+              "targetKey: \"SPRING_DATASOURCE_PASSWORD\"",
+          ]:
+              if marker not in secret_sync:
+                  raise SystemExit(f"missing GKE Secret Sync contract marker: {marker}")
           PY
 
       - name: Verify destroy-plan summary contract

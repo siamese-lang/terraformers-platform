@@ -438,12 +438,12 @@ No remaining M1 work.
 
 ## Immediate next work
 
-The fact-reuse latency side-investigation is closed with production adoption **HOLD**. Case A remains
-**OPEN**, and the frozen holdout is still not recorded as complete. The next candidate Work Package
-is **adaptive retrieval live-measurement readiness (AWAITING_APPROVAL)**: freeze a separate
-evaluation-only scenario that requires more than eight resource types so PR #127's adaptive evidence
-expansion can be measured against the operating problem it was designed to solve. Do not start that
-Work Package automatically.
+The fact-reuse latency side-investigation is closed with production adoption **HOLD**, and the
+adaptive retrieval >8-resource side-investigation is now **CLOSED / PASS** in run `36799722509`.
+Case A remains **OPEN** because a fresh canonical `terraformers-eval-v1` N=3 after the PR #119
+lifecycle correction and the frozen holdout are still not recorded as complete. That canonical
+revalidation is the next candidate validation checkpoint, but it requires a separate reviewed
+Work Package / user approval and must not start automatically.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query

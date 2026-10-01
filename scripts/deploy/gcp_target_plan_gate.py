@@ -420,20 +420,15 @@ def validate_runtime_host_firewall_repair(changes: dict[str, dict[str, Any]]) ->
     before = change.get("before") or {}
     after = change.get("after") or {}
 
-    for key in (
-        "name",
-        "machine_type",
-        "zone",
-        "attached_disk",
-        "boot_disk",
-        "network_interface",
-        "service_account",
-        "allow_stopping_for_update",
-    ):
-        require(before.get(key) == after.get(key), f"runtime host-firewall repair changed MariaDB VM {key}")
+    before_without_startup = dict(before)
+    after_without_startup = dict(after)
+    before_startup = str(before_without_startup.pop("metadata_startup_script", "") or "")
+    after_startup = str(after_without_startup.pop("metadata_startup_script", "") or "")
+    require(
+        before_without_startup == after_without_startup,
+        "runtime-host-firewall-repair may change only metadata_startup_script",
+    )
 
-    before_startup = str(before.get("metadata_startup_script") or "")
-    after_startup = str(after.get("metadata_startup_script") or "")
     require(before_startup != after_startup, "runtime host-firewall repair must change only startup-script behavior")
     require("--network host" in after_startup, "MariaDB host-network contract changed")
     require("10.40.0.0/20" in after_startup, "MariaDB guest firewall is missing the target subnet")

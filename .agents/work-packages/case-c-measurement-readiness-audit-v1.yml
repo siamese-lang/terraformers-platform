@@ -1,0 +1,176 @@
+work_package:
+  id: case-c-measurement-readiness-audit-v1
+  status: ACTIVE
+  approved_base_sha: "a6b082ae83377f98c2ea9d82bd6eb7a63948a92a"
+  execution_base_sha: "a6b082ae83377f98c2ea9d82bd6eb7a63948a92a"
+
+  goal: >
+    Audit Case C measurement readiness against the current merged repository and target-runtime
+    implementation, determine whether a representative capacity/safe-delivery baseline can be run
+    without adding architecture by assumption, and freeze the smallest next decision boundary.
+
+  engineering_axis:
+    - cloud runtime capacity
+    - safe delivery
+    - representative load measurement
+
+  representative_case:
+    - Case C Cloud Runtime Capacity & Safe Delivery
+
+  allowed_paths:
+    - .agents/work-packages/case-c-measurement-readiness-audit-v1.yml
+    - docs/evaluation/case-c-measurement-readiness-audit.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/portfolio-case-reassessment.md
+
+  prohibited_paths:
+    - backend/**
+    - frontend/**
+    - infra/**
+    - .github/workflows/**
+    - evaluation/**
+    - corpus/**
+    - AGENTS.md
+    - docs/architecture/**
+    - docs/plans/active/portfolio-case-measurement-contract.md
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - inspect_current_runtime_contract
+    - inspect_existing_fixture_reuse
+    - classify_measurement_readiness
+    - document_blockers
+    - freeze_next_decision_boundary
+    - create_pull_request
+    - inspect_ci
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - live_load_test
+    - rollout_experiment
+    - faulty_release_experiment
+    - terraform_plan
+    - terraform_apply
+    - kubernetes_apply
+    - node_pool_change
+    - cloud_resource_creation
+    - iam_change
+    - image_registry_selection
+    - database_product_selection
+    - object_storage_product_selection
+    - external_identity_product_selection
+    - ingress_product_selection
+    - replica_change
+    - hpa_change
+    - executor_tuning
+    - opensearch_sizing_change
+    - node_sizing_change
+    - rollout_strategy_change
+    - acceptance_criteria_change
+    - next_work_package_start
+
+  frozen_case_c_contract:
+    source: docs/plans/active/portfolio-case-measurement-contract.md
+    scenario: >
+      Measure the integrated backend/API durable-job AI/RAG path under increasing representative
+      concurrency, identify the first saturation bottleneck, then validate healthy rollout and
+      faulty-release rollback without corrupting accepted work.
+    no_arbitrary_tps_target: true
+    tune_only_after_baseline: true
+    required_path:
+      - authenticated API request
+      - durable AnalysisJob acceptance
+      - dispatcher/worker execution
+      - Vertex fact extraction and generation
+      - OpenSearch retrieval
+      - result persistence
+      - terminal job state
+    required_observations:
+      - request acceptance success/failure
+      - acceptance latency
+      - queue wait
+      - job end-to-end duration
+      - job success/failure
+      - executor rejection
+      - backend CPU/memory
+      - active workers/queue pressure
+      - stage latency
+      - provider failure
+      - OpenSearch latency/resource pressure
+      - rollout readiness/unavailability
+      - accepted-work loss/stranding
+      - rollback duration/post-rollback health
+
+  current_repository_findings:
+    reusable:
+      - one GKE Standard target foundation exists
+      - Vertex AI and OpenSearch target path is live-proven
+      - Case B durable MariaDB-backed AnalysisJob semantics are portfolio-closed
+      - Spring Boot backend Kubernetes base exists
+      - Actuator Prometheus endpoint and bounded analysis metrics exist
+      - portable MariaDB fixture exists
+      - portable authenticated JWKS fixture exists
+      - filesystem ObjectReader/ObjectWriter fixture exists
+    blockers:
+      - >
+        gcp-target README states the full backend Deployment has not been applied because database,
+        object-storage and JWT runtime dependencies are outside the applied target boundary
+      - >
+        gcp-target backend image remains an immutable registry placeholder; ADR-006 explicitly does
+        not select an image registry
+      - >
+        no GCP-target MariaDB hosting implementation is selected or committed
+      - >
+        portable MariaDB fixture uses emptyDir and therefore cannot prove restart/rollout durability
+      - >
+        no GCP-native object-storage adapter/product is selected; filesystem fixture currently uses
+        local /tmp and is single-runtime evidence only
+      - >
+        public ingress and a production external IdP are not required for an internal benchmark,
+        but an authenticated request path still needs a bounded fixture or equivalent
+    conclusion: NOT_READY_FOR_LIVE_CASE_C_BASELINE
+
+  measurement_readiness_gate:
+    operating_scenario_fixed: PASS
+    failure_or_limitation_reproducible: FAIL
+    user_system_impact_explicit: PASS
+    before_state_measurable: FAIL
+    metrics_can_judge_change: PARTIAL
+    minimum_missing_measurements_added: FAIL
+    thresholds_frozen_after_baseline: NOT_APPLICABLE_YET
+    alternatives_available: PASS
+
+  next_decision_boundary:
+    name: Case C representative benchmark runtime
+    purpose: >
+      Decide the minimum persistent, authenticated, immutable-release runtime needed to exercise
+      the real API/durable-job/AI-RAG/persistence path on the existing GKE target before any load
+      harness or tuning is added.
+    must_compare:
+      - >
+        benchmark-only reuse: existing portable MariaDB/JWKS/filesystem patterns adapted with
+        persistence and immutable backend image delivery on the same GKE target, explicitly not a
+        production hosting claim
+      - >
+        complete GCP application-runtime product selection for database, object storage, identity,
+        registry and ingress
+    decision_criteria:
+      - preserves Case B durable job semantics
+      - persists database and result/source bytes across backend rollout
+      - supports immutable source/release identity
+      - exercises actual Vertex/OpenSearch production adapters
+      - supports authenticated API submission without requiring public internet ingress
+      - keeps cost and operational scope bounded
+      - avoids selecting permanent cloud products not required by the Case C measurement question
+      - permits rollout/rollback observation on the same representative runtime
+
+  stopping_rule: >
+    Do not design a load generator, choose concurrency steps, tune resources, deploy a backend,
+    or select cloud products until this readiness audit is reviewed and the representative
+    benchmark-runtime decision is separately approved.
+
+  completion:
+    merge_requires_user_approval: true
+    next_work_package_start_requires_user_approval: true

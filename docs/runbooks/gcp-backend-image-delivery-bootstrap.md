@@ -90,9 +90,9 @@ expected_sha: <exact current 40-character main SHA>
 confirmation: APPLY_REVIEWED_GCP_DELIVERY_FOUNDATION_5
 ```
 
-The preflight and apply gate require:
+The preflight and apply path intentionally does not depend on a total Terraform state-resource count. The gate requires:
 
-- the existing canonical 12-resource state;
+- the canonical GKE cluster and node pool are present in the existing remote state;
 - the current GKE node count to remain unchanged;
 - the dedicated publisher service account to exist;
 - exactly five create actions:
@@ -102,8 +102,6 @@ The preflight and apply gate require:
   4. repository reader for the GKE node identity;
   5. repository reader for the Terraform plan identity;
 - zero update, delete, replacement or additional managed actions.
-
-The resulting canonical state is expected to contain 17 managed resources.
 
 ### D. Immutable backend image publication
 

@@ -650,7 +650,7 @@ class GcpTargetPlanGateTest(unittest.TestCase):
     def test_runtime_host_firewall_repair_rejects_public_source(self) -> None:
         plan = runtime_host_firewall_repair_plan()
         instance = plan["resource_changes"][0]
-        instance["change"]["after"]["metadata_startup_script"] += "0.0.0.0/0\n"
+        instance["change"]["after"]["metadata"]["startup-script"] += "0.0.0.0/0\n"
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "runtime-host-firewall-repair")
 

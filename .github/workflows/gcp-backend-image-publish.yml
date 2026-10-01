@@ -1,0 +1,171 @@
+name: GCP Backend Image Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact trusted main commit SHA to build and publish.
+        required: true
+        type: string
+      confirmation:
+        description: Enter PUBLISH_REVIEWED_BACKEND_IMAGE.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: gcp-backend-image-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: gcp-image-publish
+    timeout-minutes: 45
+    env:
+      GCP_PROJECT: terraformers-platform
+      GCP_LOCATION: asia-northeast3
+      IMAGE_NAME: terraformers-backend
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate immutable publication request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          PUBLISH_SERVICE_ACCOUNT: ${{ vars.GCP_IMAGE_PUBLISH_SERVICE_ACCOUNT }}
+          REGISTRY_HOST: ${{ vars.GCP_ARTIFACT_REGISTRY_HOST }}
+          REGISTRY_REPOSITORY: ${{ vars.GCP_ARTIFACT_REGISTRY_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]] || exit 1
+          [[ "$GITHUB_REF" == refs/heads/main ]] || exit 1
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'expected_sha must be a full 40-character commit SHA.' >&2
+            exit 1
+          }
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved source SHA does not match checked-out main.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == PUBLISH_REVIEWED_BACKEND_IMAGE ]] || {
+            echo 'confirmation must be PUBLISH_REVIEWED_BACKEND_IMAGE.' >&2
+            exit 1
+          }
+          [[ "$WIF_PROVIDER" == projects/21647422237/locations/global/workloadIdentityPools/terraformers-github/providers/terraformers-main ]]
+          [[ "$PUBLISH_SERVICE_ACCOUNT" == terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com ]]
+          [[ "$REGISTRY_HOST" == asia-northeast3-docker.pkg.dev ]]
+          [[ "$REGISTRY_REPOSITORY" == terraformers-backend ]]
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_IMAGE_PUBLISH_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Verify publisher boundary and repository
+        env:
+          REGISTRY_REPOSITORY: ${{ vars.GCP_ARTIFACT_REGISTRY_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          gcloud auth print-access-token >/dev/null
+
+          access_token="$(gcloud auth print-access-token)"
+          response="$(
+            curl -fsS -X POST \
+              -H "Authorization: Bearer ${access_token}" \
+              -H 'Content-Type: application/json' \
+              -d '{"permissions":["artifactregistry.repositories.create","compute.instances.create","container.deployments.create","resourcemanager.projects.setIamPolicy"]}' \
+              "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
+          )"
+          granted="$(jq -r '.permissions // [] | join(",")' <<<"$response")"
+          [[ -z "$granted" ]] || {
+            echo "Publisher unexpectedly has project mutation permissions: $granted" >&2
+            exit 1
+          }
+
+          format="$(
+            gcloud artifacts repositories describe "$REGISTRY_REPOSITORY" \
+              --project="$GCP_PROJECT" \
+              --location="$GCP_LOCATION" \
+              --format='value(format)'
+          )"
+          [[ "$format" == DOCKER ]] || {
+            echo "Expected Docker repository, got: $format" >&2
+            exit 1
+          }
+
+      - name: Authenticate Docker to Artifact Registry
+        env:
+          REGISTRY_HOST: ${{ vars.GCP_ARTIFACT_REGISTRY_HOST }}
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "$REGISTRY_HOST" --quiet
+
+      - name: Build and publish source-SHA image once
+        env:
+          REGISTRY_HOST: ${{ vars.GCP_ARTIFACT_REGISTRY_HOST }}
+          REGISTRY_REPOSITORY: ${{ vars.GCP_ARTIFACT_REGISTRY_REPOSITORY }}
+        run: |
+          set -euo pipefail
+
+          image_base="${REGISTRY_HOST}/${GCP_PROJECT}/${REGISTRY_REPOSITORY}/${IMAGE_NAME}"
+          image_tag="${image_base}:${GITHUB_SHA}"
+
+          if gcloud artifacts docker images describe "$image_tag" \
+              --project="$GCP_PROJECT" \
+              --format='value(image_summary.digest)' >/dev/null 2>&1; then
+            echo "Source-SHA tag already exists and will not be moved: $image_tag" >&2
+            exit 1
+          fi
+
+          docker build \
+            --build-arg "BUILD_SOURCE_REVISION=${GITHUB_SHA}" \
+            --tag "$image_tag" \
+            backend
+
+          docker image inspect "$image_tag" \
+            --format '{{range .Config.Env}}{{println .}}{{end}}' \
+            | grep -Fx "BUILD_SOURCE_REVISION=${GITHUB_SHA}"
+
+          docker push "$image_tag"
+
+          digest="$(
+            gcloud artifacts docker images describe "$image_tag" \
+              --project="$GCP_PROJECT" \
+              --format='value(image_summary.digest)'
+          )"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "Invalid remote image digest: $digest" >&2
+            exit 1
+          }
+
+          immutable_ref="${image_base}@${digest}"
+          remote_digest="$(
+            gcloud artifacts docker images describe "$immutable_ref" \
+              --project="$GCP_PROJECT" \
+              --format='value(image_summary.digest)'
+          )"
+          [[ "$remote_digest" == "$digest" ]] || {
+            echo 'Digest verification mismatch after publication.' >&2
+            exit 1
+          }
+
+          {
+            echo '## Immutable backend image publication'
+            echo
+            printf -- '- Source SHA: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Source tag: `%s`\n' "$image_tag"
+            printf -- '- Resolved digest: `%s`\n' "$digest"
+            printf -- '- Immutable deployment reference: `%s`\n' "$immutable_ref"
+            echo '- Mutable `latest` tag: not published'
+            echo '- Kubernetes/Terraform mutation: none'
+          } >> "$GITHUB_STEP_SUMMARY"

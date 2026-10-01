@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C GCP full-backend adapter readiness IMPLEMENTED / CI PENDING**
+- Current single task: **Case C GCP full-backend adapter readiness COMPLETE / PASS; next runtime-substrate/integration Work Package is unapproved**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -143,9 +143,11 @@ Case C — Cloud runtime capacity and safe delivery:
   **QUOTA / MACHINE PASS** in workflow run `36823850490`; it reused the existing GCP plan workflow and the
   existing read-only plan identity; current quota supports the additional `e2-medium` DB VM and 30 GiB balanced-disk envelope without Terraform init/plan/apply or resource mutation; Free Trial budget gate passed by explicit user confirmation on 2026-10-01;
 - [Case C GCP Full-Backend Adapter Readiness](evaluation/case-c-gcp-full-backend-adapter-readiness.md)
-  is **IMPLEMENTED / CI PENDING**: the prod startup contract no longer hardcodes Bedrock for active
-  retrieval, GCS reader/writer/remover adapters now implement the provider-neutral storage boundary
-  through ADC, and the canonical GCP overlay selects `gcs`; no GCP resource/IAM mutation occurred;
+  is **COMPLETE / PASS**: Backend Local Verification run `36825659118` and Terraform Static
+  Verification run `36825659010` succeeded; the prod startup contract no longer hardcodes Bedrock
+  for active retrieval, GCS reader/writer/remover adapters implement the provider-neutral storage
+  boundary through ADC, and the canonical GCP overlay selects `gcs`; no GCP resource/IAM mutation
+  occurred;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;

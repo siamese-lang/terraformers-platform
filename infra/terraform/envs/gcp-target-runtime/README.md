@@ -15,9 +15,15 @@ The root creates:
 - node-level `vm.max_map_count=262144` required by OpenSearch;
 - Workload Identity Federation for GKE;
 - project IAM bindings that allow only the Terraformers backend Kubernetes ServiceAccount to call
-  Vertex AI and consume the project API quota.
+  Vertex AI and consume the project API quota;
+- one Seoul Artifact Registry Docker repository for immutable backend images, with repository-scoped
+  writer access for the dedicated GitHub image publisher and reader access for the GKE node and
+  Terraform plan identities.
 
-It does not deploy OpenSearch or the backend itself; Kubernetes manifests own workload deployment.
+Artifact Registry is created only by the separately reviewed `delivery-foundation` apply contract.
+The dedicated publisher service account/WIF trust is bootstrapped separately and must exist before
+that apply. This Terraform root does not publish an image or deploy the backend; Kubernetes
+manifests own workload deployment.
 
 ## Free Trial operating profile
 

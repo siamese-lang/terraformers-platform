@@ -28,9 +28,9 @@ output "backend_workload_principal" {
 
 
 output "backend_artifact_repository" {
-  value = google_artifact_registry_repository.backend.name
+  value = var.enable_delivery_foundation ? google_artifact_registry_repository.backend[0].name : null
 }
 
 output "backend_image_base" {
-  value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.backend.repository_id}/terraformers-backend"
+  value = var.enable_delivery_foundation ? "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.backend[0].repository_id}/terraformers-backend" : null
 }

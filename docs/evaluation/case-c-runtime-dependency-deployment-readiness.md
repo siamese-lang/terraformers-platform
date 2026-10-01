@@ -138,10 +138,28 @@ The protected Terraform apply identity needs:
 - `roles/secretmanager.admin`;
 - `roles/storage.admin`.
 
-The Terraform plan identity receives read-only additions:
+The Terraform plan identity keeps its existing read-only baseline and adds only the runtime
+metadata roles needed by this unit.
+
+Existing baseline roles checked by the runtime bootstrap/workflow:
+
+- `roles/browser`;
+- `roles/compute.viewer`;
+- `roles/container.viewer`;
+- `roles/iam.serviceAccountViewer`;
+- `roles/iam.securityReviewer`;
+- `roles/serviceusage.serviceUsageConsumer`.
+
+Runtime additions:
 
 - `roles/secretmanager.viewer`;
 - `roles/storage.bucketViewer`.
+
+The read-boundary review confirmed that no custom Storage IAM role is required:
+`roles/storage.bucketViewer` supplies bucket metadata `get/list`, while the existing
+`roles/iam.securityReviewer` supplies `storage.buckets.getIamPolicy`. Secret Manager Viewer
+supplies secret/version metadata and `secretmanager.secrets.getIamPolicy`, but not
+`secretmanager.versions.access`, so the plan identity cannot read secret payloads.
 
 The plan workflow also asserts that the plan identity has none of the checked compute/container/
 Secret Manager/Storage mutation permissions and no Secret Manager payload access.

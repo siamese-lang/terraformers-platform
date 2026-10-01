@@ -946,6 +946,7 @@ jobs:
       NAMESPACE: terraformers-target
       ISSUER_URI: https://identity.example.test/case-c
       CLIENT_ID: case-c-runtime-client
+      RESULT_BUCKET: terraformers-runtime-objects-21647422237
 
     steps:
       - uses: actions/checkout@v5
@@ -1155,8 +1156,31 @@ jobs:
             }
           }
 
+          hash_gcs_object_from_pod() {
+            local pod="$1"
+            local bucket="$2"
+            local key="$3"
+            kubectl -n "$NAMESPACE" exec "$pod" -c backend -- \
+              env OBJECT_BUCKET="$bucket" OBJECT_KEY="$key" sh -c '
+                set -eu
+                token="$(
+                  curl -fsS -H "Metadata-Flavor: Google" \
+                    http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token \
+                    | sed -n "s/.*\"access_token\":\"([^\"]*)\".*/\1/p"
+                )"
+                test -n "$token"
+                curl -fsS \
+                  -H "Authorization: Bearer $token" \
+                  "https://storage.googleapis.com/${OBJECT_BUCKET}/${OBJECT_KEY}" \
+                  | sha256sum | awk "{print \$1}"
+              '
+          }
+
           trap stop_pf EXIT
           start_pf
+
+          curl -fsS http://127.0.0.1:18080/actuator/prometheus \
+            | grep -Eq '^(jvm_|process_|http_server_requests)'
 
           curl -fsS \
             -H "Authorization: Bearer ${token}" \
@@ -1276,6 +1300,15 @@ jobs:
           )"
           [[ -n "$old_pod" && -n "$old_uid" ]]
 
+          source_hash_before="$(
+            hash_gcs_object_from_pod "$old_pod" "$source_bucket" "$source_key"
+          )"
+          result_hash_before="$(
+            hash_gcs_object_from_pod "$old_pod" "$RESULT_BUCKET" "$result_key"
+          )"
+          [[ "$source_hash_before" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$result_hash_before" =~ ^[0-9a-f]{64}$ ]]
+
           stop_pf
           kubectl -n "$NAMESPACE" delete pod "$old_pod" --wait=true
           kubectl -n "$NAMESPACE" rollout status deployment/terraformers-backend --timeout=7m
@@ -1306,7 +1339,24 @@ jobs:
           )"
           [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]]
 
+          source_hash_after="$(
+            hash_gcs_object_from_pod "$new_pod" "$source_bucket" "$source_key"
+          )"
+          result_hash_after="$(
+            hash_gcs_object_from_pod "$new_pod" "$RESULT_BUCKET" "$result_key"
+          )"
+          [[ "$source_hash_after" == "$source_hash_before" ]] || {
+            echo 'Source GCS object hash changed across backend pod replacement.' >&2
+            exit 1
+          }
+          [[ "$result_hash_after" == "$result_hash_before" ]] || {
+            echo 'Result GCS object hash changed across backend pod replacement.' >&2
+            exit 1
+          }
+
           start_pf
+          curl -fsS http://127.0.0.1:18080/actuator/prometheus \
+            | grep -Eq '^(jvm_|process_|http_server_requests)'
 
           curl -fsS \
             -H "Authorization: Bearer ${token}" \
@@ -1371,6 +1421,9 @@ jobs:
             printf -- '- Old pod UID: %s\n' "$old_uid"
             printf -- '- New pod UID: %s\n' "$new_uid"
             printf -- '- Terraform draft SHA-256: %s\n' "$draft_hash_after"
+            printf -- '- Source GCS SHA-256: %s\n' "$source_hash_after"
+            printf -- '- Result GCS SHA-256: %s\n' "$result_hash_after"
+            echo '- Actuator/Prometheus metrics before/after replacement: reachable'
             echo '- Durable AnalysisJob state after replacement: SUCCEEDED'
             echo '- Result relational identity after replacement: unchanged'
             echo '- Result Terraform bytes after replacement: unchanged'

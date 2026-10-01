@@ -179,6 +179,7 @@ jobs:
           )"
           [[ "$node_count" =~ ^[01]$ ]]
           echo "TF_VAR_node_count=$node_count" >> "$GITHUB_ENV"
+          export TF_VAR_node_count="$node_count"
 
           if [[ "$OPERATION" == runtime-secret-foundation ]]; then
             for address in \
@@ -321,6 +322,7 @@ jobs:
           )"
           [[ "$node_count" =~ ^[01]$ ]]
           echo "TF_VAR_node_count=$node_count" >> "$GITHUB_ENV"
+          export TF_VAR_node_count="$node_count"
 
           if [[ "$OPERATION" == runtime-dependencies ]]; then
             for secret in terraformers-mariadb-root-password terraformers-mariadb-app-password; do

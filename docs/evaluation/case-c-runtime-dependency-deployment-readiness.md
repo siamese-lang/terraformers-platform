@@ -2,11 +2,15 @@
 
 ## Status
 
-**IMPLEMENTED / CI PENDING — NO LIVE CLOUD, SECRET, VM, BUCKET OR KUBERNETES MUTATION**
+**LIVE PREREQUISITES COMPLETE / FINAL RUNTIME LIVE ACCEPTANCE IMPLEMENTED — RESTART NOT YET EXECUTED**
 
-Execution base:
+Original implementation base:
 
 `8ada2368b85c210c2c50b0d42370454efe0d499c`
+
+Current live-acceptance implementation base:
+
+`9baaa62244ce9304490bf2c36f6b42bb030fdbd0`
 
 Selected decision:
 
@@ -16,206 +20,179 @@ Work Package:
 
 `.agents/work-packages/case-c-runtime-dependency-deployment-readiness-v1.yml`
 
-## Capability gate
+The backend Deployment is still absent. No load generation, rollout/rollback experiment, replica/HPA
+change, executor tuning, node resize, OpenSearch resize, or external IdP has been started.
 
-The user ran the required read-only cluster capability check before Work Package activation.
+## Capability and IAM gates
 
-Observed on 2026-10-01:
+The read-only GKE capability gate observed control plane and node pool
+`1.35.8-gke.1225000`, satisfying the native Secret Sync >=1.33 requirement without an upgrade.
 
-- GKE control plane: `1.35.8-gke.1225000`;
-- GKE node pool: `1.35.8-gke.1225000`;
-- release channel: `REGULAR`;
-- cluster status: `RUNNING`;
-- node pool status: `RUNNING`.
+The Case C runtime IAM bootstrap is complete. The final read-only check passed for:
 
-The selected native GKE Secret Sync path therefore satisfies the >=1.33 gate. No cluster upgrade was
-performed.
-
-## Implemented desired state
-
-The existing canonical `gcp-target-runtime` Terraform root now contains opt-in Case C runtime
-dependencies.
-
-### Secret authority
-
-- Secret Manager API;
-- `terraformers-mariadb-root-password` secret container;
-- `terraformers-mariadb-app-password` secret container;
-- no `google_secret_manager_secret_version` resource;
-- secret payloads remain outside Terraform configuration/state.
-
-The original execution ordering was corrected during implementation. Because Terraform owns the
-secret containers but must not own the values, live execution is:
-
-`empty secret containers -> operator secret versions -> remaining runtime dependencies`.
-
-This consumed the Work Package's one bounded repair.
-
-### GCS
-
-One bucket is declared:
-
-`terraformers-runtime-objects-21647422237`
-
-Contract:
-
-- location `asia-northeast3`;
-- uniform bucket-level access enabled;
-- public access prevention enforced;
-- `force_destroy=false`;
-- backend Workload Identity principal receives bucket-scoped
-  `roles/storage.objectUser`;
-- no second result bucket.
-
-### MariaDB
-
-The selected relational shape is represented as:
-
-- one dedicated `terraformers-mariadb` service account;
-- one `e2-medium` zonal VM;
-- one 20 GiB `pd-balanced` data disk;
-- data disk mounted into `/var/lib/mysql`;
-- MariaDB container input must match
-  `mariadb:11.4@sha256:<64 lowercase hex>`;
-- root/app passwords are retrieved at VM startup from Secret Manager through the VM identity;
-- no service-account key;
-- no public TCP/3306 firewall;
-- MariaDB ingress limited to the existing GKE subnet and Pod CIDR;
-- the VM may have an ephemeral outbound IPv4 bootstrap path, but no Internet database ingress rule.
-
-### GKE Secret Sync
-
-The cluster update is limited to native Secret Sync enablement. Automatic rotation is not selected.
-
-A dedicated Kubernetes ServiceAccount named `terraformers-secret-sync` receives access to only the
-application DB password secret. The backend ServiceAccount does not receive direct Secret Manager
-access.
-
-The isolated Kubernetes prerequisite surface contains:
-
-- `terraformers-secret-sync` ServiceAccount;
-- GKE `SecretProviderClass`;
-- `SecretSync` targeting existing Secret name
-  `terraformers-backend-runtime-secrets`;
-- only `SPRING_DATASOURCE_PASSWORD` is synchronized;
-- a selector-less `terraformers-mariadb` Service;
-- EndpointSlice population from the live VM private IP in the protected workflow;
-- internal `terraformers-jwks` fixture ConfigMap/Deployment/Service.
-
-The prerequisite kustomization does not reference the backend base/Deployment.
-
-## Workflow boundaries
-
-A new manual-only workflow,
-`.github/workflows/gcp-target-runtime-dependencies.yml`, defines three independently approved
-operations:
-
-1. `runtime-secret-foundation`
-   - exact contract: 3 creates;
-   - Secret Manager API + two empty secret containers only.
-2. `runtime-dependencies`
-   - exact contract: 9 creates + 1 existing GKE cluster update;
-   - requires an exact MariaDB image digest;
-   - requires both secret containers and enabled secret versions;
-   - rechecks GKE >=1.33.
-3. `kubernetes-prerequisites`
-   - applies only the isolated runtime dependency kustomization;
-   - creates the MariaDB EndpointSlice from the private VM IP;
-   - verifies the synchronized DB password key exists without printing it;
-   - verifies the internal JWKS Deployment is ready;
-   - fails if the backend Deployment already exists or is created.
-
-No operation is automatic or PR-triggered.
-
-## Plan/apply identity boundary
-
-`scripts/deploy/bootstrap_gcp_runtime_secrets.sh` defines a separate IAM checkpoint.
-
-The protected Terraform apply identity needs:
-
+Apply identity:
 - `roles/compute.instanceAdmin.v1`;
 - `roles/compute.securityAdmin`;
 - `roles/secretmanager.admin`;
 - `roles/storage.admin`.
 
-The Terraform plan identity keeps its existing read-only baseline and adds only the runtime
-metadata roles needed by this unit.
-
-Existing baseline roles checked by the runtime bootstrap/workflow:
-
+Plan identity:
 - `roles/browser`;
 - `roles/compute.viewer`;
 - `roles/container.viewer`;
 - `roles/iam.serviceAccountViewer`;
 - `roles/iam.securityReviewer`;
-- `roles/serviceusage.serviceUsageConsumer`.
-
-Runtime additions:
-
+- `roles/serviceusage.serviceUsageConsumer`;
 - `roles/secretmanager.viewer`;
 - `roles/storage.bucketViewer`.
 
-The read-boundary review confirmed that no custom Storage IAM role is required:
-`roles/storage.bucketViewer` supplies bucket metadata `get/list`, while the existing
-`roles/iam.securityReviewer` supplies `storage.buckets.getIamPolicy`. Secret Manager Viewer
-supplies secret/version metadata and `secretmanager.secrets.getIamPolicy`, but not
-`secretmanager.versions.access`, so the plan identity cannot read secret payloads.
+PR #151 hardened the bootstrap after a Cloud Resource Manager 429 exposed that repeated
+`get-iam-policy` calls could be charged to a shared Cloud SDK quota project and incorrectly
+classified as missing roles. The correction pins `terraformers-platform` as the quota project,
+caches the IAM policy, and fails closed on policy-read errors. Terraform Static Verification run
+`36846676527` passed.
 
-The plan workflow also asserts that the plan identity has none of the checked compute/container/
-Secret Manager/Storage mutation permissions and no Secret Manager payload access.
+## Completed live checkpoints
 
-The IAM bootstrap is repository-defined but **has not been executed**.
+### 1. Secret container foundation — PASS
 
-## Existing target workflow compatibility
+Protected workflow run `36847201560` executed on source
+`9baaa62244ce9304490bf2c36f6b42bb030fdbd0`.
 
-The existing `GCP Target Terraform Apply` runtime-check/activate/idle paths now derive the Case C
-runtime enable flags from canonical Terraform state. If MariaDB exists, they recover the exact
-immutable MariaDB image from the stored startup-script value before planning.
+The exact gated plan and apply were:
 
-This prevents a routine target scale/check operation from interpreting opt-in defaults as a request
-to delete the newly created Case C dependencies.
+`3 added, 0 changed, 0 destroyed`
 
-## Static acceptance
+Created:
+- Secret Manager API enablement;
+- `terraformers-mariadb-root-password` secret container;
+- `terraformers-mariadb-app-password` secret container.
 
-Pending CI must prove:
+Terraform created no secret version or payload.
 
-- Terraform init/fmt/validate for `gcp-target-runtime`;
-- exact-plan gate positive tests for both new Terraform operations;
-- rejection of an extra resource;
-- rejection of broad GCS IAM;
-- rejection of public MariaDB firewall;
-- rejection of mutable MariaDB image;
-- rejection of Secret Sync automatic rotation;
-- rejection of Terraform-managed secret versions;
-- shell syntax for the bounded IAM/secret bootstrap;
-- runtime workflow remains manual-only;
-- Kubernetes prerequisite kustomization remains isolated from backend Deployment.
+### 2. Initial secret versions — PASS
 
-## Live gates still unapproved
+The separately approved operator bootstrap created version `1` for both MariaDB secrets.
+Payload values were generated in memory and were not printed, committed, uploaded, or written into
+Terraform state. The bootstrap is intentionally non-rotating and refuses an already-enabled version.
 
-Nothing in this implementation authorizes live mutation.
+### 3. Runtime dependencies — PASS
 
-Separate user approval remains required for:
+Protected workflow run `36851221194` executed the exact MariaDB image:
 
-1. runtime IAM bootstrap;
-2. `runtime-secret-foundation` apply;
-3. initial secret-version bootstrap;
-4. `runtime-dependencies` apply;
-5. Kubernetes prerequisite apply.
+`mariadb:11.4@sha256:70cc072b29b4a89ae07abb2d4da2c64678a7f2dfe092751bb51c87d67dc1338b`
 
-A later Work Package is required for the backend Deployment.
+The gated plan and apply were:
 
-## Live acceptance still pending
+`9 added, 1 changed, 0 destroyed`
 
-After the above live checkpoints are separately approved, this Work Package still must prove:
+The only existing-resource update enabled native GKE Secret Sync. The creates were the reviewed
+private runtime GCS bucket and backend bucket IAM member, dedicated MariaDB service account,
+three secret-access IAM members, 20 GiB `pd-balanced` data disk, `e2-medium` MariaDB VM, and
+TCP/3306 firewall limited to the existing GKE source boundary.
 
-- MariaDB starts on the private runtime path;
-- the dedicated PD backs `/var/lib/mysql`;
-- container replacement preserves a marker row;
-- VM restart preserves the same marker row;
-- Secret Sync creates the expected Kubernetes Secret key without printing its value;
-- GCS write/read/delete works through the backend workload principal;
-- bucket remains private;
+The workflow verified after apply:
+- Secret Sync enabled;
+- runtime bucket private with UBLA and public access prevention enforced;
+- MariaDB VM `RUNNING`;
+- backend Deployment not applied;
+- secret payloads not printed or uploaded.
+
+### 4. Kubernetes prerequisites — PASS
+
+Protected workflow run `36854218346` applied only the isolated prerequisite surface.
+
+Created:
+- `terraformers-secret-sync` ServiceAccount;
+- internal JWKS ConfigMap, Service, and Deployment;
+- selector-less `terraformers-mariadb` Service;
+- `SecretSync`;
+- `SecretProviderClass`;
+- MariaDB EndpointSlice populated from the live VM private IP.
+
+The run then proved:
+- internal JWKS Deployment rolled out;
+- synchronized Kubernetes Secret contains non-empty `SPRING_DATASOURCE_PASSWORD` without
+  printing its value;
+- MariaDB Service/EndpointSlice exists;
 - backend Deployment remains absent.
 
-Those are runtime evidence, not static-CI substitutes.
+## Final runtime live-acceptance operation
+
+The existing manual-only `.github/workflows/gcp-target-runtime-dependencies.yml` is extended with
+one additional operation, `runtime-live-acceptance`. A new workflow is deliberately not created.
+
+The operation is protected by the existing `gcp-target-apply` environment and requires:
+- exact current main SHA;
+- exact confirmation token `RUN_REVIEWED_GCP_RUNTIME_LIVE_ACCEPTANCE_RESTART`;
+- exact `mariadb:11.4@sha256:<digest>` matching the VM startup script.
+
+Before mutation it fails closed unless:
+- GKE Secret Sync is enabled;
+- MariaDB VM is `RUNNING`;
+- the immutable MariaDB digest matches the installed startup script;
+- the startup script still binds `/var/lib/mysql` and recreates the MariaDB container;
+- the runtime bucket keeps UBLA and public access prevention and has no public IAM principal;
+- Secret Sync produced the expected password key;
+- MariaDB EndpointSlice exists;
+- backend Deployment is absent.
+
+### GCS acceptance
+
+The operation applies only the existing base `terraformers-backend` ServiceAccount, not the
+backend Deployment.
+
+It then starts a temporary probe Pod using the already-published immutable backend image:
+
+`asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae`
+
+The Pod uses `serviceAccountName: terraformers-backend` and obtains a token from the GKE metadata
+server. Against `terraformers-runtime-objects-21647422237` it must complete:
+
+`write -> read exact payload -> delete -> confirm 404`
+
+The temporary object and Pod are removed.
+
+### MariaDB persistence/restart acceptance
+
+A temporary MariaDB client Pod consumes the synchronized application password through
+`secretKeyRef`, never through a GitHub runner environment variable.
+
+Before restart it:
+- connects over the private Kubernetes Service/EndpointSlice path;
+- creates a temporary marker table/row;
+- records the MariaDB container hostname.
+
+The protected apply identity then performs one Compute Engine VM stop/start. The workflow requires
+the VM private IP to remain unchanged.
+
+After startup, a second client Pod waits until:
+- the exact marker row is still present; and
+- MariaDB reports a different container hostname.
+
+Because the VM startup script removes/recreates the MariaDB container and mounts the dedicated PD at
+`/var/lib/mysql`, the combination of marker survival and changed container identity is the live
+evidence for both container-replacement persistence and VM-restart persistence. The temporary marker
+table is dropped after verification.
+
+No SSH/IAP ingress or additional management path is introduced.
+
+## Final boundary after acceptance
+
+A successful live-acceptance run must still prove:
+- runtime bucket PAP/UBLA remain enforced;
+- Secret Sync password key remains present without printing the value;
+- backend Workload Identity ServiceAccount exists;
+- MariaDB EndpointSlice exists;
+- backend Deployment remains absent;
+- temporary acceptance Pods and objects are cleaned.
+
+## Remaining gate
+
+The workflow implementation itself must pass PR CI and independent review first.
+
+The actual VM stop/start is a separate live checkpoint and has **not** been executed by this
+implementation branch.
+
+Only after that reviewed live-acceptance run passes can this runtime-dependency/deployment-readiness
+unit be closed and the later backend Deployment Work Package be considered.

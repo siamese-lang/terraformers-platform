@@ -285,13 +285,11 @@ Rejected for first baseline:
 
 ## 13. Immediate next single task
 
-**Case C GCP quota/cost preflight — ACTIVE.**
+**Case C GCP quota/cost preflight — QUOTA / MACHINE PASS; FREE TRIAL CREDIT HUMAN_REQUIRED.**
 
 See [Case C GCP Quota / Cost Preflight](../../evaluation/case-c-gcp-quota-cost-preflight.md).
 
-It is read-only and reuses the existing GCP plan workflow / plan identity. Merging the active
-Work Package automatically triggers the preflight on `main`; no manual Cloud Shell command or
-resource creation is required.
+The read-only preflight executed automatically as workflow run `36823850490`. Current project and Seoul quota support the selected active shape. No Terraform init/plan/apply or GCP mutation occurred. The only remaining gate is human confirmation that sufficient Free Trial promotional credit remains.
 
 Its only outcome is to determine whether the candidate:
 

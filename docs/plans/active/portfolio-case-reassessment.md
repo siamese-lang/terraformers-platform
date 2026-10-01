@@ -197,11 +197,15 @@ and is **COMPATIBILITY GATE OPEN**.
 
 The portfolio objective now prefers a production-representative backend runtime over the earlier
 benchmark-only MariaDB/filesystem shape, because dependency topology can distort bottleneck
-attribution. Compatibility verification is active. Cloud Storage application-contract mapping is
-**PASS**, and Artifact Registry least-privilege GitHub/GKE delivery identity is **PASS**. MySQL 8.4
-Flyway/JPA/Case B real-database compatibility remains the final executable gate. The benchmark-only
-runtime remains a fallback if MySQL compatibility does not justify the managed relational path.
-No implementation, cloud mutation, live load or tuning is authorized yet.
+attribution. Compatibility verification is complete. Cloud Storage application-contract mapping is **PASS** and
+Artifact Registry least-privilege GitHub/GKE delivery identity is **PASS**. MySQL 8.4 is **FAIL**:
+after connection succeeded, Flyway applied migrations 001–002 and MySQL 8.4 rejected V003
+`ADD COLUMN IF NOT EXISTS` with syntax error 1064; MariaDB 11.4 remained green.
+
+The failure invalidates Cloud SQL for MySQL as a drop-in choice under the frozen unchanged-migration
+gate, but it does not invalidate the production-representative runtime direction or the two passing
+managed-service candidates. Relational hosting alone must be reconsidered before implementation.
+No cloud mutation, live load or tuning is authorized yet.
 
 ## Case B measurement-readiness checkpoint
 
@@ -351,17 +355,16 @@ capacity and safe delivery**.
 The Case C runtime decision is **NOT YET FINAL**. A production-representative backend runtime is the
 preferred candidate, but product choices remain gated by compatibility.
 
-The bounded **Case C compatibility verification Work Package** is active.
+The bounded **Case C compatibility verification Work Package** is complete.
 
-Completed:
+Results:
 1. Cloud Storage adapter-contract compatibility: **PASS**.
 2. Artifact Registry least-privilege publisher/puller identity design compatibility: **PASS**.
+3. MySQL 8.4 unchanged-migration compatibility: **FAIL**.
 
-Remaining:
-3. MySQL 8.4 clean migration + JPA + Case B durable-processing compatibility: **PENDING CI**.
-
-Do not create any Cloud SQL, bucket or registry resource and do not mutate IAM in this Work Package.
-The final Case C runtime selection occurs only after the MySQL result and aggregate 3/3 decision are reviewed.
+The next candidate task is a bounded **Case C relational-hosting decision** comparing an intentional
+MariaDB→MySQL migration against retaining MariaDB in a production-representative hosting shape.
+Do not implement either direction or create cloud resources until that decision is reviewed.
 
 ## Case A A1 measurement-readiness checkpoint
 

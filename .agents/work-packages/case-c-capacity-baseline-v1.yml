@@ -1,8 +1,8 @@
 work_package:
   id: case-c-capacity-baseline-v1
-  status: AWAITING_ACTIVATION
-  approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  status: ACTIVE
+  approved_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
+  execution_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
 
   goal: >
     Freeze and implement the smallest reproducible Case C capacity-baseline harness for the

@@ -14,6 +14,7 @@ on:
           - kubernetes-prerequisites
           - backend-deployment
           - backend-revision-rollout
+          - backend-replacement-durability
           - backend-live-validation
           - runtime-live-acceptance
       expected_sha:
@@ -38,6 +39,10 @@ on:
         type: string
       expected_current_backend_image:
         description: Exact currently deployed backend image; required for backend rollout.
+        required: false
+        type: string
+      source_validation_run_id:
+        description: Successful backend-live-validation run ID whose private project/result will be re-read across backend replacement.
         required: false
         type: string
 
@@ -927,6 +932,522 @@ jobs:
             echo '- Backend health: `UP`'
             echo '- Terraform/IAM/GCP resource mutation: none'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  backend-replacement-durability:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'backend-replacement-durability'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 25
+    env:
+      PROJECT_ID: terraformers-platform
+      NAMESPACE: terraformers-target
+      ISSUER_URI: https://identity.example.test/case-c
+      CLIENT_ID: case-c-runtime-client
+      RESULT_BUCKET: terraformers-runtime-objects-21647422237
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted backend replacement durability request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          SOURCE_VALIDATION_RUN_ID: ${{ inputs.source_validation_run_id }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved workflow SHA does not match checked-out main.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == RUN_REVIEWED_CASE_C_BACKEND_REPLACEMENT_DURABILITY_1 ]]
+          [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]]
+          [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$SOURCE_VALIDATION_RUN_ID" =~ ^[0-9]+$ ]]
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify replacement boundary
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+        run: |
+          set -euo pipefail
+          actual_image="$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend \
+              -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}'
+          )"
+          [[ "$actual_image" == "$BACKEND_IMAGE" ]]
+
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend \
+              -o jsonpath='{.status.readyReplicas}'
+          )" == 1 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend \
+              -o jsonpath='{.status.availableReplicas}'
+          )" == 1 ]]
+
+          runtime_source="$(
+            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend \
+              -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+          )"
+          [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]]
+          kubectl auth can-i delete pods -n "$NAMESPACE" | grep -Fxq yes
+
+      - name: Prepare durable-project authentication fixture
+        env:
+          SOURCE_VALIDATION_RUN_ID: ${{ inputs.source_validation_run_id }}
+        run: |
+          set -euo pipefail
+          previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
+          private_key="${RUNNER_TEMP}/case-c-private.pem"
+          modulus_bin="${RUNNER_TEMP}/case-c-modulus.bin"
+          jwks="${RUNNER_TEMP}/case-c-jwks.json"
+          token_file="${RUNNER_TEMP}/case-c-access.token"
+          unsigned="${RUNNER_TEMP}/case-c-unsigned.token"
+          signature="${RUNNER_TEMP}/case-c-signature.bin"
+          kid="case-c-${GITHUB_RUN_ID}"
+
+          kubectl -n "$NAMESPACE" get configmap terraformers-jwks \
+            -o jsonpath='{.data.jwks\.json}' > "$previous_jwks"
+          test -s "$previous_jwks"
+          jq -e '.keys == []' "$previous_jwks" >/dev/null || {
+            echo 'Refusing to replace a non-placeholder JWKS configuration.' >&2
+            exit 1
+          }
+
+          b64url_file() {
+            openssl base64 -A <"$1" | tr '+/' '-_' | tr -d '='
+          }
+
+          openssl genpkey \
+            -algorithm RSA \
+            -pkeyopt rsa_keygen_bits:2048 \
+            -pkeyopt rsa_keygen_pubexp:65537 \
+            -out "$private_key" 2>/dev/null
+
+          modulus_hex="$(
+            openssl rsa -in "$private_key" -noout -modulus 2>/dev/null | cut -d= -f2
+          )"
+          printf '%s' "$modulus_hex" | xxd -r -p > "$modulus_bin"
+          modulus="$(b64url_file "$modulus_bin")"
+
+          printf '{"keys":[{"kid":"%s","kty":"RSA","alg":"RS256","use":"sig","n":"%s","e":"AQAB"}]}' \
+            "$kid" "$modulus" > "$jwks"
+
+          kubectl -n "$NAMESPACE" create configmap terraformers-jwks \
+            --from-file=jwks.json="$jwks" \
+            --dry-run=client -o yaml \
+            | kubectl apply -f -
+          kubectl -n "$NAMESPACE" rollout restart deployment/terraformers-jwks
+          kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
+
+          service_visible=false
+          for _ in $(seq 1 30); do
+            backend_seen_jwks="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend \
+                -c backend -- \
+                curl -fsS http://terraformers-jwks:8080/jwks.json 2>/dev/null || true
+            )"
+            if jq -e --arg kid "$kid" --arg modulus "$modulus" '
+              .keys | length == 1
+              and .[0].kid == $kid
+              and .[0].alg == "RS256"
+              and .[0].n == $modulus
+              and .[0].e == "AQAB"
+            ' <<< "$backend_seen_jwks" >/dev/null 2>&1; then
+              service_visible=true
+              break
+            fi
+            sleep 1
+          done
+          [[ "$service_visible" == true ]] || {
+            echo 'Backend pod did not observe the durability JWKS through the Service path.' >&2
+            exit 1
+          }
+
+          now="$(date +%s)"
+          subject="case-c-${SOURCE_VALIDATION_RUN_ID}"
+          header="$(
+            printf '{"alg":"RS256","kid":"%s","typ":"JWT"}' "$kid" \
+              | openssl base64 -A | tr '+/' '-_' | tr -d '='
+          )"
+          payload="$(
+            printf '{"iss":"%s","sub":"%s","email":"%s","token_use":"access","client_id":"%s","iat":%s,"exp":%s}' \
+              "$ISSUER_URI" \
+              "$subject" \
+              "${subject}@example.test" \
+              "$CLIENT_ID" \
+              "$now" \
+              "$((now + 900))" \
+              | openssl base64 -A | tr '+/' '-_' | tr -d '='
+          )"
+          printf '%s.%s' "$header" "$payload" > "$unsigned"
+          openssl dgst -sha256 -sign "$private_key" -out "$signature" "$unsigned"
+          printf '%s.%s' "$(cat "$unsigned")" "$(b64url_file "$signature")" > "$token_file"
+
+      - name: Prove result identity survives backend pod replacement
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          SOURCE_VALIDATION_RUN_ID: ${{ inputs.source_validation_run_id }}
+        run: |
+          set -euo pipefail
+          token="$(cat "${RUNNER_TEMP}/case-c-access.token")"
+          project_name="case-c-live-${SOURCE_VALIDATION_RUN_ID}"
+          projects_before="${RUNNER_TEMP}/projects-before.json"
+          job_before="${RUNNER_TEMP}/job-before.json"
+          tree_before="${RUNNER_TEMP}/tree-before.json"
+          draft_before="${RUNNER_TEMP}/draft-before.json"
+          job_after="${RUNNER_TEMP}/job-after.json"
+          tree_after="${RUNNER_TEMP}/tree-after.json"
+          draft_after="${RUNNER_TEMP}/draft-after.json"
+          pf_log="${RUNNER_TEMP}/case-c-replacement-port-forward.log"
+          pf_pid=""
+
+          stop_pf() {
+            if [[ -n "$pf_pid" ]]; then
+              kill "$pf_pid" >/dev/null 2>&1 || true
+              wait "$pf_pid" >/dev/null 2>&1 || true
+              pf_pid=""
+            fi
+          }
+
+          start_pf() {
+            : > "$pf_log"
+            kubectl -n "$NAMESPACE" port-forward service/terraformers-backend 18080:80 \
+              >"$pf_log" 2>&1 &
+            pf_pid=$!
+            ready=false
+            for _ in $(seq 1 45); do
+              if curl -fsS http://127.0.0.1:18080/actuator/health \
+                  | jq -e '.status == "UP"' >/dev/null 2>&1; then
+                ready=true
+                break
+              fi
+              sleep 1
+            done
+            [[ "$ready" == true ]] || {
+              cat "$pf_log" >&2 || true
+              echo 'Backend port-forward did not become healthy.' >&2
+              exit 1
+            }
+          }
+
+          hash_gcs_object_from_pod() {
+            local pod="$1"
+            local bucket="$2"
+            local key="$3"
+            kubectl -n "$NAMESPACE" exec "$pod" -c backend -- \
+              env OBJECT_BUCKET="$bucket" OBJECT_KEY="$key" sh -c '
+                set -eu
+                token="$(
+                  curl -fsS -H "Metadata-Flavor: Google" \
+                    http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token \
+                    | sed -nE "s/.*\"access_token\"[[:space:]]*:[[:space:]]*\"([^\"]+)\".*/\1/p"
+                )"
+                test -n "$token"
+                tmp="$(mktemp /tmp/case-c-object.XXXXXX)"
+                curl -fsS \
+                  -H "Authorization: Bearer $token" \
+                  "https://storage.googleapis.com/${OBJECT_BUCKET}/${OBJECT_KEY}" \
+                  -o "$tmp"
+                sha256sum "$tmp" | awk "{print \$1}"
+                rm -f "$tmp"
+              '
+          }
+
+          trap stop_pf EXIT
+          start_pf
+
+          metrics_before="${RUNNER_TEMP}/metrics-before.txt"
+          curl -fsS http://127.0.0.1:18080/actuator/prometheus > "$metrics_before"
+          grep -Eq '^(jvm_|process_|http_server_requests)' "$metrics_before"
+
+          curl -fsS \
+            -H "Authorization: Bearer ${token}" \
+            http://127.0.0.1:18080/api/projects > "$projects_before"
+
+          jq -e --arg name "$project_name" \
+            '[.[] | select(.displayName == $name)] | length == 1' \
+            "$projects_before" >/dev/null
+
+          project_id="$(
+            jq -r --arg name "$project_name" \
+              '.[] | select(.displayName == $name) | .projectId' \
+              "$projects_before"
+          )"
+          job_id="$(
+            jq -r --arg name "$project_name" \
+              '.[] | select(.displayName == $name) | .latestAnalysisJobId' \
+              "$projects_before"
+          )"
+          result_file_id="$(
+            jq -r --arg name "$project_name" \
+              '.[] | select(.displayName == $name) | .latestResultFileId' \
+              "$projects_before"
+          )"
+          result_key="$(
+            jq -r --arg name "$project_name" \
+              '.[] | select(.displayName == $name) | .latestResultObjectKey' \
+              "$projects_before"
+          )"
+          source_file_id="$(
+            jq -r --arg name "$project_name" \
+              '.[] | select(.displayName == $name) | .sourceFileId' \
+              "$projects_before"
+          )"
+          source_bucket="$(
+            jq -r --arg name "$project_name" \
+              '.[] | select(.displayName == $name) | .sourceBucket' \
+              "$projects_before"
+          )"
+          source_key="$(
+            jq -r --arg name "$project_name" \
+              '.[] | select(.displayName == $name) | .sourceKey' \
+              "$projects_before"
+          )"
+
+          [[ "$project_id" =~ ^[0-9]+$ ]]
+          [[ "$job_id" =~ ^[0-9a-f-]{36}$ ]]
+          [[ "$result_file_id" =~ ^[0-9]+$ ]]
+          [[ -n "$result_key" && "$result_key" != null ]]
+          [[ "$source_file_id" =~ ^[0-9]+$ ]]
+          [[ "$source_bucket" == terraformers-runtime-objects-21647422237 ]]
+          [[ -n "$source_key" && "$source_key" != null ]]
+
+          jq -e --arg name "$project_name" \
+            '.[] | select(.displayName == $name)
+              | .analysisStatus == "SUCCEEDED"
+                and .sourceBinaryPersisted == true
+                and .sourceStorageProvider == "gcs"' \
+            "$projects_before" >/dev/null
+
+          curl -fsS \
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/analysis/jobs/${job_id}" > "$job_before"
+          jq -e \
+            --arg job_id "$job_id" \
+            --arg result_key "$result_key" \
+            --argjson project_id "$project_id" \
+            --argjson result_file_id "$result_file_id" '
+              .id == $job_id
+              and .projectId == $project_id
+              and .status == "SUCCEEDED"
+              and .resultFileId == $result_file_id
+              and .resultObjectKey == $result_key
+              and (.provider | type == "string" and length > 0)
+              and .failureReason == null
+            ' "$job_before" >/dev/null
+
+          curl -fsS \
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/project-tree/${project_id}" > "$tree_before"
+          jq -e \
+            --arg job_id "$job_id" \
+            --arg result_key "$result_key" \
+            --argjson result_file_id "$result_file_id" '
+              .latestAnalysisJobId == $job_id
+              and .latestResultFileId == $result_file_id
+              and .latestResultObjectKey == $result_key
+              and .analysisStatus == "SUCCEEDED"
+            ' "$tree_before" >/dev/null
+
+          curl -fsS \
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/projects/${project_id}/terraform/main.tf" > "$draft_before"
+          jq -e \
+            --arg job_id "$job_id" \
+            --arg result_key "$result_key" \
+            --argjson project_id "$project_id" \
+            --argjson result_file_id "$result_file_id" '
+              .projectId == $project_id
+              and .fileId == $result_file_id
+              and .latestAnalysisJobId == $job_id
+              and .latestResultObjectKey == $result_key
+              and (.content | type == "string" and length > 0)
+            ' "$draft_before" >/dev/null
+          draft_hash_before="$(
+            jq -r '.content' "$draft_before" | sha256sum | awk '{print $1}'
+          )"
+
+          old_pod="$(
+            kubectl -n "$NAMESPACE" get pods \
+              -l app.kubernetes.io/name=terraformers-backend \
+              -o jsonpath='{.items[0].metadata.name}'
+          )"
+          old_uid="$(
+            kubectl -n "$NAMESPACE" get pod "$old_pod" \
+              -o jsonpath='{.metadata.uid}'
+          )"
+          [[ -n "$old_pod" && -n "$old_uid" ]]
+
+          source_hash_before="$(
+            hash_gcs_object_from_pod "$old_pod" "$source_bucket" "$source_key"
+          )"
+          result_hash_before="$(
+            hash_gcs_object_from_pod "$old_pod" "$RESULT_BUCKET" "$result_key"
+          )"
+          [[ "$source_hash_before" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$result_hash_before" =~ ^[0-9a-f]{64}$ ]]
+
+          stop_pf
+          kubectl -n "$NAMESPACE" delete pod "$old_pod" --wait=true
+          kubectl -n "$NAMESPACE" rollout status deployment/terraformers-backend --timeout=7m
+
+          new_pod="$(
+            kubectl -n "$NAMESPACE" get pods \
+              -l app.kubernetes.io/name=terraformers-backend \
+              -o jsonpath='{.items[0].metadata.name}'
+          )"
+          new_uid="$(
+            kubectl -n "$NAMESPACE" get pod "$new_pod" \
+              -o jsonpath='{.metadata.uid}'
+          )"
+          [[ -n "$new_pod" && -n "$new_uid" ]]
+          [[ "$new_uid" != "$old_uid" ]] || {
+            echo 'Backend pod UID did not change after replacement.' >&2
+            exit 1
+          }
+
+          [[ "$(
+            kubectl -n "$NAMESPACE" get pod "$new_pod" \
+              -o jsonpath='{.spec.containers[?(@.name=="backend")].image}'
+          )" == "$BACKEND_IMAGE" ]]
+
+          runtime_source="$(
+            kubectl -n "$NAMESPACE" exec "$new_pod" -c backend -- \
+              sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+          )"
+          [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]]
+
+          source_hash_after="$(
+            hash_gcs_object_from_pod "$new_pod" "$source_bucket" "$source_key"
+          )"
+          result_hash_after="$(
+            hash_gcs_object_from_pod "$new_pod" "$RESULT_BUCKET" "$result_key"
+          )"
+          [[ "$source_hash_after" == "$source_hash_before" ]] || {
+            echo 'Source GCS object hash changed across backend pod replacement.' >&2
+            exit 1
+          }
+          [[ "$result_hash_after" == "$result_hash_before" ]] || {
+            echo 'Result GCS object hash changed across backend pod replacement.' >&2
+            exit 1
+          }
+
+          start_pf
+          metrics_after="${RUNNER_TEMP}/metrics-after.txt"
+          curl -fsS http://127.0.0.1:18080/actuator/prometheus > "$metrics_after"
+          grep -Eq '^(jvm_|process_|http_server_requests)' "$metrics_after"
+
+          curl -fsS \
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/analysis/jobs/${job_id}" > "$job_after"
+          jq -e \
+            --arg job_id "$job_id" \
+            --arg result_key "$result_key" \
+            --argjson project_id "$project_id" \
+            --argjson result_file_id "$result_file_id" '
+              .id == $job_id
+              and .projectId == $project_id
+              and .status == "SUCCEEDED"
+              and .resultFileId == $result_file_id
+              and .resultObjectKey == $result_key
+              and (.provider | type == "string" and length > 0)
+              and .failureReason == null
+            ' "$job_after" >/dev/null
+
+          curl -fsS \
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/project-tree/${project_id}" > "$tree_after"
+          jq -e \
+            --arg job_id "$job_id" \
+            --arg result_key "$result_key" \
+            --argjson result_file_id "$result_file_id" '
+              .latestAnalysisJobId == $job_id
+              and .latestResultFileId == $result_file_id
+              and .latestResultObjectKey == $result_key
+              and .analysisStatus == "SUCCEEDED"
+            ' "$tree_after" >/dev/null
+
+          curl -fsS \
+            -H "Authorization: Bearer ${token}" \
+            "http://127.0.0.1:18080/api/projects/${project_id}/terraform/main.tf" > "$draft_after"
+          jq -e \
+            --arg job_id "$job_id" \
+            --arg result_key "$result_key" \
+            --argjson project_id "$project_id" \
+            --argjson result_file_id "$result_file_id" '
+              .projectId == $project_id
+              and .fileId == $result_file_id
+              and .latestAnalysisJobId == $job_id
+              and .latestResultObjectKey == $result_key
+              and (.content | type == "string" and length > 0)
+            ' "$draft_after" >/dev/null
+          draft_hash_after="$(
+            jq -r '.content' "$draft_after" | sha256sum | awk '{print $1}'
+          )"
+          [[ "$draft_hash_after" == "$draft_hash_before" ]] || {
+            echo 'Terraform draft content hash changed across backend pod replacement.' >&2
+            exit 1
+          }
+
+          {
+            echo '## Case C backend replacement durability'
+            printf -- '- Source validation run: %s\n' "$SOURCE_VALIDATION_RUN_ID"
+            printf -- '- Project ID: %s\n' "$project_id"
+            printf -- '- AnalysisJob: %s\n' "$job_id"
+            printf -- '- Result file ID: %s\n' "$result_file_id"
+            printf -- '- Result object key: %s\n' "$result_key"
+            printf -- '- Source file ID: %s\n' "$source_file_id"
+            printf -- '- Old pod UID: %s\n' "$old_uid"
+            printf -- '- New pod UID: %s\n' "$new_uid"
+            printf -- '- Terraform draft SHA-256: %s\n' "$draft_hash_after"
+            printf -- '- Source GCS SHA-256: %s\n' "$source_hash_after"
+            printf -- '- Result GCS SHA-256: %s\n' "$result_hash_after"
+            echo '- Actuator/Prometheus metrics before/after replacement: reachable'
+            echo '- Durable AnalysisJob state after replacement: SUCCEEDED'
+            echo '- Result relational identity after replacement: unchanged'
+            echo '- Result Terraform bytes after replacement: unchanged'
+            echo '- Deployment image/source revision after replacement: unchanged'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Restore placeholder JWKS fixture
+        if: always()
+        run: |
+          set -euo pipefail
+          previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
+          if [[ -s "$previous_jwks" ]]; then
+            kubectl -n "$NAMESPACE" create configmap terraformers-jwks \
+              --from-file=jwks.json="$previous_jwks" \
+              --dry-run=client -o yaml \
+              | kubectl apply -f -
+            kubectl -n "$NAMESPACE" rollout restart deployment/terraformers-jwks
+            kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
+          fi
 
   backend-live-validation:
     if: >-

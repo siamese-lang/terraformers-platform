@@ -9,7 +9,7 @@ data:
   ANALYSIS_RESULT_BUCKET_NAME: terraformers-runtime-objects-21647422237
   JWT_ISSUER_URI: https://identity.example.test/case-c
   JWT_JWK_SET_URI: http://terraformers-jwks:8080/jwks.json
-  JWT_COGNITO_CLIENT_ID: case-c-runtime-client
+  COGNITO_USER_POOL_CLIENT_ID: case-c-runtime-client
   SPRING_PROFILES_ACTIVE: "prod,gcp-target"
   ANALYSIS_PROVIDER: "vertex"
   EMBEDDING_PROVIDER: "vertex"
@@ -25,6 +25,7 @@ data:
   CORPUS_VERSION: "terraformers-reference-v3"
   PROVIDER_VERSION: "5.100.0"
   EXPECTED_VECTOR_DIMENSION: "1024"
+  GOOGLE_CLOUD_PROJECT: terraformers-platform
   GOOGLE_CLOUD_LOCATION: "global"
   VERTEX_GENERATION_MODEL_ID: "gemini-3.8-flash"
   VERTEX_EMBEDDING_MODEL_ID: "gemini-embedding-001"

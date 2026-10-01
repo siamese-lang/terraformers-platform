@@ -4,12 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Authenticate only before granting cloud resource-read permissions, or run the plan.
+        description: Authenticate only, run the read-only Case C quota/cost preflight, or run the Terraform plan.
         required: true
         type: choice
         options:
           - identity-check
+          - case-c-preflight
           - plan
+  push:
+    branches:
+      - main
+    paths:
+      - '.agents/work-packages/case-c-gcp-quota-cost-preflight-v1.yml'
 
 permissions:
   contents: read
@@ -21,7 +27,7 @@ concurrency:
 
 jobs:
   plan:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
     runs-on: ubuntu-latest
     environment: gcp-target-plan
     timeout-minutes: 30
@@ -40,7 +46,7 @@ jobs:
 
       - name: Check identity and state configuration
         env:
-          RUN_MODE: ${{ inputs.mode }}
+          RUN_MODE: ${{ github.event_name == 'push' && 'case-c-preflight' || inputs.mode }}
           STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
           WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
           PLAN_SERVICE_ACCOUNT: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
@@ -48,7 +54,7 @@ jobs:
           set -euo pipefail
           [[ "$GITHUB_REF" == refs/heads/main ]] || exit 1
           [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]] || exit 1
-          [[ "$RUN_MODE" == identity-check || "$RUN_MODE" == plan ]] || exit 1
+          [[ "$RUN_MODE" == identity-check || "$RUN_MODE" == case-c-preflight || "$RUN_MODE" == plan ]] || exit 1
           [[ -n "$WIF_PROVIDER" && -n "$PLAN_SERVICE_ACCOUNT" ]] || {
             echo 'Configure GCP_WIF_PROVIDER and GCP_TF_PLAN_SERVICE_ACCOUNT in the gcp-target-plan environment.' >&2
             exit 1
@@ -87,6 +93,161 @@ jobs:
             exit 1
           }
           echo 'Plan identity mutation-permission check: PASS.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run Case C quota and cost preflight
+        if: github.event_name == 'push' || inputs.mode == 'case-c-preflight'
+        run: |
+          set -euo pipefail
+
+          PROJECT_ID=terraformers-platform
+          REGION=asia-northeast3
+          ZONE=asia-northeast3-a
+
+          gcloud compute project-info describe \
+            --project="$PROJECT_ID" \
+            --format=json > "${RUNNER_TEMP}/project-quota.json"
+
+          gcloud compute regions describe "$REGION" \
+            --project="$PROJECT_ID" \
+            --format=json > "${RUNNER_TEMP}/region-quota.json"
+
+          gcloud compute machine-types describe e2-standard-2 \
+            --zone="$ZONE" \
+            --project="$PROJECT_ID" \
+            --format=json > "${RUNNER_TEMP}/e2-standard-2.json"
+
+          gcloud compute machine-types describe e2-medium \
+            --zone="$ZONE" \
+            --project="$PROJECT_ID" \
+            --format=json > "${RUNNER_TEMP}/e2-medium.json"
+
+          current_nodes="$(
+            gcloud container clusters list \
+              --project="$PROJECT_ID" \
+              --filter='name=terraformers-target AND location=asia-northeast3-a' \
+              --format='value(currentNodeCount)'
+          )"
+          [[ "$current_nodes" =~ ^[01]$ ]] || {
+            echo "Expected terraformers-target currentNodeCount to be 0 or 1, got: ${current_nodes:-missing}" >&2
+            exit 1
+          }
+
+          billing_status=unavailable
+          billing_enabled=unknown
+          if gcloud billing projects describe "$PROJECT_ID" --format=json \
+              > "${RUNNER_TEMP}/billing.json" 2> "${RUNNER_TEMP}/billing.err"; then
+            billing_status=verified
+            billing_enabled="$(jq -r '.billingEnabled // false' "${RUNNER_TEMP}/billing.json")"
+            [[ "$billing_enabled" == true ]] || {
+              echo 'Project billing is explicitly disabled.' >&2
+              exit 1
+            }
+          fi
+
+          CURRENT_NODES="$current_nodes" \
+          BILLING_STATUS="$billing_status" \
+          BILLING_ENABLED="$billing_enabled" \
+          PROJECT_QUOTA_JSON="${RUNNER_TEMP}/project-quota.json" \
+          REGION_QUOTA_JSON="${RUNNER_TEMP}/region-quota.json" \
+          GKE_MACHINE_JSON="${RUNNER_TEMP}/e2-standard-2.json" \
+          DB_MACHINE_JSON="${RUNNER_TEMP}/e2-medium.json" \
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          def load(name):
+              return json.loads(Path(os.environ[name]).read_text(encoding='utf-8'))
+
+          def quota_map(payload):
+              result = {}
+              for item in payload.get('quotas', []):
+                  metric = item.get('metric')
+                  if not metric:
+                      continue
+                  limit = float(item.get('limit', 0) or 0)
+                  usage = float(item.get('usage', 0) or 0)
+                  result[metric] = {'limit': limit, 'usage': usage, 'available': limit - usage}
+              return result
+
+          def require_quota(table, metric, required):
+              if metric not in table:
+                  raise SystemExit(f'Required quota metric missing: {metric}')
+              row = table[metric]
+              if row['available'] < required:
+                  raise SystemExit(
+                      f"Insufficient {metric}: available={row['available']:g}, required={required:g}"
+                  )
+              return row
+
+          current_nodes = int(os.environ['CURRENT_NODES'])
+          additional_gke_nodes = 1 - current_nodes
+          additional_e2_vcpus = additional_gke_nodes * 2 + 2
+          additional_instances = additional_gke_nodes + 1
+          additional_standard_gib = additional_gke_nodes * 30
+          additional_balanced_gib = 30
+          additional_addresses = additional_gke_nodes
+
+          project = quota_map(load('PROJECT_QUOTA_JSON'))
+          region = quota_map(load('REGION_QUOTA_JSON'))
+
+          checks = []
+          checks.append(('global', 'CPUS_ALL_REGIONS', additional_e2_vcpus,
+                         require_quota(project, 'CPUS_ALL_REGIONS', additional_e2_vcpus)))
+          for metric, required in [
+              ('CPUS', additional_e2_vcpus),
+              ('E2_CPUS', additional_e2_vcpus),
+              ('INSTANCES', additional_instances),
+              ('DISKS_TOTAL_GB', additional_standard_gib),
+              ('SSD_TOTAL_GB', additional_balanced_gib),
+              ('IN_USE_ADDRESSES', additional_addresses),
+          ]:
+              checks.append(('region', metric, required, require_quota(region, metric, required)))
+
+          gke_machine = load('GKE_MACHINE_JSON')
+          db_machine = load('DB_MACHINE_JSON')
+          if gke_machine.get('name') != 'e2-standard-2' or int(gke_machine.get('guestCpus', 0)) != 2:
+              raise SystemExit('Unexpected e2-standard-2 machine metadata')
+          if int(gke_machine.get('memoryMb', 0)) != 8192:
+              raise SystemExit('Unexpected e2-standard-2 memory')
+          if db_machine.get('name') != 'e2-medium' or int(db_machine.get('guestCpus', 0)) != 2:
+              raise SystemExit('Unexpected e2-medium machine metadata')
+          if int(db_machine.get('memoryMb', 0)) != 4096:
+              raise SystemExit('Unexpected e2-medium memory')
+
+          lines = [
+              '## Case C GCP quota / cost preflight',
+              '',
+              '- Project: terraformers-platform',
+              '- Region / zone: asia-northeast3 / asia-northeast3-a',
+              f'- Current target GKE nodes: {current_nodes}',
+              '- Target active shape: 1 x e2-standard-2 GKE node + 1 x e2-medium MariaDB VM',
+              f'- Additional E2 quota required from current state: {additional_e2_vcpus:g} vCPU',
+              f'- Additional instances required from current state: {additional_instances:g}',
+              f'- Additional pd-standard quota required: {additional_standard_gib:g} GiB',
+              f'- Additional pd-balanced/SSD quota budget: {additional_balanced_gib:g} GiB',
+              f'- Additional in-use address quota required: {additional_addresses:g}',
+              f"- Billing query: {os.environ['BILLING_STATUS']}",
+              f"- Billing enabled: {os.environ['BILLING_ENABLED']}",
+              '- Remaining Free Trial promotional-credit balance: HUMAN_REQUIRED',
+              '- Quota/machine preflight: PASS',
+              '',
+              '> This workflow is read-only. It does not initialize Terraform, create resources, change IAM, activate GKE nodes, or reserve quota.',
+              '',
+              '| Scope | Metric | Limit | Usage | Available | Required additional |',
+              '| --- | --- | ---: | ---: | ---: | ---: |',
+          ]
+          for scope, metric, required, row in checks:
+              lines.append(
+                  f"| {scope} | {metric} | {row['limit']:g} | {row['usage']:g} | "
+                  f"{row['available']:g} | {required:g} |"
+              )
+
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as stream:
+              stream.write('\n'.join(lines) + '\n')
+          PY
+
+          echo 'Case C quota/cost preflight completed without mutating GCP resources.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check state bucket protection
         if: inputs.mode == 'plan'

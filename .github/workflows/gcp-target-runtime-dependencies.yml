@@ -130,7 +130,7 @@ jobs:
           policy="$(mktemp)"
           gcloud projects get-iam-policy terraformers-platform --format=json > "$policy"
           member='serviceAccount:terraformers-plan@terraformers-platform.iam.gserviceaccount.com'
-          for role in roles/secretmanager.viewer roles/storage.bucketViewer; do
+          for role in roles/iam.securityReviewer roles/secretmanager.viewer roles/storage.bucketViewer; do
             jq -e --arg role "$role" --arg member "$member" '
               any(.bindings[]?;
                 .role == $role and any(.members[]?; . == $member)

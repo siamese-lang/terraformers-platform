@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C immutable backend image delivery LIVE-CLOSED / PASS; backend runtime dependencies/deployment have not started**
+- Current single task: **Case C runtime dependency/deployment readiness decision + Work Package AWAITING APPROVAL; no dependency/backend live mutation authorized**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -173,10 +173,17 @@ Case C — Cloud runtime capacity and safe delivery:
   and runtime wiring are explicitly completed;
 - do **not** load-test the Case A evaluation pod: it would omit API acceptance, durable job queueing,
   executor saturation, persistence, accepted-work survival and rollout/rollback behavior;
-- the next candidate is a bounded **Case C runtime-dependency/deployment readiness** unit that
-  completes only the dependencies required for the production-representative backend path
-  (MariaDB VM/PD, application GCS authority, and explicit secret-delivery decision) before any
-  backend Deployment or load test; it requires a separate Work Package and user approval;
+- [Case C Runtime Dependency / Deployment Readiness Decision](plans/active/case-c-runtime-dependency-deployment-readiness-decision.md)
+  is **PROPOSED / AWAITING USER DECISION**. It selects one private Seoul GCS bucket for uploads/results,
+  Google Secret Manager as the DB-secret authority, native GKE Secret Sync only if the current cluster
+  is already >=1.33, the previously selected dedicated MariaDB 11.4 VM/PD, and an internal deterministic
+  JWKS fixture for Case C authentication. External Secrets Operator, a new deploy identity, external
+  production IdP selection, backend Deployment, load generation and capacity tuning remain excluded;
+- proposed Work Package
+  `.agents/work-packages/case-c-runtime-dependency-deployment-readiness-v1.yml` is
+  **AWAITING_APPROVAL** with `BIND_AT_ACTIVATION`; it permits repository implementation only and keeps
+  secret-version creation, Terraform apply, Kubernetes prerequisite apply and backend Deployment behind
+  separate approval gates;
 - no load harness, concurrency steps, HPA, replicas, executor tuning, node/OpenSearch sizing or
   rollout changes are authorized before that decision.
 

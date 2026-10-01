@@ -150,13 +150,13 @@ def delivery_foundation_plan() -> dict:
     return {
         "resource_changes": [
             resource(
-                "google_project_service.artifact_registry",
+                "google_project_service.artifact_registry[0]",
                 "google_project_service",
                 ["create"],
                 {"service": "artifactregistry.googleapis.com", "disable_on_destroy": False},
             ),
             resource(
-                "google_artifact_registry_repository.backend",
+                "google_artifact_registry_repository.backend[0]",
                 "google_artifact_registry_repository",
                 ["create"],
                 {
@@ -167,7 +167,7 @@ def delivery_foundation_plan() -> dict:
                 },
             ),
             resource(
-                "google_artifact_registry_repository_iam_member.publisher_writer",
+                "google_artifact_registry_repository_iam_member.publisher_writer[0]",
                 "google_artifact_registry_repository_iam_member",
                 ["create"],
                 {
@@ -179,7 +179,7 @@ def delivery_foundation_plan() -> dict:
                 },
             ),
             resource(
-                "google_artifact_registry_repository_iam_member.gke_node_reader",
+                "google_artifact_registry_repository_iam_member.gke_node_reader[0]",
                 "google_artifact_registry_repository_iam_member",
                 ["create"],
                 {
@@ -191,7 +191,7 @@ def delivery_foundation_plan() -> dict:
                 },
             ),
             resource(
-                "google_artifact_registry_repository_iam_member.plan_reader",
+                "google_artifact_registry_repository_iam_member.plan_reader[0]",
                 "google_artifact_registry_repository_iam_member",
                 ["create"],
                 {
@@ -389,7 +389,7 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         plan = delivery_foundation_plan()
         repository = next(
             item for item in plan["resource_changes"]
-            if item["address"] == "google_artifact_registry_repository.backend"
+            if item["address"] == "google_artifact_registry_repository.backend[0]"
         )
         repository["change"]["actions"] = ["update"]
         with self.assertRaises(gate.ContractError):
@@ -399,7 +399,7 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         plan = delivery_foundation_plan()
         writer = next(
             item for item in plan["resource_changes"]
-            if item["address"] == "google_artifact_registry_repository_iam_member.publisher_writer"
+            if item["address"] == "google_artifact_registry_repository_iam_member.publisher_writer[0]"
         )
         writer["change"]["after"]["role"] = "roles/artifactregistry.admin"
         with self.assertRaises(gate.ContractError):

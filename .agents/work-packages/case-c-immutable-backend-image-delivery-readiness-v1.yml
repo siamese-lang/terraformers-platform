@@ -133,11 +133,12 @@ work_package:
     implementation: COMPLETE
     ci: PENDING
     auto_repair_used: 1
-    auto_repair_reason: preserve_historical_12_resource_foundation_and_pre_post_delivery_runtime_checks
+    auto_repair_reason: preserve_historical_foundation_contract_with_conditional_delivery_resources
     main_drift: false
     live_cloud_or_iam_mutation: false
     registry_created: false
     image_published: false
     backend_deployed: false
     apply_identity_artifact_registry_admin_project_scope: true
+    human_directed_correction_after_stop: remove_total_state_count_gates_and_keep_only_direct_prerequisites
     next_gate: independent_acceptance_review_after_CI

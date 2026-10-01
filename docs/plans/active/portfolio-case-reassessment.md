@@ -183,6 +183,19 @@ require a measured bottleneck and the Case Decision Gate.
 Case C begins only after Cases B and A are sufficiently settled for its load results to represent the
 integrated system rather than unresolved durability or AI-behavior ambiguity.
 
+The current [Case C Measurement Readiness Audit](../../evaluation/case-c-measurement-readiness-audit.md)
+is **COMPLETE / NOT READY FOR LIVE BASELINE**. The GKE/Vertex/OpenSearch target foundation is
+available, but the full authenticated backend service is not deployed on that target: persistent
+MariaDB/object-byte dependencies and immutable backend image delivery are unresolved. Existing
+portable MariaDB/JWKS/filesystem fixtures can reduce scope, but their current `emptyDir`/`/tmp`
+forms are not valid safe-rollout persistence evidence. Therefore the evaluation pod must not be
+substituted for the Case C system under test.
+
+The next decision is the representative benchmark runtime: compare a benchmark-only persistent
+reuse of existing fixture patterns on the same GKE target against completing the broader GCP
+application-runtime product selections first. No load harness or tuning is authorized before that
+decision.
+
 ## Case B measurement-readiness checkpoint
 
 Case B measurement readiness is now recorded in
@@ -328,11 +341,11 @@ This reassessment is complete only when:
 Case B and Case A are now portfolio-closed. The next representative case is **Case C — cloud runtime
 capacity and safe delivery**.
 
-The next candidate task is a bounded Case C baseline-definition audit against the current integrated
-runtime: freeze representative workload identity, concurrency steps, collection method, rollout
-observation method, and stopping criteria before any tuning. Do not preselect replicas, HPA, node
-size, OpenSearch size, executor changes, or rollout strategy, and do not begin a live load/rollout
-experiment automatically.
+The Case C measurement-readiness audit is complete and found the live baseline **NOT READY**. The
+next candidate task is a bounded **Case C representative benchmark-runtime decision**. Compare the
+minimum benchmark-only persistent/authenticated runtime on the existing GKE target with completing
+the broader GCP application runtime first. Select no tuning and start no live load/rollout experiment
+until that decision is reviewed and merged.
 
 ## Case A A1 measurement-readiness checkpoint
 

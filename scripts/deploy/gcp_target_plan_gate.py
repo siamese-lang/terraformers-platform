@@ -425,16 +425,10 @@ def validate_runtime_host_firewall_repair(changes: dict[str, dict[str, Any]]) ->
 
     before_metadata = dict(before_without_startup.pop("metadata", {}) or {})
     after_metadata = dict(after_without_startup.pop("metadata", {}) or {})
-    before_startup = str(
-        before_metadata.pop("startup-script", "")
-        or before_without_startup.pop("metadata_startup_script", "")
-        or ""
-    )
-    after_startup = str(
-        after_metadata.pop("startup-script", "")
-        or after_without_startup.pop("metadata_startup_script", "")
-        or ""
-    )
+    before_legacy_startup = str(before_without_startup.pop("metadata_startup_script", "") or "")
+    after_legacy_startup = str(after_without_startup.pop("metadata_startup_script", "") or "")
+    before_startup = str(before_metadata.pop("startup-script", "") or before_legacy_startup or "")
+    after_startup = str(after_metadata.pop("startup-script", "") or after_legacy_startup or "")
 
     require(not before_metadata, "runtime-host-firewall-repair found unexpected existing VM metadata")
     require(not after_metadata, "runtime-host-firewall-repair may add only startup-script metadata")

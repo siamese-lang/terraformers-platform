@@ -2,7 +2,7 @@
 
 ## Status
 
-**READY / EXECUTION PENDING MAIN MERGE**
+**QUOTA / MACHINE PASS — FREE TRIAL CREDIT CONFIRMATION HUMAN_REQUIRED**
 
 Execution base:
 
@@ -140,6 +140,56 @@ After this PR merges:
 
 If quota/machine checks PASS but promotional-credit balance remains unavailable, only the budget
 confirmation remains a human checkpoint.
+
+
+## Executed result
+
+Authoritative workflow run:
+
+`36823850490`
+
+Merge/head SHA:
+
+`576d343e207aa98486e386a66782890ebe7dd3bd`
+
+Observed result:
+
+- GitHub OIDC exchange / service-account impersonation: **PASS**;
+- plan-identity mutation-permission denial check: **PASS**;
+- Case C quota/machine preflight: **PASS**;
+- Terraform setup/init/plan/apply steps: **SKIPPED**;
+- GCP mutation: **none**;
+- current target GKE nodes: **1**;
+- additional E2 quota required for the DB VM: **2 vCPU**;
+- additional instances required: **1**;
+- additional `pd-standard` required: **0 GiB**;
+- additional balanced/SSD-backed disk envelope: **30 GiB**;
+- additional in-use addresses required: **0**.
+
+Observed quota:
+
+| Scope | Metric | Limit | Usage | Available | Required additional | Result |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| global | `CPUS_ALL_REGIONS` | 12 | 2 | 10 | 2 | PASS |
+| region | `CPUS` | 32 | 2 | 30 | 2 | PASS |
+| region | `E2_CPUS` | 8 | 0 | 8 | 2 | PASS |
+| region | `INSTANCES` | 8 | 1 | 7 | 1 | PASS |
+| region | `DISKS_TOTAL_GB` | 2048 | 45 | 2003 | 0 | PASS |
+| region | `SSD_TOTAL_GB` | 250 | 0 | 250 | 30 | PASS |
+| region | `IN_USE_ADDRESSES` | 4 | 1 | 3 | 0 | PASS |
+
+Therefore the selected active shape is **not blocked by current Compute Engine quota**.
+
+The workflow could not authoritatively query project billing-link state with the existing
+project-scoped plan identity:
+
+- billing query: `unavailable`;
+- billing enabled: `unknown`;
+- remaining Free Trial promotional-credit balance: **HUMAN_REQUIRED**.
+
+This does **not** justify granting billing-account administration to the plan identity. The only
+remaining preflight action is a human confirmation that sufficient promotional credit remains for
+the bounded Case C implementation and evidence session.
 
 ## External references
 

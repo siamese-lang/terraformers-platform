@@ -618,6 +618,17 @@ jobs:
               --format='value(uniform_bucket_level_access)'
           )" == True ]]
 
+          bucket_policy="$(mktemp)"
+          gcloud storage buckets get-iam-policy "gs://$RUNTIME_BUCKET" --format=json > "$bucket_policy"
+          if jq -e '
+            any(.bindings[]?.members[]?;
+              . == "allUsers" or . == "allAuthenticatedUsers"
+            )
+          ' "$bucket_policy" >/dev/null; then
+            echo 'Runtime bucket unexpectedly has a public IAM principal.' >&2
+            exit 1
+          fi
+
           startup="$(
             gcloud compute instances describe "$MARIADB_INSTANCE" \
               --zone="$ZONE" --project="$PROJECT_ID" --format=json \
@@ -821,11 +832,71 @@ jobs:
             echo '- Backend Deployment absent'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Cleanup temporary acceptance pods
+      - name: Recover runtime and clean temporary acceptance state
         if: always()
         run: |
+          set +e
+
+          object="case-c-live-acceptance-${GITHUB_RUN_ID}.txt"
+          gcloud storage rm "gs://$RUNTIME_BUCKET/$object" --quiet >/dev/null 2>&1 || true
+
+          status="$(
+            gcloud compute instances describe "$MARIADB_INSTANCE" \
+              --zone="$ZONE" --project="$PROJECT_ID" \
+              --format='value(status)' 2>/dev/null
+          )"
+
+          if [[ "$status" == STOPPING ]]; then
+            for _ in $(seq 1 60); do
+              status="$(
+                gcloud compute instances describe "$MARIADB_INSTANCE" \
+                  --zone="$ZONE" --project="$PROJECT_ID" \
+                  --format='value(status)' 2>/dev/null
+              )"
+              [[ "$status" == TERMINATED ]] && break
+              sleep 2
+            done
+          fi
+
+          if [[ "$status" == TERMINATED ]]; then
+            for _ in 1 2 3; do
+              gcloud compute instances start "$MARIADB_INSTANCE" \
+                --zone="$ZONE" --project="$PROJECT_ID" --quiet && break
+              sleep 5
+            done
+          fi
+
+          for _ in $(seq 1 60); do
+            status="$(
+              gcloud compute instances describe "$MARIADB_INSTANCE" \
+                --zone="$ZONE" --project="$PROJECT_ID" \
+                --format='value(status)' 2>/dev/null
+            )"
+            [[ "$status" == RUNNING ]] && break
+            sleep 2
+          done
+          if [[ "$status" != RUNNING ]]; then
+            echo "ERROR: MariaDB VM recovery did not reach RUNNING; status=$status" >&2
+          fi
+
+          db_pod="${DB_POD:-case-c-db-${GITHUB_RUN_ID}}"
+          if kubectl -n "$NAMESPACE" get pod "$db_pod" >/dev/null 2>&1; then
+            for _ in $(seq 1 60); do
+              if kubectl -n "$NAMESPACE" exec "$db_pod" -- \
+                mariadb --protocol=TCP -h terraformers-mariadb -P 3306 \
+                  -u terraformers terraformers --batch --skip-column-names \
+                  -e 'DROP TABLE IF EXISTS case_c_runtime_acceptance_marker;' \
+                  >/dev/null 2>&1; then
+                break
+              fi
+              sleep 2
+            done
+          fi
+
           kubectl -n "$NAMESPACE" delete pod \
             "${GCS_POD:-case-c-gcs-${GITHUB_RUN_ID}}" \
-            "${DB_POD:-case-c-db-${GITHUB_RUN_ID}}" \
+            "$db_pod" \
             --ignore-not-found --wait=false >/dev/null 2>&1 || true
+
+          [[ "$status" == RUNNING ]] || exit 1
 

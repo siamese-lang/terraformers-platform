@@ -43,7 +43,7 @@ active_project="$(gcloud config get-value project 2>/dev/null)"
   exit 1
 }
 
-actual_number="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
+actual_number="$(gcloud projects describe "$PROJECT" --billing-project="$PROJECT" --format='value(projectNumber)')"
 [[ "$actual_number" == "$PROJECT_NUMBER" ]] || {
   echo "ERROR: project number is '$actual_number'; expected '$PROJECT_NUMBER'." >&2
   exit 1
@@ -63,27 +63,42 @@ if (( major < 1 || (major == 1 && minor < 33) )); then
   exit 1
 fi
 
+PROJECT_POLICY_FILE="$(mktemp)"
+trap 'rm -f "$PROJECT_POLICY_FILE"' EXIT
+
+refresh_project_policy() {
+  if ! gcloud projects get-iam-policy "$PROJECT" \
+      --billing-project="$PROJECT" \
+      --format=json > "$PROJECT_POLICY_FILE"; then
+    echo "ERROR: failed to read project IAM policy; refusing to classify roles as missing." >&2
+    exit 1
+  fi
+}
+
 project_role_bound() {
   local service_account="$1"
   local role="$2"
-  gcloud projects get-iam-policy "$PROJECT" --format=json     | jq -e --arg role "$role" --arg member "serviceAccount:${service_account}" '
-        any(.bindings[]?;
-          .role == $role and any(.members[]?; . == $member)
-        )
-      ' >/dev/null
+  jq -e --arg role "$role" --arg member "serviceAccount:${service_account}" '
+    any(.bindings[]?;
+      .role == $role and any(.members[]?; . == $member)
+    )
+  ' "$PROJECT_POLICY_FILE" >/dev/null
 }
+
+refresh_project_policy
 
 if [[ "$MODE" == apply-iam ]]; then
   for role in "${APPLY_PROJECT_ROLES[@]}"; do
     if ! project_role_bound "$APPLY_SA" "$role"; then
-      gcloud projects add-iam-policy-binding "$PROJECT"         --member="serviceAccount:${APPLY_SA}"         --role="$role"         --quiet >/dev/null
+      gcloud projects add-iam-policy-binding "$PROJECT"         --billing-project="$PROJECT"         --member="serviceAccount:${APPLY_SA}"         --role="$role"         --quiet >/dev/null
     fi
   done
   for role in "${PLAN_PROJECT_ROLES[@]}"; do
     if ! project_role_bound "$PLAN_SA" "$role"; then
-      gcloud projects add-iam-policy-binding "$PROJECT"         --member="serviceAccount:${PLAN_SA}"         --role="$role"         --quiet >/dev/null
+      gcloud projects add-iam-policy-binding "$PROJECT"         --billing-project="$PROJECT"         --member="serviceAccount:${PLAN_SA}"         --role="$role"         --quiet >/dev/null
     fi
   done
+  refresh_project_policy
 fi
 
 echo "=== CASE C RUNTIME DEPENDENCY IAM/CAPABILITY CHECK ==="
@@ -107,12 +122,16 @@ for role in "${PLAN_PROJECT_ROLES[@]}"; do
   fi
 done
 
-if [[ "$MODE" == check && "$iam_ok" != true ]]; then
-  cat <<'EOF'
+if [[ "$iam_ok" != true ]]; then
+  if [[ "$MODE" == check ]]; then
+    cat <<'EOF'
 Runtime dependency IAM is not bootstrapped.
 After explicit IAM approval, run:
   bash scripts/deploy/bootstrap_gcp_runtime_secrets.sh apply-iam
 EOF
+  else
+    echo "ERROR: runtime dependency IAM verification failed after apply." >&2
+  fi
   exit 1
 fi
 

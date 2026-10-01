@@ -52,6 +52,24 @@ class RuntimeAdapterContractValidatorTest {
                 .hasMessageContaining("AI_LOG_QUEUE_URL");
     }
 
+
+    @Test
+    void vertexRetrievalDoesNotRequireBedrockSettings() {
+        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        properties.setProvider("vertex");
+        properties.setRetrievalMode(RetrievalMode.REQUIRED);
+        properties.setEmbeddingProvider("vertex");
+        properties.setOpensearchEndpoint("http://terraformers-opensearch:9200");
+        properties.setIndexName("terraformers-reference-v3");
+        properties.setVectorFieldName("embedding");
+        properties.setContentFieldName("content");
+
+        RuntimeAdapterContractValidator validator = validator(properties, new BedrockRuntimeProperties());
+
+        assertThat(validator.findMissingEnabledAdapterSettings()).isEmpty();
+        assertThatCode(() -> validator.run(null)).doesNotThrowAnyException();
+    }
+
     @Test
     void enabledAdaptersPassWhenTheirOwnSettingsArePresent() {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();

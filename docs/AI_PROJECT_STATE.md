@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C runtime dependency/deployment readiness live prerequisites PASS; final runtime-live-acceptance workflow implemented on a review branch, with the actual MariaDB VM restart still separately approval-gated**
+- Current single task: **Case C live acceptance run 36857449268 reproduced a pre-restart MariaDB connectivity failure; COS guest firewall was isolated as the root boundary and an explicitly approved second bounded repair is in PR/CI preparation. No backend Deployment or load work is authorized.**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**

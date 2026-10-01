@@ -2,7 +2,7 @@
 
 ## Status
 
-**COMPATIBILITY GATE OPEN — PRODUCTION-REPRESENTATIVE BACKEND RUNTIME IS THE PREFERRED CANDIDATE, NOT YET THE FINAL SELECTION**
+**COMPATIBILITY VERIFICATION COMPLETE — GCS PASS / ARTIFACT REGISTRY PASS / MYSQL 8.4 FAIL**
 
 Decision source:
 
@@ -193,9 +193,11 @@ The repository is already strongly MySQL-family oriented:
   MariaDB transactions rather than a separate MariaDB-specific queue product;
 - MariaDB Connector/J documentation states that the driver supports MariaDB and MySQL servers.
 
-MySQL 8.0 release notes record `IF NOT EXISTS` support added in the MySQL 8.0.29 line, so the
-repository's `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` migrations are not automatically ruled out
-by current MySQL 8.4.
+The compatibility run disproved the earlier assumption that the repository's
+`ALTER TABLE ... ADD COLUMN IF NOT EXISTS` migration would be accepted unchanged by MySQL 8.4.
+MySQL 8.4 accepted migrations 001 and 002, then rejected V003 at that construct with SQL syntax
+error 1064. The MySQL 8.4 `ALTER TABLE` grammar documents `ADD [COLUMN] col_name ...` without an
+`IF NOT EXISTS` form for column addition.
 
 ### Repository evidence preventing immediate selection
 
@@ -234,7 +236,7 @@ It must prove on a clean MySQL 8.4 instance:
 If this proof fails because of SQL/dialect/transaction semantics, Cloud SQL for MySQL is **not
 selected** and Alternative A or another compatible managed relational option must be reconsidered.
 
-**Current status: COMPATIBILITY PLAUSIBLE / NOT PROVEN / NOT SELECTED.**
+**Current compatibility result: FAIL.** MySQL 8.4 accepts migrations 001–002 but rejects V003 `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` with syntax error 1064. Cloud SQL for MySQL is not a drop-in selection under the frozen unchanged-migration gate.
 
 ## 7. Compatibility Gate 2 — object storage
 
@@ -296,7 +298,7 @@ Before Cloud Storage is selected:
 5. only after the adapter contract passes may a separately approved bounded live object
    create/read/overwrite/delete round-trip be used to prove GKE Workload Identity access.
 
-**Current status: CONTRACT FIT HIGH / IMPLEMENTATION ABSENT / NOT SELECTED.**
+**Current compatibility result: PASS.** The application contract maps cleanly to GCS without a domain/schema rewrite. This is not yet a live adapter/runtime proof.
 
 ## 8. Compatibility Gate 3 — immutable image registry
 
@@ -349,7 +351,7 @@ must be designed before selection.
 If those permissions cannot be kept narrow, compare GHCR as the fallback registry rather than
 broadening the Terraform apply identity.
 
-**Current status: IDENTITY PATH PLAUSIBLE / IAM DESIGN NOT PROVEN / NOT SELECTED.**
+**Current compatibility result: PASS.** A dedicated image-publisher identity can use existing GitHub OIDC/WIF with repository-scoped Writer, while the existing GKE node service account receives repository-scoped Reader. This is not yet a live registry/IAM proof.
 
 ## 9. Components already accepted for the candidate runtime
 
@@ -458,21 +460,31 @@ This PR does **not** yet select:
 
 ## 14. Immediate next single task
 
-The next task is **compatibility verification**, not implementation of the target runtime.
+Compatibility verification is active under
+`.agents/work-packages/case-c-compatibility-verification-v1.yml`.
 
-The smallest useful sequence is:
+Completed design gates:
 
-1. MySQL 8.4 repository compatibility proof;
-2. Cloud Storage adapter-contract proof;
-3. Artifact Registry least-privilege identity/permission proof.
+- Cloud Storage application-contract compatibility: **PASS**;
+- Artifact Registry least-privilege delivery identity compatibility: **PASS**.
 
-These checks may be grouped into one bounded compatibility Work Package only if they remain
-read-only/local/CI design verification. Any live GCP resource creation or IAM mutation remains a
-separate user checkpoint.
+The MySQL 8.4 real-database gate is now **FAIL**. Connection succeeded with MySQL Connector/J and
+Flyway applied migrations 001 and 002, but migration 003 failed on MariaDB-specific
+`ADD COLUMN IF NOT EXISTS` syntax. The authoritative MariaDB 11.4 baseline remained green.
+
+Therefore Alternative C in its original 3/3 form is **NOT SELECTABLE**. Cloud Storage and Artifact
+Registry remain passing candidates; only relational hosting must be reopened.
+
+The next decision must compare:
+- intentionally migrating the persistence contract to MySQL/Cloud SQL, including migration-history
+  compatibility and Case B semantics; versus
+- retaining MariaDB in a production-representative hosting shape.
+
+No live GCP resource creation or IAM mutation is authorized by this completed compatibility Work Package.
 
 ## 15. Approval boundary
 
-**Runtime selection status: COMPATIBILITY_VERIFICATION_REQUIRED**
+**Runtime selection status: COMPATIBILITY_VERIFICATION_COMPLETE — 2/3 PASS, MYSQL 8.4 FAIL; RELATIONAL HOSTING DECISION REOPENED**
 
 No implementation Work Package for the production-representative runtime may be created until the
 compatibility evidence above is reviewed.

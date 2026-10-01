@@ -46,11 +46,16 @@ extra resources, updates, deletes, replacements, wrong repository/location/forma
 publisher repository role.
 
 The operation preserves the current target node count rather than coupling registry creation to
-GKE activation or idling. One bounded repository-side repair was required before PR creation:
-unconditional delivery resources would have invalidated the historical 12-resource foundation and
-pre-delivery runtime-check contracts. The delivery resources are therefore conditionally enabled;
-foundation explicitly keeps them disabled, delivery-foundation enables them, and runtime-check
-matches the pre-delivery 12-resource or post-delivery 17-resource state without planning deletion.
+GKE activation or idling. One bounded repository-side repair before PR creation introduced
+conditional delivery resources so the historical foundation operation remains unchanged.
+
+After the first CI pass, independent review found that the workflow also used total Terraform
+state-resource counts as a proxy for delivery readiness. The user explicitly rejected that brittle
+verification pattern. The correction removes all delivery/runtime total-count gates. The workflow
+now checks only the foundation addresses it actually depends on, lets the exact saved-plan contract
+decide what may change, and selects the delivery-foundation variable for activate/idle from the
+Artifact Registry repository address already present in state. No additional verification layer was
+added.
 
 ### Publisher identity
 

@@ -401,7 +401,7 @@ jobs:
               jq -r '
                 .values.root_module.resources[]
                 | select(.address == "google_compute_instance.mariadb[0]")
-                | .values.metadata_startup_script
+                | (.values.metadata["startup-script"] // .values.metadata_startup_script // "")
               ' "${RUNNER_TEMP}/gcp-target-runtime-state.json" \
               | sed -n 's/.*MARIADB_IMAGE="\(mariadb:11\.4@sha256:[0-9a-f]\{64\}\)".*/\1/p' \
               | head -n1
@@ -694,7 +694,7 @@ jobs:
                 jq -r '
                   .values.root_module.resources[]
                   | select(.address == "google_compute_instance.mariadb[0]")
-                  | .values.metadata_startup_script
+                  | (.values.metadata["startup-script"] // .values.metadata_startup_script // "")
                 ' "${RUNNER_TEMP}/gcp-target-preserve-runtime-state.json" \
                 | sed -n 's/.*MARIADB_IMAGE="\(mariadb:11\.4@sha256:[0-9a-f]\{64\}\)".*/\1/p' \
                 | head -n1

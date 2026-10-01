@@ -13,6 +13,7 @@ on:
           - runtime-host-firewall-repair
           - kubernetes-prerequisites
           - backend-deployment
+          - backend-revision-rollout
           - backend-live-validation
           - runtime-live-acceptance
       expected_sha:
@@ -25,6 +26,18 @@ on:
         type: string
       mariadb_image:
         description: Exact mariadb:11.4@sha256:<digest>; required for runtime dependency, host-firewall repair, and live-acceptance operations.
+        required: false
+        type: string
+      backend_image:
+        description: Exact immutable Artifact Registry backend image; required for backend rollout and live validation.
+        required: false
+        type: string
+      backend_source_sha:
+        description: Full source commit SHA embedded in the backend image; required for backend rollout.
+        required: false
+        type: string
+      expected_current_backend_image:
+        description: Exact currently deployed backend image; required for backend rollout.
         required: false
         type: string
 
@@ -594,7 +607,6 @@ jobs:
       PROJECT_ID: terraformers-platform
       ZONE: asia-northeast3-a
       NAMESPACE: terraformers-target
-      BACKEND_IMAGE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae
 
     steps:
       - uses: actions/checkout@v5
@@ -750,6 +762,172 @@ jobs:
             echo '- Load generation / rollout / rollback: not executed in this checkpoint'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  backend-revision-rollout:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'backend-revision-rollout'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 20
+    env:
+      PROJECT_ID: terraformers-platform
+      LOCATION: asia-northeast3
+      ZONE: asia-northeast3-a
+      NAMESPACE: terraformers-target
+      IMAGE_BASE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate trusted backend revision rollout request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          EXPECTED_CURRENT_BACKEND_IMAGE: ${{ inputs.expected_current_backend_image }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]] || {
+            echo 'Approved workflow SHA does not match checked-out main.' >&2
+            exit 1
+          }
+          [[ "$CONFIRMATION" == APPLY_REVIEWED_CASE_C_BACKEND_REVISION_ROLLOUT_1 ]]
+          [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]]
+          [[ "$EXPECTED_CURRENT_BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]]
+          [[ "$BACKEND_IMAGE" != "$EXPECTED_CURRENT_BACKEND_IMAGE" ]] || {
+            echo 'Target backend image is already the expected current image.' >&2
+            exit 1
+          }
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify immutable image provenance and current deployment boundary
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          EXPECTED_CURRENT_BACKEND_IMAGE: ${{ inputs.expected_current_backend_image }}
+        run: |
+          set -euo pipefail
+          target_digest="${BACKEND_IMAGE##*@}"
+          source_tag="${IMAGE_BASE}:${BACKEND_SOURCE_SHA}"
+
+          tag_digest="$(
+            gcloud artifacts docker images describe "$source_tag"               --project="$PROJECT_ID"               --format='value(image_summary.digest)'
+          )"
+          [[ "$tag_digest" == "$target_digest" ]] || {
+            echo "Source-SHA tag digest mismatch: tag=$tag_digest target=$target_digest" >&2
+            exit 1
+          }
+
+          immutable_digest="$(
+            gcloud artifacts docker images describe "$BACKEND_IMAGE"               --project="$PROJECT_ID"               --format='value(image_summary.digest)'
+          )"
+          [[ "$immutable_digest" == "$target_digest" ]] || {
+            echo 'Immutable backend image digest verification failed.' >&2
+            exit 1
+          }
+
+          actual_current="$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}'
+          )"
+          [[ "$actual_current" == "$EXPECTED_CURRENT_BACKEND_IMAGE" ]] || {
+            echo "Current backend image mismatch: actual=$actual_current" >&2
+            exit 1
+          }
+
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.readyReplicas}'
+          )" == 1 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.availableReplicas}'
+          )" == 1 ]]
+
+          kubectl auth can-i patch deployments.apps -n "$NAMESPACE" | grep -Fxq yes
+
+      - name: Roll out exact immutable backend revision
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+        run: |
+          set -euo pipefail
+          if ! kubectl -n "$NAMESPACE" set image               deployment/terraformers-backend               "backend=$BACKEND_IMAGE"; then
+            echo 'Failed to submit backend image update.' >&2
+            exit 1
+          fi
+
+          if ! kubectl -n "$NAMESPACE" rollout status               deployment/terraformers-backend --timeout=7m; then
+            echo 'Backend revision did not become Ready; reverting to previous ReplicaSet revision.' >&2
+            kubectl -n "$NAMESPACE" rollout undo deployment/terraformers-backend || true
+            kubectl -n "$NAMESPACE" rollout status deployment/terraformers-backend --timeout=5m || true
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend -o wide || true
+            kubectl -n "$NAMESPACE" get pods               -l app.kubernetes.io/name=terraformers-backend -o wide || true
+            kubectl -n "$NAMESPACE" logs               -l app.kubernetes.io/name=terraformers-backend               --all-containers=true --tail=200 || true
+            exit 1
+          fi
+
+      - name: Verify resulting backend revision
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          EXPECTED_CURRENT_BACKEND_IMAGE: ${{ inputs.expected_current_backend_image }}
+        run: |
+          set -euo pipefail
+          actual_image="$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}'
+          )"
+          [[ "$actual_image" == "$BACKEND_IMAGE" ]]
+
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.readyReplicas}'
+          )" == 1 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.availableReplicas}'
+          )" == 1 ]]
+
+          runtime_source="$(
+            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend               -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+          )"
+          [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]] || {
+            echo "Runtime source revision mismatch: $runtime_source" >&2
+            exit 1
+          }
+
+          health="$(
+            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend               -c backend -- curl -fsS http://127.0.0.1:8080/actuator/health
+          )"
+          jq -e '.status == "UP"' <<< "$health" >/dev/null
+
+          {
+            echo '## Case C backend revision rollout'
+            echo
+            printf -- '- Workflow SHA: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Previous image: `%s`\n' "$EXPECTED_CURRENT_BACKEND_IMAGE"
+            printf -- '- Target image: `%s`\n' "$BACKEND_IMAGE"
+            printf -- '- Embedded source SHA: `%s`\n' "$runtime_source"
+            echo '- Ready replicas: `1/1`'
+            echo '- Backend health: `UP`'
+            echo '- Terraform/IAM/GCP resource mutation: none'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   backend-live-validation:
     if: >-
       github.ref == 'refs/heads/main' &&
@@ -764,7 +942,6 @@ jobs:
       NAMESPACE: terraformers-target
       ISSUER_URI: https://identity.example.test/case-c
       CLIENT_ID: case-c-runtime-client
-      BACKEND_IMAGE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae
       FIXTURE: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
 
     steps:
@@ -774,6 +951,7 @@ jobs:
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
           CONFIRMATION: ${{ inputs.confirmation }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
         run: |
           set -euo pipefail
           [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
@@ -785,6 +963,10 @@ jobs:
           }
           [[ "$CONFIRMATION" == RUN_REVIEWED_CASE_C_BACKEND_LIVE_VALIDATION_1 ]] || {
             echo 'Backend live validation requires confirmation RUN_REVIEWED_CASE_C_BACKEND_LIVE_VALIDATION_1.' >&2
+            exit 1
+          }
+          [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]] || {
+            echo 'backend-live-validation requires an exact immutable backend_image.' >&2
             exit 1
           }
 
@@ -805,6 +987,8 @@ jobs:
           location: asia-northeast3-a
 
       - name: Verify deployed backend boundary
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
         run: |
           set -euo pipefail
           [[ "$(

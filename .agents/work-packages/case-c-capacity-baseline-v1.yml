@@ -59,9 +59,11 @@ work_package:
     - docs/evaluation/case-c-capacity-baseline.md
     - docs/AI_PROJECT_STATE.md
     - docs/plans/active/portfolio-case-reassessment.md
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisObservabilityTest.java
 
   prohibited_paths:
-    - backend/**
+    - backend/** except backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java and backend/src/test/java/com/terraformers/modernization/analysis/AnalysisObservabilityTest.java
     - frontend/**
     - infra/terraform/**
     - infra/kubernetes/**
@@ -88,6 +90,37 @@ work_package:
     - create_pull_request
     - inspect_CI_once
     - perform_one_bounded_corrective_iteration_within_same_failure_class
+    - classify_google_provider_http_429_in_existing_analysis_observability
+    - add_deterministic_observability_tests
+
+  approved_scope_amendment_2026_10_01:
+    reason: >
+      The harness cannot reliably distinguish external Vertex quota saturation from repository-owned
+      saturation because the existing AnalysisJob API, Prometheus category, and backend log boundary
+      discard the bounded Google provider HTTP status. The user explicitly approved the smallest
+      observability scope expansion on 2026-10-01.
+    selected_decision: >
+      Extend only AnalysisObservability.category(Throwable) so a bounded Google SDK HTTP 429 found
+      in the exception cause chain is classified as provider_rate_limited. Reuse the existing
+      terraformers.analysis.stage.failures and terraformers.analysis.failures metric families.
+      Do not change AnalysisJob failureReason, Vertex provider behavior, retry semantics, prompts,
+      model configuration, or user-facing API error text.
+    allowed_backend_paths:
+      - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java
+      - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisObservabilityTest.java
+    required_followup_repairs:
+      - capacity harness consumes provider_rate_limited metric deltas as EXTERNAL_PROVIDER_SATURATION
+      - authentication/unrelated application correctness failures stop the baseline immediately
+      - every SUCCEEDED job verifies result identity, Terraform draft readability, and GCS result bytes
+      - executor 2/4/50 values are documented as source-bound compile-time invariants
+    forbidden_even_after_amendment:
+      - change AnalysisJob persisted failureReason contract
+      - modify Vertex provider/fact-extraction/embedding/generation behavior
+      - add new metric family or monitoring platform
+      - change retry semantics
+      - tune runtime capacity
+      - execute live load
+    corrective_iteration_authorized: true
 
   prohibited_actions:
     - merge
@@ -286,6 +319,9 @@ work_package:
       - OpenSearch_and_GKE_resource_collection_are_bounded
       - no_runtime_tuning_or_new_monitoring_platform_is_added
       - live_execution_is_blocked_by_exact_confirmation_and_current_main_SHA
+      - google_provider_HTTP_429_is_exposed_as_provider_rate_limited_through_existing_failure_metrics
+      - unrelated_authentication_or_application_failures_fail_stop_the_baseline
+      - each_successful_job_has_result_identity_and_GCS_byte_integrity_verification
     live_baseline:
       - every_executed_step_records_request_job_and_resource_evidence
       - first_saturation_signal_is_classified_or_run_stops_inconclusive_at_concurrency_8

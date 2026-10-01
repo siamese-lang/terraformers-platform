@@ -384,14 +384,23 @@ Storage adapter compatibility is implemented as concrete GCS reader/writer/remov
 ADC, and the GCP overlay selects `gcs`. Backend Local Verification run `36825659118` and
 Terraform Static Verification run `36825659010` succeeded. No cloud/IAM mutation occurred.
 
-The next approved implementation unit is **Case C immutable backend image delivery readiness**.
-It reuses the canonical `gcp-target-runtime` Terraform root/state, adds an exact five-create
-`delivery-foundation` contract for Artifact Registry, separates a dedicated GitHub WIF image
-publisher from the Terraform apply identity, and defines a manual full-source-SHA publication path
-that resolves a remote `sha256` digest without deploying Kubernetes. Repository implementation is
-complete and CI is pending. No GCP resource/IAM mutation, image publication or backend deployment has
-been executed. Live identity bootstrap, delivery-foundation apply and first image publication remain
-separate user approval gates.
+The **Case C immutable backend image delivery** unit is now **LIVE-CLOSED / PASS**.
+PR #147 merged as `0774c80bb3cf9f684567e30c1e329fc27dc05d04` after final static run
+`36832747254` passed. The separately approved live sequence then completed: dedicated publisher
+identity/environment bootstrap passed; the protected Terraform apply identity received the required
+Artifact Registry administration role; delivery-foundation run `36833957446` applied exactly
+`5 added, 0 changed, 0 destroyed`; and first image publication run `36834457170` verified
+`BUILD_SOURCE_REVISION=0774c80bb3cf9f684567e30c1e329fc27dc05d04`, pushed only the full-SHA tag,
+and resolved remote digest
+`sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae`.
+No Kubernetes backend Deployment has been performed.
+
+The next candidate is a bounded **Case C runtime-dependency/deployment readiness** Work Package.
+It should complete only the dependencies required to make the production-representative backend
+deployable: the already-selected dedicated MariaDB VM/PD path, application GCS authority, and an
+explicit database/JWT secret-delivery decision. Backend Deployment, load generation, rollout,
+rollback, HPA/replica/executor/node/OpenSearch tuning, and any additional product choice remain
+outside that candidate until separately approved.
 
 ## Case A A1 measurement-readiness checkpoint
 

@@ -9,7 +9,7 @@ data:
   ANALYSIS_RESULT_BUCKET_NAME: terraformers-runtime-objects-21647422237
   JWT_ISSUER_URI: https://identity.example.test/case-c
   JWT_JWK_SET_URI: http://terraformers-jwks:8080/jwks.json
-  COGNITO_USER_POOL_CLIENT_ID: case-c-runtime-client
+  TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID: case-c-runtime-client
   SPRING_PROFILES_ACTIVE: "prod,gcp-target"
   ANALYSIS_PROVIDER: "vertex"
   EMBEDDING_PROVIDER: "vertex"

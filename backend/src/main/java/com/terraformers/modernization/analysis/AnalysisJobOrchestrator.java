@@ -6,11 +6,15 @@ import com.terraformers.modernization.storage.ObjectWriteResult;
 import com.terraformers.modernization.storage.ObjectReference;
 import java.net.SocketTimeoutException;
 import java.net.http.HttpTimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AnalysisJobOrchestrator {
+
+    private static final Logger log = LoggerFactory.getLogger(AnalysisJobOrchestrator.class);
 
     private final AnalysisProvider analysisProvider;
     private final ProgressPublisher progressPublisher;
@@ -50,15 +54,22 @@ public class AnalysisJobOrchestrator {
             }
             throw exception;
         }
+        log.info("Analysis provider completed provider={}", result.provider());
+
         TerraformDraftValidation validation = terraformDraftValidator.validate(result.terraformCode());
         if (!validation.valid()) {
+            log.warn("Terraform draft validation failed reason={}", validation.reason());
             throw new IllegalStateException(validation.reason());
         }
+        log.info("Terraform draft validation passed");
+
         TerraformDraftValidation executableValidation =
                 terraformExecutableValidator.validate(validation.sanitizedContent());
         if (!executableValidation.valid()) {
+            log.warn("Terraform executable validation failed reason={}", executableValidation.reason());
             throw new IllegalStateException(executableValidation.reason());
         }
+        log.info("Terraform executable validation passed");
         return result.withTerraformCode(executableValidation.sanitizedContent());
     }
 

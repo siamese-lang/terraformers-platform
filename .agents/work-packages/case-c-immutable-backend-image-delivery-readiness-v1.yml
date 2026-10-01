@@ -1,6 +1,6 @@
 work_package:
   id: case-c-immutable-backend-image-delivery-readiness-v1
-  status: ACTIVE
+  status: IMPLEMENTED_CI_PENDING
   approved_base_sha: "488f9c2b216f7f863ebb1d09bedf9716ccdef2b9"
   execution_base_sha: "488f9c2b216f7f863ebb1d09bedf9716ccdef2b9"
 
@@ -128,3 +128,14 @@ work_package:
     delivery_foundation_apply_requires_user_approval: true
     image_publish_requires_user_approval: true
     next_work_package_requires_user_approval: true
+
+  result:
+    implementation: COMPLETE
+    ci: PENDING
+    main_drift: false
+    live_cloud_or_iam_mutation: false
+    registry_created: false
+    image_published: false
+    backend_deployed: false
+    apply_identity_artifact_registry_admin_project_scope: true
+    next_gate: independent_acceptance_review_after_CI

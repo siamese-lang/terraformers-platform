@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C measurement readiness audit complete: live baseline NOT READY; next candidate is the representative benchmark-runtime decision**
+- Current single task: **Case C representative benchmark-runtime decision READY; selected benchmark-only persistent runtime is AWAITING_USER_DECISION_APPROVAL**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -125,6 +125,10 @@ Case B — Backend durable asynchronous processing:
 Case C — Cloud runtime capacity and safe delivery:
 - measurement readiness audit is **COMPLETE / NOT READY FOR LIVE BASELINE** in
   [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md);
+- the representative-runtime decision is **READY / AWAITING_USER_DECISION_APPROVAL** in
+  [Case C Representative Benchmark Runtime Decision](plans/active/case-c-representative-benchmark-runtime-decision.md);
+  it selects a benchmark-only persistent runtime on the existing GKE target rather than completing
+  the full GCP application runtime first;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;
@@ -464,12 +468,18 @@ runs without a newly reproduced defect or changed requirement.
 
 The next representative portfolio case is **Case C — Cloud Runtime Capacity & Safe Delivery**.
 The [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md) found the
-live baseline **NOT READY** because the GCP target does not yet provide a persistent, authenticated,
-immutable-release backend service path. The next candidate task is the **Case C representative
-benchmark-runtime decision**. It must choose the smallest runtime that can exercise the real
-API/durable-job/Vertex/OpenSearch/persistence path and survive backend rollout without pretending
-that benchmark fixtures are final production hosting choices. Do not start a load harness or live
-rollout experiment automatically.
+live baseline **NOT READY**. The
+[Case C Representative Benchmark Runtime Decision](plans/active/case-c-representative-benchmark-runtime-decision.md)
+is now **READY / AWAITING_USER_DECISION_APPROVAL**.
+
+Selected direction: extend the same GKE target with benchmark-only persistent MariaDB and
+filesystem-object-store volumes, deterministic JWT/JWKS authentication, real Case B durable jobs,
+real Vertex/OpenSearch adapters, and digest-pinned GHCR backend images. This is explicitly not a
+final production DB/object-storage/identity architecture.
+
+Do not create an implementation Work Package, publish an image, apply Kubernetes resources, activate
+the node pool, generate load, or run rollout/rollback experiments until the user approves this
+decision.
 
 Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
 fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query

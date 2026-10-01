@@ -144,7 +144,9 @@ ChatGPT의 기본 역할은 **read/analysis/review**다.
 
 ### Codex — bounded implementation agent
 
-production/runtime 코드 구현은 원칙적으로 Codex에 bounded task로 위임한다.
+production/runtime 코드 구현은 원칙적으로 Codex에 bounded task로 위임한다. 사용자의 로컬 컴퓨터가
+persistent execution host가 될 수 없는 경우에는 **Codex Cloud를 기본 executor로 우선**하며, task가
+로컬 checkout/daemon/Docker/session에 의존하지 않도록 한다.
 
 Codex task에는 최소한 다음이 포함되어야 한다.
 
@@ -201,6 +203,31 @@ implementation unit 하나만 수행한다. Approved Work Package의 동일 impl
 공통으로:
 - 예상하지 못한 다른 PR/commit이 `main`에 병합되면 즉시 작업을 멈추고 scope drift를 보고한다.
 - 사용자가 방향 재검토를 요구하면 새 기능 구현/merge보다 재감사와 decision 정리가 우선한다.
+
+### Cloud-only execution protocol
+
+이 프로젝트의 agent workflow는 **local persistent runtime을 요구하지 않는다**. 상세 절차는
+`docs/runbooks/cloud-only-agent-execution-protocol.md`를 따른다.
+
+- GitHub `main`, Work Package, PR/commit/CI/evidence가 durable execution state다.
+- local filesystem, local Docker, local MCP daemon, Cloud Shell home directory, 단일 chat context는
+  authoritative state가 아니다.
+- 새 session은 `main → AGENTS.md → AI_PROJECT_STATE.md → active/last Work Package → open PR/CI →
+  referenced decision/evidence` 순서로 복구한다.
+- 승인된 Work Package 내부에서는 implement → validate → bounded repair → evidence/state update → PR
+  생성까지 자동 진행할 수 있다.
+- ChatGPT Work의 GitHub PR event task는 지원될 경우 review/continuation coordinator로 사용할 수 있지만,
+  merge, architecture 변경, 다음 Work Package 시작, live/cost/security action을 승인하지 못한다.
+- Codex Cloud task dispatch가 Work event에서 자동으로 이어진다고 가정하지 않는다. 명시적으로 지원·구성된
+  연결이 없으면 Work Package 승인 후 Codex task handoff는 별도 실행 단계다.
+- 장시간 CI 완료를 interactive chat에서 polling하지 않는다. GitHub/Work의 event-driven continuation을
+  우선하고, event automation이 없어도 repository state만으로 수동 resume 가능해야 한다.
+- MCP는 필요한 external tool access를 제공하는 선택적 계층이며 orchestration SSOT가 아니다. local MCP를
+  프로젝트 필수 구성으로 만들지 않는다.
+- n8n은 GitHub Actions + Work event task로 표현하기 어려운 durable multi-system orchestration 문제가
+  실제로 확인되기 전까지 `DEFER`한다.
+- GCP write는 기본적으로 GitHub Actions + short-lived WIF + repository-backed IaC/deployment 경로로 수행한다.
+  agent에게 편의를 위해 unrestricted GCP write credential을 제공하지 않는다.
 
 ## Case Decision Gate
 

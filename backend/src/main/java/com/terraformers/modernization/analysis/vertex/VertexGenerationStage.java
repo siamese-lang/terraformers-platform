@@ -27,7 +27,7 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
     private final VertexResponseParser responseParser;
 
     public VertexGenerationStage(
-            @Lazy Client client,
+            Client client,
             VertexRuntimeProperties properties,
             VertexPromptBuilder promptBuilder,
             VertexResponseParser responseParser

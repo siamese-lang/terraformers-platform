@@ -6,7 +6,7 @@ locals {
     "iamcredentials.googleapis.com",
   ])
 
-  backend_workload_principal = "principal://iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${var.project_id}.svc.id.goog/subject/ns/${var.backend_namespace}/sa/${var.backend_service_account}"
+  backend_workload_principal     = "principal://iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${var.project_id}.svc.id.goog/subject/ns/${var.backend_namespace}/sa/${var.backend_service_account}"
   secret_sync_workload_principal = "principal://iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${var.project_id}.svc.id.goog/subject/ns/${var.backend_namespace}/sa/terraformers-secret-sync"
 
   node_roles = toset([

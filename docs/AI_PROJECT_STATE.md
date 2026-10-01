@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C production-representative runtime is the preferred candidate; MySQL 8.4 / Cloud Storage / Artifact Registry compatibility verification REQUIRED before final selection**
+- Current single task: **Case C compatibility verification ACTIVE; Cloud Storage PASS, Artifact Registry PASS, MySQL 8.4 executable proof pending**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -125,11 +125,11 @@ Case B — Backend durable asynchronous processing:
 Case C — Cloud runtime capacity and safe delivery:
 - measurement readiness audit is **COMPLETE / NOT READY FOR LIVE BASELINE** in
   [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md);
-- the representative-runtime decision is **COMPATIBILITY GATE OPEN** in
+- the representative-runtime decision is **COMPATIBILITY VERIFICATION ACTIVE** in
   [Case C Production-Representative Runtime Decision Gate](plans/active/case-c-representative-benchmark-runtime-decision.md);
-  a production-representative backend runtime is now the preferred candidate, but Cloud SQL for
-  MySQL, Cloud Storage and Artifact Registry are not selected until repository compatibility and
-  least-privilege identity checks pass;
+  Cloud Storage application-contract compatibility is **PASS** and Artifact Registry
+  least-privilege delivery identity compatibility is **PASS**; MySQL 8.4 real-database compatibility
+  is the remaining executable gate before Alternative C can be selected;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;

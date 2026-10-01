@@ -395,12 +395,19 @@ and resolved remote digest
 `sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae`.
 No Kubernetes backend Deployment has been performed.
 
-The next candidate is a bounded **Case C runtime-dependency/deployment readiness** Work Package.
-It should complete only the dependencies required to make the production-representative backend
-deployable: the already-selected dedicated MariaDB VM/PD path, application GCS authority, and an
-explicit database/JWT secret-delivery decision. Backend Deployment, load generation, rollout,
-rollback, HPA/replica/executor/node/OpenSearch tuning, and any additional product choice remain
-outside that candidate until separately approved.
+The bounded **Case C runtime-dependency/deployment readiness** decision is now proposed in
+[Case C Runtime Dependency / Deployment Readiness Decision](case-c-runtime-dependency-deployment-readiness-decision.md)
+with Work Package `.agents/work-packages/case-c-runtime-dependency-deployment-readiness-v1.yml`.
+The proposal selects one private Seoul GCS bucket for upload/result objects, Google Secret Manager as
+the MariaDB credential authority, native GKE Secret Sync only if the existing cluster already satisfies
+the >=1.33 capability gate, the previously selected dedicated MariaDB 11.4 VM/PD, and an internal
+deterministic JWKS fixture for authenticated Case C requests. It deliberately rejects External Secrets
+Operator for this baseline and does not select a new external identity product or deployment identity.
+
+Status is **AWAITING USER DECISION / WORK PACKAGE APPROVAL**. No secret version, VM, disk, bucket,
+IAM, GKE Secret Sync, Kubernetes prerequisite, backend Deployment, load generation, rollout, rollback,
+HPA/replica/executor/node/OpenSearch tuning, or additional product choice is authorized by this
+decision PR.
 
 ## Case A A1 measurement-readiness checkpoint
 

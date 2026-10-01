@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C immutable backend image delivery readiness IMPLEMENTED / CI PENDING; live bootstrap/apply/publish remain unapproved**
+- Current single task: **Case C immutable backend image delivery LIVE-CLOSED / PASS; backend runtime dependencies/deployment have not started**
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**
@@ -149,12 +149,17 @@ Case C — Cloud runtime capacity and safe delivery:
   boundary through ADC, and the canonical GCP overlay selects `gcs`; no GCP resource/IAM mutation
   occurred;
 - [Case C Immutable Backend Image Delivery Readiness](evaluation/case-c-immutable-backend-image-delivery-readiness.md)
-  is **IMPLEMENTED / CI PENDING** on execution base `488f9c2b216f7f863ebb1d09bedf9716ccdef2b9`:
-  the existing canonical Terraform root/state now declares a five-resource Artifact Registry delivery
-  foundation; a fail-closed `delivery-foundation` gate preserves current GKE node count and rejects
-  all unreviewed mutation; the dedicated `terraformers-image-publish` WIF path and manual full-SHA
-  image publication workflow are repository-defined; no GCP/IAM/registry/image/Kubernetes action has
-  been executed;
+  is **LIVE-CLOSED / PASS**. PR #147 merged as
+  `0774c80bb3cf9f684567e30c1e329fc27dc05d04` after final Terraform Static Verification run
+  `36832747254` passed. Separately approved live checkpoints then succeeded: the dedicated
+  `terraformers-image-publish` WIF publisher/environment bootstrap passed with no project resource
+  role or user-managed key; the protected Terraform apply identity was refreshed with
+  `roles/artifactregistry.admin`; delivery-foundation run `36833957446` applied exactly
+  `5 added, 0 changed, 0 destroyed`; and image publication run `36834457170` built source
+  `0774c80bb3cf9f684567e30c1e329fc27dc05d04`, verified `BUILD_SOURCE_REVISION`, published only
+  the full-SHA tag, and resolved remote digest
+  `sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae`.
+  No Kubernetes backend Deployment has been performed;
 - the existing GKE/Vertex/OpenSearch substrate and Case B durable-job implementation are reusable,
   but the live target does not yet expose the full authenticated API → durable job → AI/RAG →
   persistence path that Case C must measure;
@@ -162,12 +167,16 @@ Case C — Cloud runtime capacity and safe delivery:
   object-storage and JWT dependencies are not supplied in the live target boundary;
 - existing portable MariaDB/JWKS/filesystem fixtures are reusable patterns, but MariaDB `emptyDir`
   and filesystem `/tmp` are not valid rollout-durability evidence;
-- the target backend image is still a registry placeholder and ADR-006 does not select an image
-  registry, so immutable-revision rollout evidence is not yet possible;
+- the immutable backend artifact is now available at
+  `asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae`,
+  but the GCP backend Deployment is still deferred until its database, object-storage, JWT/secret,
+  and runtime wiring are explicitly completed;
 - do **not** load-test the Case A evaluation pod: it would omit API acceptance, durable job queueing,
   executor saturation, persistence, accepted-work survival and rollout/rollback behavior;
-- the next candidate is a **representative benchmark-runtime decision** comparing benchmark-only
-  reuse on the existing GKE target with completing the broader GCP application runtime first;
+- the next candidate is a bounded **Case C runtime-dependency/deployment readiness** unit that
+  completes only the dependencies required for the production-representative backend path
+  (MariaDB VM/PD, application GCS authority, and explicit secret-delivery decision) before any
+  backend Deployment or load test; it requires a separate Work Package and user approval;
 - no load harness, concurrency steps, HPA, replicas, executor tuning, node/OpenSearch sizing or
   rollout changes are authorized before that decision.
 

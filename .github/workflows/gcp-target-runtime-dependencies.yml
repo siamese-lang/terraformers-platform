@@ -1055,6 +1055,28 @@ jobs:
             and .[0].e == "AQAB"
           ' <<< "$served_jwks" >/dev/null
 
+          service_visible=false
+          for _ in $(seq 1 30); do
+            backend_seen_jwks="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend                 -c backend --                 curl -fsS http://terraformers-jwks:8080/jwks.json 2>/dev/null || true
+            )"
+            if jq -e --arg kid "$kid" --arg modulus "$modulus" '
+              .keys | length == 1
+              and .[0].kid == $kid
+              and .[0].alg == "RS256"
+              and .[0].n == $modulus
+              and .[0].e == "AQAB"
+            ' <<< "$backend_seen_jwks" >/dev/null 2>&1; then
+              service_visible=true
+              break
+            fi
+            sleep 1
+          done
+          [[ "$service_visible" == true ]] || {
+            echo 'Backend pod did not observe the new JWKS through the Service path.' >&2
+            exit 1
+          }
+
           now="$(date +%s)"
           header="$(
             printf '{"alg":"RS256","kid":"%s","typ":"JWT"}' "$kid"               | openssl base64 -A | tr '+/' '-_' | tr -d '='

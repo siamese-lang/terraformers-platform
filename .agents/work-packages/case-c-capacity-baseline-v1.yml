@@ -1,8 +1,10 @@
 work_package:
   id: case-c-capacity-baseline-v1
-  status: HARNESS_IMPLEMENTED_STATIC_VALIDATION_PASS
+  status: LIVE_BASELINE_APPROVED_RUNTIME_REBOUND
   approved_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
   execution_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
+  live_baseline_main_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
+  live_baseline_backend_source_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
 
   goal: >
     Freeze and implement the smallest reproducible Case C capacity-baseline harness for the
@@ -49,7 +51,24 @@ work_package:
     bind_rule: >
       Immediately before the first implementation write, read GitHub remote main exactly once and
       bind that exact SHA to execution_base_sha. Do not rebase or refresh automatically afterward.
+    implementation_base_is_historical_after_harness_merge: true
+    live_baseline_rebind:
+      reason: >
+        After the harness was implemented, accepted Case C correctness repairs changed the backend
+        source without changing the frozen capacity/runtime sizing contract. PR #175 separated
+        Terraform init/validate timeouts and PR #177 added one bounded generation-safety recovery.
+        Authenticated live-validation run 36956086874 passed on the rebound source before capacity
+        execution was approved.
+      authoritative_main_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
+      backend_source_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
+      backend_image_digest: "sha256:054a9ae1d953313cb15691fe50281373e74a93d2a0d050ee0cf6879fe096aa06"
+      correctness_live_validation_run: 36956086874
+      correctness_live_validation: PASS
+      runtime_sizing_changed_since_harness_freeze: false
+      capacity_tuning_before_baseline: false
+      user_live_baseline_approval: "2026-10-02"
     stop_on_main_drift: true
+    stop_on_live_baseline_main_drift: true
     live_execution_requires_separate_user_checkpoint: true
 
   allowed_paths:
@@ -312,7 +331,7 @@ work_package:
   auto_repair_limit: 1
 
   stop_on:
-    - current_main_differs_from_bound_execution_base
+    - current_main_differs_from_live_baseline_main_sha
     - second_failure_after_one_bounded_repair
     - failure_class_changes
     - allowed_path_outside_scope_is_required
@@ -330,8 +349,13 @@ work_package:
 
   implementation_evidence:
     harness_readiness: PASS
-    live_baseline: NOT_EXECUTED
-    authoritative_main_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
+    live_baseline: APPROVED_NOT_EXECUTED
+    harness_implementation_main_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
+    authoritative_live_baseline_main_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
+    authoritative_live_backend_source_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
+    authoritative_live_backend_image_digest: "sha256:054a9ae1d953313cb15691fe50281373e74a93d2a0d050ee0cf6879fe096aa06"
+    pre_baseline_correctness_live_validation_run: 36956086874
+    pre_baseline_correctness_live_validation: PASS
     implementation_paths:
       - scripts/checks/case-c-capacity-baseline.sh
       - .github/workflows/gcp-target-runtime-dependencies.yml
@@ -360,4 +384,4 @@ work_package:
       successful_result_integrity: IMPLEMENTED
       executor_identity: SOURCE_BOUND_COMPILE_TIME
     live_execution_requires_separate_user_checkpoint: true
-    next_checkpoint: AWAITING_APPROVAL
+    next_checkpoint: LIVE_BASELINE_EXECUTION_AFTER_REBIND_MERGE

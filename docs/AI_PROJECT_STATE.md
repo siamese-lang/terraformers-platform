@@ -18,14 +18,14 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C architecture closure is active; capacity baseline is SUSPENDED_BY_ARCHITECTURE_AUDIT. Current phase is C1 — Executable Terraform Contract Decision and closure (COMPLETE).**
+- Current single task: **Case C architecture closure is active; capacity baseline is SUSPENDED_BY_ARCHITECTURE_AUDIT. Current phase is C2 — Repeated correctness stability gate (ACTIVE).**
 
 <!-- CASE_C_ARCHITECTURE_CLOSURE:START -->
 ### Case C architecture closure control
 
 - Overall: **ARCHITECTURE_CLOSURE_ACTIVE**
 - Capacity baseline: **SUSPENDED_BY_ARCHITECTURE_AUDIT**
-- Current phase: **C1 — Executable Terraform Contract Decision and closure (COMPLETE)**
+- Current phase: **C2 — Repeated correctness stability gate (ACTIVE)**
 - Open blockers: C-ARCH-04, C-ARCH-05, C-ARCH-06
 - Durable issue register: .agents/state/case-c-architecture-closure.json
 - Generated plan: [Case C Architecture Closure](plans/active/case-c-architecture-closure.md)

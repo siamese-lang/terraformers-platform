@@ -388,4 +388,4 @@ work_package:
       successful_result_integrity: IMPLEMENTED
       executor_identity: SOURCE_BOUND_COMPILE_TIME
     live_execution_requires_separate_user_checkpoint: true
-    next_checkpoint: ARCHITECTURE_CLOSURE_C1_DECISION
+    next_checkpoint: ARCHITECTURE_CLOSURE_C2_STABILITY_GATE

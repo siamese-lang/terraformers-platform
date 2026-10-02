@@ -110,7 +110,7 @@ def check(d):
     if task(d) not in a or extract(a)!=state(d): raise SystemExit("AI project state is stale; run --sync")
     if extract(PORTFOLIO.read_text(encoding="utf-8"))!=portfolio(d): raise SystemExit("portfolio plan is stale; run --sync")
     c=CAPACITY.read_text(encoding="utf-8")
-    for marker in ["status: SUSPENDED_BY_ARCHITECTURE_AUDIT","live_baseline: SUSPENDED_BY_ARCHITECTURE_AUDIT","next_checkpoint: ARCHITECTURE_CLOSURE_C1_DECISION"]:
+    for marker in ["status: SUSPENDED_BY_ARCHITECTURE_AUDIT","live_baseline: SUSPENDED_BY_ARCHITECTURE_AUDIT","next_checkpoint: ARCHITECTURE_CLOSURE_C2_STABILITY_GATE"]:
         if marker not in c: raise SystemExit("capacity Work Package is not suspended: "+marker)
     print("case_c_architecture_ledger=passed"); print("current_phase="+d["current_phase"]); print("open_blocker_count="+str(len(blockers(d))))
 

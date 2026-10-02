@@ -8,7 +8,7 @@
 - Overall status: **ARCHITECTURE_CLOSURE_ACTIVE**
 - Capacity baseline: **SUSPENDED_BY_ARCHITECTURE_AUDIT**
 - Audit base SHA: 9a0d9bc3e792a5b5780b7676960bb14750f969ee
-- Current phase: **C1 — Executable Terraform Contract Decision and closure**
+- Current phase: **C2 — Repeated correctness stability gate**
 - Open blocking issues: C-ARCH-04, C-ARCH-05, C-ARCH-06
 
 Capacity-baseline retry is prohibited until every blocker required by C5 is RESOLVED and a new live checkpoint is approved.
@@ -19,7 +19,7 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 |---|---|---|---|---|
 | C0 | COMPLETE | Durable audit plan and maintenance automation | — | no |
 | C1 | COMPLETE | Executable Terraform Contract Decision and closure | C0 | no |
-| C2 | BLOCKED | Repeated correctness stability gate | C1 | yes |
+| C2 | ACTIVE | Repeated correctness stability gate | C1 | yes |
 | C3 | BLOCKED | Executor-aware capacity measurement contract | C1, C2 | no |
 | C4 | BLOCKED | Runtime and delivery desired-state convergence | C1, C2, C3 | no |
 | C5 | BLOCKED | Valid capacity baseline | C1, C2, C3, C4 | yes |
@@ -35,7 +35,7 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 | C-ARCH-02 | BLOCKER | RESOLVED | C1 | C2, C5 | REQUIRED retrieval does not prove generated-resource grounding coverage |
 | C-ARCH-03 | BLOCKER | RESOLVED | C1 | C2, C5 | Terraform executable validation collapses actionable init/validate diagnostics |
 | C-ARCH-04 | BLOCKER | OPEN | C3 | C5 | Capacity harness saturation model conflicts with executor queueing semantics |
-| C-ARCH-05 | BLOCKER | OPEN | C2 | C3, C5 | Single successful live analysis is insufficient as a capacity correctness prerequisite |
+| C-ARCH-05 | BLOCKER | IN_PROGRESS | C2 | C3, C5 | Single successful live analysis is insufficient as a capacity correctness prerequisite |
 | C-ARCH-06 | BLOCKER | OPEN | C4 | C5, C7 | Live backend image and repository declarative image are divergent |
 | C-ARCH-07 | HIGH | OPEN | C7 | C8 | Single-replica rollout strategy can interrupt API availability |
 | C-ARCH-08 | HIGH | OPEN | C7 | C8 | Kubernetes Ready does not represent integrated analysis-path readiness |
@@ -101,11 +101,13 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 
 ### C-ARCH-05 — Single successful live analysis is insufficient as a capacity correctness prerequisite
 
-- Severity/status: BLOCKER / OPEN
+- Severity/status: BLOCKER / IN_PROGRESS
 - Owner phase: C2
 - Retained evidence:
   - live validation 36956086874 passed
   - capacity run 36957682821 then produced two successes followed by an executable-correctness failure at concurrency 1
+  - C2 decision approved by user through merged PR #184 (b6fb62c457d08b73a256f1d014e67b8fcdb07cf4): freeze exactly five sequential integrated analyses at concurrency 1 before any capacity execution; 5/5 is required and no whole-gate automatic rerun is permitted
+  - C2 implementation reuses the existing backend live-validation workflow and existing GCP image-publish/revision-rollout paths; no new workflow, backend source, IaC, model, retrieval, or runtime-sizing change is authorized
 - Acceptance:
   - a frozen repeated correctness gate passes before capacity execution
   - repeat count and acceptance are selected before the live gate rather than retrofitted

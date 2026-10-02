@@ -8,133 +8,222 @@ Approved on 2026-10-02.
 
 ## Decision driver
 
-The repository success criterion is not a perfectly reliable production service. It is a small number
-of technically defensible engineering cases that show evidence-based judgment.
+The repository success criterion is a small number of technically defensible engineering cases, not
+a production system with every possible hardening item completed.
 
-Case C had expanded from a cloud/operations case into an open-ended attempt to eliminate every
-remaining correctness, capacity, rollout, and observability defect before closure. That no longer
-serves the portfolio objective.
+Case C originally served the **cloud infrastructure / operations** role beside:
 
-The user explicitly selected portfolio sufficiency over continued system perfection.
+- Case A — AI/RAG;
+- Case B — backend durability;
+- Case C — GCP runtime architecture, delivery, persistence and operational validation.
 
-## Evidence already obtained
-
-The retained Case C evidence is sufficient to support an operations/reliability decision story:
-
-1. Capacity run `36957682821` stopped at concurrency 1 before any valid saturation result because
-   the integrated path failed Terraform executable correctness. This proved that a load result would
-   have been misleading until functional correctness was separated from capacity.
-2. The architecture audit then separated repository-owned false correctness boundaries from actual
-   Terraform correctness. Request-local schema allowlisting, policy-only credential/account/
-   placeholder rejection, and sensitive-credential regeneration were removed.
-3. PR #190 merged as `ca214ef5dfd23f76477cfef0aa4a9137c4cd1706`; final static acceptance
-   passed Terraform Static Verification `37012674794` and Backend Local Verification
-   `37012674780`.
-4. Immutable backend image publication run `37015159218` built exact source
-   `b420291fa1534184d2a260883df718cc96511505` and resolved digest
-   `sha256:0db599d2487a3f7850bd0b5e454fe04d9cb234ae840202c7ad01f1a147478419`.
-5. Exact-digest rollout run `37015932695` verified the previous deployed digest before mutation,
-   rolled out the new immutable image, reached Ready/Available 1/1, preserved embedded source
-   identity, and reported backend health UP.
-6. Repeated correctness gate run `37016993776` used the same source/image/fixture/runtime identity.
-   Attempt 1 passed the complete integrated path; attempt 2 failed with terminal
-   `terraform_validate_configuration`. The gate stopped at 1/5 with no automatic whole-gate rerun.
-7. The corrected failure parser preserved the terminal Terraform category. The observed remaining
-   instability is therefore not the removed request-schema/sensitive policy boundary, not runtime
-   identity drift, and not proven external provider variance.
+That role must remain explicit. The case is therefore closed around the infrastructure decisions and
+live evidence already obtained, while unfinished capacity and rollback work remain residual/deferred.
 
 ## Selected portfolio case
 
-Case C is reframed from:
+Case C is:
 
-> Cloud Runtime Capacity & Safe Delivery
+> **GCP Production-Representative Runtime & Immutable Delivery**
 
-to the narrower evidence-backed case:
+Observability is a supporting capability, not a fourth representative case.
 
-> **Cloud Runtime Measurement Guardrails & Immutable Delivery**
+The primary engineering claim is:
 
-The engineering claim is:
+> The project moved from an evaluation-oriented target to a production-representative GCP runtime
+> with separated database/storage/secret/artifact boundaries, keyless GitHub delivery, immutable
+> source-to-image provenance, persistent state across backend replacement, and repository-owned
+> metrics/log correlation sufficient to validate the runtime and classify failures. Capacity and
+> rollout hardening were stopped when the workload correctness prerequisite became unstable rather
+> than manufacturing an unsupported infrastructure conclusion.
 
-> Before interpreting load/capacity results, the integrated request path must satisfy a bounded
-> correctness gate under an exact runtime identity. When the first capacity attempt failed before
-> saturation, the project stopped tuning infrastructure, audited the correctness boundary, removed
-> false repository-owned rejection rules, deployed an immutable revision with source/digest
-> provenance, and reran the same gated path. The rerun showed that actual AI-generated Terraform
-> validity still varies, so capacity conclusions were intentionally deferred rather than fabricated.
+## Infrastructure evidence already obtained
 
-This is a technical-decision case, not a claim that the service is production-perfect.
+### 1. Runtime topology and hosting decision
+
+The selected target separates responsibilities:
+
+- GKE Standard — Spring backend and OpenSearch;
+- Vertex AI — fact extraction, embeddings and Terraform generation;
+- dedicated Compute Engine VM — MariaDB 11.4;
+- dedicated Persistent Disk — MariaDB data authority;
+- Cloud Storage — source/result object bytes;
+- Secret Manager + native GKE Secret Sync — runtime secret delivery;
+- Artifact Registry — immutable backend images.
+
+MariaDB on the current GKE worker was rejected for the initial representative runtime because DB
+pressure would be coupled to backend/OpenSearch capacity and weaken bottleneck attribution.
+
+Cloud SQL for MySQL was not selected as a drop-in replacement because the unchanged Flyway migration
+contract failed against MySQL 8.4 while MariaDB 11.4 remained compatible. An intentional database
+migration would have expanded Case C into a different project.
+
+### 2. Protected GCP foundation and secret boundary
+
+Retained live evidence includes:
+
+- runtime-dependency apply run `36851221194`: exact MariaDB image, private runtime GCS bucket,
+  MariaDB VM/PD/firewall/service account, Secret Manager access boundary and native Secret Sync;
+- Kubernetes prerequisite run `36854218346`: synchronized secret key, internal JWKS runtime,
+  MariaDB Service/EndpointSlice and no accidental backend deployment.
+
+The database service remained private; no public MariaDB ingress was selected.
+
+### 3. Integrated production-representative path
+
+Run `36889896239` is retained as **PASS** evidence for:
+
+- authenticated upload;
+- durable AnalysisJob acceptance;
+- real Vertex fact extraction and generation;
+- real Vertex embedding;
+- OpenSearch retrieval;
+- GCS source/result persistence;
+- terminal `SUCCEEDED`;
+- generated Terraform draft read-back.
+
+This is the representative service path that Case A's evaluation-only pod did not prove.
+
+### 4. Persistence across backend replacement
+
+Run `36891629279` is retained as **PASS** evidence for:
+
+- backend pod replacement;
+- immutable backend image/source identity preservation;
+- durable AnalysisJob identity preservation;
+- source GCS bytes preservation;
+- result GCS bytes preservation;
+- Terraform draft bytes preservation;
+- Actuator/Prometheus reachability before and after replacement.
+
+This is the core safe-runtime evidence for the portfolio claim. It does not claim database HA or
+zero-downtime multi-replica delivery.
+
+### 5. Keyless and immutable delivery
+
+The delivery path separates infrastructure mutation from image publication:
+
+- GitHub OIDC / Workload Identity Federation rather than a user-managed long-lived GCP key;
+- dedicated image publisher identity;
+- repository-scoped Artifact Registry writer/reader boundaries;
+- source-SHA image identity;
+- no mutable `latest` publication.
+
+The later reviewed image publication run `37015159218` built exact source
+`b420291fa1534184d2a260883df718cc96511505` and resolved:
+
+`sha256:0db599d2487a3f7850bd0b5e454fe04d9cb234ae840202c7ad01f1a147478419`
+
+Run `37015932695` then:
+
+- verified the previous deployed digest before mutation;
+- rolled out the exact new digest;
+- reached Ready replicas = 1 and Available replicas = 1;
+- verified the embedded source revision;
+- reported backend health UP.
+
+## Observability support
+
+The project already has enough repository-owned observability to support the three cases without
+creating a separate monitoring project:
+
+- Spring Boot Actuator and Prometheus export;
+- `terraformers.analysis.jobs{outcome}`;
+- `terraformers.analysis.failures{category}`;
+- `terraformers.analysis.duration`;
+- `terraformers.analysis.stage.duration{stage,outcome}`;
+- `terraformers.analysis.stage.failures{stage,category}`;
+- durable-job claim, dispatch, queue-wait, retry, recovery and cleanup signals;
+- executor rejection counter;
+- `analysisJobId` in MDC for job-level correlation;
+- `BUILD_SOURCE_REVISION` in logs for release/source correlation.
+
+Metric dimensions are intentionally bounded. Job IDs, prompts, object keys and raw diagnostic
+messages are not used as metric labels.
+
+The project does **not** claim a completed distributed-tracing/monitoring platform. Grafana,
+OpenTelemetry Collector, Jaeger/Tempo, Cloud Trace and arbitrary SLO/alert thresholds are not needed
+to make the current portfolio claims.
+
+## Capacity attempt as an operational stopping decision
+
+Capacity run `36957682821` stopped at concurrency 1 before a valid saturation result because the
+integrated path experienced Terraform executable-correctness failure.
+
+The project did not reinterpret this as GKE/CPU/OpenSearch saturation.
+
+The validation boundary was audited, false repository-owned policy failures were removed in PR #190,
+and the same path was rerun using an exact immutable revision.
+
+C2 run `37016993776` then:
+
+- passed attempt 1;
+- failed attempt 2 with terminal `terraform_validate_configuration`;
+- preserved the exact runtime/source/image/fixture identity;
+- stopped at 1/5;
+- did not automatically rerun the whole gate.
+
+This result is retained only as evidence that **capacity attribution must stop when the workload's
+functional correctness prerequisite is unstable**. It is not the primary Case C topic and does not
+turn Case C into another AI/RAG case.
 
 ## Portfolio closure acceptance
 
-Case C is portfolio-sufficient when the repository can explain all of the following from retained
-evidence:
+Case C is portfolio-sufficient because the repository can explain:
 
-1. **Operating scenario** — real authenticated analysis runs on the GKE target using Vertex,
-   OpenSearch, persistent dependencies, and immutable backend delivery.
-2. **Observed failure** — a supposed capacity baseline failed at concurrency 1 before saturation.
-3. **Impact** — continuing load tuning would have attributed functional correctness failures to
-   runtime capacity and produced misleading conclusions.
-4. **Root mechanism separation** — false repository-owned validation policy was separated from actual
-   Terraform executable validity.
-5. **Alternatives/decision** — do not widen the corpus blindly, do not remove Terraform CLI
-   validation, do not rerun until lucky, and do not tune capacity while the correctness prerequisite
-   is unstable.
-6. **Implementation** — simplified validation ownership, exact local provider boundary, terminal
-   failure classification, immutable image publication, and exact-digest rollout.
-7. **Same-scenario after evidence** — the revised path passed attempt 1 and then exposed a genuine
-   `terraform validate` failure on attempt 2 instead of the previous policy-only rejection.
-8. **Residual risk** — stochastic generated-Terraform validity remains; capacity saturation,
-   declarative image convergence, rollout-under-load availability, and full faulty-release rollback
-   are not claimed as solved.
+1. why an evaluation-only environment was insufficient for infrastructure/operations claims;
+2. why MariaDB was separated onto a dedicated VM/PD rather than placed in the measured GKE worker;
+3. why MySQL/Cloud SQL was deferred after concrete migration incompatibility;
+4. how private persistence, secret delivery and immutable artifact delivery were assembled;
+5. how GitHub-to-GCP keyless identities were separated by responsibility;
+6. how exact source SHA → image digest → deployed revision identity was verified;
+7. how the authenticated integrated path and backend-replacement persistence were proven live;
+8. how bounded metrics/log correlation supported runtime validation and failure classification;
+9. why capacity testing was stopped rather than misattributing correctness variance to infrastructure;
+10. which production-hardening risks remain explicitly unsolved.
 
-These criteria are satisfied by the evidence above.
+## Deferred production hardening
 
-## Explicitly deferred work
-
-The following are no longer required for portfolio closure:
+The following remain valid future engineering work but are not portfolio prerequisites:
 
 - another C2 rerun solely to obtain 5/5;
-- finer Terraform validation diagnostics solely to chase the next invalid generated draft;
-- executor-aware saturation harness repair;
-- a valid capacity saturation curve;
-- capacity tuning or HPA/replica/resource optimization;
+- finer Terraform validation diagnostics solely to chase another generated draft;
+- executor-aware saturation-harness repair;
+- a complete saturation curve and capacity tuning;
+- HPA/replica/node/OpenSearch optimization;
 - repository/live image desired-state convergence;
-- two-node control-plane cleanup;
-- rollout-under-load availability optimization;
+- multi-replica zero-downtime rollout optimization;
+- integrated-path Kubernetes readiness redesign;
 - faulty-release rollback experiment;
-- integrated-path Kubernetes readiness redesign.
+- MariaDB HA/replication/failover;
+- a full tracing/dashboard/alerting platform.
 
-They may be reopened only for a new operational requirement, a real deployment need, or a later
-portfolio revision with explicit user approval.
+They may be reopened for a real operational requirement, a reproduced defect, or an explicit future
+portfolio-hardening decision.
 
 ## Case A / Case B reopening rule
 
-This Case C decision does **not** automatically reopen Case A or Case B.
+This closure does **not** reopen Case A or Case B.
 
-Case A's final closure explicitly states that Terraform structural validation does not prove
-deployment correctness and does not claim generated Terraform was plan/applied. Its selected claim
-is retrieval grounding/generalization and negative-control behavior. The Case C
-`terraform_validate_configuration` observation is downstream executable-validity evidence and does
-not contradict those retrieval conclusions.
+Case A's accepted claim is retrieval grounding/generalization and negative-control behavior. It
+already excludes deployment-correct Terraform as a claim.
 
-Case B concerns durable AnalysisJob ownership, fencing, retry, restart, and result-accountability
-semantics. The Case C validation failure does not contradict those durability invariants.
+Case B's accepted claim is durable AnalysisJob ownership, fencing, bounded retry, restart recovery
+and result accountability.
 
-A closed case is reopened only when new evidence directly contradicts a material claim in that
-case, or when its operating requirement changes. A stricter downstream validator by itself is not a
-reason to repeat an already-closed case.
+A closed case is reopened only when new evidence directly contradicts one of its material claims or
+its operating requirement changes.
 
 ## Non-claims
 
-Portfolio closure does not claim:
+Case C closure does not claim:
 
-- 5/5 generated Terraform reliability;
-- statistically reliable AI output;
 - production capacity or saturation limits;
-- an optimized GKE/backend/OpenSearch configuration;
+- an optimized GKE/OpenSearch/backend shape;
+- 5/5 generated Terraform reliability;
 - zero-downtime rollout;
 - completed faulty-release rollback;
+- MariaDB HA;
+- a full observability/tracing platform;
 - fully converged declarative/live image state;
-- production-ready unattended Terraform apply.
-
-These are preserved as explicit residual/deferred risks rather than hidden behind a PASS label.
+- unattended production Terraform apply safety.

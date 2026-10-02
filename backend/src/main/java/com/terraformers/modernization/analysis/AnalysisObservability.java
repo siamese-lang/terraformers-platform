@@ -177,6 +177,13 @@ public class AnalysisObservability {
     }
 
     public String category(Throwable exception) {
+        if (exception instanceof GeneratedTerraformContractViolation generatedFailure) {
+            return switch (generatedFailure.reason()) {
+                case MODULE_BLOCK -> "generated_terraform_contract_module";
+                case RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT -> "generated_terraform_contract_provider";
+                case RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE -> "generated_terraform_contract_request_schema";
+            };
+        }
         if (exception instanceof TerraformValidationFailureException terraformFailure) {
             return "terraform_" + terraformFailure.category().name().toLowerCase(Locale.ROOT);
         }

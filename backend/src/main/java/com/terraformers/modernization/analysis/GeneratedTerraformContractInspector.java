@@ -1,7 +1,6 @@
 package com.terraformers.modernization.analysis;
 
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
-import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.context.annotation.Lazy;
@@ -18,7 +17,7 @@ public class GeneratedTerraformContractInspector {
         this.catalog = catalog;
     }
 
-    public void inspect(String terraform, AwsProviderSchemaEvidence evidence) {
+    public void inspect(String terraform) {
         String source = terraform == null ? "" : terraform;
         Matcher matcher = DEPLOYABLE.matcher(source);
         while (matcher.find()) {
@@ -30,10 +29,6 @@ public class GeneratedTerraformContractInspector {
             if (!type.startsWith("aws_") || !catalog.contains(type)) {
                 throw new GeneratedTerraformContractViolation(
                         GeneratedTerraformContractViolation.Reason.RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT);
-            }
-            if (!evidence.covers(type)) {
-                throw new GeneratedTerraformContractViolation(
-                        GeneratedTerraformContractViolation.Reason.RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE);
             }
         }
     }

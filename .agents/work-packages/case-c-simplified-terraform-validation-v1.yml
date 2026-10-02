@@ -1,8 +1,8 @@
 work_package:
   id: case-c-simplified-terraform-validation-v1
-  status: AWAITING_APPROVAL
+  status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: "5f2ab26ce4d4e303e5966ecaec7c79d32884e4d3"
 
   goal: >
     Implement the user-approved simplified Terraform draft contract: remove policy-only credential,
@@ -51,6 +51,8 @@ work_package:
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilderTest.java
+    - backend/src/test/java/com/terraformers/modernization/evaluation/gemini/GeminiGenerationComparisonTest.java
+    - backend/src/test/java/com/terraformers/modernization/evaluation/opus/OpusGenerationEvaluationTest.java
     - .github/workflows/gcp-target-runtime-dependencies.yml
     - docs/evaluation/case-c-executable-terraform-contract.md
     - docs/evaluation/case-c-repeated-correctness-stability.md
@@ -139,6 +141,33 @@ work_package:
       - git_diff_check
 
   auto_repair_limit: 1
+  repair_history:
+    - iteration: 1
+      trigger: Backend Local Verification run 37010410994
+      failure_class: STALE_TEST_CONTRACT
+      scope:
+        - backend/src/test/java/com/terraformers/modernization/evaluation/gemini/GeminiGenerationComparisonTest.java
+        - backend/src/test/java/com/terraformers/modernization/evaluation/opus/OpusGenerationEvaluationTest.java
+      decision: >
+        User-approved bounded scope expansion on 2026-10-02. Update only stale placeholder-failure
+        expectations to the selected simplified draft contract; do not change production behavior.
+
+  human_checkpoint_repairs:
+    - checkpoint: 2026-10-02
+      trigger: independent acceptance review after successful run 37011300679
+      finding: >
+        TerraformDraftValidator still required an assignment or nested block inside a resource/module
+        body, duplicating Terraform CLI syntax/schema responsibility and creating a residual
+        false-rejection path.
+      authorization: explicit user "다음 작업 진행"
+      scope:
+        - backend/src/main/java/com/terraformers/modernization/analysis/TerraformDraftValidator.java
+        - backend/src/test/java/com/terraformers/modernization/analysis/TerraformDraftValidatorTest.java
+      decision: >
+        Remove body-structure heuristics. Keep only draft presence/prose screening and delegate HCL
+        syntax/provider-schema validity to the existing Terraform executable validator. This is a
+        human-approved continuation after auto_repair_limit was exhausted; it does not increase
+        automatic repair authority.
 
   stop_on:
     - current_main_differs_from_bound_execution_base

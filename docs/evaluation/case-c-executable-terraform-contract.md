@@ -96,3 +96,33 @@ started by this maintenance transition.
 - Provider schema compatibility does not prove semantic architecture or security quality.
 - The bounded inspector is deliberately not a complete HCL parser; Terraform CLI remains the final
   executable syntax and provider-validation boundary.
+
+## Live-evidence correction
+
+The original C1 closure above remains historical evidence of PR #182 and its then-approved
+contract. It is not the current selected behavior in full.
+
+C2 run `37003640318` demonstrated that two original constraints were over-constrained for the
+actual product role of generated Terraform:
+
+- request-specific schema evidence acted as a hard generated-resource allowlist; and
+- policy-only sensitive-literal detection triggered a dedicated regeneration path.
+
+PR #189 therefore revised the selected contract. The current implementation candidate is documented
+in [Simplified Terraform Draft Validation Evidence](case-c-simplified-terraform-validation.md).
+
+The retained parts of the original C1 contract are:
+
+- exact local AWS Provider 5.100.0 catalog;
+- AWS-only generated resource scope;
+- module blocks unsupported;
+- Terraform CLI offline initialization/validation;
+- bounded safe diagnostics.
+
+The superseded parts are:
+
+- request-local schema evidence as a final generated-resource allowlist;
+- policy-only credential/account-ID/account-ARN/placeholder rejection;
+- sensitive-credential-specific regeneration.
+
+C1 remains reopened until the revised implementation is merged and accepted.

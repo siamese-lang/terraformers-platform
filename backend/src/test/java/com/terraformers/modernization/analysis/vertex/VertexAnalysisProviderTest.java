@@ -3,10 +3,9 @@ package com.terraformers.modernization.analysis.vertex;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,7 +18,6 @@ import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
 import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
-import com.terraformers.modernization.analysis.TerraformDraftValidator;
 import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
@@ -33,21 +31,18 @@ import com.terraformers.modernization.reference.VertexArchitectureFactsExtractor
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
 import com.terraformers.modernization.storage.ObjectReader;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.Collection;
-import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 class VertexAnalysisProviderTest {
 
     @Test
     void passesStructuredFactResourceTypesToRetrievalWithoutParsingQueryText() {
-        ObjectContent source = new ObjectContent(
-                new ObjectMetadata("bucket", "key.png", "image/png", 3, "etag"),
-                new byte[] {1, 2, 3}
-        );
+        ObjectContent source = source();
         ObjectReader objectReader = mock(ObjectReader.class);
         when(objectReader.readContent(any())).thenReturn(source);
         VertexArchitectureFactsExtractor factsExtractor = mock(VertexArchitectureFactsExtractor.class);
@@ -66,23 +61,19 @@ class VertexAnalysisProviderTest {
         AtomicReference<ReferenceQuery> receivedQuery = new AtomicReference<>();
         ReferenceRetriever retriever = query -> {
             receivedQuery.set(query);
-            return List.of(new ReferenceDocument("ref", "title", "content", 1.0));
+            return List.of(reference());
         };
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setRetrievalMode(RetrievalMode.REQUIRED);
-        properties.setOpensearchTopK(8);
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult(
-                "vertex:test", AnalysisInputClassification.ARCHITECTURE_DIAGRAM, 1.0,
-                "resource \"aws_vpc\" \"main\" {}", "Three tier", List.of("VPC"), List.of(), List.of(),
-                "STOP", 10, false
-        ));
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(safeGeneration());
+        AwsProviderSchemaCatalog catalog = catalogWith(
+                List.of("aws_vpc", "aws_db_instance", "aws_security_group"),
+                new AwsProviderSchemaEvidence(Map.of("aws_vpc", "cidr_block(optional)")));
+        AnalysisRuntimeProperties properties = requiredProperties();
         VertexAnalysisProvider provider = new VertexAnalysisProvider(
-                objectReader, retriever, properties, factsExtractor, textWithoutResourceIdentifiers, generationStage,
-                new TerraformDraftValidator(), schemaCatalog(), mock(GeneratedTerraformContractInspector.class));
+                objectReader, retriever, properties, factsExtractor, textWithoutResourceIdentifiers,
+                generationStage, catalog, mock(GeneratedTerraformContractInspector.class));
 
-        provider.analyze(new AnalysisRequestContext(
-                "job", "project", "bucket", "key.png", "correlation", AnalysisMode.INTEGRATED_JAVA));
+        provider.analyze(context());
 
         assertThat(receivedQuery.get()).isNotNull();
         assertThat(receivedQuery.get().text()).doesNotContain("aws_");
@@ -121,179 +112,171 @@ class VertexAnalysisProviderTest {
     }
 
     @Test
-    void safeFirstGenerationDoesNotRecoverAndRunsUpstreamStagesOnce() {
-        ReferenceRetriever retriever = mock(ReferenceRetriever.class);
-        List<ReferenceDocument> references = List.of(reference());
-        when(retriever.retrieve(any())).thenReturn(references);
+    void policyLikeLiteralDraftDoesNotTriggerASecondGenerationPath() {
+        ReferenceRetriever retriever = query -> List.of(reference());
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(safeGeneration());
-        ProviderFixture fixture = fixture(retriever, generationStage);
-        AnalysisRequestContext context = context();
-
-        fixture.provider().analyze(context);
-
-        verify(generationStage, times(1)).generate(same(context), same(fixture.source()), same(references), any());
-        verify(generationStage, never()).regenerateAfterSensitiveCredential(any(), any(), any());
-        verify(fixture.factsExtractor(), times(1)).extract(same(fixture.source()));
-        verify(retriever, times(1)).retrieve(any());
-    }
-
-    @Test
-    void sensitiveFirstGenerationRecoversOnceWithSameSourceAndReferences() {
-        ReferenceRetriever retriever = mock(ReferenceRetriever.class);
-        List<ReferenceDocument> references = List.of(reference());
-        when(retriever.retrieve(any())).thenReturn(references);
-        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(sensitiveGeneration());
-        when(generationStage.regenerateAfterSensitiveCredential(any(), any(), any(), any())).thenReturn(safeGeneration());
-        ProviderFixture fixture = fixture(retriever, generationStage);
-        AnalysisRequestContext context = context();
-
-        var result = fixture.provider().analyze(context);
-
-        assertThat(result.terraformCode()).isEqualTo(safeGeneration().terraformCode());
-        verify(generationStage, times(1)).generate(same(context), same(fixture.source()), same(references), any());
-        verify(generationStage, times(1)).regenerateAfterSensitiveCredential(
-                same(context), same(fixture.source()), same(references), any());
-        verify(fixture.factsExtractor(), times(1)).extract(same(fixture.source()));
-        verify(retriever, times(1)).retrieve(any());
-    }
-
-    @Test
-    void unrelatedInvalidFirstGenerationDoesNotRecover() {
-        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(generation("placeholder output"));
-        VertexAnalysisProvider provider = provider(query -> List.of(reference()), generationStage);
-
-        provider.analyze(context());
-
-        verify(generationStage, never()).regenerateAfterSensitiveCredential(any(), any(), any());
-    }
-
-    @Test
-    void sensitiveRecoveryIsReturnedWithoutSecondProviderRetry() {
-        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(sensitiveGeneration());
-        when(generationStage.regenerateAfterSensitiveCredential(any(), any(), any(), any()))
-                .thenReturn(sensitiveGeneration());
-        VertexAnalysisProvider provider = provider(query -> List.of(reference()), generationStage);
+        AnalysisGenerationResult literalDraft = generation("""
+                resource "aws_db_instance" "main" {
+                  password = "example-password"
+                }
+                """);
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(literalDraft);
+        GeneratedTerraformContractInspector inspector = mock(GeneratedTerraformContractInspector.class);
+        VertexAnalysisProvider provider = provider(retriever, generationStage, inspector);
 
         var result = provider.analyze(context());
 
-        verify(generationStage, times(1)).regenerateAfterSensitiveCredential(any(), any(), any(), any());
-        assertThat(new TerraformDraftValidator().isHardCodedSensitiveCredentialFailure(
-                new TerraformDraftValidator().validate(result.terraformCode()))).isTrue();
+        assertThat(result.terraformCode()).contains("example-password");
+        verify(generationStage, times(1)).generate(any(), any(), any(), any());
+        verify(inspector).inspect(literalDraft.terraformCode());
     }
 
     @Test
-    void truncationRetryThenSensitiveResultDoesNotMakeThirdCall() {
-        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        AnalysisGenerationResult secondAttemptSensitive = new AnalysisGenerationResult(
-                "vertex:test", AnalysisInputClassification.ARCHITECTURE_DIAGRAM, 1.0,
-                sensitiveGeneration().terraformCode(), "VPC", List.of(), List.of(), List.of(), "STOP", 10, true);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(secondAttemptSensitive);
-
-        provider(query -> List.of(reference()), generationStage).analyze(context());
-
-        verify(generationStage, never()).regenerateAfterSensitiveCredential(any(), any(), any(), any());
-    }
-
-    @Test
-    void combinesFactAndRetrievedCompanionTypesIntoGenerationSchemaEvidence() {
+    void combinesFactMetadataAndReferenceContentResourcesIntoPromptSchemaContext() {
         ObjectContent source = source();
         ObjectReader objectReader = mock(ObjectReader.class);
         when(objectReader.readContent(any())).thenReturn(source);
         VertexArchitectureFactsExtractor factsExtractor = mock(VertexArchitectureFactsExtractor.class);
         when(factsExtractor.extract(source)).thenReturn(new ArchitectureRetrievalFacts(
                 "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
+
         ReferenceDocument companion = new ReferenceDocument(
-                "network-pattern", "Network pattern", "Use a subnet", 1.0, "PROJECT_DECISION",
-                List.of("aws_subnet"), "network.md", "5.100.0", "v3", "PROJECT", 1, List.of());
+                "network-pattern",
+                "Network pattern",
+                """
+                Use a subnet and listener:
+                resource "aws_lb_listener" "http" {
+                  load_balancer_arn = aws_lb.app.arn
+                  port = 80
+                  protocol = "HTTP"
+                }
+                """,
+                1.0,
+                "TERRAFORMERS_PATTERN",
+                List.of("aws_subnet"),
+                "network.md",
+                "5.100.0",
+                "v3",
+                "PROJECT_DECISION",
+                1,
+                List.of()
+        );
         ReferenceRetriever retriever = query -> List.of(companion);
         AwsProviderSchemaEvidence expectedEvidence = new AwsProviderSchemaEvidence(Map.of(
                 "aws_vpc", "cidr_block: type=\"string\" (optional)",
-                "aws_subnet", "vpc_id: type=\"string\" (required)"));
-        AwsProviderSchemaCatalog catalog = mock(AwsProviderSchemaCatalog.class);
-        when(catalog.resolve(any())).thenReturn(expectedEvidence);
+                "aws_subnet", "vpc_id: type=\"string\" (required)",
+                "aws_lb_listener", "port: type=\"number\" (optional)"));
+        AwsProviderSchemaCatalog catalog = catalogWith(
+                List.of("aws_vpc", "aws_subnet", "aws_lb_listener"), expectedEvidence);
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
         when(generationStage.generate(any(), any(), any(), same(expectedEvidence))).thenReturn(safeGeneration());
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setRetrievalMode(RetrievalMode.REQUIRED);
+
         VertexAnalysisProvider provider = new VertexAnalysisProvider(
-                objectReader, retriever, properties, factsExtractor, new RetrievalQueryTextBuilder(), generationStage,
-                new TerraformDraftValidator(), catalog, mock(GeneratedTerraformContractInspector.class));
+                objectReader, retriever, requiredProperties(), factsExtractor,
+                new RetrievalQueryTextBuilder(), generationStage, catalog,
+                mock(GeneratedTerraformContractInspector.class));
 
         provider.analyze(context());
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Collection<String>> candidates = ArgumentCaptor.forClass(Collection.class);
         verify(catalog).resolve(candidates.capture());
-        assertThat(candidates.getValue()).containsExactly("aws_vpc", "aws_subnet");
+        assertThat(candidates.getValue()).containsExactly("aws_vpc", "aws_subnet", "aws_lb_listener");
         verify(generationStage).generate(any(), same(source), eq(List.of(companion)), same(expectedEvidence));
-        assertThat(expectedEvidence.resourceTypes()).containsExactlyInAnyOrder("aws_vpc", "aws_subnet");
     }
 
     @Test
-    void unknownFactSelectedAwsResourceFailsBeforeGeneration() {
+    void unknownFactResourceIsOmittedFromAdvisorySchemaContextInsteadOfFailingRequest() {
+        ObjectContent source = source();
         ObjectReader objectReader = mock(ObjectReader.class);
-        when(objectReader.readContent(any())).thenReturn(source());
+        when(objectReader.readContent(any())).thenReturn(source);
         VertexArchitectureFactsExtractor factsExtractor = mock(VertexArchitectureFactsExtractor.class);
-        when(factsExtractor.extract(any())).thenReturn(new ArchitectureRetrievalFacts(
+        when(factsExtractor.extract(source)).thenReturn(new ArchitectureRetrievalFacts(
                 "Unknown", List.of(), List.of(), List.of("aws_not_real")));
-        AwsProviderSchemaCatalog catalog = mock(AwsProviderSchemaCatalog.class);
-        when(catalog.resolve(any())).thenThrow(new IllegalArgumentException(
-                "candidate is absent from AWS 5.100.0 provider schema: aws_not_real"));
-        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setRetrievalMode(RetrievalMode.REQUIRED);
-        VertexAnalysisProvider provider = new VertexAnalysisProvider(
-                objectReader, query -> List.of(reference()), properties, factsExtractor,
-                new RetrievalQueryTextBuilder(), generationStage, new TerraformDraftValidator(), catalog,
-                mock(GeneratedTerraformContractInspector.class));
 
-        assertThatThrownBy(() -> provider.analyze(context()))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("aws_not_real");
-        verify(generationStage, never()).generate(any(), any(), any(), any());
+        ReferenceDocument reference = new ReferenceDocument(
+                "vpc-example", "VPC", "resource \"aws_vpc\" \"main\" { cidr_block = \"10.0.0.0/16\" }", 1.0);
+        AwsProviderSchemaEvidence evidence =
+                new AwsProviderSchemaEvidence(Map.of("aws_vpc", "cidr_block(optional)"));
+        AwsProviderSchemaCatalog catalog = catalogWith(List.of("aws_vpc"), evidence);
+        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
+        when(generationStage.generate(any(), any(), any(), same(evidence))).thenReturn(safeGeneration());
+        GeneratedTerraformContractInspector inspector = mock(GeneratedTerraformContractInspector.class);
+
+        VertexAnalysisProvider provider = new VertexAnalysisProvider(
+                objectReader, query -> List.of(reference), requiredProperties(), factsExtractor,
+                new RetrievalQueryTextBuilder(), generationStage, catalog, inspector);
+
+        provider.analyze(context());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Collection<String>> candidates = ArgumentCaptor.forClass(Collection.class);
+        verify(catalog).resolve(candidates.capture());
+        assertThat(candidates.getValue()).containsExactly("aws_vpc");
+        verify(inspector).inspect(safeGeneration().terraformCode());
+    }
+
+    @Test
+    void finalGeneratedResourceInspectionDoesNotReceiveRequestSchemaEnvelope() {
+        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
+        AnalysisGenerationResult generated = generation(
+                "resource \"aws_subnet\" \"generated\" { vpc_id = \"vpc-example\" }");
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(generated);
+        GeneratedTerraformContractInspector inspector = mock(GeneratedTerraformContractInspector.class);
+
+        provider(query -> List.of(reference()), generationStage, inspector).analyze(context());
+
+        verify(inspector).inspect(generated.terraformCode());
     }
 
     private VertexAnalysisProvider provider(
             ReferenceRetriever retriever,
             VertexGenerationStage generationStage
     ) {
-        ObjectReader objectReader = mock(ObjectReader.class);
-        when(objectReader.readContent(any())).thenReturn(source());
-        VertexArchitectureFactsExtractor factsExtractor = mock(VertexArchitectureFactsExtractor.class);
-        when(factsExtractor.extract(any())).thenReturn(new ArchitectureRetrievalFacts(
-                "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setRetrievalMode(RetrievalMode.REQUIRED);
-        return new VertexAnalysisProvider(objectReader, retriever, properties, factsExtractor,
-                new RetrievalQueryTextBuilder(), generationStage, new TerraformDraftValidator(), schemaCatalog(),
-                mock(GeneratedTerraformContractInspector.class));
+        return provider(retriever, generationStage, mock(GeneratedTerraformContractInspector.class));
     }
 
-    private ProviderFixture fixture(ReferenceRetriever retriever, VertexGenerationStage generationStage) {
+    private VertexAnalysisProvider provider(
+            ReferenceRetriever retriever,
+            VertexGenerationStage generationStage,
+            GeneratedTerraformContractInspector inspector
+    ) {
         ObjectContent source = source();
         ObjectReader objectReader = mock(ObjectReader.class);
         when(objectReader.readContent(any())).thenReturn(source);
         VertexArchitectureFactsExtractor factsExtractor = mock(VertexArchitectureFactsExtractor.class);
-        when(factsExtractor.extract(source)).thenReturn(new ArchitectureRetrievalFacts(
+        when(factsExtractor.extract(any())).thenReturn(new ArchitectureRetrievalFacts(
                 "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
-        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
-        properties.setRetrievalMode(RetrievalMode.REQUIRED);
-        return new ProviderFixture(new VertexAnalysisProvider(
-                objectReader, retriever, properties, factsExtractor, new RetrievalQueryTextBuilder(),
-                generationStage, new TerraformDraftValidator(), schemaCatalog(),
-                mock(GeneratedTerraformContractInspector.class)), source, factsExtractor);
+        return new VertexAnalysisProvider(
+                objectReader,
+                retriever,
+                requiredProperties(),
+                factsExtractor,
+                new RetrievalQueryTextBuilder(),
+                generationStage,
+                catalogWith(List.of("aws_vpc"), new AwsProviderSchemaEvidence(Map.of(
+                        "aws_vpc", "cidr_block(optional)"))),
+                inspector
+        );
     }
 
-    private AwsProviderSchemaCatalog schemaCatalog() {
+    private AwsProviderSchemaCatalog catalogWith(
+            List<String> supported,
+            AwsProviderSchemaEvidence evidence
+    ) {
         AwsProviderSchemaCatalog catalog = mock(AwsProviderSchemaCatalog.class);
-        when(catalog.resolve(any())).thenReturn(new AwsProviderSchemaEvidence(Map.of(
-                "aws_vpc", "cidr_block(optional)",
-                "aws_db_instance", "password(optional)",
-                "aws_security_group", "name(optional)")));
+        for (String resourceType : supported) {
+            when(catalog.contains(resourceType)).thenReturn(true);
+        }
+        when(catalog.resolve(any())).thenReturn(evidence);
         return catalog;
+    }
+
+    private AnalysisRuntimeProperties requiredProperties() {
+        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        properties.setRetrievalMode(RetrievalMode.REQUIRED);
+        properties.setOpensearchTopK(8);
+        return properties;
     }
 
     private ObjectContent source() {
@@ -315,10 +298,6 @@ class VertexAnalysisProviderTest {
         return generation("resource \"aws_vpc\" \"main\" { cidr_block = \"10.0.0.0/16\" }");
     }
 
-    private AnalysisGenerationResult sensitiveGeneration() {
-        return generation("resource \"aws_db_instance\" \"main\" { password = \"unsafe-example\" }");
-    }
-
     private AnalysisGenerationResult generation(String terraform) {
         return new AnalysisGenerationResult(
                 "vertex:test", AnalysisInputClassification.ARCHITECTURE_DIAGRAM, 1.0,
@@ -333,10 +312,4 @@ class VertexAnalysisProviderTest {
         return new AnalysisRequestContext(
                 "job", "project", "bucket", "key.png", "correlation", AnalysisMode.INTEGRATED_JAVA);
     }
-
-    private record ProviderFixture(
-            VertexAnalysisProvider provider,
-            ObjectContent source,
-            VertexArchitectureFactsExtractor factsExtractor
-    ) {}
 }

@@ -11,11 +11,11 @@ import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisGenerationStage;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
-import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
-import java.util.Map;
+import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.util.List;
+import java.util.Map;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -53,25 +53,10 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
             List<ReferenceDocument> references, AwsProviderSchemaEvidence schemaEvidence) {
         List<ReferenceDocument> safeReferences = references == null ? List.of() : List.copyOf(references);
         try {
-            return invoke(source, safeReferences, schemaEvidence, false, false, false);
+            return invoke(source, safeReferences, schemaEvidence, false, false);
         } catch (VertexOutputTruncatedException exception) {
-            return invoke(source, safeReferences, schemaEvidence, true, true, false);
+            return invoke(source, safeReferences, schemaEvidence, true, true);
         }
-    }
-
-    public AnalysisGenerationResult regenerateAfterSensitiveCredential(
-            AnalysisRequestContext context,
-            ObjectContent source,
-            List<ReferenceDocument> references
-    ) {
-        return regenerateAfterSensitiveCredential(context, source, references,
-                new AwsProviderSchemaEvidence(Map.of()));
-    }
-
-    public AnalysisGenerationResult regenerateAfterSensitiveCredential(AnalysisRequestContext context,
-            ObjectContent source, List<ReferenceDocument> references, AwsProviderSchemaEvidence schemaEvidence) {
-        List<ReferenceDocument> safeReferences = references == null ? List.of() : List.copyOf(references);
-        return invoke(source, safeReferences, schemaEvidence, false, true, true);
     }
 
     GenerateContentConfig generationConfig() {
@@ -89,17 +74,14 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
             List<ReferenceDocument> references,
             AwsProviderSchemaEvidence schemaEvidence,
             boolean compact,
-            boolean retryOccurred,
-            boolean sensitiveCredentialRecovery
+            boolean retryOccurred
     ) {
         String modelId = properties.requireGenerationModelId();
         GenerateContentConfig config = generationConfig();
 
         Content content = Content.fromParts(
                 Part.fromBytes(source.bytes(), source.metadata().contentType()),
-                Part.fromText(sensitiveCredentialRecovery
-                        ? promptBuilder.buildSensitiveCredentialRecovery(source, references, schemaEvidence)
-                        : promptBuilder.build(source, references, schemaEvidence, compact))
+                Part.fromText(promptBuilder.build(source, references, schemaEvidence, compact))
         );
 
         GenerateContentResponse response = client.models.generateContent(modelId, content, config);

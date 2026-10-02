@@ -8,10 +8,8 @@ import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
-import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
 import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
-import com.terraformers.modernization.analysis.TerraformDraftValidation;
-import com.terraformers.modernization.analysis.TerraformDraftValidator;
+import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
@@ -24,8 +22,11 @@ import com.terraformers.modernization.reference.VertexArchitectureFactsExtractor
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectReader;
 import com.terraformers.modernization.storage.ObjectReference;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -36,6 +37,8 @@ import org.springframework.stereotype.Component;
 public class VertexAnalysisProvider implements AnalysisProvider {
 
     private static final Logger log = LoggerFactory.getLogger(VertexAnalysisProvider.class);
+    private static final Pattern REFERENCE_AWS_RESOURCE = Pattern.compile(
+            "(?m)^\\s*resource\\s+\"(aws_[a-z0-9_]+)\"\\s+\"[^\"]+\"\\s*\\{");
 
     private final ObjectReader objectReader;
     private final ReferenceRetriever referenceRetriever;
@@ -43,7 +46,6 @@ public class VertexAnalysisProvider implements AnalysisProvider {
     private final VertexArchitectureFactsExtractor factsExtractor;
     private final RetrievalQueryTextBuilder queryTextBuilder;
     private final VertexGenerationStage generationStage;
-    private final TerraformDraftValidator terraformDraftValidator;
     private final AwsProviderSchemaCatalog schemaCatalog;
     private final GeneratedTerraformContractInspector contractInspector;
 
@@ -54,7 +56,6 @@ public class VertexAnalysisProvider implements AnalysisProvider {
             VertexArchitectureFactsExtractor factsExtractor,
             RetrievalQueryTextBuilder queryTextBuilder,
             VertexGenerationStage generationStage,
-            TerraformDraftValidator terraformDraftValidator,
             AwsProviderSchemaCatalog schemaCatalog,
             GeneratedTerraformContractInspector contractInspector
     ) {
@@ -64,7 +65,6 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         this.factsExtractor = factsExtractor;
         this.queryTextBuilder = queryTextBuilder;
         this.generationStage = generationStage;
-        this.terraformDraftValidator = terraformDraftValidator;
         this.schemaCatalog = schemaCatalog;
         this.contractInspector = contractInspector;
     }
@@ -92,23 +92,13 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         ));
         RetrievalOutcome retrieval = retrieveReferences(source);
         List<ReferenceDocument> references = retrieval.references();
-        List<String> candidates = new ArrayList<>(retrieval.facts().resourceTypes());
-        references.forEach(reference -> candidates.addAll(reference.resourceTypes()));
-        AwsProviderSchemaEvidence schemaEvidence = schemaCatalog.resolve(candidates);
-        AnalysisGenerationResult generated = generationStage.generate(context, source, references, schemaEvidence);
+        AwsProviderSchemaEvidence schemaEvidence = schemaCatalog.resolve(
+                promptSchemaCandidates(retrieval.facts(), references));
+        AnalysisGenerationResult generated =
+                generationStage.generate(context, source, references, schemaEvidence);
         RequiredGroundingPolicy.requireForArchitecture(
                 properties.getRetrievalMode(), generated, references);
-        TerraformDraftValidation preliminaryValidation =
-                terraformDraftValidator.validate(generated.terraformCode());
-        if (terraformDraftValidator.isHardCodedSensitiveCredentialFailure(preliminaryValidation)
-                && !generated.retryOccurred()) {
-            log.info("Vertex generation recovery outcome=retry category=sensitive_credential");
-            generated = generationStage.regenerateAfterSensitiveCredential(
-                    context, source, references, schemaEvidence);
-            RequiredGroundingPolicy.requireForArchitecture(
-                    properties.getRetrievalMode(), generated, references);
-        }
-        contractInspector.inspect(generated.terraformCode(), schemaEvidence);
+        contractInspector.inspect(generated.terraformCode());
         return new AnalysisResult(
                 generated.provider(),
                 generated.terraformCode(),
@@ -118,6 +108,31 @@ public class VertexAnalysisProvider implements AnalysisProvider {
                 generated.warnings(),
                 references.stream().map(ReferenceDocument::id).toList()
         );
+    }
+
+    private Set<String> promptSchemaCandidates(
+            ArchitectureRetrievalFacts facts,
+            List<ReferenceDocument> references
+    ) {
+        Set<String> candidates = new LinkedHashSet<>();
+        if (facts != null) {
+            facts.resourceTypes().stream()
+                    .filter(schemaCatalog::contains)
+                    .forEach(candidates::add);
+        }
+        for (ReferenceDocument reference : references == null ? List.<ReferenceDocument>of() : references) {
+            reference.resourceTypes().stream()
+                    .filter(schemaCatalog::contains)
+                    .forEach(candidates::add);
+            Matcher matcher = REFERENCE_AWS_RESOURCE.matcher(reference.content() == null ? "" : reference.content());
+            while (matcher.find()) {
+                String resourceType = matcher.group(1);
+                if (schemaCatalog.contains(resourceType)) {
+                    candidates.add(resourceType);
+                }
+            }
+        }
+        return candidates;
     }
 
     private RetrievalOutcome retrieveReferences(ObjectContent source) {

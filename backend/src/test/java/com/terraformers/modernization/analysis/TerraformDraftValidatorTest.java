@@ -18,7 +18,7 @@ class TerraformDraftValidatorTest {
     }
 
     @Test
-    void acceptsSingleLineResourceTerraformDraft() {
+    void acceptsSingleLineResourceTerraformDraftAndStripsFence() {
         TerraformDraftValidation validation = validator.validate("""
                 ```hcl
                 provider "aws" { region = var.aws_region }
@@ -47,101 +47,43 @@ class TerraformDraftValidatorTest {
     }
 
     @Test
-    void rejectsHardCodedPasswordObservedInGeminiComparisonRun() {
+    void acceptsEmptyResourceBodyAndDelegatesSchemaValidityToTerraformCli() {
+        TerraformDraftValidation validation =
+                validator.validate("resource \"aws_vpc\" \"example\" {}");
+
+        assertThat(validation.valid()).isTrue();
+    }
+
+    @Test
+    void acceptsIncompleteResourceBodyShapeAndDelegatesSyntaxValidityToTerraformCli() {
+        TerraformDraftValidation validation =
+                validator.validate("resource \"aws_vpc\" \"example\" {");
+
+        assertThat(validation.valid()).isTrue();
+    }
+
+    @Test
+    void acceptsIllustrativeCredentialLikeLiteralsBecauseDraftIsNotAutoApplied() {
         TerraformDraftValidation validation = validator.validate("""
                 resource "aws_db_instance" "database" {
                   engine   = "postgres"
-                  username = "dbadmin"
+                  username = "example-admin"
                   password = "ChangeMeSafely123!"
+                  tags = {
+                    api_key = "example-api-key"
+                    token   = "example-token"
+                  }
                 }
                 """);
 
-        assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).isEqualTo(
-                "generated Terraform contains a hard-coded sensitive credential");
-        assertThat(validation.reason()).doesNotContain("ChangeMeSafely123!");
-        assertThat(validator.isHardCodedSensitiveCredentialFailure(validation)).isTrue();
+        assertThat(validation.valid()).isTrue();
     }
 
     @Test
-    void rejectsOtherHardCodedSensitiveCredentialLiterals() {
-        assertSensitiveLiteralRejected("access_key", "AKIAEXAMPLE000000000");
-        assertSensitiveLiteralRejected("secret_access_key", "example-secret-value");
-        assertSensitiveLiteralRejected("client_secret", "example-client-secret");
-        assertSensitiveLiteralRejected("secret", "example-secret");
-        assertSensitiveLiteralRejected("secret_string", "example-secret-string");
-        assertSensitiveLiteralRejected("api_key", "example-api-key");
-        assertSensitiveLiteralRejected("auth_token", "example-auth-token");
-        assertSensitiveLiteralRejected("access_token", "example-access-token");
-        assertSensitiveLiteralRejected("token", "example-token");
-        assertSensitiveLiteralRejected("private_key", "example-private-key");
-    }
-
-    @Test
-    void acceptsReferencedOrManagedSensitiveValues() {
-        TerraformDraftValidation variable = validator.validate("""
-                resource "aws_db_instance" "database" {
-                  engine   = "postgres"
-                  username = "dbadmin"
-                  password = var.db_password
-                }
-                """);
-        TerraformDraftValidation generated = validator.validate("""
-                resource "aws_db_instance" "database" {
-                  engine   = "postgres"
-                  username = "dbadmin"
-                  password = random_password.database.result
-                }
-                """);
-        TerraformDraftValidation managed = validator.validate("""
-                resource "aws_db_instance" "database" {
-                  engine                      = "postgres"
-                  username                    = "dbadmin"
-                  manage_master_user_password = true
-                }
-                """);
-        TerraformDraftValidation interpolation = validator.validate("""
-                resource "aws_db_instance" "database" {
-                  engine   = "postgres"
-                  username = "dbadmin"
-                  password = "${var.db_password}"
-                }
-                """);
-
-        assertThat(variable.valid()).isTrue();
-        assertThat(generated.valid()).isTrue();
-        assertThat(managed.valid()).isTrue();
-        assertThat(interpolation.valid()).isTrue();
-    }
-
-    @Test
-    void rejectsMixedLiteralAndInterpolationCredential() {
+    void acceptsIllustrativeAccountIdentifiersAndAccountScopedArns() {
         TerraformDraftValidation validation = validator.validate("""
-                resource "aws_db_instance" "database" {
-                  engine   = "postgres"
-                  username = "dbadmin"
-                  password = "HardCodedSecret-${var.suffix}"
-                }
-                """);
-
-        assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).contains("hard-coded sensitive credential");
-    }
-
-    @Test
-    void rejectsSensitiveLiteralInsideSingleLineResource() {
-        TerraformDraftValidation validation = validator.validate(
-                "resource \"aws_db_instance\" \"database\" { engine = \"postgres\" password = \"HardCodedSecret!\" }");
-
-        assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).contains("hard-coded sensitive credential");
-    }
-
-    @Test
-    void rejectsAccountScopedArnObservedInGeminiComparisonRun() {
-        TerraformDraftValidation validation = validator.validate("""
-                resource "aws_iam_role" "gha" {
-                  name = "gha-role"
+                resource "aws_iam_role" "example" {
+                  name = "example-role"
                   assume_role_policy = jsonencode({
                     Statement = [{
                       Principal = {
@@ -149,97 +91,34 @@ class TerraformDraftValidatorTest {
                       }
                     }]
                   })
-                }
-                """);
-
-        assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).isEqualTo(
-                "generated Terraform contains an account-specific AWS identifier");
-        assertThat(validation.reason()).doesNotContain("123456789012");
-    }
-
-    @Test
-    void rejectsLiteralAwsAccountIdAttribute() {
-        TerraformDraftValidation validation = validator.validate("""
-                resource "aws_s3_bucket" "example" {
-                  bucket_prefix = "example-"
                   tags = {
                     account_id = "123456789012"
                   }
                 }
                 """);
 
-        assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).contains("account-specific AWS identifier");
+        assertThat(validation.valid()).isTrue();
     }
 
     @Test
-    void rejectsLiteralAwsAccountIdInsideSingleLineMap() {
-        TerraformDraftValidation validation = validator.validate(
-                "resource \"aws_s3_bucket\" \"example\" { bucket_prefix = \"example-\" tags = { account_id = \"123456789012\" } }");
-
-        assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).contains("account-specific AWS identifier");
-    }
-
-    @Test
-    void acceptsAwsManagedPolicyArnAndGeneratedResourceArn() {
-        TerraformDraftValidation managedPolicy = validator.validate("""
-                resource "aws_iam_role_policy_attachment" "readonly" {
-                  role       = aws_iam_role.example.name
-                  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-                }
-                """);
-        TerraformDraftValidation generatedArn = validator.validate("""
-                resource "aws_lambda_permission" "invoke" {
-                  function_name = aws_lambda_function.example.function_name
-                  principal     = "events.amazonaws.com"
-                  source_arn    = aws_cloudwatch_event_rule.example.arn
-                }
-                """);
-
-        assertThat(managedPolicy.valid()).isTrue();
-        assertThat(generatedArn.valid()).isTrue();
-    }
-
-    @Test
-    void preservesPlaceholderFailurePrecedence() {
+    void acceptsPlaceholderTodoAndExampleWordingInsideUsableTerraform() {
         TerraformDraftValidation validation = validator.validate("""
                 resource "aws_lb_listener" "https" {
-                  load_balancer_arn = aws_lb.app.arn
+                  # TODO: replace this example certificate ARN for your environment.
+                  load_balancer_arn = aws_lb.example.arn
                   certificate_arn   = "arn:aws:acm:us-east-1:123456789012:certificate/placeholder-cert-id"
                   port              = 443
                   protocol          = "HTTPS"
                 }
                 """);
 
-        assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).isEqualTo(
-                "generated Terraform appears to be placeholder/example output");
-        assertThat(validator.isHardCodedSensitiveCredentialFailure(validation)).isFalse();
+        assertThat(validation.valid()).isTrue();
     }
 
     @Test
-    void doesNotClassifyValidDraftOrNullAsSensitiveCredentialFailure() {
-        TerraformDraftValidation valid = validator.validate("""
-                resource "aws_db_instance" "database" {
-                  password = var.db_password
-                }
-                """);
-
-        assertThat(validator.isHardCodedSensitiveCredentialFailure(valid)).isFalse();
-        assertThat(validator.isHardCodedSensitiveCredentialFailure(null)).isFalse();
-    }
-
-    private void assertSensitiveLiteralRejected(String attribute, String value) {
-        TerraformDraftValidation validation = validator.validate("""
-                resource "aws_instance" "example" {
-                  ami = "ami-12345678"
-                  %s = "%s"
-                }
-                """.formatted(attribute, value));
-
-        assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).contains("hard-coded sensitive credential");
+    void stillRejectsBlankLanguageLabelAndProseOnlyOutput() {
+        assertThat(validator.validate("").valid()).isFalse();
+        assertThat(validator.validate("terraform").valid()).isFalse();
+        assertThat(validator.validate("Here is the Terraform you requested.").valid()).isFalse();
     }
 }

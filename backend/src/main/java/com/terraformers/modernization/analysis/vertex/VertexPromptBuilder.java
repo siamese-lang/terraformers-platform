@@ -1,7 +1,7 @@
 package com.terraformers.modernization.analysis.vertex;
 
-import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
+import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.util.List;
 import java.util.Map;
@@ -11,40 +11,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class VertexPromptBuilder {
 
-    private static final String SAFETY_RECOVERY_INSTRUCTION = """
-            Safety recovery mode: The previous Terraform draft was rejected because it contained a literal sensitive credential.
-            Regenerate the complete response without literal credentials. Use variable references, generated-secret resources,
-            or provider-managed secret mechanisms where appropriate.
-            """;
-
     public String build(ObjectContent source, List<ReferenceDocument> references, boolean compact) {
-        return build(source, references, new AwsProviderSchemaEvidence(Map.of()), compact, false);
+        return build(source, references, new AwsProviderSchemaEvidence(Map.of()), compact);
     }
 
     public String build(ObjectContent source, List<ReferenceDocument> references,
                         AwsProviderSchemaEvidence schemaEvidence, boolean compact) {
-        return build(source, references, schemaEvidence, compact, false);
-    }
-
-    public String buildSensitiveCredentialRecovery(
-            ObjectContent source,
-            List<ReferenceDocument> references
-    ) {
-        return build(source, references, new AwsProviderSchemaEvidence(Map.of()), false, true);
-    }
-
-    public String buildSensitiveCredentialRecovery(ObjectContent source, List<ReferenceDocument> references,
-                                                   AwsProviderSchemaEvidence schemaEvidence) {
-        return build(source, references, schemaEvidence, false, true);
-    }
-
-    private String build(
-            ObjectContent source,
-            List<ReferenceDocument> references,
-            AwsProviderSchemaEvidence schemaEvidence,
-            boolean compact,
-            boolean safetyRecovery
-    ) {
         requireSupportedImageMediaType(source.metadata().contentType());
         String referenceText = (references == null ? List.<ReferenceDocument>of() : references).stream()
                 .map(this::formatReference)
@@ -62,12 +34,9 @@ public class VertexPromptBuilder {
                 - For NON_ARCHITECTURE_IMAGE or AMBIGUOUS, summary/components/relationships/warnings/terraformCode must all be empty.
                 - Only for ARCHITECTURE_DIAGRAM, terraformCode must contain raw Terraform HCL with AWS resource blocks only. Module blocks are forbidden.
                 - Keep Terraform concise and limited to architecture visible in the input.
-                - Do not include secrets, account IDs, access keys, static credentials, public S3 URLs, or real ARNs.
                 - Treat PROJECT_DECISION references as mandatory project constraints when applicable.
                 - Use the exact provider schema evidence below for AWS Provider 5.100.0 argument and nested-block compatibility.
                 - Provider examples demonstrate syntax only; do not copy settings marked by riskTags without adapting them to project constraints.
-
-                %s
 
                 %s
 
@@ -78,13 +47,12 @@ public class VertexPromptBuilder {
                 Retrieved reference evidence:
                 %s
 
-                Exact request-specific AWS Provider 5.100.0 schema evidence:
+                Request-relevant AWS Provider 5.100.0 schema context:
                 %s
                 """.formatted(
                 compact
                         ? "Compact mode: minimize prose and Terraform while preserving only core components, relationships, and resources."
                         : "Standard mode: keep analysis and Terraform concise and avoid equivalent repeated detail.",
-                safetyRecovery ? SAFETY_RECOVERY_INSTRUCTION : "",
                 source.metadata().contentType(),
                 source.metadata().contentLength(),
                 referenceText.isBlank() ? "- none" : referenceText,

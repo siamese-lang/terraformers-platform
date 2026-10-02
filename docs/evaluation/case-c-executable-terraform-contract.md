@@ -69,8 +69,16 @@ The repair also preserves provider-reported argument types and configurable nest
 directly verifies the fact-plus-curated-companion candidate union and unknown-fact rejection, and
 adds direct safe observability-category coverage.
 
-The repaired targeted tests were attempted first, but this checkout could not complete Maven
-validation because Maven Central returned HTTP 403 while resolving the Spring Boot parent POM.
+The first bounded repair fixed Spring construction and Docker-only catalog lazy loading. Subsequent
+Backend Local Verification run `36972549049` reached the complete 415-test backend suite and passed
+MariaDB schema/repository validation. Two test-contract failures remained: the schema test's
+`id: type` substring incorrectly matched the valid `vpc_id: type` entry, and the existing orchestrator
+test still supplied and asserted the pre-C1 unclassified Terraform CLI failure message. The user
+explicitly approved one narrow test-contract closure amendment. That closure replaces the substring
+check with standalone nested-`id` boundaries and aligns the orchestrator fixture/assertion with the
+approved `VALIDATE_CONFIGURATION` exception category. No production behavior changed in this
+closure.
+
 Consequently this evidence does **not** transition C-ARCH-01, C-ARCH-02, C-ARCH-03, or C-ARCH-10 to
 `RESOLVED`; independent CI/static acceptance remains required.
 

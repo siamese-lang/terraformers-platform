@@ -35,9 +35,14 @@ class AwsProviderSchemaCatalogTest {
         AwsProviderSchemaEvidence evidence = catalog.resolve(List.of("aws_subnet", "aws_vpc", "aws_vpc"));
         assertThat(evidence.resourceTypes()).containsExactly("aws_subnet", "aws_vpc");
         assertThat(evidence.promptText())
+                .contains("vpc_id: type=\"string\" (required)")
                 .contains("cidr_block: type=\"string\" (optional)")
                 .contains("timeouts block(nesting=single, optional, arguments=[")
                 .contains("create: type=\"string\" (optional)")
-                .doesNotContain("id: type", "arn: type", "aws_lambda_function");
+                .doesNotContain(
+                        "arguments=[id: type=",
+                        ", id: type=",
+                        "arn: type=",
+                        "aws_lambda_function");
     }
 }

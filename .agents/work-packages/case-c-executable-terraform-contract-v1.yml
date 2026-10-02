@@ -59,6 +59,7 @@ work_package:
     - backend/src/test/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspectorTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/TerraformCliValidatorTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisObservabilityTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobOrchestratorTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilderTest.java
@@ -88,6 +89,7 @@ work_package:
     - create_pull_request
     - inspect_CI_once
     - perform_one_bounded_corrective_iteration_within_same_failure_class
+    - perform_one_user_approved_test_contract_closure_iteration
 
   prohibited_actions:
     - merge

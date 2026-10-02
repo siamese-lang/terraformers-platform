@@ -829,6 +829,21 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         result = gate.validate_plan(plan, "teardown", 29)
         self.assertEqual(result["resource_change_count"], 29)
 
+    def test_teardown_accepts_reviewed_subset_recovery(self) -> None:
+        plan = {
+            "resource_changes": [
+                resource(
+                    "google_compute_disk.mariadb_data[0]",
+                    "google_compute_disk",
+                    ["delete"],
+                    None,
+                    {},
+                )
+            ]
+        }
+        result = gate.validate_plan(plan, "teardown", 1)
+        self.assertEqual(result["resource_change_count"], 1)
+
     def test_teardown_rejects_wrong_reviewed_count(self) -> None:
         reviewed = {}
         for source in (

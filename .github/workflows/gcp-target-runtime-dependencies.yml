@@ -16,6 +16,7 @@ on:
           - backend-revision-rollout
           - backend-replacement-durability
           - backend-live-validation
+          - backend-live-validation-c2-stability
           - capacity-baseline
           - runtime-live-acceptance
       expected_sha:
@@ -1454,10 +1455,10 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch' &&
-      inputs.operation == 'backend-live-validation'
+      (inputs.operation == 'backend-live-validation' || inputs.operation == 'backend-live-validation-c2-stability')
     runs-on: ubuntu-latest
     environment: gcp-target-apply
-    timeout-minutes: 30
+    timeout-minutes: 90
     env:
       PROJECT_ID: terraformers-platform
       ZONE: asia-northeast3-a
@@ -1471,9 +1472,11 @@ jobs:
 
       - name: Validate trusted backend live-validation request
         env:
+          OPERATION: ${{ inputs.operation }}
           EXPECTED_SHA: ${{ inputs.expected_sha }}
           CONFIRMATION: ${{ inputs.confirmation }}
           BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
         run: |
           set -euo pipefail
           [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
@@ -1483,12 +1486,34 @@ jobs:
             echo 'Approved SHA does not match checked-out main.' >&2
             exit 1
           }
-          [[ "$CONFIRMATION" == RUN_REVIEWED_CASE_C_BACKEND_LIVE_VALIDATION_1 ]] || {
-            echo 'Backend live validation requires confirmation RUN_REVIEWED_CASE_C_BACKEND_LIVE_VALIDATION_1.' >&2
-            exit 1
-          }
+          case "$OPERATION" in
+            backend-live-validation)
+              [[ "$CONFIRMATION" == RUN_REVIEWED_CASE_C_BACKEND_LIVE_VALIDATION_1 ]] || {
+                echo 'Backend live validation requires confirmation RUN_REVIEWED_CASE_C_BACKEND_LIVE_VALIDATION_1.' >&2
+                exit 1
+              }
+              ;;
+            backend-live-validation-c2-stability)
+              [[ "$CONFIRMATION" == RUN_REVIEWED_CASE_C_C2_STABILITY_GATE_5 ]] || {
+                echo 'C2 stability gate requires confirmation RUN_REVIEWED_CASE_C_C2_STABILITY_GATE_5.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+                echo 'C2 stability gate requires an exact backend_source_sha.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_SHA" ]] || {
+                echo 'C2 backend source SHA must equal the approved checked-out main SHA.' >&2
+                exit 1
+              }
+              ;;
+            *)
+              echo "Unsupported backend live-validation operation: $OPERATION" >&2
+              exit 1
+              ;;
+          esac
           [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]] || {
-            echo 'backend-live-validation requires an exact immutable backend_image.' >&2
+            echo 'backend live validation requires an exact immutable backend_image.' >&2
             exit 1
           }
 
@@ -1510,7 +1535,9 @@ jobs:
 
       - name: Verify deployed backend boundary
         env:
+          OPERATION: ${{ inputs.operation }}
           BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
         run: |
           set -euo pipefail
           [[ "$(
@@ -1528,7 +1555,19 @@ jobs:
           kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
           test -s "$FIXTURE"
 
+          if [[ "$OPERATION" == backend-live-validation-c2-stability ]]; then
+            runtime_source="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend                 -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+            )"
+            [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]] || {
+              echo "C2 runtime source revision mismatch: $runtime_source" >&2
+              exit 1
+            }
+          fi
+
       - name: Prepare ephemeral authenticated JWT fixture
+        env:
+          OPERATION: ${{ inputs.operation }}
         run: |
           set -euo pipefail
           previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
@@ -1603,14 +1642,19 @@ jobs:
           header="$(
             printf '{"alg":"RS256","kid":"%s","typ":"JWT"}' "$kid"               | openssl base64 -A | tr '+/' '-_' | tr -d '='
           )"
+          token_ttl=900
+          if [[ "$OPERATION" == backend-live-validation-c2-stability ]]; then
+            token_ttl=10800
+          fi
           payload="$(
-            printf '{"iss":"%s","sub":"%s","email":"%s","token_use":"access","client_id":"%s","iat":%s,"exp":%s}'               "$ISSUER_URI"               "case-c-${GITHUB_RUN_ID}"               "case-c-${GITHUB_RUN_ID}@example.test"               "$CLIENT_ID"               "$now"               "$((now + 900))"               | openssl base64 -A | tr '+/' '-_' | tr -d '='
+            printf '{"iss":"%s","sub":"%s","email":"%s","token_use":"access","client_id":"%s","iat":%s,"exp":%s}'               "$ISSUER_URI"               "case-c-${GITHUB_RUN_ID}"               "case-c-${GITHUB_RUN_ID}@example.test"               "$CLIENT_ID"               "$now"               "$((now + token_ttl))"               | openssl base64 -A | tr '+/' '-_' | tr -d '='
           )"
           printf '%s.%s' "$header" "$payload" > "$unsigned"
           openssl dgst -sha256 -sign "$private_key" -out "$signature" "$unsigned"
           printf '%s.%s' "$(cat "$unsigned")" "$(b64url_file "$signature")" > "$token_file"
 
       - name: Run authenticated integrated backend path
+        if: inputs.operation == 'backend-live-validation'
         run: |
           set -euo pipefail
           token="$(cat "${RUNNER_TEMP}/case-c-access.token")"
@@ -1746,6 +1790,286 @@ jobs:
             echo '- Generated Terraform read through backend: `PASS`'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run C2 five-request repeated correctness stability gate
+        if: inputs.operation == 'backend-live-validation-c2-stability'
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_sha }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+        run: |
+          set -euo pipefail
+
+          repeat_count=5
+          [[ "$repeat_count" == 5 ]]
+          expected_fixture_sha='a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8'
+          actual_fixture_sha="$(sha256sum "$FIXTURE" | awk '{print $1}')"
+          [[ "$actual_fixture_sha" == "$expected_fixture_sha" ]] || {
+            echo "C2 fixture SHA-256 mismatch: $actual_fixture_sha" >&2
+            exit 1
+          }
+
+          artifact_dir="${RUNNER_TEMP}/case-c-c2-stability"
+          attempts_jsonl="${artifact_dir}/attempts.jsonl"
+          summary_json="${artifact_dir}/summary.json"
+          runtime_json="${artifact_dir}/runtime-identity.json"
+          mkdir -p "$artifact_dir"
+          : > "$attempts_jsonl"
+
+          backend_pod="$(
+            kubectl -n "$NAMESPACE" get pods               -l app.kubernetes.io/name=terraformers-backend               -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+          )"
+          [[ "$(printf '%s\n' "$backend_pod" | sed '/^$/d' | wc -l)" == 1 ]] || {
+            echo 'C2 requires exactly one backend Pod.' >&2
+            exit 1
+          }
+          backend_pod_uid="$(
+            kubectl -n "$NAMESPACE" get pod "$backend_pod" -o jsonpath='{.metadata.uid}'
+          )"
+          backend_restart_count="$(
+            kubectl -n "$NAMESPACE" get pod "$backend_pod"               -o jsonpath='{.status.containerStatuses[?(@.name=="backend")].restartCount}'
+          )"
+          [[ "$backend_restart_count" =~ ^[0-9]+$ ]]
+
+          runtime_source="$(
+            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend               -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+          )"
+          [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]]
+          [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_MAIN_SHA" ]]
+
+          jq -n             --arg main_sha "$EXPECTED_MAIN_SHA"             --arg backend_image "$BACKEND_IMAGE"             --arg backend_source_sha "$BACKEND_SOURCE_SHA"             --arg fixture_sha256 "$actual_fixture_sha"             --arg backend_pod_uid "$backend_pod_uid"             --argjson backend_restart_count "$backend_restart_count"             --argjson repeat_count "$repeat_count"             '{
+              main_sha: $main_sha,
+              backend_image: $backend_image,
+              backend_source_sha: $backend_source_sha,
+              fixture_sha256: $fixture_sha256,
+              backend_pod_uid: $backend_pod_uid,
+              backend_restart_count: $backend_restart_count,
+              repeat_count: $repeat_count,
+              concurrency: 1
+            }' > "$runtime_json"
+
+          record_failure() {
+            local attempt="$1"
+            local classification="$2"
+            local reason="$3"
+            local terminal_status="${4:-UNKNOWN}"
+            jq -n               --argjson attempt "$attempt"               --arg classification "$classification"               --arg reason "$reason"               --arg terminal_status "$terminal_status"               '{
+                attempt: $attempt,
+                accepted: false,
+                classification: $classification,
+                reason: $reason,
+                terminal_status: $terminal_status
+              }' >> "$attempts_jsonl"
+            jq -n               --arg classification "$classification"               --argjson failed_attempt "$attempt"               --argjson required_attempts "$repeat_count"               '{
+                classification: $classification,
+                passed: false,
+                failed_attempt: $failed_attempt,
+                accepted_attempts: ($failed_attempt - 1),
+                required_attempts: $required_attempts,
+                automatic_whole_gate_rerun: false
+              }' > "$summary_json"
+            echo "C2 gate stopped: classification=$classification attempt=$attempt reason=$reason" >&2
+            exit 1
+          }
+
+          verify_runtime_identity() {
+            local attempt="$1"
+            local current_image current_source current_pod current_uid current_restarts
+            current_image="$(
+              kubectl -n "$NAMESPACE" get deployment terraformers-backend                 -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}'
+            )"
+            current_source="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend                 -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+            )"
+            current_pod="$(
+              kubectl -n "$NAMESPACE" get pods                 -l app.kubernetes.io/name=terraformers-backend                 -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+            )"
+            if [[ "$(printf '%s\n' "$current_pod" | sed '/^$/d' | wc -l)" != 1 ]]; then
+              record_failure "$attempt" RUNTIME_IDENTITY_DRIFT backend_pod_count_changed
+            fi
+            current_uid="$(kubectl -n "$NAMESPACE" get pod "$current_pod" -o jsonpath='{.metadata.uid}')"
+            current_restarts="$(
+              kubectl -n "$NAMESPACE" get pod "$current_pod"                 -o jsonpath='{.status.containerStatuses[?(@.name=="backend")].restartCount}'
+            )"
+            if [[ "$current_image" != "$BACKEND_IMAGE" ||
+                  "$current_source" != "$BACKEND_SOURCE_SHA" ||
+                  "$current_uid" != "$backend_pod_uid" ||
+                  "$current_restarts" != "$backend_restart_count" ]]; then
+              record_failure "$attempt" RUNTIME_IDENTITY_DRIFT backend_runtime_identity_changed
+            fi
+            [[ "$(
+              kubectl -n "$NAMESPACE" get deployment terraformers-backend                 -o jsonpath='{.status.readyReplicas}'
+            )" == 1 ]] || record_failure "$attempt" RUNTIME_IDENTITY_DRIFT ready_replicas_changed
+            [[ "$(
+              kubectl -n "$NAMESPACE" get deployment terraformers-backend                 -o jsonpath='{.status.availableReplicas}'
+            )" == 1 ]] || record_failure "$attempt" RUNTIME_IDENTITY_DRIFT available_replicas_changed
+          }
+
+          token="$(cat "${RUNNER_TEMP}/case-c-access.token")"
+          pf_log="${RUNNER_TEMP}/case-c-c2-port-forward.log"
+          kubectl -n "$NAMESPACE" port-forward service/terraformers-backend 18080:80             >"$pf_log" 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid" >/dev/null 2>&1 || true; wait "$pf_pid" >/dev/null 2>&1 || true' EXIT
+
+          ready=false
+          for _ in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:18080/actuator/health                 | jq -e '.status == "UP"' >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          [[ "$ready" == true ]] || {
+            jq -n               --arg classification RUNTIME_IDENTITY_DRIFT               --argjson required_attempts "$repeat_count"               '{
+                classification: $classification,
+                passed: false,
+                failed_attempt: 0,
+                accepted_attempts: 0,
+                required_attempts: $required_attempts,
+                automatic_whole_gate_rerun: false
+              }' > "$summary_json"
+            echo 'C2 backend port-forward did not become healthy.' >&2
+            exit 1
+          }
+
+          for attempt in $(seq 1 "$repeat_count"); do
+            verify_runtime_identity "$attempt"
+
+            upload_json="${RUNNER_TEMP}/case-c-c2-upload-${attempt}.json"
+            upload_headers="${RUNNER_TEMP}/case-c-c2-upload-${attempt}.headers"
+            job_json="${RUNNER_TEMP}/case-c-c2-job-${attempt}.json"
+            draft_json="${RUNNER_TEMP}/case-c-c2-draft-${attempt}.json"
+            project_name="case-c-c2-${GITHUB_RUN_ID}-${attempt}"
+
+            upload_code="$(
+              curl -sS -D "$upload_headers" -o "$upload_json" -w '%{http_code}'                 -H "Authorization: Bearer ${token}"                 -F "file=@${FIXTURE};type=image/webp"                 -F "projectName=${project_name}"                 http://127.0.0.1:18080/api/upload
+            )"
+            [[ "$upload_code" == 201 ]] ||               record_failure "$attempt" CORRECTNESS_FAILURE "upload_http_${upload_code}"
+
+            if ! jq -e '
+              .storageProvider == "gcs"
+              and .binaryPersisted == true
+              and (.analysisJobId | type == "string" and length > 0)
+              and (.projectId | type == "number")
+              and (.sourceFileId | type == "number")
+              and (.sourceBucket == "terraformers-runtime-objects-21647422237")
+              and (.sourceKey | type == "string" and length > 0)
+            ' "$upload_json" >/dev/null; then
+              record_failure "$attempt" CORRECTNESS_FAILURE upload_contract_mismatch
+            fi
+
+            job_id="$(jq -r '.analysisJobId' "$upload_json")"
+            project_id="$(jq -r '.projectId' "$upload_json")"
+            terminal_status=""
+
+            for _ in $(seq 1 240); do
+              job_code="$(
+                curl -sS -o "$job_json" -w '%{http_code}'                   -H "Authorization: Bearer ${token}"                   "http://127.0.0.1:18080/api/analysis/jobs/${job_id}"
+              )"
+              [[ "$job_code" == 200 ]] ||                 record_failure "$attempt" CORRECTNESS_FAILURE "analysis_job_http_${job_code}"
+
+              terminal_status="$(jq -r '.status' "$job_json")"
+              case "$terminal_status" in
+                SUCCEEDED)
+                  break
+                  ;;
+                FAILED)
+                  backend_diagnostics="${RUNNER_TEMP}/case-c-c2-backend-failure-${attempt}.log"
+                  kubectl -n "$NAMESPACE" logs deployment/terraformers-backend                     -c backend --since=15m >"$backend_diagnostics" 2>/dev/null || true
+                  if awk -v job="analysisJobId=${job_id}" '
+                    index($0, job) &&
+                    ($0 ~ /category=provider_rate_limited/ ||
+                     $0 ~ /category=timeout errorClass=AnalysisProviderTimeoutException/) {
+                      found=1
+                    }
+                    END { exit(found ? 0 : 1) }
+                  ' "$backend_diagnostics"; then
+                    record_failure "$attempt" EXTERNAL_VARIANCE_INCONCLUSIVE external_provider_failure FAILED
+                  fi
+                  record_failure "$attempt" CORRECTNESS_FAILURE integrated_analysis_failed FAILED
+                  ;;
+                PENDING|RUNNING)
+                  sleep 5
+                  ;;
+                *)
+                  record_failure "$attempt" CORRECTNESS_FAILURE unexpected_analysis_job_status "$terminal_status"
+                  ;;
+              esac
+            done
+
+            [[ "$terminal_status" == SUCCEEDED ]] ||               record_failure "$attempt" CORRECTNESS_FAILURE terminal_success_timeout "$terminal_status"
+
+            if ! jq -e               --arg job_id "$job_id"               --argjson project_id "$project_id" '
+                .id == $job_id
+                and .projectId == $project_id
+                and .status == "SUCCEEDED"
+                and (.provider | type == "string" and length > 0)
+                and (.resultFileId | type == "number")
+                and (.resultObjectKey | type == "string" and length > 0)
+                and (.failureReason == null)
+              ' "$job_json" >/dev/null; then
+              record_failure "$attempt" CORRECTNESS_FAILURE terminal_job_contract_mismatch SUCCEEDED
+            fi
+
+            draft_code="$(
+              curl -sS -o "$draft_json" -w '%{http_code}'                 -H "Authorization: Bearer ${token}"                 "http://127.0.0.1:18080/api/projects/${project_id}/terraform/main.tf"
+            )"
+            [[ "$draft_code" == 200 ]] ||               record_failure "$attempt" CORRECTNESS_FAILURE "terraform_draft_http_${draft_code}" SUCCEEDED
+
+            result_key="$(jq -r '.resultObjectKey' "$job_json")"
+            if ! jq -e               --arg job_id "$job_id"               --arg result_key "$result_key" '
+                .latestAnalysisJobId == $job_id
+                and .latestResultObjectKey == $result_key
+                and (.content | type == "string" and length > 0)
+              ' "$draft_json" >/dev/null; then
+              record_failure "$attempt" CORRECTNESS_FAILURE terraform_result_contract_mismatch SUCCEEDED
+            fi
+
+            verify_runtime_identity "$attempt"
+
+            provider="$(jq -r '.provider' "$job_json")"
+            jq -n               --argjson attempt "$attempt"               --arg project_name "$project_name"               --argjson project_id "$project_id"               --arg analysis_job_id "$job_id"               --arg terminal_status "$terminal_status"               --arg provider "$provider"               --arg result_object_key "$result_key"               '{
+                attempt: $attempt,
+                accepted: true,
+                classification: "PASS",
+                project_name: $project_name,
+                project_id: $project_id,
+                analysis_job_id: $analysis_job_id,
+                terminal_status: $terminal_status,
+                failure_reason_is_null: true,
+                provider: $provider,
+                result_object_key: $result_object_key,
+                terraform_result_readable_nonempty: true
+              }' >> "$attempts_jsonl"
+          done
+
+          accepted_attempts="$(jq -s '[.[] | select(.accepted == true)] | length' "$attempts_jsonl")"
+          [[ "$accepted_attempts" == "$repeat_count" ]] || {
+            echo "C2 accepted attempt count mismatch: $accepted_attempts" >&2
+            exit 1
+          }
+
+          verify_runtime_identity "$repeat_count"
+
+          jq -n             --argjson accepted_attempts "$accepted_attempts"             --argjson required_attempts "$repeat_count"             '{
+              classification: "PASS",
+              passed: true,
+              accepted_attempts: $accepted_attempts,
+              required_attempts: $required_attempts,
+              concurrency: 1,
+              automatic_whole_gate_rerun: false
+            }' > "$summary_json"
+
+          {
+            echo '## Case C C2 repeated correctness stability gate'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            echo '- Sequential attempts: `5/5`'
+            echo '- Concurrency: `1`'
+            echo '- Runtime identity drift: `0`'
+            echo '- Unexpected backend restart: `0`'
+            echo '- Result: `PASS`'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Restore placeholder JWKS fixture
         if: always()
         run: |
@@ -1756,6 +2080,15 @@ jobs:
             kubectl -n "$NAMESPACE" rollout restart deployment/terraformers-jwks
             kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
           fi
+
+      - name: Upload sanitized C2 stability evidence
+        if: ${{ always() && inputs.operation == 'backend-live-validation-c2-stability' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: case-c-c2-stability-${{ github.run_id }}
+          path: ${{ runner.temp }}/case-c-c2-stability
+          if-no-files-found: error
+          retention-days: 14
 
   runtime-live-acceptance:
     if: >-

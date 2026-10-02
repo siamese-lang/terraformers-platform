@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE SOURCE OF TRUTH — CASE IMPLEMENTATION GATED**
+**PORTFOLIO CASE SET CLOSED — FUTURE HARDENING REQUIRES NEW DECISION**
 
 This document defines the measurement and acceptance contract for the three representative
 engineering cases selected during Portfolio Case Reassessment.

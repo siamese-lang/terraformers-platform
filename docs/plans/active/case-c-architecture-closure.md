@@ -5,13 +5,13 @@
 
 ## Control state
 
-- Overall status: **ARCHITECTURE_CLOSURE_ACTIVE**
-- Capacity baseline: **SUSPENDED_BY_ARCHITECTURE_AUDIT**
+- Overall status: **PORTFOLIO_CLOSED_WITH_RESIDUALS**
+- Capacity baseline: **DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE**
 - Audit base SHA: 9a0d9bc3e792a5b5780b7676960bb14750f969ee
-- Current phase: **C2 — Repeated correctness stability gate**
-- Open blocking issues: C-ARCH-04, C-ARCH-05, C-ARCH-06
+- Current phase: **C8 — Case C evidence closure**
+- Open blocking issues: none
 
-Capacity-baseline retry is prohibited until every blocker required by C5 is RESOLVED and a new live checkpoint is approved.
+Capacity baseline and later hardening phases are deferred by the approved portfolio-sufficiency decision; they are not prerequisites for Case C portfolio closure.
 
 ## Phase dependency graph
 
@@ -19,13 +19,13 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 |---|---|---|---|---|
 | C0 | COMPLETE | Durable audit plan and maintenance automation | — | no |
 | C1 | COMPLETE | Executable Terraform Contract Decision and closure | C0 | no |
-| C2 | ACTIVE | Repeated correctness stability gate | C1 | yes |
-| C3 | BLOCKED | Executor-aware capacity measurement contract | C1, C2 | no |
-| C4 | BLOCKED | Runtime and delivery desired-state convergence | C1, C2, C3 | no |
-| C5 | BLOCKED | Valid capacity baseline | C1, C2, C3, C4 | yes |
-| C6 | BLOCKED | Measured bottleneck decision and improvement | C5 | yes |
-| C7 | BLOCKED | Safe delivery and faulty-release rollback | C6 | yes |
-| C8 | BLOCKED | Case C evidence closure | C7 | no |
+| C2 | COMPLETE | Repeated correctness gate and residual-risk decision | C1 | yes |
+| C3 | DEFERRED | Executor-aware capacity measurement contract | C1, C2 | no |
+| C4 | DEFERRED | Runtime and delivery desired-state convergence | C1, C2, C3 | no |
+| C5 | DEFERRED | Valid capacity baseline | C1, C2, C3, C4 | yes |
+| C6 | DEFERRED | Measured bottleneck decision and improvement | C5 | yes |
+| C7 | DEFERRED | Safe delivery and faulty-release rollback | C6 | yes |
+| C8 | COMPLETE | Case C evidence closure | C7 | no |
 
 ## Issue register
 
@@ -34,12 +34,12 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 | C-ARCH-01 | BLOCKER | RESOLVED | C1 | C2, C5 | Generated Terraform executable boundary is over-constrained by a request-local allowlist |
 | C-ARCH-02 | BLOCKER | RESOLVED | C1 | C2, C5 | Retrieval metadata is incorrectly coupled to generated-resource eligibility |
 | C-ARCH-03 | BLOCKER | RESOLVED | C1 | C2, C5 | Terraform executable validation collapses actionable init/validate diagnostics |
-| C-ARCH-04 | BLOCKER | OPEN | C3 | C5 | Capacity harness saturation model conflicts with executor queueing semantics |
-| C-ARCH-05 | BLOCKER | IN_PROGRESS | C2 | C3, C5 | Single successful live analysis is insufficient as a capacity correctness prerequisite |
-| C-ARCH-06 | BLOCKER | OPEN | C4 | C5, C7 | Live backend image and repository declarative image are divergent |
-| C-ARCH-07 | HIGH | OPEN | C7 | C8 | Single-replica rollout strategy can interrupt API availability |
-| C-ARCH-08 | HIGH | OPEN | C7 | C8 | Kubernetes Ready does not represent integrated analysis-path readiness |
-| C-ARCH-09 | HIGH | OPEN | C4 | C5 | Two-node live baseline is not consistently represented across Terraform control-plane checks |
+| C-ARCH-04 | HIGH | DEFERRED | C3 | C5 | Capacity harness saturation model conflicts with executor queueing semantics |
+| C-ARCH-05 | RESIDUAL | ACCEPTED_RESIDUAL | C2 | C3, C5 | Single successful live analysis is insufficient as a capacity correctness prerequisite |
+| C-ARCH-06 | HIGH | DEFERRED | C4 | C5, C7 | Live backend image and repository declarative image are divergent |
+| C-ARCH-07 | HIGH | DEFERRED | C7 | C8 | Single-replica rollout strategy can interrupt API availability |
+| C-ARCH-08 | HIGH | DEFERRED | C7 | C8 | Kubernetes Ready does not represent integrated analysis-path readiness |
+| C-ARCH-09 | HIGH | DEFERRED | C4 | C5 | Two-node live baseline is not consistently represented across Terraform control-plane checks |
 | C-ARCH-10 | HIGH | RESOLVED | C1 | C2 | Generation recovery is failure-specific and can grow as ad-hoc exception handling |
 | C-ARCH-11 | HIGH | RESOLVED | C0 | C1 | Repository project-state documents are stale relative to actual Case C execution |
 | C-ARCH-12 | RESIDUAL | ACCEPTED_RESIDUAL | C8 | — | External provider/network variance and possible duplicate provider invocation after process loss remain residual risks |
@@ -98,18 +98,19 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 
 ### C-ARCH-04 — Capacity harness saturation model conflicts with executor queueing semantics
 
-- Severity/status: BLOCKER / OPEN
+- Severity/status: HIGH / DEFERRED
 - Owner phase: C3
 - Retained evidence:
   - executor is core=2 max=4 queue=50
   - capacity contract treats concurrency 4 as max-worker parallelism and requires active workers=4 for queue pressure
+  - Portfolio sufficiency decision 2026-10-02 defers executor-aware saturation-harness repair because a complete capacity curve is no longer required for the selected Case C portfolio claim.
 - Acceptance:
   - capacity saturation rules match the actual executor scheduling model
   - deterministic verification covers the worker/queue behavior assumed by the harness
 
 ### C-ARCH-05 — Single successful live analysis is insufficient as a capacity correctness prerequisite
 
-- Severity/status: BLOCKER / IN_PROGRESS
+- Severity/status: RESIDUAL / ACCEPTED_RESIDUAL
 - Owner phase: C2
 - Retained evidence:
   - live validation 36956086874 passed
@@ -128,49 +129,55 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
   - Run 37016993776 accepted attempt 1 (project 14, AnalysisJob 65817f11-7e19-4b86-b0aa-a247692d0f54) and stopped on attempt 2 (project 15, AnalysisJob 06ca4f00-f3f2-40fd-bcc1-815452a32593) with CORRECTNESS_FAILURE and terminal failure_category=terraform_validate_configuration; accepted_attempts=1/5 and automatic_whole_gate_rerun=false
   - The corrected C2 parser preserved terraform_validate_configuration instead of an earlier informational category; the failure is an actual Terraform CLI validate/configuration failure, not request-schema policy rejection, external provider variance, or runtime identity drift
   - The current safe Terraform validation taxonomy intentionally does not retain raw generated HCL or unbounded terraform validate diagnostics, so the exact invalid construct from failed attempt 2 cannot be reconstructed from the retained artifact; no rerun is authorized by this evidence append
+  - Portfolio sufficiency decision 2026-10-02 accepts the observed 1/5 C2 result as a residual risk rather than continuing live reruns solely to obtain a green portfolio result.
 - Acceptance:
-  - a frozen repeated correctness gate passes before capacity execution
-  - repeat count and acceptance are selected before the live gate rather than retrofitted
+  - the failed repeated correctness gate is retained as direct evidence that capacity conclusions are unsafe while generated-Terraform executable validity varies
+  - no automatic rerun or rerun-until-lucky behavior is permitted
+  - 5/5 remains a useful future production-hardening target but is not required for the narrowed portfolio closure claim
 
 ### C-ARCH-06 — Live backend image and repository declarative image are divergent
 
-- Severity/status: BLOCKER / OPEN
+- Severity/status: HIGH / DEFERRED
 - Owner phase: C4
 - Retained evidence:
   - live backend digest is sha256:054a9ae1d953313cb15691fe50281373e74a93d2a0d050ee0cf6879fe096aa06
   - infra/kubernetes/overlays/gcp-target/kustomization.yaml still records sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae
+  - Repository/live immutable-image convergence remains a real follow-up concern but is deferred from the narrowed portfolio claim after exact source-bound image publication and rollout evidence were obtained.
 - Acceptance:
   - repository desired state converges to the accepted immutable live backend revision
   - future declarative apply cannot silently revert to an older backend image
 
 ### C-ARCH-07 — Single-replica rollout strategy can interrupt API availability
 
-- Severity/status: HIGH / OPEN
+- Severity/status: HIGH / DEFERRED
 - Owner phase: C7
 - Retained evidence:
   - backend replicas=1 with maxUnavailable=1 and maxSurge=0
+  - Single-replica rollout availability optimization and faulty-release rollback are deferred from portfolio closure; exact-digest healthy rollout evidence is retained without claiming zero-downtime delivery.
 - Acceptance:
   - healthy rollout availability is measured explicitly
   - selected delivery decision records accepted-work durability separately from new-request availability
 
 ### C-ARCH-08 — Kubernetes Ready does not represent integrated analysis-path readiness
 
-- Severity/status: HIGH / OPEN
+- Severity/status: HIGH / DEFERRED
 - Owner phase: C7
 - Retained evidence:
   - backend probes use Spring Actuator health
   - current custom runtime readiness checks required configuration rather than the executable AI/RAG/Terraform path
+  - Integrated-path readiness redesign is deferred from portfolio closure; Kubernetes Ready/Actuator health are not reclassified as full AI-path readiness.
 - Acceptance:
   - faulty-release experiment has a deterministic readiness/canary contract
   - external provider outages are not naively coupled to pod liveness/readiness
 
 ### C-ARCH-09 — Two-node live baseline is not consistently represented across Terraform control-plane checks
 
-- Severity/status: HIGH / OPEN
+- Severity/status: HIGH / DEFERRED
 - Owner phase: C4
 - Retained evidence:
   - live target and capacity WP use two e2-standard-2 nodes
   - some plan/runtime-check paths still default to or require node_count=1
+  - Two-node control-plane consistency cleanup is deferred because a final capacity baseline is no longer required for the selected portfolio case.
 - Acceptance:
   - all active Case C control-plane checks understand the selected two-node baseline or explicitly preserve current state
   - no active check can accidentally plan or assert an obsolete one-node desired state
@@ -227,7 +234,7 @@ The maintenance lane never authorizes production/runtime source changes, workflo
 
 1. Map every new Case C failure to an existing C-ARCH item before creating a new issue ID.
 2. Never delete resolved findings; preserve their status and evidence.
-3. Do not start a downstream phase while a prerequisite blocker remains unresolved.
+3. Deferred production-hardening phases are not an automatic execution queue; reopen only from a new operational requirement or explicit user decision.
 4. CI PASS does not resolve an issue unless that issue's predeclared acceptance is directly satisfied.
-5. Capacity execution remains suspended until C1–C4 prerequisites are closed and a new live checkpoint is approved.
+5. Capacity execution is deferred after portfolio closure and must not be restarted solely to obtain a green historical result.
 6. Architecture, acceptance, severity, ownership, residual-risk, and scope decisions use D_DECISION and require user approval.

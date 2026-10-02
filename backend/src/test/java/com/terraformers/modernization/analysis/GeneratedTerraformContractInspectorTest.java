@@ -1,12 +1,10 @@
 package com.terraformers.modernization.analysis;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
 import java.nio.file.Path;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class GeneratedTerraformContractInspectorTest {
@@ -16,35 +14,38 @@ class GeneratedTerraformContractInspectorTest {
     private final GeneratedTerraformContractInspector inspector = new GeneratedTerraformContractInspector(catalog);
 
     @Test
-    void rejectsResourceOutsideRequestEnvelopeWithTypedReason() {
-        var evidence = catalog.resolve(List.of("aws_vpc"));
-
-        assertThatThrownBy(() -> inspector.inspect("resource \"aws_subnet\" \"x\" {}", evidence))
-                .isInstanceOfSatisfying(GeneratedTerraformContractViolation.class,
-                        failure -> assertThat(failure.reason()).isEqualTo(
-                                GeneratedTerraformContractViolation.Reason
-                                        .RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE));
+    void acceptsCatalogResourceWithoutRequestLocalEnvelope() {
+        inspector.inspect("resource \"aws_subnet\" \"x\" { vpc_id = \"vpc-example\" }");
     }
 
     @Test
-    void rejectsModuleAndNonAwsResourceBlocksWithTypedReasons() {
-        var evidence = catalog.resolve(List.of("aws_vpc"));
-
-        assertThatThrownBy(() -> inspector.inspect("module \"network\" { source = \"x\" }", evidence))
+    void rejectsModuleAndNonAwsResourceBlocks() {
+        assertThatThrownBy(() -> inspector.inspect("module \"network\" { source = \"x\" }"))
                 .isInstanceOfSatisfying(GeneratedTerraformContractViolation.class,
-                        failure -> assertThat(failure.reason()).isEqualTo(
-                                GeneratedTerraformContractViolation.Reason.MODULE_BLOCK));
+                        failure -> org.assertj.core.api.Assertions.assertThat(failure.reason())
+                                .isEqualTo(GeneratedTerraformContractViolation.Reason.MODULE_BLOCK));
 
-        assertThatThrownBy(() -> inspector.inspect("resource \"google_compute_network\" \"x\" {}", evidence))
+        assertThatThrownBy(() -> inspector.inspect("resource \"google_compute_network\" \"x\" { name = \"x\" }"))
                 .isInstanceOfSatisfying(GeneratedTerraformContractViolation.class,
-                        failure -> assertThat(failure.reason()).isEqualTo(
-                                GeneratedTerraformContractViolation.Reason
+                        failure -> org.assertj.core.api.Assertions.assertThat(failure.reason())
+                                .isEqualTo(GeneratedTerraformContractViolation.Reason
                                         .RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT));
     }
 
     @Test
-    void acceptsEveryResourceCoveredByEvidence() {
-        var evidence = catalog.resolve(List.of("aws_vpc", "aws_subnet"));
-        inspector.inspect("resource \"aws_vpc\" \"x\" {}\nresource \"aws_subnet\" \"x\" {}", evidence);
+    void rejectsNonexistentAwsResource() {
+        assertThatThrownBy(() -> inspector.inspect("resource \"aws_not_real\" \"x\" { name = \"x\" }"))
+                .isInstanceOfSatisfying(GeneratedTerraformContractViolation.class,
+                        failure -> org.assertj.core.api.Assertions.assertThat(failure.reason())
+                                .isEqualTo(GeneratedTerraformContractViolation.Reason
+                                        .RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT));
+    }
+
+    @Test
+    void acceptsMultipleCatalogResources() {
+        inspector.inspect("""
+                resource "aws_vpc" "x" { cidr_block = "10.0.0.0/16" }
+                resource "aws_subnet" "x" { vpc_id = aws_vpc.x.id }
+                """);
     }
 }

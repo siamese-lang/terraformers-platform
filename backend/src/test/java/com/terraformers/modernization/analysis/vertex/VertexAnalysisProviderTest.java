@@ -19,7 +19,10 @@ import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.TerraformDraftValidator;
+import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
+import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
+import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceQuery;
 import com.terraformers.modernization.reference.ReferenceRetriever;
@@ -30,6 +33,7 @@ import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
 import com.terraformers.modernization.storage.ObjectReader;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
@@ -65,14 +69,14 @@ class VertexAnalysisProviderTest {
         properties.setRetrievalMode(RetrievalMode.REQUIRED);
         properties.setOpensearchTopK(8);
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any())).thenReturn(new AnalysisGenerationResult(
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult(
                 "vertex:test", AnalysisInputClassification.ARCHITECTURE_DIAGRAM, 1.0,
                 "resource \"aws_vpc\" \"main\" {}", "Three tier", List.of("VPC"), List.of(), List.of(),
                 "STOP", 10, false
         ));
         VertexAnalysisProvider provider = new VertexAnalysisProvider(
                 objectReader, retriever, properties, factsExtractor, textWithoutResourceIdentifiers, generationStage,
-                new TerraformDraftValidator());
+                new TerraformDraftValidator(), schemaCatalog(), mock(GeneratedTerraformContractInspector.class));
 
         provider.analyze(new AnalysisRequestContext(
                 "job", "project", "bucket", "key.png", "correlation", AnalysisMode.INTEGRATED_JAVA));
@@ -87,7 +91,7 @@ class VertexAnalysisProviderTest {
     @Test
     void requiredArchitectureGenerationFailsClosedWhenRetrievalIsEmpty() {
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any())).thenReturn(generatedArchitecture());
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(generatedArchitecture());
         VertexAnalysisProvider provider = provider(query -> List.of(), generationStage);
 
         assertThatThrownBy(() -> provider.analyze(context()))
@@ -101,7 +105,7 @@ class VertexAnalysisProviderTest {
                 AnalysisInputClassification.NON_ARCHITECTURE_IMAGE,
                 AnalysisInputClassification.AMBIGUOUS)) {
             VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-            when(generationStage.generate(any(), any(), any())).thenThrow(
+            when(generationStage.generate(any(), any(), any(), any())).thenThrow(
                     new AnalysisInputRejectedException(classification, 0.9, false, null));
             VertexAnalysisProvider provider = provider(query -> List.of(), generationStage);
 
@@ -119,13 +123,13 @@ class VertexAnalysisProviderTest {
         List<ReferenceDocument> references = List.of(reference());
         when(retriever.retrieve(any())).thenReturn(references);
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any())).thenReturn(safeGeneration());
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(safeGeneration());
         ProviderFixture fixture = fixture(retriever, generationStage);
         AnalysisRequestContext context = context();
 
         fixture.provider().analyze(context);
 
-        verify(generationStage, times(1)).generate(same(context), same(fixture.source()), same(references));
+        verify(generationStage, times(1)).generate(same(context), same(fixture.source()), same(references), any());
         verify(generationStage, never()).regenerateAfterSensitiveCredential(any(), any(), any());
         verify(fixture.factsExtractor(), times(1)).extract(same(fixture.source()));
         verify(retriever, times(1)).retrieve(any());
@@ -137,17 +141,17 @@ class VertexAnalysisProviderTest {
         List<ReferenceDocument> references = List.of(reference());
         when(retriever.retrieve(any())).thenReturn(references);
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any())).thenReturn(sensitiveGeneration());
-        when(generationStage.regenerateAfterSensitiveCredential(any(), any(), any())).thenReturn(safeGeneration());
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(sensitiveGeneration());
+        when(generationStage.regenerateAfterSensitiveCredential(any(), any(), any(), any())).thenReturn(safeGeneration());
         ProviderFixture fixture = fixture(retriever, generationStage);
         AnalysisRequestContext context = context();
 
         var result = fixture.provider().analyze(context);
 
         assertThat(result.terraformCode()).isEqualTo(safeGeneration().terraformCode());
-        verify(generationStage, times(1)).generate(same(context), same(fixture.source()), same(references));
+        verify(generationStage, times(1)).generate(same(context), same(fixture.source()), same(references), any());
         verify(generationStage, times(1)).regenerateAfterSensitiveCredential(
-                same(context), same(fixture.source()), same(references));
+                same(context), same(fixture.source()), same(references), any());
         verify(fixture.factsExtractor(), times(1)).extract(same(fixture.source()));
         verify(retriever, times(1)).retrieve(any());
     }
@@ -155,7 +159,7 @@ class VertexAnalysisProviderTest {
     @Test
     void unrelatedInvalidFirstGenerationDoesNotRecover() {
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any())).thenReturn(generation("placeholder output"));
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(generation("placeholder output"));
         VertexAnalysisProvider provider = provider(query -> List.of(reference()), generationStage);
 
         provider.analyze(context());
@@ -166,16 +170,29 @@ class VertexAnalysisProviderTest {
     @Test
     void sensitiveRecoveryIsReturnedWithoutSecondProviderRetry() {
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any())).thenReturn(sensitiveGeneration());
-        when(generationStage.regenerateAfterSensitiveCredential(any(), any(), any()))
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(sensitiveGeneration());
+        when(generationStage.regenerateAfterSensitiveCredential(any(), any(), any(), any()))
                 .thenReturn(sensitiveGeneration());
         VertexAnalysisProvider provider = provider(query -> List.of(reference()), generationStage);
 
         var result = provider.analyze(context());
 
-        verify(generationStage, times(1)).regenerateAfterSensitiveCredential(any(), any(), any());
+        verify(generationStage, times(1)).regenerateAfterSensitiveCredential(any(), any(), any(), any());
         assertThat(new TerraformDraftValidator().isHardCodedSensitiveCredentialFailure(
                 new TerraformDraftValidator().validate(result.terraformCode()))).isTrue();
+    }
+
+    @Test
+    void truncationRetryThenSensitiveResultDoesNotMakeThirdCall() {
+        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
+        AnalysisGenerationResult secondAttemptSensitive = new AnalysisGenerationResult(
+                "vertex:test", AnalysisInputClassification.ARCHITECTURE_DIAGRAM, 1.0,
+                sensitiveGeneration().terraformCode(), "VPC", List.of(), List.of(), List.of(), "STOP", 10, true);
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(secondAttemptSensitive);
+
+        provider(query -> List.of(reference()), generationStage).analyze(context());
+
+        verify(generationStage, never()).regenerateAfterSensitiveCredential(any(), any(), any(), any());
     }
 
     private VertexAnalysisProvider provider(
@@ -190,7 +207,8 @@ class VertexAnalysisProviderTest {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
         properties.setRetrievalMode(RetrievalMode.REQUIRED);
         return new VertexAnalysisProvider(objectReader, retriever, properties, factsExtractor,
-                new RetrievalQueryTextBuilder(), generationStage, new TerraformDraftValidator());
+                new RetrievalQueryTextBuilder(), generationStage, new TerraformDraftValidator(), schemaCatalog(),
+                mock(GeneratedTerraformContractInspector.class));
     }
 
     private ProviderFixture fixture(ReferenceRetriever retriever, VertexGenerationStage generationStage) {
@@ -204,7 +222,17 @@ class VertexAnalysisProviderTest {
         properties.setRetrievalMode(RetrievalMode.REQUIRED);
         return new ProviderFixture(new VertexAnalysisProvider(
                 objectReader, retriever, properties, factsExtractor, new RetrievalQueryTextBuilder(),
-                generationStage, new TerraformDraftValidator()), source, factsExtractor);
+                generationStage, new TerraformDraftValidator(), schemaCatalog(),
+                mock(GeneratedTerraformContractInspector.class)), source, factsExtractor);
+    }
+
+    private AwsProviderSchemaCatalog schemaCatalog() {
+        AwsProviderSchemaCatalog catalog = mock(AwsProviderSchemaCatalog.class);
+        when(catalog.resolve(any())).thenReturn(new AwsProviderSchemaEvidence(Map.of(
+                "aws_vpc", "cidr_block(optional)",
+                "aws_db_instance", "password(optional)",
+                "aws_security_group", "name(optional)")));
+        return catalog;
     }
 
     private ObjectContent source() {

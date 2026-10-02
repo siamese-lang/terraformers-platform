@@ -69,21 +69,30 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
 
             CommandResult init = executor.run(initCommand(), workspace, initializationTimeout);
             if (init.timedOut()) {
-                outcome = invalid(content, "Terraform CLI initialization timed out");
+                outcome = failure(content, TerraformValidationFailureException.Category.INIT_TIMEOUT,
+                        "Terraform CLI initialization timed out");
             } else if (init.exitCode() != 0) {
-                outcome = invalid(content, "generated Terraform failed offline Terraform initialization");
+                TerraformValidationFailureException.Category category = providerClosureFailure(init.output())
+                        ? TerraformValidationFailureException.Category.PROVIDER_CLOSURE
+                        : TerraformValidationFailureException.Category.INIT_CONFIGURATION;
+                outcome = failure(content, category, category == TerraformValidationFailureException.Category.PROVIDER_CLOSURE
+                        ? "offline provider closure could not be satisfied"
+                        : "Terraform initialization/configuration failed");
             } else {
                 outcome = validateInitializedWorkspace(content, workspace);
             }
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            outcome = invalid(content, "Terraform CLI validation was interrupted");
+            outcome = failure(content, TerraformValidationFailureException.Category.INTERNAL,
+                    "Terraform CLI validation was interrupted");
         } catch (IOException | RuntimeException exception) {
-            outcome = invalid(content, "Terraform CLI validation could not be completed");
+            outcome = failure(content, TerraformValidationFailureException.Category.INTERNAL,
+                    "Terraform CLI validation could not be completed");
         }
 
         if (!deleteWorkspace(workspace)) {
-            return invalid(content, "Terraform CLI validation workspace cleanup failed");
+            return failure(content, TerraformValidationFailureException.Category.INTERNAL,
+                    "Terraform CLI validation workspace cleanup failed");
         }
         return outcome;
     }
@@ -92,20 +101,24 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
             throws IOException, InterruptedException {
         CommandResult validation = executor.run(validateCommand(), workspace, validationTimeout);
         if (validation.timedOut()) {
-            return invalid(content, "Terraform CLI validation timed out");
+            return failure(content, TerraformValidationFailureException.Category.VALIDATE_TIMEOUT,
+                    "Terraform CLI validation timed out");
         }
 
         JsonNode diagnostics;
         try {
             diagnostics = objectMapper.readTree(validation.output());
         } catch (Exception exception) {
-            return invalid(content, "Terraform CLI validation returned malformed diagnostics");
+            return failure(content, TerraformValidationFailureException.Category.INTERNAL,
+                    "Terraform CLI validation returned malformed diagnostics");
         }
         if (diagnostics == null || !diagnostics.path("valid").isBoolean()) {
-            return invalid(content, "Terraform CLI validation returned malformed diagnostics");
+            return failure(content, TerraformValidationFailureException.Category.INTERNAL,
+                    "Terraform CLI validation returned malformed diagnostics");
         }
         if (validation.exitCode() != 0 || !diagnostics.path("valid").asBoolean()) {
-            return invalid(content, "generated Terraform failed Terraform CLI validation");
+            return failure(content, TerraformValidationFailureException.Category.VALIDATE_CONFIGURATION,
+                    "generated Terraform failed Terraform CLI validation");
         }
         return new TerraformDraftValidation(true, content, null);
     }
@@ -148,6 +161,18 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
 
     private TerraformDraftValidation invalid(String content, String reason) {
         return new TerraformDraftValidation(false, content, reason);
+    }
+
+    private TerraformDraftValidation failure(String content, TerraformValidationFailureException.Category category,
+                                             String message) {
+        return invalid(content, category.name() + ": " + message);
+    }
+
+    private boolean providerClosureFailure(String output) {
+        String bounded = output == null ? "" : output.toLowerCase(java.util.Locale.ROOT);
+        return bounded.contains("provider") && (bounded.contains("not found")
+                || bounded.contains("unavailable") || bounded.contains("no available releases")
+                || bounded.contains("does not match") || bounded.contains("failed to query available provider"));
     }
 
     interface CommandExecutor {

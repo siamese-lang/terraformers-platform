@@ -81,7 +81,7 @@ class TerraformCliValidatorTest {
 
         assertThat(validation.valid()).isFalse();
         assertThat(validation.reason()).isEqualTo(
-                "generated Terraform failed Terraform CLI validation");
+                "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation");
         assertThat(validation.reason()).doesNotContain("definitely_not_a_real_argument");
         assertTempRootEmpty();
     }
@@ -97,7 +97,7 @@ class TerraformCliValidatorTest {
                 """);
 
         assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).contains("offline Terraform initialization");
+        assertThat(validation.reason()).isEqualTo("PROVIDER_CLOSURE: offline provider closure could not be satisfied");
         assertThat(executor.commands()).hasSize(1);
         assertTempRootEmpty();
     }
@@ -113,7 +113,7 @@ class TerraformCliValidatorTest {
                 """);
 
         assertThat(validation.valid()).isFalse();
-        assertThat(validation.reason()).isEqualTo("Terraform CLI initialization timed out");
+        assertThat(validation.reason()).isEqualTo("INIT_TIMEOUT: Terraform CLI initialization timed out");
         assertThat(executor.commands()).hasSize(1);
         assertThat(executor.timeouts()).containsExactly(Duration.ofSeconds(3));
         assertTempRootEmpty();
@@ -132,7 +132,7 @@ class TerraformCliValidatorTest {
                 """);
 
         assertThat(timeout.valid()).isFalse();
-        assertThat(timeout.reason()).isEqualTo("Terraform CLI validation timed out");
+        assertThat(timeout.reason()).isEqualTo("VALIDATE_TIMEOUT: Terraform CLI validation timed out");
         assertThat(timeoutExecutor.commands()).hasSize(2);
         assertThat(timeoutExecutor.timeouts()).containsExactly(
                 Duration.ofSeconds(3),
@@ -156,6 +156,16 @@ class TerraformCliValidatorTest {
         assertThat(malformed.valid()).isFalse();
         assertThat(malformed.reason()).contains("malformed diagnostics");
         assertTempRootEmpty();
+    }
+
+    @Test
+    void distinguishesOtherInitializationFailureWithoutLeakingCapturedOutput() {
+        String sensitive = "SECRET-FIXTURE-VALUE";
+        TerraformDraftValidation validation = validator(new RecordingExecutor(
+                result(1, false, "configuration syntax failed " + sensitive))).validate("resource \"aws_vpc\" \"x\" {}");
+
+        assertThat(validation.reason()).isEqualTo("INIT_CONFIGURATION: Terraform initialization/configuration failed");
+        assertThat(validation.reason()).doesNotContain(sensitive);
     }
 
     @Test

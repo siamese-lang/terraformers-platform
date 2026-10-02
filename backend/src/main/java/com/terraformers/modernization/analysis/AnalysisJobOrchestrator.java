@@ -67,7 +67,7 @@ public class AnalysisJobOrchestrator {
                 terraformExecutableValidator.validate(validation.sanitizedContent());
         if (!executableValidation.valid()) {
             log.warn("Terraform executable validation failed reason={}", executableValidation.reason());
-            throw new IllegalStateException(executableValidation.reason());
+            throw TerraformValidationFailureException.fromSafeReason(executableValidation.reason());
         }
         log.info("Terraform executable validation passed");
         return result.withTerraformCode(executableValidation.sanitizedContent());

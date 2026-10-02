@@ -9,9 +9,12 @@ import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
+import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
 import com.terraformers.modernization.analysis.TerraformDraftValidation;
 import com.terraformers.modernization.analysis.TerraformDraftValidator;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
+import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
+import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceQuery;
 import com.terraformers.modernization.reference.ReferenceRetriever;
@@ -22,6 +25,7 @@ import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectReader;
 import com.terraformers.modernization.storage.ObjectReference;
 import java.util.List;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -40,6 +44,8 @@ public class VertexAnalysisProvider implements AnalysisProvider {
     private final RetrievalQueryTextBuilder queryTextBuilder;
     private final VertexGenerationStage generationStage;
     private final TerraformDraftValidator terraformDraftValidator;
+    private final AwsProviderSchemaCatalog schemaCatalog;
+    private final GeneratedTerraformContractInspector contractInspector;
 
     public VertexAnalysisProvider(
             ObjectReader objectReader,
@@ -48,7 +54,9 @@ public class VertexAnalysisProvider implements AnalysisProvider {
             VertexArchitectureFactsExtractor factsExtractor,
             RetrievalQueryTextBuilder queryTextBuilder,
             VertexGenerationStage generationStage,
-            TerraformDraftValidator terraformDraftValidator
+            TerraformDraftValidator terraformDraftValidator,
+            AwsProviderSchemaCatalog schemaCatalog,
+            GeneratedTerraformContractInspector contractInspector
     ) {
         this.objectReader = objectReader;
         this.referenceRetriever = referenceRetriever;
@@ -57,6 +65,8 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         this.queryTextBuilder = queryTextBuilder;
         this.generationStage = generationStage;
         this.terraformDraftValidator = terraformDraftValidator;
+        this.schemaCatalog = schemaCatalog;
+        this.contractInspector = contractInspector;
     }
 
     @Override
@@ -80,18 +90,25 @@ public class VertexAnalysisProvider implements AnalysisProvider {
                 context.sourceBucket(),
                 context.sourceKey()
         ));
-        List<ReferenceDocument> references = retrieveReferences(source);
-        AnalysisGenerationResult generated = generationStage.generate(context, source, references);
+        RetrievalOutcome retrieval = retrieveReferences(source);
+        List<ReferenceDocument> references = retrieval.references();
+        List<String> candidates = new ArrayList<>(retrieval.facts().resourceTypes());
+        references.forEach(reference -> candidates.addAll(reference.resourceTypes()));
+        AwsProviderSchemaEvidence schemaEvidence = schemaCatalog.resolve(candidates);
+        AnalysisGenerationResult generated = generationStage.generate(context, source, references, schemaEvidence);
         RequiredGroundingPolicy.requireForArchitecture(
                 properties.getRetrievalMode(), generated, references);
         TerraformDraftValidation preliminaryValidation =
                 terraformDraftValidator.validate(generated.terraformCode());
-        if (terraformDraftValidator.isHardCodedSensitiveCredentialFailure(preliminaryValidation)) {
+        if (terraformDraftValidator.isHardCodedSensitiveCredentialFailure(preliminaryValidation)
+                && !generated.retryOccurred()) {
             log.info("Vertex generation recovery outcome=retry category=sensitive_credential");
-            generated = generationStage.regenerateAfterSensitiveCredential(context, source, references);
+            generated = generationStage.regenerateAfterSensitiveCredential(
+                    context, source, references, schemaEvidence);
             RequiredGroundingPolicy.requireForArchitecture(
                     properties.getRetrievalMode(), generated, references);
         }
+        contractInspector.inspect(generated.terraformCode(), schemaEvidence);
         return new AnalysisResult(
                 generated.provider(),
                 generated.terraformCode(),
@@ -103,13 +120,13 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         );
     }
 
-    private List<ReferenceDocument> retrieveReferences(ObjectContent source) {
+    private RetrievalOutcome retrieveReferences(ObjectContent source) {
         RetrievalMode mode = properties.getRetrievalMode();
         if (mode == null) {
             throw new IllegalStateException("terraformers.analysis.retrieval-mode must be set");
         }
         if (mode == RetrievalMode.DISABLED) {
-            return List.of();
+            return new RetrievalOutcome(new ArchitectureRetrievalFacts("", List.of(), List.of(), List.of()), List.of());
         }
         ArchitectureRetrievalFacts facts = factsExtractor.extract(source);
         ReferenceQuery query = new ReferenceQuery(
@@ -125,7 +142,7 @@ public class VertexAnalysisProvider implements AnalysisProvider {
                     properties.getCorpusVersion(),
                     references.size()
             );
-            return references;
+            return new RetrievalOutcome(facts, references);
         } catch (RuntimeException exception) {
             log.warn(
                     "Vertex reference retrieval outcome=failure mode={} corpusVersion={} errorClass={}",
@@ -136,7 +153,9 @@ public class VertexAnalysisProvider implements AnalysisProvider {
             if (mode == RetrievalMode.REQUIRED) {
                 throw exception;
             }
-            return List.of();
+            return new RetrievalOutcome(facts, List.of());
         }
     }
+
+    private record RetrievalOutcome(ArchitectureRetrievalFacts facts, List<ReferenceDocument> references) {}
 }

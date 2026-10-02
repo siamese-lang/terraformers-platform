@@ -181,7 +181,6 @@ public class AnalysisObservability {
             return switch (generatedFailure.reason()) {
                 case MODULE_BLOCK -> "generated_terraform_contract_module";
                 case RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT -> "generated_terraform_contract_provider";
-                case RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE -> "generated_terraform_contract_request_schema";
             };
         }
         if (exception instanceof TerraformValidationFailureException terraformFailure) {

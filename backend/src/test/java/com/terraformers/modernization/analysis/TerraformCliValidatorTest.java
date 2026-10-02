@@ -51,7 +51,10 @@ class TerraformCliValidatorTest {
         assertThat(executor.commands().get(1))
                 .containsExactly("terraform", "validate", "-json", "-no-color")
                 .doesNotContain("plan", "apply");
-        assertThat(executor.timeouts()).containsOnly(Duration.ofSeconds(2));
+        assertThat(executor.timeouts()).containsExactly(
+                Duration.ofSeconds(3),
+                Duration.ofSeconds(2)
+        );
         assertThat(executor.workingDirectories()).hasSize(2);
         assertThat(executor.workingDirectories().get(0))
                 .isEqualTo(executor.workingDirectories().get(1));
@@ -100,7 +103,24 @@ class TerraformCliValidatorTest {
     }
 
     @Test
-    void failsClosedOnTimeoutAndMalformedDiagnostics() {
+    void failsClosedWhenInitializationTimesOutBeforeValidate() {
+        RecordingExecutor executor = new RecordingExecutor(result(-1, true, ""));
+
+        TerraformDraftValidation validation = validator(executor).validate("""
+                resource "aws_vpc" "main" {
+                  cidr_block = "10.0.0.0/16"
+                }
+                """);
+
+        assertThat(validation.valid()).isFalse();
+        assertThat(validation.reason()).isEqualTo("Terraform CLI initialization timed out");
+        assertThat(executor.commands()).hasSize(1);
+        assertThat(executor.timeouts()).containsExactly(Duration.ofSeconds(3));
+        assertTempRootEmpty();
+    }
+
+    @Test
+    void failsClosedWhenValidationTimesOutAfterSuccessfulInitialization() {
         RecordingExecutor timeoutExecutor = new RecordingExecutor(
                 result(0, false, "init ok"),
                 result(-1, true, "")
@@ -111,6 +131,18 @@ class TerraformCliValidatorTest {
                 }
                 """);
 
+        assertThat(timeout.valid()).isFalse();
+        assertThat(timeout.reason()).isEqualTo("Terraform CLI validation timed out");
+        assertThat(timeoutExecutor.commands()).hasSize(2);
+        assertThat(timeoutExecutor.timeouts()).containsExactly(
+                Duration.ofSeconds(3),
+                Duration.ofSeconds(2)
+        );
+        assertTempRootEmpty();
+    }
+
+    @Test
+    void failsClosedOnMalformedDiagnostics() {
         RecordingExecutor malformedExecutor = new RecordingExecutor(
                 result(0, false, "init ok"),
                 result(0, false, "not-json")
@@ -121,8 +153,6 @@ class TerraformCliValidatorTest {
                 }
                 """);
 
-        assertThat(timeout.valid()).isFalse();
-        assertThat(timeout.reason()).contains("timed out");
         assertThat(malformed.valid()).isFalse();
         assertThat(malformed.reason()).contains("malformed diagnostics");
         assertTempRootEmpty();
@@ -159,6 +189,7 @@ class TerraformCliValidatorTest {
                 executor,
                 "terraform",
                 Path.of("/plugins"),
+                Duration.ofSeconds(3),
                 Duration.ofSeconds(2),
                 tempRoot
         );

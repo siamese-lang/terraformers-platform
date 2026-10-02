@@ -22,20 +22,22 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
 
     static final String DEFAULT_TERRAFORM_BINARY = "/usr/local/bin/terraform";
     static final Path DEFAULT_PLUGIN_DIR = Path.of("/opt/terraform-plugins");
-    static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(20);
+    static final Duration DEFAULT_INITIALIZATION_TIMEOUT = Duration.ofSeconds(60);
+    static final Duration DEFAULT_VALIDATION_TIMEOUT = Duration.ofSeconds(20);
     private static final int MAX_CAPTURE_BYTES = 32 * 1024;
 
     private final ObjectMapper objectMapper;
     private final CommandExecutor executor;
     private final String terraformBinary;
     private final Path pluginDir;
-    private final Duration timeout;
+    private final Duration initializationTimeout;
+    private final Duration validationTimeout;
     private final Path tempRoot;
 
     @Autowired
     public TerraformCliValidator(ObjectMapper objectMapper) {
         this(objectMapper, new ProcessCommandExecutor(), DEFAULT_TERRAFORM_BINARY,
-                DEFAULT_PLUGIN_DIR, DEFAULT_TIMEOUT, null);
+                DEFAULT_PLUGIN_DIR, DEFAULT_INITIALIZATION_TIMEOUT, DEFAULT_VALIDATION_TIMEOUT, null);
     }
 
     TerraformCliValidator(
@@ -43,14 +45,16 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
             CommandExecutor executor,
             String terraformBinary,
             Path pluginDir,
-            Duration timeout,
+            Duration initializationTimeout,
+            Duration validationTimeout,
             Path tempRoot
     ) {
         this.objectMapper = objectMapper;
         this.executor = executor;
         this.terraformBinary = terraformBinary;
         this.pluginDir = pluginDir;
-        this.timeout = timeout;
+        this.initializationTimeout = initializationTimeout;
+        this.validationTimeout = validationTimeout;
         this.tempRoot = tempRoot;
     }
 
@@ -63,7 +67,7 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
             workspace = createWorkspace();
             Files.writeString(workspace.resolve("main.tf"), content, StandardCharsets.UTF_8);
 
-            CommandResult init = executor.run(initCommand(), workspace, timeout);
+            CommandResult init = executor.run(initCommand(), workspace, initializationTimeout);
             if (init.timedOut()) {
                 outcome = invalid(content, "Terraform CLI initialization timed out");
             } else if (init.exitCode() != 0) {
@@ -86,7 +90,7 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
 
     private TerraformDraftValidation validateInitializedWorkspace(String content, Path workspace)
             throws IOException, InterruptedException {
-        CommandResult validation = executor.run(validateCommand(), workspace, timeout);
+        CommandResult validation = executor.run(validateCommand(), workspace, validationTimeout);
         if (validation.timedOut()) {
             return invalid(content, "Terraform CLI validation timed out");
         }

@@ -9,8 +9,8 @@ import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisMode;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
-import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
+import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
 import java.util.ArrayList;
@@ -61,26 +61,27 @@ class VertexGenerationStageTest {
     }
 
     @Test
-    void sensitiveCredentialRecoveryInvokesOnceWithoutCompactFallbackAndMarksRetry() {
-        RecordingStage stage = new RecordingStage(false);
-
-        AnalysisGenerationResult result = stage.regenerateAfterSensitiveCredential(
-                context(), source(), List.of(reference()));
-
-        assertThat(stage.invocations).containsExactly(new Invocation(false, true, true));
-        assertThat(result.retryOccurred()).isTrue();
-    }
-
-    @Test
     void normalGenerationRetainsStandardThenCompactTruncationFallback() {
-        RecordingStage stage = new RecordingStage(true);
+        RecordingStage stage = new RecordingStage(1);
 
         AnalysisGenerationResult result = stage.generate(context(), source(), List.of(reference()));
 
         assertThat(stage.invocations).containsExactly(
-                new Invocation(false, false, false),
-                new Invocation(true, true, false));
+                new Invocation(false, false),
+                new Invocation(true, true));
         assertThat(result.retryOccurred()).isTrue();
+    }
+
+    @Test
+    void repeatedTruncationStopsAfterTwoProviderCalls() {
+        RecordingStage stage = new RecordingStage(2);
+
+        assertThatThrownBy(() -> stage.generate(context(), source(), List.of(reference())))
+                .isInstanceOf(VertexOutputTruncatedException.class);
+
+        assertThat(stage.invocations).containsExactly(
+                new Invocation(false, false),
+                new Invocation(true, true));
     }
 
     private VertexGenerationStage stage(VertexRuntimeProperties properties) {
@@ -107,16 +108,16 @@ class VertexGenerationStageTest {
         return new ReferenceDocument("ref", "title", "content", 1.0);
     }
 
-    private record Invocation(boolean compact, boolean retryOccurred, boolean safetyRecovery) {}
+    private record Invocation(boolean compact, boolean retryOccurred) {}
 
     private static final class RecordingStage extends VertexGenerationStage {
         private final List<Invocation> invocations = new ArrayList<>();
-        private final boolean truncateFirst;
+        private int truncationsRemaining;
 
-        private RecordingStage(boolean truncateFirst) {
+        private RecordingStage(int truncationsRemaining) {
             super(null, new VertexRuntimeProperties(), new VertexPromptBuilder(),
                     new VertexResponseParser(new ObjectMapper()));
-            this.truncateFirst = truncateFirst;
+            this.truncationsRemaining = truncationsRemaining;
         }
 
         @Override
@@ -125,11 +126,11 @@ class VertexGenerationStageTest {
                 List<ReferenceDocument> references,
                 AwsProviderSchemaEvidence schemaEvidence,
                 boolean compact,
-                boolean retryOccurred,
-                boolean sensitiveCredentialRecovery
+                boolean retryOccurred
         ) {
-            invocations.add(new Invocation(compact, retryOccurred, sensitiveCredentialRecovery));
-            if (truncateFirst && invocations.size() == 1) {
+            invocations.add(new Invocation(compact, retryOccurred));
+            if (truncationsRemaining > 0) {
+                truncationsRemaining--;
                 throw new VertexOutputTruncatedException(8192);
             }
             return new AnalysisGenerationResult(

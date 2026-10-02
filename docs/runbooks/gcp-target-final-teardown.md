@@ -125,19 +125,32 @@ gh workflow run gcp-target-runtime-teardown.yml \
 
 Do not run Stage 2 until this workflow succeeds and the residual summary is reviewed.
 
-## Stage 1 failure rule
+## Stage 1 failure and recovery rule
 
 If teardown fails:
 
 - do not delete the state bucket;
 - do not delete the WIF pool or CI service accounts;
 - inspect the first residual owner;
-- do not broaden the address set or permissions just to force completion;
-- if Terraform partially destroyed resources, determine the new exact remaining managed count before
-  any recovery-run contract is changed.
+- do not broaden the reviewed address set or permissions just to force completion;
+- determine the exact remaining managed state count before any recovery dispatch.
 
-The initial workflow intentionally accepts exactly 29 deletes. A partial-recovery contract requires
-an explicit repository change and review rather than silently accepting a smaller plan.
+The initial full run expects 29 deletes. A recovery run may use a smaller
+`expected_delete_count` only when:
+
+1. the canonical remote state contains exactly that many managed instances;
+2. every remaining address is still inside the original reviewed 29-address teardown set;
+3. the plan contains delete actions only;
+4. the confirmation is exactly
+   `DESTROY_REVIEWED_GCP_TARGET_RUNTIME_<COUNT>`.
+
+The plan gate rejects unknown addresses, creates, updates and replacements. This lets a partial
+Terraform destroy resume without pretending the original 29 resources still exist.
+
+The first observed recovery case on 2026-10-03 was a GCE 409 conflict while Terraform attempted to
+detach `terraformers-mariadb-data` concurrently with deletion of the MariaDB VM. The VM and the
+other runtime resources had already completed deletion; the remaining PD must be handled through
+this reviewed-subset recovery path rather than by rerunning the original 29-delete contract.
 
 ## Stage 2 — final bootstrap cleanup
 

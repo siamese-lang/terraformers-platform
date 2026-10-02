@@ -36,7 +36,7 @@ on:
         required: false
         type: string
       backend_source_sha:
-        description: Full source commit SHA embedded in the backend image; required for backend rollout and capacity baseline.
+        description: Full source commit SHA embedded in the backend image; required for backend rollout, C2 stability validation, and capacity baseline.
         required: false
         type: string
       expected_current_backend_image:

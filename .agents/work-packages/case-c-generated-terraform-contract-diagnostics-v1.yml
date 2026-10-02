@@ -1,0 +1,148 @@
+work_package:
+  id: case-c-generated-terraform-contract-diagnostics-v1
+  status: AWAITING_APPROVAL
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  goal: >
+    Replace GeneratedTerraformContractViolation message-only observability with a closed three-value
+    typed reason contract, map it to stable safe telemetry categories, and preserve those categories
+    in C2 sanitized evidence without changing generation, validation, retry, or user-facing failure
+    semantics.
+
+  decision_source:
+    - docs/plans/active/case-c-generated-terraform-contract-diagnostics-decision.md
+
+  related_issue:
+    - C-ARCH-05
+
+  trigger_evidence:
+    live_run_id: 36985305485
+    analysis_job_id: 6a6eec5d-9e21-4fa8-907a-0dcd7521a24f
+    source_revision: 8d72c91767c25705d460551babfc4fc079ce7d80
+    error_class: GeneratedTerraformContractViolation
+    previous_category: other
+
+  activation:
+    bind_rule: >
+      Immediately before the first implementation write, read authoritative GitHub remote main
+      exactly once and bind that SHA to execution_base_sha. Do not automatically refresh or rebase.
+    stop_on_main_drift: true
+
+  allowed_paths:
+    - .agents/work-packages/case-c-generated-terraform-contract-diagnostics-v1.yml
+    - .agents/state/case-c-architecture-closure.json
+    - backend/src/main/java/com/terraformers/modernization/analysis/GeneratedTerraformContractViolation.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspector.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspectorTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisObservabilityTest.java
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+    - docs/evaluation/case-c-repeated-correctness-stability.md
+    - docs/evaluation/case-c-generated-terraform-contract-diagnostics.md
+    - docs/plans/active/case-c-architecture-closure.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/portfolio-case-reassessment.md
+
+  prohibited_paths:
+    - frontend/**
+    - infra/terraform/**
+    - infra/kubernetes/**
+    - corpus/**
+    - evaluation/**
+    - docs/architecture/**
+    - AGENTS.md
+    - backend/Dockerfile
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - .github/workflows/** except .github/workflows/gcp-target-runtime-dependencies.yml
+
+  selected_contract:
+    reasons:
+      - MODULE_BLOCK
+      - RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT
+      - RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE
+    categories:
+      MODULE_BLOCK: generated_terraform_contract_module
+      RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT: generated_terraform_contract_provider
+      RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE: generated_terraform_contract_request_schema
+    user_facing_failure_reason: unchanged_generic
+    retryability: unchanged_non_retryable
+    raw_exception_message_as_metric_or_artifact: forbidden
+    raw_hcl_or_resource_identity_in_diagnostics: forbidden
+
+  allowed_actions:
+    - inspect_repository
+    - bind_execution_base_once
+    - introduce_typed_generated_contract_reason
+    - map_typed_reason_to_stable_observability_category
+    - update_C2_sanitized_category_allowlist
+    - add_deterministic_tests
+    - append_direct_evidence
+    - sync_generated_case_c_state
+    - run_existing_checks
+    - create_pull_request
+    - inspect_CI_once
+    - perform_one_bounded_corrective_iteration_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - change_generation_prompt
+    - change_generation_model
+    - change_retrieval
+    - change_corpus
+    - change_schema_candidate_set
+    - relax_generated_Terraform_contract
+    - add_generation_retry
+    - change_AnalysisJob_retryability
+    - change_user_facing_failure_reason
+    - log_raw_HCL
+    - log_generated_resource_type_or_label
+    - log_request_candidate_set
+    - create_new_workflow
+    - image_publication
+    - backend_rollout
+    - live_C2_execution
+    - capacity_baseline_execution
+    - C3_implementation
+
+  acceptance_criteria:
+    - exception_reason_is_closed_to_exactly_three_selected_values
+    - each_inspector_rejection_branch_uses_the_correct_typed_reason
+    - observability_maps_each_reason_to_exactly_one_selected_stable_category
+    - no_selected_category_contains_dynamic_request_or_generated_content
+    - Prometheus_evidence_contains_no_raw_HCL_credentials_resource_names_labels_or_exception_messages
+    - existing_Terraform_validation_categories_are_unchanged
+    - C2_sanitized_failure_evidence_accepts_the_three_selected_categories
+    - C2_external_variance_semantics_are_unchanged
+    - generic_user_facing_failure_reason_is_unchanged
+    - no_generation_or_retry_behavior_change
+    - no_C1_contract_relaxation
+
+  validation:
+    required:
+      - targeted_backend_tests_for_inspector_and_observability
+      - backend_local_verification_or_equivalent_existing_CI
+      - existing_automatic_workflow_policy
+      - python3_scripts_checks_case_c_architecture_ledger_py_check
+      - git_diff_check
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_bound_execution_base
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - allowed_path_outside_scope_is_required
+    - C1_contract_would_need_to_change
+    - generation_or_retry_behavior_would_need_to_change
+    - raw_request_or_generated_content_would_need_to_be_logged
+    - live_or_cost_action_is_requested_without_user_checkpoint
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    live_action_authorized: false
+    later_C2_rerun_requires_separate_user_approval: true
+    next_work_package_requires_user_approval: true

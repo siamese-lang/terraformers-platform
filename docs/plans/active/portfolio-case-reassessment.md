@@ -166,7 +166,7 @@ The comparison must include:
 RabbitMQ or Outbox may not be excluded merely because they were previously DEFER-listed.
 Likewise they may not be selected merely for portfolio technology breadth.
 
-## Case C — cloud runtime measurement guardrails and immutable delivery
+## Case C — GCP production-representative runtime and immutable delivery
 
 **Current status: PORTFOLIO-CLOSED / RESIDUAL RISKS ACCEPTED.**
 
@@ -343,7 +343,7 @@ The reassessment closes with three representative engineering cases:
 
 1. Case A — AI/RAG retrieval grounding and evaluation: **PORTFOLIO-CLOSED / PASS**;
 2. Case B — durable asynchronous AnalysisJob processing: **PORTFOLIO-CLOSED / PASS**;
-3. Case C — cloud runtime measurement guardrails and immutable delivery:
+3. Case C — GCP production-representative runtime and immutable delivery:
    **PORTFOLIO-CLOSED / RESIDUAL RISKS ACCEPTED**.
 
 Future work is no longer driven by incomplete milestone or Case C phase lists. It requires a new
@@ -421,5 +421,5 @@ Case C is **PORTFOLIO_CLOSED_WITH_RESIDUALS**. The capacity baseline is **DEFERR
 
 The closure phase is **C8 — Case C evidence closure** (COMPLETE). Open blockers are none.
 
-The selected portfolio case is **Cloud Runtime Measurement Guardrails & Immutable Delivery**. Final evidence is [Case C Final Portfolio Closure](../../evaluation/case-c-portfolio-closure.md). C2 run 37016993776 is retained as a 1/5 fail-closed result showing real Terraform executable-validity variance. Capacity tuning, desired-state convergence, rollout-under-load, and faulty-release rollback are deferred production-hardening work rather than portfolio prerequisites.
+The selected portfolio case is **GCP Production-Representative Runtime & Immutable Delivery**. Final evidence is [Case C Final Portfolio Closure](../../evaluation/case-c-portfolio-closure.md). C2 run 37016993776 is retained as a 1/5 fail-closed result showing real Terraform executable-validity variance. Capacity tuning, desired-state convergence, rollout-under-load, and faulty-release rollback are deferred production-hardening work rather than portfolio prerequisites.
 <!-- CASE_C_ARCHITECTURE_CLOSURE:END -->

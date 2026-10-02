@@ -108,6 +108,8 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
   - capacity run 36957682821 then produced two successes followed by an executable-correctness failure at concurrency 1
   - C2 decision approved by user through merged PR #184 (b6fb62c457d08b73a256f1d014e67b8fcdb07cf4): freeze exactly five sequential integrated analyses at concurrency 1 before any capacity execution; 5/5 is required and no whole-gate automatic rerun is permitted
   - C2 implementation reuses the existing backend live-validation workflow and existing GCP image-publish/revision-rollout paths; no new workflow, backend source, IaC, model, retrieval, or runtime-sizing change is authorized
+  - Live C2 gate run 36985305485 executed the accepted exact runtime identity and stopped on attempt 1 with classification CORRECTNESS_FAILURE; runtime-identity evidence recorded source 8d72c91767c25705d460551babfc4fc079ce7d80, image sha256:221e11378f2e73557c1fc0933ea09c629c5120c41360917f5bedb9d3b213768c, fixture SHA-256 a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8, backend restart count 0, concurrency 1
+  - Run 36985305485 exposed a C2 evidence-contract defect: the failed-attempt artifact retained only attempt/classification/reason/status and omitted the known project ID, AnalysisJob ID, and bounded safe failure category, preventing post-run root-cause classification; one bounded repair iteration is being used without changing C-ARCH-05 acceptance
 - Acceptance:
   - a frozen repeated correctness gate passes before capacity execution
   - repeat count and acceptance are selected before the live gate rather than retrofitted

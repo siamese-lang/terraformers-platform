@@ -9,7 +9,7 @@
 - Capacity baseline: **SUSPENDED_BY_ARCHITECTURE_AUDIT**
 - Audit base SHA: 9a0d9bc3e792a5b5780b7676960bb14750f969ee
 - Current phase: **C1 — Executable Terraform Contract Decision and closure**
-- Open blocking issues: C-ARCH-01, C-ARCH-02, C-ARCH-03, C-ARCH-04, C-ARCH-05, C-ARCH-06
+- Open blocking issues: C-ARCH-04, C-ARCH-05, C-ARCH-06
 
 Capacity-baseline retry is prohibited until every blocker required by C5 is RESOLVED and a new live checkpoint is approved.
 
@@ -18,7 +18,7 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 | Phase | Status | Purpose | Requires | Live action |
 |---|---|---|---|---|
 | C0 | COMPLETE | Durable audit plan and maintenance automation | — | no |
-| C1 | ACTIVE | Executable Terraform Contract Decision and closure | C0 | no |
+| C1 | COMPLETE | Executable Terraform Contract Decision and closure | C0 | no |
 | C2 | BLOCKED | Repeated correctness stability gate | C1 | yes |
 | C3 | BLOCKED | Executor-aware capacity measurement contract | C1, C2 | no |
 | C4 | BLOCKED | Runtime and delivery desired-state convergence | C1, C2, C3 | no |
@@ -31,16 +31,16 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 
 | ID | Severity | Status | Owner | Blocks | Finding |
 |---|---|---|---|---|---|
-| C-ARCH-01 | BLOCKER | IN_PROGRESS | C1 | C2, C5 | Generated Terraform envelope is not closed against bundled executable providers/resources |
-| C-ARCH-02 | BLOCKER | IN_PROGRESS | C1 | C2, C5 | REQUIRED retrieval does not prove generated-resource grounding coverage |
-| C-ARCH-03 | BLOCKER | IN_PROGRESS | C1 | C2, C5 | Terraform executable validation collapses actionable init/validate diagnostics |
+| C-ARCH-01 | BLOCKER | RESOLVED | C1 | C2, C5 | Generated Terraform envelope is not closed against bundled executable providers/resources |
+| C-ARCH-02 | BLOCKER | RESOLVED | C1 | C2, C5 | REQUIRED retrieval does not prove generated-resource grounding coverage |
+| C-ARCH-03 | BLOCKER | RESOLVED | C1 | C2, C5 | Terraform executable validation collapses actionable init/validate diagnostics |
 | C-ARCH-04 | BLOCKER | OPEN | C3 | C5 | Capacity harness saturation model conflicts with executor queueing semantics |
 | C-ARCH-05 | BLOCKER | OPEN | C2 | C3, C5 | Single successful live analysis is insufficient as a capacity correctness prerequisite |
 | C-ARCH-06 | BLOCKER | OPEN | C4 | C5, C7 | Live backend image and repository declarative image are divergent |
 | C-ARCH-07 | HIGH | OPEN | C7 | C8 | Single-replica rollout strategy can interrupt API availability |
 | C-ARCH-08 | HIGH | OPEN | C7 | C8 | Kubernetes Ready does not represent integrated analysis-path readiness |
 | C-ARCH-09 | HIGH | OPEN | C4 | C5 | Two-node live baseline is not consistently represented across Terraform control-plane checks |
-| C-ARCH-10 | HIGH | IN_PROGRESS | C1 | C2 | Generation recovery is failure-specific and can grow as ad-hoc exception handling |
+| C-ARCH-10 | HIGH | RESOLVED | C1 | C2 | Generation recovery is failure-specific and can grow as ad-hoc exception handling |
 | C-ARCH-11 | HIGH | RESOLVED | C0 | C1 | Repository project-state documents are stale relative to actual Case C execution |
 | C-ARCH-12 | RESIDUAL | ACCEPTED_RESIDUAL | C8 | — | External provider/network variance and possible duplicate provider invocation after process loss remain residual risks |
 
@@ -48,36 +48,42 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 
 ### C-ARCH-01 — Generated Terraform envelope is not closed against bundled executable providers/resources
 
-- Severity/status: BLOCKER / IN_PROGRESS
+- Severity/status: BLOCKER / RESOLVED
 - Owner phase: C1
 - Retained evidence:
   - backend/Dockerfile bundles Terraform 1.8.5 and hashicorp/aws 5.100.0 only
   - VertexPromptBuilder guides AWS 5.100.0 but does not machine-enforce the executable provider/resource envelope
   - C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion
+  - PR #182 merged as 40237e593530086b4649bfc8bc5499848c4b7165: backend image build derives a read-only request-time catalog from the exact checksum-pinned bundled hashicorp/aws 5.100.0 provider; generated Terraform is mechanically inspected against the request schema envelope and module/non-AWS deployable blocks fail closed
+  - Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS
 - Acceptance:
   - generated provider/resource set is mechanically constrained to an explicitly selected executable envelope
   - runtime bundled provider set and generation envelope are checked as one contract
 
 ### C-ARCH-02 — REQUIRED retrieval does not prove generated-resource grounding coverage
 
-- Severity/status: BLOCKER / IN_PROGRESS
+- Severity/status: BLOCKER / RESOLVED
 - Owner phase: C1
 - Retained evidence:
   - RequiredGroundingPolicy only requires non-empty references for architecture output
   - Case A already established that retrieval PASS alone does not prove grounding coverage
   - C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion
+  - PR #182 tests prove the request candidate set is the union of extracted fact resource types and retrieved curated-reference resource types, unknown catalog resources fail before generation, and generated resources outside the request schema envelope fail closed
+  - Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS
 - Acceptance:
   - every generated infrastructure resource requiring provider evidence is covered by the selected grounding contract
   - missing required coverage fails closed before result finalization
 
 ### C-ARCH-03 — Terraform executable validation collapses actionable init/validate diagnostics
 
-- Severity/status: BLOCKER / IN_PROGRESS
+- Severity/status: BLOCKER / RESOLVED
 - Owner phase: C1
 - Retained evidence:
   - capacity run 36957682821 failed at concurrency 1 with offline Terraform initialization failure
   - TerraformCliValidator captures bounded command output but returns a generic non-zero init reason
   - C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion
+  - PR #182 implements bounded Terraform CLI categories INIT_TIMEOUT, PROVIDER_CLOSURE, INIT_CONFIGURATION, VALIDATE_TIMEOUT, VALIDATE_CONFIGURATION, and INTERNAL; observability tests prove raw HCL and credential fixture values are not emitted as metric labels
+  - Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS
 - Acceptance:
   - safe diagnostic taxonomy distinguishes actionable init/validate failure classes without exposing generated secrets
   - live evidence can identify failure class without an ad-hoc runtime probe
@@ -149,11 +155,13 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 
 ### C-ARCH-10 — Generation recovery is failure-specific and can grow as ad-hoc exception handling
 
-- Severity/status: HIGH / IN_PROGRESS
+- Severity/status: HIGH / RESOLVED
 - Owner phase: C1
 - Retained evidence:
   - generation has output-truncation retry and a separate hard-coded-sensitive-credential regeneration path
   - C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion
+  - PR #182 consolidates generation recovery into a maximum two-call budget: truncation and sensitive-credential recovery share the same retry state, truncation followed by a sensitive second result makes no third call, and schema/CLI contract failures do not trigger regeneration
+  - Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS
 - Acceptance:
   - recovery policy is derived from an explicit generation/executable contract
   - new validation failures do not automatically create one-off retries

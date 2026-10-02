@@ -470,7 +470,7 @@ trade-offs, and residual risks.
 
 Case C is **ARCHITECTURE_CLOSURE_ACTIVE**. The previous capacity baseline is **SUSPENDED_BY_ARCHITECTURE_AUDIT** after run 36957682821 stopped at concurrency 1 on an executable-Terraform correctness failure before any valid saturation result.
 
-The current phase is **C1 — Executable Terraform Contract Decision and closure** (ACTIVE). Open blockers are C-ARCH-01, C-ARCH-02, C-ARCH-03, C-ARCH-04, C-ARCH-05, C-ARCH-06.
+The current phase is **C1 — Executable Terraform Contract Decision and closure** (COMPLETE). Open blockers are C-ARCH-04, C-ARCH-05, C-ARCH-06.
 
 The durable issue register is .agents/state/case-c-architecture-closure.json; the generated human-readable plan is [Case C Architecture Closure](case-c-architecture-closure.md). The C0 maintenance automation lane machine-checks this state through the existing Terraform Static Verification scope job. Capacity execution must not resume until C1–C4 prerequisites are resolved and a new live checkpoint is approved.
 <!-- CASE_C_ARCHITECTURE_CLOSURE:END -->

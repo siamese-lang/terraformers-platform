@@ -79,8 +79,15 @@ check with standalone nested-`id` boundaries and aligns the orchestrator fixture
 approved `VALIDATE_CONFIGURATION` exception category. No production behavior changed in this
 closure.
 
-Consequently this evidence does **not** transition C-ARCH-01, C-ARCH-02, C-ARCH-03, or C-ARCH-10 to
-`RESOLVED`; independent CI/static acceptance remains required.
+Final PR #182 head `0136ca3491eecfa0011d52b9025a15ccf5e0a171` passed Terraform Static
+Verification run `36974352021` and Backend Local Verification run `36974352028`, including the
+backend local smoke baseline and MariaDB schema/repository validation. Independent acceptance review
+confirmed the predeclared C-ARCH-01, C-ARCH-02, C-ARCH-03, and C-ARCH-10 criteria without changing
+their acceptance text, severity, ownership, architecture, or scope. PR #182 then merged to
+authoritative `main` as `40237e593530086b4649bfc8bc5499848c4b7165`.
+
+This closes C1 evidence for those four issues. Capacity execution remains suspended; C2 is not
+started by this maintenance transition.
 
 ## Residual risks
 

@@ -1,4 +1,4 @@
-# Case C Final Portfolio Closure — Cloud Runtime Measurement Guardrails & Immutable Delivery
+# Case C Final Portfolio Closure — GCP Production-Representative Runtime & Immutable Delivery
 
 ## Status
 
@@ -7,150 +7,266 @@
 Closure decision:
 [Case C Portfolio Sufficiency Closure Decision](../plans/active/case-c-portfolio-sufficiency-decision.md).
 
-## Portfolio question
+## Portfolio role
 
-How should an operations team measure capacity when the workload includes stochastic AI generation
-and the integrated request path can fail for correctness reasons before infrastructure saturation?
+Case C is the project's **cloud infrastructure / operations** representative case.
 
-The project initially attempted to measure GKE/runtime capacity directly. The first capacity run
-proved that this was the wrong order of operations.
+Case A covers AI/RAG retrieval and evaluation. Case B covers backend durable processing. Case C
+covers the infrastructure boundary required to run that application as a representative GCP service:
 
-## Before-state
+`GitHub delivery → Artifact Registry → GKE backend/OpenSearch → Vertex AI → MariaDB VM/PD → GCS`
 
-Capacity run `36957682821` stopped at concurrency 1:
+with Secret Manager/Secret Sync, Workload Identity and repository-owned observability supporting the
+runtime.
 
-- two requests succeeded and a later request failed;
-- no valid queue/CPU/OpenSearch saturation point had been established;
-- the failing path was Terraform executable correctness rather than measured capacity.
+## Initial limitation
 
-A naïve continuation would have increased concurrency, nodes, replicas, or executor capacity while
-the workload itself was not yet a stable correctness prerequisite.
+The early GCP target was sufficient for AI evaluation but not for an infrastructure portfolio claim.
+It did not initially prove the full authenticated backend path, durable relational/object
+persistence, or immutable backend delivery.
 
-## Root mechanism work
+Running capacity tests against an evaluation pod would have omitted:
 
-The architecture audit found that several repository rules had been conflated:
+- authenticated API acceptance;
+- durable AnalysisJob queue/ownership behavior;
+- backend executor behavior;
+- MariaDB state;
+- source/result object persistence;
+- release identity and backend replacement behavior.
 
-- RAG/retrieval evidence was acting as a generated-resource allowlist;
-- example/editable Terraform was rejected for policy-like literal content;
-- a sensitive-credential detector could force a second model generation;
-- Terraform draft regex checks duplicated responsibilities owned by Terraform itself.
+The project therefore chose to assemble the smallest production-representative runtime first.
 
-Those rules could create false failures unrelated to whether the resulting draft was valid
-Terraform for the exact bundled provider.
+## Architecture decisions
 
-The selected boundary became:
+### Database hosting
 
-`retrieval guidance → generation → exact AWS provider resource existence → terraform init/validate`
+Three realistic directions were considered.
 
-with retrieval context advisory rather than authoritative resource eligibility.
+**Cloud SQL / MySQL**
 
-## Implementation and delivery evidence
+Deferred. MySQL 8.4 connected and applied earlier Flyway migrations but rejected the retained V003
+migration syntax. Treating Cloud SQL as a drop-in replacement would therefore require an intentional
+database migration and revalidation of Case B semantics.
 
-PR #190 implemented the simplified boundary and passed final static verification.
+**MariaDB inside the measured GKE cluster**
 
-A new backend image was then published from exact source
-`b420291fa1534184d2a260883df718cc96511505` in run `37015159218`:
+Rejected for the first representative runtime. Database CPU/memory/I/O pressure would share the same
+worker boundary as backend/OpenSearch and make later bottleneck attribution weaker.
 
-- immutable digest:
-  `sha256:0db599d2487a3f7850bd0b5e454fe04d9cb234ae840202c7ad01f1a147478419`;
-- source revision embedded in the image;
-- no mutable `latest` publication.
+**Dedicated Compute Engine VM running MariaDB 11.4**
 
-Run `37015932695` rolled out that exact digest:
+Selected. It preserved the proven MariaDB contract while separating database resource pressure from
+the GKE application worker. MariaDB data is backed by a dedicated Persistent Disk rather than the
+container writable layer.
 
-- previous digest checked before mutation;
-- target digest provenance verified;
-- Ready replicas = 1;
-- Available replicas = 1;
-- embedded source SHA matched;
-- backend health = UP.
+This is not a claim of database HA.
 
-## Same-scenario correctness gate
+### Object persistence
 
-Run `37016993776` repeated the frozen integrated request under the same source/image/fixture and
-concurrency 1.
+Cloud Storage implements the provider-neutral source/result object boundary. The selected runtime
+keeps source/result bytes independent of backend pod lifecycle.
 
-Attempt 1 passed:
+### Secret delivery
 
-- terminal `SUCCEEDED`;
-- result object persisted;
-- generated Terraform readable and non-empty.
+Secret Manager holds runtime secret containers and GKE native Secret Sync supplies the application
+secret into Kubernetes. Secret payloads are not Terraform-managed values.
 
-Attempt 2 failed:
+### Artifact delivery
 
-- terminal `FAILED`;
-- classification `CORRECTNESS_FAILURE`;
-- terminal category `terraform_validate_configuration`;
-- accepted attempts = `1/5`;
-- automatic whole-gate rerun = `false`.
+Artifact Registry provides the immutable backend image boundary. GitHub image publishing uses a
+dedicated short-lived WIF identity rather than a user-managed service-account key.
 
-This is stronger evidence than a rerun-until-green result. The corrected system no longer failed on
-the previous request-schema/sensitive policy boundary, but it still demonstrated real stochastic
-Terraform executable-validity variance.
+Infrastructure mutation and image publication remain distinct trust responsibilities.
 
-## Engineering decision
+## Live infrastructure evidence
 
-The project stops here for portfolio purposes.
+### Runtime dependencies
 
-The correct operational decision is not to keep adding diagnostics and retries until the same fixture
-eventually reaches 5/5. It is to state that capacity results are not trustworthy while the
-correctness prerequisite is variable, preserve that limitation, and avoid pretending that
-infrastructure tuning solved it.
+Run `36851221194` applied the reviewed dependency surface including:
 
-The useful engineering material is therefore:
+- private runtime GCS bucket;
+- MariaDB service account;
+- secret-access boundary;
+- dedicated MariaDB Persistent Disk;
+- dedicated MariaDB Compute Engine VM;
+- private database firewall boundary;
+- native GKE Secret Sync enablement.
 
-- detecting an invalid measurement premise;
-- separating RAG guidance, product policy, provider eligibility, and Terraform correctness;
-- using exact source/digest provenance for the deployed revision;
-- making live gates fail closed rather than rerun until lucky;
-- refusing to attribute correctness variance to infrastructure capacity;
-- preserving unresolved risk instead of expanding the project indefinitely.
+The database image was pinned to an exact MariaDB 11.4 digest.
 
-## Alternatives rejected
+### Kubernetes prerequisites
 
-- **Continue capacity testing anyway** — rejected because correctness failures contaminate capacity
-  attribution.
-- **Remove Terraform CLI validation** — rejected because it would recreate the previous false
-  success mode where invalid drafts were stored as successful output.
-- **Keep broadening RAG corpus until the gate passes** — rejected because the observed failure is not
-  currently evidence of retrieval failure.
-- **Add automatic regeneration on any Terraform validation failure** — rejected because it hides
-  failure frequency and can become a rerun-until-lucky mechanism.
-- **Continue implementing every C3–C8 item before portfolio closure** — rejected because it optimizes
-  for system completeness rather than the repository's primary success criterion.
+Run `36854218346` proved:
 
-## Residual risks and deferred engineering
+- synchronized DB password key exists without exposing the value;
+- internal JWKS runtime is available;
+- MariaDB Service/EndpointSlice is configured;
+- the backend Deployment was not accidentally introduced by the prerequisite step.
 
-Retained but not required for this portfolio case:
+## Full integrated path evidence
 
-- AI-generated Terraform can still fail `terraform validate` on repeated identical scenarios;
-- capacity saturation point is not established;
-- executor-aware load-harness semantics are not repaired;
-- repository declarative image and live image convergence remains follow-up work;
-- single-replica rollout availability has not been optimized;
-- integrated-path readiness and faulty-release rollback remain unproven;
-- full production unattended Terraform apply is outside the product claim.
+Run `36889896239` passed the representative application path:
+
+`authenticated upload → durable AnalysisJob → Vertex fact extraction/generation → Vertex embedding
+→ OpenSearch retrieval → GCS source/result persistence → terminal success → Terraform read-back`
+
+This matters because Case A's bounded evaluation environment did not claim this complete
+infrastructure/application path.
+
+## Backend-replacement durability evidence
+
+Run `36891629279` passed the replacement scenario:
+
+- backend pod replaced;
+- immutable backend image/source identity preserved;
+- durable AnalysisJob identity remained readable;
+- source GCS bytes remained readable;
+- result GCS bytes remained readable;
+- generated Terraform draft bytes remained readable;
+- Actuator/Prometheus remained reachable before and after replacement.
+
+This demonstrates that application pod replacement does not own the durable database/object result
+state used by the portfolio scenario.
+
+It does not prove multi-replica zero-downtime availability or database failover.
+
+## Immutable delivery evidence
+
+The delivery path uses exact revision identity instead of a mutable release label.
+
+Image publication run `37015159218` built source:
+
+`b420291fa1534184d2a260883df718cc96511505`
+
+and published digest:
+
+`sha256:0db599d2487a3f7850bd0b5e454fe04d9cb234ae840202c7ad01f1a147478419`
+
+The workflow:
+
+- verified `BUILD_SOURCE_REVISION`;
+- published no mutable `latest` tag;
+- resolved the remote digest.
+
+Rollout run `37015932695` then:
+
+- verified the expected previous deployed digest before mutation;
+- deployed the exact target digest;
+- reached Ready replicas = 1;
+- reached Available replicas = 1;
+- verified the embedded source revision;
+- reported backend health UP.
+
+This creates a defensible Git commit → image → deployed revision provenance chain.
+
+## Observability as supporting infrastructure
+
+Observability is deliberately a dependency of A/B/C, not a separate fourth case.
+
+Existing repository-owned signals include:
+
+- Actuator + Prometheus export;
+- analysis job started/succeeded/failed counters;
+- bounded failure categories;
+- total analysis duration;
+- provider-neutral stage duration and stage failure categories;
+- queue wait;
+- claim/dispatch/retry/recovery/cleanup metrics;
+- executor rejection;
+- `analysisJobId` MDC correlation;
+- source revision in logs.
+
+This split is intentional:
+
+- job-specific identity belongs in logs/MDC;
+- metrics use bounded dimensions such as stage/outcome/category;
+- prompts, object keys, raw exception messages and job IDs are not metric labels.
+
+The repository does not claim that `trace_id` / `span_id` are backed by a completed distributed
+tracing system, and it does not claim Grafana/OpenTelemetry/Cloud Trace/SLO alerting was completed.
+
+The existing signals are sufficient for the portfolio evidence because they supported concrete
+runtime and failure classification rather than serving as decorative dashboards.
+
+## Capacity experiment and stopping rule
+
+After the representative runtime existed, the project attempted the capacity baseline.
+
+Run `36957682821` stopped at concurrency 1 before a valid saturation point because the integrated
+workload experienced executable-Terraform correctness failure.
+
+No CPU/OpenSearch/executor saturation conclusion was fabricated from that run.
+
+The validation ownership was audited and false repository-owned policy rejection was removed. A
+later exact immutable revision was deployed and the bounded correctness gate was repeated.
+
+Run `37016993776`:
+
+- used the frozen source/image/fixture/runtime identity;
+- passed attempt 1;
+- failed attempt 2 with terminal `terraform_validate_configuration`;
+- stopped at 1/5;
+- did not automatically rerun the gate.
+
+The infrastructure conclusion is therefore narrow:
+
+> Do not tune GKE/runtime capacity against a workload whose correctness prerequisite is still
+> variable.
+
+This is a stopping decision, not the main Case C accomplishment.
+
+## Technical judgment demonstrated
+
+Case C can now explain:
+
+- why the evaluation-only target was not sufficient for infrastructure evidence;
+- why the database was isolated from the measured GKE worker;
+- why a managed MySQL migration was not forced after compatibility failure;
+- how private persistence and secret delivery were separated from pod lifecycle;
+- why GitHub infrastructure apply and image-publish identities were separated;
+- how immutable source/digest provenance prevents ambiguous release identity;
+- how backend replacement was tested against durable DB/object state;
+- how low-cardinality metrics and job-correlated logs supported operational validation;
+- why a contaminated capacity experiment was stopped instead of tuned until a desired graph
+  appeared.
+
+## Residual risks / deferred production hardening
+
+Not claimed as solved:
+
+- production saturation limit;
+- capacity tuning effectiveness;
+- HPA/replica/node/OpenSearch optimization;
+- zero-downtime multi-replica rollout;
+- faulty-release rollback;
+- integrated-path readiness/canary semantics;
+- MariaDB HA/automatic failover;
+- full tracing/dashboard/alerting platform;
+- declarative/live image convergence;
+- 5/5 generated Terraform reliability;
+- unattended production Terraform apply.
+
+These are future hardening items, not hidden failures.
 
 ## Case A compatibility
 
-This result does not invalidate Case A.
+Case A remains closed.
 
-Case A closed on retrieval-grounding coverage, negative-control behavior, repeated canonical
-evaluation, and a frozen holdout. Its final closure explicitly did **not** claim that Terraform
-structural validation proved deployment correctness or that generated Terraform had been
-plan/applied.
+Its material claim is retrieval grounding/generalization and negative-control behavior. It explicitly
+does not claim that every generated Terraform result is deployment-correct.
 
-The Case C failure adds a stricter downstream executable-validity observation. It does not negate the
-retrieval-grounding measurements that Case A actually claimed.
+The stricter Case C executable-validity evidence therefore does not invalidate the Case A retrieval
+result.
 
 ## Portfolio-ready summary
 
-> A capacity test on the GKE target failed before saturation because the AI-generated Terraform path
-> was not functionally stable. Instead of tuning infrastructure against a contaminated workload, I
-> separated retrieval guidance, repository policy, provider-resource eligibility, and Terraform CLI
-> correctness. I removed false policy gates, published and rolled out an immutable source-bound
-> backend image, and repeated the same integrated request under a fixed runtime identity. The first
-> attempt passed and the second failed real `terraform validate`, proving that remaining variance
-> belonged to generated-code correctness rather than measured GKE capacity. I therefore stopped the
-> capacity experiment, preserved the residual risk, and avoided claiming a bottleneck the evidence
-> could not support.
+> AI evaluation alone was not sufficient to make an infrastructure claim, so I assembled a
+> production-representative GCP path using GKE, Vertex/OpenSearch, a dedicated MariaDB VM with
+> Persistent Disk, GCS, Secret Manager/Secret Sync and Artifact Registry. I separated GitHub
+> infrastructure and image-publishing identities with WIF, pinned release identity from Git commit
+> to image digest, and verified the authenticated integrated path plus persistence across backend pod
+> replacement. Actuator/Prometheus metrics and job-correlated logs were used to validate the runtime
+> and classify failures without high-cardinality metric labels. When a capacity experiment later
+> failed on workload correctness before saturation, I stopped the experiment rather than attributing
+> the failure to GKE capacity. The remaining saturation, HA and rollback work is recorded as explicit
+> production hardening rather than being presented as completed.

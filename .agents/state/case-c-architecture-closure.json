@@ -17,7 +17,7 @@
     {
       "id": "C1",
       "title": "Executable Terraform Contract Decision and closure",
-      "status": "ACTIVE",
+      "status": "COMPLETE",
       "requires": [
         "C0"
       ],
@@ -97,7 +97,7 @@
     {
       "id": "C-ARCH-01",
       "severity": "BLOCKER",
-      "status": "IN_PROGRESS",
+      "status": "RESOLVED",
       "owner_phase": "C1",
       "title": "Generated Terraform envelope is not closed against bundled executable providers/resources",
       "blocks": [
@@ -107,7 +107,9 @@
       "evidence": [
         "backend/Dockerfile bundles Terraform 1.8.5 and hashicorp/aws 5.100.0 only",
         "VertexPromptBuilder guides AWS 5.100.0 but does not machine-enforce the executable provider/resource envelope",
-        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion"
+        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion",
+        "PR #182 merged as 40237e593530086b4649bfc8bc5499848c4b7165: backend image build derives a read-only request-time catalog from the exact checksum-pinned bundled hashicorp/aws 5.100.0 provider; generated Terraform is mechanically inspected against the request schema envelope and module/non-AWS deployable blocks fail closed",
+        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS"
       ],
       "acceptance": [
         "generated provider/resource set is mechanically constrained to an explicitly selected executable envelope",
@@ -117,7 +119,7 @@
     {
       "id": "C-ARCH-02",
       "severity": "BLOCKER",
-      "status": "IN_PROGRESS",
+      "status": "RESOLVED",
       "owner_phase": "C1",
       "title": "REQUIRED retrieval does not prove generated-resource grounding coverage",
       "blocks": [
@@ -127,7 +129,9 @@
       "evidence": [
         "RequiredGroundingPolicy only requires non-empty references for architecture output",
         "Case A already established that retrieval PASS alone does not prove grounding coverage",
-        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion"
+        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion",
+        "PR #182 tests prove the request candidate set is the union of extracted fact resource types and retrieved curated-reference resource types, unknown catalog resources fail before generation, and generated resources outside the request schema envelope fail closed",
+        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS"
       ],
       "acceptance": [
         "every generated infrastructure resource requiring provider evidence is covered by the selected grounding contract",
@@ -137,7 +141,7 @@
     {
       "id": "C-ARCH-03",
       "severity": "BLOCKER",
-      "status": "IN_PROGRESS",
+      "status": "RESOLVED",
       "owner_phase": "C1",
       "title": "Terraform executable validation collapses actionable init/validate diagnostics",
       "blocks": [
@@ -147,7 +151,9 @@
       "evidence": [
         "capacity run 36957682821 failed at concurrency 1 with offline Terraform initialization failure",
         "TerraformCliValidator captures bounded command output but returns a generic non-zero init reason",
-        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion"
+        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion",
+        "PR #182 implements bounded Terraform CLI categories INIT_TIMEOUT, PROVIDER_CLOSURE, INIT_CONFIGURATION, VALIDATE_TIMEOUT, VALIDATE_CONFIGURATION, and INTERNAL; observability tests prove raw HCL and credential fixture values are not emitted as metric labels",
+        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS"
       ],
       "acceptance": [
         "safe diagnostic taxonomy distinguishes actionable init/validate failure classes without exposing generated secrets",
@@ -266,7 +272,7 @@
     {
       "id": "C-ARCH-10",
       "severity": "HIGH",
-      "status": "IN_PROGRESS",
+      "status": "RESOLVED",
       "owner_phase": "C1",
       "title": "Generation recovery is failure-specific and can grow as ad-hoc exception handling",
       "blocks": [
@@ -274,7 +280,9 @@
       ],
       "evidence": [
         "generation has output-truncation retry and a separate hard-coded-sensitive-credential regeneration path",
-        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion"
+        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion",
+        "PR #182 consolidates generation recovery into a maximum two-call budget: truncation and sensitive-credential recovery share the same retry state, truncation followed by a sensitive second result makes no third call, and schema/CLI contract failures do not trigger regeneration",
+        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS"
       ],
       "acceptance": [
         "recovery policy is derived from an explicit generation/executable contract",

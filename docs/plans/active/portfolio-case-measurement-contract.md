@@ -444,7 +444,11 @@ DEFER-listed.
 
 ---
 
-# 4. Case C — Cloud Runtime Capacity & Safe Delivery
+# 4. Case C — GCP Production-Representative Runtime & Immutable Delivery
+
+> Portfolio closure is governed by the 2026-10-02 sufficiency amendment above. The capacity,
+> saturation, tuning and rollback requirements retained in this section are a future
+> production-hardening contract, not prerequisites for the closed portfolio case.
 
 ## 4.1 Operating scenario
 

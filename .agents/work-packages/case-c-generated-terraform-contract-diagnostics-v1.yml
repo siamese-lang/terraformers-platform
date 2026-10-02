@@ -1,8 +1,8 @@
 work_package:
   id: case-c-generated-terraform-contract-diagnostics-v1
-  status: AWAITING_APPROVAL
+  status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: "1f74e5305571d21e4e94eee4854cc3d6bdca7c55"
 
   goal: >
     Replace GeneratedTerraformContractViolation message-only observability with a closed three-value

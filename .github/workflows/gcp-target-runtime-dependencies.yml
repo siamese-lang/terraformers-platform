@@ -2022,7 +2022,14 @@ jobs:
                     ' "$backend_diagnostics"
                   )"
                   if [[ "$observed_error_class" == GeneratedTerraformContractViolation ]]; then
-                    current_failure_category="generated_terraform_contract_violation"
+                    case "$observed_category" in
+                      generated_terraform_contract_module|generated_terraform_contract_provider|generated_terraform_contract_request_schema)
+                        current_failure_category="$observed_category"
+                        ;;
+                      *)
+                        current_failure_category="unclassified"
+                        ;;
+                    esac
                   else
                     case "$observed_category" in
                       terraform_init_timeout|terraform_provider_closure|terraform_init_configuration|terraform_validate_timeout|terraform_validate_configuration|terraform_internal|provider_rate_limited|result_finalization|truncated_output|rejected_input|response_format|timeout|executor_rejected|validation|other)

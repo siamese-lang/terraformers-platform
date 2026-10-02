@@ -1,0 +1,159 @@
+work_package:
+  id: case-c-simplified-terraform-validation-v1
+  status: AWAITING_APPROVAL
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  goal: >
+    Implement the user-approved simplified Terraform draft contract: remove policy-only credential,
+    account-identifier and placeholder rejection; remove sensitive-credential regeneration; make
+    request-specific schema evidence advisory rather than a generated-resource allowlist; enrich
+    prompt schema context from retrieved reference content; retain exact local AWS provider and
+    Terraform CLI correctness checks; and fix C2 terminal failure-category selection.
+
+  decision_source:
+    - docs/plans/active/case-c-simplified-terraform-validation-decision.md
+
+  representative_case:
+    - Case C Cloud Runtime Capacity & Safe Delivery
+
+  engineering_axis:
+    - AI/RAG targeted improvement
+    - backend reliability
+    - observability from real failure diagnosis
+
+  trigger_evidence:
+    c2_run_id: 37003640318
+    analysis_job_id: 27fa157f-cc8f-45ab-8efd-63ac5e81a407
+    source_revision: 61accc9ee50bba57ae5fa9dff0074fdc01e970e4
+    terminal_category: generated_terraform_contract_request_schema
+    artifact_category: unclassified
+
+  activation:
+    bind_rule: >
+      Immediately before the first implementation write, read authoritative GitHub remote main
+      exactly once and bind that SHA to execution_base_sha. Do not automatically refresh or rebase.
+    stop_on_main_drift: true
+
+  allowed_paths:
+    - .agents/work-packages/case-c-simplified-terraform-validation-v1.yml
+    - .agents/state/case-c-architecture-closure.json
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformDraftValidator.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspector.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/GeneratedTerraformContractViolation.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProvider.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilder.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/TerraformDraftValidatorTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspectorTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisObservabilityTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilderTest.java
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+    - docs/evaluation/case-c-executable-terraform-contract.md
+    - docs/evaluation/case-c-repeated-correctness-stability.md
+    - docs/evaluation/case-c-simplified-terraform-validation.md
+    - docs/plans/active/case-c-executable-terraform-contract-decision.md
+    - docs/plans/active/case-c-simplified-terraform-validation-decision.md
+    - docs/plans/active/case-c-architecture-closure.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/portfolio-case-reassessment.md
+    - scripts/checks/case_c_architecture_ledger.py
+
+  prohibited_paths:
+    - frontend/**
+    - infra/terraform/**
+    - infra/kubernetes/**
+    - corpus/**
+    - evaluation/**
+    - docs/architecture/**
+    - AGENTS.md
+    - backend/Dockerfile
+    - backend/src/main/java/com/terraformers/modernization/reference/AwsProviderSchemaCatalog.java
+    - .github/workflows/** except .github/workflows/gcp-target-runtime-dependencies.yml
+
+  allowed_actions:
+    - inspect_repository
+    - bind_execution_base_once
+    - remove_policy_only_draft_rejection
+    - remove_sensitive_credential_regeneration
+    - retain_truncation_only_generation_retry
+    - make_request_schema_context_advisory
+    - enrich_schema_context_from_retrieved_reference_resource_blocks
+    - retain_exact_provider_catalog_validation
+    - retain_terraform_cli_validation
+    - correct_C2_terminal_failure_category_selection
+    - update_deterministic_tests
+    - append_direct_evidence
+    - sync_case_c_generated_state
+    - run_existing_checks
+    - create_pull_request
+    - inspect_CI_once
+    - perform_one_bounded_corrective_iteration_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - add_new_workflow
+    - add_new_standalone_verifier
+    - change_generation_model
+    - change_embedding_model
+    - change_retrieval_algorithm
+    - change_corpus
+    - change_provider_version
+    - change_terraform_version
+    - enable_non_AWS_provider
+    - enable_Terraform_modules
+    - run_terraform_plan_or_apply
+    - image_publication
+    - backend_rollout
+    - live_C2_execution
+    - capacity_baseline_execution
+    - C3_implementation
+
+  acceptance_criteria:
+    - policy_only_sensitive_literal_rejection_removed
+    - account_ID_and_account_scoped_ARN_policy_rejection_removed
+    - placeholder_TODO_example_word_policy_rejection_removed
+    - sensitive_credential_regeneration_removed
+    - truncation_is_the_only_generation_retry_path
+    - generation_provider_call_budget_remains_at_most_two
+    - retrieved_reference_content_resource_blocks_can_enrich_prompt_schema_context
+    - request_schema_context_is_not_a_generated_resource_allowlist
+    - generated_AWS_resource_must_exist_in_exact_local_provider_catalog
+    - nonexistent_or_non_AWS_generated_resource_still_fails
+    - Terraform_module_scope_remains_unchanged_and_unsupported
+    - Terraform_init_and_validate_remain_final_executable_checks
+    - C2_parser_uses_terminal_failure_category_not_earlier_informational_category
+    - C2_five_of_five_acceptance_is_unchanged
+    - no_new_workflow_or_standalone_verifier
+
+  validation:
+    required:
+      - targeted_backend_tests
+      - full_backend_local_verification
+      - existing_automatic_workflow_policy
+      - python3_scripts_checks_case_c_architecture_ledger_py_check
+      - git_diff_check
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_bound_execution_base
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - allowed_path_outside_scope_is_required
+    - provider_or_Terraform_version_change_becomes_required
+    - module_or_non_AWS_provider_support_becomes_required
+    - retrieval_algorithm_or_corpus_change_becomes_required
+    - C2_acceptance_would_need_to_change
+    - live_or_cost_action_is_requested_without_user_checkpoint
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    live_action_authorized: false
+    later_image_publish_rollout_and_C2_rerun_require_separate_user_approval: true
+    next_work_package_requires_user_approval: true

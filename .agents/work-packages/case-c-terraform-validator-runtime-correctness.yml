@@ -1,0 +1,198 @@
+work_package:
+  id: case-c-terraform-validator-runtime-correctness
+  status: APPROVED_CONTRACT_PENDING_MERGE
+
+  contract_base_sha: "78246030c4de28acca9f512526c249fef15859d8"
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: null
+
+  goal: >
+    Restore single-request correctness for the already-proven Case C integrated backend path by
+    removing a false Terraform executable-validation failure caused by placing the normal offline
+    provider initialization time on the same 20-second boundary as the hard initialization timeout.
+    This work package is a correctness repair, not a capacity-tuning task.
+
+  engineering_axis:
+    - backend reliability
+    - observability based on real failure diagnosis
+
+  representative_case:
+    - Case C Cloud Runtime Capacity & Safe Delivery
+
+  observed_evidence:
+    failed_live_validation:
+      run_id: 36945994734
+      analysis_job_id: "67f52484-53ed-4316-a0be-40b5415a2e8f"
+      stage: analysis_execution
+      category: other
+      error_class: IllegalStateException
+      reason: "Terraform CLI initialization timed out"
+      stage_elapsed_ms: 44905
+      jwt_jwks_boundary: PASS
+      authenticated_upload: PASS
+      jwks_restore: PASS
+    runtime_probe:
+      backend_image: "asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:214c5de9a731a8ef571413f0d73d37499f0ff32b16ee817d6462986abdce4d22"
+      embedded_backend_source_sha: "314ed7b2ac2d84de7aa04633e7405ea6e1a91e9b"
+      terraform_version: "1.8.5"
+      bundled_aws_provider_version: "5.100.0"
+      bundled_aws_provider_bytes: 706945176
+      pinned_provider_init:
+        exit_code: 0
+        observed_elapsed_seconds: 20
+      inferred_provider_init:
+        exit_code: 0
+        observed_elapsed_seconds: 10
+      conclusion: >
+        Offline initialization succeeds with the bundled provider, but the pinned-provider path can
+        legitimately consume the entire current 20-second hard timeout. Small runtime variation can
+        therefore turn a valid request into a false FAILED AnalysisJob.
+
+  decision:
+    selected: >
+      Split Terraform CLI initialization and validation timeout budgets. Give initialization a
+      bounded 60-second timeout while retaining the existing 20-second validation timeout.
+    rationale:
+      - "The measured normal pinned-provider initialization reached the existing 20-second boundary."
+      - "The provider is already bundled locally; no provider/version/runtime architecture change is required."
+      - "Keeping validate at 20 seconds avoids widening unrelated Terraform CLI execution."
+      - "No retry is added, so a genuinely stuck initialization still fails closed within a bounded interval."
+    rejected_alternatives:
+      keep_20_seconds:
+        reason: "Already proven to create false failures at the measured normal runtime boundary."
+      raise_one_shared_timeout_for_init_and_validate:
+        reason: "Would widen validation execution without evidence that validation needs more headroom."
+      change_provider_or_remove_executable_validation:
+        reason: "Would change the correctness boundary instead of repairing the measured timeout defect."
+      tune_cpu_memory_or_gke_capacity:
+        reason: "No capacity evidence justifies runtime sizing changes before the frozen Case C baseline."
+
+  activation:
+    bind_rule: >
+      After this Work Package contract is merged, immediately before the first implementation write,
+      read authoritative GitHub remote main exactly once and bind that SHA to execution_base_sha.
+      Codex isolated checkout may use a synthetic/local SHA; remote identity is verified by ChatGPT
+      and Codex gates on clean exact-base content identity. Do not require local branch/SHA equality
+      with remote when remote access is unavailable.
+    stop_on_main_drift: true
+    implementation_executor: Codex Cloud
+    live_execution_requires_separate_user_checkpoint: true
+
+  allowed_paths:
+    - .agents/work-packages/case-c-terraform-validator-runtime-correctness.yml
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformCliValidator.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/TerraformCliValidatorTest.java
+
+  prohibited_paths:
+    - backend/** except the two explicit TerraformCliValidator paths above
+    - frontend/**
+    - infra/**
+    - evaluation/**
+    - corpus/**
+    - .github/workflows/**
+    - AGENTS.md
+    - docs/**
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - bind_execution_base_once
+    - split_initialization_and_validation_timeout_budgets
+    - add_or_adjust_targeted_unit_tests
+    - run_existing_targeted_backend_tests
+    - run_existing_backend_verification_if_available
+    - create_pull_request
+    - inspect_CI_once
+    - perform_one_bounded_corrective_iteration_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - image_publication
+    - backend_revision_rollout
+    - live_validation
+    - capacity_baseline
+    - terraform_plan
+    - terraform_apply
+    - IAM_change
+    - GKE_change
+    - backend_replica_change
+    - backend_CPU_or_memory_change
+    - executor_tuning
+    - OpenSearch_change
+    - provider_version_change
+    - Terraform_version_change
+    - retry_addition
+    - validator_bypass
+    - acceptance_threshold_redefinition
+    - next_work_package_start
+
+  implementation_contract:
+    initialization_timeout_seconds: 60
+    validation_timeout_seconds: 20
+    preserve:
+      - "/usr/local/bin/terraform"
+      - "/opt/terraform-plugins"
+      - "-backend=false"
+      - "-input=false"
+      - "-get=false"
+      - "-no-color"
+      - "fail-closed validation semantics"
+      - "bounded process termination"
+      - "bounded diagnostic capture"
+      - "workspace cleanup"
+    required_code_shape: >
+      The production constructor must use separate initialization and validation timeout values.
+      Both command executions must remain bounded. Do not add retries, network fallbacks, provider
+      downloads, or configuration-driven tuning in this corrective unit.
+
+  acceptance_criteria:
+    static_and_unit:
+      - "init command receives a 60-second timeout"
+      - "validate command receives a 20-second timeout"
+      - "existing offline init command arguments remain unchanged"
+      - "existing validate command arguments remain unchanged"
+      - "initialization timeout still fails closed with the existing safe reason"
+      - "validation timeout still fails closed with the existing safe reason"
+      - "workspace cleanup behavior remains covered"
+      - "targeted TerraformCliValidator tests pass"
+    runtime_checkpoint_after_merge:
+      - "new backend image publication requires separate user approval"
+      - "rollout requires separate user approval"
+      - "same authenticated integrated live-validation path must reach SUCCEEDED before capacity baseline resumes"
+      - "capacity baseline runtime identity must be re-frozen to the new immutable backend image/source SHA"
+
+  residual_risk:
+    - >
+      A 60-second initialization budget is bounded headroom derived from a measured 20-second normal
+      runtime sample, not a performance SLO. The later capacity baseline may still reveal that
+      Terraform executable validation is a material throughput cost.
+    - >
+      This repair does not optimize provider initialization, change the 706,945,176-byte bundled AWS
+      provider, or prove behavior under concurrent load.
+    - >
+      Live success after this repair does not by itself prove the Case C saturation or rollback
+      objectives.
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - "current main differs from bound execution_base_sha after activation"
+    - "allowed path outside scope is required"
+    - "provider or Terraform version change becomes required"
+    - "runtime sizing or capacity tuning becomes required"
+    - "failure class changes"
+    - "same failure repeats after one bounded corrective iteration"
+    - "live or cloud mutation is requested without a separate user checkpoint"
+    - "acceptance criteria would need to change"
+
+  completion:
+    contract_merge_requires_user_approval: true
+    implementation_pr_merge_requires_user_approval: true
+    image_publication_requires_user_approval: true
+    rollout_requires_user_approval: true
+    live_validation_requires_user_approval: true
+    capacity_baseline_resume_requires_user_approval: true
+    next_work_package_requires_user_approval: true
+
+  next_checkpoint: CONTRACT_MERGE_APPROVAL

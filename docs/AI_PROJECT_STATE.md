@@ -27,11 +27,13 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Capacity baseline: **DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE**
 - Current phase: **C8 — Case C evidence closure (COMPLETE)**
 - Open blockers: none
+- Selected case: **GCP Production-Representative Runtime & Immutable Delivery**
+- Observability role: supporting evidence across A/B/C; no separate Case D required
 - Durable issue register: .agents/state/case-c-architecture-closure.json
 - Generated plan: [Case C Architecture Closure](plans/active/case-c-architecture-closure.md)
 - Portfolio closure: [Case C Final Portfolio Closure](evaluation/case-c-portfolio-closure.md)
-- Failed capacity run 36957682821 and C2 run 37016993776 are retained as evidence, not rerun obligations.
-- Capacity and deferred hardening phases reopen only for a new operational requirement or explicit user-approved portfolio revision.
+- Failed capacity run 36957682821 and C2 run 37016993776 are retained as stopping evidence, not the primary Case C claim.
+- Deferred hardening reopens only for a new operational requirement or explicit user-approved portfolio revision.
 <!-- CASE_C_ARCHITECTURE_CLOSURE:END -->
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**

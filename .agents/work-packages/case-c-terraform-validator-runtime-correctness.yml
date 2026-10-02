@@ -1,10 +1,10 @@
 work_package:
   id: case-c-terraform-validator-runtime-correctness
-  status: APPROVED_CONTRACT_PENDING_MERGE
+  status: ACTIVE
 
   contract_base_sha: "78246030c4de28acca9f512526c249fef15859d8"
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: null
+  execution_base_sha: "cd12fe0de2552b2a941bb9b26f9a534b0c4970bb"
 
   goal: >
     Restore single-request correctness for the already-proven Case C integrated backend path by

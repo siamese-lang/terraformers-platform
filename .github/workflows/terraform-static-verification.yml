@@ -115,7 +115,7 @@ jobs:
               "gcloud storage rm --recursive",
               "terraform plan -destroy",
               "terraform apply -no-color -input=false",
-              "Terraform managed state: \`empty\`",
+              "Terraform managed state: `empty`",
           ]:
               if marker not in teardown_workflow:
                   raise SystemExit(f"missing GCP teardown workflow marker: {marker}")

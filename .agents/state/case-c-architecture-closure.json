@@ -17,7 +17,7 @@
     {
       "id": "C1",
       "title": "Executable Terraform Contract Decision and closure",
-      "status": "AWAITING_DECISION_APPROVAL",
+      "status": "ACTIVE",
       "requires": [
         "C0"
       ],
@@ -97,7 +97,7 @@
     {
       "id": "C-ARCH-01",
       "severity": "BLOCKER",
-      "status": "OPEN",
+      "status": "IN_PROGRESS",
       "owner_phase": "C1",
       "title": "Generated Terraform envelope is not closed against bundled executable providers/resources",
       "blocks": [
@@ -106,7 +106,8 @@
       ],
       "evidence": [
         "backend/Dockerfile bundles Terraform 1.8.5 and hashicorp/aws 5.100.0 only",
-        "VertexPromptBuilder guides AWS 5.100.0 but does not machine-enforce the executable provider/resource envelope"
+        "VertexPromptBuilder guides AWS 5.100.0 but does not machine-enforce the executable provider/resource envelope",
+        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion"
       ],
       "acceptance": [
         "generated provider/resource set is mechanically constrained to an explicitly selected executable envelope",
@@ -116,7 +117,7 @@
     {
       "id": "C-ARCH-02",
       "severity": "BLOCKER",
-      "status": "OPEN",
+      "status": "IN_PROGRESS",
       "owner_phase": "C1",
       "title": "REQUIRED retrieval does not prove generated-resource grounding coverage",
       "blocks": [
@@ -125,7 +126,8 @@
       ],
       "evidence": [
         "RequiredGroundingPolicy only requires non-empty references for architecture output",
-        "Case A already established that retrieval PASS alone does not prove grounding coverage"
+        "Case A already established that retrieval PASS alone does not prove grounding coverage",
+        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion"
       ],
       "acceptance": [
         "every generated infrastructure resource requiring provider evidence is covered by the selected grounding contract",
@@ -135,7 +137,7 @@
     {
       "id": "C-ARCH-03",
       "severity": "BLOCKER",
-      "status": "OPEN",
+      "status": "IN_PROGRESS",
       "owner_phase": "C1",
       "title": "Terraform executable validation collapses actionable init/validate diagnostics",
       "blocks": [
@@ -144,7 +146,8 @@
       ],
       "evidence": [
         "capacity run 36957682821 failed at concurrency 1 with offline Terraform initialization failure",
-        "TerraformCliValidator captures bounded command output but returns a generic non-zero init reason"
+        "TerraformCliValidator captures bounded command output but returns a generic non-zero init reason",
+        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion"
       ],
       "acceptance": [
         "safe diagnostic taxonomy distinguishes actionable init/validate failure classes without exposing generated secrets",
@@ -263,14 +266,15 @@
     {
       "id": "C-ARCH-10",
       "severity": "HIGH",
-      "status": "OPEN",
+      "status": "IN_PROGRESS",
       "owner_phase": "C1",
       "title": "Generation recovery is failure-specific and can grow as ad-hoc exception handling",
       "blocks": [
         "C2"
       ],
       "evidence": [
-        "generation has output-truncation retry and a separate hard-coded-sensitive-credential regeneration path"
+        "generation has output-truncation retry and a separate hard-coded-sensitive-credential regeneration path",
+        "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion"
       ],
       "acceptance": [
         "recovery policy is derived from an explicit generation/executable contract",
@@ -334,5 +338,44 @@
         "rule": "architecture choice, acceptance change, severity/ownership change, residual-risk acceptance, or scope expansion"
       }
     }
+  },
+  "c1_decision": {
+    "status": "SELECTED_USER_APPROVED",
+    "approved_on": "2026-10-02",
+    "selected": "HYBRID_CURATED_RAG_PLUS_LOCAL_AWS_PROVIDER_SCHEMA_CATALOG",
+    "operating_boundary": {
+      "terraform_version": "1.8.5",
+      "provider_source": "registry.terraform.io/hashicorp/aws",
+      "provider_version": "5.100.0",
+      "corpus_role": "curated project patterns, decisions, representative examples; not an exhaustive AWS provider encyclopedia",
+      "schema_role": "authoritative executable resource schema for the exact bundled AWS provider",
+      "schema_distribution": "generated during backend image build from the exact bundled provider; not committed as a full generated schema dump and not fetched from the registry at request time"
+    },
+    "request_context_contract": [
+      "fact extraction may identify any aws_[a-z0-9_]+ resource type, not only types already present in the curated corpus",
+      "candidate resource types are the bounded union of extracted fact resource types and resource types carried by retrieved curated references",
+      "candidate types must exist in the exact local AWS 5.100.0 schema catalog before schema evidence is injected",
+      "only the request-relevant compact schema summaries are added to generation context",
+      "a resource does not need a curated corpus document when facts identify it and the exact provider catalog supports it",
+      "generated deployable AWS resource types must remain within the request candidate set and exact provider catalog",
+      "module blocks and non-AWS deployable providers are outside the C1 executable envelope"
+    ],
+    "recovery_contract": [
+      "generation provider-call budget is at most two",
+      "existing output-truncation compact retry and sensitive-credential recovery share the same two-call budget",
+      "a new contract/CLI failure class does not automatically gain another regeneration path",
+      "second-attempt contract failure and Terraform CLI executable failure fail closed"
+    ],
+    "diagnostic_contract": [
+      "Terraform init timeout is distinct from init non-zero failure",
+      "provider-closure/init-configuration/validate-configuration/internal CLI classes are represented by bounded stable categories",
+      "raw generated Terraform, credentials, and unbounded CLI output are not emitted as diagnostics"
+    ],
+    "rejected": [
+      "keep generation grounded only to the current 30-resource curated corpus",
+      "embed and ingest the entire AWS Provider documentation set into OpenSearch",
+      "query the public Terraform Registry dynamically on each analysis request",
+      "add provider-specific retries one failure class at a time"
+    ]
   }
 }

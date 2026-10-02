@@ -23,14 +23,14 @@ public class GeneratedTerraformContractInspector {
         Matcher matcher = DEPLOYABLE.matcher(source);
         while (matcher.find()) {
             if (matcher.group(1).equals("module")) {
-                throw new GeneratedTerraformContractViolation("module blocks are outside the executable contract");
+                throw new GeneratedTerraformContractViolation(\n                        GeneratedTerraformContractViolation.Reason.MODULE_BLOCK);
             }
             String type = matcher.group(2);
             if (!type.startsWith("aws_") || !catalog.contains(type)) {
-                throw new GeneratedTerraformContractViolation("generated resource is outside the AWS provider contract");
+                throw new GeneratedTerraformContractViolation(\n                        GeneratedTerraformContractViolation.Reason.RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT);
             }
             if (!evidence.covers(type)) {
-                throw new GeneratedTerraformContractViolation("generated resource is outside the request schema envelope");
+                throw new GeneratedTerraformContractViolation(\n                        GeneratedTerraformContractViolation.Reason.RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE);
             }
         }
     }

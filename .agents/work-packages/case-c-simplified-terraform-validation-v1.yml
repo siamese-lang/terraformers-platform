@@ -51,6 +51,8 @@ work_package:
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilderTest.java
+    - backend/src/test/java/com/terraformers/modernization/evaluation/gemini/GeminiGenerationComparisonTest.java
+    - backend/src/test/java/com/terraformers/modernization/evaluation/opus/OpusGenerationEvaluationTest.java
     - .github/workflows/gcp-target-runtime-dependencies.yml
     - docs/evaluation/case-c-executable-terraform-contract.md
     - docs/evaluation/case-c-repeated-correctness-stability.md
@@ -139,6 +141,16 @@ work_package:
       - git_diff_check
 
   auto_repair_limit: 1
+  repair_history:
+    - iteration: 1
+      trigger: Backend Local Verification run 37010410994
+      failure_class: STALE_TEST_CONTRACT
+      scope:
+        - backend/src/test/java/com/terraformers/modernization/evaluation/gemini/GeminiGenerationComparisonTest.java
+        - backend/src/test/java/com/terraformers/modernization/evaluation/opus/OpusGenerationEvaluationTest.java
+      decision: >
+        User-approved bounded scope expansion on 2026-10-02. Update only stale placeholder-failure
+        expectations to the selected simplified draft contract; do not change production behavior.
 
   stop_on:
     - current_main_differs_from_bound_execution_base

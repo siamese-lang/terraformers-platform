@@ -102,6 +102,8 @@ jobs:
           apply_bootstrap = Path("scripts/deploy/bootstrap_gcp_target_apply.sh").read_text(encoding="utf-8")
           if "roles/artifactregistry.admin" not in apply_bootstrap:
               raise SystemExit("apply bootstrap is missing Artifact Registry administration required for repository creation")
+          if "roles/iam.serviceAccountDeleter" not in apply_bootstrap:
+              raise SystemExit("apply bootstrap is missing narrow service-account deletion required for final teardown")
 
           teardown_workflow = Path(".github/workflows/gcp-target-runtime-teardown.yml").read_text(encoding="utf-8")
           for marker in [
@@ -109,6 +111,8 @@ jobs:
               "environment: gcp-target-plan",
               "environment: gcp-target-apply",
               "DESTROY_REVIEWED_GCP_TARGET_RUNTIME_29",
+              "Verify apply identity has exact teardown permissions",
+              "iam.serviceAccounts.delete",
               "--operation teardown",
               "--expected-delete-count",
               "kubectl delete namespace terraformers-target",

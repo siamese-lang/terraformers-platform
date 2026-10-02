@@ -46,10 +46,19 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
     ) {
         List<ReferenceDocument> safeReferences = references == null ? List.of() : List.copyOf(references);
         try {
-            return invoke(source, safeReferences, false);
+            return invoke(source, safeReferences, false, false, false);
         } catch (VertexOutputTruncatedException exception) {
-            return invoke(source, safeReferences, true);
+            return invoke(source, safeReferences, true, true, false);
         }
+    }
+
+    public AnalysisGenerationResult regenerateAfterSensitiveCredential(
+            AnalysisRequestContext context,
+            ObjectContent source,
+            List<ReferenceDocument> references
+    ) {
+        List<ReferenceDocument> safeReferences = references == null ? List.of() : List.copyOf(references);
+        return invoke(source, safeReferences, false, true, true);
     }
 
     GenerateContentConfig generationConfig() {
@@ -62,17 +71,21 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
         return builder.build();
     }
 
-    private AnalysisGenerationResult invoke(
+    AnalysisGenerationResult invoke(
             ObjectContent source,
             List<ReferenceDocument> references,
-            boolean compact
+            boolean compact,
+            boolean retryOccurred,
+            boolean sensitiveCredentialRecovery
     ) {
         String modelId = properties.requireGenerationModelId();
         GenerateContentConfig config = generationConfig();
 
         Content content = Content.fromParts(
                 Part.fromBytes(source.bytes(), source.metadata().contentType()),
-                Part.fromText(promptBuilder.build(source, references, compact))
+                Part.fromText(sensitiveCredentialRecovery
+                        ? promptBuilder.buildSensitiveCredentialRecovery(source, references)
+                        : promptBuilder.build(source, references, compact))
         );
 
         GenerateContentResponse response = client.models.generateContent(modelId, content, config);
@@ -104,16 +117,16 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                     text,
                     finishReason == null ? "" : finishReason.toString(),
                     outputTokens,
-                    compact
+                    retryOccurred
             );
         } catch (AnalysisInputRejectedException exception) {
-            if (exception.retryOccurred() == compact) {
+            if (exception.retryOccurred() == retryOccurred) {
                 throw exception;
             }
             throw new AnalysisInputRejectedException(
                     exception.classification(),
                     exception.classificationConfidence(),
-                    compact,
+                    retryOccurred,
                     exception.getCause()
             );
         }

@@ -3,7 +3,11 @@ package com.terraformers.modernization.analysis.vertex;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
@@ -14,6 +18,7 @@ import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
 import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
+import com.terraformers.modernization.analysis.TerraformDraftValidator;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceQuery;
@@ -66,7 +71,8 @@ class VertexAnalysisProviderTest {
                 "STOP", 10, false
         ));
         VertexAnalysisProvider provider = new VertexAnalysisProvider(
-                objectReader, retriever, properties, factsExtractor, textWithoutResourceIdentifiers, generationStage);
+                objectReader, retriever, properties, factsExtractor, textWithoutResourceIdentifiers, generationStage,
+                new TerraformDraftValidator());
 
         provider.analyze(new AnalysisRequestContext(
                 "job", "project", "bucket", "key.png", "correlation", AnalysisMode.INTEGRATED_JAVA));
@@ -107,6 +113,71 @@ class VertexAnalysisProviderTest {
         }
     }
 
+    @Test
+    void safeFirstGenerationDoesNotRecoverAndRunsUpstreamStagesOnce() {
+        ReferenceRetriever retriever = mock(ReferenceRetriever.class);
+        List<ReferenceDocument> references = List.of(reference());
+        when(retriever.retrieve(any())).thenReturn(references);
+        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
+        when(generationStage.generate(any(), any(), any())).thenReturn(safeGeneration());
+        ProviderFixture fixture = fixture(retriever, generationStage);
+        AnalysisRequestContext context = context();
+
+        fixture.provider().analyze(context);
+
+        verify(generationStage, times(1)).generate(same(context), same(fixture.source()), same(references));
+        verify(generationStage, never()).regenerateAfterSensitiveCredential(any(), any(), any());
+        verify(fixture.factsExtractor(), times(1)).extract(same(fixture.source()));
+        verify(retriever, times(1)).retrieve(any());
+    }
+
+    @Test
+    void sensitiveFirstGenerationRecoversOnceWithSameSourceAndReferences() {
+        ReferenceRetriever retriever = mock(ReferenceRetriever.class);
+        List<ReferenceDocument> references = List.of(reference());
+        when(retriever.retrieve(any())).thenReturn(references);
+        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
+        when(generationStage.generate(any(), any(), any())).thenReturn(sensitiveGeneration());
+        when(generationStage.regenerateAfterSensitiveCredential(any(), any(), any())).thenReturn(safeGeneration());
+        ProviderFixture fixture = fixture(retriever, generationStage);
+        AnalysisRequestContext context = context();
+
+        var result = fixture.provider().analyze(context);
+
+        assertThat(result.terraformCode()).isEqualTo(safeGeneration().terraformCode());
+        verify(generationStage, times(1)).generate(same(context), same(fixture.source()), same(references));
+        verify(generationStage, times(1)).regenerateAfterSensitiveCredential(
+                same(context), same(fixture.source()), same(references));
+        verify(fixture.factsExtractor(), times(1)).extract(same(fixture.source()));
+        verify(retriever, times(1)).retrieve(any());
+    }
+
+    @Test
+    void unrelatedInvalidFirstGenerationDoesNotRecover() {
+        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
+        when(generationStage.generate(any(), any(), any())).thenReturn(generation("placeholder output"));
+        VertexAnalysisProvider provider = provider(query -> List.of(reference()), generationStage);
+
+        provider.analyze(context());
+
+        verify(generationStage, never()).regenerateAfterSensitiveCredential(any(), any(), any());
+    }
+
+    @Test
+    void sensitiveRecoveryIsReturnedWithoutSecondProviderRetry() {
+        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
+        when(generationStage.generate(any(), any(), any())).thenReturn(sensitiveGeneration());
+        when(generationStage.regenerateAfterSensitiveCredential(any(), any(), any()))
+                .thenReturn(sensitiveGeneration());
+        VertexAnalysisProvider provider = provider(query -> List.of(reference()), generationStage);
+
+        var result = provider.analyze(context());
+
+        verify(generationStage, times(1)).regenerateAfterSensitiveCredential(any(), any(), any());
+        assertThat(new TerraformDraftValidator().isHardCodedSensitiveCredentialFailure(
+                new TerraformDraftValidator().validate(result.terraformCode()))).isTrue();
+    }
+
     private VertexAnalysisProvider provider(
             ReferenceRetriever retriever,
             VertexGenerationStage generationStage
@@ -119,7 +190,21 @@ class VertexAnalysisProviderTest {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
         properties.setRetrievalMode(RetrievalMode.REQUIRED);
         return new VertexAnalysisProvider(objectReader, retriever, properties, factsExtractor,
-                new RetrievalQueryTextBuilder(), generationStage);
+                new RetrievalQueryTextBuilder(), generationStage, new TerraformDraftValidator());
+    }
+
+    private ProviderFixture fixture(ReferenceRetriever retriever, VertexGenerationStage generationStage) {
+        ObjectContent source = source();
+        ObjectReader objectReader = mock(ObjectReader.class);
+        when(objectReader.readContent(any())).thenReturn(source);
+        VertexArchitectureFactsExtractor factsExtractor = mock(VertexArchitectureFactsExtractor.class);
+        when(factsExtractor.extract(source)).thenReturn(new ArchitectureRetrievalFacts(
+                "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
+        AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
+        properties.setRetrievalMode(RetrievalMode.REQUIRED);
+        return new ProviderFixture(new VertexAnalysisProvider(
+                objectReader, retriever, properties, factsExtractor, new RetrievalQueryTextBuilder(),
+                generationStage, new TerraformDraftValidator()), source, factsExtractor);
     }
 
     private ObjectContent source() {
@@ -137,8 +222,32 @@ class VertexAnalysisProviderTest {
         );
     }
 
+    private AnalysisGenerationResult safeGeneration() {
+        return generation("resource \"aws_vpc\" \"main\" { cidr_block = \"10.0.0.0/16\" }");
+    }
+
+    private AnalysisGenerationResult sensitiveGeneration() {
+        return generation("resource \"aws_db_instance\" \"main\" { password = \"unsafe-example\" }");
+    }
+
+    private AnalysisGenerationResult generation(String terraform) {
+        return new AnalysisGenerationResult(
+                "vertex:test", AnalysisInputClassification.ARCHITECTURE_DIAGRAM, 1.0,
+                terraform, "VPC", List.of("VPC"), List.of(), List.of(), "STOP", 10, false);
+    }
+
+    private ReferenceDocument reference() {
+        return new ReferenceDocument("ref", "title", "content", 1.0);
+    }
+
     private AnalysisRequestContext context() {
         return new AnalysisRequestContext(
                 "job", "project", "bucket", "key.png", "correlation", AnalysisMode.INTEGRATED_JAVA);
     }
+
+    private record ProviderFixture(
+            VertexAnalysisProvider provider,
+            ObjectContent source,
+            VertexArchitectureFactsExtractor factsExtractor
+    ) {}
 }

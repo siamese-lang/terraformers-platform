@@ -7,6 +7,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class TerraformDraftValidator {
 
+    private static final String HARD_CODED_SENSITIVE_CREDENTIAL_REASON =
+            "generated Terraform contains a hard-coded sensitive credential";
+
     private static final Pattern RESOURCE_OR_MODULE = Pattern.compile("(?m)^\\s*(resource|module)\\s+\\\"[^\\\"]+\\\"");
     private static final Pattern ONLY_META_BLOCKS = Pattern.compile("(?s)^(\\s*(terraform|provider)\\s*(\\\"[^\\\"]+\\\")?\\s*\\{[^{}]*(?:\\{[^{}]*}[^{}]*)*}\\s*)+$");
     private static final Pattern STRUCTURED_RESOURCE_OR_MODULE = Pattern.compile("(?ms)^\\s*(resource|module)\\s+\"[^\"]+\"(?:\\s+\"[^\"]+\")?\\s*\\{.*?(=|^\\s*[A-Za-z_][A-Za-z0-9_-]*\\s*\\{).*?\\}");
@@ -31,7 +34,7 @@ public class TerraformDraftValidator {
             return invalid(sanitized, "generated Terraform appears to be placeholder/example output");
         }
         if (containsHardCodedSensitiveCredential(sanitized)) {
-            return invalid(sanitized, "generated Terraform contains a hard-coded sensitive credential");
+            return invalid(sanitized, HARD_CODED_SENSITIVE_CREDENTIAL_REASON);
         }
         if (containsAccountSpecificAwsIdentifier(sanitized)) {
             return invalid(sanitized, "generated Terraform contains an account-specific AWS identifier");
@@ -46,6 +49,12 @@ public class TerraformDraftValidator {
             return invalid(sanitized, "generated Terraform is not a structurally usable HCL draft");
         }
         return new TerraformDraftValidation(true, sanitized, null);
+    }
+
+    public boolean isHardCodedSensitiveCredentialFailure(TerraformDraftValidation validation) {
+        return validation != null
+                && !validation.valid()
+                && HARD_CODED_SENSITIVE_CREDENTIAL_REASON.equals(validation.reason());
     }
 
     public String stripMarkdownFences(String candidate) {

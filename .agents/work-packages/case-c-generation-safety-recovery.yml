@@ -1,10 +1,10 @@
 work_package:
   id: case-c-generation-safety-recovery
-  status: APPROVED_CONTRACT_PENDING_MERGE
+  status: ACTIVE
 
   contract_base_sha: "006e570f99d1eec2dd712a6dd5ee3ce1af991ca8"
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: null
+  execution_base_sha: "306260ef103e05d717e927705683c841e026dbcd"
 
   goal: >
     Restore deterministic single-request correctness for the Case C integrated Vertex path when

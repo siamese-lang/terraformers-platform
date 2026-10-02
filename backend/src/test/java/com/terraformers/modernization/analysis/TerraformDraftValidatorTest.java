@@ -60,6 +60,7 @@ class TerraformDraftValidatorTest {
         assertThat(validation.reason()).isEqualTo(
                 "generated Terraform contains a hard-coded sensitive credential");
         assertThat(validation.reason()).doesNotContain("ChangeMeSafely123!");
+        assertThat(validator.isHardCodedSensitiveCredentialFailure(validation)).isTrue();
     }
 
     @Test
@@ -215,6 +216,19 @@ class TerraformDraftValidatorTest {
         assertThat(validation.valid()).isFalse();
         assertThat(validation.reason()).isEqualTo(
                 "generated Terraform appears to be placeholder/example output");
+        assertThat(validator.isHardCodedSensitiveCredentialFailure(validation)).isFalse();
+    }
+
+    @Test
+    void doesNotClassifyValidDraftOrNullAsSensitiveCredentialFailure() {
+        TerraformDraftValidation valid = validator.validate("""
+                resource "aws_db_instance" "database" {
+                  password = var.db_password
+                }
+                """);
+
+        assertThat(validator.isHardCodedSensitiveCredentialFailure(valid)).isFalse();
+        assertThat(validator.isHardCodedSensitiveCredentialFailure(null)).isFalse();
     }
 
     private void assertSensitiveLiteralRejected(String attribute, String value) {

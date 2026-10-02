@@ -9,6 +9,8 @@ import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
+import com.terraformers.modernization.analysis.TerraformDraftValidation;
+import com.terraformers.modernization.analysis.TerraformDraftValidator;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceQuery;
@@ -37,6 +39,7 @@ public class VertexAnalysisProvider implements AnalysisProvider {
     private final VertexArchitectureFactsExtractor factsExtractor;
     private final RetrievalQueryTextBuilder queryTextBuilder;
     private final VertexGenerationStage generationStage;
+    private final TerraformDraftValidator terraformDraftValidator;
 
     public VertexAnalysisProvider(
             ObjectReader objectReader,
@@ -44,7 +47,8 @@ public class VertexAnalysisProvider implements AnalysisProvider {
             AnalysisRuntimeProperties properties,
             VertexArchitectureFactsExtractor factsExtractor,
             RetrievalQueryTextBuilder queryTextBuilder,
-            VertexGenerationStage generationStage
+            VertexGenerationStage generationStage,
+            TerraformDraftValidator terraformDraftValidator
     ) {
         this.objectReader = objectReader;
         this.referenceRetriever = referenceRetriever;
@@ -52,6 +56,7 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         this.factsExtractor = factsExtractor;
         this.queryTextBuilder = queryTextBuilder;
         this.generationStage = generationStage;
+        this.terraformDraftValidator = terraformDraftValidator;
     }
 
     @Override
@@ -79,6 +84,14 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         AnalysisGenerationResult generated = generationStage.generate(context, source, references);
         RequiredGroundingPolicy.requireForArchitecture(
                 properties.getRetrievalMode(), generated, references);
+        TerraformDraftValidation preliminaryValidation =
+                terraformDraftValidator.validate(generated.terraformCode());
+        if (terraformDraftValidator.isHardCodedSensitiveCredentialFailure(preliminaryValidation)) {
+            log.info("Vertex generation recovery outcome=retry category=sensitive_credential");
+            generated = generationStage.regenerateAfterSensitiveCredential(context, source, references);
+            RequiredGroundingPolicy.requireForArchitecture(
+                    properties.getRetrievalMode(), generated, references);
+        }
         return new AnalysisResult(
                 generated.provider(),
                 generated.terraformCode(),

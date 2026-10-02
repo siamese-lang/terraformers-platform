@@ -10,7 +10,29 @@ import org.springframework.stereotype.Component;
 @Component
 public class VertexPromptBuilder {
 
+    private static final String SAFETY_RECOVERY_INSTRUCTION = """
+            Safety recovery mode: The previous Terraform draft was rejected because it contained a literal sensitive credential.
+            Regenerate the complete response without literal credentials. Use variable references, generated-secret resources,
+            or provider-managed secret mechanisms where appropriate.
+            """;
+
     public String build(ObjectContent source, List<ReferenceDocument> references, boolean compact) {
+        return build(source, references, compact, false);
+    }
+
+    public String buildSensitiveCredentialRecovery(
+            ObjectContent source,
+            List<ReferenceDocument> references
+    ) {
+        return build(source, references, false, true);
+    }
+
+    private String build(
+            ObjectContent source,
+            List<ReferenceDocument> references,
+            boolean compact,
+            boolean safetyRecovery
+    ) {
         requireSupportedImageMediaType(source.metadata().contentType());
         String referenceText = (references == null ? List.<ReferenceDocument>of() : references).stream()
                 .map(this::formatReference)
@@ -35,6 +57,8 @@ public class VertexPromptBuilder {
 
                 %s
 
+                %s
+
                 Object metadata:
                 - contentType: %s
                 - contentLength: %s
@@ -45,6 +69,7 @@ public class VertexPromptBuilder {
                 compact
                         ? "Compact mode: minimize prose and Terraform while preserving only core components, relationships, and resources."
                         : "Standard mode: keep analysis and Terraform concise and avoid equivalent repeated detail.",
+                safetyRecovery ? SAFETY_RECOVERY_INSTRUCTION : "",
                 source.metadata().contentType(),
                 source.metadata().contentLength(),
                 referenceText.isBlank() ? "- none" : referenceText

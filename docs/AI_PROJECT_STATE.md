@@ -18,7 +18,21 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C live acceptance run 36857449268 reproduced a pre-restart MariaDB connectivity failure; COS guest firewall was isolated as the root boundary and an explicitly approved second bounded repair is in PR/CI preparation. No backend Deployment or load work is authorized.**
+- Current single task: **Case C architecture closure is active; capacity baseline is SUSPENDED_BY_ARCHITECTURE_AUDIT. Current phase is C1 — Executable Terraform Contract Decision and closure (AWAITING_DECISION_APPROVAL).**
+
+<!-- CASE_C_ARCHITECTURE_CLOSURE:START -->
+### Case C architecture closure control
+
+- Overall: **ARCHITECTURE_CLOSURE_ACTIVE**
+- Capacity baseline: **SUSPENDED_BY_ARCHITECTURE_AUDIT**
+- Current phase: **C1 — Executable Terraform Contract Decision and closure (AWAITING_DECISION_APPROVAL)**
+- Open blockers: C-ARCH-01, C-ARCH-02, C-ARCH-03, C-ARCH-04, C-ARCH-05, C-ARCH-06
+- Durable issue register: .agents/state/case-c-architecture-closure.json
+- Generated plan: [Case C Architecture Closure](plans/active/case-c-architecture-closure.md)
+- Failed baseline attempt retained as evidence: run 36957682821; it stopped at concurrency 1 on a non-capacity Terraform executable-correctness failure.
+- Do not retry the capacity baseline until C1–C4 prerequisites are resolved and a new live checkpoint is approved.
+<!-- CASE_C_ARCHITECTURE_CLOSURE:END -->
+
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**
 - M3: **RETAINED CASE A BASELINE**

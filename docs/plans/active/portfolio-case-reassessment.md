@@ -465,18 +465,12 @@ Case A closure does not claim latency optimization. See
 [Case A Final Closure](../../evaluation/case-a-final-closure.md) for the full evidence chain,
 trade-offs, and residual risks.
 
+<!-- CASE_C_ARCHITECTURE_CLOSURE:START -->
+## Case C architecture-closure checkpoint
 
-## Case C capacity-baseline harness checkpoint
+Case C is **ARCHITECTURE_CLOSURE_ACTIVE**. The previous capacity baseline is **SUSPENDED_BY_ARCHITECTURE_AUDIT** after run 36957682821 stopped at concurrency 1 on an executable-Terraform correctness failure before any valid saturation result.
 
-The bounded `case-c-capacity-baseline-v1` implementation is **IMPLEMENTED / STATIC VALIDATION
-PASS** against execution base `b96120a8f065d54f05183d9f9642af5d0e860375`. It prepares the
-reviewed closed-loop authenticated AnalysisJob experiment, fail-closed runtime identity checks,
-existing Prometheus/GKE/OpenSearch collection, sanitized machine-readable artifacts, and the frozen
-saturation stopping rule. It performs no tuning and adds no monitoring platform. Detailed readiness
-is recorded in [Case C Capacity Baseline Harness Readiness](../../evaluation/case-c-capacity-baseline.md).
+The current phase is **C1 — Executable Terraform Contract Decision and closure** (AWAITING_DECISION_APPROVAL). Open blockers are C-ARCH-01, C-ARCH-02, C-ARCH-03, C-ARCH-04, C-ARCH-05, C-ARCH-06.
 
-The corrective readiness implementation adds cause-chain-safe provider HTTP 429 classification to the existing failure metrics, per-job attribution only from the matching `analysisJobId` correlated failure log, correctness fail-stop, and per-success DB/result/GCS integrity checks. Executor `2 / 4 / 50` values are source-bound compile-time invariants, not dynamically read configuration.
-
-The live capacity baseline is **NOT YET EXECUTED**, so no first bottleneck or capacity result exists.
-The next single checkpoint is one separately approved protected live run and is
-`AWAITING_APPROVAL`; it is not authorized by harness implementation or merge.
+The durable issue register is .agents/state/case-c-architecture-closure.json; the generated human-readable plan is [Case C Architecture Closure](case-c-architecture-closure.md). The C0 maintenance automation lane machine-checks this state through the existing Terraform Static Verification scope job. Capacity execution must not resume until C1–C4 prerequisites are resolved and a new live checkpoint is approved.
+<!-- CASE_C_ARCHITECTURE_CLOSURE:END -->

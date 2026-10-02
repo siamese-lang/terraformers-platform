@@ -1,6 +1,6 @@
 work_package:
   id: case-c-capacity-baseline-v1
-  status: LIVE_BASELINE_APPROVED_RUNTIME_REBOUND
+  status: SUSPENDED_BY_ARCHITECTURE_AUDIT
   approved_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
   execution_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
   live_baseline_main_sha: BIND_AT_EXECUTION
@@ -353,7 +353,7 @@ work_package:
 
   implementation_evidence:
     harness_readiness: PASS
-    live_baseline: APPROVED_NOT_EXECUTED
+    live_baseline: SUSPENDED_BY_ARCHITECTURE_AUDIT
     harness_implementation_main_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
     authoritative_live_baseline_main_sha: BIND_AT_EXECUTION
     authoritative_live_backend_source_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
@@ -388,4 +388,4 @@ work_package:
       successful_result_integrity: IMPLEMENTED
       executor_identity: SOURCE_BOUND_COMPILE_TIME
     live_execution_requires_separate_user_checkpoint: true
-    next_checkpoint: LIVE_BASELINE_EXECUTION_AFTER_REBIND_MERGE
+    next_checkpoint: ARCHITECTURE_CLOSURE_C1_DECISION

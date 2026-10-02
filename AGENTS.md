@@ -179,6 +179,18 @@ implementation unit 하나만 수행한다. Approved Work Package의 동일 impl
 문서 오탈자, 명백한 metadata 수정처럼 production/architecture 의미가 전혀 없는 소규모 변경은 사용자가
 해당 변경을 직접 요청한 경우 ChatGPT가 수행할 수 있다. 이 예외를 기능/설계 변경으로 확대하지 않는다.
 
+### Maintenance automation lane
+
+Low-risk repository-state maintenance is separated from architecture/production decisions so mechanical documentation work does not require a fresh user judgment for every PR.
+
+- **M0_MECHANICAL_SYNC**: generated Markdown/state synchronization only. The durable ledger or predeclared decision is unchanged. After the repository consistency check passes, ChatGPT may create, update, and merge this maintenance PR without a separate per-PR user checkpoint.
+- **M1_EVIDENCE_STATE**: append direct evidence and perform only a status transition already permitted by predeclared acceptance criteria. Acceptance text, severity, ownership, architecture, and scope must remain unchanged. ChatGPT must independently review the cited evidence; after that review and repository checks pass, it may merge without a separate per-PR user checkpoint.
+- **D_DECISION**: architecture choice, acceptance-criteria change, severity/ownership change, residual-risk acceptance, scope expansion, production/runtime behavior change, workflow behavior change, IaC/dependency change, or a new failure class. This lane always requires the ordinary user decision/merge checkpoints.
+
+Maintenance automation never authorizes live/cloud/IAM/cost/destructive actions, production/runtime source edits, force-push, ruleset changes, or bypassing required checks. Any ambiguous evidence, changed failure class, failed consistency check, or path outside the maintenance boundary becomes HUMAN_REQUIRED. Changes to this AGENTS.md maintenance policy are themselves D_DECISION work.
+
+For Case C architecture closure, .agents/state/case-c-architecture-closure.json is the durable issue/status ledger. docs/plans/active/case-c-architecture-closure.md and marked Case C state blocks are generated views. Run python3 scripts/checks/case_c_architecture_ledger.py --sync after ledger changes; the existing Terraform Static Verification scope job runs --check on every PR.
+
 ### Interaction and execution boundary
 
 대화가 길어지거나 새 대화로 전환되어도 agent가 독자적으로 작업 범위를 넓히지 않도록 다음을 지킨다.

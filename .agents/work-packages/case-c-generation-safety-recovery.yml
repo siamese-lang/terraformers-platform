@@ -1,0 +1,292 @@
+work_package:
+  id: case-c-generation-safety-recovery
+  status: APPROVED_CONTRACT_PENDING_MERGE
+
+  contract_base_sha: "006e570f99d1eec2dd712a6dd5ee3ce1af991ca8"
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: null
+
+  goal: >
+    Restore deterministic single-request correctness for the Case C integrated Vertex path when
+    the model produces Terraform containing a literal sensitive credential. Preserve the existing
+    fail-closed safety boundary and add exactly one bounded, category-only regeneration attempt
+    using the same source object and already-retrieved reference evidence.
+
+  engineering_axis:
+    - AI/RAG reliability
+    - backend reliability
+    - observability based on real failure diagnosis
+
+  representative_case:
+    - Case C Cloud Runtime Capacity & Safe Delivery
+
+  predecessor_status:
+    terraform_cli_timeout_repair:
+      implementation_pr: 175
+      merged_main_sha: "006e570f99d1eec2dd712a6dd5ee3ce1af991ca8"
+      static_and_unit_acceptance: PASS
+      runtime_acceptance: INCONCLUSIVE
+      reason: >
+        The post-rollout live validation did not reach TerraformCliValidator. A different earlier
+        safety-validation failure stopped the request before executable validation.
+
+  observed_evidence:
+    failed_live_validation:
+      run_id: 36949479621
+      analysis_job_id: "09b718ec-f675-4612-b921-7520f5e5f672"
+      backend_source_sha: "006e570f99d1eec2dd712a6dd5ee3ce1af991ca8"
+      result: FAILED
+      failure_stage: analysis_execution
+      stage_elapsed_ms: 21822
+      diagnostic: "generated Terraform contains a hard-coded sensitive credential"
+      executable_validator_reached: false
+      jwks_restore: PASS
+    existing_repository_evidence:
+      validator_test: >
+        TerraformDraftValidatorTest.rejectsHardCodedPasswordObservedInGeminiComparisonRun already
+        records this as an observed Gemini failure class rather than a hypothetical condition.
+      current_prompt_guard: >
+        VertexPromptBuilder already instructs the model not to include secrets, account IDs,
+        access keys, static credentials, public S3 URLs, or real ARNs.
+      current_failure_semantics: >
+        TerraformDraftValidator correctly rejects the unsafe draft, but AnalysisJobOrchestrator
+        converts that rejection into a terminal failure and there is no bounded generation-level
+        recovery for this class.
+
+  operating_scenario: >
+    A valid architecture image and valid retrieved evidence should not fail nondeterministically
+    merely because the generative model emitted a literal secret once. Unsafe Terraform must never
+    pass the safety validator, but a recoverable model-generation defect may receive one safe
+    regeneration attempt before the request is failed.
+
+  impact: >
+    The current safety gate protects correctness, but a stochastic unsafe generation turns an
+    otherwise valid authenticated analysis request into FAILED. Re-running the whole workflow
+    manually can appear to solve the problem by chance and would make the later capacity baseline
+    unreliable because correctness would depend on model-output luck.
+
+  root_mechanism: >
+    Prompt instruction is advisory while TerraformDraftValidator is authoritative. The repository
+    already knows that Gemini can violate the no-literal-secret instruction. The missing mechanism
+    is a bounded provider-side recovery path between initial generation and the authoritative final
+    draft/executable validation boundaries.
+
+  decision:
+    selected: >
+      In the active Vertex provider path, inspect the first generated Terraform with the existing
+      TerraformDraftValidator after required-grounding validation. If and only if the failure is
+      the existing hard-coded-sensitive-credential class, request exactly one safety regeneration
+      from Vertex using the same ObjectContent and the same already-retrieved ReferenceDocument
+      list. Supply only a fixed safe failure category/instruction; never send the rejected HCL,
+      credential literal, or validator-captured value back to the model. Then return the regenerated
+      result through the unchanged AnalysisJobOrchestrator, which must run the authoritative
+      TerraformDraftValidator and TerraformCliValidator as before.
+    placement: >
+      Keep retry orchestration inside VertexAnalysisProvider/VertexGenerationStage rather than
+      AnalysisJobRunner. This is correction of generative output with already-loaded source and
+      retrieval evidence, not durable job retry or provider-transport retry.
+    boundedness:
+      max_safety_regenerations: 1
+      reuse_source_object: true
+      reuse_reference_evidence: true
+      rerun_fact_extraction: false
+      rerun_retrieval: false
+      raw_rejected_terraform_in_feedback: forbidden
+      sensitive_literal_in_feedback: forbidden
+      second_safety_retry: forbidden
+    rationale:
+      - "The existing prompt prohibition is already proven insufficient as a sole correctness control."
+      - "The existing validator remains authoritative and must not be weakened or bypassed."
+      - "Reusing source and reference evidence isolates the retry to generation rather than repeating the full AI/RAG pipeline."
+      - "Exactly one retry bounds latency/cost and prevents an open-ended model-correction loop."
+      - "The final draft and executable validators remain unchanged, so a second unsafe or invalid result still fails closed."
+    rejected_alternatives:
+      rerun_live_validation_until_it_happens_to_pass:
+        reason: >
+          Would hide a known stochastic reliability defect and contaminate the Case C baseline with
+          correctness dependent on model-output luck.
+      prompt_only_strengthening:
+        reason: >
+          A no-secrets instruction already exists and the repository already records an observed
+          Gemini violation. Prompt hardening may accompany the recovery instruction but cannot
+          replace the authoritative validator/recovery boundary.
+      validator_auto_rewrite:
+        reason: >
+          Rewriting credential literals into variables or managed-secret references would mutate
+          generated infrastructure semantics without enough architectural context.
+      whole_analysis_job_retry:
+        reason: >
+          Would rerun object loading, fact extraction, retrieval, and generation, adding unrelated
+          cost/variability when the observed defect is confined to generated Terraform.
+      disable_or_relax_sensitive_credential_validation:
+        reason: >
+          Would trade reliability for unsafe output and violate the existing fail-closed contract.
+
+  activation:
+    bind_rule: >
+      After this contract is merged, immediately before the first implementation write, ChatGPT
+      verifies authoritative GitHub remote main exactly once and binds that SHA to
+      execution_base_sha. Codex isolated checkout may use a synthetic/local SHA; when remote access
+      is unavailable Codex must gate on clean exact-base content identity rather than local SHA or
+      branch-name equality.
+    stop_on_main_drift: true
+    implementation_executor: Codex Cloud
+    live_execution_requires_separate_user_checkpoint: true
+
+  allowed_paths:
+    - .agents/work-packages/case-c-generation-safety-recovery.yml
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformDraftValidator.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/TerraformDraftValidatorTest.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProvider.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilder.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilderTest.java
+
+  prohibited_paths:
+    - backend/** except the eight explicit production/test paths above
+    - frontend/**
+    - infra/**
+    - evaluation/**
+    - corpus/**
+    - .github/workflows/**
+    - AGENTS.md
+    - docs/**
+
+  allowed_actions:
+    - inspect_repository
+    - verify_remote_main
+    - bind_execution_base_once
+    - expose_a_stable_sensitive_credential_failure_category_without_weakening_validation
+    - implement_one_vertex_safety_regeneration
+    - add_fixed_category_only_recovery_prompt
+    - reuse_same_source_and_reference_evidence
+    - add_safe_bounded_recovery_log_without_generated_HCL_or_secret_values
+    - add_or_adjust_targeted_unit_tests
+    - run_existing_targeted_backend_tests
+    - run_existing_backend_verification_if_available
+    - create_pull_request
+    - inspect_CI_once
+    - perform_one_bounded_corrective_iteration_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - image_publication
+    - backend_revision_rollout
+    - live_validation
+    - capacity_baseline
+    - terraform_plan
+    - terraform_apply
+    - IAM_change
+    - GKE_change
+    - backend_replica_change
+    - backend_CPU_or_memory_change
+    - executor_tuning
+    - OpenSearch_change
+    - provider_model_change
+    - provider_version_change
+    - Terraform_version_change
+    - durable_job_retry_change
+    - retrieval_query_or_top_k_change
+    - fact_extraction_change
+    - validator_bypass
+    - validator_relaxation
+    - generated_terraform_auto_rewrite
+    - acceptance_threshold_redefinition
+    - next_work_package_start
+
+  implementation_contract:
+    initial_generation:
+      behavior: unchanged
+      grounding_policy: unchanged
+    recovery_eligibility:
+      only_failure_class: hard_coded_sensitive_credential
+      classification_source: TerraformDraftValidator
+      generic_invalid_draft: no_retry
+      executable_validation_failure: no_retry
+      provider_timeout_or_format_failure: existing_behavior_only
+    recovery_generation:
+      attempts: 1
+      input_image: exact_same_ObjectContent_instance_or_equivalent_bytes_and_metadata
+      references: exact_same_already_retrieved_reference_list
+      feedback: >
+        Fixed category-only instruction stating that the previous Terraform was rejected for a
+        literal sensitive credential and that the complete response must be regenerated without
+        literal credentials, using references such as variables, generated-secret resources, or
+        provider-managed secret mechanisms where appropriate. Do not include the rejected HCL or
+        any captured credential value.
+      compact_or_truncation_fallback_inside_safety_retry: forbidden
+      second_safety_retry: forbidden
+    final_authority:
+      - AnalysisJobOrchestrator TerraformDraftValidator remains mandatory
+      - TerraformCliValidator remains mandatory
+      - second unsafe generation fails closed
+      - non-sensitive validation failures keep existing fail-closed behavior
+    observability:
+      allow: >
+        Emit a bounded recovery category/outcome log such as category=sensitive_credential without
+        Terraform text, credential values, or model output.
+      new_monitoring_platform: forbidden
+
+  acceptance_criteria:
+    static_and_unit:
+      - "existing hard-coded sensitive credential validator rejection remains unchanged"
+      - "safe referenced/managed credential forms remain accepted"
+      - "non-sensitive draft validation failures do not trigger safety regeneration"
+      - "initial safe generation performs zero safety regenerations"
+      - "initial sensitive-credential generation performs exactly one safety regeneration"
+      - "safety regeneration reuses the same source object and already-retrieved references"
+      - "fact extraction and retrieval occur once across initial generation plus safety regeneration"
+      - "recovery prompt contains only a fixed failure category/instruction, never rejected HCL or credential values"
+      - "safety regeneration does not perform a compact/truncation fallback or a second safety retry"
+      - "a second unsafe generation remains rejected by the unchanged final TerraformDraftValidator"
+      - "TerraformCliValidator remains downstream and mandatory for a recovered safe draft"
+      - "targeted Vertex/Terraform draft tests pass"
+    runtime_checkpoint_after_merge:
+      - "new backend image publication requires separate user approval"
+      - "rollout requires separate user approval"
+      - "same authenticated live-validation path must reach SUCCEEDED"
+      - "live evidence must show either zero recovery or exactly one bounded sensitive-credential recovery"
+      - "final Terraform draft validation and executable validation must both pass"
+      - "previous Terraform CLI timeout repair must finally be exercised by the live path"
+      - "capacity baseline remains blocked until this live validation passes"
+
+  residual_risk:
+    - >
+      The model may still generate a second unsafe or otherwise invalid Terraform draft. The design
+      intentionally fails closed after one safety regeneration rather than guaranteeing success.
+    - >
+      One additional Vertex generation increases latency and token cost only on the eligible
+      failure path. The later capacity baseline must record this behavior rather than hiding it.
+    - >
+      This repair addresses the observed sensitive-credential generation class only. It does not
+      authorize retries for placeholders, account-specific identifiers, malformed HCL, Terraform
+      executable failures, provider errors, or unrelated generation defects.
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - "current main differs from bound execution_base_sha after activation"
+    - "allowed path outside scope is required"
+    - "safety validator would need to be weakened or bypassed"
+    - "raw rejected Terraform or sensitive values would need to be sent back to the model"
+    - "a second generation retry becomes necessary"
+    - "retrieval or fact-extraction behavior would need to change"
+    - "provider model/configuration change becomes required"
+    - "failure class changes"
+    - "same failure repeats after one bounded corrective iteration"
+    - "live or cloud mutation is requested without a separate user checkpoint"
+    - "acceptance criteria would need to change"
+
+  completion:
+    contract_merge_requires_user_approval: true
+    implementation_pr_merge_requires_user_approval: true
+    image_publication_requires_user_approval: true
+    rollout_requires_user_approval: true
+    live_validation_requires_user_approval: true
+    capacity_baseline_resume_requires_user_approval: true
+    next_work_package_requires_user_approval: true
+
+  next_checkpoint: CONTRACT_MERGE_APPROVAL

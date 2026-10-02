@@ -70,6 +70,14 @@ RUNTIME_HOST_FIREWALL_REPAIR_ACTIONS = {
     "google_compute_instance.mariadb[0]": ("google_compute_instance", ["update"]),
 }
 
+TEARDOWN_ADDRESSES = (
+    set(FOUNDATION_ACTIONS)
+    | set(DELIVERY_FOUNDATION_ACTIONS)
+    | set(RUNTIME_SECRET_FOUNDATION_ACTIONS)
+    | set(RUNTIME_DEPENDENCY_ACTIONS)
+)
+
+
 EXPECTED_SERVICES = {
     "aiplatform.googleapis.com",
     "compute.googleapis.com",
@@ -519,14 +527,47 @@ def validate_capacity_scale_in(changes: dict[str, dict[str, Any]]) -> None:
 def validate_idle(changes: dict[str, dict[str, Any]]) -> None:
     validate_node_pool_transition(changes, "idle", 1, 0)
 
-def validate_plan(plan: dict[str, Any], operation: str) -> dict[str, Any]:
-    changes = managed_changes(plan)
+
+def validate_teardown(
+    changes: dict[str, dict[str, Any]],
+    expected_delete_count: int | None,
+) -> None:
+    require(expected_delete_count is not None, "teardown requires --expected-delete-count")
+    require(expected_delete_count > 0, "teardown expected delete count must be positive")
+    require(
+        expected_delete_count <= len(TEARDOWN_ADDRESSES),
+        "teardown expected delete count exceeds the reviewed address set",
+    )
+    require(len(changes) == expected_delete_count, (
+        f"teardown delete count mismatch: expected {expected_delete_count}, got {len(changes)}"
+    ))
+    require(
+        set(changes).issubset(TEARDOWN_ADDRESSES),
+        "teardown plan contains an address outside the reviewed GCP target runtime set",
+    )
     for address, resource in changes.items():
         actions = list(resource.get("change", {}).get("actions", []))
-        require("delete" not in actions, f"destructive action is forbidden: {address}: {actions}")
-        require(actions not in (["delete", "create"], ["create", "delete"]), f"replacement is forbidden: {address}")
+        require(actions == ["delete"], f"teardown may only delete managed resources: {address}: {actions}")
 
-    if operation == "foundation":
+
+def validate_plan(
+    plan: dict[str, Any],
+    operation: str,
+    expected_delete_count: int | None = None,
+) -> dict[str, Any]:
+    changes = managed_changes(plan)
+
+    if operation == "teardown":
+        validate_teardown(changes, expected_delete_count)
+    else:
+        for address, resource in changes.items():
+            actions = list(resource.get("change", {}).get("actions", []))
+            require("delete" not in actions, f"destructive action is forbidden: {address}: {actions}")
+            require(actions not in (["delete", "create"], ["create", "delete"]), f"replacement is forbidden: {address}")
+
+    if operation == "teardown":
+        pass
+    elif operation == "foundation":
         validate_foundation(changes)
     elif operation == "delivery-foundation":
         validate_delivery_foundation(changes)
@@ -581,7 +622,11 @@ def append_summary(result: dict[str, Any], plan_hash: str) -> None:
         f"- Changed managed resources: `{result['resource_change_count']}`",
         f"- Plan JSON SHA-256: `{plan_hash}`",
         "- Contract gate: `PASS`",
-        "- Delete/replacement actions: `0`",
+        (
+            f"- Delete actions: `{result['resource_change_count']}`"
+            if result["operation"] == "teardown"
+            else "- Delete/replacement actions: `0`"
+        ),
         "- Raw plan, state and changed values are not uploaded.",
         "",
         "| Address | Type | Actions |",
@@ -602,7 +647,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--operation",
         required=True,
-        choices=("foundation", "delivery-foundation", "runtime-secret-foundation", "runtime-dependencies", "runtime-host-firewall-repair", "activate", "capacity-scale-out", "capacity-scale-in", "idle"),
+        choices=("foundation", "delivery-foundation", "runtime-secret-foundation", "runtime-dependencies", "runtime-host-firewall-repair", "activate", "capacity-scale-out", "capacity-scale-in", "idle", "teardown"),
+    )
+    parser.add_argument(
+        "--expected-delete-count",
+        type=int,
+        default=None,
+        help="Exact reviewed managed delete count; required only for teardown.",
     )
     return parser.parse_args()
 
@@ -611,7 +662,7 @@ def main() -> int:
     args = parse_args()
     plan = json.loads(args.plan_json.read_text(encoding="utf-8"))
     try:
-        result = validate_plan(plan, args.operation)
+        result = validate_plan(plan, args.operation, args.expected_delete_count)
     except ContractError as exc:
         print(f"gcp_target_plan_gate=failed\nreason={exc}")
         return 1

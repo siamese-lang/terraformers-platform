@@ -1,0 +1,347 @@
+name: GCP Target Runtime Teardown
+
+on:
+  workflow_dispatch:
+    inputs:
+      execute_teardown:
+        description: Must be true to destroy the closed GCP target runtime.
+        required: true
+        type: boolean
+        default: false
+      expected_sha:
+        description: Exact trusted main commit SHA being approved for teardown.
+        required: true
+        type: string
+      expected_delete_count:
+        description: Exact reviewed Terraform managed delete count. Initial full teardown is 29.
+        required: true
+        type: number
+        default: 29
+      confirmation:
+        description: Exact DESTROY_REVIEWED_GCP_TARGET_RUNTIME_29 confirmation for the initial full teardown.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: gcp-target-terraform-state
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: 'true'
+  TF_INPUT: 'false'
+  TF_VAR_project_id: terraformers-platform
+  TF_VAR_subnet_cidr: 10.40.0.0/20
+  CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
+
+jobs:
+  destroy-plan:
+    if: ${{ inputs.execute_teardown }}
+    runs-on: ubuntu-latest
+    environment: gcp-target-plan
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: infra/terraform/envs/gcp-target-runtime
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate exact teardown request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          EXPECTED_DELETE_COUNT: ${{ inputs.expected_delete_count }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          PLAN_SERVICE_ACCOUNT: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
+          [[ "$EXPECTED_DELETE_COUNT" == 29 ]]
+          [[ "$CONFIRMATION" == DESTROY_REVIEWED_GCP_TARGET_RUNTIME_29 ]]
+          [[ "$STATE_BUCKET" == terraformers-platform-tfstate-21647422237 ]]
+          [[ "$PLAN_SERVICE_ACCOUNT" == terraformers-plan@terraformers-platform.iam.gserviceaccount.com ]]
+          [[ -n "$WIF_PROVIDER" ]]
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_PLAN_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Verify plan identity remains non-mutating
+        run: |
+          set -euo pipefail
+          access_token="$(gcloud auth print-access-token)"
+          response="$(
+            curl -fsS -X POST               -H "Authorization: Bearer ${access_token}"               -H 'Content-Type: application/json'               -d '{"permissions":["compute.instances.delete","compute.disks.delete","container.clusters.delete","iam.serviceAccounts.delete","storage.buckets.delete"]}'               "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
+          )"
+          [[ "$(jq -r '.permissions // [] | length' <<< "$response")" -eq 0 ]] || {
+            echo 'Plan identity unexpectedly has teardown mutation permissions.' >&2
+            exit 1
+          }
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: Verify canonical state and create destroy plan
+        env:
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+          EXPECTED_DELETE_COUNT: ${{ inputs.expected_delete_count }}
+        run: |
+          set -euo pipefail
+          terraform init -no-color -reconfigure -input=false             -backend-config="bucket=${STATE_BUCKET}"             -backend-config='prefix=gcp-target-runtime'
+
+          mapfile -t state_addresses < <(terraform state list | grep -v '^data\.')
+          [[ "${#state_addresses[@]}" -eq "$EXPECTED_DELETE_COUNT" ]] || {
+            printf 'Expected %s managed state addresses, got %s.\n'               "$EXPECTED_DELETE_COUNT" "${#state_addresses[@]}" >&2
+            printf '%s\n' "${state_addresses[@]}" >&2
+            exit 1
+          }
+
+          for required in             google_container_cluster.target             google_container_node_pool.target             'google_compute_instance.mariadb[0]'             'google_compute_disk.mariadb_data[0]'             'google_storage_bucket.runtime_objects[0]'             'google_artifact_registry_repository.backend[0]'             'google_secret_manager_secret.mariadb_app[0]'             google_compute_network.target
+          do
+            printf '%s\n' "${state_addresses[@]}" | grep -Fxq "$required" || {
+              echo "Required teardown state address missing: $required" >&2
+              exit 1
+            }
+          done
+
+          terraform plan -destroy -no-color -input=false -lock-timeout=5m             -out="${RUNNER_TEMP}/gcp-target-destroy.tfplan"
+          terraform show -json "${RUNNER_TEMP}/gcp-target-destroy.tfplan"             > "${RUNNER_TEMP}/gcp-target-destroy-plan.json"
+
+          python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_target_plan_gate.py"             --plan-json "${RUNNER_TEMP}/gcp-target-destroy-plan.json"             --operation teardown             --expected-delete-count "$EXPECTED_DELETE_COUNT"
+
+          {
+            echo
+            echo '### Teardown boundary'
+            echo
+            echo '- Exact initial contract: 29 managed deletes only.'
+            echo '- Creates, updates, replacements and unknown addresses are forbidden.'
+            echo '- Kubernetes namespace/PVC and runtime bucket contents are cleaned only in the separately protected apply job.'
+            echo '- Terraform state bucket and bootstrap WIF/service accounts are intentionally preserved until residual verification completes.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  destroy:
+    needs: destroy-plan
+    if: ${{ inputs.execute_teardown && needs.destroy-plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+        working-directory: infra/terraform/envs/gcp-target-runtime
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate protected destructive request
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          EXPECTED_DELETE_COUNT: ${{ inputs.expected_delete_count }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" == "$EXPECTED_SHA" ]]
+          [[ "$EXPECTED_DELETE_COUNT" == 29 ]]
+          [[ "$CONFIRMATION" == DESTROY_REVIEWED_GCP_TARGET_RUNTIME_29 ]]
+          [[ "$STATE_BUCKET" == terraformers-platform-tfstate-21647422237 ]]
+          [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]]
+          [[ -n "$WIF_PROVIDER" ]]
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Verify apply identity has exact teardown permissions
+        run: |
+          set -euo pipefail
+          access_token="$(gcloud auth print-access-token)"
+          response="$(
+            curl -fsS -X POST               -H "Authorization: Bearer ${access_token}"               -H 'Content-Type: application/json'               -d '{"permissions":["compute.instances.delete","compute.disks.delete","compute.networks.delete","compute.subnetworks.delete","container.clusters.delete","iam.serviceAccounts.delete","secretmanager.secrets.delete","storage.buckets.delete","artifactregistry.repositories.delete"]}'               "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
+          )"
+          granted="$(jq -r '.permissions // [] | sort | join(",")' <<< "$response")"
+          expected='artifactregistry.repositories.delete,compute.disks.delete,compute.instances.delete,compute.networks.delete,compute.subnetworks.delete,container.clusters.delete,iam.serviceAccounts.delete,secretmanager.secrets.delete,storage.buckets.delete'
+          [[ "$granted" == "$expected" ]] || {
+            echo "Apply identity teardown permission contract mismatch: $granted" >&2
+            exit 1
+          }
+
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: v1.35.0
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: Initialize canonical state
+        env:
+          STATE_BUCKET: ${{ vars.GCP_TF_STATE_BUCKET }}
+          EXPECTED_DELETE_COUNT: ${{ inputs.expected_delete_count }}
+        run: |
+          set -euo pipefail
+          terraform init -no-color -reconfigure -input=false             -backend-config="bucket=${STATE_BUCKET}"             -backend-config='prefix=gcp-target-runtime'
+          mapfile -t state_addresses < <(terraform state list | grep -v '^data\.')
+          [[ "${#state_addresses[@]}" -eq "$EXPECTED_DELETE_COUNT" ]] || {
+            echo 'Canonical state changed after destroy-plan approval.' >&2
+            exit 1
+          }
+
+      - name: Remove Kubernetes owners and OpenSearch persistent disk
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          gcloud container clusters get-credentials terraformers-target             --zone=asia-northeast3-a             --project=terraformers-platform >/dev/null
+
+          disk_name=''
+          if kubectl get namespace terraformers-target >/dev/null 2>&1; then
+            mapfile -t pvcs < <(
+              kubectl get pvc -n terraformers-target -o json |
+              jq -r '.items[]?.metadata.name'
+            )
+            for pvc in "${pvcs[@]}"; do
+              [[ "$pvc" == data-terraformers-opensearch-0 ]] || {
+                echo "Unexpected PVC in terraformers-target namespace: $pvc" >&2
+                exit 1
+              }
+            done
+
+            if kubectl get pvc data-terraformers-opensearch-0                 -n terraformers-target >/dev/null 2>&1; then
+              pv_name="$(
+                kubectl get pvc data-terraformers-opensearch-0                   -n terraformers-target                   -o jsonpath='{.spec.volumeName}'
+              )"
+              [[ -n "$pv_name" ]]
+              storage_class="$(
+                kubectl get pv "$pv_name" -o jsonpath='{.spec.storageClassName}'
+              )"
+              [[ "$storage_class" == terraformers-pd-standard ]]
+              volume_handle="$(
+                kubectl get pv "$pv_name" -o jsonpath='{.spec.csi.volumeHandle}'
+              )"
+              [[ "$volume_handle" == projects/terraformers-platform/zones/asia-northeast3-a/disks/* ]]
+              disk_name="${volume_handle##*/}"
+              [[ "$disk_name" == pvc-* ]]
+            fi
+
+            kubectl delete namespace terraformers-target               --wait=true --timeout=10m
+          fi
+
+          if [[ -n "$disk_name" ]]; then
+            for _ in $(seq 1 60); do
+              if ! gcloud compute disks describe "$disk_name"                   --zone=asia-northeast3-a                   --project=terraformers-platform >/dev/null 2>&1; then
+                disk_name=''
+                break
+              fi
+              sleep 5
+            done
+          fi
+
+          if [[ -n "$disk_name" ]]; then
+            users="$(
+              gcloud compute disks describe "$disk_name"                 --zone=asia-northeast3-a                 --project=terraformers-platform                 --format='value(users)'
+            )"
+            [[ -z "$users" ]] || {
+              echo "PVC-owned disk still has users: $users" >&2
+              exit 1
+            }
+            gcloud compute disks delete "$disk_name"               --zone=asia-northeast3-a               --project=terraformers-platform               --quiet
+          fi
+
+          echo '- Kubernetes runtime namespace removed; OpenSearch PVC disk absent or explicitly removed.'             >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Empty runtime object bucket
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          bucket='gs://terraformers-runtime-objects-21647422237'
+          if gcloud storage buckets describe "$bucket" >/dev/null 2>&1; then
+            objects="$(gcloud storage ls --recursive "${bucket}/**" 2>/dev/null || true)"
+            if [[ -n "$objects" ]]; then
+              gcloud storage rm --recursive "${bucket}/**"
+            fi
+          fi
+          echo '- Runtime GCS object contents removed before bucket destroy.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Recreate exact destroy plan and gate it
+        env:
+          EXPECTED_DELETE_COUNT: ${{ inputs.expected_delete_count }}
+        run: |
+          set -euo pipefail
+          terraform plan -destroy -no-color -input=false -lock-timeout=5m             -out="${RUNNER_TEMP}/gcp-target-destroy.tfplan"
+          terraform show -json "${RUNNER_TEMP}/gcp-target-destroy.tfplan"             > "${RUNNER_TEMP}/gcp-target-destroy-plan.json"
+
+          python3 "$GITHUB_WORKSPACE/scripts/deploy/gcp_target_plan_gate.py"             --plan-json "${RUNNER_TEMP}/gcp-target-destroy-plan.json"             --operation teardown             --expected-delete-count "$EXPECTED_DELETE_COUNT"
+
+          sha256sum "${RUNNER_TEMP}/gcp-target-destroy.tfplan" |
+            awk '{print "- Saved destroy plan SHA-256: `"$1"`"}' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply exact saved destroy plan
+        run: |
+          set -euo pipefail
+          terraform apply -no-color -input=false "${RUNNER_TEMP}/gcp-target-destroy.tfplan"
+
+      - name: Verify Terraform state is empty
+        run: |
+          set -euo pipefail
+          remaining="$(terraform state list | grep -v '^data\.' || true)"
+          [[ -z "$remaining" ]] || {
+            printf 'Managed state remains after teardown:\n%s\n' "$remaining" >&2
+            exit 1
+          }
+
+      - name: Verify cost-bearing target residuals are absent
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          absent() {
+            local description="$1"
+            shift
+            if "$@" >/dev/null 2>&1; then
+              echo "Residual still exists: $description" >&2
+              exit 1
+            fi
+          }
+
+          absent 'GKE cluster terraformers-target'             gcloud container clusters describe terraformers-target               --zone=asia-northeast3-a --project=terraformers-platform
+          absent 'MariaDB VM terraformers-mariadb'             gcloud compute instances describe terraformers-mariadb               --zone=asia-northeast3-a --project=terraformers-platform
+          absent 'MariaDB data disk terraformers-mariadb-data'             gcloud compute disks describe terraformers-mariadb-data               --zone=asia-northeast3-a --project=terraformers-platform
+          absent 'runtime GCS bucket'             gcloud storage buckets describe gs://terraformers-runtime-objects-21647422237
+          absent 'Artifact Registry repository'             gcloud artifacts repositories describe terraformers-backend               --location=asia-northeast3 --project=terraformers-platform
+          absent 'MariaDB root secret'             gcloud secrets describe terraformers-mariadb-root-password               --project=terraformers-platform
+          absent 'MariaDB app secret'             gcloud secrets describe terraformers-mariadb-app-password               --project=terraformers-platform
+          absent 'target VPC'             gcloud compute networks describe terraformers-target               --project=terraformers-platform
+
+          {
+            echo '## GCP target runtime teardown'
+            echo
+            echo '- Terraform managed state: `empty`'
+            echo '- GKE cluster/node compute: `absent`'
+            echo '- MariaDB VM and dedicated PD: `absent`'
+            echo '- OpenSearch PVC disk: `absent`'
+            echo '- Runtime GCS bucket: `absent`'
+            echo '- Artifact Registry repository/images: `absent`'
+            echo '- MariaDB Secret Manager secrets: `absent`'
+            echo '- Target VPC: `absent`'
+            echo '- Terraform state bucket: `preserved for final bootstrap cleanup`'
+            echo '- WIF + plan/apply/image-publisher identities: `preserved for final bootstrap cleanup`'
+          } >> "$GITHUB_STEP_SUMMARY"

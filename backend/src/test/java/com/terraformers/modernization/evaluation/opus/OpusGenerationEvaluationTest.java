@@ -39,7 +39,7 @@ class OpusGenerationEvaluationTest {
 
     @Test void duplicateCorpusDocumentFailsClosed() throws Exception {Path source=root.resolve("corpus/terraformers-reference/v3/documents.jsonl");List<String> lines=new ArrayList<>(Files.readAllLines(source));lines.add(lines.get(0));Path duplicate=temp.resolve("documents.jsonl");Files.write(duplicate,lines);assertThatThrownBy(()->load(root.resolve("evaluation/opus-generation-v1/manifest.json"),duplicate)).hasMessageContaining("duplicate corpus document ID");}
 
-    @Test void placeholderRemainsStructuralValidation(){String terraform=requiredTerraform(fixture().cases().get(0))+"\n# placeholder";var e=evaluate(0,"ARCHITECTURE_DIAGRAM",terraform);assertThat(e.firstFailureCategory()).isEqualTo("TERRAFORM_STRUCTURAL_VALIDATION");assertThat(e.placeholderExampleDetected()).isTrue();}
+    @Test void placeholderCommentDoesNotInvalidateUsableDraft(){String terraform=requiredTerraform(fixture().cases().get(0))+"\n# placeholder";var e=evaluate(0,"ARCHITECTURE_DIAGRAM",terraform);assertThat(e.firstFailureCategory()).isEqualTo("NONE");assertThat(e.placeholderExampleDetected()).isFalse();}
 
     @Test void forbiddenResourceIsRecorded(){String terraform=requiredTerraform(fixture().cases().get(0))+"\nresource \"aws_cloudfront_distribution\" \"bad\" { enabled = true }";var e=evaluate(0,"ARCHITECTURE_DIAGRAM",terraform);assertThat(e.forbiddenResourceTypesPresent()).containsExactly("aws_cloudfront_distribution");assertThat(e.firstFailureCategory()).isEqualTo("GENERATION_FORBIDDEN_RESOURCE");}
 

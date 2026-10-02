@@ -47,6 +47,22 @@ class TerraformDraftValidatorTest {
     }
 
     @Test
+    void acceptsEmptyResourceBodyAndDelegatesSchemaValidityToTerraformCli() {
+        TerraformDraftValidation validation =
+                validator.validate("resource \"aws_vpc\" \"example\" {}");
+
+        assertThat(validation.valid()).isTrue();
+    }
+
+    @Test
+    void acceptsIncompleteResourceBodyShapeAndDelegatesSyntaxValidityToTerraformCli() {
+        TerraformDraftValidation validation =
+                validator.validate("resource \"aws_vpc\" \"example\" {");
+
+        assertThat(validation.valid()).isTrue();
+    }
+
+    @Test
     void acceptsIllustrativeCredentialLikeLiteralsBecauseDraftIsNotAutoApplied() {
         TerraformDraftValidation validation = validator.validate("""
                 resource "aws_db_instance" "database" {

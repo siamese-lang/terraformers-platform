@@ -415,11 +415,11 @@ Case A closure does not claim latency optimization. See
 trade-offs, and residual risks.
 
 <!-- CASE_C_ARCHITECTURE_CLOSURE:START -->
-## Case C architecture-closure checkpoint
+## Case C portfolio-closure checkpoint
 
-Case C is **ARCHITECTURE_CLOSURE_ACTIVE**. The previous capacity baseline is **SUSPENDED_BY_ARCHITECTURE_AUDIT** after run 36957682821 stopped at concurrency 1 on an executable-Terraform correctness failure before any valid saturation result.
+Case C is **PORTFOLIO_CLOSED_WITH_RESIDUALS**. The capacity baseline is **DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE**; run 36957682821 is retained as evidence that functional correctness failed before any valid saturation result.
 
-The current phase is **C2 — Repeated correctness stability gate** (ACTIVE). Open blockers are C-ARCH-04, C-ARCH-05, C-ARCH-06.
+The closure phase is **C8 — Case C evidence closure** (COMPLETE). Open blockers are none.
 
-The durable issue register is .agents/state/case-c-architecture-closure.json; the generated human-readable plan is [Case C Architecture Closure](case-c-architecture-closure.md). The C0 maintenance automation lane machine-checks this state through the existing Terraform Static Verification scope job. Capacity execution must not resume until C1–C4 prerequisites are resolved and a new live checkpoint is approved.
+The selected portfolio case is **Cloud Runtime Measurement Guardrails & Immutable Delivery**. Final evidence is [Case C Final Portfolio Closure](../../evaluation/case-c-portfolio-closure.md). C2 run 37016993776 is retained as a 1/5 fail-closed result showing real Terraform executable-validity variance. Capacity tuning, desired-state convergence, rollout-under-load, and faulty-release rollback are deferred production-hardening work rather than portfolio prerequisites.
 <!-- CASE_C_ARCHITECTURE_CLOSURE:END -->

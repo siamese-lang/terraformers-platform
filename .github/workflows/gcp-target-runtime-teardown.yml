@@ -13,12 +13,12 @@ on:
         required: true
         type: string
       expected_delete_count:
-        description: Exact reviewed Terraform managed delete count. Initial full teardown is 29.
+        description: Exact current reviewed Terraform managed delete count. Initial full teardown is 29; recovery may use a smaller reviewed subset.
         required: true
         type: number
         default: 29
       confirmation:
-        description: Exact DESTROY_REVIEWED_GCP_TARGET_RUNTIME_29 confirmation for the initial full teardown.
+        description: Exact DESTROY_REVIEWED_GCP_TARGET_RUNTIME_<COUNT> confirmation matching expected_delete_count.
         required: true
         type: string
 
@@ -64,8 +64,9 @@ jobs:
           [[ "$GITHUB_REF" == refs/heads/main ]]
           [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
-          [[ "$EXPECTED_DELETE_COUNT" == 29 ]]
-          [[ "$CONFIRMATION" == DESTROY_REVIEWED_GCP_TARGET_RUNTIME_29 ]]
+          [[ "$EXPECTED_DELETE_COUNT" =~ ^[0-9]+$ ]]
+          (( EXPECTED_DELETE_COUNT >= 1 && EXPECTED_DELETE_COUNT <= 29 ))
+          [[ "$CONFIRMATION" == "DESTROY_REVIEWED_GCP_TARGET_RUNTIME_${EXPECTED_DELETE_COUNT}" ]]
           [[ "$STATE_BUCKET" == terraformers-platform-tfstate-21647422237 ]]
           [[ "$PLAN_SERVICE_ACCOUNT" == terraformers-plan@terraformers-platform.iam.gserviceaccount.com ]]
           [[ -n "$WIF_PROVIDER" ]]
@@ -110,13 +111,15 @@ jobs:
             exit 1
           }
 
-          for required in             google_container_cluster.target             google_container_node_pool.target             'google_compute_instance.mariadb[0]'             'google_compute_disk.mariadb_data[0]'             'google_storage_bucket.runtime_objects[0]'             'google_artifact_registry_repository.backend[0]'             'google_secret_manager_secret.mariadb_app[0]'             google_compute_network.target
-          do
-            printf '%s\n' "${state_addresses[@]}" | grep -Fxq "$required" || {
-              echo "Required teardown state address missing: $required" >&2
-              exit 1
-            }
-          done
+          if [[ "$EXPECTED_DELETE_COUNT" -eq 29 ]]; then
+            for required in               google_container_cluster.target               google_container_node_pool.target               'google_compute_instance.mariadb[0]'               'google_compute_disk.mariadb_data[0]'               'google_storage_bucket.runtime_objects[0]'               'google_artifact_registry_repository.backend[0]'               'google_secret_manager_secret.mariadb_app[0]'               google_compute_network.target
+            do
+              printf '%s\n' "${state_addresses[@]}" | grep -Fxq "$required" || {
+                echo "Required initial teardown state address missing: $required" >&2
+                exit 1
+              }
+            done
+          fi
 
           terraform plan -destroy -no-color -input=false -lock-timeout=5m             -out="${RUNNER_TEMP}/gcp-target-destroy.tfplan"
           terraform show -json "${RUNNER_TEMP}/gcp-target-destroy.tfplan"             > "${RUNNER_TEMP}/gcp-target-destroy-plan.json"
@@ -127,7 +130,7 @@ jobs:
             echo
             echo '### Teardown boundary'
             echo
-            echo '- Exact initial contract: 29 managed deletes only.'
+            printf -- '- Exact current contract: %s managed deletes only.\n' "$EXPECTED_DELETE_COUNT"
             echo '- Creates, updates, replacements and unknown addresses are forbidden.'
             echo '- Kubernetes namespace/PVC and runtime bucket contents are cleaned only in the separately protected apply job.'
             echo '- Terraform state bucket and bootstrap WIF/service accounts are intentionally preserved until residual verification completes.'
@@ -157,8 +160,9 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$GITHUB_SHA" == "$EXPECTED_SHA" ]]
-          [[ "$EXPECTED_DELETE_COUNT" == 29 ]]
-          [[ "$CONFIRMATION" == DESTROY_REVIEWED_GCP_TARGET_RUNTIME_29 ]]
+          [[ "$EXPECTED_DELETE_COUNT" =~ ^[0-9]+$ ]]
+          (( EXPECTED_DELETE_COUNT >= 1 && EXPECTED_DELETE_COUNT <= 29 ))
+          [[ "$CONFIRMATION" == "DESTROY_REVIEWED_GCP_TARGET_RUNTIME_${EXPECTED_DELETE_COUNT}" ]]
           [[ "$STATE_BUCKET" == terraformers-platform-tfstate-21647422237 ]]
           [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]]
           [[ -n "$WIF_PROVIDER" ]]
@@ -211,10 +215,11 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           set -euo pipefail
-          gcloud container clusters get-credentials terraformers-target             --zone=asia-northeast3-a             --project=terraformers-platform >/dev/null
-
           disk_name=''
-          if kubectl get namespace terraformers-target >/dev/null 2>&1; then
+          if gcloud container clusters describe terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform >/dev/null 2>&1; then
+            gcloud container clusters get-credentials terraformers-target               --zone=asia-northeast3-a               --project=terraformers-platform >/dev/null
+
+            if kubectl get namespace terraformers-target >/dev/null 2>&1; then
             mapfile -t pvcs < <(
               kubectl get pvc -n terraformers-target -o json |
               jq -r '.items[]?.metadata.name'
@@ -243,7 +248,8 @@ jobs:
               [[ "$disk_name" == pvc-* ]]
             fi
 
-            kubectl delete namespace terraformers-target               --wait=true --timeout=10m
+              kubectl delete namespace terraformers-target                 --wait=true --timeout=10m
+            fi
           fi
 
           if [[ -n "$disk_name" ]]; then

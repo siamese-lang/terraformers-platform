@@ -1995,35 +1995,49 @@ jobs:
                   backend_diagnostics="${RUNNER_TEMP}/case-c-c2-backend-failure-${attempt}.log"
                   kubectl -n "$NAMESPACE" logs deployment/terraformers-backend                     -c backend --since=15m >"$backend_diagnostics" 2>/dev/null || true
 
-                  observed_category="$(
+                  terminal_category="$(
                     awk -v job="analysisJobId=${job_id}" '
-                      index($0, job) {
+                      index($0, job) && /Analysis job failed outcome=failed/ {
+                        for (i = 1; i <= NF; i++) {
+                          if ($i ~ /^exceptionCategory=[a-z0-9_]+$/) {
+                            sub(/^exceptionCategory=/, "", $i)
+                            value=$i
+                          }
+                        }
+                      }
+                      END { if (value != "") print value }
+                    ' "$backend_diagnostics"
+                  )"
+                  stage_category="$(
+                    awk -v job="analysisJobId=${job_id}" '
+                      index($0, job) && /analysis stage outcome=failure/ {
                         for (i = 1; i <= NF; i++) {
                           if ($i ~ /^category=[a-z0-9_]+$/) {
                             sub(/^category=/, "", $i)
-                            print $i
-                            exit
+                            value=$i
                           }
                         }
                       }
+                      END { if (value != "") print value }
                     ' "$backend_diagnostics"
                   )"
+                  observed_category="${terminal_category:-$stage_category}"
                   observed_error_class="$(
                     awk -v job="analysisJobId=${job_id}" '
-                      index($0, job) {
+                      index($0, job) && /analysis stage outcome=failure/ {
                         for (i = 1; i <= NF; i++) {
                           if ($i ~ /^errorClass=[A-Za-z0-9_.$]+$/) {
                             sub(/^errorClass=/, "", $i)
-                            print $i
-                            exit
+                            value=$i
                           }
                         }
                       }
+                      END { if (value != "") print value }
                     ' "$backend_diagnostics"
                   )"
                   if [[ "$observed_error_class" == GeneratedTerraformContractViolation ]]; then
                     case "$observed_category" in
-                      generated_terraform_contract_module|generated_terraform_contract_provider|generated_terraform_contract_request_schema)
+                      generated_terraform_contract_module|generated_terraform_contract_provider)
                         current_failure_category="$observed_category"
                         ;;
                       *)
@@ -2041,13 +2055,8 @@ jobs:
                     esac
                   fi
 
-                  if [[ "$current_failure_category" == provider_rate_limited ]] ||                      awk -v job="analysisJobId=${job_id}" '
-                       index($0, job) && /category=timeout errorClass=AnalysisProviderTimeoutException/ {
-                         found=1
-                       }
-                       END { exit(found ? 0 : 1) }
-                     ' "$backend_diagnostics"; then
-                    [[ "$current_failure_category" != unclassified ]] || current_failure_category="timeout"
+                  if [[ "$current_failure_category" == provider_rate_limited ]] || \
+                     [[ "$current_failure_category" == timeout && "$observed_error_class" == AnalysisProviderTimeoutException ]]; then
                     record_failure "$attempt" EXTERNAL_VARIANCE_INCONCLUSIVE external_provider_failure FAILED
                   fi
                   record_failure "$attempt" CORRECTNESS_FAILURE integrated_analysis_failed FAILED

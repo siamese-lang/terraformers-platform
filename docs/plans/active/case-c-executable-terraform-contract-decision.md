@@ -2,7 +2,14 @@
 
 ## Status
 
-**SELECTED / USER-APPROVED — 2026-10-02**
+**PARTIALLY SUPERSEDED BY LIVE EVIDENCE — 2026-10-02**
+
+The provider-version pin, exact local provider schema catalog, AWS-only resource scope, and offline
+Terraform CLI validation remain selected. The request-local generated-resource allowlist,
+policy-only sensitive/account-identifier rejection, and sensitive-credential regeneration are
+superseded by
+[Case C C1 Correction — Simplified Terraform Draft Validation Decision](case-c-simplified-terraform-validation-decision.md)
+after C2 live run `37003640318` exposed their interaction as a correctness defect.
 
 Implementation is not authorized by this document alone. The bounded implementation contract is
 `.agents/work-packages/case-c-executable-terraform-contract-v1.yml`.

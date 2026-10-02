@@ -2,7 +2,7 @@
 
 ## Status
 
-**FIRST LIVE GATE FAILED / TYPED DIAGNOSTIC IMPLEMENTATION STATIC / RERUN NOT EXECUTED**
+**TWO LIVE GATES FAILED / C1 CONTRACT REOPENED / FURTHER RERUN NOT AUTHORIZED**
 
 This document records the implementation/readiness and first-live-execution boundary for C2. It
 does not claim that C-ARCH-05 is resolved. Run `36985305485` executed and failed on attempt 1.
@@ -179,3 +179,34 @@ subsequent static implementation maps the three existing fail-closed branches to
 The failed run `36985305485` predates that typed telemetry, so its specific subtype remains
 unknown and must not be retroactively inferred. A later C2 rerun can preserve one of the three
 categories without parsing exception messages or uploading raw HCL/log content.
+
+## Second live execution — failed, C1 contract reopened
+
+Run `37003640318` executed against:
+
+- source SHA `61accc9ee50bba57ae5fa9dff0074fdc01e970e4`;
+- backend digest `sha256:201eece790fd4a9913ee54fe122f4b72efdf70152d93037f60c05da20ae51235`;
+- the same frozen fixture and concurrency `1`.
+
+The gate again stopped on **attempt 1**, with `0/5` accepted and
+`CORRECTNESS_FAILURE`.
+
+The correlated backend trace proved the terminal category was
+`generated_terraform_contract_request_schema` after:
+
+1. REQUIRED retrieval succeeded with eight references;
+2. the first generation triggered the policy-only `sensitive_credential` regeneration path;
+3. the regenerated Terraform was rejected because one or more generated AWS resource types were
+   outside the pre-generation request schema envelope.
+
+The backend typed diagnostic implementation therefore worked. The sanitized C2 artifact recorded
+`failure_category=unclassified` for a separate workflow-parser defect: it selected an earlier
+informational category associated with the same AnalysisJob rather than the terminal
+`Analysis job failed outcome=failed exceptionCategory=...` line.
+
+This live evidence invalidates the earlier C1 assumption that request-specific schema context should
+also be a hard generated-resource allowlist. The C1 contract is reopened under
+[Case C C1 Correction — Simplified Terraform Draft Validation Decision](../plans/active/case-c-simplified-terraform-validation-decision.md).
+
+No additional C2 rerun is authorized until that correction is implemented, merged, independently
+accepted, published as a new immutable image, and rolled out under a separate live checkpoint.

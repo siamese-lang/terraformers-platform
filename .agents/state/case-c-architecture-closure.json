@@ -5,7 +5,7 @@
   "audit_base_sha": "9a0d9bc3e792a5b5780b7676960bb14750f969ee",
   "overall_status": "ARCHITECTURE_CLOSURE_ACTIVE",
   "capacity_baseline_status": "SUSPENDED_BY_ARCHITECTURE_AUDIT",
-  "current_phase": "C2",
+  "current_phase": "C1",
   "phases": [
     {
       "id": "C0",
@@ -17,7 +17,7 @@
     {
       "id": "C1",
       "title": "Executable Terraform Contract Decision and closure",
-      "status": "COMPLETE",
+      "status": "ACTIVE",
       "requires": [
         "C0"
       ],
@@ -26,7 +26,7 @@
     {
       "id": "C2",
       "title": "Repeated correctness stability gate",
-      "status": "ACTIVE",
+      "status": "BLOCKED",
       "requires": [
         "C1"
       ],
@@ -97,9 +97,9 @@
     {
       "id": "C-ARCH-01",
       "severity": "BLOCKER",
-      "status": "RESOLVED",
+      "status": "IN_PROGRESS",
       "owner_phase": "C1",
-      "title": "Generated Terraform envelope is not closed against bundled executable providers/resources",
+      "title": "Generated Terraform executable boundary is over-constrained by a request-local allowlist",
       "blocks": [
         "C2",
         "C5"
@@ -109,19 +109,21 @@
         "VertexPromptBuilder guides AWS 5.100.0 but does not machine-enforce the executable provider/resource envelope",
         "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion",
         "PR #182 merged as 40237e593530086b4649bfc8bc5499848c4b7165: backend image build derives a read-only request-time catalog from the exact checksum-pinned bundled hashicorp/aws 5.100.0 provider; generated Terraform is mechanically inspected against the request schema envelope and module/non-AWS deployable blocks fail closed",
-        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS"
+        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS",
+        "C2 rerun 37003640318 on source 61accc9ee50bba57ae5fa9dff0074fdc01e970e4 failed at attempt 1 with terminal category generated_terraform_contract_request_schema after successful REQUIRED retrieval and one sensitive-credential regeneration",
+        "The user redefined generated Terraform as an editable/reference draft rather than an unattended deployment artifact and explicitly rejected request-local policy restrictions that are not required for provider/Terraform correctness"
       ],
       "acceptance": [
-        "generated provider/resource set is mechanically constrained to an explicitly selected executable envelope",
-        "runtime bundled provider set and generation envelope are checked as one contract"
+        "every generated AWS resource block is checked against the exact bundled AWS Provider 5.100.0 catalog rather than a request-local allowlist",
+        "request-specific schema evidence is advisory generation context while Terraform init/validate remains the final executable correctness boundary"
       ]
     },
     {
       "id": "C-ARCH-02",
       "severity": "BLOCKER",
-      "status": "RESOLVED",
+      "status": "IN_PROGRESS",
       "owner_phase": "C1",
-      "title": "REQUIRED retrieval does not prove generated-resource grounding coverage",
+      "title": "Retrieval metadata is incorrectly coupled to generated-resource eligibility",
       "blocks": [
         "C2",
         "C5"
@@ -131,11 +133,13 @@
         "Case A already established that retrieval PASS alone does not prove grounding coverage",
         "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion",
         "PR #182 tests prove the request candidate set is the union of extracted fact resource types and retrieved curated-reference resource types, unknown catalog resources fail before generation, and generated resources outside the request schema envelope fail closed",
-        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS"
+        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS",
+        "Run 37003640318 retrieved eight references successfully, but retrieved provider example content can contain companion AWS resource blocks not represented in that document's resourceTypes metadata",
+        "The revised C1 decision separates retrieval grounding/guidance from provider resource eligibility; valid generated AWS resources no longer require request-local retrieval metadata coverage"
       ],
       "acceptance": [
-        "every generated infrastructure resource requiring provider evidence is covered by the selected grounding contract",
-        "missing required coverage fails closed before result finalization"
+        "REQUIRED retrieval grounds architecture intent, project decisions, relationships, and representative patterns without acting as a provider resource allowlist",
+        "retrieved reference content may enrich prompt schema context automatically, while final generated-resource existence is decided by the exact local provider catalog"
       ]
     },
     {
@@ -197,7 +201,9 @@
         "Run 36985305485 exposed a C2 evidence-contract defect: the failed-attempt artifact retained only attempt/classification/reason/status and omitted the known project ID, AnalysisJob ID, and bounded safe failure category, preventing post-run root-cause classification; one bounded repair iteration is being used without changing C-ARCH-05 acceptance",
         "Read-only backend log recovery for run 36985305485 identified errorClass=GeneratedTerraformContractViolation with category=other for analysisJobId 6a6eec5d-9e21-4fa8-907a-0dcd7521a24f; this proves a repository-owned C1 generated-Terraform contract rejection rather than external provider variance, while the current observability taxonomy loses its safe subtype",
         "PR #187 merged as 1f74e5305571d21e4e94eee4854cc3d6bdca7c55 selecting a closed three-reason GeneratedTerraformContractViolation diagnostic taxonomy; no C1 contract, generation, retrieval, retry, or C2 acceptance change was authorized",
-        "Generated Terraform contract diagnostic implementation assigns MODULE_BLOCK, RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT, or RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE at the rejection point and maps them to fixed sanitized categories without logging HCL, resource identity, candidate sets, schema content, or exception messages"
+        "Generated Terraform contract diagnostic implementation assigns MODULE_BLOCK, RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT, or RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE at the rejection point and maps them to fixed sanitized categories without logging HCL, resource identity, candidate sets, schema content, or exception messages",
+        "C2 rerun 37003640318 on exact source 61accc9ee50bba57ae5fa9dff0074fdc01e970e4 and diagnostic-enabled image stopped at attempt 1 with 0/5 accepted; backend logs proved terminal category generated_terraform_contract_request_schema after REQUIRED retrieval success and sensitive-credential regeneration",
+        "The C2 artifact recorded failure_category=unclassified because the workflow parser selected an earlier informational category before the terminal AnalysisJob failure; parser correction is included in the revised C1 implementation scope"
       ],
       "acceptance": [
         "a frozen repeated correctness gate passes before capacity execution",
@@ -279,7 +285,7 @@
     {
       "id": "C-ARCH-10",
       "severity": "HIGH",
-      "status": "RESOLVED",
+      "status": "IN_PROGRESS",
       "owner_phase": "C1",
       "title": "Generation recovery is failure-specific and can grow as ad-hoc exception handling",
       "blocks": [
@@ -289,11 +295,13 @@
         "generation has output-truncation retry and a separate hard-coded-sensitive-credential regeneration path",
         "C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion",
         "PR #182 consolidates generation recovery into a maximum two-call budget: truncation and sensitive-credential recovery share the same retry state, truncation followed by a sensitive second result makes no third call, and schema/CLI contract failures do not trigger regeneration",
-        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS"
+        "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS",
+        "Run 37003640318 shows the policy-only sensitive-credential detector triggered a second generation call before the terminal request-schema rejection",
+        "The revised C1 decision removes sensitive-credential regeneration and retains only the existing bounded output-truncation retry"
       ],
       "acceptance": [
-        "recovery policy is derived from an explicit generation/executable contract",
-        "new validation failures do not automatically create one-off retries"
+        "generation retry policy is limited to the existing bounded output-truncation compact retry",
+        "policy-only literal/account-identifier/placeholder checks do not create regeneration paths or correctness failures"
       ]
     },
     {
@@ -355,42 +363,52 @@
     }
   },
   "c1_decision": {
-    "status": "SELECTED_USER_APPROVED",
+    "status": "REVISED_USER_APPROVED_PENDING_IMPLEMENTATION",
     "approved_on": "2026-10-02",
-    "selected": "HYBRID_CURATED_RAG_PLUS_LOCAL_AWS_PROVIDER_SCHEMA_CATALOG",
+    "selected": "CURATED_RAG_PLUS_LOCAL_PROVIDER_CATALOG_WITH_ADVISORY_SCHEMA_CONTEXT",
+    "revision_trigger": "C2 run 37003640318 exposed that request-local schema evidence and policy-only draft rules were incorrectly acting as hard correctness boundaries for editable example Terraform",
     "operating_boundary": {
       "terraform_version": "1.8.5",
       "provider_source": "registry.terraform.io/hashicorp/aws",
       "provider_version": "5.100.0",
-      "corpus_role": "curated project patterns, decisions, representative examples; not an exhaustive AWS provider encyclopedia",
-      "schema_role": "authoritative executable resource schema for the exact bundled AWS provider",
-      "schema_distribution": "generated during backend image build from the exact bundled provider; not committed as a full generated schema dump and not fetched from the registry at request time"
+      "generated_result_role": "editable/reference Terraform draft; not an unattended plan/apply artifact",
+      "corpus_role": "curated project patterns, decisions, relationships and representative examples; not a provider allowlist",
+      "schema_role": "authoritative local AWS resource existence/schema source for the exact bundled provider",
+      "schema_distribution": "generated during backend image build from the exact bundled provider; not fetched from the public registry at request time"
     },
     "request_context_contract": [
-      "fact extraction may identify any aws_[a-z0-9_]+ resource type, not only types already present in the curated corpus",
-      "candidate resource types are the bounded union of extracted fact resource types and resource types carried by retrieved curated references",
-      "candidate types must exist in the exact local AWS 5.100.0 schema catalog before schema evidence is injected",
-      "only the request-relevant compact schema summaries are added to generation context",
-      "a resource does not need a curated corpus document when facts identify it and the exact provider catalog supports it",
-      "generated deployable AWS resource types must remain within the request candidate set and exact provider catalog",
-      "module blocks and non-AWS deployable providers are outside the C1 executable envelope"
+      "pre-generation schema context is the bounded union of fact resource types, retrieved-reference resourceTypes metadata, and AWS resource blocks found in retrieved reference content",
+      "request-specific schema context is advisory prompt evidence and is not a generated-resource allowlist",
+      "a generated AWS resource may be emitted even when absent from request schema context if the exact local AWS 5.100.0 provider catalog contains it",
+      "generated AWS resource blocks must exist in the exact local provider catalog",
+      "module blocks and non-AWS deployable providers remain outside the current product scope"
+    ],
+    "draft_validation_contract": [
+      "policy-only rejection of literal password/secret/token-like values is removed",
+      "policy-only rejection of account IDs and account-scoped ARNs is removed",
+      "placeholder/TODO/example wording does not by itself invalidate structurally usable Terraform",
+      "blank/prose-only/non-Terraform output screening remains",
+      "Terraform init -backend=false -get=false and terraform validate -json remain the final executable correctness checks"
     ],
     "recovery_contract": [
-      "generation provider-call budget is at most two",
-      "existing output-truncation compact retry and sensitive-credential recovery share the same two-call budget",
-      "a new contract/CLI failure class does not automatically gain another regeneration path",
-      "second-attempt contract failure and Terraform CLI executable failure fail closed"
+      "generation provider-call budget remains at most two",
+      "the existing output-truncation compact retry is the only generation retry path",
+      "sensitive-credential regeneration is removed",
+      "contract and Terraform CLI failures do not gain automatic regeneration"
     ],
     "diagnostic_contract": [
-      "Terraform init timeout is distinct from init non-zero failure",
-      "provider-closure/init-configuration/validate-configuration/internal CLI classes are represented by bounded stable categories",
-      "raw generated Terraform, credentials, and unbounded CLI output are not emitted as diagnostics"
+      "C2 failure evidence is derived from the job-correlated terminal AnalysisJob failure category rather than the first arbitrary category token",
+      "Terraform CLI bounded failure categories remain",
+      "raw generated Terraform, credentials, and unbounded CLI output are not emitted as diagnostic labels/artifacts"
     ],
     "rejected": [
-      "keep generation grounded only to the current 30-resource curated corpus",
+      "use request-local schema context as a generated-resource allowlist",
+      "reject example Terraform solely for literal credentials, account IDs, account-scoped ARNs, placeholders, or TODO wording",
+      "run sensitive-credential-specific regeneration",
+      "keep generation grounded only to the current curated corpus",
       "embed and ingest the entire AWS Provider documentation set into OpenSearch",
       "query the public Terraform Registry dynamically on each analysis request",
-      "add provider-specific retries one failure class at a time"
+      "enable modules or non-AWS providers as part of this correction"
     ]
   },
   "c2_decision": {

@@ -1,8 +1,8 @@
 work_package:
   id: case-c-repeated-correctness-stability-v1
-  status: AWAITING_APPROVAL
+  status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: "b6fb62c457d08b73a256f1d014e67b8fcdb07cf4"
 
   goal: >
     Implement the selected C2 repeated correctness stability gate by extending the existing

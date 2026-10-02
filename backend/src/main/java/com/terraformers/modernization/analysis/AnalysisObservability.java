@@ -177,6 +177,9 @@ public class AnalysisObservability {
     }
 
     public String category(Throwable exception) {
+        if (exception instanceof TerraformValidationFailureException terraformFailure) {
+            return "terraform_" + terraformFailure.category().name().toLowerCase(Locale.ROOT);
+        }
         if (hasGoogleProviderStatus(exception, 429)) return "provider_rate_limited";
         if (exception instanceof AnalysisResultFinalizationException) return "result_finalization";
         if (exception instanceof AnalysisProviderFailureException providerFailure) {

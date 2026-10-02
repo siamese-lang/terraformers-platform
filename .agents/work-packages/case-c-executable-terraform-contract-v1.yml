@@ -1,8 +1,8 @@
 work_package:
   id: case-c-executable-terraform-contract-v1
-  status: AWAITING_IMPLEMENTATION_ACTIVATION
+  status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: "47529fe426a95de18f57030e1426b1eede0df824"
 
   goal: >
     Implement the approved C1 hybrid executable-Terraform contract: retain the curated RAG corpus
@@ -59,6 +59,7 @@ work_package:
     - backend/src/test/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspectorTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/TerraformCliValidatorTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisObservabilityTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobOrchestratorTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java
     - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilderTest.java
@@ -88,6 +89,7 @@ work_package:
     - create_pull_request
     - inspect_CI_once
     - perform_one_bounded_corrective_iteration_within_same_failure_class
+    - perform_one_user_approved_test_contract_closure_iteration
 
   prohibited_actions:
     - merge

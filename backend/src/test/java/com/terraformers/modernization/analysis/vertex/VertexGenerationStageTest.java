@@ -10,6 +10,7 @@ import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisMode;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.reference.ReferenceDocument;
+import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
 import java.util.ArrayList;
@@ -122,6 +123,7 @@ class VertexGenerationStageTest {
         AnalysisGenerationResult invoke(
                 ObjectContent source,
                 List<ReferenceDocument> references,
+                AwsProviderSchemaEvidence schemaEvidence,
                 boolean compact,
                 boolean retryOccurred,
                 boolean sensitiveCredentialRecovery

@@ -1,0 +1,25 @@
+{
+  "provider_schemas": {
+    "registry.terraform.io/hashicorp/aws": {
+      "resource_schemas": {
+        "aws_vpc": {"block": {"attributes": {
+          "cidr_block": {"type": "string", "optional": true},
+          "arn": {"type": "string", "computed": true}
+        }, "block_types": {"timeouts": {"nesting_mode": "single", "block": {"attributes": {
+          "create": {"type": "string", "optional": true},
+          "read": {"type": "string", "optional": true},
+          "id": {"type": "string", "computed": true}
+        }}, "min_items": 0}}}},
+        "aws_subnet": {"block": {"attributes": {
+          "vpc_id": {"type": "string", "required": true},
+          "cidr_block": {"type": "string", "required": true}
+        }}},
+        "aws_lambda_function": {"block": {"attributes": {
+          "function_name": {"type": "string", "required": true},
+          "role": {"type": "string", "required": true},
+          "handler": {"type": "string", "optional": true}
+        }}}
+      }
+    }
+  }
+}

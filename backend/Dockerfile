@@ -54,6 +54,15 @@ RUN set -eux; \
       TF_IN_AUTOMATION=1 TF_DATA_DIR="$validation_dir/.terraform-data" AWS_EC2_METADATA_DISABLED=true \
       terraform -chdir="$validation_dir" init -backend=false -input=false -get=false -no-color \
         -plugin-dir="$TERRAFORM_VALIDATION_PLUGIN_DIR"; \
+    mkdir -p /opt/terraform-provider-schema; \
+    env -i PATH=/usr/local/bin:/usr/bin:/bin HOME="$validation_dir" \
+      TF_IN_AUTOMATION=1 TF_DATA_DIR="$validation_dir/.terraform-data" AWS_EC2_METADATA_DISABLED=true \
+      terraform -chdir="$validation_dir" providers schema -json \
+        > /opt/terraform-provider-schema/aws-5.100.0.json; \
+    grep -Fq '"registry.terraform.io/hashicorp/aws"' /opt/terraform-provider-schema/aws-5.100.0.json; \
+    grep -Fq '"aws_vpc"' /opt/terraform-provider-schema/aws-5.100.0.json; \
+    test -s /opt/terraform-provider-schema/aws-5.100.0.json; \
+    chmod 0444 /opt/terraform-provider-schema/aws-5.100.0.json; \
     env -i PATH=/usr/local/bin:/usr/bin:/bin HOME="$validation_dir" \
       TF_IN_AUTOMATION=1 TF_DATA_DIR="$validation_dir/.terraform-data" AWS_EC2_METADATA_DISABLED=true \
       terraform -chdir="$validation_dir" validate -json > "$validation_dir/valid.json"; \

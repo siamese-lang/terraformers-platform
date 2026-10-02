@@ -71,6 +71,35 @@ class AnalysisObservabilityTest {
         assertThat(observability.category(new RuntimeException(unavailable))).isEqualTo("other");
     }
 
+    @Test
+    void publishesStableTerraformFailureCategoriesWithoutSensitiveDiagnosticLabels() {
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        AnalysisObservability observability = new AnalysisObservability(registry);
+        String sensitive = "SECRET-FIXTURE-VALUE";
+        String rawHcl = "resource \"aws_db_instance\" \"main\" { password = \"" + sensitive + "\" }";
+
+        for (TerraformValidationFailureException.Category category
+                : TerraformValidationFailureException.Category.values()) {
+            TerraformValidationFailureException failure = new TerraformValidationFailureException(
+                    category, "bounded message; raw=" + rawHcl);
+            String expected = "terraform_" + category.name().toLowerCase(java.util.Locale.ROOT);
+
+            assertThat(observability.category(failure)).isEqualTo(expected);
+            observability.jobFailed(failure);
+            assertThat(failureCount(registry, expected)).isEqualTo(1);
+        }
+
+        String scrape = registry.scrape();
+        assertThat(scrape)
+                .contains("category=\"terraform_init_timeout\"")
+                .contains("category=\"terraform_provider_closure\"")
+                .contains("category=\"terraform_init_configuration\"")
+                .contains("category=\"terraform_validate_timeout\"")
+                .contains("category=\"terraform_validate_configuration\"")
+                .contains("category=\"terraform_internal\"")
+                .doesNotContain(sensitive, rawHcl, "aws_db_instance", "password");
+    }
+
     private AnalysisProviderFailureException providerFailure(AnalysisProviderFailureReason reason) {
         return new AnalysisProviderFailureException(reason, new RuntimeException());
     }

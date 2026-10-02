@@ -140,7 +140,8 @@ class AnalysisJobOrchestratorTest {
         );
         TerraformExecutableValidator executableValidator = mock(TerraformExecutableValidator.class);
         when(executableValidator.validate(anyString())).thenReturn(
-                new TerraformDraftValidation(false, "", "generated Terraform failed Terraform CLI validation"));
+                new TerraformDraftValidation(false, "",
+                        "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation"));
         AnalysisJobOrchestrator orchestrator = new AnalysisJobOrchestrator(
                 provider,
                 mock(ProgressPublisher.class),
@@ -151,8 +152,12 @@ class AnalysisJobOrchestratorTest {
         );
 
         assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(sampleEntity(105L)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("generated Terraform failed Terraform CLI validation");
+                .isInstanceOfSatisfying(TerraformValidationFailureException.class, failure -> {
+                    assertThat(failure.category()).isEqualTo(
+                            TerraformValidationFailureException.Category.VALIDATE_CONFIGURATION);
+                    assertThat(failure).hasMessage(
+                            "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation");
+                });
 
         verify(executableValidator).validate("""
                 resource "aws_s3_bucket" "accepted" {

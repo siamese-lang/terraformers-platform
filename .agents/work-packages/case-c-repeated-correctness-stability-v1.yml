@@ -1,0 +1,172 @@
+work_package:
+  id: case-c-repeated-correctness-stability-v1
+  status: AWAITING_APPROVAL
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  goal: >
+    Implement the selected C2 repeated correctness stability gate by extending the existing
+    backend live-validation workflow with one fixed five-request sequential profile, preserving
+    exact runtime identity and sanitized evidence, without starting live execution.
+
+  decision_source:
+    - docs/plans/active/case-c-repeated-correctness-stability-decision.md
+
+  closes_if_live_accepted:
+    - C-ARCH-05
+
+  engineering_axis:
+    - backend reliability
+    - observability from real failure diagnosis
+    - cloud runtime correctness prerequisite
+
+  representative_case:
+    - Case C Cloud Runtime Capacity & Safe Delivery
+
+  activation:
+    bind_rule: >
+      Immediately before the first implementation write, read authoritative GitHub remote main
+      exactly once and bind that SHA to execution_base_sha. Do not automatically refresh or rebase.
+    stop_on_main_drift: true
+
+  allowed_paths:
+    - .agents/work-packages/case-c-repeated-correctness-stability-v1.yml
+    - .agents/state/case-c-architecture-closure.json
+    - .agents/work-packages/case-c-capacity-baseline-v1.yml
+    - scripts/checks/case_c_architecture_ledger.py
+    - docs/plans/active/case-c-architecture-closure.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/portfolio-case-reassessment.md
+    - docs/evaluation/case-c-repeated-correctness-stability.md
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+
+  prohibited_paths:
+    - backend/**
+    - frontend/**
+    - infra/terraform/**
+    - infra/kubernetes/**
+    - corpus/**
+    - evaluation/**
+    - docs/architecture/**
+    - AGENTS.md
+    - .github/workflows/** except .github/workflows/gcp-target-runtime-dependencies.yml
+
+  allowed_actions:
+    - inspect_repository
+    - bind_execution_base_once
+    - extend_existing_backend_live_validation_with_fixed_c2_profile
+    - preserve_existing_single_request_profile
+    - add_sanitized_machine_readable_c2_evidence
+    - update_case_c_phase_and_checkpoint_state
+    - update_existing_case_c_ledger_checker_for_c2_checkpoint
+    - run_existing_static_checks
+    - create_pull_request
+    - inspect_CI_once
+    - perform_one_bounded_corrective_iteration_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - create_new_GitHub_Actions_workflow
+    - create_new_standalone_validation_script
+    - backend_source_change
+    - model_change
+    - retrieval_change
+    - corpus_change
+    - Terraform_or_provider_version_change
+    - runtime_sizing_change
+    - image_publication
+    - backend_rollout
+    - live_C2_execution
+    - capacity_baseline_execution
+    - cloud_or_IAM_mutation
+    - C3_implementation
+    - next_work_package_start
+
+  selected_contract:
+    fixture: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
+    fixture_sha256: a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8
+    repeat_count: 5
+    concurrency: 1
+    submission: sequential_after_prior_terminal_acceptance
+    automatic_whole_gate_rerun: forbidden
+    new_workflow: forbidden
+    new_validation_script: forbidden
+    existing_single_live_validation_profile: preserved
+
+  acceptance_criteria:
+    implementation:
+      - existing_single_request_backend_live_validation_profile_remains_compatible
+      - C2_profile_is_fixed_to_exactly_five_sequential_requests
+      - each_iteration_uses_unique_project_identity
+      - request_N_plus_1_starts_only_after_request_N_terminal_acceptance
+      - exact_main_SHA_and_immutable_backend_image_are_fail_closed
+      - backend_source_revision_is_recorded_and_verified
+      - first_nonaccepted_attempt_stops_the_gate
+      - sanitized_evidence_records_all_attempt_identities_without_credentials_or_raw_HCL
+      - placeholder_JWKS_is_restored_on_success_or_failure
+      - no_production_backend_IaC_model_retrieval_or_runtime_sizing_change
+    live_gate:
+      - exact_five_attempts_execute
+      - all_five_authenticated_uploads_return_201
+      - all_five_AnalysisJobs_reach_SUCCEEDED
+      - all_five_failure_reason_values_are_null
+      - all_five_generated_Terraform_results_are_readable_and_nonempty
+      - approved_backend_image_and_source_SHA_remain_constant
+      - backend_ready_and_available_replicas_remain_one
+      - unexpected_backend_restart_equals_zero
+      - no_attempt_is_skipped_or_replaced
+      - no_whole_gate_automatic_rerun_occurs
+
+  failure_semantics:
+    correctness_failure: >
+      Repository-owned application, Terraform/schema, authentication, or result-integrity failure
+      stops C2 and leaves C-ARCH-05 unresolved.
+    external_variance_inconclusive: >
+      Explicit external provider/network variance stops the gate without relabeling it as a
+      repository correctness defect. C-ARCH-05 remains unresolved and rerun requires user approval.
+    runtime_identity_drift: >
+      Image/source/restart identity drift stops immediately as HUMAN_REQUIRED.
+    pass: >
+      Only five of five accepted sequential executions under one frozen runtime identity can satisfy
+      the live C2 gate.
+
+  live_sequence_after_implementation_merge:
+    requires_separate_user_checkpoint: true
+    steps:
+      - publish_exact_main_image_with_existing_GCP_Backend_Image_Publish
+      - roll_out_exact_digest_with_existing_backend_revision_rollout
+      - run_one_protected_C2_five_request_stability_gate
+    explicitly_not_in_this_work_package_implementation:
+      - image_publication
+      - backend_rollout
+      - live_gate_execution
+
+  validation:
+    required:
+      - workflow_YAML_parse
+      - existing_automatic_workflow_policy
+      - python3_scripts_checks_case_c_architecture_ledger_py_check
+      - git_diff_check
+    note: >
+      Static validation proves only the gate contract. C-ARCH-05 remains unresolved until the
+      separately approved live gate passes.
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_bound_execution_base
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - allowed_path_outside_scope_is_required
+    - arbitrary_repeat_count_becomes_required
+    - new_workflow_or_new_script_becomes_required
+    - production_backend_or_IaC_change_becomes_required
+    - live_or_cost_action_is_requested_without_user_checkpoint
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    live_action_required_for_C2_completion: true
+    live_action_requires_separate_user_approval: true
+    next_work_package_requires_user_approval: true

@@ -1,0 +1,205 @@
+work_package:
+  id: case-c-executable-terraform-contract-v1
+  status: AWAITING_IMPLEMENTATION_ACTIVATION
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  goal: >
+    Implement the approved C1 hybrid executable-Terraform contract: retain the curated RAG corpus
+    for project guidance, derive an exact local AWS Provider 5.100.0 schema catalog from the bundled
+    provider, inject only request-relevant schema summaries, fail closed when generated Terraform
+    escapes that request envelope, preserve a two-call generation budget, and expose bounded
+    executable-validation failure categories.
+
+  decision_source:
+    - docs/plans/active/case-c-executable-terraform-contract-decision.md
+
+  closes_if_accepted:
+    - C-ARCH-01
+    - C-ARCH-02
+    - C-ARCH-03
+    - C-ARCH-10
+
+  engineering_axis:
+    - AI/RAG targeted improvement
+    - observability from real failure diagnosis
+    - cloud runtime correctness prerequisite
+
+  representative_case:
+    - Case C Cloud Runtime Capacity & Safe Delivery
+
+  activation:
+    bind_rule: >
+      Immediately before the first implementation write, read authoritative GitHub remote main
+      exactly once and bind that SHA to execution_base_sha. Do not automatically refresh or rebase
+      after activation.
+    stop_on_main_drift: true
+
+  allowed_paths:
+    - .agents/work-packages/case-c-executable-terraform-contract-v1.yml
+    - .agents/state/case-c-architecture-closure.json
+    - docs/plans/active/case-c-architecture-closure.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/portfolio-case-reassessment.md
+    - docs/evaluation/case-c-executable-terraform-contract.md
+    - backend/Dockerfile
+    - backend/src/main/java/com/terraformers/modernization/reference/AwsProviderSchemaCatalog.java
+    - backend/src/main/java/com/terraformers/modernization/reference/AwsProviderSchemaEvidence.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspector.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/GeneratedTerraformContractViolation.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformValidationFailureException.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/RequiredGroundingPolicy.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformCliValidator.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobOrchestrator.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProvider.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilder.java
+    - backend/src/test/java/com/terraformers/modernization/reference/AwsProviderSchemaCatalogTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspectorTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/TerraformCliValidatorTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisObservabilityTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilderTest.java
+    - backend/src/test/resources/terraform/aws-provider-schema-catalog-fixture.json
+
+  prohibited_paths:
+    - frontend/**
+    - infra/terraform/**
+    - infra/kubernetes/**
+    - corpus/**
+    - evaluation/**
+    - .github/workflows/**
+    - AGENTS.md
+    - docs/architecture/**
+
+  allowed_actions:
+    - inspect_repository
+    - bind_execution_base_once
+    - add_exact_provider_schema_catalog_runtime_support
+    - add_request_specific_schema_evidence
+    - add_generated_terraform_contract_inspection
+    - consolidate_generation_invocation_budget
+    - add_safe_terraform_failure_categories
+    - add_or_update_targeted_backend_tests
+    - run_existing_backend_local_verification
+    - update_predeclared_C1_evidence_and_status
+    - create_pull_request
+    - inspect_CI_once
+    - perform_one_bounded_corrective_iteration_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - new_GitHub_Actions_workflow
+    - modify_existing_workflow
+    - provider_version_change
+    - Terraform_version_change
+    - corpus_document_addition
+    - corpus_reembedding
+    - OpenSearch_reingestion
+    - model_change
+    - retrieval_algorithm_change
+    - live_registry_lookup_from_analysis_request
+    - module_support
+    - non_AWS_provider_support
+    - generic_retry_for_every_contract_failure
+    - image_publication
+    - backend_rollout
+    - live_GKE_execution
+    - capacity_baseline_execution
+    - cloud_or_IAM_mutation
+    - next_work_package_start
+
+  selected_contract:
+    terraform_version: "1.8.5"
+    provider_source: registry.terraform.io/hashicorp/aws
+    provider_version: "5.100.0"
+    schema_catalog:
+      source: exact_bundled_provider_via_terraform_providers_schema_json
+      generated_during_image_build: true
+      full_generated_schema_committed_to_git: false
+      runtime_registry_lookup: false
+    candidate_resource_types: >
+      Bounded union of fact-extraction resourceTypes and resourceTypes attached to the retrieved
+      curated references for the same request. Every type must resolve in the exact local provider
+      catalog before it can contribute schema evidence.
+    generated_resource_rule: >
+      Deployable generated resource types must be AWS resource blocks, exist in the exact provider
+      catalog, and be members of the request candidate set whose schema evidence was supplied.
+    module_blocks: forbidden
+    non_AWS_deployable_providers: forbidden
+    generation_provider_call_budget: 2
+
+  acceptance_criteria:
+    C_ARCH_01:
+      - exact_AWS_5_100_0_provider_catalog_is_derived_from_the_same_bundled_provider_used_for_validation
+      - curated_corpus_membership_is_not_required_for_a_fact_selected_resource_supported_by_the_catalog
+      - nonexistent_or_non_AWS_resource_types_cannot_enter_the_schema_evidence_envelope
+      - generated_resource_outside_request_candidate_set_fails_closed
+      - module_block_fails_closed
+    C_ARCH_02:
+      - request_candidate_set_combines_fact_resource_types_and_retrieved_reference_resource_types
+      - only_request_relevant_schema_summaries_are_injected_into_generation_context
+      - every_generated_deployable_resource_is_covered_by_the_request_schema_envelope
+      - one_missing_generated_resource_coverage_case_fails_closed
+    C_ARCH_03:
+      - init_timeout_has_stable_safe_category
+      - provider_closure_init_failure_has_stable_safe_category
+      - other_init_configuration_failure_has_stable_safe_category
+      - validate_timeout_has_stable_safe_category
+      - validate_configuration_failure_has_stable_safe_category
+      - malformed_or_internal_CLI_failure_has_stable_safe_category
+      - diagnostics_do_not_emit_raw_generated_HCL_or_credentials
+    C_ARCH_10:
+      - total_generation_provider_calls_never_exceed_two
+      - truncation_retry_and_sensitive_credential_recovery_share_one_budget
+      - no_third_call_after_a_second_attempt_failure
+      - new_schema_or_CLI_contract_failures_do_not_gain_automatic_regeneration
+
+  test_matrix:
+    - facts_select_resource_absent_from_curated_fixture_but_present_in_schema_catalog__accepted
+    - facts_select_unknown_aws_resource__rejected_before_prompt_schema_injection
+    - curated_pattern_adds_companion_resource__schema_for_both_is_injected
+    - generated_resource_not_in_candidate_set__rejected
+    - generated_module_block__rejected
+    - prompt_contains_only_selected_schema_summaries_not_full_catalog
+    - first_call_truncated_second_call_succeeds__two_calls
+    - first_call_sensitive_second_call_succeeds__two_calls
+    - first_call_truncated_second_call_sensitive__no_third_call
+    - CLI_init_timeout__stable_category
+    - CLI_missing_or_unsatisfied_provider__provider_closure_category
+    - CLI_other_init_failure__init_configuration_category
+    - CLI_validate_failure__validate_configuration_category
+    - CLI_malformed_diagnostics__internal_category
+    - diagnostics_do_not_contain_sensitive_fixture_value
+
+  validation:
+    required:
+      - targeted_JUnit_tests_for_changed_contracts
+      - existing_Backend_Local_Verification
+      - existing_Case_C_architecture_ledger_check
+    image_build_contract: >
+      Dockerfile must deterministically derive and retain the schema catalog from the exact checksum-
+      verified AWS 5.100.0 provider and fail the image build if catalog generation or expected AWS
+      resource presence fails. Actual image publication/rollout is outside C1 and remains separately
+      gated.
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_bound_execution_base
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - allowed_path_outside_scope_is_required
+    - full_provider_document_corpus_expansion_becomes_required
+    - provider_or_Terraform_version_change_becomes_required
+    - module_or_non_AWS_provider_support_becomes_required
+    - new_workflow_or_cloud_action_becomes_required
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    live_action_required_for_C1_completion: false
+    next_work_package_requires_user_approval: true

@@ -1,0 +1,338 @@
+{
+  "schema_version": 1,
+  "case": "case-c",
+  "title": "Case C Architecture Closure",
+  "audit_base_sha": "9a0d9bc3e792a5b5780b7676960bb14750f969ee",
+  "overall_status": "ARCHITECTURE_CLOSURE_ACTIVE",
+  "capacity_baseline_status": "SUSPENDED_BY_ARCHITECTURE_AUDIT",
+  "current_phase": "C1",
+  "phases": [
+    {
+      "id": "C0",
+      "title": "Durable audit plan and maintenance automation",
+      "status": "COMPLETE",
+      "requires": [],
+      "live_action": false
+    },
+    {
+      "id": "C1",
+      "title": "Executable Terraform Contract Decision and closure",
+      "status": "AWAITING_DECISION_APPROVAL",
+      "requires": [
+        "C0"
+      ],
+      "live_action": false
+    },
+    {
+      "id": "C2",
+      "title": "Repeated correctness stability gate",
+      "status": "BLOCKED",
+      "requires": [
+        "C1"
+      ],
+      "live_action": true
+    },
+    {
+      "id": "C3",
+      "title": "Executor-aware capacity measurement contract",
+      "status": "BLOCKED",
+      "requires": [
+        "C1",
+        "C2"
+      ],
+      "live_action": false
+    },
+    {
+      "id": "C4",
+      "title": "Runtime and delivery desired-state convergence",
+      "status": "BLOCKED",
+      "requires": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "live_action": false
+    },
+    {
+      "id": "C5",
+      "title": "Valid capacity baseline",
+      "status": "BLOCKED",
+      "requires": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "live_action": true
+    },
+    {
+      "id": "C6",
+      "title": "Measured bottleneck decision and improvement",
+      "status": "BLOCKED",
+      "requires": [
+        "C5"
+      ],
+      "live_action": true
+    },
+    {
+      "id": "C7",
+      "title": "Safe delivery and faulty-release rollback",
+      "status": "BLOCKED",
+      "requires": [
+        "C6"
+      ],
+      "live_action": true
+    },
+    {
+      "id": "C8",
+      "title": "Case C evidence closure",
+      "status": "BLOCKED",
+      "requires": [
+        "C7"
+      ],
+      "live_action": false
+    }
+  ],
+  "issues": [
+    {
+      "id": "C-ARCH-01",
+      "severity": "BLOCKER",
+      "status": "OPEN",
+      "owner_phase": "C1",
+      "title": "Generated Terraform envelope is not closed against bundled executable providers/resources",
+      "blocks": [
+        "C2",
+        "C5"
+      ],
+      "evidence": [
+        "backend/Dockerfile bundles Terraform 1.8.5 and hashicorp/aws 5.100.0 only",
+        "VertexPromptBuilder guides AWS 5.100.0 but does not machine-enforce the executable provider/resource envelope"
+      ],
+      "acceptance": [
+        "generated provider/resource set is mechanically constrained to an explicitly selected executable envelope",
+        "runtime bundled provider set and generation envelope are checked as one contract"
+      ]
+    },
+    {
+      "id": "C-ARCH-02",
+      "severity": "BLOCKER",
+      "status": "OPEN",
+      "owner_phase": "C1",
+      "title": "REQUIRED retrieval does not prove generated-resource grounding coverage",
+      "blocks": [
+        "C2",
+        "C5"
+      ],
+      "evidence": [
+        "RequiredGroundingPolicy only requires non-empty references for architecture output",
+        "Case A already established that retrieval PASS alone does not prove grounding coverage"
+      ],
+      "acceptance": [
+        "every generated infrastructure resource requiring provider evidence is covered by the selected grounding contract",
+        "missing required coverage fails closed before result finalization"
+      ]
+    },
+    {
+      "id": "C-ARCH-03",
+      "severity": "BLOCKER",
+      "status": "OPEN",
+      "owner_phase": "C1",
+      "title": "Terraform executable validation collapses actionable init/validate diagnostics",
+      "blocks": [
+        "C2",
+        "C5"
+      ],
+      "evidence": [
+        "capacity run 36957682821 failed at concurrency 1 with offline Terraform initialization failure",
+        "TerraformCliValidator captures bounded command output but returns a generic non-zero init reason"
+      ],
+      "acceptance": [
+        "safe diagnostic taxonomy distinguishes actionable init/validate failure classes without exposing generated secrets",
+        "live evidence can identify failure class without an ad-hoc runtime probe"
+      ]
+    },
+    {
+      "id": "C-ARCH-04",
+      "severity": "BLOCKER",
+      "status": "OPEN",
+      "owner_phase": "C3",
+      "title": "Capacity harness saturation model conflicts with executor queueing semantics",
+      "blocks": [
+        "C5"
+      ],
+      "evidence": [
+        "executor is core=2 max=4 queue=50",
+        "capacity contract treats concurrency 4 as max-worker parallelism and requires active workers=4 for queue pressure"
+      ],
+      "acceptance": [
+        "capacity saturation rules match the actual executor scheduling model",
+        "deterministic verification covers the worker/queue behavior assumed by the harness"
+      ]
+    },
+    {
+      "id": "C-ARCH-05",
+      "severity": "BLOCKER",
+      "status": "OPEN",
+      "owner_phase": "C2",
+      "title": "Single successful live analysis is insufficient as a capacity correctness prerequisite",
+      "blocks": [
+        "C3",
+        "C5"
+      ],
+      "evidence": [
+        "live validation 36956086874 passed",
+        "capacity run 36957682821 then produced two successes followed by an executable-correctness failure at concurrency 1"
+      ],
+      "acceptance": [
+        "a frozen repeated correctness gate passes before capacity execution",
+        "repeat count and acceptance are selected before the live gate rather than retrofitted"
+      ]
+    },
+    {
+      "id": "C-ARCH-06",
+      "severity": "BLOCKER",
+      "status": "OPEN",
+      "owner_phase": "C4",
+      "title": "Live backend image and repository declarative image are divergent",
+      "blocks": [
+        "C5",
+        "C7"
+      ],
+      "evidence": [
+        "live backend digest is sha256:054a9ae1d953313cb15691fe50281373e74a93d2a0d050ee0cf6879fe096aa06",
+        "infra/kubernetes/overlays/gcp-target/kustomization.yaml still records sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae"
+      ],
+      "acceptance": [
+        "repository desired state converges to the accepted immutable live backend revision",
+        "future declarative apply cannot silently revert to an older backend image"
+      ]
+    },
+    {
+      "id": "C-ARCH-07",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "owner_phase": "C7",
+      "title": "Single-replica rollout strategy can interrupt API availability",
+      "blocks": [
+        "C8"
+      ],
+      "evidence": [
+        "backend replicas=1 with maxUnavailable=1 and maxSurge=0"
+      ],
+      "acceptance": [
+        "healthy rollout availability is measured explicitly",
+        "selected delivery decision records accepted-work durability separately from new-request availability"
+      ]
+    },
+    {
+      "id": "C-ARCH-08",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "owner_phase": "C7",
+      "title": "Kubernetes Ready does not represent integrated analysis-path readiness",
+      "blocks": [
+        "C8"
+      ],
+      "evidence": [
+        "backend probes use Spring Actuator health",
+        "current custom runtime readiness checks required configuration rather than the executable AI/RAG/Terraform path"
+      ],
+      "acceptance": [
+        "faulty-release experiment has a deterministic readiness/canary contract",
+        "external provider outages are not naively coupled to pod liveness/readiness"
+      ]
+    },
+    {
+      "id": "C-ARCH-09",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "owner_phase": "C4",
+      "title": "Two-node live baseline is not consistently represented across Terraform control-plane checks",
+      "blocks": [
+        "C5"
+      ],
+      "evidence": [
+        "live target and capacity WP use two e2-standard-2 nodes",
+        "some plan/runtime-check paths still default to or require node_count=1"
+      ],
+      "acceptance": [
+        "all active Case C control-plane checks understand the selected two-node baseline or explicitly preserve current state",
+        "no active check can accidentally plan or assert an obsolete one-node desired state"
+      ]
+    },
+    {
+      "id": "C-ARCH-10",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "owner_phase": "C1",
+      "title": "Generation recovery is failure-specific and can grow as ad-hoc exception handling",
+      "blocks": [
+        "C2"
+      ],
+      "evidence": [
+        "generation has output-truncation retry and a separate hard-coded-sensitive-credential regeneration path"
+      ],
+      "acceptance": [
+        "recovery policy is derived from an explicit generation/executable contract",
+        "new validation failures do not automatically create one-off retries"
+      ]
+    },
+    {
+      "id": "C-ARCH-11",
+      "severity": "HIGH",
+      "status": "RESOLVED",
+      "owner_phase": "C0",
+      "title": "Repository project-state documents are stale relative to actual Case C execution",
+      "blocks": [
+        "C1"
+      ],
+      "evidence": [
+        "C0 introduces the durable architecture ledger and generated Case C state blocks",
+        "the existing Terraform Static Verification scope job machine-checks generated state against the ledger on every PR"
+      ],
+      "acceptance": [
+        "repository state points to architecture closure and records the failed capacity attempt",
+        "generated state summary is machine-checked against this ledger"
+      ]
+    },
+    {
+      "id": "C-ARCH-12",
+      "severity": "RESIDUAL",
+      "status": "ACCEPTED_RESIDUAL",
+      "owner_phase": "C8",
+      "title": "External provider/network variance and possible duplicate provider invocation after process loss remain residual risks",
+      "blocks": [],
+      "evidence": [
+        "Vertex latency/quota behavior is external to repository runtime capacity",
+        "Case B intentionally guarantees durable ownership/fencing rather than exactly-once provider invocation"
+      ],
+      "acceptance": [
+        "residual risk is preserved in final Case C closure and is not misreported as eliminated"
+      ]
+    }
+  ],
+  "automation": {
+    "generated_files": [
+      "docs/plans/active/case-c-architecture-closure.md",
+      "docs/AI_PROJECT_STATE.md#CASE_C_ARCHITECTURE_CLOSURE",
+      "docs/plans/active/portfolio-case-reassessment.md#CASE_C_ARCHITECTURE_CLOSURE"
+    ],
+    "lanes": {
+      "M0_MECHANICAL_SYNC": {
+        "user_per_pr_decision_required": false,
+        "agent_merge_allowed_after_checks": true,
+        "rule": "generated summary synchronization only; no ledger semantic change"
+      },
+      "M1_EVIDENCE_STATE": {
+        "user_per_pr_decision_required": false,
+        "agent_merge_allowed_after_checks_and_independent_evidence_review": true,
+        "rule": "predeclared acceptance unchanged; only evidence append and permitted status transition"
+      },
+      "D_DECISION": {
+        "user_per_pr_decision_required": true,
+        "agent_merge_allowed_after_checks": false,
+        "rule": "architecture choice, acceptance change, severity/ownership change, residual-risk acceptance, or scope expansion"
+      }
+    }
+  }
+}

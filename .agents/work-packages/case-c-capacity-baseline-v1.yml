@@ -3,7 +3,7 @@ work_package:
   status: LIVE_BASELINE_APPROVED_RUNTIME_REBOUND
   approved_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
   execution_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
-  live_baseline_main_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
+  live_baseline_main_sha: BIND_AT_EXECUTION
   live_baseline_backend_source_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
 
   goal: >
@@ -68,6 +68,10 @@ work_package:
       capacity_tuning_before_baseline: false
       user_live_baseline_approval: "2026-10-02"
     stop_on_main_drift: true
+    live_baseline_main_binding: >
+      Immediately before workflow dispatch, independently read authoritative GitHub remote main
+      and pass that exact SHA as expected_sha. The protected workflow and harness both require
+      expected_sha == GITHUB_SHA, so any later main drift fails closed.
     stop_on_live_baseline_main_drift: true
     live_execution_requires_separate_user_checkpoint: true
 
@@ -331,7 +335,7 @@ work_package:
   auto_repair_limit: 1
 
   stop_on:
-    - current_main_differs_from_live_baseline_main_sha
+    - workflow_expected_main_sha_differs_from_checked_out_main
     - second_failure_after_one_bounded_repair
     - failure_class_changes
     - allowed_path_outside_scope_is_required
@@ -351,7 +355,7 @@ work_package:
     harness_readiness: PASS
     live_baseline: APPROVED_NOT_EXECUTED
     harness_implementation_main_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
-    authoritative_live_baseline_main_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
+    authoritative_live_baseline_main_sha: BIND_AT_EXECUTION
     authoritative_live_backend_source_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
     authoritative_live_backend_image_digest: "sha256:054a9ae1d953313cb15691fe50281373e74a93d2a0d050ee0cf6879fe096aa06"
     pre_baseline_correctness_live_validation_run: 36956086874

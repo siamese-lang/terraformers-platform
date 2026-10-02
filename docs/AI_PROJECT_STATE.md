@@ -139,7 +139,7 @@ Case B — Backend durable asynchronous processing:
   MariaDB contention evidence, hard-gate results, trade-offs, and residual limitations are recorded
   in [Case B Integrated Durable-Processing Closure](evaluation/case-b-integrated-closure.md).
 
-Case C — Cloud runtime measurement guardrails and immutable delivery:
+Case C — GCP production-representative runtime and immutable delivery:
 - **PORTFOLIO-CLOSED / RESIDUAL RISKS ACCEPTED** in
   [Case C Final Portfolio Closure](evaluation/case-c-portfolio-closure.md);
 - the selected closure decision is

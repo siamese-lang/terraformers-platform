@@ -809,6 +809,69 @@ class GcpTargetPlanGateTest(unittest.TestCase):
         with self.assertRaises(gate.ContractError):
             gate.validate_plan(plan, "runtime-dependencies")
 
+    def test_teardown_accepts_exact_reviewed_delete_set(self) -> None:
+        reviewed = {}
+        for source in (
+            gate.FOUNDATION_ACTIONS,
+            gate.DELIVERY_FOUNDATION_ACTIONS,
+            gate.RUNTIME_SECRET_FOUNDATION_ACTIONS,
+            gate.RUNTIME_DEPENDENCY_ACTIONS,
+        ):
+            for address, (resource_type, _actions) in source.items():
+                reviewed[address] = resource_type
+
+        plan = {
+            "resource_changes": [
+                resource(address, resource_type, ["delete"], None, {})
+                for address, resource_type in sorted(reviewed.items())
+            ]
+        }
+        result = gate.validate_plan(plan, "teardown", 29)
+        self.assertEqual(result["resource_change_count"], 29)
+
+    def test_teardown_rejects_wrong_reviewed_count(self) -> None:
+        reviewed = {}
+        for source in (
+            gate.FOUNDATION_ACTIONS,
+            gate.DELIVERY_FOUNDATION_ACTIONS,
+            gate.RUNTIME_SECRET_FOUNDATION_ACTIONS,
+            gate.RUNTIME_DEPENDENCY_ACTIONS,
+        ):
+            for address, (resource_type, _actions) in source.items():
+                reviewed[address] = resource_type
+        plan = {
+            "resource_changes": [
+                resource(address, resource_type, ["delete"], None, {})
+                for address, resource_type in sorted(reviewed.items())
+            ]
+        }
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "teardown", 28)
+
+    def test_teardown_rejects_unknown_address(self) -> None:
+        plan = {
+            "resource_changes": [
+                resource("google_compute_instance.unreviewed", "google_compute_instance", ["delete"], None, {})
+            ]
+        }
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "teardown", 1)
+
+    def test_teardown_rejects_update_action(self) -> None:
+        plan = {
+            "resource_changes": [
+                resource(
+                    "google_compute_network.target",
+                    "google_compute_network",
+                    ["update"],
+                    {"name": "terraformers-target"},
+                    {"name": "terraformers-target"},
+                )
+            ]
+        }
+        with self.assertRaises(gate.ContractError):
+            gate.validate_plan(plan, "teardown", 1)
+
 
 if __name__ == "__main__":
     unittest.main()

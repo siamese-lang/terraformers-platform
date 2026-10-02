@@ -76,6 +76,7 @@ jobs:
           bash -n scripts/deploy/bootstrap_gcp_image_publish.sh
           bash -n scripts/deploy/bootstrap_github_image_publish_environment.sh
           bash -n scripts/deploy/bootstrap_gcp_runtime_secrets.sh
+          bash -n scripts/deploy/cleanup_gcp_target_bootstrap.sh
 
           python3 - <<'PY'
           from pathlib import Path
@@ -101,6 +102,36 @@ jobs:
           apply_bootstrap = Path("scripts/deploy/bootstrap_gcp_target_apply.sh").read_text(encoding="utf-8")
           if "roles/artifactregistry.admin" not in apply_bootstrap:
               raise SystemExit("apply bootstrap is missing Artifact Registry administration required for repository creation")
+
+          teardown_workflow = Path(".github/workflows/gcp-target-runtime-teardown.yml").read_text(encoding="utf-8")
+          for marker in [
+              "workflow_dispatch:",
+              "environment: gcp-target-plan",
+              "environment: gcp-target-apply",
+              "DESTROY_REVIEWED_GCP_TARGET_RUNTIME_29",
+              "--operation teardown",
+              "--expected-delete-count",
+              "kubectl delete namespace terraformers-target",
+              "gcloud storage rm --recursive",
+              "terraform plan -destroy",
+              "terraform apply -no-color -input=false",
+              "Terraform managed state: \`empty\`",
+          ]:
+              if marker not in teardown_workflow:
+                  raise SystemExit(f"missing GCP teardown workflow marker: {marker}")
+          if "pull_request:" in teardown_workflow or "\npush:" in teardown_workflow:
+              raise SystemExit("GCP teardown workflow must remain manual-only")
+
+          cleanup = Path("scripts/deploy/cleanup_gcp_target_bootstrap.sh").read_text(encoding="utf-8")
+          for marker in [
+              "DELETE_GCP_TARGET_BOOTSTRAP",
+              "gcloud storage rm --all-versions",
+              "gcloud storage buckets delete",
+              "gcloud iam workload-identity-pools delete",
+              "Runtime residuals still exist",
+          ]:
+              if marker not in cleanup:
+                  raise SystemExit(f"missing GCP bootstrap cleanup marker: {marker}")
 
           runtime_workflow = Path(".github/workflows/gcp-target-runtime-dependencies.yml").read_text(encoding="utf-8")
           for marker in [

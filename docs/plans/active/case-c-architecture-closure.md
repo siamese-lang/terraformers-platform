@@ -8,8 +8,8 @@
 - Overall status: **ARCHITECTURE_CLOSURE_ACTIVE**
 - Capacity baseline: **SUSPENDED_BY_ARCHITECTURE_AUDIT**
 - Audit base SHA: 9a0d9bc3e792a5b5780b7676960bb14750f969ee
-- Current phase: **C2 — Repeated correctness stability gate**
-- Open blocking issues: C-ARCH-04, C-ARCH-05, C-ARCH-06
+- Current phase: **C1 — Executable Terraform Contract Decision and closure**
+- Open blocking issues: C-ARCH-01, C-ARCH-02, C-ARCH-04, C-ARCH-05, C-ARCH-06
 
 Capacity-baseline retry is prohibited until every blocker required by C5 is RESOLVED and a new live checkpoint is approved.
 
@@ -18,8 +18,8 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 | Phase | Status | Purpose | Requires | Live action |
 |---|---|---|---|---|
 | C0 | COMPLETE | Durable audit plan and maintenance automation | — | no |
-| C1 | COMPLETE | Executable Terraform Contract Decision and closure | C0 | no |
-| C2 | ACTIVE | Repeated correctness stability gate | C1 | yes |
+| C1 | ACTIVE | Executable Terraform Contract Decision and closure | C0 | no |
+| C2 | BLOCKED | Repeated correctness stability gate | C1 | yes |
 | C3 | BLOCKED | Executor-aware capacity measurement contract | C1, C2 | no |
 | C4 | BLOCKED | Runtime and delivery desired-state convergence | C1, C2, C3 | no |
 | C5 | BLOCKED | Valid capacity baseline | C1, C2, C3, C4 | yes |
@@ -31,8 +31,8 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 
 | ID | Severity | Status | Owner | Blocks | Finding |
 |---|---|---|---|---|---|
-| C-ARCH-01 | BLOCKER | RESOLVED | C1 | C2, C5 | Generated Terraform envelope is not closed against bundled executable providers/resources |
-| C-ARCH-02 | BLOCKER | RESOLVED | C1 | C2, C5 | REQUIRED retrieval does not prove generated-resource grounding coverage |
+| C-ARCH-01 | BLOCKER | IN_PROGRESS | C1 | C2, C5 | Generated Terraform executable boundary is over-constrained by a request-local allowlist |
+| C-ARCH-02 | BLOCKER | IN_PROGRESS | C1 | C2, C5 | Retrieval metadata is incorrectly coupled to generated-resource eligibility |
 | C-ARCH-03 | BLOCKER | RESOLVED | C1 | C2, C5 | Terraform executable validation collapses actionable init/validate diagnostics |
 | C-ARCH-04 | BLOCKER | OPEN | C3 | C5 | Capacity harness saturation model conflicts with executor queueing semantics |
 | C-ARCH-05 | BLOCKER | IN_PROGRESS | C2 | C3, C5 | Single successful live analysis is insufficient as a capacity correctness prerequisite |
@@ -40,15 +40,15 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 | C-ARCH-07 | HIGH | OPEN | C7 | C8 | Single-replica rollout strategy can interrupt API availability |
 | C-ARCH-08 | HIGH | OPEN | C7 | C8 | Kubernetes Ready does not represent integrated analysis-path readiness |
 | C-ARCH-09 | HIGH | OPEN | C4 | C5 | Two-node live baseline is not consistently represented across Terraform control-plane checks |
-| C-ARCH-10 | HIGH | RESOLVED | C1 | C2 | Generation recovery is failure-specific and can grow as ad-hoc exception handling |
+| C-ARCH-10 | HIGH | IN_PROGRESS | C1 | C2 | Generation recovery is failure-specific and can grow as ad-hoc exception handling |
 | C-ARCH-11 | HIGH | RESOLVED | C0 | C1 | Repository project-state documents are stale relative to actual Case C execution |
 | C-ARCH-12 | RESIDUAL | ACCEPTED_RESIDUAL | C8 | — | External provider/network variance and possible duplicate provider invocation after process loss remain residual risks |
 
 ## Acceptance and retained evidence
 
-### C-ARCH-01 — Generated Terraform envelope is not closed against bundled executable providers/resources
+### C-ARCH-01 — Generated Terraform executable boundary is over-constrained by a request-local allowlist
 
-- Severity/status: BLOCKER / RESOLVED
+- Severity/status: BLOCKER / IN_PROGRESS
 - Owner phase: C1
 - Retained evidence:
   - backend/Dockerfile bundles Terraform 1.8.5 and hashicorp/aws 5.100.0 only
@@ -56,13 +56,15 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
   - C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion
   - PR #182 merged as 40237e593530086b4649bfc8bc5499848c4b7165: backend image build derives a read-only request-time catalog from the exact checksum-pinned bundled hashicorp/aws 5.100.0 provider; generated Terraform is mechanically inspected against the request schema envelope and module/non-AWS deployable blocks fail closed
   - Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS
+  - C2 rerun 37003640318 on source 61accc9ee50bba57ae5fa9dff0074fdc01e970e4 failed at attempt 1 with terminal category generated_terraform_contract_request_schema after successful REQUIRED retrieval and one sensitive-credential regeneration
+  - The user redefined generated Terraform as an editable/reference draft rather than an unattended deployment artifact and explicitly rejected request-local policy restrictions that are not required for provider/Terraform correctness
 - Acceptance:
-  - generated provider/resource set is mechanically constrained to an explicitly selected executable envelope
-  - runtime bundled provider set and generation envelope are checked as one contract
+  - every generated AWS resource block is checked against the exact bundled AWS Provider 5.100.0 catalog rather than a request-local allowlist
+  - request-specific schema evidence is advisory generation context while Terraform init/validate remains the final executable correctness boundary
 
-### C-ARCH-02 — REQUIRED retrieval does not prove generated-resource grounding coverage
+### C-ARCH-02 — Retrieval metadata is incorrectly coupled to generated-resource eligibility
 
-- Severity/status: BLOCKER / RESOLVED
+- Severity/status: BLOCKER / IN_PROGRESS
 - Owner phase: C1
 - Retained evidence:
   - RequiredGroundingPolicy only requires non-empty references for architecture output
@@ -70,9 +72,11 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
   - C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion
   - PR #182 tests prove the request candidate set is the union of extracted fact resource types and retrieved curated-reference resource types, unknown catalog resources fail before generation, and generated resources outside the request schema envelope fail closed
   - Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS
+  - Run 37003640318 retrieved eight references successfully, but retrieved provider example content can contain companion AWS resource blocks not represented in that document's resourceTypes metadata
+  - The revised C1 decision separates retrieval grounding/guidance from provider resource eligibility; valid generated AWS resources no longer require request-local retrieval metadata coverage
 - Acceptance:
-  - every generated infrastructure resource requiring provider evidence is covered by the selected grounding contract
-  - missing required coverage fails closed before result finalization
+  - REQUIRED retrieval grounds architecture intent, project decisions, relationships, and representative patterns without acting as a provider resource allowlist
+  - retrieved reference content may enrich prompt schema context automatically, while final generated-resource existence is decided by the exact local provider catalog
 
 ### C-ARCH-03 — Terraform executable validation collapses actionable init/validate diagnostics
 
@@ -113,6 +117,8 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
   - Read-only backend log recovery for run 36985305485 identified errorClass=GeneratedTerraformContractViolation with category=other for analysisJobId 6a6eec5d-9e21-4fa8-907a-0dcd7521a24f; this proves a repository-owned C1 generated-Terraform contract rejection rather than external provider variance, while the current observability taxonomy loses its safe subtype
   - PR #187 merged as 1f74e5305571d21e4e94eee4854cc3d6bdca7c55 selecting a closed three-reason GeneratedTerraformContractViolation diagnostic taxonomy; no C1 contract, generation, retrieval, retry, or C2 acceptance change was authorized
   - Generated Terraform contract diagnostic implementation assigns MODULE_BLOCK, RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT, or RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE at the rejection point and maps them to fixed sanitized categories without logging HCL, resource identity, candidate sets, schema content, or exception messages
+  - C2 rerun 37003640318 on exact source 61accc9ee50bba57ae5fa9dff0074fdc01e970e4 and diagnostic-enabled image stopped at attempt 1 with 0/5 accepted; backend logs proved terminal category generated_terraform_contract_request_schema after REQUIRED retrieval success and sensitive-credential regeneration
+  - The C2 artifact recorded failure_category=unclassified because the workflow parser selected an earlier informational category before the terminal AnalysisJob failure; parser correction is included in the revised C1 implementation scope
 - Acceptance:
   - a frozen repeated correctness gate passes before capacity execution
   - repeat count and acceptance are selected before the live gate rather than retrofitted
@@ -162,16 +168,18 @@ Capacity-baseline retry is prohibited until every blocker required by C5 is RESO
 
 ### C-ARCH-10 — Generation recovery is failure-specific and can grow as ad-hoc exception handling
 
-- Severity/status: HIGH / RESOLVED
+- Severity/status: HIGH / IN_PROGRESS
 - Owner phase: C1
 - Retained evidence:
   - generation has output-truncation retry and a separate hard-coded-sensitive-credential regeneration path
   - C1 decision approved by user on 2026-10-02: curated RAG + exact local AWS Provider 5.100.0 schema catalog + request-specific schema injection; no exhaustive provider-document corpus expansion
   - PR #182 consolidates generation recovery into a maximum two-call budget: truncation and sensitive-credential recovery share the same retry state, truncation followed by a sensitive second result makes no third call, and schema/CLI contract failures do not trigger regeneration
   - Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS
+  - Run 37003640318 shows the policy-only sensitive-credential detector triggered a second generation call before the terminal request-schema rejection
+  - The revised C1 decision removes sensitive-credential regeneration and retains only the existing bounded output-truncation retry
 - Acceptance:
-  - recovery policy is derived from an explicit generation/executable contract
-  - new validation failures do not automatically create one-off retries
+  - generation retry policy is limited to the existing bounded output-truncation compact retry
+  - policy-only literal/account-identifier/placeholder checks do not create regeneration paths or correctness failures
 
 ### C-ARCH-11 — Repository project-state documents are stale relative to actual Case C execution
 

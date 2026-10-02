@@ -60,6 +60,25 @@ runtime bucket, registry, or secrets. It is only an interim cost reduction.
 
 ## Stage 1 — protected runtime teardown
 
+Before dispatching the teardown workflow, refresh the protected apply identity once from an
+independently authenticated Cloud Shell administrator:
+
+```bash
+cd ~/terraformers-platform
+git switch main
+git pull --ff-only
+bash scripts/deploy/bootstrap_gcp_target_apply.sh apply
+```
+
+For final teardown this bootstrap adds the narrow
+`roles/iam.serviceAccountDeleter` permission to `terraformers-apply`. The existing
+`roles/iam.serviceAccountCreator` role can create/list/get service accounts but does not grant
+`iam.serviceAccounts.delete`; Terraform destroy therefore must not begin until the delete
+permission is present.
+
+The teardown workflow independently verifies the full required delete-permission set with
+`testIamPermissions` and stops before mutation if any required permission is missing.
+
 Workflow:
 
 `.github/workflows/gcp-target-runtime-teardown.yml`

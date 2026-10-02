@@ -130,6 +130,19 @@ work_package:
 
   auto_repair_limit: 1
 
+  repair_history:
+    - iteration: 1
+      trigger: independent_acceptance_review
+      failure_class: DOCUMENTATION_STATE_INCONSISTENCY
+      finding: >
+        The existing C2 evidence document still said the live gate had not executed and still
+        described the temporary pre-taxonomy category generated_terraform_contract_violation,
+        despite failed live run 36985305485 and the approved three-category diagnostic decision.
+      correction: >
+        Reconcile the document with the failed live execution and the selected typed categories
+        without changing implementation behavior, C1/C2 acceptance, or live authorization.
+      acceptance_changed: false
+
   stop_on:
     - current_main_differs_from_bound_execution_base
     - second_failure_after_one_bounded_repair

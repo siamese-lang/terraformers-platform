@@ -142,25 +142,36 @@ Case B — Backend durable asynchronous processing:
 Case C — GCP production-representative runtime and immutable delivery:
 - **PORTFOLIO-CLOSED / RESIDUAL RISKS ACCEPTED** in
   [Case C Final Portfolio Closure](evaluation/case-c-portfolio-closure.md);
-- the selected closure decision is
-  [Case C Portfolio Sufficiency Closure Decision](plans/active/case-c-portfolio-sufficiency-decision.md);
-- capacity run `36957682821` stopped at concurrency 1 before a valid saturation result because the
-  integrated path failed executable-Terraform correctness; this invalidated capacity attribution;
-- PR #190 removed request-local generated-resource allowlisting, policy-only credential/account/
-  placeholder rejection, sensitive-credential regeneration, and duplicated Terraform body regex
-  validation while retaining exact AWS Provider 5.100.0 resource existence and Terraform CLI
-  init/validate;
-- immutable image publication run `37015159218` built source
+- selected runtime boundary:
+  GKE backend/OpenSearch + Vertex AI + dedicated MariaDB 11.4 Compute Engine VM/Persistent Disk +
+  GCS + Secret Manager/Secret Sync + Artifact Registry;
+- Cloud SQL/MySQL was not treated as a drop-in replacement after MySQL 8.4 rejected the retained
+  Flyway migration contract; MariaDB-in-GKE was rejected for the first representative runtime
+  because it would couple DB pressure to the measured GKE worker;
+- runtime dependency run `36851221194` and Kubernetes prerequisite run `36854218346` established
+  the private GCS/DB/secret/runtime boundary;
+- integrated live-validation run `36889896239` **PASS** proves authenticated upload, durable
+  AnalysisJob acceptance, real Vertex generation/embedding, OpenSearch retrieval, GCS source/result
+  persistence, terminal success and Terraform read-back;
+- backend-replacement run `36891629279` **PASS** proves preserved immutable image/source identity,
+  durable AnalysisJob identity, source/result/Terraform bytes, and Actuator/Prometheus reachability
+  across backend pod replacement;
+- GitHub delivery uses OIDC/WIF with separated infrastructure-apply and image-publisher
+  responsibilities; no user-managed long-lived GCP key is part of the selected delivery path;
+- image publication run `37015159218` built exact source
   `b420291fa1534184d2a260883df718cc96511505` and digest
   `sha256:0db599d2487a3f7850bd0b5e454fe04d9cb234ae840202c7ad01f1a147478419`;
-- exact rollout run `37015932695` verified the prior image boundary, rolled out the new digest,
-  reached Ready/Available 1/1, preserved embedded source identity, and reported health UP;
-- repeated gate run `37016993776` accepted attempt 1 and failed attempt 2 with terminal
-  `terraform_validate_configuration`, stopping at 1/5 with no automatic whole-gate rerun;
-- this remaining generated-Terraform executable-validity variance is an **accepted residual risk**,
-  not a reason to rerun until green or to reopen Case A;
-- capacity saturation measurement, executor-harness repair, declarative/live image convergence,
-  rollout-under-load, readiness redesign, and faulty-release rollback are **DEFERRED**;
+- exact rollout run `37015932695` verified the prior image, deployed the target digest, reached
+  Ready/Available 1/1, preserved embedded source identity, and reported health UP;
+- observability is supporting infrastructure, not a fourth Case: Actuator/Prometheus plus bounded
+  job/stage/failure/queue/retry metrics and `analysisJobId`/source-revision log correlation are
+  retained; a full Grafana/OpenTelemetry/tracing platform is not claimed;
+- capacity run `36957682821` and C2 run `37016993776` are retained only as stopping evidence:
+  correctness variance appeared before trustworthy saturation attribution, so capacity tuning was
+  not continued or misreported as solved;
+- capacity saturation, HPA/replica/node/OpenSearch tuning, zero-downtime rollout, faulty-release
+  rollback, MariaDB HA, integrated-path readiness redesign and full tracing/dashboard hardening are
+  **DEFERRED**;
 - there is no automatic next Case C implementation task.
 
 Observability and failure/load work may continue only when it closes a measurement gap for Case A,

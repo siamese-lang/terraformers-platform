@@ -24,6 +24,7 @@ PROJECT_ROLES=(
   roles/container.clusterAdmin
   roles/container.developer
   roles/iam.serviceAccountCreator
+  roles/iam.serviceAccountDeleter
   roles/iam.serviceAccountUser
   roles/resourcemanager.projectIamAdmin
   roles/serviceusage.serviceUsageAdmin

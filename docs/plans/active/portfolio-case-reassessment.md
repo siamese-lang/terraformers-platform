@@ -438,9 +438,9 @@ trade-offs, and residual risks.
 <!-- CASE_C_ARCHITECTURE_CLOSURE:START -->
 ## Case C portfolio-closure checkpoint
 
-Case C is **PORTFOLIO_CLOSED_WITH_RESIDUALS** and remains the project's cloud infrastructure / operations case. The selected case is **GCP Production-Representative Runtime & Immutable Delivery**.
+Case C is **PORTFOLIO_CLOSED_WITH_RESIDUALS**. The capacity baseline is **DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE**; run 36957682821 is retained as evidence that functional correctness failed before any valid saturation result.
 
-Retained live evidence includes the integrated authenticated runtime path (run 36889896239), persistence and identity across backend replacement (run 36891629279), source-bound immutable image publication (run 37015159218), and exact-digest rollout with Ready/Available 1/1 (run 37015932695). Actuator/Prometheus plus bounded job/stage metrics and job/source-correlated logs are supporting observability evidence, not a separate fourth case.
+The closure phase is **C8 — Case C evidence closure** (COMPLETE). Open blockers are none.
 
-Capacity run 36957682821 and C2 run 37016993776 are retained as operational stopping evidence: workload correctness varied before trustworthy saturation attribution. Capacity tuning, HA, rollout-under-load, faulty-release rollback, desired-state convergence, and a full tracing/dashboard platform are deferred production-hardening work rather than portfolio prerequisites.
+The selected portfolio case is **GCP Production-Representative Runtime & Immutable Delivery**. Final evidence is [Case C Final Portfolio Closure](../../evaluation/case-c-portfolio-closure.md). C2 run 37016993776 is retained as a 1/5 fail-closed result showing real Terraform executable-validity variance. Capacity tuning, desired-state convergence, rollout-under-load, and faulty-release rollback are deferred production-hardening work rather than portfolio prerequisites.
 <!-- CASE_C_ARCHITECTURE_CLOSURE:END -->

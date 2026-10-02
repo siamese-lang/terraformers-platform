@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE SOURCE OF TRUTH — CASE IMPLEMENTATION GATED**
+**PORTFOLIO CASE SET CLOSED — FUTURE HARDENING REQUIRES NEW DECISION**
 
 This document defines the measurement and acceptance contract for the three representative
 engineering cases selected during Portfolio Case Reassessment.
@@ -14,7 +14,46 @@ Representative cases:
 
 1. **Case A — AI/RAG Quality, Performance & Reliability**
 2. **Case B — Durable Asynchronous AnalysisJob Processing**
-3. **Case C — Cloud Runtime Capacity & Safe Delivery**
+3. **Case C — GCP Production-Representative Runtime & Immutable Delivery**
+
+The project must optimize for explainable, repository-backed engineering decisions under realistic
+operating scenarios rather than milestone count, technology breadth, or production-system
+perfection.
+
+## 2026-10-02 portfolio-sufficiency amendment
+
+This amendment overrides the original Case C completion requirements in sections 4, 5, 6, and 7
+where they require a full saturation/tuning/rollback program before portfolio closure.
+
+The original requirements remain useful as a future production-hardening backlog, but they are no
+longer mandatory for the representative portfolio case.
+
+Case C is portfolio-sufficient when retained evidence shows:
+
+- the evaluation-only target was expanded into a production-representative GCP application runtime;
+- database, object persistence, secret delivery and artifact delivery have explicit ownership
+  boundaries and trade-offs;
+- the MariaDB hosting decision is evidence-backed rather than chosen for technology breadth;
+- authenticated end-to-end execution is proven through GKE, Vertex/OpenSearch, MariaDB and GCS;
+- backend pod replacement preserves durable job/source/result state;
+- GitHub-to-GCP delivery uses short-lived identity and immutable source/digest provenance;
+- repository-owned Actuator/Prometheus metrics plus job/source-correlated logs are sufficient to
+  validate the runtime and classify observed failures without claiming a full tracing platform;
+- a later capacity attempt that encountered correctness variance was stopped instead of being
+  misreported as infrastructure saturation;
+- unresolved capacity/rollout/HA work is recorded as residual/deferred rather than claimed as solved.
+
+A 5/5 C2 pass, a complete saturation curve, capacity tuning, rollout-under-load optimization, and a
+faulty-release rollback experiment are **not required for portfolio closure** after this amendment.
+
+This is not permission to weaken or misreport technical evidence. It narrows the claim to what the
+repository has actually demonstrated.
+
+Closed cases are not automatically reopened when a later case adds a stricter downstream validator.
+A case is reopened only when new evidence directly contradicts one of its material accepted claims
+or its operating requirement changes. In particular, Case C Terraform CLI validity variance does
+not by itself invalidate Case A's retrieval-grounding/generalization claims or Case B's durable-job
+semantics.
 
 The project must optimize for explainable, repository-backed engineering decisions under realistic
 operating scenarios rather than milestone count or technology breadth.
@@ -405,7 +444,11 @@ DEFER-listed.
 
 ---
 
-# 4. Case C — Cloud Runtime Capacity & Safe Delivery
+# 4. Case C — GCP Production-Representative Runtime & Immutable Delivery
+
+> Portfolio closure is governed by the 2026-10-02 sufficiency amendment above. The capacity,
+> saturation, tuning and rollback requirements retained in this section are a future
+> production-hardening contract, not prerequisites for the closed portfolio case.
 
 ## 4.1 Operating scenario
 

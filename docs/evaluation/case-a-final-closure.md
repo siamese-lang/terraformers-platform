@@ -216,10 +216,23 @@ This closure does not claim:
 Future Case A work requires new evidence from production usage, a newly reproduced defect, or a
 material requirement change. Do not reopen the case merely to add more runs.
 
+## Cross-case scope clarification — 2026-10-02
+
+Later Case C live evidence showed that one generated Terraform draft can pass the executable
+Terraform CLI boundary while another draft from the same frozen scenario can fail
+`terraform_validate_configuration`.
+
+This does **not** reopen Case A. Case A's accepted claim is retrieval grounding/generalization and
+negative-control behavior. Its validation evidence is not presented as proof that every generated
+Terraform draft is deployment-correct, and this closure already explicitly excludes that claim.
+
+A future Case A reopening requires evidence that contradicts its retrieval/grounding/holdout claims,
+not merely a stricter downstream correctness check added by another case.
+
 ## Next portfolio task
 
 Case B is already portfolio-closed. With Case A now closed, the next representative portfolio case
-is **Case C — Cloud Runtime Capacity & Safe Delivery**.
+is **Case C — Cloud Runtime Measurement Guardrails & Immutable Delivery**.
 
 This closure does not automatically authorize load generation, rollout experiments, replica/HPA
 changes, node sizing, OpenSearch sizing, or delivery changes. Case C must begin from its existing

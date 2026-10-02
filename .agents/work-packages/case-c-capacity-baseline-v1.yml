@@ -1,6 +1,6 @@
 work_package:
   id: case-c-capacity-baseline-v1
-  status: SUSPENDED_BY_ARCHITECTURE_AUDIT
+  status: DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE
   approved_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
   execution_base_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
   live_baseline_main_sha: BIND_AT_EXECUTION
@@ -351,9 +351,22 @@ work_package:
     live_baseline_execution_requires_user_approval: true
     next_work_package_requires_user_approval: true
 
+  portfolio_scope_decision:
+    approved_on: "2026-10-02"
+    decision_source: docs/plans/active/case-c-portfolio-sufficiency-decision.md
+    closure_evidence: docs/evaluation/case-c-portfolio-closure.md
+    decision: >
+      The capacity harness and frozen load contract are retained as future production-hardening
+      assets, but a completed saturation curve is no longer required for the selected portfolio
+      claim. The failed concurrency-1 baseline and later C2 correctness variance are retained as
+      evidence that capacity attribution must stop when functional correctness is unstable.
+    reopening_rule: >
+      Reopen only for a real operational capacity requirement or an explicitly approved future
+      portfolio revision; do not rerun solely to obtain a green historical baseline.
+
   implementation_evidence:
     harness_readiness: PASS
-    live_baseline: SUSPENDED_BY_ARCHITECTURE_AUDIT
+    live_baseline: DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE
     harness_implementation_main_sha: "b96120a8f065d54f05183d9f9642af5d0e860375"
     authoritative_live_baseline_main_sha: BIND_AT_EXECUTION
     authoritative_live_backend_source_sha: "8f7b8e90aaca1c0444cba0bc50065c69194558f1"
@@ -388,4 +401,4 @@ work_package:
       successful_result_integrity: IMPLEMENTED
       executor_identity: SOURCE_BOUND_COMPILE_TIME
     live_execution_requires_separate_user_checkpoint: true
-    next_checkpoint: ARCHITECTURE_CLOSURE_C2_STABILITY_GATE
+    next_checkpoint: NONE_PORTFOLIO_CLOSED

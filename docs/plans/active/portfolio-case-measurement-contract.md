@@ -14,7 +14,7 @@ Representative cases:
 
 1. **Case A — AI/RAG Quality, Performance & Reliability**
 2. **Case B — Durable Asynchronous AnalysisJob Processing**
-3. **Case C — Cloud Runtime Measurement Guardrails & Immutable Delivery**
+3. **Case C — GCP Production-Representative Runtime & Immutable Delivery**
 
 The project must optimize for explainable, repository-backed engineering decisions under realistic
 operating scenarios rather than milestone count, technology breadth, or production-system
@@ -30,17 +30,18 @@ longer mandatory for the representative portfolio case.
 
 Case C is portfolio-sufficient when retained evidence shows:
 
-- a real cloud-runtime measurement attempt was invalidated by a correctness failure before
-  saturation;
-- the project distinguished correctness from capacity instead of tuning infrastructure blindly;
-- false repository-owned correctness boundaries were removed without disabling Terraform's own
-  executable validation;
-- one immutable source-bound image was published and rolled out by exact digest with runtime
-  identity verification;
-- the same integrated scenario was rerun under the frozen runtime identity;
-- the rerun exposed genuine remaining Terraform executable-validity variance and stopped fail-closed;
-- unresolved capacity/rollout/reliability work is recorded as residual/deferred rather than claimed
-  as solved.
+- the evaluation-only target was expanded into a production-representative GCP application runtime;
+- database, object persistence, secret delivery and artifact delivery have explicit ownership
+  boundaries and trade-offs;
+- the MariaDB hosting decision is evidence-backed rather than chosen for technology breadth;
+- authenticated end-to-end execution is proven through GKE, Vertex/OpenSearch, MariaDB and GCS;
+- backend pod replacement preserves durable job/source/result state;
+- GitHub-to-GCP delivery uses short-lived identity and immutable source/digest provenance;
+- repository-owned Actuator/Prometheus metrics plus job/source-correlated logs are sufficient to
+  validate the runtime and classify observed failures without claiming a full tracing platform;
+- a later capacity attempt that encountered correctness variance was stopped instead of being
+  misreported as infrastructure saturation;
+- unresolved capacity/rollout/HA work is recorded as residual/deferred rather than claimed as solved.
 
 A 5/5 C2 pass, a complete saturation curve, capacity tuning, rollout-under-load optimization, and a
 faulty-release rollback experiment are **not required for portfolio closure** after this amendment.

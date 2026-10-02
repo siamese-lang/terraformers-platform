@@ -18,19 +18,20 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Case C architecture closure is active; capacity baseline is SUSPENDED_BY_ARCHITECTURE_AUDIT. Current phase is C2 — Repeated correctness stability gate (ACTIVE).**
+- Current single task: **Portfolio representative-case work is closed with explicit residuals. Case C is PORTFOLIO_CLOSED_WITH_RESIDUALS; deferred capacity/hardening work requires a new explicit operational or portfolio decision.**
 
 <!-- CASE_C_ARCHITECTURE_CLOSURE:START -->
-### Case C architecture closure control
+### Case C portfolio closure control
 
-- Overall: **ARCHITECTURE_CLOSURE_ACTIVE**
-- Capacity baseline: **SUSPENDED_BY_ARCHITECTURE_AUDIT**
-- Current phase: **C2 — Repeated correctness stability gate (ACTIVE)**
-- Open blockers: C-ARCH-04, C-ARCH-05, C-ARCH-06
+- Overall: **PORTFOLIO_CLOSED_WITH_RESIDUALS**
+- Capacity baseline: **DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE**
+- Current phase: **C8 — Case C evidence closure (COMPLETE)**
+- Open blockers: none
 - Durable issue register: .agents/state/case-c-architecture-closure.json
 - Generated plan: [Case C Architecture Closure](plans/active/case-c-architecture-closure.md)
-- Failed baseline attempt retained as evidence: run 36957682821; it stopped at concurrency 1 on a non-capacity Terraform executable-correctness failure.
-- Do not retry the capacity baseline until C1–C4 prerequisites are resolved and a new live checkpoint is approved.
+- Portfolio closure: [Case C Final Portfolio Closure](evaluation/case-c-portfolio-closure.md)
+- Failed capacity run 36957682821 and C2 run 37016993776 are retained as evidence, not rerun obligations.
+- Capacity and deferred hardening phases reopen only for a new operational requirement or explicit user-approved portfolio revision.
 <!-- CASE_C_ARCHITECTURE_CLOSURE:END -->
 - M0/M1: **AUDITED / RETAINED**
 - M2: **RETAINED FOUNDATION**

@@ -1,5 +1,6 @@
 package com.terraformers.modernization.analysis;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,20 +16,30 @@ class GeneratedTerraformContractInspectorTest {
     private final GeneratedTerraformContractInspector inspector = new GeneratedTerraformContractInspector(catalog);
 
     @Test
-    void rejectsResourceOutsideRequestEnvelope() {
+    void rejectsResourceOutsideRequestEnvelopeWithTypedReason() {
         var evidence = catalog.resolve(List.of("aws_vpc"));
+
         assertThatThrownBy(() -> inspector.inspect("resource \"aws_subnet\" \"x\" {}", evidence))
-                .isInstanceOf(GeneratedTerraformContractViolation.class)
-                .hasMessageContaining("request schema envelope");
+                .isInstanceOfSatisfying(GeneratedTerraformContractViolation.class,
+                        failure -> assertThat(failure.reason()).isEqualTo(
+                                GeneratedTerraformContractViolation.Reason
+                                        .RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE));
     }
 
     @Test
-    void rejectsModuleAndNonAwsResourceBlocks() {
+    void rejectsModuleAndNonAwsResourceBlocksWithTypedReasons() {
         var evidence = catalog.resolve(List.of("aws_vpc"));
+
         assertThatThrownBy(() -> inspector.inspect("module \"network\" { source = \"x\" }", evidence))
-                .isInstanceOf(GeneratedTerraformContractViolation.class).hasMessageContaining("module");
+                .isInstanceOfSatisfying(GeneratedTerraformContractViolation.class,
+                        failure -> assertThat(failure.reason()).isEqualTo(
+                                GeneratedTerraformContractViolation.Reason.MODULE_BLOCK));
+
         assertThatThrownBy(() -> inspector.inspect("resource \"google_compute_network\" \"x\" {}", evidence))
-                .isInstanceOf(GeneratedTerraformContractViolation.class).hasMessageContaining("AWS provider");
+                .isInstanceOfSatisfying(GeneratedTerraformContractViolation.class,
+                        failure -> assertThat(failure.reason()).isEqualTo(
+                                GeneratedTerraformContractViolation.Reason
+                                        .RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT));
     }
 
     @Test

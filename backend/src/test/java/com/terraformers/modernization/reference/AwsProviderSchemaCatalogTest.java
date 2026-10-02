@@ -17,7 +17,9 @@ class AwsProviderSchemaCatalogTest {
     void resolvesFactSelectedCatalogResourceWithoutCuratedDocument() {
         AwsProviderSchemaEvidence evidence = catalog.resolve(List.of("aws_lambda_function"));
         assertThat(evidence.resourceTypes()).containsExactly("aws_lambda_function");
-        assertThat(evidence.promptText()).contains("function_name(required)", "handler(optional)");
+        assertThat(evidence.promptText()).contains(
+                "function_name: type=\"string\" (required)",
+                "handler: type=\"string\" (optional)");
     }
 
     @Test
@@ -32,6 +34,10 @@ class AwsProviderSchemaCatalogTest {
     void evidenceIsDeterministicAndRequestBounded() {
         AwsProviderSchemaEvidence evidence = catalog.resolve(List.of("aws_subnet", "aws_vpc", "aws_vpc"));
         assertThat(evidence.resourceTypes()).containsExactly("aws_subnet", "aws_vpc");
-        assertThat(evidence.promptText()).doesNotContain("aws_lambda_function");
+        assertThat(evidence.promptText())
+                .contains("cidr_block: type=\"string\" (optional)")
+                .contains("timeouts block(nesting=single, optional, arguments=[")
+                .contains("create: type=\"string\" (optional)")
+                .doesNotContain("id: type", "arn: type", "aws_lambda_function");
     }
 }

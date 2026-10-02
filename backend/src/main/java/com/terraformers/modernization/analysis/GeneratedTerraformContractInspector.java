@@ -5,6 +5,7 @@ import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Lazy;
 
 @Component
 public class GeneratedTerraformContractInspector {
@@ -13,7 +14,7 @@ public class GeneratedTerraformContractInspector {
             "(?m)^\\s*(resource|module)\\s+\"([^\"]+)\"(?:\\s+\"[^\"]+\")?\\s*\\{");
     private final AwsProviderSchemaCatalog catalog;
 
-    public GeneratedTerraformContractInspector(AwsProviderSchemaCatalog catalog) {
+    public GeneratedTerraformContractInspector(@Lazy AwsProviderSchemaCatalog catalog) {
         this.catalog = catalog;
     }
 

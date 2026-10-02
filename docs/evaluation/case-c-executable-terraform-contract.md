@@ -61,7 +61,15 @@ and malformed/internal failure; captured CLI output is not returned in those dia
 
 ## Static validation state
 
-The implementation and targeted tests are present, but this checkout could not complete Maven
+The single permitted bounded corrective iteration repaired Spring construction by explicitly marking
+the production `ObjectMapper` constructor for injection and making the inspector's catalog dependency
+lazy. Ordinary unrelated Spring contexts therefore do not load the Docker-only catalog, while the
+first Vertex executable-generation request still loads it and fails closed if it is absent or invalid.
+The repair also preserves provider-reported argument types and configurable nested-block structure,
+directly verifies the fact-plus-curated-companion candidate union and unknown-fact rejection, and
+adds direct safe observability-category coverage.
+
+The repaired targeted tests were attempted first, but this checkout could not complete Maven
 validation because Maven Central returned HTTP 403 while resolving the Spring Boot parent POM.
 Consequently this evidence does **not** transition C-ARCH-01, C-ARCH-02, C-ARCH-03, or C-ARCH-10 to
 `RESOLVED`; independent CI/static acceptance remains required.

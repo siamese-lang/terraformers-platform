@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ public class AwsProviderSchemaCatalog {
     private static final Pattern AWS_RESOURCE = Pattern.compile("aws_[a-z0-9_]+");
     private final JsonNode resources;
 
+    @Autowired
     public AwsProviderSchemaCatalog(ObjectMapper mapper) {
         this(mapper, DEFAULT_CATALOG);
     }
@@ -79,7 +81,9 @@ public class AwsProviderSchemaCatalog {
                     && !attribute.path("optional").asBoolean(false)
                     && !attribute.path("required").asBoolean(false)) return;
             appendSeparator(result);
-            result.append(name).append('(')
+            result.append(name).append(": type=")
+                    .append(attribute.path("type").toString())
+                    .append(" (")
                     .append(attribute.path("required").asBoolean(false) ? "required" : "optional")
                     .append(')');
         });
@@ -90,9 +94,15 @@ public class AwsProviderSchemaCatalog {
         blocks.fieldNames().forEachRemaining(name -> {
             JsonNode nested = blocks.path(name);
             appendSeparator(result);
-            result.append(name).append(" block(")
+            result.append(name).append(" block(nesting=")
+                    .append(nested.path("nesting_mode").asText("unknown"))
+                    .append(", ")
                     .append(nested.path("min_items").asInt(0) > 0 ? "required" : "optional")
-                    .append(')');
+                    .append(", arguments=[");
+            StringBuilder nestedSummary = new StringBuilder();
+            appendAttributes(nestedSummary, nested.path("block").path("attributes"));
+            appendBlocks(nestedSummary, nested.path("block").path("block_types"));
+            result.append(nestedSummary).append("])");
         });
     }
 

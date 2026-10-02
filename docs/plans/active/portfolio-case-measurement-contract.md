@@ -14,7 +14,45 @@ Representative cases:
 
 1. **Case A — AI/RAG Quality, Performance & Reliability**
 2. **Case B — Durable Asynchronous AnalysisJob Processing**
-3. **Case C — Cloud Runtime Capacity & Safe Delivery**
+3. **Case C — Cloud Runtime Measurement Guardrails & Immutable Delivery**
+
+The project must optimize for explainable, repository-backed engineering decisions under realistic
+operating scenarios rather than milestone count, technology breadth, or production-system
+perfection.
+
+## 2026-10-02 portfolio-sufficiency amendment
+
+This amendment overrides the original Case C completion requirements in sections 4, 5, 6, and 7
+where they require a full saturation/tuning/rollback program before portfolio closure.
+
+The original requirements remain useful as a future production-hardening backlog, but they are no
+longer mandatory for the representative portfolio case.
+
+Case C is portfolio-sufficient when retained evidence shows:
+
+- a real cloud-runtime measurement attempt was invalidated by a correctness failure before
+  saturation;
+- the project distinguished correctness from capacity instead of tuning infrastructure blindly;
+- false repository-owned correctness boundaries were removed without disabling Terraform's own
+  executable validation;
+- one immutable source-bound image was published and rolled out by exact digest with runtime
+  identity verification;
+- the same integrated scenario was rerun under the frozen runtime identity;
+- the rerun exposed genuine remaining Terraform executable-validity variance and stopped fail-closed;
+- unresolved capacity/rollout/reliability work is recorded as residual/deferred rather than claimed
+  as solved.
+
+A 5/5 C2 pass, a complete saturation curve, capacity tuning, rollout-under-load optimization, and a
+faulty-release rollback experiment are **not required for portfolio closure** after this amendment.
+
+This is not permission to weaken or misreport technical evidence. It narrows the claim to what the
+repository has actually demonstrated.
+
+Closed cases are not automatically reopened when a later case adds a stricter downstream validator.
+A case is reopened only when new evidence directly contradicts one of its material accepted claims
+or its operating requirement changes. In particular, Case C Terraform CLI validity variance does
+not by itself invalidate Case A's retrieval-grounding/generalization claims or Case B's durable-job
+semantics.
 
 The project must optimize for explainable, repository-backed engineering decisions under realistic
 operating scenarios rather than milestone count or technology breadth.

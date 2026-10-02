@@ -72,6 +72,42 @@ class AnalysisObservabilityTest {
     }
 
     @Test
+    void publishesStableGeneratedTerraformContractCategoriesWithoutDynamicDiagnosticContent() {
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        AnalysisObservability observability = new AnalysisObservability(registry);
+
+        for (GeneratedTerraformContractViolation.Reason reason
+                : GeneratedTerraformContractViolation.Reason.values()) {
+            GeneratedTerraformContractViolation failure =
+                    new GeneratedTerraformContractViolation(reason);
+            String expected = switch (reason) {
+                case MODULE_BLOCK -> "generated_terraform_contract_module";
+                case RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT ->
+                        "generated_terraform_contract_provider";
+                case RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE ->
+                        "generated_terraform_contract_request_schema";
+            };
+
+            assertThat(observability.category(failure)).isEqualTo(expected);
+            observability.jobFailed(failure);
+            assertThat(failureCount(registry, expected)).isEqualTo(1);
+        }
+
+        String scrape = registry.scrape();
+        assertThat(scrape)
+                .contains("category=\"generated_terraform_contract_module\"")
+                .contains("category=\"generated_terraform_contract_provider\"")
+                .contains("category=\"generated_terraform_contract_request_schema\"")
+                .doesNotContain(
+                        "module blocks are outside the executable contract",
+                        "generated resource is outside the AWS provider contract",
+                        "generated resource is outside the request schema envelope",
+                        "aws_db_instance",
+                        "resource \"",
+                        "password");
+    }
+
+    @Test
     void publishesStableTerraformFailureCategoriesWithoutSensitiveDiagnosticLabels() {
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         AnalysisObservability observability = new AnalysisObservability(registry);

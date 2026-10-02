@@ -5,7 +5,7 @@
   "audit_base_sha": "9a0d9bc3e792a5b5780b7676960bb14750f969ee",
   "overall_status": "ARCHITECTURE_CLOSURE_ACTIVE",
   "capacity_baseline_status": "SUSPENDED_BY_ARCHITECTURE_AUDIT",
-  "current_phase": "C1",
+  "current_phase": "C2",
   "phases": [
     {
       "id": "C0",
@@ -17,7 +17,7 @@
     {
       "id": "C1",
       "title": "Executable Terraform Contract Decision and closure",
-      "status": "ACTIVE",
+      "status": "COMPLETE",
       "requires": [
         "C0"
       ],
@@ -26,7 +26,7 @@
     {
       "id": "C2",
       "title": "Repeated correctness stability gate",
-      "status": "BLOCKED",
+      "status": "ACTIVE",
       "requires": [
         "C1"
       ],
@@ -97,7 +97,7 @@
     {
       "id": "C-ARCH-01",
       "severity": "BLOCKER",
-      "status": "IN_PROGRESS",
+      "status": "RESOLVED",
       "owner_phase": "C1",
       "title": "Generated Terraform executable boundary is over-constrained by a request-local allowlist",
       "blocks": [
@@ -111,7 +111,9 @@
         "PR #182 merged as 40237e593530086b4649bfc8bc5499848c4b7165: backend image build derives a read-only request-time catalog from the exact checksum-pinned bundled hashicorp/aws 5.100.0 provider; generated Terraform is mechanically inspected against the request schema envelope and module/non-AWS deployable blocks fail closed",
         "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS",
         "C2 rerun 37003640318 on source 61accc9ee50bba57ae5fa9dff0074fdc01e970e4 failed at attempt 1 with terminal category generated_terraform_contract_request_schema after successful REQUIRED retrieval and one sensitive-credential regeneration",
-        "The user redefined generated Terraform as an editable/reference draft rather than an unattended deployment artifact and explicitly rejected request-local policy restrictions that are not required for provider/Terraform correctness"
+        "The user redefined generated Terraform as an editable/reference draft rather than an unattended deployment artifact and explicitly rejected request-local policy restrictions that are not required for provider/Terraform correctness",
+        "PR #190 merged as ca214ef5dfd23f76477cfef0aa4a9137c4cd1706: request-specific schema evidence is advisory prompt context; final generated AWS resource existence is checked against the exact bundled AWS Provider 5.100.0 catalog; Terraform CLI remains the executable correctness boundary",
+        "PR #190 final head 1b6e7739fd5f85044f9fe7b8c36396cf4aca2556 passed Terraform Static Verification run 37012674794 and Backend Local Verification run 37012674780"
       ],
       "acceptance": [
         "every generated AWS resource block is checked against the exact bundled AWS Provider 5.100.0 catalog rather than a request-local allowlist",
@@ -121,7 +123,7 @@
     {
       "id": "C-ARCH-02",
       "severity": "BLOCKER",
-      "status": "IN_PROGRESS",
+      "status": "RESOLVED",
       "owner_phase": "C1",
       "title": "Retrieval metadata is incorrectly coupled to generated-resource eligibility",
       "blocks": [
@@ -135,7 +137,9 @@
         "PR #182 tests prove the request candidate set is the union of extracted fact resource types and retrieved curated-reference resource types, unknown catalog resources fail before generation, and generated resources outside the request schema envelope fail closed",
         "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS",
         "Run 37003640318 retrieved eight references successfully, but retrieved provider example content can contain companion AWS resource blocks not represented in that document's resourceTypes metadata",
-        "The revised C1 decision separates retrieval grounding/guidance from provider resource eligibility; valid generated AWS resources no longer require request-local retrieval metadata coverage"
+        "The revised C1 decision separates retrieval grounding/guidance from provider resource eligibility; valid generated AWS resources no longer require request-local retrieval metadata coverage",
+        "PR #190 derives advisory prompt schema context from fact resource types, retrieved-reference metadata, and AWS resource blocks present in retrieved reference content without making retrieval metadata a final generated-resource allowlist",
+        "Final generated resource eligibility is decoupled from request-local retrieval coverage and checked by the exact local provider catalog"
       ],
       "acceptance": [
         "REQUIRED retrieval grounds architecture intent, project decisions, relationships, and representative patterns without acting as a provider resource allowlist",
@@ -203,7 +207,8 @@
         "PR #187 merged as 1f74e5305571d21e4e94eee4854cc3d6bdca7c55 selecting a closed three-reason GeneratedTerraformContractViolation diagnostic taxonomy; no C1 contract, generation, retrieval, retry, or C2 acceptance change was authorized",
         "Generated Terraform contract diagnostic implementation assigns MODULE_BLOCK, RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT, or RESOURCE_OUTSIDE_REQUEST_SCHEMA_ENVELOPE at the rejection point and maps them to fixed sanitized categories without logging HCL, resource identity, candidate sets, schema content, or exception messages",
         "C2 rerun 37003640318 on exact source 61accc9ee50bba57ae5fa9dff0074fdc01e970e4 and diagnostic-enabled image stopped at attempt 1 with 0/5 accepted; backend logs proved terminal category generated_terraform_contract_request_schema after REQUIRED retrieval success and sensitive-credential regeneration",
-        "The C2 artifact recorded failure_category=unclassified because the workflow parser selected an earlier informational category before the terminal AnalysisJob failure; parser correction is included in the revised C1 implementation scope"
+        "The C2 artifact recorded failure_category=unclassified because the workflow parser selected an earlier informational category before the terminal AnalysisJob failure; parser correction is included in the revised C1 implementation scope",
+        "PR #190 also corrects the C2 failure parser to prefer the job-correlated terminal AnalysisJob exceptionCategory and use stage-failure category only as fallback; earlier informational categories can no longer become final artifact classification"
       ],
       "acceptance": [
         "a frozen repeated correctness gate passes before capacity execution",
@@ -285,7 +290,7 @@
     {
       "id": "C-ARCH-10",
       "severity": "HIGH",
-      "status": "IN_PROGRESS",
+      "status": "RESOLVED",
       "owner_phase": "C1",
       "title": "Generation recovery is failure-specific and can grow as ad-hoc exception handling",
       "blocks": [
@@ -297,7 +302,9 @@
         "PR #182 consolidates generation recovery into a maximum two-call budget: truncation and sensitive-credential recovery share the same retry state, truncation followed by a sensitive second result makes no third call, and schema/CLI contract failures do not trigger regeneration",
         "Final PR #182 validation on head 0136ca3491eecfa0011d52b9025a15ccf5e0a171: Backend Local Verification run 36974352028 PASS and Terraform Static Verification run 36974352021 PASS",
         "Run 37003640318 shows the policy-only sensitive-credential detector triggered a second generation call before the terminal request-schema rejection",
-        "The revised C1 decision removes sensitive-credential regeneration and retains only the existing bounded output-truncation retry"
+        "The revised C1 decision removes sensitive-credential regeneration and retains only the existing bounded output-truncation retry",
+        "PR #190 removes the sensitive-credential-specific regeneration API/prompt/path; output truncation is the only generation retry and remains bounded to at most two provider calls",
+        "TerraformDraftValidator no longer rejects illustrative credential/account/ARN/placeholder/TODO content or duplicates Terraform body syntax/provider-schema checks"
       ],
       "acceptance": [
         "generation retry policy is limited to the existing bounded output-truncation compact retry",
@@ -363,7 +370,7 @@
     }
   },
   "c1_decision": {
-    "status": "REVISED_USER_APPROVED_PENDING_IMPLEMENTATION",
+    "status": "SELECTED_USER_APPROVED_IMPLEMENTED",
     "approved_on": "2026-10-02",
     "selected": "CURATED_RAG_PLUS_LOCAL_PROVIDER_CATALOG_WITH_ADVISORY_SCHEMA_CONTEXT",
     "revision_trigger": "C2 run 37003640318 exposed that request-local schema evidence and policy-only draft rules were incorrectly acting as hard correctness boundaries for editable example Terraform",
@@ -409,7 +416,15 @@
       "embed and ingest the entire AWS Provider documentation set into OpenSearch",
       "query the public Terraform Registry dynamically on each analysis request",
       "enable modules or non-AWS providers as part of this correction"
-    ]
+    ],
+    "implemented_on": "2026-10-02",
+    "implementation_pr": 190,
+    "implementation_merge_sha": "ca214ef5dfd23f76477cfef0aa4a9137c4cd1706",
+    "acceptance_evidence": {
+      "terraform_static_verification_run": 37012674794,
+      "backend_local_verification_run": 37012674780,
+      "independent_acceptance": "PASS"
+    }
   },
   "c2_decision": {
     "status": "SELECTED_USER_APPROVED",

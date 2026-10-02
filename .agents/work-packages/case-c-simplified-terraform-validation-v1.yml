@@ -1,8 +1,8 @@
 work_package:
   id: case-c-simplified-terraform-validation-v1
-  status: AWAITING_APPROVAL
+  status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: "5f2ab26ce4d4e303e5966ecaec7c79d32884e4d3"
 
   goal: >
     Implement the user-approved simplified Terraform draft contract: remove policy-only credential,

@@ -78,7 +78,7 @@ class GeminiGenerationComparisonTest {
         assertThat(artifact.cases().get(1).control().firstFailureCategory()).isEqualTo("NONE");
     }
 
-    @Test void appliesClassificationMissingForbiddenAndPlaceholderPrecedence() {
+    @Test void appliesClassificationMissingForbiddenAndAllowsPlaceholderCommentInUsableDraft() {
         var c = fixture().cases().get(0);
         assertThat(run(c, AnalysisInputClassification.NON_ARCHITECTURE_IMAGE, "").firstFailureCategory()).isEqualTo("INPUT_CLASSIFICATION");
         assertThat(run(c, AnalysisInputClassification.ARCHITECTURE_DIAGRAM, "resource \"aws_vpc\" \"x\" {}").firstFailureCategory())
@@ -87,9 +87,10 @@ class GeminiGenerationComparisonTest {
         assertThat(run(c, AnalysisInputClassification.ARCHITECTURE_DIAGRAM,
                 required + "\nresource \"aws_cloudfront_distribution\" \"bad\" {}").firstFailureCategory())
                 .isEqualTo("GENERATION_FORBIDDEN_RESOURCE");
-        assertThat(run(c, AnalysisInputClassification.ARCHITECTURE_DIAGRAM, required + "\n# placeholder").firstFailureCategory())
-                .isEqualTo("TERRAFORM_STRUCTURAL_VALIDATION");
-        assertThat(run(c, AnalysisInputClassification.ARCHITECTURE_DIAGRAM, required + "\n# placeholder").placeholderExampleDetected()).isTrue();
+        var placeholderDraft = run(
+                c, AnalysisInputClassification.ARCHITECTURE_DIAGRAM, required + "\n# placeholder");
+        assertThat(placeholderDraft.firstFailureCategory()).isEqualTo("NONE");
+        assertThat(placeholderDraft.placeholderExampleDetected()).isFalse();
     }
 
     @Test void recordsNegativeTerraformAndOutputTruncation() {

@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTATION CANDIDATE / STATIC VALIDATION PENDING**
+**IMPLEMENTED / STATIC ACCEPTANCE PASS**
 
 This document records the implementation candidate selected by PR #189. It does not close reopened
 C1 issues and does not authorize image publication, rollout, C2 rerun, or capacity execution.
@@ -120,7 +120,23 @@ repository policy checks pass, including deterministic tests for:
 - safe observability categories remaining bounded;
 - C2 terminal failure-category selection semantics.
 
+## Static acceptance result
+
+PR #190 head `1b6e7739fd5f85044f9fe7b8c36396cf4aca2556` passed:
+
+- Terraform Static Verification run `37012674794`;
+- Backend Local Verification run `37012674780`.
+
+Independent acceptance also rechecked the final diff after the human-approved cleanup of the
+remaining body-structure regex heuristic. The accepted implementation delegates resource-body HCL
+syntax and provider-schema validity to the existing Terraform executable validator rather than
+duplicating those checks in `TerraformDraftValidator`.
+
+PR #190 merged to authoritative `main` as
+`ca214ef5dfd23f76477cfef0aa4a9137c4cd1706`.
+
 ## Live boundary
 
-C1 remains ACTIVE and C2 remains BLOCKED until this candidate is merged and independently accepted.
-A later immutable image publish, rollout, and C2 rerun require a separate user checkpoint.
+C1 static closure is complete. C2 may return to ACTIVE, but a later immutable image publish,
+rollout, and C2 five-request rerun still require a separate explicit live checkpoint. Capacity
+execution remains suspended until C2 passes and the remaining C3/C4 prerequisites close.

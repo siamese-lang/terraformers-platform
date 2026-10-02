@@ -1,6 +1,6 @@
 work_package:
   id: case-c-simplified-terraform-validation-v1
-  status: ACTIVE
+  status: COMPLETE
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: "5f2ab26ce4d4e303e5966ecaec7c79d32884e4d3"
 
@@ -180,6 +180,15 @@ work_package:
     - C2_acceptance_would_need_to_change
     - live_or_cost_action_is_requested_without_user_checkpoint
     - acceptance_criteria_would_need_to_change
+
+  completion_evidence:
+    implementation_pr: 190
+    implementation_head_sha: "1b6e7739fd5f85044f9fe7b8c36396cf4aca2556"
+    merge_sha: "ca214ef5dfd23f76477cfef0aa4a9137c4cd1706"
+    terraform_static_verification_run: 37012674794
+    backend_local_verification_run: 37012674780
+    independent_acceptance: PASS
+    accepted_on: 2026-10-02
 
   completion:
     merge_requires_user_approval: true

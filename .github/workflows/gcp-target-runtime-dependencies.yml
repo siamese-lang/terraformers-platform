@@ -2008,14 +2008,31 @@ jobs:
                       }
                     ' "$backend_diagnostics"
                   )"
-                  case "$observed_category" in
-                    terraform_init_timeout|terraform_provider_closure|terraform_init_configuration|terraform_validate_timeout|terraform_validate_configuration|terraform_internal|provider_rate_limited|result_finalization|truncated_output|rejected_input|response_format|timeout|executor_rejected|validation|other)
-                      current_failure_category="$observed_category"
-                      ;;
-                    *)
-                      current_failure_category="unclassified"
-                      ;;
-                  esac
+                  observed_error_class="$(
+                    awk -v job="analysisJobId=${job_id}" '
+                      index($0, job) {
+                        for (i = 1; i <= NF; i++) {
+                          if ($i ~ /^errorClass=[A-Za-z0-9_.$]+$/) {
+                            sub(/^errorClass=/, "", $i)
+                            print $i
+                            exit
+                          }
+                        }
+                      }
+                    ' "$backend_diagnostics"
+                  )"
+                  if [[ "$observed_error_class" == GeneratedTerraformContractViolation ]]; then
+                    current_failure_category="generated_terraform_contract_violation"
+                  else
+                    case "$observed_category" in
+                      terraform_init_timeout|terraform_provider_closure|terraform_init_configuration|terraform_validate_timeout|terraform_validate_configuration|terraform_internal|provider_rate_limited|result_finalization|truncated_output|rejected_input|response_format|timeout|executor_rejected|validation|other)
+                        current_failure_category="$observed_category"
+                        ;;
+                      *)
+                        current_failure_category="unclassified"
+                        ;;
+                    esac
+                  fi
 
                   if [[ "$current_failure_category" == provider_rate_limited ]] ||                      awk -v job="analysisJobId=${job_id}" '
                        index($0, job) && /category=timeout errorClass=AnalysisProviderTimeoutException/ {

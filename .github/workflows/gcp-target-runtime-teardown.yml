@@ -78,6 +78,18 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v3
 
+      - name: Verify plan identity remains non-mutating
+        run: |
+          set -euo pipefail
+          access_token="$(gcloud auth print-access-token)"
+          response="$(
+            curl -fsS -X POST               -H "Authorization: Bearer ${access_token}"               -H 'Content-Type: application/json'               -d '{"permissions":["compute.instances.delete","compute.disks.delete","container.clusters.delete","iam.serviceAccounts.delete","storage.buckets.delete"]}'               "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
+          )"
+          [[ "$(jq -r '.permissions // [] | length' <<< "$response")" -eq 0 ]] || {
+            echo 'Plan identity unexpectedly has teardown mutation permissions.' >&2
+            exit 1
+          }
+
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.15.8
@@ -158,6 +170,20 @@ jobs:
           service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
 
       - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Verify apply identity has exact teardown permissions
+        run: |
+          set -euo pipefail
+          access_token="$(gcloud auth print-access-token)"
+          response="$(
+            curl -fsS -X POST               -H "Authorization: Bearer ${access_token}"               -H 'Content-Type: application/json'               -d '{"permissions":["compute.instances.delete","compute.disks.delete","compute.networks.delete","compute.subnetworks.delete","container.clusters.delete","iam.serviceAccounts.delete","secretmanager.secrets.delete","storage.buckets.delete","artifactregistry.repositories.delete"]}'               "https://cloudresourcemanager.googleapis.com/v1/projects/terraformers-platform:testIamPermissions"
+          )"
+          granted="$(jq -r '.permissions // [] | sort | join(",")' <<< "$response")"
+          expected='artifactregistry.repositories.delete,compute.disks.delete,compute.instances.delete,compute.networks.delete,compute.subnetworks.delete,container.clusters.delete,iam.serviceAccounts.delete,secretmanager.secrets.delete,storage.buckets.delete'
+          [[ "$granted" == "$expected" ]] || {
+            echo "Apply identity teardown permission contract mismatch: $granted" >&2
+            exit 1
+          }
 
       - uses: azure/setup-kubectl@v4
         with:

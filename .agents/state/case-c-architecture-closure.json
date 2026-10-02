@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "case": "case-c",
-  "title": "Case C Architecture Closure",
+  "title": "Case C Portfolio Closure",
   "audit_base_sha": "9a0d9bc3e792a5b5780b7676960bb14750f969ee",
-  "overall_status": "ARCHITECTURE_CLOSURE_ACTIVE",
-  "capacity_baseline_status": "SUSPENDED_BY_ARCHITECTURE_AUDIT",
-  "current_phase": "C2",
+  "overall_status": "PORTFOLIO_CLOSED_WITH_RESIDUALS",
+  "capacity_baseline_status": "DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE",
+  "current_phase": "C8",
   "phases": [
     {
       "id": "C0",
@@ -25,8 +25,8 @@
     },
     {
       "id": "C2",
-      "title": "Repeated correctness stability gate",
-      "status": "ACTIVE",
+      "title": "Repeated correctness gate and residual-risk decision",
+      "status": "COMPLETE",
       "requires": [
         "C1"
       ],
@@ -35,7 +35,7 @@
     {
       "id": "C3",
       "title": "Executor-aware capacity measurement contract",
-      "status": "BLOCKED",
+      "status": "DEFERRED",
       "requires": [
         "C1",
         "C2"
@@ -45,7 +45,7 @@
     {
       "id": "C4",
       "title": "Runtime and delivery desired-state convergence",
-      "status": "BLOCKED",
+      "status": "DEFERRED",
       "requires": [
         "C1",
         "C2",
@@ -56,7 +56,7 @@
     {
       "id": "C5",
       "title": "Valid capacity baseline",
-      "status": "BLOCKED",
+      "status": "DEFERRED",
       "requires": [
         "C1",
         "C2",
@@ -68,7 +68,7 @@
     {
       "id": "C6",
       "title": "Measured bottleneck decision and improvement",
-      "status": "BLOCKED",
+      "status": "DEFERRED",
       "requires": [
         "C5"
       ],
@@ -77,7 +77,7 @@
     {
       "id": "C7",
       "title": "Safe delivery and faulty-release rollback",
-      "status": "BLOCKED",
+      "status": "DEFERRED",
       "requires": [
         "C6"
       ],
@@ -86,7 +86,7 @@
     {
       "id": "C8",
       "title": "Case C evidence closure",
-      "status": "BLOCKED",
+      "status": "COMPLETE",
       "requires": [
         "C7"
       ],
@@ -170,8 +170,8 @@
     },
     {
       "id": "C-ARCH-04",
-      "severity": "BLOCKER",
-      "status": "OPEN",
+      "severity": "HIGH",
+      "status": "DEFERRED",
       "owner_phase": "C3",
       "title": "Capacity harness saturation model conflicts with executor queueing semantics",
       "blocks": [
@@ -179,7 +179,8 @@
       ],
       "evidence": [
         "executor is core=2 max=4 queue=50",
-        "capacity contract treats concurrency 4 as max-worker parallelism and requires active workers=4 for queue pressure"
+        "capacity contract treats concurrency 4 as max-worker parallelism and requires active workers=4 for queue pressure",
+        "Portfolio sufficiency decision 2026-10-02 defers executor-aware saturation-harness repair because a complete capacity curve is no longer required for the selected Case C portfolio claim."
       ],
       "acceptance": [
         "capacity saturation rules match the actual executor scheduling model",
@@ -188,8 +189,8 @@
     },
     {
       "id": "C-ARCH-05",
-      "severity": "BLOCKER",
-      "status": "IN_PROGRESS",
+      "severity": "RESIDUAL",
+      "status": "ACCEPTED_RESIDUAL",
       "owner_phase": "C2",
       "title": "Single successful live analysis is insufficient as a capacity correctness prerequisite",
       "blocks": [
@@ -212,17 +213,19 @@
         "C2 live gate run 37016993776 executed on source b420291fa1534184d2a260883df718cc96511505 and backend image sha256:0db599d2487a3f7850bd0b5e454fe04d9cb234ae840202c7ad01f1a147478419 with the frozen fixture, concurrency 1, backend restart count 0, and exact runtime identity",
         "Run 37016993776 accepted attempt 1 (project 14, AnalysisJob 65817f11-7e19-4b86-b0aa-a247692d0f54) and stopped on attempt 2 (project 15, AnalysisJob 06ca4f00-f3f2-40fd-bcc1-815452a32593) with CORRECTNESS_FAILURE and terminal failure_category=terraform_validate_configuration; accepted_attempts=1/5 and automatic_whole_gate_rerun=false",
         "The corrected C2 parser preserved terraform_validate_configuration instead of an earlier informational category; the failure is an actual Terraform CLI validate/configuration failure, not request-schema policy rejection, external provider variance, or runtime identity drift",
-        "The current safe Terraform validation taxonomy intentionally does not retain raw generated HCL or unbounded terraform validate diagnostics, so the exact invalid construct from failed attempt 2 cannot be reconstructed from the retained artifact; no rerun is authorized by this evidence append"
+        "The current safe Terraform validation taxonomy intentionally does not retain raw generated HCL or unbounded terraform validate diagnostics, so the exact invalid construct from failed attempt 2 cannot be reconstructed from the retained artifact; no rerun is authorized by this evidence append",
+        "Portfolio sufficiency decision 2026-10-02 accepts the observed 1/5 C2 result as a residual risk rather than continuing live reruns solely to obtain a green portfolio result."
       ],
       "acceptance": [
-        "a frozen repeated correctness gate passes before capacity execution",
-        "repeat count and acceptance are selected before the live gate rather than retrofitted"
+        "the failed repeated correctness gate is retained as direct evidence that capacity conclusions are unsafe while generated-Terraform executable validity varies",
+        "no automatic rerun or rerun-until-lucky behavior is permitted",
+        "5/5 remains a useful future production-hardening target but is not required for the narrowed portfolio closure claim"
       ]
     },
     {
       "id": "C-ARCH-06",
-      "severity": "BLOCKER",
-      "status": "OPEN",
+      "severity": "HIGH",
+      "status": "DEFERRED",
       "owner_phase": "C4",
       "title": "Live backend image and repository declarative image are divergent",
       "blocks": [
@@ -231,7 +234,8 @@
       ],
       "evidence": [
         "live backend digest is sha256:054a9ae1d953313cb15691fe50281373e74a93d2a0d050ee0cf6879fe096aa06",
-        "infra/kubernetes/overlays/gcp-target/kustomization.yaml still records sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae"
+        "infra/kubernetes/overlays/gcp-target/kustomization.yaml still records sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae",
+        "Repository/live immutable-image convergence remains a real follow-up concern but is deferred from the narrowed portfolio claim after exact source-bound image publication and rollout evidence were obtained."
       ],
       "acceptance": [
         "repository desired state converges to the accepted immutable live backend revision",
@@ -241,14 +245,15 @@
     {
       "id": "C-ARCH-07",
       "severity": "HIGH",
-      "status": "OPEN",
+      "status": "DEFERRED",
       "owner_phase": "C7",
       "title": "Single-replica rollout strategy can interrupt API availability",
       "blocks": [
         "C8"
       ],
       "evidence": [
-        "backend replicas=1 with maxUnavailable=1 and maxSurge=0"
+        "backend replicas=1 with maxUnavailable=1 and maxSurge=0",
+        "Single-replica rollout availability optimization and faulty-release rollback are deferred from portfolio closure; exact-digest healthy rollout evidence is retained without claiming zero-downtime delivery."
       ],
       "acceptance": [
         "healthy rollout availability is measured explicitly",
@@ -258,7 +263,7 @@
     {
       "id": "C-ARCH-08",
       "severity": "HIGH",
-      "status": "OPEN",
+      "status": "DEFERRED",
       "owner_phase": "C7",
       "title": "Kubernetes Ready does not represent integrated analysis-path readiness",
       "blocks": [
@@ -266,7 +271,8 @@
       ],
       "evidence": [
         "backend probes use Spring Actuator health",
-        "current custom runtime readiness checks required configuration rather than the executable AI/RAG/Terraform path"
+        "current custom runtime readiness checks required configuration rather than the executable AI/RAG/Terraform path",
+        "Integrated-path readiness redesign is deferred from portfolio closure; Kubernetes Ready/Actuator health are not reclassified as full AI-path readiness."
       ],
       "acceptance": [
         "faulty-release experiment has a deterministic readiness/canary contract",
@@ -276,7 +282,7 @@
     {
       "id": "C-ARCH-09",
       "severity": "HIGH",
-      "status": "OPEN",
+      "status": "DEFERRED",
       "owner_phase": "C4",
       "title": "Two-node live baseline is not consistently represented across Terraform control-plane checks",
       "blocks": [
@@ -284,7 +290,8 @@
       ],
       "evidence": [
         "live target and capacity WP use two e2-standard-2 nodes",
-        "some plan/runtime-check paths still default to or require node_count=1"
+        "some plan/runtime-check paths still default to or require node_count=1",
+        "Two-node control-plane consistency cleanup is deferred because a final capacity baseline is no longer required for the selected portfolio case."
       ],
       "acceptance": [
         "all active Case C control-plane checks understand the selected two-node baseline or explicitly preserve current state",
@@ -431,7 +438,7 @@
     }
   },
   "c2_decision": {
-    "status": "SELECTED_USER_APPROVED",
+    "status": "CLOSED_WITH_ACCEPTED_RESIDUAL_FOR_PORTFOLIO",
     "approved_on": "2026-10-02",
     "selected": "FIVE_SEQUENTIAL_INTEGRATED_ANALYSES_AT_CONCURRENCY_ONE",
     "repeat_count": 5,
@@ -451,6 +458,48 @@
       "live C2 execution",
       "capacity baseline execution",
       "C3 implementation"
+    ],
+    "portfolio_closure_override": {
+      "approved_on": "2026-10-02",
+      "original_5_of_5_result": "NOT_PASSED",
+      "retained_run": 37016993776,
+      "accepted_attempts": 1,
+      "failed_attempt": 2,
+      "terminal_failure_category": "terraform_validate_configuration",
+      "rule": "Do not rerun solely for portfolio closure; preserve the failed gate as residual-risk evidence."
+    }
+  },
+  "portfolio_closure_decision": {
+    "status": "USER_APPROVED_IMPLEMENTED",
+    "approved_on": "2026-10-02",
+    "selected_case": "CLOUD_RUNTIME_MEASUREMENT_GUARDRAILS_AND_IMMUTABLE_DELIVERY",
+    "decision_source": "docs/plans/active/case-c-portfolio-sufficiency-decision.md",
+    "closure_evidence": "docs/evaluation/case-c-portfolio-closure.md",
+    "rationale": [
+      "project success is defined by 2-3 strong evidence-backed engineering cases rather than production-system perfection",
+      "capacity run 36957682821 proved the workload correctness prerequisite was unstable before any valid saturation measurement",
+      "PR #190 removed false repository-owned validation policy while retaining exact provider and Terraform CLI correctness",
+      "image publish run 37015159218 and rollout run 37015932695 proved immutable source/digest delivery",
+      "C2 run 37016993776 passed attempt 1 and failed attempt 2 with terraform_validate_configuration under one frozen runtime identity, proving residual generated-Terraform validity variance",
+      "continuing C2/capacity/rollback work solely to obtain green closure would optimize for completeness rather than portfolio explanation value"
+    ],
+    "case_a_reopen_required": false,
+    "case_b_reopen_required": false,
+    "deferred_phases": [
+      "C3",
+      "C4",
+      "C5",
+      "C6",
+      "C7"
+    ],
+    "non_claims": [
+      "5/5 generated Terraform reliability",
+      "measured production saturation point",
+      "capacity tuning effectiveness",
+      "zero-downtime rollout",
+      "faulty-release rollback closure",
+      "fully converged declarative/live image state",
+      "unattended production Terraform apply safety"
     ]
   }
 }

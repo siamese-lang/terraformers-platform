@@ -2,7 +2,7 @@
 
 ## Status
 
-**TWO LIVE GATES FAILED / C1 CONTRACT REOPENED / FURTHER RERUN NOT AUTHORIZED**
+**THIRD LIVE GATE FAILED AT 1/5 / ACTUAL TERRAFORM VALIDATION VARIANCE / FURTHER RERUN NOT AUTHORIZED**
 
 This document records the implementation/readiness and first-live-execution boundary for C2. It
 does not claim that C-ARCH-05 is resolved. Run `36985305485` executed and failed on attempt 1.
@@ -210,3 +210,52 @@ also be a hard generated-resource allowlist. The C1 contract is reopened under
 
 No additional C2 rerun is authorized until that correction is implemented, merged, independently
 accepted, published as a new immutable image, and rolled out under a separate live checkpoint.
+
+## Third live execution — attempt 1 passed, attempt 2 Terraform validation failed
+
+Run `37016993776` executed after the revised C1 contract was merged, published, and rolled out.
+
+Frozen runtime identity:
+
+- main/source SHA: `b420291fa1534184d2a260883df718cc96511505`;
+- backend image:
+  `sha256:0db599d2487a3f7850bd0b5e454fe04d9cb234ae840202c7ad01f1a147478419`;
+- fixture SHA-256:
+  `a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8`;
+- concurrency: `1`;
+- repeat count: `5`;
+- initial backend restart count: `0`.
+
+Attempt 1 passed the complete integrated contract:
+
+- project ID: `14`;
+- AnalysisJob: `65817f11-7e19-4b86-b0aa-a247692d0f54`;
+- terminal status: `SUCCEEDED`;
+- provider: `vertex:gemini-3.8-flash`;
+- generated Terraform result persisted and was readable/non-empty.
+
+Attempt 2 then failed:
+
+- project ID: `15`;
+- AnalysisJob: `06ca4f00-f3f2-40fd-bcc1-815452a32593`;
+- terminal status: `FAILED`;
+- classification: `CORRECTNESS_FAILURE`;
+- retained terminal failure category: `terraform_validate_configuration`.
+
+The gate therefore stopped with `1/5` accepted and
+`automatic_whole_gate_rerun=false`.
+
+This is materially different from the prior C1 policy failures. The revised parser preserved the
+terminal Terraform category correctly, and no request-schema contract category, external-provider
+classification, or runtime-identity-drift classification fired. The remaining observed instability
+is that the same frozen image/fixture/model path can produce a Terraform draft that passes on one
+attempt and fails `terraform validate` on the next.
+
+The current safe-diagnostic contract deliberately retains the bounded category but not raw generated
+HCL or unbounded Terraform CLI diagnostics. Because the failed draft is not persisted before
+validation succeeds, the exact invalid construct from attempt 2 cannot be reconstructed from the
+retained artifact after the run.
+
+No fourth C2 run is authorized by this evidence. Another live gate requires a new user checkpoint;
+rerunning without first improving root-cause evidence would risk repeating a failure that remains
+only category-level diagnosable.

@@ -24,13 +24,14 @@ as correctness gates even though generated Terraform is an editable/reference dr
 
 ### Structural draft screening
 
-`TerraformDraftValidator` now checks only draft structure:
+`TerraformDraftValidator` now checks only whether a Terraform draft is present:
 
 - blank or language-label-only output fails;
-- Terraform must contain at least one resource or module-shaped block;
-- provider/terraform metadata alone is insufficient;
+- Terraform must contain at least one resource or module-shaped declaration;
 - obvious prose/non-HCL output fails;
-- Markdown fences are stripped.
+- Markdown fences are stripped;
+- resource/module body syntax, required arguments, and provider-schema validity are not inferred with
+  regex heuristics and are delegated to the existing Terraform executable validator.
 
 It no longer rejects otherwise structured Terraform solely because it contains:
 

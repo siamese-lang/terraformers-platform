@@ -2,11 +2,11 @@
 
 ## Status
 
-**STATIC IMPLEMENTATION / LIVE GATE NOT EXECUTED**
+**FIRST LIVE GATE FAILED / TYPED DIAGNOSTIC IMPLEMENTATION STATIC / RERUN NOT EXECUTED**
 
-This document records the implementation/readiness boundary for C2. It does not claim that
-C-ARCH-05 is resolved. Only one separately approved live five-request gate can satisfy the live
-acceptance.
+This document records the implementation/readiness and first-live-execution boundary for C2. It
+does not claim that C-ARCH-05 is resolved. Run `36985305485` executed and failed on attempt 1.
+Only a later separately approved five-request gate that passes 5/5 can satisfy the live acceptance.
 
 ## Execution identity
 
@@ -169,6 +169,13 @@ taxonomy does not preserve which of the contract's three safe subtypes fired (mo
 non-AWS/provider-envelope resource, or request-schema-envelope resource), and the durable failure
 reason is intentionally replaced by the generic user-facing analysis failure reason.
 
-The bounded C2 evidence repair therefore normalizes this known error class to
-`generated_terraform_contract_violation` in the sanitized artifact. It still does not claim a
-specific subtype that the failed run did not preserve.
+PR #187 selected a closed typed diagnostic contract for this error class, and the
+subsequent static implementation maps the three existing fail-closed branches to:
+
+- `generated_terraform_contract_module`;
+- `generated_terraform_contract_provider`;
+- `generated_terraform_contract_request_schema`.
+
+The failed run `36985305485` predates that typed telemetry, so its specific subtype remains
+unknown and must not be retroactively inferred. A later C2 rerun can preserve one of the three
+categories without parsing exception messages or uploading raw HCL/log content.

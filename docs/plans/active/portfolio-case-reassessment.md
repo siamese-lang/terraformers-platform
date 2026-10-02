@@ -173,36 +173,57 @@ Likewise they may not be selected merely for portfolio technology breadth.
 Authoritative final evidence:
 [Case C Final Portfolio Closure](../../evaluation/case-c-portfolio-closure.md).
 
-Case C no longer claims a completed saturation/tuning/rollback program. The selected portfolio
-material is narrower and directly supported by live evidence:
+Case C remains the project's **cloud infrastructure / operations** representative case.
 
-- capacity run `36957682821` failed at concurrency 1 before any valid saturation result, proving
-  that functional correctness had to be separated from capacity before interpreting load;
-- the architecture audit removed false repository-owned correctness boundaries while retaining the
-  exact local AWS Provider catalog and Terraform CLI as the executable boundary;
-- PR #190 merged the simplified contract and passed final static acceptance;
-- image publication run `37015159218` produced exact source-bound immutable digest
-  `sha256:0db599d2487a3f7850bd0b5e454fe04d9cb234ae840202c7ad01f1a147478419`;
-- rollout run `37015932695` verified the previous digest, rolled out the exact new digest, reached
-  Ready/Available 1/1, preserved embedded source identity, and reported backend health UP;
-- C2 run `37016993776` then passed attempt 1 and failed attempt 2 with terminal
-  `terraform_validate_configuration` under one frozen runtime identity, stopping at 1/5 without an
-  automatic whole-gate rerun.
+The selected representative runtime combines:
 
-The engineering conclusion is not that GKE capacity is solved. It is that a capacity experiment is
-invalid while the integrated workload still exhibits correctness variance, and infrastructure tuning
-must not be used to explain or hide that failure.
+- GKE backend + OpenSearch;
+- Vertex AI;
+- dedicated MariaDB 11.4 Compute Engine VM + Persistent Disk;
+- GCS source/result persistence;
+- Secret Manager + native GKE Secret Sync;
+- Artifact Registry;
+- GitHub OIDC/WIF delivery identities.
 
-The following are therefore **deferred production-hardening work**, not portfolio prerequisites:
+The major infrastructure decisions are evidence-backed:
+
+- Cloud SQL/MySQL was deferred after unchanged Flyway compatibility failed on MySQL 8.4;
+- MariaDB-in-GKE was rejected for the first representative runtime because shared DB pressure would
+  weaken GKE bottleneck attribution;
+- a dedicated MariaDB VM/PD retained the proven relational contract while separating resource and
+  pod lifecycles;
+- GitHub infrastructure mutation and image publication use separate short-lived identity boundaries;
+- backend releases are source-bound and digest-pinned rather than dependent on mutable `latest`.
+
+Live evidence includes:
+
+- runtime dependencies `36851221194` and Kubernetes prerequisites `36854218346`;
+- integrated authenticated runtime path `36889896239` — **PASS**;
+- backend replacement durability `36891629279` — **PASS**;
+- immutable image publication `37015159218`;
+- exact-digest rollout `37015932695` — Ready/Available 1/1 with matching embedded source.
+
+Observability supports this case rather than becoming a fourth portfolio case. Existing
+Actuator/Prometheus signals cover bounded analysis job/failure/stage/queue/retry/recovery behavior,
+while `analysisJobId` and source revision remain log-correlation dimensions instead of
+high-cardinality metric labels. No completed distributed-tracing/dashboard platform is claimed.
+
+The later capacity attempt is retained as an **operational stopping decision**, not the Case C
+centerpiece. Run `36957682821` failed before a valid saturation result; after validation-boundary
+corrections, run `37016993776` still showed real generated-Terraform validity variance. The project
+therefore stopped capacity attribution rather than tuning GKE against an unstable workload.
+
+The following remain **deferred production-hardening work**, not portfolio prerequisites:
 
 - another C2 run solely to obtain 5/5;
-- finer Terraform validation diagnostics solely to chase one more generated-draft defect;
-- executor-aware saturation-harness repair and a full saturation curve;
-- capacity tuning / HPA / replica / node / OpenSearch optimization;
-- declarative/live image convergence cleanup;
-- rollout-under-load optimization;
-- integrated-path readiness redesign;
-- faulty-release rollback experiment.
+- executor-aware saturation-harness repair and a complete capacity curve;
+- HPA/replica/node/OpenSearch capacity tuning;
+- declarative/live image convergence;
+- multi-replica zero-downtime rollout optimization;
+- integrated-path readiness/canary redesign;
+- faulty-release rollback;
+- MariaDB HA/failover;
+- Grafana/OpenTelemetry/tracing/SLO platform work.
 
 This closure is governed by
 [Case C Portfolio Sufficiency Closure Decision](case-c-portfolio-sufficiency-decision.md).

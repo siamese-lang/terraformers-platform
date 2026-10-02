@@ -1,6 +1,6 @@
 work_package:
   id: case-c-executable-terraform-contract-v1
-  status: ACTIVE
+  status: COMPLETE
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: "47529fe426a95de18f57030e1426b1eede0df824"
 

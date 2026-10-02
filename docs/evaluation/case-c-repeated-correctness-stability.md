@@ -123,3 +123,52 @@ This implementation performs none of those live/cost/runtime actions.
 C4 remains responsible for repository declarative image convergence. C3 remains responsible for
 repairing executor-aware capacity saturation semantics. Capacity baseline execution remains
 prohibited.
+
+## First live execution — failed, no rerun authorized
+
+Run `36985305485` executed against:
+
+- source SHA `8d72c91767c25705d460551babfc4fc079ce7d80`;
+- backend digest `sha256:221e11378f2e73557c1fc0933ea09c629c5120c41360917f5bedb9d3b213768c`;
+- fixture SHA-256 `a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8`;
+- backend restart count `0`;
+- concurrency `1`.
+
+The gate stopped on **attempt 1** with terminal state `FAILED` and classification
+`CORRECTNESS_FAILURE`. No later attempt ran, and `automatic_whole_gate_rerun=false` was retained.
+The placeholder JWKS cleanup and sanitized artifact upload both succeeded.
+
+The uploaded artifact also exposed an implementation defect in the C2 evidence contract: for a
+failed AnalysisJob, `attempts.jsonl` did not retain the already-known project ID, AnalysisJob ID, or
+bounded observability failure category. Consequently the run proves that the integrated request
+failed, but does not preserve enough sanitized evidence to identify the repository-owned root cause
+after the workflow ended.
+
+This maps to the existing `C-ARCH-05` work rather than creating a new architecture issue. The Work
+Package's single bounded corrective iteration is used to add those missing failed-attempt identity
+fields and one allowlisted safe failure category only. Acceptance, repeat count, workload,
+concurrency, retry policy, runtime sizing, backend source, and live execution policy are unchanged.
+
+**No rerun is authorized by this repair.** A later retry still requires a new explicit user live
+checkpoint after the repair is merged and independently accepted.
+
+### Recovered failure class
+
+A read-only backend log query after run `36985305485` recovered the job-correlated failure:
+
+- AnalysisJob: `6a6eec5d-9e21-4fa8-907a-0dcd7521a24f`
+- source revision: `8d72c91767c25705d460551babfc4fc079ce7d80`
+- stage: `analysis_execution`
+- error class: `GeneratedTerraformContractViolation`
+- existing observability category: `other`
+- claim generation: `1`
+
+This excludes the C2 `EXTERNAL_VARIANCE_INCONCLUSIVE` path. The request was rejected by the
+repository-owned C1 generated-Terraform contract after generation. The current backend observability
+taxonomy does not preserve which of the contract's three safe subtypes fired (module block,
+non-AWS/provider-envelope resource, or request-schema-envelope resource), and the durable failure
+reason is intentionally replaced by the generic user-facing analysis failure reason.
+
+The bounded C2 evidence repair therefore normalizes this known error class to
+`generated_terraform_contract_violation` in the sanitized artifact. It still does not claim a
+specific subtype that the failed run did not preserve.

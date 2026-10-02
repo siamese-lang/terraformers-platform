@@ -154,6 +154,20 @@ work_package:
 
   auto_repair_limit: 1
 
+  repair_history:
+    - iteration: 1
+      trigger_run_id: 36985305485
+      failure_class: C2_EVIDENCE_CONTRACT_GAP
+      finding: >
+        The first live C2 gate stopped on attempt 1 as CORRECTNESS_FAILURE, but the sanitized
+        failure artifact omitted the already-known project ID, AnalysisJob ID, and bounded
+        observability failure category, so the accepted evidence contract could not support
+        post-run root-cause diagnosis.
+      correction: >
+        Preserve failed-attempt project/job identity and one allowlisted safe failure category in
+        attempts.jsonl without adding raw logs, credentials, response bodies, or generated HCL.
+      acceptance_changed: false
+
   stop_on:
     - current_main_differs_from_bound_execution_base
     - second_failure_after_one_bounded_repair

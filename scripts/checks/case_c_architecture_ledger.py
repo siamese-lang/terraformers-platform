@@ -13,7 +13,7 @@ START="<!-- CASE_C_ARCHITECTURE_CLOSURE:START -->"
 END="<!-- CASE_C_ARCHITECTURE_CLOSURE:END -->"
 ISSUE_STATUSES={"OPEN","IN_PROGRESS","EVIDENCE_PENDING","RESOLVED","DEFERRED","ACCEPTED_RESIDUAL"}
 SEVERITIES={"BLOCKER","HIGH","RESIDUAL"}
-PHASE_STATUSES={"COMPLETE","AWAITING_DECISION_APPROVAL","BLOCKED","ACTIVE"}
+PHASE_STATUSES={"COMPLETE","AWAITING_DECISION_APPROVAL","BLOCKED","ACTIVE","DEFERRED"}
 
 def load():
     data=json.loads(LEDGER.read_text(encoding="utf-8"))
@@ -46,7 +46,7 @@ def plan(d):
        f"- Audit base SHA: {d['audit_base_sha']}",
        f"- Current phase: **{d['current_phase']} — {cur['title']}**",
        f"- Open blocking issues: {', '.join(blockers(d)) or 'none'}","",
-       "Capacity-baseline retry is prohibited until every blocker required by C5 is RESOLVED and a new live checkpoint is approved.","",
+       "Capacity baseline and later hardening phases are deferred by the approved portfolio-sufficiency decision; they are not prerequisites for Case C portfolio closure.","",
        "## Phase dependency graph","",
        "| Phase | Status | Purpose | Requires | Live action |","|---|---|---|---|---|"]
     for p in d["phases"]: o.append(f"| {p['id']} | {p['status']} | {p['title']} | {', '.join(p['requires']) or '—'} | {'yes' if p['live_action'] else 'no'} |")
@@ -63,23 +63,23 @@ def plan(d):
     o += ["","The maintenance lane never authorizes production/runtime source changes, workflow behavior changes, IaC changes, dependency changes, live/cloud/IAM/cost actions, acceptance changes, architecture choices, or new failure-class scope.","","## Operating rules","",
           "1. Map every new Case C failure to an existing C-ARCH item before creating a new issue ID.",
           "2. Never delete resolved findings; preserve their status and evidence.",
-          "3. Do not start a downstream phase while a prerequisite blocker remains unresolved.",
+          "3. Deferred production-hardening phases are not an automatic execution queue; reopen only from a new operational requirement or explicit user decision.",
           "4. CI PASS does not resolve an issue unless that issue's predeclared acceptance is directly satisfied.",
-          "5. Capacity execution remains suspended until C1–C4 prerequisites are closed and a new live checkpoint is approved.",
+          "5. Capacity execution is deferred after portfolio closure and must not be restarted solely to obtain a green historical result.",
           "6. Architecture, acceptance, severity, ownership, residual-risk, and scope decisions use D_DECISION and require user approval.",""]
     return "\n".join(o)
 
 def state(d):
     cur=next(p for p in d["phases"] if p["id"]==d["current_phase"])
-    return "\n".join([START,"### Case C architecture closure control","",f"- Overall: **{d['overall_status']}**",f"- Capacity baseline: **{d['capacity_baseline_status']}**",f"- Current phase: **{d['current_phase']} — {cur['title']} ({cur['status']})**",f"- Open blockers: {', '.join(blockers(d)) or 'none'}","- Durable issue register: .agents/state/case-c-architecture-closure.json","- Generated plan: [Case C Architecture Closure](plans/active/case-c-architecture-closure.md)","- Failed baseline attempt retained as evidence: run 36957682821; it stopped at concurrency 1 on a non-capacity Terraform executable-correctness failure.","- Do not retry the capacity baseline until C1–C4 prerequisites are resolved and a new live checkpoint is approved.",END])
+    return "\n".join([START,"### Case C portfolio closure control","",f"- Overall: **{d['overall_status']}**",f"- Capacity baseline: **{d['capacity_baseline_status']}**",f"- Current phase: **{d['current_phase']} — {cur['title']} ({cur['status']})**",f"- Open blockers: {', '.join(blockers(d)) or 'none'}","- Durable issue register: .agents/state/case-c-architecture-closure.json","- Generated plan: [Case C Architecture Closure](plans/active/case-c-architecture-closure.md)","- Portfolio closure: [Case C Final Portfolio Closure](evaluation/case-c-portfolio-closure.md)","- Failed capacity run 36957682821 and C2 run 37016993776 are retained as evidence, not rerun obligations.","- Capacity and deferred hardening phases reopen only for a new operational requirement or explicit user-approved portfolio revision.",END])
 
 def portfolio(d):
     cur=next(p for p in d["phases"] if p["id"]==d["current_phase"])
-    return "\n".join([START,"## Case C architecture-closure checkpoint","",f"Case C is **{d['overall_status']}**. The previous capacity baseline is **{d['capacity_baseline_status']}** after run 36957682821 stopped at concurrency 1 on an executable-Terraform correctness failure before any valid saturation result.","",f"The current phase is **{d['current_phase']} — {cur['title']}** ({cur['status']}). Open blockers are {', '.join(blockers(d))}.","","The durable issue register is .agents/state/case-c-architecture-closure.json; the generated human-readable plan is [Case C Architecture Closure](case-c-architecture-closure.md). The C0 maintenance automation lane machine-checks this state through the existing Terraform Static Verification scope job. Capacity execution must not resume until C1–C4 prerequisites are resolved and a new live checkpoint is approved.",END])
+    return "\n".join([START,"## Case C portfolio-closure checkpoint","",f"Case C is **{d['overall_status']}**. The capacity baseline is **{d['capacity_baseline_status']}**; run 36957682821 is retained as evidence that functional correctness failed before any valid saturation result.","",f"The closure phase is **{d['current_phase']} — {cur['title']}** ({cur['status']}). Open blockers are {', '.join(blockers(d)) or 'none'}.","","The selected portfolio case is **Cloud Runtime Measurement Guardrails & Immutable Delivery**. Final evidence is [Case C Final Portfolio Closure](../../evaluation/case-c-portfolio-closure.md). C2 run 37016993776 is retained as a 1/5 fail-closed result showing real Terraform executable-validity variance. Capacity tuning, desired-state convergence, rollout-under-load, and faulty-release rollback are deferred production-hardening work rather than portfolio prerequisites.",END])
 
 def task(d):
     cur=next(p for p in d["phases"] if p["id"]==d["current_phase"])
-    return f"- Current single task: **Case C architecture closure is active; capacity baseline is {d['capacity_baseline_status']}. Current phase is {d['current_phase']} — {cur['title']} ({cur['status']}).**"
+    return f"- Current single task: **Portfolio representative-case work is closed with explicit residuals. Case C is {d['overall_status']}; deferred capacity/hardening work requires a new explicit operational or portfolio decision.**"
 
 def replace_block(text,b):
     if START in text or END in text:
@@ -110,8 +110,8 @@ def check(d):
     if task(d) not in a or extract(a)!=state(d): raise SystemExit("AI project state is stale; run --sync")
     if extract(PORTFOLIO.read_text(encoding="utf-8"))!=portfolio(d): raise SystemExit("portfolio plan is stale; run --sync")
     c=CAPACITY.read_text(encoding="utf-8")
-    for marker in ["status: SUSPENDED_BY_ARCHITECTURE_AUDIT","live_baseline: SUSPENDED_BY_ARCHITECTURE_AUDIT","next_checkpoint: ARCHITECTURE_CLOSURE_C2_STABILITY_GATE"]:
-        if marker not in c: raise SystemExit("capacity Work Package is not suspended: "+marker)
+    for marker in ["status: DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE","live_baseline: DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE","next_checkpoint: NONE_PORTFOLIO_CLOSED"]:
+        if marker not in c: raise SystemExit("capacity Work Package is not portfolio-deferred: "+marker)
     print("case_c_architecture_ledger=passed"); print("current_phase="+d["current_phase"]); print("open_blocker_count="+str(len(blockers(d))))
 
 def main():

@@ -1847,17 +1847,28 @@ jobs:
               concurrency: 1
             }' > "$runtime_json"
 
+          current_project_id=""
+          current_job_id=""
+          current_provider=""
+          current_result_object_key=""
+          current_failure_category=""
+
           record_failure() {
             local attempt="$1"
             local classification="$2"
             local reason="$3"
             local terminal_status="${4:-UNKNOWN}"
-            jq -n               --argjson attempt "$attempt"               --arg classification "$classification"               --arg reason "$reason"               --arg terminal_status "$terminal_status"               '{
+            jq -n               --argjson attempt "$attempt"               --arg classification "$classification"               --arg reason "$reason"               --arg terminal_status "$terminal_status"               --arg project_id "$current_project_id"               --arg analysis_job_id "$current_job_id"               --arg provider "$current_provider"               --arg result_object_key "$current_result_object_key"               --arg failure_category "$current_failure_category"               '{
                 attempt: $attempt,
                 accepted: false,
                 classification: $classification,
                 reason: $reason,
-                terminal_status: $terminal_status
+                terminal_status: $terminal_status,
+                project_id: (if $project_id == "" then null else ($project_id | tonumber) end),
+                analysis_job_id: (if $analysis_job_id == "" then null else $analysis_job_id end),
+                provider: (if $provider == "" then null else $provider end),
+                result_object_key: (if $result_object_key == "" then null else $result_object_key end),
+                failure_category: (if $failure_category == "" then "unclassified" else $failure_category end)
               }' >> "$attempts_jsonl"
             jq -n               --arg classification "$classification"               --argjson failed_attempt "$attempt"               --argjson required_attempts "$repeat_count"               '{
                 classification: $classification,
@@ -1934,6 +1945,12 @@ jobs:
           for attempt in $(seq 1 "$repeat_count"); do
             verify_runtime_identity "$attempt"
 
+            current_project_id=""
+            current_job_id=""
+            current_provider=""
+            current_result_object_key=""
+            current_failure_category=""
+
             upload_json="${RUNNER_TEMP}/case-c-c2-upload-${attempt}.json"
             upload_headers="${RUNNER_TEMP}/case-c-c2-upload-${attempt}.headers"
             job_json="${RUNNER_TEMP}/case-c-c2-job-${attempt}.json"
@@ -1959,6 +1976,8 @@ jobs:
 
             job_id="$(jq -r '.analysisJobId' "$upload_json")"
             project_id="$(jq -r '.projectId' "$upload_json")"
+            current_job_id="$job_id"
+            current_project_id="$project_id"
             terminal_status=""
 
             for _ in $(seq 1 240); do
@@ -1975,14 +1994,36 @@ jobs:
                 FAILED)
                   backend_diagnostics="${RUNNER_TEMP}/case-c-c2-backend-failure-${attempt}.log"
                   kubectl -n "$NAMESPACE" logs deployment/terraformers-backend                     -c backend --since=15m >"$backend_diagnostics" 2>/dev/null || true
-                  if awk -v job="analysisJobId=${job_id}" '
-                    index($0, job) &&
-                    ($0 ~ /category=provider_rate_limited/ ||
-                     $0 ~ /category=timeout errorClass=AnalysisProviderTimeoutException/) {
-                      found=1
-                    }
-                    END { exit(found ? 0 : 1) }
-                  ' "$backend_diagnostics"; then
+
+                  observed_category="$(
+                    awk -v job="analysisJobId=${job_id}" '
+                      index($0, job) {
+                        for (i = 1; i <= NF; i++) {
+                          if ($i ~ /^category=[a-z0-9_]+$/) {
+                            sub(/^category=/, "", $i)
+                            print $i
+                            exit
+                          }
+                        }
+                      }
+                    ' "$backend_diagnostics"
+                  )"
+                  case "$observed_category" in
+                    terraform_init_timeout|terraform_provider_closure|terraform_init_configuration|terraform_validate_timeout|terraform_validate_configuration|terraform_internal|provider_rate_limited|result_finalization|truncated_output|rejected_input|response_format|timeout|executor_rejected|validation|other)
+                      current_failure_category="$observed_category"
+                      ;;
+                    *)
+                      current_failure_category="unclassified"
+                      ;;
+                  esac
+
+                  if [[ "$current_failure_category" == provider_rate_limited ]] ||                      awk -v job="analysisJobId=${job_id}" '
+                       index($0, job) && /category=timeout errorClass=AnalysisProviderTimeoutException/ {
+                         found=1
+                       }
+                       END { exit(found ? 0 : 1) }
+                     ' "$backend_diagnostics"; then
+                    [[ "$current_failure_category" != unclassified ]] || current_failure_category="timeout"
                     record_failure "$attempt" EXTERNAL_VARIANCE_INCONCLUSIVE external_provider_failure FAILED
                   fi
                   record_failure "$attempt" CORRECTNESS_FAILURE integrated_analysis_failed FAILED
@@ -2016,6 +2057,8 @@ jobs:
             [[ "$draft_code" == 200 ]] ||               record_failure "$attempt" CORRECTNESS_FAILURE "terraform_draft_http_${draft_code}" SUCCEEDED
 
             result_key="$(jq -r '.resultObjectKey' "$job_json")"
+            current_provider="$(jq -r '.provider' "$job_json")"
+            current_result_object_key="$result_key"
             if ! jq -e               --arg job_id "$job_id"               --arg result_key "$result_key" '
                 .latestAnalysisJobId == $job_id
                 and .latestResultObjectKey == $result_key
@@ -2026,7 +2069,7 @@ jobs:
 
             verify_runtime_identity "$attempt"
 
-            provider="$(jq -r '.provider' "$job_json")"
+            provider="$current_provider"
             jq -n               --argjson attempt "$attempt"               --arg project_name "$project_name"               --argjson project_id "$project_id"               --arg analysis_job_id "$job_id"               --arg terminal_status "$terminal_status"               --arg provider "$provider"               --arg result_object_key "$result_key"               '{
                 attempt: $attempt,
                 accepted: true,

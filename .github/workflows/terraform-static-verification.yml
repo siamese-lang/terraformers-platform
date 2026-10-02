@@ -110,7 +110,7 @@ jobs:
               "workflow_dispatch:",
               "environment: gcp-target-plan",
               "environment: gcp-target-apply",
-              "DESTROY_REVIEWED_GCP_TARGET_RUNTIME_29",
+              "DESTROY_REVIEWED_GCP_TARGET_RUNTIME_${EXPECTED_DELETE_COUNT}",
               "Verify apply identity has exact teardown permissions",
               "iam.serviceAccounts.delete",
               "--operation teardown",

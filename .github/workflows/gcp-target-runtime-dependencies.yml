@@ -1684,15 +1684,9 @@ jobs:
                 kubectl -n "$NAMESPACE" logs deployment/terraformers-backend \
                   -c backend --since=10m >"$backend_diagnostics" 2>/dev/null || true
                 awk -v job="analysisJobId=${job_id}" '
-                  index($0, job) && (
-                    index($0, "analysis stage outcome=failure") ||
-                    index($0, "Analysis job failed outcome=failed") ||
-                    index($0, "Analysis retry scheduled") ||
-                    index($0, "Analysis retry budget exhausted") ||
-                    index($0, "Terraform draft validation failed") ||
-                    index($0, "Terraform executable validation failed")
-                  ) { print }
-                ' "$backend_diagnostics" >&2
+                  index($0, job) &&
+                  $0 ~ /(analysis stage outcome=failure|Analysis job failed outcome=failed|Analysis retry scheduled|Analysis retry budget exhausted|Terraform draft validation failed|Terraform executable validation failed)/ { print }
+                ' "$backend_diagnostics" >&2 || true
                 echo 'Integrated analysis reached FAILED.' >&2
                 exit 1
                 ;;

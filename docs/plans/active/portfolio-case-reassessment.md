@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — FEATURE WORK PAUSED**
+**PORTFOLIO CASE SET CLOSED — PRODUCTION HARDENING DEFERRED**
 
 This plan temporarily supersedes milestone progression. Its purpose is to restore the modernization
 project to its actual success criterion: creating a small number of technically defensible,
@@ -166,46 +166,46 @@ The comparison must include:
 RabbitMQ or Outbox may not be excluded merely because they were previously DEFER-listed.
 Likewise they may not be selected merely for portfolio technology breadth.
 
-## Case C — cloud runtime capacity and safe delivery
+## Case C — cloud runtime measurement guardrails and immutable delivery
 
-Case C is the independent cloud/operations representative case.
+**Current status: PORTFOLIO-CLOSED / RESIDUAL RISKS ACCEPTED.**
 
-It must measure the integrated GKE/Vertex/OpenSearch/backend system under representative workload,
-identify the first saturation bottleneck, and validate healthy rollout plus faulty-release rollback
-without inventing arbitrary capacity targets.
+Authoritative final evidence:
+[Case C Final Portfolio Closure](../../evaluation/case-c-portfolio-closure.md).
 
-Current implementation facts such as one backend replica, executor sizing, OpenSearch single-node
-resources, and the current rolling-update strategy are baseline inputs, not defects by declaration.
+Case C no longer claims a completed saturation/tuning/rollback program. The selected portfolio
+material is narrower and directly supported by live evidence:
 
-Capacity tuning, replica changes, HPA, node sizing, OpenSearch sizing, or rollout-strategy changes
-require a measured bottleneck and the Case Decision Gate.
+- capacity run `36957682821` failed at concurrency 1 before any valid saturation result, proving
+  that functional correctness had to be separated from capacity before interpreting load;
+- the architecture audit removed false repository-owned correctness boundaries while retaining the
+  exact local AWS Provider catalog and Terraform CLI as the executable boundary;
+- PR #190 merged the simplified contract and passed final static acceptance;
+- image publication run `37015159218` produced exact source-bound immutable digest
+  `sha256:0db599d2487a3f7850bd0b5e454fe04d9cb234ae840202c7ad01f1a147478419`;
+- rollout run `37015932695` verified the previous digest, rolled out the exact new digest, reached
+  Ready/Available 1/1, preserved embedded source identity, and reported backend health UP;
+- C2 run `37016993776` then passed attempt 1 and failed attempt 2 with terminal
+  `terraform_validate_configuration` under one frozen runtime identity, stopping at 1/5 without an
+  automatic whole-gate rerun.
 
-Case C begins only after Cases B and A are sufficiently settled for its load results to represent the
-integrated system rather than unresolved durability or AI-behavior ambiguity.
+The engineering conclusion is not that GKE capacity is solved. It is that a capacity experiment is
+invalid while the integrated workload still exhibits correctness variance, and infrastructure tuning
+must not be used to explain or hide that failure.
 
-The current [Case C Measurement Readiness Audit](../../evaluation/case-c-measurement-readiness-audit.md)
-is **COMPLETE / NOT READY FOR LIVE BASELINE**. The GKE/Vertex/OpenSearch target foundation is
-available, but the full authenticated backend service is not deployed on that target: persistent
-MariaDB/object-byte dependencies and immutable backend image delivery are unresolved. Existing
-portable MariaDB/JWKS/filesystem fixtures can reduce scope, but their current `emptyDir`/`/tmp`
-forms are not valid safe-rollout persistence evidence. Therefore the evaluation pod must not be
-substituted for the Case C system under test.
+The following are therefore **deferred production-hardening work**, not portfolio prerequisites:
 
-The representative-runtime decision is now documented in
-[Case C Production-Representative Runtime Decision Gate](case-c-representative-benchmark-runtime-decision.md)
-and is **COMPATIBILITY GATE OPEN**.
+- another C2 run solely to obtain 5/5;
+- finer Terraform validation diagnostics solely to chase one more generated-draft defect;
+- executor-aware saturation-harness repair and a full saturation curve;
+- capacity tuning / HPA / replica / node / OpenSearch optimization;
+- declarative/live image convergence cleanup;
+- rollout-under-load optimization;
+- integrated-path readiness redesign;
+- faulty-release rollback experiment.
 
-The portfolio objective now prefers a production-representative backend runtime over the earlier
-benchmark-only MariaDB/filesystem shape, because dependency topology can distort bottleneck
-attribution. Compatibility verification is complete. Cloud Storage application-contract mapping is **PASS** and
-Artifact Registry least-privilege GitHub/GKE delivery identity is **PASS**. MySQL 8.4 is **FAIL**:
-after connection succeeded, Flyway applied migrations 001–002 and MySQL 8.4 rejected V003
-`ADD COLUMN IF NOT EXISTS` with syntax error 1064; MariaDB 11.4 remained green.
-
-The failure invalidates Cloud SQL for MySQL as a drop-in choice under the frozen unchanged-migration
-gate, but it does not invalidate the production-representative runtime direction or the two passing
-managed-service candidates. Relational hosting alone must be reconsidered before implementation.
-No cloud mutation, live load or tuning is authorized yet.
+This closure is governed by
+[Case C Portfolio Sufficiency Closure Decision](case-c-portfolio-sufficiency-decision.md).
 
 ## Case B measurement-readiness checkpoint
 
@@ -337,83 +337,32 @@ dashboard, tracing stack, load test, or failure demo just to consume a milestone
 
 ## Reassessment exit condition
 
-This reassessment is complete only when:
+**SATISFIED.**
 
-1. M0/M1 lightweight foundation audit is complete;
-2. M2/M3 are retained with explicit limitations;
-3. M4/M5/M6 claims are reclassified without relying on historical COMPLETE labels;
-4. exactly three representative cases are fixed: AI/RAG, durable async backend, and cloud runtime capacity/safe delivery;
-5. each case has a technical decision gap rather than merely a list of fixes;
-6. the Measurement & Acceptance Contract governs before/after evidence and acceptance;
-7. implementation starts only after the selected case passes Measurement Readiness and Case Decision gates.
+The reassessment closes with three representative engineering cases:
+
+1. Case A — AI/RAG retrieval grounding and evaluation: **PORTFOLIO-CLOSED / PASS**;
+2. Case B — durable asynchronous AnalysisJob processing: **PORTFOLIO-CLOSED / PASS**;
+3. Case C — cloud runtime measurement guardrails and immutable delivery:
+   **PORTFOLIO-CLOSED / RESIDUAL RISKS ACCEPTED**.
+
+Future work is no longer driven by incomplete milestone or Case C phase lists. It requires a new
+operational requirement, a concrete reproduced defect, or an explicitly approved portfolio revision.
 
 ## Immediate next single task
 
-Case B and Case A are now portfolio-closed. The next representative case is **Case C — cloud runtime
-capacity and safe delivery**.
+There is **no automatic next implementation task**.
 
-The Case C runtime decision is **NOT YET FINAL**. A production-representative backend runtime is the
-preferred candidate, but product choices remain gated by compatibility.
+The representative portfolio case set is closed. Case A and Case B are retained as closed; Case C
+is closed with explicit residual/deferred engineering. Do not resume C2, capacity baseline, C3–C7,
+or historical milestone progression merely because those items remain technically incomplete.
 
-The bounded **Case C compatibility verification Work Package** is complete.
+A new task must begin from one of:
 
-Results:
-1. Cloud Storage adapter-contract compatibility: **PASS**.
-2. Artifact Registry least-privilege publisher/puller identity design compatibility: **PASS**.
-3. MySQL 8.4 unchanged-migration compatibility: **FAIL**.
-
-The [Case C Relational Hosting Decision](case-c-relational-hosting-decision.md) is now
-**SELECTED**. Case C retains MariaDB 11.4 on one dedicated Compute Engine VM, containerized with an
-exact image digest and a dedicated Persistent Disk. MariaDB-in-GKE is rejected for the first baseline
-because it would couple DB resource pressure to the Backend/OpenSearch node and weaken bottleneck
-attribution. MariaDB→MySQL/Cloud SQL migration is deferred because it would require intentional
-migration-history and Case B revalidation work.
-
-The read-only **GCP quota/cost preflight** has executed as workflow run `36823850490`.
-Quota/machine checks are **PASS** for the selected active shape: one existing `e2-standard-2` GKE
-node plus one additional `e2-medium` MariaDB VM and a 30 GiB balanced-disk envelope. The run used
-the existing `terraformers-plan` WIF identity and performed no Terraform init/plan/apply or cloud
-mutation. The user confirmed sufficient Free Trial promotional credit on 2026-10-01. The preflight
-is therefore **COMPLETE / PASS**.
-
-The first production-runtime implementation unit, **Case C GCP full-backend adapter
-readiness**, is **COMPLETE / PASS**. Repository inspection found that the `prod` startup validator
-still required Bedrock for any active retrieval even though `gcp-target` selects Vertex + REQUIRED
-retrieval. That stale AWS-era invariant is corrected without changing the domain contract. Cloud
-Storage adapter compatibility is implemented as concrete GCS reader/writer/remover adapters using
-ADC, and the GCP overlay selects `gcs`. Backend Local Verification run `36825659118` and
-Terraform Static Verification run `36825659010` succeeded. No cloud/IAM mutation occurred.
-
-The **Case C immutable backend image delivery** unit is now **LIVE-CLOSED / PASS**.
-PR #147 merged as `0774c80bb3cf9f684567e30c1e329fc27dc05d04` after final static run
-`36832747254` passed. The separately approved live sequence then completed: dedicated publisher
-identity/environment bootstrap passed; the protected Terraform apply identity received the required
-Artifact Registry administration role; delivery-foundation run `36833957446` applied exactly
-`5 added, 0 changed, 0 destroyed`; and first image publication run `36834457170` verified
-`BUILD_SOURCE_REVISION=0774c80bb3cf9f684567e30c1e329fc27dc05d04`, pushed only the full-SHA tag,
-and resolved remote digest
-`sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae`.
-No Kubernetes backend Deployment has been performed.
-
-The bounded **Case C runtime-dependency/deployment readiness** decision is **SELECTED** and
-the repository implementation is **IMPLEMENTED / CI PENDING** in Work Package
-`.agents/work-packages/case-c-runtime-dependency-deployment-readiness-v1.yml`, bound once to
-`8ada2368b85c210c2c50b0d42370454efe0d499c`. The mandatory read-only capability gate observed GKE
-control plane and node pool `1.35.8-gke.1225000`, so native Secret Sync satisfies the >=1.33 gate
-without a cluster upgrade.
-
-The canonical GCP Terraform root now declares one private Seoul GCS runtime-object bucket, Secret
-Manager secret containers without Terraform-managed payload versions, native Secret Sync without
-automatic rotation, and the selected dedicated MariaDB 11.4 `e2-medium` VM + 20 GiB balanced data
-disk. The implementation corrected the live ordering to
-`empty secret containers -> operator secret versions -> remaining dependencies`; that bounded repair
-consumed the Work Package repair allowance. The isolated Kubernetes prerequisite surface does not
-include the backend Deployment.
-
-No live IAM bootstrap, secret version, VM, disk, bucket, Secret Sync, Kubernetes prerequisite,
-backend Deployment, load generation, rollout, rollback, HPA/replica/executor/node/OpenSearch tuning,
-or additional product choice has been executed by this implementation. Static CI and independent
-acceptance review remain before merge; every live mutation remains a separate user checkpoint.
+- portfolio document/material production using the three closed cases;
+- a real newly reproduced defect;
+- an actual deployment/operations requirement;
+- an explicit user-approved hardening goal.
 
 ## Case A A1 measurement-readiness checkpoint
 

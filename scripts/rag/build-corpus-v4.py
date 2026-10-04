@@ -517,6 +517,7 @@ def build_coverage_report(
     v3_corpus_dir: Path,
     selected_resources: list[str],
     missing_docs: list[str],
+    provider_documents: list[dict[str, object]],
     provider_document_count: int,
     project_decision_count: int,
 ) -> dict[str, object]:
@@ -524,6 +525,16 @@ def build_coverage_report(
     documented = set(documented_resources(provider_source_dir, provider_schema))
     historical = v3_provider_resources(v3_corpus_dir)
     selected = set(selected_resources)
+    missing_official_sources = set(missing_docs)
+    official_evidence_resources = {
+        str(resource_type)
+        for document in provider_documents
+        if document["documentType"] in {"AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE"}
+        for resource_type in document["resourceTypes"]
+    }
+    extraction_gaps = (
+        selected - missing_official_sources - official_evidence_resources
+    )
     return {
         "corpusVersion": CORPUS_VERSION,
         "providerVersion": PROVIDER_VERSION,
@@ -534,8 +545,10 @@ def build_coverage_report(
         "schemaResourcesWithoutOfficialDocumentationCount": len(schemas - documented),
         "v3ProviderResourceCount": len(historical),
         "selectedResourceCount": len(selected),
-        "selectedOfficialDocumentationResourceCount": len(selected - set(missing_docs)),
-        "selectedMissingOfficialDocumentationResourceTypes": sorted(missing_docs),
+        "selectedOfficialDocumentationResourceCount": len(selected - missing_official_sources),
+        "selectedOfficialEvidenceResourceCount": len(official_evidence_resources & selected),
+        "selectedMissingOfficialDocumentationResourceTypes": sorted(missing_official_sources),
+        "selectedOfficialEvidenceExtractionGapResourceTypes": sorted(extraction_gaps),
         "newResourceTypesComparedWithV3": sorted(selected - historical),
         "providerDocumentChunkCount": provider_document_count,
         "projectDecisionCount": project_decision_count,
@@ -645,6 +658,7 @@ def build(args: argparse.Namespace) -> dict[str, object]:
         v3_corpus_dir=v3_corpus_dir,
         selected_resources=selected,
         missing_docs=missing_docs,
+        provider_documents=provider_docs,
         provider_document_count=len(provider_docs),
         project_decision_count=len(project_docs),
     )
@@ -654,6 +668,9 @@ def build(args: argparse.Namespace) -> dict[str, object]:
         "selectedResourceCount": len(selected),
         "documentCount": len(documents),
         "missingOfficialDocumentationCount": len(missing_docs),
+        "officialEvidenceExtractionGapCount": len(
+            coverage["selectedOfficialEvidenceExtractionGapResourceTypes"]
+        ),
         "newResourceCountComparedWithV3": len(coverage["newResourceTypesComparedWithV3"]),
         "output": str(args.output_dir.resolve()),
     }

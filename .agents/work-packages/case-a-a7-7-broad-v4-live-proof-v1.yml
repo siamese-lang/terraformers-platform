@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-7-broad-v4-live-proof-v1
-  status: ACTIVE
+  status: IMPLEMENTED_AWAITING_REVIEW
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: 13e398599ce69e087e9098b1413cad37c41edfd1
 
@@ -427,6 +427,22 @@ work_package:
     - positive_or_negative_control_reaches_unexpected_terminal_semantics
     - teardown_plan_contains_unknown_create_update_replace_action
     - residual_target_runtime_resource_remains_after_teardown
+
+  repository_implementation:
+    status: IMPLEMENTED_AWAITING_REVIEW
+    frozen_execution_base_sha: 13e398599ce69e087e9098b1413cad37c41edfd1
+    changed_runtime_contract:
+      - scripts/rag/ingest-gcp-target-corpus.py now accepts exact v3/v4 manifest contracts
+      - historical v3 128-document behavior remains explicit and tested
+      - broad v4 requires exact 5,395-document contract
+      - protected corpus workflow builds v4 from pinned provider source plus schema copied from exact backend runtime
+      - GCP backend ConfigMap serves terraformers-reference-v4
+      - existing runtime-dependencies workflow exposes one a7-7-broad-v4-live-proof operation
+      - positive live assertions include v4 retrieval and persisted evidence-quality-v1
+      - negative live assertions include rejected-input NOT_APPLICABLE quality and no Terraform result
+      - bounded live evidence artifact excludes generated HCL, prompt/image/reference content, and embedding vectors
+    live_action_performed: false
+    repository_CI: PENDING
 
   completion:
     merge_requires_user_approval: true

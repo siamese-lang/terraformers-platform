@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-5 Safe Executable Diagnostics is explicitly approved. Merge `.agents/work-packages/case-a-a7-5-safe-executable-diagnostics-v1.yml`, then bind its execution base once and implement only A7-5. Stop before A7-6.**
+- Current single task: **Review the implemented A7-5 Safe Executable Diagnostics change and its authoritative CI evidence. Stop before A7-6.**
 
 ### Case A evidence-backed quality extension control
 

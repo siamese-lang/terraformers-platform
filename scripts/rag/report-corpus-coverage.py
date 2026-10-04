@@ -103,12 +103,21 @@ def report(args: argparse.Namespace) -> dict[str, object]:
     if args.provider_source_dir:
         official = official_document_resources(args.provider_source_dir.resolve())
         documented_schema = official & schema
+        selected_documented_schema = corpus_schema_docs & documented_schema
+        extraction_gaps = selected_documented_schema - corpus_official_evidence
         result.update(
             {
                 "providerSourceCommit": args.provider_source_commit,
                 "officialResourceDocumentCount": len(official),
                 "officialDocumentedProviderSchemaResourceCount": len(documented_schema),
                 "providerSchemaResourcesWithoutOfficialDocumentCount": len(schema - official),
+                "corpusSelectedOfficialDocumentResourceCount": len(
+                    selected_documented_schema
+                ),
+                "corpusOfficialEvidenceExtractionGapResourceTypes": sorted(
+                    extraction_gaps
+                ),
+                "corpusOfficialEvidenceExtractionGapCount": len(extraction_gaps),
                 "corpusCoverageOfOfficialDocumentedResources": round(
                     len(corpus_official_evidence & documented_schema)
                     / len(documented_schema),

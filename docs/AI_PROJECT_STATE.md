@@ -18,12 +18,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Accept and merge the frozen Case A evidence-backed-quality decision, then start A7-0 authoritative knowledge coverage. Case B and Case C remain portfolio-closed; live GCP recreation is not authorized until a separate checkpoint.**
+- Current single task: **A7-0 authoritative knowledge coverage is ACTIVE on execution base `dd34d1cec34d31783ca2d672c65311ce82fd2666`. Measure v3/provider coverage, implement the scalable v4 corpus compiler, prove a previously unsupported resource can be compiled without a per-resource source-code allowlist change, and stop before A7-1.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — IMPLEMENTATION NOT STARTED**
+- Extension status: **DIRECTION FROZEN — A7-0 ACTIVE**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:

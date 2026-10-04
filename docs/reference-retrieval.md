@@ -110,3 +110,46 @@ hit IDs, outcome, and elapsed seconds. The receipt contains no document content 
 ```text
 Python 서비스가 담당하던 OpenSearch 검색을 별도 런타임으로 유지하지 않고, Spring Boot backend의 ReferenceRetriever port로 분리했습니다. 현재는 로컬/CI 검증 가능한 stub 구현을 두고, 운영 구현에서는 Bedrock embedding과 OpenSearch/AOSS k-NN 검색을 붙일 수 있도록 runtime config와 failure boundary를 문서화했습니다.
 ```
+
+
+## 8. Case A A7-0 authoritative knowledge coverage
+
+The active Case A extension does **not** treat the current v3 index as complete AWS Provider
+knowledge.
+
+Current committed v3 facts:
+
+- corpus documents: 128
+- provider resource types represented: 30
+- Terraformers project-decision documents: 8
+- provider version: 5.100.0
+- provider source commit: `f7a3b98da589ab1d52756b0dcee0dbf2de83d635`
+
+The pinned provider source contains far more official resource documentation than the committed v3
+subset. Therefore a missing v3 hit cannot by itself be classified as model/retrieval quality
+failure.
+
+A7-0 introduces `scripts/rag/build-corpus-v4.py` and
+`scripts/rag/report-corpus-coverage.py`.
+
+The v4 compiler differs from the historical v2 builder in one important contract: a provider
+resource is validated from the pinned provider schema and its official document path is derived
+from the resource type. Adding a new resource does not require adding it to a Python
+`RESOURCE_SPECS` dictionary.
+
+The authority model is:
+
+1. pinned provider schema — direct structural authority;
+2. official provider docs/examples — authoritative RAG evidence;
+3. Terraformers project decisions — curated relationship/architecture evidence.
+
+The v4 compiler supports both a bounded explicit resource set and all documented resources found in
+the pinned provider source/schema intersection. The actual v4 ingestion scope is selected only
+after measuring provider-schema count, official-document count, generated chunk count, embedding
+volume, and index cost.
+
+A missing official document is represented as a knowledge-coverage gap. The compiler can still
+produce provider-schema evidence for that resource; it does not fabricate documentation.
+
+**Serving remains on the committed v3 contract until a later explicitly accepted v4 ingestion/live
+step.** A7-0 changes knowledge build/measurement capability, not the current live retrieval target.

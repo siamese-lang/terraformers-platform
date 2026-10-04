@@ -1,8 +1,15 @@
 work_package:
   id: case-a-a7-1-evidence-quality-contract-v1
   status: ACTIVE
-  approved_base_sha: 9b2289920f6af13e3de739668a3a761cfcba1cbd
-  execution_base_sha: 9b2289920f6af13e3de739668a3a761cfcba1cbd
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  activation:
+    bind_rule: >
+      This Work Package itself must exist on main before implementation. Immediately before the
+      first implementation write, read authoritative remote main exactly once, bind that SHA to
+      execution_base_sha on the implementation branch, and do not refresh/rebase afterward.
+    first_implementation_write_must_bind_execution_base: true
 
   goal: >
     Implement only A7-1 of ADR-008: a deterministic, versioned evidence-quality contract that

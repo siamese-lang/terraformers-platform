@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-6-observability-backend-decision-v1
-  status: IMPLEMENTED_AWAITING_REVIEW
+  status: COMPLETE
   execution_base_sha: 175de19a32d4aac906eabc0e222090cf0ddf9f69
 
   prior_phase:
@@ -211,6 +211,18 @@ work_package:
     repository_only_closure_allowed: false
     live_scope_must_remain_bounded: true
     teardown_required: true
+
+  acceptance_evidence:
+    decision_pr: 219
+    decision_merge_sha: a58d78181be642f3b3c2fdd38486c7d19fcc045e
+    terraform_static_verification_run: 37217252459
+    terraform_static_verification_conclusion: success
+    changed_files: governance_and_evidence_only
+    backend_dependency_runtime_change: false
+    independent_direction_audit: PASS
+    selected_backend: REPOSITORY_NATIVE
+    OpenTelemetry: DEFERRED_WITH_TRIGGER
+    Langfuse: DEFERRED_WITH_TRIGGER
 
   completion:
     merge_requires_user_approval: true

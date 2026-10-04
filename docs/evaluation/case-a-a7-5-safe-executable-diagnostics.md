@@ -1,6 +1,6 @@
 # Case A A7-5 — safe executable diagnostics
 
-Status: **APPROVED — IMPLEMENTATION NOT STARTED — LIVE VALIDATION NOT AUTHORIZED**
+Status: **IMPLEMENTED — AWAITING REVIEW — LIVE VALIDATION NOT AUTHORIZED**
 
 ## Decision
 
@@ -132,6 +132,29 @@ historical attempt-2 invalid construct.
 
 No live C2 rerun, Vertex/Bedrock call, GCP action, OpenSearch ingestion, image publication, rollout, or
 cost-bearing operation is authorized.
+
+## Implementation evidence
+
+The bounded implementation recognizes only four deterministic classes supported by repository JSON
+fixtures: `MISSING_REQUIRED_ARGUMENT`, `UNSUPPORTED_ARGUMENT_OR_BLOCK`, `UNDECLARED_REFERENCE`, and
+`UNKNOWN`. Classes are de-duplicated and enum-sorted, while error and warning counts are clamped to
+`0..1000`. Terraform summary/detail and all other diagnostic payload fields remain local to the
+validator reduction and are neither returned nor placed in exception messages, metric labels, or
+logs.
+
+The typed summary is propagated beneath the unchanged `VALIDATE_CONFIGURATION` exception category.
+`AnalysisObservability` retains `terraform_validate_configuration` and emits only diagnostic enum
+labels plus numeric count measurements and a bounded enum/count log event. The durable failure
+reason and `evidence-quality-v1` mapping remain unchanged.
+
+The repository-only representative fixture demonstrates improved evidence for a future failure in
+the same top-level class as C2. It does not reconstruct or assign a subtype to historical run
+`37016993776`; that historical subtype remains unknown.
+
+Local focused Maven execution was attempted, but dependency resolution was blocked by the execution
+environment returning HTTP 403 for Maven Central's Spring Boot parent POM. No dependency or
+repository workaround was introduced. Authoritative GitHub Backend Local Verification and MariaDB
+schema/repository validation therefore remain pending independent review.
 
 ## Next gate
 

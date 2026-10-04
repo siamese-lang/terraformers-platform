@@ -1,0 +1,1 @@
+{"format_version":"1.0","valid":false,"error_count":2147483647,"warning_count":-8,"diagnostics":[{"severity":"error","summary":"SENTINEL_SUMMARY_CHANGED_BY_TERRAFORM","detail":"SENTINEL_DETAIL_UNKNOWN","range":{"filename":"SENTINEL_PATH/secret.tf"},"snippet":{"code":"SENTINEL_SNIPPET_UNKNOWN"}}]}

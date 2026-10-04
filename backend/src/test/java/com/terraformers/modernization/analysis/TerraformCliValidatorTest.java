@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -84,6 +85,45 @@ class TerraformCliValidatorTest {
                 "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation");
         assertThat(validation.reason()).doesNotContain("definitely_not_a_real_argument");
         assertTempRootEmpty();
+    }
+
+    @Test
+    void reducesFixtureBackedDiagnosticsWithoutLeakingRawTerraformData() throws Exception {
+        assertFixture("missing-required-argument.json",
+                TerraformDiagnosticSummary.DiagnosticClass.MISSING_REQUIRED_ARGUMENT, 1, 0);
+        assertFixture("unsupported-argument-or-block.json",
+                TerraformDiagnosticSummary.DiagnosticClass.UNSUPPORTED_ARGUMENT_OR_BLOCK, 2, 1);
+        assertFixture("undeclared-reference.json",
+                TerraformDiagnosticSummary.DiagnosticClass.UNDECLARED_REFERENCE, 1, 0);
+        assertFixture("unknown.json", TerraformDiagnosticSummary.DiagnosticClass.UNKNOWN, 1_000, 0);
+    }
+
+    @Test
+    void producesDeterministicUniqueDiagnosticOrderingForRepresentativeC2Class() {
+        String rawHcl = "SENTINEL_RAW_HCL";
+        String json = """
+                {"valid":false,"error_count":3,"warning_count":4,"diagnostics":[
+                  {"severity":"error","summary":"Unsupported argument","detail":"SENTINEL_DETAIL"},
+                  {"severity":"error","summary":"Missing required argument","detail":"SENTINEL_DETAIL"},
+                  {"severity":"error","summary":"Unsupported block type","detail":"SENTINEL_DETAIL"}]}
+                """;
+        TerraformDraftValidation validation = validator(new RecordingExecutor(
+                result(0, false, "init ok"), result(1, false, json))).validate(rawHcl);
+
+        assertThat(validation.reason()).isEqualTo(
+                "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation");
+        assertThat(validation.diagnosticSummary().diagnosticClasses()).containsExactly(
+                TerraformDiagnosticSummary.DiagnosticClass.MISSING_REQUIRED_ARGUMENT,
+                TerraformDiagnosticSummary.DiagnosticClass.UNSUPPORTED_ARGUMENT_OR_BLOCK);
+        assertThat(validation.diagnosticSummary().errorCount()).isEqualTo(3);
+        assertThat(validation.diagnosticSummary().warningCount()).isEqualTo(4);
+
+        TerraformValidationFailureException failure = TerraformValidationFailureException.fromSafeReason(
+                validation.reason(), validation.diagnosticSummary());
+        assertThat(failure.category()).isEqualTo(
+                TerraformValidationFailureException.Category.VALIDATE_CONFIGURATION);
+        assertThat(failure.diagnosticSummary()).isEqualTo(validation.diagnosticSummary());
+        assertThat(failure.getMessage()).doesNotContain(rawHcl, "SENTINEL_DETAIL");
     }
 
     @Test
@@ -191,6 +231,26 @@ class TerraformCliValidatorTest {
         } catch (Exception exception) {
             throw new AssertionError(exception);
         }
+    }
+
+    private void assertFixture(String fixture,
+                               TerraformDiagnosticSummary.DiagnosticClass expectedClass,
+                               int errorCount, int warningCount) throws Exception {
+        String json;
+        try (var input = getClass().getResourceAsStream("/terraform-diagnostics/" + fixture)) {
+            json = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        TerraformDraftValidation validation = validator(new RecordingExecutor(
+                result(0, false, "init ok"), result(1, false, json)))
+                .validate("SENTINEL_RAW_HCL");
+
+        assertThat(validation.diagnosticSummary().diagnosticClasses()).containsExactly(expectedClass);
+        assertThat(validation.diagnosticSummary().errorCount()).isEqualTo(errorCount);
+        assertThat(validation.diagnosticSummary().warningCount()).isEqualTo(warningCount);
+        assertThat(validation.reason()).doesNotContain(
+                "SENTINEL_RAW_HCL", "SENTINEL_SUMMARY", "SENTINEL_DETAIL",
+                "SENTINEL_SNIPPET", "SENTINEL_PATH", "SENTINEL_RESOURCE");
+        assertTempRootEmpty();
     }
 
     private TerraformCliValidator validator(RecordingExecutor executor) {

@@ -48,6 +48,10 @@ public class BedrockArchitectureFactsExtractor implements ArchitectureFactsExtra
             String response = client.invokeModel(InvokeModelRequest.builder().modelId(requireModelId())
                     .contentType("application/json").accept("application/json").body(SdkBytes.fromUtf8String(request)).build())
                     .body().asUtf8String();
+            if (response == null || response.isBlank()) {
+                throw ArchitectureFactsExtractionException.response(
+                        ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE, null);
+            }
             JsonNode root = objectMapper.readTree(response);
             if ("max_tokens".equals(root.path("stop_reason").asText())) {
                 throw ArchitectureFactsExtractionException.response(

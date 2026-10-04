@@ -1,0 +1,434 @@
+work_package:
+  id: case-a-a7-7-broad-v4-live-proof-v1
+  status: APPROVED_AWAITING_ACTIVATION
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  activation:
+    bind_rule: >
+      Merge this Work Package to main before implementation. Immediately before the first A7-7
+      implementation write, read authoritative remote main exactly once, bind that SHA to
+      execution_base_sha on the implementation branch, and do not refresh or rebase afterward.
+    first_implementation_write_must_bind_execution_base: true
+
+  prior_phase:
+    id: A7_6
+    status: COMPLETE_ON_ACTIVATION_MERGE
+    decision_merge_sha: a58d78181be642f3b3c2fdd38486c7d19fcc045e
+    evidence: docs/evaluation/case-a-a7-6-observability-backend-decision.md
+    selected_observability: repository_native
+    OpenTelemetry: DEFERRED_WITH_TRIGGER
+    Langfuse: DEFERRED_WITH_TRIGGER
+
+  user_goal:
+    approved_on: 2026-10-05
+    statement: >
+      The improved Terraformers must actually operate end-to-end with broad v4 RAG and persisted
+      quality. Repository-only evidence is insufficient for final closure.
+    interpretation: >
+      A7-7 is required. The user authorizes preparation of the bounded live-proof path. Actual GCP
+      mutation/cost/destructive workflow dispatch occurs only after the repository implementation is
+      merged, read-only preflight identifies the exact runtime/image/state contract, and one explicit
+      live-execution checkpoint presents those exact values.
+
+  goal: >
+    Prove in the existing Case C representative GCP topology that the improved Terraformers actually
+    serves the broad terraformers-reference-v4 corpus, runs the real authenticated AnalysisJob path,
+    persists evidence-quality-v1, returns that quality through the existing job API, rejects a
+    negative control without Terraform output, retains any naturally observed failures as evidence,
+    and returns all recreated target-runtime resources to the pre-A7-7 teardown baseline.
+
+  non_goal:
+    - production_hardening
+    - capacity_tuning
+    - HPA_or_replica_tuning
+    - zero_downtime_rollout
+    - HA_database_design
+    - OpenTelemetry_or_Langfuse_adoption
+    - new_GCP_topology
+    - second_vector_database
+    - evaluator_LLM
+    - rerun_until_green
+
+  frozen_authority:
+    provider_version: "5.100.0"
+    provider_source_commit: f7a3b98da589ab1d52756b0dcee0dbf2de83d635
+    provider_schema_resource_count: 1526
+    official_documented_schema_resource_count: 1514
+    official_knowledge_gap_count: 12
+    v4:
+      corpus_version: terraformers-reference-v4
+      index_name: terraformers-reference-v4
+      selected_resource_count: 1514
+      selected_official_evidence_resource_count: 1514
+      official_evidence_extraction_gap_count: 0
+      total_document_count: 5395
+      provider_document_chunk_count: 5387
+      project_decision_count: 8
+      embedding_model_id: gemini-embedding-001
+      vector_dimension: 1024
+    historical_v3:
+      corpus_version: terraformers-reference-v3
+      document_count: 128
+      immutable: true
+
+  selected_runtime:
+    project: terraformers-platform
+    region: asia-northeast3
+    zone: asia-northeast3-a
+    reuse_case_c_topology: true
+    components:
+      - GKE_single_node_target_runtime
+      - OpenSearch_3_8_single_statefulset
+      - MariaDB_11_4_VM_and_dedicated_PD
+      - GCS_runtime_object_bucket
+      - Secret_Manager_runtime_secrets
+      - Artifact_Registry_backend_image
+      - Vertex_AI_generation_and_embedding
+    no_second_architecture: true
+
+  implementation_contract:
+    corpus_build:
+      decision: BUILD_REPRODUCIBLY_FOR_LIVE_INGESTION
+      do_not_commit_14_8MB_generated_v4_corpus_by_default: true
+      provider_source: >
+        Use the exact pinned terraform-provider-aws source commit
+        f7a3b98da589ab1d52756b0dcee0dbf2de83d635. Do not use current/default branch content.
+      provider_schema: >
+        Use the AWS Provider 5.100.0 schema from the exact A7-7 backend image/runtime source.
+        The backend image already checksum-pins Terraform 1.8.5 and AWS Provider 5.100.0 and exposes
+        /opt/terraform-provider-schema/aws-5.100.0.json.
+      project_source_commit: >
+        Use the exact final A7-7 main source SHA for v4 project-decision provenance.
+      compiler: scripts/rag/build-corpus-v4.py
+      mode: --all-documented-resources
+      deterministic_gate:
+        - corpusVersion_is_terraformers-reference-v4
+        - providerSchemaResourceCount_is_1526
+        - officialDocumentationResourceCount_is_1514
+        - selectedResourceCount_is_1514
+        - selectedOfficialEvidenceResourceCount_is_1514
+        - selectedOfficialEvidenceExtractionGapResourceTypes_is_empty
+        - providerDocumentChunkCount_is_5387
+        - projectDecisionCount_is_8
+        - documentCount_is_5395
+
+    ingestion_script:
+      file: scripts/rag/ingest-gcp-target-corpus.py
+      required_change: >
+        Generalize the currently v3/128-specific contract to a manifest/contract-driven v3+v4
+        ingester while preserving all v3 behavior and tests.
+      rules:
+        - validate corpus through rag-corpus-contract-verification.py
+        - validate supported embedding model and dimension from manifest
+        - use manifest corpusVersion/indexName/documentCount instead of hard-coded v3/128
+        - existing-index checksum mismatch remains fail-closed
+        - final corpus-version document count must equal manifest documentCount
+        - representative kNN readiness query remains mandatory
+        - receipt remains bounded and contains no document content_embedding_vectors_or_credentials
+        - preserve bounded retry/backoff_for_transient_Vertex_embedding_errors
+        - do_not_weaken_v3_contract
+
+    ingestion_workflow:
+      file: .github/workflows/gcp-target-corpus-ingestion.yml
+      required_change: >
+        Extend the existing protected workflow instead of adding a new workflow. Preserve the
+        historical v3 operation and add an exact A7-7 v4 operation/confirmation.
+      v4_confirmation: INGEST_A7_7_REFERENCE_V4
+      timeout_budget: >
+        Broad v4 contains 5,395 documents. The existing 0.5-second document-embedding pacing alone
+        can exceed 45 minutes; the workflow timeout must be explicitly sufficient without removing
+        bounded pacing/retry merely to make CI faster.
+      v4_receipt_gate:
+        - corpus_version_terraformers-reference-v4
+        - document_count_5395
+        - index_name_terraformers-reference-v4
+        - embedding_model_gemini-embedding-001
+        - vector_dimension_1024
+        - checksum_is_64_char_sha256
+        - representative_hit_ids_nonempty
+        - outcome_ingested_or_already_ingested
+      evidence:
+        - upload_bounded_contract_and_ingestion_receipt_artifact
+        - no_document_content_or_embedding_vector_artifact
+
+    runtime_config:
+      file: infra/kubernetes/overlays/gcp-target/backend-configmap-patch.yaml
+      required_change:
+        INDEX_NAME: terraformers-reference-v4
+        CORPUS_VERSION: terraformers-reference-v4
+      preserve:
+        - RETRIEVAL_MODE_REQUIRED
+        - OPENSEARCH_TOP_K_8
+        - provider_version_5_100_0
+        - embedding_model_gemini-embedding-001
+        - vector_dimension_1024
+
+    live_validation_workflow:
+      file: .github/workflows/gcp-target-runtime-dependencies.yml
+      required_change: >
+        Add one bounded A7-7 operation to the existing backend live-validation job. Do not create a
+        new workflow. Reuse the existing ephemeral JWT/JWKS authentication mechanism.
+      operation: a7-7-broad-v4-live-proof
+      confirmation: RUN_A7_7_BROAD_V4_LIVE_PROOF
+      positive_fixture:
+        case_id: arch-vpc-three-tier
+        path: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
+        sha256: a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8
+      negative_fixture:
+        case_id: non-architecture-deployment-dashboard
+        path: evaluation/terraformers-eval-v1/fixtures/case-06-non-architecture-dashboard.webp
+        sha256: 12eb8590b89eaea0988d5038c7a9862eebc584039d88084fe91433848a53d36d
+      preconditions:
+        - deployed_backend_image_is_exact_immutable_digest
+        - BUILD_SOURCE_REVISION_equals_approved_main_SHA
+        - ConfigMap_INDEX_NAME_is_terraformers-reference-v4
+        - ConfigMap_CORPUS_VERSION_is_terraformers-reference-v4
+        - OpenSearch_v4_index_checksum_metadata_exists
+        - OpenSearch_v4_document_count_is_5395
+
+  live_acceptance:
+    identity:
+      - exact_main_source_SHA
+      - exact_backend_image_digest
+      - BUILD_SOURCE_REVISION_matches_main_SHA
+      - provider_version_5_100_0
+      - corpus_version_terraformers-reference-v4
+      - v4_corpus_checksum
+      - quality_contract_evidence-quality-v1
+      - fixture_SHA256s
+
+    positive_path:
+      request:
+        - authenticated_upload_HTTP_201
+        - source_bytes_persisted_to_GCS
+        - AnalysisJob_id_returned
+      terminal:
+        - AnalysisJob_reaches_SUCCEEDED
+        - generated_Terraform_is_readable_and_nonempty
+        - result_object_key_is_present
+      live_v4_retrieval:
+        - correlated_job_log_contains_retrieval_success
+        - correlated_job_log_corpusVersion_is_terraformers-reference-v4
+        - correlated_job_log_referenceCount_is_positive
+        - OpenSearch_active_index_is_terraformers-reference-v4_with_5395_documents
+      persisted_quality:
+        - quality_object_is_non_null
+        - quality_contractVersion_is_evidence-quality-v1
+        - technicalStatus_is_PASS
+        - knowledgeStatus_is_COMPLETE
+        - qualityStatus_is_not_NOT_APPLICABLE
+        - projectDecisionStatus_may_be_UNKNOWN_under_current_runtime_contract
+        - runtimeQualityBoundary_is_CONDITIONAL_ON_EXTRACTED_FACTS
+        - reasons_are_bounded_enum_values
+      observability:
+        - terminal_quality_metric_is_present
+        - job_and_stage_metrics_are_present
+        - correlated_logs_use_analysisJobId_and_source_revision
+        - no_prompt_image_bytes_raw_reference_content_or_generated_HCL_in_metric_labels
+
+    negative_path:
+      request:
+        - authenticated_upload_HTTP_201
+        - separate_project_identity_from_positive_control
+      terminal:
+        - terminal_state_is_FAILED_for_INPUT_REJECTED_semantics
+        - resultFileId_is_null
+        - resultObjectKey_is_null
+        - project_Terraform_read_returns_no_successful_draft
+      persisted_quality:
+        - quality_object_is_non_null
+        - contractVersion_is_evidence-quality-v1
+        - technicalStatus_is_PASS
+        - knowledgeStatus_is_NOT_APPLICABLE
+        - qualityStatus_is_NOT_APPLICABLE
+        - projectDecisionStatus_is_NOT_APPLICABLE
+        - reasons_is_empty
+      observability:
+        - failure_category_is_rejected_input
+        - no_generation_or_Terraform_output_is_claimed
+
+    failure_retention:
+      rule: >
+        Do not automatically rerun a positive/negative correctness request until green. Any naturally
+        observed provider, retrieval, executable, or quality failure is part of the evidence and must
+        be retained with exact source/image/corpus identity.
+      retry_rule: >
+        A retry may occur only after the first attempt is durably recorded and the reason is stated.
+        Infrastructure setup/ingestion resume with the identical corpus checksum is not treated as a
+        hidden correctness rerun, but all workflow attempts remain evidence.
+
+  live_execution_sequence:
+    - id: PRECHECK
+      action: >
+        Read-only current-state/quota/cost preflight. Verify the pre-A7-7 target runtime is absent and
+        bootstrap state/WIF identities are the expected baseline.
+    - id: FOUNDATION
+      action: >
+        Recreate only the previously selected Case C GCP foundation and delivery/runtime dependencies
+        using existing protected workflows and reviewed Terraform plans.
+    - id: BACKEND_IMAGE
+      action: >
+        Build/publish one immutable backend image from the exact A7-7 main source SHA and record its digest.
+    - id: OPENSEARCH_AND_BACKEND
+      action: >
+        Deploy the existing OpenSearch and backend runtime with v4 ConfigMap identity. Do not change topology.
+    - id: V4_INGESTION
+      action: >
+        Deterministically build the broad v4 corpus from pinned authority, ingest all 5,395 documents,
+        and retain only the bounded contract/receipt.
+    - id: LIVE_PROOF
+      action: >
+        Execute exactly the bounded authenticated positive and negative controls and capture API,
+        metrics, and bounded correlated-log evidence.
+    - id: TEARDOWN
+      action: >
+        Use the existing protected teardown workflow with the exact reviewed state/delete count.
+        Remove the recreated target runtime, Kubernetes namespace/PVC disk, runtime object bucket,
+        Artifact Registry runtime repository/images, runtime secrets, MariaDB VM/PD, GKE target,
+        and target VPC.
+    - id: RESIDUAL_CHECK
+      action: >
+        Verify all A7-7-created/recreated target-runtime cost-bearing resources are absent. Existing
+        bootstrap state bucket/WIF/service-account control-plane identities may remain only if they
+        exactly match the pre-A7-7 baseline and contain no recreated runtime resource outside canonical
+        state history.
+
+  live_checkpoint:
+    required_before_first_GCP_mutation: true
+    single_checkpoint_may_authorize_whole_bounded_sequence: true
+    checkpoint_must_present:
+      - exact_final_main_SHA
+      - exact_read_only_preflight_result
+      - exact_Terraform_plan_contract_for_recreation
+      - expected_runtime_shape_and_region
+      - exact_backend_image_source_SHA_strategy
+      - broad_v4_embedding_volume_approx_2654504_input_tokens
+      - expected_ingestion_document_count_5395
+      - teardown_strategy_and_expected_state_count_rule
+    actions_outside_work_package_require_new_approval: true
+
+  repository_acceptance_before_live:
+    - A7_6_is_COMPLETE
+    - execution_base_is_bound_once
+    - v3_ingestion_behavior_remains_tested_and_compatible
+    - v4_ingestion_is_manifest_driven_and_exact_count_gated
+    - broad_v4_build_is_deterministic_from_pinned_provider_source_and_exact_provider_schema
+    - runtime_ConfigMap_points_to_v4
+    - existing_backend_live_validation_has_bounded_A7_7_operation
+    - positive_quality_API_assertions_are_present
+    - negative_INPUT_REJECTED_quality_API_assertions_are_present
+    - no_new_workflow_is_added
+    - Backend_Local_Verification_is_green
+    - Terraform_Static_Verification_is_green
+    - rag_ingestion_tests_are_green
+
+  final_acceptance:
+    - broad_v4_contract_counts_match_A7_0
+    - broad_v4_is_actually_ingested_into_live_OpenSearch
+    - backend_runtime_actually_points_to_v4_index_and_corpus_version
+    - authenticated_positive_request_reaches_SUCCEEDED
+    - positive_request_correlated_log_proves_v4_retrieval_with_positive_reference_count
+    - positive_generated_Terraform_is_readable
+    - positive_quality_snapshot_is_persisted_and_returned_by_API
+    - authenticated_negative_control_produces_no_Terraform_result
+    - negative_quality_snapshot_matches_INPUT_REJECTED_NOT_APPLICABLE_semantics
+    - bounded_quality_and_stage_metrics_logs_are_observed
+    - any_natural_failure_is_retained_not_rerun_away
+    - all_recreated_target_runtime_resources_are_torn_down
+    - pre_A7_7_bootstrap_baseline_is_not_expanded
+    - A7_8_is_not_started
+
+  allowed_paths:
+    - .agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml
+    - .agents/work-packages/case-a-a7-6-observability-backend-decision-v1.yml
+    - .agents/work-packages/case-a-semantic-reliability-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+    - docs/evaluation/case-a-a7-6-observability-backend-decision.md
+    - docs/evaluation/case-a-a7-7-broad-v4-live-proof.md
+    - scripts/rag/ingest-gcp-target-corpus.py
+    - tests/rag/test_ingest_gcp_target_corpus.py
+    - .github/workflows/gcp-target-corpus-ingestion.yml
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+    - infra/kubernetes/overlays/gcp-target/backend-configmap-patch.yaml
+
+  prohibited_paths:
+    - backend/src/main/java/**
+    - backend/src/main/resources/db/migration/**
+    - corpus/terraformers-reference/v1/**
+    - corpus/terraformers-reference/v2/**
+    - corpus/terraformers-reference/v3/**
+    - frontend/**
+    - infra/terraform/**
+    - AGENTS.md
+
+  prohibited_actions_before_live_checkpoint:
+    - live_GCP_mutation
+    - Vertex_embedding_or_generation_call
+    - OpenSearch_live_ingestion
+    - backend_image_publication
+    - runtime_deployment
+    - teardown
+
+  prohibited_actions:
+    - start_A7_8
+    - create_second_GCP_architecture
+    - add_new_workflow
+    - add_new_database_or_vector_database
+    - add_Langfuse_OpenTelemetry_or_other_observability_product
+    - add_evaluator_LLM_or_model_voting
+    - change_provider_version
+    - change_embedding_model
+    - change_quality_taxonomy
+    - change_retry_lease_claim_or_fencing_semantics
+    - change_prompt_or_generation_model_for_convenience
+    - weaken_negative_control
+    - log_or_upload_prompt_image_bytes_raw_reference_content_generated_HCL_or_embedding_vectors
+    - commit_live_credentials
+    - rerun_correctness_until_green
+    - leave_recreated_target_runtime_running_after_evidence_collection
+
+  validation:
+    repository_required:
+      - python_unit_tests_for_v3_and_v4_ingestion_contract
+      - rag_corpus_contract_regression_v1_v2_v3_and_v4_fixture
+      - Backend_Local_Verification
+      - Terraform_Static_Verification
+      - git_diff_and_scope_check
+    live_required:
+      - read_only_preflight
+      - protected_runtime_recreation
+      - immutable_backend_image_publication
+      - broad_v4_ingestion_receipt
+      - authenticated_positive_path
+      - authenticated_negative_control
+      - persisted_quality_API_readback
+      - bounded_metrics_and_logs
+      - protected_teardown
+      - residual_resource_check
+
+  auto_repair_limit:
+    repository_implementation: 1
+    live_setup: 0
+    live_correctness: 0
+
+  stop_on:
+    - current_main_differs_from_execution_base_sha_during_repository_implementation
+    - second_repository_repair_is_required
+    - broad_v4_counts_do_not_reconcile_with_A7_0
+    - v4_ingestion_requires_weakening_checksum_or_count_gates
+    - runtime_needs_a_new_topology
+    - provider_or_embedding_model_change_is_required
+    - quality_contract_change_is_required
+    - backend_domain_code_change_is_required
+    - unexpected_Terraform_plan_action_or_resource_address_appears
+    - live_preflight_shows_insufficient_quota_or_unknown_cost_boundary
+    - positive_or_negative_control_reaches_unexpected_terminal_semantics
+    - teardown_plan_contains_unknown_create_update_replace_action
+    - residual_target_runtime_resource_remains_after_teardown
+
+  completion:
+    merge_requires_user_approval: true
+    live_checkpoint_requires_user_approval: true
+    A7_8_requires_separate_user_approval: true

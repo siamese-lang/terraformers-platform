@@ -20,6 +20,12 @@ V4_SPEC = importlib.util.spec_from_file_location(
 build_v4 = importlib.util.module_from_spec(V4_SPEC)
 V4_SPEC.loader.exec_module(build_v4)
 
+COVERAGE_SPEC = importlib.util.spec_from_file_location(
+    "report_corpus_coverage", ROOT / "scripts/rag/report-corpus-coverage.py"
+)
+report_coverage = importlib.util.module_from_spec(COVERAGE_SPEC)
+COVERAGE_SPEC.loader.exec_module(report_coverage)
+
 
 class BuildCorpusV2Tests(unittest.TestCase):
     def setUp(self):
@@ -253,6 +259,19 @@ resource "aws_lambda_function" "example" {
 """,
             encoding="utf-8",
         )
+        (docs / "unparsed_resource.html.markdown").write_text(
+            """---
+subcategory: "Test"
+layout: "aws"
+page_title: "AWS: aws_unparsed_resource"
+---
+# Unexpected Heading
+
+This source file exists but intentionally has no parser-recognized resource overview
+or Terraform/HCL example.
+""",
+            encoding="utf-8",
+        )
         self.schema = self.workspace / "schema.json"
         self.schema.write_text(
             json.dumps(
@@ -279,6 +298,14 @@ resource "aws_lambda_function" "example" {
                                     }
                                 },
                                 "aws_schema_only_resource": {
+                                    "block": {
+                                        "attributes": {
+                                            "name": {"type": "string", "required": True}
+                                        },
+                                        "block_types": {},
+                                    }
+                                },
+                                "aws_unparsed_resource": {
                                     "block": {
                                         "attributes": {
                                             "name": {"type": "string", "required": True}
@@ -355,8 +382,8 @@ resource "aws_lambda_function" "example" {
         self.assertEqual(1, summary["newResourceCountComparedWithV3"])
 
         coverage = json.loads((output / "coverage-report.json").read_text(encoding="utf-8"))
-        self.assertEqual(3, coverage["providerSchemaResourceCount"])
-        self.assertEqual(2, coverage["officialDocumentationResourceCount"])
+        self.assertEqual(4, coverage["providerSchemaResourceCount"])
+        self.assertEqual(3, coverage["officialDocumentationResourceCount"])
         self.assertEqual(1, coverage["v3ProviderResourceCount"])
         self.assertEqual(["aws_lambda_function"], coverage["newResourceTypesComparedWithV3"])
 
@@ -413,12 +440,66 @@ resource "aws_lambda_function" "example" {
         ]
         self.assertEqual(["AWS_PROVIDER_SCHEMA"], [document["documentType"] for document in target])
 
+    def test_v4_does_not_count_unparsed_official_file_as_indexed_evidence(self):
+        output = self.workspace / "v4-unparsed"
+        build_v4.build(self.args(output, ["aws_unparsed_resource"]))
+        coverage = json.loads((output / "coverage-report.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(1, coverage["selectedOfficialDocumentationResourceCount"])
+        self.assertEqual(0, coverage["selectedOfficialEvidenceResourceCount"])
+        self.assertEqual([], coverage["selectedMissingOfficialDocumentationResourceTypes"])
+        self.assertEqual(
+            ["aws_unparsed_resource"],
+            coverage["selectedOfficialEvidenceExtractionGapResourceTypes"],
+        )
+
+        documents = [
+            json.loads(line)
+            for line in (output / "documents.jsonl").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        target = [
+            document
+            for document in documents
+            if "aws_unparsed_resource" in document.get("resourceTypes", [])
+        ]
+        self.assertEqual(["AWS_PROVIDER_SCHEMA"], [document["documentType"] for document in target])
+
+        report = report_coverage.report(
+            SimpleNamespace(
+                corpus_dir=output,
+                provider_schema_json=self.schema,
+                provider_source_dir=self.provider,
+                provider_source_commit="a" * 40,
+                output=None,
+            )
+        )
+        self.assertEqual(0, report["corpusOfficialEvidenceResourceCount"])
+        self.assertEqual(0.0, report["corpusCoverageOfOfficialDocumentedResources"])
+        self.assertEqual(
+            3,
+            report["officialDocumentedProviderSchemaResourcesWithoutCorpusEvidenceCount"],
+        )
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/checks/rag-corpus-contract-verification.py"),
+                "--corpus-dir",
+                str(output),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(0, completed.returncode, completed.stderr)
+
     def test_v4_all_documented_mode_is_schema_intersection_not_allowlist(self):
         args = self.args(self.workspace / "v4-all", None)
         args.all_documented_resources = True
         provider_schema = build_v4.schema_provider(self.schema)
         self.assertEqual(
-            ["aws_lambda_function", "aws_vpc"],
+            ["aws_lambda_function", "aws_unparsed_resource", "aws_vpc"],
             build_v4.select_resources(args, provider_schema),
         )
 

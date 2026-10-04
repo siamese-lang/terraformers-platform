@@ -1,6 +1,16 @@
 # Case A A7-6 — Observability backend decision
 
-Status: **DECISION COMPLETE — AWAITING REVIEW — NO PRODUCT ADOPTION**
+Status: **COMPLETE — ACCEPTANCE PASS — NO PRODUCT ADOPTION — A7-7 REQUIRED**
+
+Decision merge SHA:
+
+`a58d78181be642f3b3c2fdd38486c7d19fcc045e`
+
+Validation:
+
+- Terraform Static Verification `37217252459`: **SUCCESS**
+- production/backend dependency changes: none
+- independent direction audit: **PASS**
 
 Execution base:
 

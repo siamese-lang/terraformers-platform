@@ -107,7 +107,7 @@ jobs:
           {
             echo 'CORPUS_DIR=corpus/terraformers-reference/v3'
             echo 'CORPUS_DIR_NAME=v3'
-            echo 'CORPUS_CONTRACT_JSON='${RUNNER_TEMP}'/corpus-contract.json'
+            echo "CORPUS_CONTRACT_JSON=${RUNNER_TEMP}/corpus-contract.json"
           } >> "$GITHUB_ENV"
 
       - uses: google-github-actions/auth@v3
@@ -323,11 +323,15 @@ jobs:
           set -euo pipefail
           bundle_root="${RUNNER_TEMP}/rag-ingestion-bundle"
           rm -rf "$bundle_root"
-          mkdir -p             "$bundle_root/scripts/rag"             "$bundle_root/scripts/checks"             "$bundle_root/corpus/terraformers-reference"
+          mkdir -p             "$bundle_root/scripts/rag"             "$bundle_root/scripts/checks"             "$bundle_root/corpus/terraformers-reference"             "$bundle_root/docs"             "$bundle_root/infra/terraform/envs/eks-runtime"             "$bundle_root/infra/terraform/envs/rag-runtime"
 
           cp scripts/rag/ingest-gcp-target-corpus.py "$bundle_root/scripts/rag/"
           cp scripts/rag/requirements-gcp.txt "$bundle_root/scripts/rag/"
           cp scripts/checks/rag-corpus-contract-verification.py "$bundle_root/scripts/checks/"
+          cp docs/source-rag-gitops-reuse-plan.md "$bundle_root/docs/"
+          cp infra/terraform/envs/eks-runtime/main.tf "$bundle_root/infra/terraform/envs/eks-runtime/"
+          cp infra/terraform/envs/rag-runtime/main.tf "$bundle_root/infra/terraform/envs/rag-runtime/"
+          cp infra/terraform/envs/rag-runtime/outputs.tf "$bundle_root/infra/terraform/envs/rag-runtime/"
           cp -R "$CORPUS_DIR" "$bundle_root/corpus/terraformers-reference/$CORPUS_DIR_NAME"
 
           tar -C "$bundle_root" -czf "${RUNNER_TEMP}/rag-ingestion-bundle.tgz" .

@@ -186,8 +186,22 @@ only when a measured requirement justifies it.
 
 ## Next gate
 
-A7-7 does not start automatically.
+A7-7 is now **required**.
 
-A7-7 Representative Live Validation still requires separate user approval. Its purpose is to decide
-whether repository-only evidence is sufficient or whether a representative live proof is worth
-recreating under the existing Case C topology and teardown contract.
+The user explicitly requires the improved Terraformers to work end-to-end with the broad v4 RAG
+corpus and persisted `evidence-quality-v1`, so repository-only evidence is not sufficient for final
+closure.
+
+A7-7 must remain a bounded representative proof rather than an open-ended production-hardening
+phase. It must prove at minimum:
+
+1. exact source/image/provider/corpus/quality-contract identity;
+2. the broad v4 corpus is actually ingested and served by the live retrieval path;
+3. an authenticated positive architecture request reaches terminal success;
+4. selected retrieval evidence comes from the v4 corpus and is visible through bounded evidence;
+5. the terminal AnalysisJob quality snapshot is persisted and returned by the existing API;
+6. an authenticated negative control produces no Terraform output and the expected terminal quality;
+7. any naturally occurring provider/executable failure is retained rather than rerun away;
+8. the recreated runtime is torn down and known Terraformers billable resources return to zero.
+
+No Langfuse/OpenTelemetry adoption is implied by this requirement.

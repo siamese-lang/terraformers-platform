@@ -1,8 +1,8 @@
 work_package:
   id: case-a-a7-3-provider-partial-failures-v1
-  status: APPROVED_AWAITING_ACTIVATION
+  status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: c9adae19c5d8cb6c4d888c3b5ed0bf8cadae647d
 
   activation:
     bind_rule: >

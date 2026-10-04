@@ -305,3 +305,49 @@ set, the current provider default branch, or fabricated resource names.
 
 A7-4 may therefore proceed with a compact versioned read-only coverage manifest carrying these 12
 gaps and the pinned provenance. This evidence does not claim that v4 is currently served or ingested.
+
+## Implementation evidence — awaiting review
+
+**Status: A7-4 IMPLEMENTED / AWAITING REVIEW. Acceptance is not self-declared.**
+
+The implementation adds `V20261004_007__add_analysis_job_quality_snapshot.sql`, with nullable bounded
+columns `quality_contract_version`, `technical_status`, `knowledge_status`, `quality_status`,
+`project_decision_status`, `runtime_quality_boundary`, and `quality_reasons`. Existing rows are not
+backfilled. Success writes the snapshot inside the existing owned success transaction; terminal
+failure uses the existing claim-generation and live-lease fenced update. Retry scheduling does not
+write terminal quality.
+
+The runtime coverage catalog reads
+`quality/aws-provider-5.100.0-official-knowledge-coverage.json`: AWS Provider `5.100.0`, source commit
+`f7a3b98da589ab1d52756b0dcee0dbf2de83d635`, generated registry tree
+`08ac3f85622b439f826da9b5677414f0f0b86fda`, documentation tree
+`fda313b7ec2d69be5077056340ba25d6dc763b0d`, 256 generated registry files, and exact counts
+`1,526 / 1,514 / 12`. It interprets schema-known resources outside the verified 12 gaps as having
+official knowledge; retrieval hits do not define that universe.
+
+Vertex and Bedrock attach the existing `EvidenceQualityAssessment` to successful architecture
+results while facts, selected references, generated Terraform, provider schema, and coverage
+metadata remain available. Bedrock carries one retrieval outcome and does not repeat fact
+extraction. `AnalysisResult.withTerraformCode` retains the assessment. Project-decision
+applicability remains `UNKNOWN`.
+
+`GET /api/analysis/jobs/{id}` now returns nullable `quality` with only `contractVersion`,
+`technicalStatus`, `knowledgeStatus`, `qualityStatus`, `projectDecisionStatus`,
+`runtimeQualityBoundary`, and bounded `reasons`. Micrometer uses
+`terraformers.analysis.quality.terminal` with label keys `contract`, `technical`, `knowledge`,
+`quality`, `project_decision`, and `runtime_boundary`; reason counts use
+`terraformers.analysis.quality.reasons` with only `reason`. The terminal log contains bounded
+status/version/reason names and relies on existing `analysisJobId` MDC correlation.
+
+Deterministic tests cover manifest provenance/gaps, provider attachment, one-pass Bedrock fact
+extraction, result-copy preservation, success/failure/input-rejection mappings, degraded and unknown
+snapshots, retry and stale-generation fencing, legacy-null API behavior, fresh persistence-context
+readback, and low-cardinality metric labels. Local Maven execution was attempted but this isolated
+environment returned HTTP 403 resolving the Spring Boot parent from Maven Central; authoritative
+Backend Local Verification and MariaDB Flyway/repository validation therefore remain PR CI review
+evidence rather than a local claim.
+
+No live provider, embedding, OpenSearch, corpus ingestion, GCP, deployment, or cost-bearing action
+was performed. A7-5 was not started. Residual limitations are the intentional
+`CONDITIONAL_ON_EXTRACTED_FACTS` boundary, `UNKNOWN` project-decision applicability for arbitrary
+requests, null quality for legacy rows, and pending authoritative CI validation.

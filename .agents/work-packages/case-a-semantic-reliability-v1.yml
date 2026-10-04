@@ -1,6 +1,6 @@
 work_package:
   id: case-a-semantic-reliability-v1
-  status: A7_3_COMPLETE_HANDOFF_TO_A7_4_WORK_PACKAGE
+  status: A7_4_IMPLEMENTED_AWAITING_REVIEW
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: dd34d1cec34d31783ca2d672c65311ce82fd2666
 
@@ -20,7 +20,7 @@ work_package:
     closure_evidence: docs/evaluation/case-a-a7-3-provider-partial-failures.md
     completed_phase_merge_sha: fdb0e8a3f7e6656c46dd24e173894460ec09fd7f
     next_phase: A7_4
-    next_phase_status: APPROVED_IMPLEMENTATION_NOT_STARTED
+    next_phase_status: IMPLEMENTED_AWAITING_REVIEW
     next_phase_requires_explicit_user_approval: false
     measured_provider_schema_resource_count: 1526
     measured_official_documented_schema_resource_count: 1514

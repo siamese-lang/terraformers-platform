@@ -11,6 +11,23 @@ import com.terraformers.modernization.reference.ArchitectureFactsExtractionExcep
 
 class AnalysisObservabilityTest {
     @Test
+    void terminalQualityMetricsUseOnlyBoundedEnumLabels() {
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        AnalysisObservability observability = new AnalysisObservability(registry);
+        var quality = TerminalQualityAssessmentMapper.failure(
+                providerFailure(AnalysisProviderFailureReason.CONTENT_BLOCKED));
+
+        observability.terminalQuality(quality);
+
+        assertThat(registry.find("terraformers.analysis.quality.terminal").meters()).allSatisfy(meter ->
+                assertThat(meter.getId().getTags()).extracting(Tag::getKey)
+                        .containsExactly("contract", "knowledge", "project_decision", "quality",
+                                "runtime_boundary", "technical"));
+        assertThat(registry.find("terraformers.analysis.quality.reasons").meters()).allSatisfy(meter ->
+                assertThat(meter.getId().getTags()).extracting(Tag::getKey).containsExactly("reason"));
+        assertThat(registry.scrape()).doesNotContain("analysisJobId", "projectId", "aws_vpc", "referenceId");
+    }
+    @Test
     void classifiesProviderNeutralFailuresAndPublishesTheirMetricTags() {
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         AnalysisObservability observability = new AnalysisObservability(registry);

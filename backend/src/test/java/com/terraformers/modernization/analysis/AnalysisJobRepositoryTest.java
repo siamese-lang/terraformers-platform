@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
+import jakarta.persistence.EntityManager;
+import java.util.List;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -19,6 +21,34 @@ class AnalysisJobRepositoryTest {
 
     @Autowired
     private AnalysisJobRepository repository;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Test
+    void qualitySnapshotSurvivesFreshPersistenceContextWithoutRecomputation() {
+        AnalysisJobEntity entity = savePending("quality-reload");
+        var quality = new EvidenceQualityAssessment(EvidenceQualityAssessment.CONTRACT_VERSION,
+                EvidenceQualityAssessment.TechnicalStatus.PASS,
+                EvidenceQualityAssessment.KnowledgeStatus.INCOMPLETE,
+                EvidenceQualityAssessment.QualityStatus.DEGRADED,
+                EvidenceQualityAssessment.ProjectDecisionStatus.UNKNOWN,
+                EvidenceQualityAssessment.RuntimeQualityBoundary.CONDITIONAL_ON_EXTRACTED_FACTS,
+                List.of(EvidenceQualityAssessment.Reason.OFFICIAL_KNOWLEDGE_NOT_AVAILABLE),
+                List.of("aws_alb"), List.of("aws_alb"), List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+        entity.setQualityAssessment(quality);
+        repository.saveAndFlush(entity);
+        entityManager.clear();
+
+        AnalysisJobEntity reloaded = repository.findById(entity.getId()).orElseThrow();
+        assertThat(reloaded.getQualityContractVersion()).isEqualTo(quality.contractVersion());
+        assertThat(reloaded.getTechnicalStatus()).isEqualTo(quality.technicalStatus());
+        assertThat(reloaded.getKnowledgeStatus()).isEqualTo(quality.knowledgeStatus());
+        assertThat(reloaded.getQualityStatus()).isEqualTo(quality.qualityStatus());
+        assertThat(reloaded.getProjectDecisionStatus()).isEqualTo(quality.projectDecisionStatus());
+        assertThat(reloaded.getRuntimeQualityBoundary()).isEqualTo(quality.runtimeQualityBoundary());
+        assertThat(reloaded.qualityReasonValues()).containsExactlyElementsOf(quality.reasons());
+    }
 
     @Test
     void pendingJobCanBeClaimedExactlyOnce() {

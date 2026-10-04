@@ -97,6 +97,7 @@ public class AnalysisJobRunner {
                 boolean finalized = observability.recordStage(AnalysisTelemetryStage.RESULT_FINALIZE,
                         () -> stateService.markSucceededOwned(jobId, generation, clock.instant(), completed, reference));
                 if (finalized) observability.jobSucceeded();
+                if (finalized) observability.terminalQuality(completed.qualityAssessment());
                 else {
                     leaseLost.set(true);
                     log.warn("Analysis success finalization rejected because durable ownership was lost generation={}", generation);
@@ -137,9 +138,12 @@ public class AnalysisJobRunner {
                     log.warn("Analysis retry budget exhausted attempt={} generation={}",
                             runningJob.getAttemptCount(), generation);
                 }
-                boolean failed = stateService.markFailedOwned(jobId, generation, clock.instant(), safeFailureReason(exception));
+                EvidenceQualityAssessment quality = TerminalQualityAssessmentMapper.failure(exception);
+                boolean failed = stateService.markFailedOwned(jobId, generation, clock.instant(),
+                        safeFailureReason(exception), quality);
                 if (failed) {
                     observability.jobFailed(exception);
+                    observability.terminalQuality(quality);
                     log.error("Analysis job failed outcome=failed exceptionCategory={} generation={}",
                             observability.category(exception), generation);
                 } else {

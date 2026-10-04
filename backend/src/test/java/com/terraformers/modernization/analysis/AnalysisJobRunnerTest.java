@@ -73,7 +73,7 @@ class AnalysisJobRunnerTest {
 
         assertThat(invocations).hasValue(1);
         verify(fixture.state).scheduleRetryOwned("job-transient", 3, NOW, NOW.plusSeconds(10));
-        verify(fixture.state, never()).markFailedOwned(any(), anyLong(), any(), any());
+        verify(fixture.state, never()).markFailedOwned(any(), anyLong(), any(), any(), any());
         assertThat(fixture.registry.find("terraformers.analysis.retries")
                 .tags("outcome", "scheduled").counter().count()).isEqualTo(1);
         assertThat(fixture.registry.find("terraformers.analysis.jobs")
@@ -87,13 +87,14 @@ class AnalysisJobRunnerTest {
         when(fixture.state.claimEligible("job-exhausted", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
         when(fixture.orchestrator.executeProviderAndValidate(running))
                 .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("timeout")));
-        when(fixture.state.markFailedOwned("job-exhausted", 5, NOW,
-                AnalysisJobRunner.TIMEOUT_FAILURE_REASON)).thenReturn(true);
+        when(fixture.state.markFailedOwned(eq("job-exhausted"), eq(5L), eq(NOW),
+                eq(AnalysisJobRunner.TIMEOUT_FAILURE_REASON), any())).thenReturn(true);
 
         fixture.runner.run("job-exhausted");
 
         verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
-        verify(fixture.state).markFailedOwned("job-exhausted", 5, NOW, AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
+        verify(fixture.state).markFailedOwned(eq("job-exhausted"), eq(5L), eq(NOW),
+                eq(AnalysisJobRunner.TIMEOUT_FAILURE_REASON), any());
         assertThat(fixture.registry.find("terraformers.analysis.retries")
                 .tags("outcome", "exhausted").counter().count()).isEqualTo(1);
     }
@@ -109,7 +110,7 @@ class AnalysisJobRunnerTest {
 
         fixture.runner.run("job-stale-retry");
 
-        verify(fixture.state, never()).markFailedOwned(any(), anyLong(), any(), any());
+        verify(fixture.state, never()).markFailedOwned(any(), anyLong(), any(), any(), any());
         assertThat(fixture.registry.find("terraformers.analysis.retries")
                 .tags("outcome", "ownership_lost").counter().count()).isEqualTo(1);
     }
@@ -122,13 +123,14 @@ class AnalysisJobRunnerTest {
                 AnalysisProviderFailureReason.OUTPUT_TRUNCATED, new IllegalStateException("truncated"));
         when(fixture.state.claimEligible("job-semantic", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
         when(fixture.orchestrator.executeProviderAndValidate(running)).thenThrow(failure);
-        when(fixture.state.markFailedOwned("job-semantic", 8, NOW,
-                AnalysisJobRunner.TRUNCATED_FAILURE_REASON)).thenReturn(true);
+        when(fixture.state.markFailedOwned(eq("job-semantic"), eq(8L), eq(NOW),
+                eq(AnalysisJobRunner.TRUNCATED_FAILURE_REASON), any())).thenReturn(true);
 
         fixture.runner.run("job-semantic");
 
         verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
-        verify(fixture.state).markFailedOwned("job-semantic", 8, NOW, AnalysisJobRunner.TRUNCATED_FAILURE_REASON);
+        verify(fixture.state).markFailedOwned(eq("job-semantic"), eq(8L), eq(NOW),
+                eq(AnalysisJobRunner.TRUNCATED_FAILURE_REASON), any());
     }
 
     @Test
@@ -140,14 +142,14 @@ class AnalysisJobRunnerTest {
         when(fixture.state.claimEligible("job-rate-limited", NOW, NOW.plusSeconds(60)))
                 .thenReturn(Optional.of(running));
         when(fixture.orchestrator.executeProviderAndValidate(running)).thenThrow(failure);
-        when(fixture.state.markFailedOwned("job-rate-limited", 11, NOW,
-                AnalysisJobRunner.GENERIC_FAILURE_REASON)).thenReturn(true);
+        when(fixture.state.markFailedOwned(eq("job-rate-limited"), eq(11L), eq(NOW),
+                eq(AnalysisJobRunner.GENERIC_FAILURE_REASON), any())).thenReturn(true);
 
         fixture.runner.run("job-rate-limited");
 
         verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
-        verify(fixture.state).markFailedOwned(
-                "job-rate-limited", 11, NOW, AnalysisJobRunner.GENERIC_FAILURE_REASON);
+        verify(fixture.state).markFailedOwned(eq("job-rate-limited"), eq(11L), eq(NOW),
+                eq(AnalysisJobRunner.GENERIC_FAILURE_REASON), any());
     }
 
     @Test
@@ -157,13 +159,14 @@ class AnalysisJobRunnerTest {
         RuntimeException storageFailure = new RuntimeException("storage failed", new SocketTimeoutException("write"));
         when(fixture.state.claimEligible("job-storage", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
         when(fixture.orchestrator.executeProviderAndValidate(running)).thenThrow(storageFailure);
-        when(fixture.state.markFailedOwned("job-storage", 10, NOW,
-                AnalysisJobRunner.TIMEOUT_FAILURE_REASON)).thenReturn(true);
+        when(fixture.state.markFailedOwned(eq("job-storage"), eq(10L), eq(NOW),
+                eq(AnalysisJobRunner.TIMEOUT_FAILURE_REASON), any())).thenReturn(true);
 
         fixture.runner.run("job-storage");
 
         verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
-        verify(fixture.state).markFailedOwned("job-storage", 10, NOW, AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
+        verify(fixture.state).markFailedOwned(eq("job-storage"), eq(10L), eq(NOW),
+                eq(AnalysisJobRunner.TIMEOUT_FAILURE_REASON), any());
     }
 
     @Test
@@ -180,7 +183,7 @@ class AnalysisJobRunnerTest {
         fixture.runner.run("job-stale");
 
         verify(fixture.state, never()).markSucceededOwned(eq("job-stale"), anyLong(), any(), any(), any());
-        verify(fixture.state, never()).markFailedOwned(eq("job-stale"), anyLong(), any(), any());
+        verify(fixture.state, never()).markFailedOwned(eq("job-stale"), anyLong(), any(), any(), any());
         assertThat(fixture.registry.find("terraformers.analysis.lease.renewals")
                 .tags("outcome", "lost").counter().count()).isEqualTo(1);
     }

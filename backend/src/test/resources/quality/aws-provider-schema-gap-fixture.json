@@ -1,0 +1,21 @@
+{
+  "provider_schemas": {
+    "registry.terraform.io/hashicorp/aws": {
+      "resource_schemas": {
+        "aws_account_region": {},
+        "aws_alb": {},
+        "aws_alb_listener": {},
+        "aws_alb_listener_certificate": {},
+        "aws_alb_listener_rule": {},
+        "aws_alb_target_group": {},
+        "aws_alb_target_group_attachment": {},
+        "aws_api_gateway_rest_api_put": {},
+        "aws_ec2_image_block_public_access": {},
+        "aws_pinpoint_email_template": {},
+        "aws_rds_custom_db_engine_version": {},
+        "aws_securityhub_configuration_policy_association": {},
+        "aws_vpc": {}
+      }
+    }
+  }
+}

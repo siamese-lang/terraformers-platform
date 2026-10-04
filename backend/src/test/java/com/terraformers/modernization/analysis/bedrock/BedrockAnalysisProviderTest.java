@@ -21,6 +21,10 @@ import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
+import com.terraformers.modernization.analysis.EvidenceQualityAssessor;
+import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
+import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
+import com.terraformers.modernization.reference.OfficialKnowledgeCoverageCatalog;
 import com.terraformers.modernization.reference.BedrockArchitectureFactsExtractor;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.ReferenceDocument;
@@ -234,20 +238,50 @@ class BedrockAnalysisProviderTest {
         }
     }
 
+    @Test
+    void successfulArchitectureCarriesQualityWithoutSecondFactsExtraction() {
+        BedrockGenerationStage generationStage = mock(BedrockGenerationStage.class);
+        when(generationStage.generate(any(), any(), any())).thenReturn(new AnalysisGenerationResult(
+                "bedrock:test", AnalysisInputClassification.ARCHITECTURE_DIAGRAM, 0.95,
+                "resource \"aws_vpc\" \"main\" {}", "VPC", List.of("VPC"), List.of(), List.of(),
+                "end_turn", 10, false));
+        BedrockArchitectureFactsExtractor factsExtractor = mock(BedrockArchitectureFactsExtractor.class);
+        when(factsExtractor.extract(any())).thenReturn(new ArchitectureRetrievalFacts(
+                "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
+
+        AnalysisResult result = requiredProvider(query -> List.of(
+                new ReferenceDocument("ref", "VPC", "official", 1.0)), generationStage, factsExtractor)
+                .analyze(context());
+
+        assertThat(result.qualityAssessment()).isNotNull();
+        verify(factsExtractor, times(1)).extract(any());
+    }
+
     private BedrockAnalysisProvider requiredProvider(
             ReferenceRetriever retriever,
             BedrockGenerationStage generationStage
     ) {
+        BedrockArchitectureFactsExtractor factsExtractor = mock(BedrockArchitectureFactsExtractor.class);
+        when(factsExtractor.extract(any())).thenReturn(new ArchitectureRetrievalFacts(
+                "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
+        return requiredProvider(retriever, generationStage, factsExtractor);
+    }
+
+    private BedrockAnalysisProvider requiredProvider(ReferenceRetriever retriever,
+            BedrockGenerationStage generationStage, BedrockArchitectureFactsExtractor factsExtractor) {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
         properties.setRetrievalMode(RetrievalMode.REQUIRED);
         BedrockRuntimeProperties bedrockProperties = new BedrockRuntimeProperties();
         bedrockProperties.setModelId("configured-model-id");
-        BedrockArchitectureFactsExtractor factsExtractor = mock(BedrockArchitectureFactsExtractor.class);
-        when(factsExtractor.extract(any())).thenReturn(new ArchitectureRetrievalFacts(
-                "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
+        AwsProviderSchemaCatalog catalog = mock(AwsProviderSchemaCatalog.class);
+        when(catalog.contains("aws_vpc")).thenReturn(true);
+        OfficialKnowledgeCoverageCatalog coverage = mock(OfficialKnowledgeCoverageCatalog.class);
+        when(coverage.availableFor(any(), any())).thenReturn(java.util.Set.of("aws_vpc"));
         return new BedrockAnalysisProvider(
                 objectReader(), retriever, properties, bedrockProperties, factsExtractor,
-                new RetrievalQueryTextBuilder(), observability(), generationStage);
+                new RetrievalQueryTextBuilder(), observability(), generationStage,
+                new EvidenceQualityAssessor(catalog, new GeneratedTerraformContractInspector(catalog)),
+                catalog, coverage);
     }
 
     private BedrockAnalysisProvider provider(BedrockRuntimeClient client) {

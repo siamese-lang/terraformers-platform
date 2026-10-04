@@ -45,6 +45,25 @@ public class AnalysisObservability {
         failures("terraformers.analysis.failures", category(exception)).increment();
     }
 
+    public void terminalQuality(EvidenceQualityAssessment quality) {
+        if (quality == null) return;
+        Counter.builder("terraformers.analysis.quality.terminal")
+                .tag("contract", quality.contractVersion())
+                .tag("technical", quality.technicalStatus().name())
+                .tag("knowledge", quality.knowledgeStatus().name())
+                .tag("quality", quality.qualityStatus().name())
+                .tag("project_decision", quality.projectDecisionStatus().name())
+                .tag("runtime_boundary", quality.runtimeQualityBoundary().name())
+                .register(meterRegistry).increment();
+        quality.reasons().forEach(reason -> Counter.builder("terraformers.analysis.quality.reasons")
+                .tag("reason", reason.name()).register(meterRegistry).increment());
+        log.info("terminal quality contract={} technical={} knowledge={} quality={} projectDecision={} runtimeBoundary={} reasons={}",
+                quality.contractVersion(), quality.technicalStatus(), quality.knowledgeStatus(),
+                quality.qualityStatus(), quality.projectDecisionStatus(),
+                quality.runtimeQualityBoundary(),
+                quality.reasons().stream().map(Enum::name).toList());
+    }
+
     public void claimOutcome(String outcome) {
         Counter.builder("terraformers.analysis.claims")
                 .tag("outcome", outcome)

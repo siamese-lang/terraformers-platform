@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-3-corrective-provider-failure-classifier-null-v1
-  status: ACTIVE
+  status: COMPLETE
   source_pr: 208
   source_pr_head_sha: 12d7d90e1b3b45bc4e580ec7fa77fcb8578c51cb
   execution_base_sha: 12d7d90e1b3b45bc4e580ec7fa77fcb8578c51cb
@@ -77,7 +77,16 @@ work_package:
     - retry_policy_change_required
     - live_provider_call_required
 
+  completion_evidence:
+    corrective_pr: 209
+    corrective_merge_sha: 94869668ef177370701adcaae7e5c5473b3076ac
+    parent_pr: 208
+    parent_merge_sha: fdb0e8a3f7e6656c46dd24e173894460ec09fd7f
+    backend_local_verification_run: 37198612965
+    backend_local_verification_conclusion: success
+    independent_acceptance: PASS
+
   completion:
     target_branch: codex/implement-a7-3-provider-partial-failures
     merge_requires_user_approval: true
-    parent_PR_208_remains_unmerged_until_parent_CI_passes: true
+    parent_PR_208_remains_unmerged_until_parent_CI_passes: false

@@ -4,7 +4,6 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.RejectedExecutionException;
@@ -12,6 +11,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import com.terraformers.modernization.reference.ArchitectureFactsExtractionException;
 
 @Component
 public class AnalysisObservability {
@@ -186,13 +186,27 @@ public class AnalysisObservability {
         if (exception instanceof TerraformValidationFailureException terraformFailure) {
             return "terraform_" + terraformFailure.category().name().toLowerCase(Locale.ROOT);
         }
-        if (hasGoogleProviderStatus(exception, 429)) return "provider_rate_limited";
         if (exception instanceof AnalysisResultFinalizationException) return "result_finalization";
         if (exception instanceof AnalysisProviderFailureException providerFailure) {
             return switch (providerFailure.reason()) {
                 case OUTPUT_TRUNCATED -> "truncated_output";
+                case CONTENT_BLOCKED -> "provider_content_blocked";
+                case EMPTY_RESPONSE -> "provider_empty_response";
+                case RATE_LIMITED -> "provider_rate_limited";
+                case PROVIDER_ERROR -> "provider_error";
                 case INPUT_REJECTED -> "rejected_input";
                 case RESPONSE_FORMAT -> "response_format";
+            };
+        }
+        if (exception instanceof ArchitectureFactsExtractionException factsFailure) {
+            return switch (factsFailure.reason()) {
+                case PROVIDER_CONTENT_BLOCKED -> "provider_content_blocked";
+                case PROVIDER_TIMEOUT -> "timeout";
+                case PROVIDER_RATE_LIMITED -> "provider_rate_limited";
+                case PROVIDER_ERROR, PROVIDER_RUNTIME -> "provider_error";
+                case RESPONSE_TRUNCATED -> "truncated_output";
+                case EMPTY_RESPONSE -> "provider_empty_response";
+                case INVALID_RESPONSE, EMPTY_FACTS -> "response_format";
             };
         }
         if (exception instanceof AnalysisProviderTimeoutException) return "timeout";
@@ -204,23 +218,6 @@ public class AnalysisObservability {
         if (simple.contains("format")) return "response_format";
         if (simple.contains("truncated")) return "truncated_output";
         return "other";
-    }
-
-    private boolean hasGoogleProviderStatus(Throwable exception, int expectedStatus) {
-        for (Throwable current = exception; current != null; current = current.getCause()) {
-            Package typePackage = current.getClass().getPackage();
-            if (typePackage == null || !typePackage.getName().startsWith("com.google")) continue;
-            for (String methodName : java.util.List.of("code", "statusCode", "getStatusCode")) {
-                try {
-                    Method method = current.getClass().getMethod(methodName);
-                    Object value = method.invoke(current);
-                    if (value instanceof Number number && number.intValue() == expectedStatus) return true;
-                } catch (ReflectiveOperationException | SecurityException ignored) {
-                    // The SDK exception does not expose this bounded status accessor.
-                }
-            }
-        }
-        return false;
     }
 
     private long elapsedMs(long startedAt) {

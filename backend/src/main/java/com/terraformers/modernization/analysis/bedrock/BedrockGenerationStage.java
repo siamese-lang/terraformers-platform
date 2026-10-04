@@ -6,6 +6,9 @@ import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisObservability;
 import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
+import com.terraformers.modernization.analysis.ProviderFailureClassifier;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.storage.ObjectContent;
@@ -136,11 +139,21 @@ public class BedrockGenerationStage implements AnalysisGenerationStage {
             if (hasReadTimeout(exception)) {
                 throw new AnalysisProviderTimeoutException(exception);
             }
-            throw exception;
+            throw providerFailure(exception);
         } catch (RuntimeException exception) {
             logFailedCall(exception, startedAt);
-            throw exception;
+            if (exception instanceof AnalysisProviderFailureException
+                    || exception instanceof BedrockResponseFormatException) throw exception;
+            throw providerFailure(exception);
         }
+    }
+
+    private AnalysisProviderFailureException providerFailure(RuntimeException exception) {
+        return new AnalysisProviderFailureException(
+                ProviderFailureClassifier.isRateLimited(exception)
+                        ? AnalysisProviderFailureReason.RATE_LIMITED
+                        : AnalysisProviderFailureReason.PROVIDER_ERROR,
+                exception);
     }
 
     private boolean hasReadTimeout(Throwable exception) {

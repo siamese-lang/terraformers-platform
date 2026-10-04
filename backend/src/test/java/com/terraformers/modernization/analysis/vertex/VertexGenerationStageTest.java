@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.types.ThinkingLevel;
+import com.google.genai.types.FinishReason;
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisMode;
@@ -18,6 +19,16 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class VertexGenerationStageTest {
+
+    @Test
+    void recognizesOnlyExplicitContentAndSafetyFinishReasonsAsBlocked() {
+        assertThat(VertexGenerationStage.isContentBlocked(FinishReason.Known.SAFETY)).isTrue();
+        assertThat(VertexGenerationStage.isContentBlocked(FinishReason.Known.BLOCKLIST)).isTrue();
+        assertThat(VertexGenerationStage.isContentBlocked(FinishReason.Known.PROHIBITED_CONTENT)).isTrue();
+        assertThat(VertexGenerationStage.isContentBlocked(FinishReason.Known.STOP)).isFalse();
+        assertThat(VertexGenerationStage.isContentBlocked(FinishReason.Known.OTHER)).isFalse();
+        assertThat(VertexGenerationStage.isContentBlocked(FinishReason.Known.MALFORMED_FUNCTION_CALL)).isFalse();
+    }
 
     @Test
     void leavesThinkingUnsetByDefaultToPreserveModelDefault() {

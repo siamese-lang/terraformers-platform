@@ -18,6 +18,7 @@ import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse;
+import software.amazon.awssdk.services.bedrockruntime.model.ThrottlingException;
 
 class BedrockArchitectureFactsExtractorTest {
     @Test
@@ -69,6 +70,36 @@ class BedrockArchitectureFactsExtractorTest {
         assertThatThrownBy(() -> extractor(client).extract(source())).hasMessageNotContaining("SENTINEL_IMAGE");
     }
 
+    @Test
+    void distinguishesTruncationEmptyThrottlingAndGenericProviderFailure() throws Exception {
+        BedrockRuntimeClient client = mock(BedrockRuntimeClient.class);
+        when(client.invokeModel(any(InvokeModelRequest.class)))
+                .thenReturn(raw("{\"stop_reason\":\"max_tokens\",\"content\":[]}"));
+        assertThat(failure(client).reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.RESPONSE_TRUNCATED);
+
+        when(client.invokeModel(any(InvokeModelRequest.class))).thenReturn(raw("{\"content\":[]}"));
+        assertThat(failure(client).reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE);
+
+        when(client.invokeModel(any(InvokeModelRequest.class))).thenThrow(
+                ThrottlingException.builder().statusCode(429).message("SENTINEL_PROVIDER_PAYLOAD").build());
+        ArchitectureFactsExtractionException throttled = failure(client);
+        assertThat(throttled.reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.PROVIDER_RATE_LIMITED);
+        assertThat(throttled.evaluationDetail()).doesNotContain("SENTINEL_PROVIDER_PAYLOAD");
+
+        when(client.invokeModel(any(InvokeModelRequest.class))).thenThrow(
+                new IllegalStateException("SENTINEL_PROVIDER_PAYLOAD"));
+        assertThat(failure(client).reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.PROVIDER_ERROR);
+    }
+
+    private ArchitectureFactsExtractionException failure(BedrockRuntimeClient client) {
+        return org.assertj.core.api.Assertions.catchThrowableOfType(
+                () -> extractor(client).extract(source()), ArchitectureFactsExtractionException.class);
+    }
+
     private BedrockArchitectureFactsExtractor extractor(BedrockRuntimeClient client) {
         BedrockRuntimeProperties properties = new BedrockRuntimeProperties();
         properties.setModelId("model");
@@ -76,4 +107,5 @@ class BedrockArchitectureFactsExtractorTest {
     }
     private ObjectContent source() { return new ObjectContent(new ObjectMetadata("bucket", "key", "image/png", 14, "etag"), "SENTINEL_IMAGE".getBytes()); }
     private InvokeModelResponse response(String facts) throws Exception { return InvokeModelResponse.builder().body(SdkBytes.fromUtf8String(new ObjectMapper().writeValueAsString(java.util.Map.of("content", java.util.List.of(java.util.Map.of("type", "text", "text", facts)))))).build(); }
+    private InvokeModelResponse raw(String body) { return InvokeModelResponse.builder().body(SdkBytes.fromUtf8String(body)).build(); }
 }

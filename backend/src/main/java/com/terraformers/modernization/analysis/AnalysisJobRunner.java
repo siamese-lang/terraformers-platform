@@ -189,6 +189,9 @@ public class AnalysisJobRunner {
             if (current instanceof AnalysisProviderFailureException providerFailure) {
                 return switch (providerFailure.reason()) {
                     case OUTPUT_TRUNCATED -> TRUNCATED_FAILURE_REASON;
+                    case CONTENT_BLOCKED -> "Analysis provider blocked the response";
+                    case EMPTY_RESPONSE -> "Analysis provider returned no usable response";
+                    case RATE_LIMITED, PROVIDER_ERROR -> GENERIC_FAILURE_REASON;
                     case INPUT_REJECTED -> REJECTED_INPUT_FAILURE_REASON;
                     case RESPONSE_FORMAT -> FORMAT_FAILURE_REASON;
                 };

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.types.ThinkingLevel;
+import com.google.genai.types.FinishReason;
 import com.terraformers.modernization.analysis.vertex.VertexRuntimeProperties;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
@@ -90,16 +91,16 @@ class VertexArchitectureFactsExtractorTest {
 
         ArchitectureFactsExtractionException failure = failure(extractor);
 
-        assertThat(failure.reason()).isEqualTo(ArchitectureFactsExtractionException.Reason.PROVIDER_RUNTIME);
+        assertThat(failure.reason()).isEqualTo(ArchitectureFactsExtractionException.Reason.PROVIDER_ERROR);
         assertThat(failure.evaluationDetail())
-                .isEqualTo("reason=PROVIDER_RUNTIME;providerErrorType=IllegalStateException")
+                .isEqualTo("reason=PROVIDER_ERROR;providerErrorType=IllegalStateException")
                 .doesNotContain("secret-token", "prompt", "image", "base64");
     }
 
     @Test
     void distinguishesMaxTokens() {
         ArchitectureFactsExtractionException failure = failure(extractor((modelId, content, config) ->
-                new VertexArchitectureFactsExtractor.VertexFactsResponse(SECRET_PAYLOAD, true)));
+                new VertexArchitectureFactsExtractor.VertexFactsResponse(SECRET_PAYLOAD, FinishReason.Known.MAX_TOKENS))));
 
         assertThat(failure.reason()).isEqualTo(ArchitectureFactsExtractionException.Reason.RESPONSE_TRUNCATED);
         assertThat(failure.evaluationDetail()).isEqualTo("reason=RESPONSE_TRUNCATED");
@@ -111,6 +112,18 @@ class VertexArchitectureFactsExtractorTest {
                 response("  ")));
 
         assertThat(failure.reason()).isEqualTo(ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE);
+    }
+
+    @Test
+    void distinguishesExplicitSafetyBlockWithoutPayloadEvidence() {
+        ArchitectureFactsExtractionException failure = failure(extractor((modelId, content, config) ->
+                new VertexArchitectureFactsExtractor.VertexFactsResponse(
+                        SECRET_PAYLOAD, FinishReason.Known.SAFETY)));
+
+        assertThat(failure.reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.PROVIDER_CONTENT_BLOCKED);
+        assertThat(failure.evaluationDetail()).isEqualTo("reason=PROVIDER_CONTENT_BLOCKED")
+                .doesNotContain(SECRET_PAYLOAD);
     }
 
     @Test
@@ -142,7 +155,8 @@ class VertexArchitectureFactsExtractorTest {
     }
 
     private VertexArchitectureFactsExtractor.VertexFactsResponse response(String text) {
-        return new VertexArchitectureFactsExtractor.VertexFactsResponse(text, false);
+        return new VertexArchitectureFactsExtractor.VertexFactsResponse(
+                text, FinishReason.Known.FINISH_REASON_UNSPECIFIED);
     }
 
     private ArchitectureFactsExtractionException failure(VertexArchitectureFactsExtractor extractor) {

@@ -7,6 +7,7 @@ import com.terraformers.modernization.analysis.AnalysisGenerationResponseFormatE
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisMode;
 import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
 import com.terraformers.modernization.analysis.TerraformDraftValidation;
@@ -565,7 +566,18 @@ public class EvaluationRunner {
         return new EvaluationFailure(stage, category, detail);
     }
 
-    private EvaluationFailureCategory generationFailureCategory(RuntimeException exception) {
+    EvaluationFailureCategory generationFailureCategory(RuntimeException exception) {
+        if (exception instanceof AnalysisProviderFailureException providerFailure) {
+            return switch (providerFailure.reason()) {
+                case OUTPUT_TRUNCATED -> EvaluationFailureCategory.OUTPUT_TRUNCATED;
+                case CONTENT_BLOCKED -> EvaluationFailureCategory.PROVIDER_CONTENT_BLOCKED;
+                case EMPTY_RESPONSE -> EvaluationFailureCategory.PROVIDER_EMPTY_RESPONSE;
+                case RATE_LIMITED -> EvaluationFailureCategory.PROVIDER_RATE_LIMITED;
+                case PROVIDER_ERROR -> EvaluationFailureCategory.PROVIDER_ERROR;
+                case RESPONSE_FORMAT -> EvaluationFailureCategory.RESPONSE_FORMAT;
+                case INPUT_REJECTED -> EvaluationFailureCategory.INPUT_CLASSIFICATION;
+            };
+        }
         if (exception instanceof AnalysisGenerationOutputTruncatedException) {
             return EvaluationFailureCategory.OUTPUT_TRUNCATED;
         }
@@ -578,12 +590,17 @@ public class EvaluationRunner {
         return EvaluationFailureCategory.PROVIDER_RUNTIME;
     }
 
-    private EvaluationFailureCategory factExtractionFailureCategory(RuntimeException exception) {
+    EvaluationFailureCategory factExtractionFailureCategory(RuntimeException exception) {
         if (exception instanceof ArchitectureFactsExtractionException factsFailure) {
             return switch (factsFailure.reason()) {
                 case PROVIDER_RUNTIME -> EvaluationFailureCategory.PROVIDER_RUNTIME;
+                case PROVIDER_CONTENT_BLOCKED -> EvaluationFailureCategory.PROVIDER_CONTENT_BLOCKED;
+                case PROVIDER_TIMEOUT -> EvaluationFailureCategory.PROVIDER_TIMEOUT;
+                case PROVIDER_RATE_LIMITED -> EvaluationFailureCategory.PROVIDER_RATE_LIMITED;
+                case PROVIDER_ERROR -> EvaluationFailureCategory.PROVIDER_ERROR;
                 case RESPONSE_TRUNCATED -> EvaluationFailureCategory.OUTPUT_TRUNCATED;
-                case EMPTY_RESPONSE, INVALID_RESPONSE, EMPTY_FACTS -> EvaluationFailureCategory.RESPONSE_FORMAT;
+                case EMPTY_RESPONSE -> EvaluationFailureCategory.PROVIDER_EMPTY_RESPONSE;
+                case INVALID_RESPONSE, EMPTY_FACTS -> EvaluationFailureCategory.RESPONSE_FORMAT;
             };
         }
         return EvaluationFailureCategory.PROVIDER_RUNTIME;

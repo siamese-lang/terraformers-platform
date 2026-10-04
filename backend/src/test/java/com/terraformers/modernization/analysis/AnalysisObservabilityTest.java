@@ -1,14 +1,13 @@
 package com.terraformers.modernization.analysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
+import com.terraformers.modernization.reference.ArchitectureFactsExtractionException;
 
 class AnalysisObservabilityTest {
     @Test
@@ -39,12 +38,10 @@ class AnalysisObservabilityTest {
 
 
     @Test
-    void classifiesGoogleProvider429AcrossCauseChainAndPublishesExistingMetricTags() {
+    void classifiesProviderNeutralPartialFailuresWithStableMetricTags() {
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         AnalysisObservability observability = new AnalysisObservability(registry);
-        com.google.genai.errors.ClientException rateLimited = mock(com.google.genai.errors.ClientException.class);
-        when(rateLimited.code()).thenReturn(429);
-        RuntimeException wrapped = new IllegalStateException("bounded wrapper", rateLimited);
+        AnalysisProviderFailureException wrapped = providerFailure(AnalysisProviderFailureReason.RATE_LIMITED);
 
         assertThat(observability.category(wrapped)).isEqualTo("provider_rate_limited");
         observability.jobFailed(wrapped);
@@ -54,7 +51,7 @@ class AnalysisObservabilityTest {
             observability.recordStage(AnalysisTelemetryStage.ANALYSIS_EXECUTION, () -> {
                 throw wrapped;
             });
-        } catch (IllegalStateException ignored) {
+        } catch (AnalysisProviderFailureException ignored) {
         }
         assertThat(registry.find("terraformers.analysis.stage.failures")
                 .tag("stage", AnalysisTelemetryStage.ANALYSIS_EXECUTION.tag())
@@ -62,13 +59,15 @@ class AnalysisObservabilityTest {
     }
 
     @Test
-    void doesNotClassifyNon429ProviderRuntimeAsRateLimited() {
+    void classifiesAllNewProviderNeutralReasons() {
         AnalysisObservability observability = new AnalysisObservability(
                 new PrometheusMeterRegistry(PrometheusConfig.DEFAULT));
-        com.google.genai.errors.ClientException unavailable = mock(com.google.genai.errors.ClientException.class);
-        when(unavailable.code()).thenReturn(503);
-
-        assertThat(observability.category(new RuntimeException(unavailable))).isEqualTo("other");
+        assertThat(observability.category(providerFailure(AnalysisProviderFailureReason.CONTENT_BLOCKED)))
+                .isEqualTo("provider_content_blocked");
+        assertThat(observability.category(providerFailure(AnalysisProviderFailureReason.EMPTY_RESPONSE)))
+                .isEqualTo("provider_empty_response");
+        assertThat(observability.category(providerFailure(AnalysisProviderFailureReason.PROVIDER_ERROR)))
+                .isEqualTo("provider_error");
     }
 
     @Test

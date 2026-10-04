@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 IMPLEMENTED / AWAITING REVIEW — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 NOT STARTED — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -16,8 +16,8 @@ The architecture decision is frozen in
 ADR-008 — Evidence-backed AI quality for Terraformers.
 
 Extension direction is governed by
-`.agents/work-packages/case-a-semantic-reliability-v1.yml`; the active A7-1 execution unit is
-`.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml`.
+`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 and A7-2 have completed in their
+bounded execution Work Packages; no A7-3 execution Work Package is active yet.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
 
@@ -42,8 +42,9 @@ A7-1 was explicitly approved on 2026-10-04, implemented on execution base
 `2efa4dcc1425feafac896a069315416949fa7ab5`, and merged as
 `f9009ce8f9a744afee848b8e196b57de5860c78f`. The deterministic
 `evidence-quality-v1` contract passed Backend Local Verification run `37188607802`.
-AnalysisJob persistence/API exposure remains deferred to A7-4. A7-2 is implemented and awaits
-review and the ordinary user merge checkpoint.
+AnalysisJob persistence/API exposure remains deferred to A7-4. A7-2 closed after PR #205 merged as
+`9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`; Backend Local Verification run `37191939296`
+passed. A7-3 is not started and requires separate user approval.
 
 ## 1. Why this extension exists
 
@@ -395,8 +396,11 @@ Required:
 
 ### A7-2 — False-green measurement and calibration
 
-A7-2 was explicitly approved on 2026-10-04 and is implemented awaiting review. Execution is isolated in
-`.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml`.
+A7-2 was explicitly approved on 2026-10-04 and is complete. Its execution was isolated in
+`.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml`; PR #205 merged as
+`9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`. The accepted implementation preserves the existing
+retrieval-grounding report, adds `case-a-quality-calibration-v1`, and computes false green only from
+frozen labeled truth. A7-1 runtime quality remains a comparison signal rather than ground truth.
 
 The selected implementation boundary is repository-only: preserve the existing Case A grounding
 report unchanged and add a parallel versioned calibration report that computes deterministic

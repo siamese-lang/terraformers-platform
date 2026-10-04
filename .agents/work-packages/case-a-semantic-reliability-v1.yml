@@ -1,6 +1,6 @@
 work_package:
   id: case-a-semantic-reliability-v1
-  status: A7_0_COMPLETE_HANDOFF_TO_A7_1_WORK_PACKAGE
+  status: A7_1_COMPLETE_A7_2_AWAITING_USER_APPROVAL
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: dd34d1cec34d31783ca2d672c65311ce82fd2666
 
@@ -11,12 +11,14 @@ work_package:
       that historical execution base. A7-1 therefore uses its own bounded Work Package.
     next_work_package: .agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml
     user_approval: 2026-10-04
-    A7_1_implementation_started: false
+    A7_1_implementation_started: true
+    A7_1_status: COMPLETE
+    A7_1_merge_sha: f9009ce8f9a744afee848b8e196b57de5860c78f
 
   phase_gate:
-    completed_phase: A7_0
-    closure_evidence: docs/evaluation/case-a-a7-0-authoritative-knowledge-coverage.md
-    next_phase: A7_1
+    completed_phase: A7_1
+    closure_evidence: docs/evaluation/case-a-a7-1-evidence-quality-contract.md
+    next_phase: A7_2
     next_phase_status: NOT_STARTED
     next_phase_requires_explicit_user_approval: true
     measured_provider_schema_resource_count: 1526

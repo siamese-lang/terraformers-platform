@@ -76,7 +76,7 @@ public final class CaseAQualityCalibrationScorer {
                 : trace.validation().evidence().applicationValidator().valid();
         return switch (expected) {
             case PASS -> trace.validation().status() == EvaluationStageStatus.PASS && Boolean.TRUE.equals(valid);
-            case FAIL -> trace.validation().status() == EvaluationStageStatus.PASS && Boolean.FALSE.equals(valid);
+            case FAIL -> trace.validation().status() == EvaluationStageStatus.FAIL && Boolean.FALSE.equals(valid);
             case NOT_APPLICABLE -> trace.validation().status() == EvaluationStageStatus.NOT_RUN;
         };
     }

@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-5-safe-executable-diagnostics-v1
-  status: IMPLEMENTED_AWAITING_REVIEW
+  status: COMPLETE
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: acc8debe415d6e0211bcf50aec28592a260e01b4
 
@@ -302,6 +302,28 @@ work_package:
     - workflow_change_is_required
     - live_or_cost_action_is_requested
     - acceptance_criteria_would_need_to_change
+
+  implementation_evidence:
+    feature_implementation_pr: 216
+    feature_merge_sha: 0ce33a2302cfda87bcbf505d67b71257958a2b80
+    main_validation_pr: 217
+    implementation_merge_sha: c5840c05c60ec78dc3a8c698453424b587014814
+    backend_local_verification:
+      run_id: 37215839871
+      conclusion: success
+      flyway_migration_uniqueness: success
+      maven_clean_tests: success
+      application_package: success
+      mariadb_schema_and_repository_validation: success
+    terraform_static_verification:
+      run_id: 37215839970
+      conclusion: success
+      scope_and_policy_checks: success
+      terraform_static_job: skipped_no_terraform_path_changes
+    independent_acceptance: PASS
+    live_C2_rerun_performed: false
+    live_provider_GCP_OpenSearch_action_performed: false
+    A7_6_status: NOT_STARTED
 
   completion:
     merge_requires_user_approval: true

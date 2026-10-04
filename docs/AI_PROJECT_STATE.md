@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 IMPLEMENTED — AWAITING REVIEW**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Review the implemented A7-2 false-green calibration. Stop before A7-3.**
+- Current single task: **A7-2 is closed at merge SHA `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`. A7-3 Provider Partial Failures is NOT STARTED and requires separate user approval before activation.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 IMPLEMENTED / AWAITING REVIEW**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 AWAITING USER APPROVAL**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -57,7 +57,14 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   run `37188607802` passed `mvn clean test`, package, MariaDB Flyway/Hibernate validation, and
   canonical repository smoke queries. Terraform Static Verification run `37188607799` completed
   successfully at scope level; its terraform/RAG job was skipped because PR #202 changed no
-  terraform/RAG paths. A7-2 is implemented as a deterministic offline calibration report.
+  terraform/RAG paths.
+- A7-2 closure evidence: `docs/evaluation/case-a-a7-2-false-green-calibration.md`.
+  PR #205 merged as `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`; Backend Local Verification
+  run `37191939296` passed `mvn clean test`, package, MariaDB Flyway/Hibernate validation, and
+  canonical repository smoke queries. Terraform Static Verification run `37191939292` completed
+  successfully at scope level; its terraform/RAG job was skipped because PR #205 changed no
+  terraform/RAG paths. Frozen canonical/holdout datasets were unchanged and no live AI/cloud
+  execution was used. A7-3 has not started.
 - No evaluator LLM or multi-model voting is part of the default design.
 - Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
   validation PASS while required grounding was incomplete.
@@ -558,9 +565,12 @@ PR #202 merged as `f9009ce8f9a744afee848b8e196b57de5860c78f`.
 The original Case A retrieval-grounding/generalization closure remains retained; this extension does
 not invalidate it. Case B and Case C portfolio closures also remain retained.
 
-A7-2 — False-green Measurement and Offline Calibration — is **IMPLEMENTED / AWAITING REVIEW**.
-Its bounded execution contract is `.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml`.
-The implementation used its once-bound execution base and now awaits review and the user merge checkpoint.
+A7-2 — False-green Measurement and Offline Calibration — is **COMPLETE**. Closure evidence is
+recorded in [Case A A7-2 — False-green Measurement and Offline Calibration](evaluation/case-a-a7-2-false-green-calibration.md).
+PR #205 merged as `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`.
+
+A7-3 — Provider Partial Failures — is **NOT STARTED**. No A7-3 Work Package exists yet. Starting
+A7-3 requires separate user approval and a newly bounded execution contract.
 
 Do not start A7-3 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
 v4 corpus into a live vector store, or introduce an evaluator LLM / multi-model voting / new

@@ -2534,6 +2534,15 @@ jobs:
             kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
           fi
 
+      - name: Upload bounded A7-7 live-proof evidence
+        if: ${{ always() && inputs.operation == 'a7-7-broad-v4-live-proof' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: case-a-a7-7-live-proof-${{ github.run_id }}
+          path: ${{ runner.temp }}/a7-7-live-proof
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Upload sanitized C2 stability evidence
         if: ${{ always() && inputs.operation == 'backend-live-validation-c2-stability' }}
         uses: actions/upload-artifact@v5

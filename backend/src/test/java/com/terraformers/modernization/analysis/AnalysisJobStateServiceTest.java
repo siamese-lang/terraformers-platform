@@ -97,7 +97,10 @@ class AnalysisJobStateServiceTest {
         String key = "analysis-results/1/" + id + "/main.tf";
         assertThat(stateService.recordResultObjectIntentOwned(id, 1, NOW, "bucket", key)).isTrue();
         var reference = new com.terraformers.modernization.storage.ObjectReference("bucket", key);
-        var result = new AnalysisResult("stub", "resource {}", "summary", List.of(), List.of(), List.of(), List.of());
+        var quality = quality(EvidenceQualityAssessment.QualityStatus.DEGRADED,
+                EvidenceQualityAssessment.Reason.REQUIRED_EVIDENCE_NOT_RETRIEVED);
+        var result = new AnalysisResult("stub", "resource {}", "summary", List.of(), List.of(), List.of(),
+                List.of(), quality);
         var writeResult = new com.terraformers.modernization.storage.ObjectWriteResult(
                 "metadata-only", false, "bucket", key, null);
         var resultFile = org.mockito.Mockito.mock(
@@ -121,6 +124,25 @@ class AnalysisJobStateServiceTest {
         assertThat(succeeded.getResultObjectKey()).isEqualTo(key);
         assertThat(succeeded.getResultCleanupStatus()).isEqualTo(AnalysisResultCleanupStatus.NOT_REQUIRED);
         assertThat(succeeded.getLeaseExpiresAt()).isNull();
+        assertThat(succeeded.getQualityContractVersion()).isEqualTo("evidence-quality-v1");
+        assertThat(succeeded.getTechnicalStatus()).isEqualTo(EvidenceQualityAssessment.TechnicalStatus.PASS);
+        assertThat(succeeded.getQualityStatus()).isEqualTo(EvidenceQualityAssessment.QualityStatus.DEGRADED);
+        assertThat(succeeded.qualityReasonValues())
+                .containsExactly(EvidenceQualityAssessment.Reason.REQUIRED_EVIDENCE_NOT_RETRIEVED);
+    }
+
+    @Test
+    void staleGenerationCannotMutateTerminalQualityAndRetryHasNoSnapshot() {
+        String id = saveCommitted(pendingJob());
+        assertThat(stateService.claimEligible(id, NOW, NOW.plusSeconds(10))).isPresent();
+        assertThat(stateService.claimEligible(id, NOW.plusSeconds(10), NOW.plusSeconds(70))).isPresent();
+        var blocked = quality(EvidenceQualityAssessment.QualityStatus.UNKNOWN,
+                EvidenceQualityAssessment.Reason.PROVIDER_CONTENT_BLOCKED);
+
+        assertThat(stateService.markFailedOwned(id, 1, NOW.plusSeconds(11), "stale", blocked)).isFalse();
+        assertThat(repository.findById(id).orElseThrow().getQualityContractVersion()).isNull();
+        assertThat(stateService.scheduleRetryOwned(id, 2, NOW.plusSeconds(11), NOW.plusSeconds(20))).isTrue();
+        assertThat(repository.findById(id).orElseThrow().getQualityContractVersion()).isNull();
     }
 
     @Test
@@ -155,5 +177,15 @@ class AnalysisJobStateServiceTest {
         String id = repository.saveAndFlush(job).getId();
         committedJobIds.add(id);
         return id;
+    }
+
+    private EvidenceQualityAssessment quality(EvidenceQualityAssessment.QualityStatus status,
+            EvidenceQualityAssessment.Reason reason) {
+        return new EvidenceQualityAssessment(EvidenceQualityAssessment.CONTRACT_VERSION,
+                EvidenceQualityAssessment.TechnicalStatus.PASS,
+                EvidenceQualityAssessment.KnowledgeStatus.COMPLETE, status,
+                EvidenceQualityAssessment.ProjectDecisionStatus.UNKNOWN,
+                EvidenceQualityAssessment.RuntimeQualityBoundary.CONDITIONAL_ON_EXTRACTED_FACTS,
+                List.of(reason), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
     }
 }

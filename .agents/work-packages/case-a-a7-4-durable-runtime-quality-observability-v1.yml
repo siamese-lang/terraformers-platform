@@ -1,8 +1,8 @@
 work_package:
   id: case-a-a7-4-durable-runtime-quality-observability-v1
-  status: APPROVED_AWAITING_ACTIVATION
+  status: IMPLEMENTED_AWAITING_REVIEW
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: 9beec226a1cc5c314d6e6f27a62e6b63f20abab1
 
   activation:
     bind_rule: >
@@ -81,6 +81,42 @@ work_package:
       sensitive_data_control: bounded_enums_only_no_raw_prompt_image_HCL_or_provider_payload
       portfolio_value: directly_explains_why_pipeline_success_is_not_equivalent_to_trusted_output
 
+  preflight_evidence:
+    A7_0_official_knowledge_gap_set:
+      status: VERIFIED
+      verification_method: >
+        Independently reproduced from pinned terraform-provider-aws commit
+        f7a3b98da589ab1d52756b0dcee0dbf2de83d635 by enumerating all 256 generated
+        internal/service/*/service_package_gen.go files, extracting managed-resource TypeName values
+        only from FrameworkResources() and SDKResources(), and comparing the resulting 1,526-resource
+        set with website/docs/r/*.html.markdown from the same commit.
+      provider_source_commit: f7a3b98da589ab1d52756b0dcee0dbf2de83d635
+      internal_service_tree_sha: 08ac3f85622b439f826da9b5677414f0f0b86fda
+      official_resource_docs_tree_sha: fda313b7ec2d69be5077056340ba25d6dc763b0d
+      generated_service_package_file_count: 256
+      provider_schema_resource_count_reproduced: 1526
+      official_documented_schema_resource_count_reproduced: 1514
+      missing_official_document_resource_count_reproduced: 12
+      missing_official_document_resource_types:
+        - aws_account_region
+        - aws_api_gateway_rest_api_put
+        - aws_ec2_image_block_public_access
+        - aws_alb
+        - aws_alb_listener
+        - aws_alb_listener_certificate
+        - aws_alb_listener_rule
+        - aws_alb_target_group
+        - aws_alb_target_group_attachment
+        - aws_pinpoint_email_template
+        - aws_rds_custom_db_engine_version
+        - aws_securityhub_configuration_policy_association
+      evidence_document: docs/evaluation/case-a-a7-4-durable-runtime-quality-observability.md
+      implication: >
+        The A7_0_KNOWLEDGE_GAP_MANIFEST_UNVERIFIED stop condition is resolved for this frozen lineage.
+        A7-4 implementation may package these exact 12 gaps as compact runtime coverage metadata,
+        preserving the recorded provenance and counts without inferring knowledge availability from
+        retrieval hits.
+
   selected_contract:
     source_contract:
       quality_contract: EvidenceQualityAssessment
@@ -147,6 +183,53 @@ work_package:
 
     official_knowledge_coverage:
       authority: A7_0_pinned_AWS_provider_5_100_0_measurement
+      preflight_verification: VERIFIED
+      verification_method: >
+        Independently read the pinned terraform-provider-aws source commit
+        f7a3b98da589ab1d52756b0dcee0dbf2de83d635 through GitHub's repository API.
+        The pinned resource-doc tree contains 1520 Markdown files: 1514 use the exact
+        .html.markdown path accepted by the A7-0 compiler and 6 use legacy .markdown names.
+        The generated managed-resource registries confirm those 6 are schema resources and
+        also expose 6 aws_alb compatibility resource aliases with no matching
+        .html.markdown file. A7-0 had already measured the schema/document intersection as
+        1514 of 1526, so these 12 distinct managed resource names exhaust the exact gap set.
+      verified_missing_official_document_resource_types:
+        - aws_account_region
+        - aws_api_gateway_rest_api_put
+        - aws_ec2_image_block_public_access
+        - aws_pinpoint_email_template
+        - aws_rds_custom_db_engine_version
+        - aws_securityhub_configuration_policy_association
+        - aws_alb
+        - aws_alb_listener
+        - aws_alb_listener_certificate
+        - aws_alb_listener_rule
+        - aws_alb_target_group
+        - aws_alb_target_group_attachment
+      preflight_recovery:
+        status: VERIFIED
+        evidence: docs/evaluation/case-a-a7-4-durable-runtime-quality-observability.md
+        provider_source_commit: f7a3b98da589ab1d52756b0dcee0dbf2de83d635
+        provider_commit_tree: 5a6a39a237cfdb28cf9f4fdb4a6e00fdf1affe36
+        provider_internal_service_tree: 08ac3f85622b439f826da9b5677414f0f0b86fda
+        provider_official_resource_docs_tree: fda313b7ec2d69be5077056340ba25d6dc763b0d
+        generated_service_package_registry_count: 256
+        verified_managed_resource_count: 1526
+        verified_official_documented_managed_resource_count: 1514
+        verified_missing_official_document_count: 12
+        exact_missing_official_document_resource_types:
+          - aws_account_region
+          - aws_alb
+          - aws_alb_listener
+          - aws_alb_listener_certificate
+          - aws_alb_listener_rule
+          - aws_alb_target_group
+          - aws_alb_target_group_attachment
+          - aws_api_gateway_rest_api_put
+          - aws_ec2_image_block_public_access
+          - aws_pinpoint_email_template
+          - aws_rds_custom_db_engine_version
+          - aws_securityhub_configuration_policy_association
       provider_schema_resource_count: 1526
       official_documented_schema_resource_count: 1514
       schema_resources_without_official_document_count: 12

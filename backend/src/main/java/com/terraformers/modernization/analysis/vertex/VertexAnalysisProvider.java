@@ -9,6 +9,9 @@ import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
+import com.terraformers.modernization.analysis.EvidenceQualityAssessment;
+import com.terraformers.modernization.analysis.EvidenceQualityAssessor;
+import com.terraformers.modernization.analysis.EvidenceQualityAssessor.ProjectDecisionApplicability;
 import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
@@ -16,6 +19,7 @@ import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceQuery;
 import com.terraformers.modernization.reference.ReferenceRetriever;
+import com.terraformers.modernization.reference.OfficialKnowledgeCoverageCatalog;
 import com.terraformers.modernization.reference.RetrievalMode;
 import com.terraformers.modernization.reference.RetrievalQueryTextBuilder;
 import com.terraformers.modernization.reference.VertexArchitectureFactsExtractor;
@@ -30,6 +34,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -48,7 +53,10 @@ public class VertexAnalysisProvider implements AnalysisProvider {
     private final VertexGenerationStage generationStage;
     private final AwsProviderSchemaCatalog schemaCatalog;
     private final GeneratedTerraformContractInspector contractInspector;
+    private final EvidenceQualityAssessor qualityAssessor;
+    private final OfficialKnowledgeCoverageCatalog knowledgeCoverage;
 
+    @Autowired
     public VertexAnalysisProvider(
             ObjectReader objectReader,
             ReferenceRetriever referenceRetriever,
@@ -57,7 +65,9 @@ public class VertexAnalysisProvider implements AnalysisProvider {
             RetrievalQueryTextBuilder queryTextBuilder,
             VertexGenerationStage generationStage,
             AwsProviderSchemaCatalog schemaCatalog,
-            GeneratedTerraformContractInspector contractInspector
+            GeneratedTerraformContractInspector contractInspector,
+            EvidenceQualityAssessor qualityAssessor,
+            OfficialKnowledgeCoverageCatalog knowledgeCoverage
     ) {
         this.objectReader = objectReader;
         this.referenceRetriever = referenceRetriever;
@@ -67,6 +77,16 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         this.generationStage = generationStage;
         this.schemaCatalog = schemaCatalog;
         this.contractInspector = contractInspector;
+        this.qualityAssessor = qualityAssessor;
+        this.knowledgeCoverage = knowledgeCoverage;
+    }
+
+    public VertexAnalysisProvider(ObjectReader objectReader, ReferenceRetriever referenceRetriever,
+            AnalysisRuntimeProperties properties, VertexArchitectureFactsExtractor factsExtractor,
+            RetrievalQueryTextBuilder queryTextBuilder, VertexGenerationStage generationStage,
+            AwsProviderSchemaCatalog schemaCatalog, GeneratedTerraformContractInspector contractInspector) {
+        this(objectReader, referenceRetriever, properties, factsExtractor, queryTextBuilder, generationStage,
+                schemaCatalog, contractInspector, null, null);
     }
 
     @Override
@@ -99,6 +119,7 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         RequiredGroundingPolicy.requireForArchitecture(
                 properties.getRetrievalMode(), generated, references);
         contractInspector.inspect(generated.terraformCode());
+        EvidenceQualityAssessment quality = assess(retrieval, generated.terraformCode());
         return new AnalysisResult(
                 generated.provider(),
                 generated.terraformCode(),
@@ -106,8 +127,19 @@ public class VertexAnalysisProvider implements AnalysisProvider {
                 generated.components(),
                 generated.relationships(),
                 generated.warnings(),
-                references.stream().map(ReferenceDocument::id).toList()
+                references.stream().map(ReferenceDocument::id).toList(),
+                quality
         );
+    }
+
+    private EvidenceQualityAssessment assess(RetrievalOutcome retrieval, String terraform) {
+        if (qualityAssessor == null || knowledgeCoverage == null) return null;
+        List<String> resources = retrieval.facts().resourceTypes();
+        return qualityAssessor.assess(new EvidenceQualityAssessor.Input(
+                EvidenceQualityAssessment.TechnicalStatus.PASS,
+                com.terraformers.modernization.analysis.AnalysisInputClassification.ARCHITECTURE_DIAGRAM,
+                resources, knowledgeCoverage.availableFor(resources, schemaCatalog), retrieval.references(),
+                terraform, ProjectDecisionApplicability.UNKNOWN, List.of()));
     }
 
     private Set<String> promptSchemaCandidates(

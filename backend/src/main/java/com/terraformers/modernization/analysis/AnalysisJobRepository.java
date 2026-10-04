@@ -103,12 +103,32 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
     @Query("""
             update AnalysisJobEntity job
                set job.status = :failed, job.failureReason = :failureReason,
+                   job.qualityContractVersion = :qualityContractVersion,
+                   job.technicalStatus = :technicalStatus,
+                   job.knowledgeStatus = :knowledgeStatus,
+                   job.qualityStatus = :qualityStatus,
+                   job.projectDecisionStatus = :projectDecisionStatus,
+                   job.runtimeQualityBoundary = :runtimeQualityBoundary,
+                   job.qualityReasons = :qualityReasons,
                    job.leaseExpiresAt = null, job.nextAttemptAt = null, job.updatedAt = :now
              where job.id = :jobId and job.status = :running
                and job.claimGeneration = :generation and job.leaseExpiresAt > :now
             """)
     int markFailedOwned(String jobId, AnalysisJobStatus running, AnalysisJobStatus failed,
-            long generation, Instant now, String failureReason);
+            long generation, Instant now, String failureReason, String qualityContractVersion,
+            EvidenceQualityAssessment.TechnicalStatus technicalStatus,
+            EvidenceQualityAssessment.KnowledgeStatus knowledgeStatus,
+            EvidenceQualityAssessment.QualityStatus qualityStatus,
+            EvidenceQualityAssessment.ProjectDecisionStatus projectDecisionStatus,
+            EvidenceQualityAssessment.RuntimeQualityBoundary runtimeQualityBoundary, String qualityReasons);
+
+    default int markFailedOwned(String jobId, AnalysisJobStatus running, AnalysisJobStatus failed,
+            long generation, Instant now, String failureReason) {
+        EvidenceQualityAssessment quality = TerminalQualityAssessmentMapper.failure(new IllegalStateException());
+        return markFailedOwned(jobId, running, failed, generation, now, failureReason,
+                quality.contractVersion(), quality.technicalStatus(), quality.knowledgeStatus(),
+                quality.qualityStatus(), quality.projectDecisionStatus(), quality.runtimeQualityBoundary(), "");
+    }
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""

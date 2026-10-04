@@ -15,8 +15,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Lazy;
 
 /** Deterministic A7-1 evidence-quality-v1 decision engine. No model call is involved. */
+@Component
+@Lazy
 public final class EvidenceQualityAssessor {
 
     private static final Set<String> OFFICIAL_EVIDENCE_DOCUMENT_TYPES =

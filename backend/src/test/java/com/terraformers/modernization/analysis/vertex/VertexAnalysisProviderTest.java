@@ -19,10 +19,12 @@ import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
+import com.terraformers.modernization.analysis.EvidenceQualityAssessor;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
 import com.terraformers.modernization.reference.ReferenceDocument;
+import com.terraformers.modernization.reference.OfficialKnowledgeCoverageCatalog;
 import com.terraformers.modernization.reference.ReferenceQuery;
 import com.terraformers.modernization.reference.ReferenceRetriever;
 import com.terraformers.modernization.reference.RetrievalMode;
@@ -229,6 +231,18 @@ class VertexAnalysisProviderTest {
         verify(inspector).inspect(generated.terraformCode());
     }
 
+    @Test
+    void successfulArchitectureResultCarriesEvidenceQualityAssessment() {
+        VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
+        when(generationStage.generate(any(), any(), any(), any())).thenReturn(safeGeneration());
+
+        var result = provider(query -> List.of(reference()), generationStage).analyze(context());
+
+        assertThat(result.qualityAssessment()).isNotNull();
+        assertThat(result.qualityAssessment().technicalStatus())
+                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.TechnicalStatus.PASS);
+    }
+
     private VertexAnalysisProvider provider(
             ReferenceRetriever retriever,
             VertexGenerationStage generationStage
@@ -247,6 +261,8 @@ class VertexAnalysisProviderTest {
         VertexArchitectureFactsExtractor factsExtractor = mock(VertexArchitectureFactsExtractor.class);
         when(factsExtractor.extract(any())).thenReturn(new ArchitectureRetrievalFacts(
                 "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
+        AwsProviderSchemaCatalog catalog = catalogWith(List.of("aws_vpc"), new AwsProviderSchemaEvidence(Map.of(
+                "aws_vpc", "cidr_block(optional)")));
         return new VertexAnalysisProvider(
                 objectReader,
                 retriever,
@@ -254,10 +270,17 @@ class VertexAnalysisProviderTest {
                 factsExtractor,
                 new RetrievalQueryTextBuilder(),
                 generationStage,
-                catalogWith(List.of("aws_vpc"), new AwsProviderSchemaEvidence(Map.of(
-                        "aws_vpc", "cidr_block(optional)"))),
-                inspector
+                catalog,
+                inspector,
+                new EvidenceQualityAssessor(catalog, new GeneratedTerraformContractInspector(catalog)),
+                availableCoverage()
         );
+    }
+
+    private OfficialKnowledgeCoverageCatalog availableCoverage() {
+        OfficialKnowledgeCoverageCatalog coverage = mock(OfficialKnowledgeCoverageCatalog.class);
+        when(coverage.availableFor(any(), any())).thenReturn(java.util.Set.of("aws_vpc"));
+        return coverage;
     }
 
     private AwsProviderSchemaCatalog catalogWith(

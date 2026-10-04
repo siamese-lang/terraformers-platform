@@ -51,3 +51,24 @@ existing bounded truncation retry is preserved.
 A7-3 adds no database migration, `AnalysisJob` field, API field, evaluation artifact mutation, or
 durable quality state. Durable runtime quality persistence remains deferred to separately approved
 A7-4 work.
+
+
+## Independent review correction
+
+The independent PR review found and corrected several gaps before CI acceptance:
+
+- the pre-A7-3 Bedrock provider regression test still expected a raw `IllegalStateException`;
+  it now expects the intended provider-neutral `PROVIDER_ERROR` wrapper and explicitly covers
+  Bedrock throttling as `RATE_LIMITED`;
+- Vertex generation now exposes package-bounded deterministic mapping helpers so tests cover
+  provider 429, timeout, generic provider error, explicit content block, truncation, abnormal
+  non-blocking finish reason, and empty successful output without a live provider call;
+- Vertex fact extraction rejects abnormal non-blocking finish reasons as invalid response rather
+  than accepting otherwise valid-looking JSON, and tests explicit rate-limit/timeout mappings;
+- Bedrock fact extraction treats a blank successful response body as `EMPTY_RESPONSE` and tests
+  timeout separately;
+- raw provider throttling observed inside the existing Bedrock external-call metric path maps to
+  the same low-cardinality `provider_rate_limited` category used after adapter wrapping.
+
+These corrections do not change retry ownership, prompt/model/retrieval behavior, provider safety
+controls, persistence, API shape, or any A7-4 boundary.

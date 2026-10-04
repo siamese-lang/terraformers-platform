@@ -88,7 +88,7 @@ The authoritative original closure remains
 The new extension is
 [Evidence-backed AI Quality and Semantic Reliability](case-a-semantic-reliability-extension.md),
 with architecture frozen by
-[ADR-008](../architecture/decisions/ADR-008-evidence-backed-ai-quality.md).
+[ADR-008](../../architecture/decisions/ADR-008-evidence-backed-ai-quality.md).
 
 The extension uses the historical grounding gap as the false-green before-state and adds a
 provider-schema + official-RAG + project-decision authority model. It explicitly treats the current

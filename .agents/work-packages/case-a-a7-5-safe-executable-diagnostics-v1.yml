@@ -1,0 +1,310 @@
+work_package:
+  id: case-a-a7-5-safe-executable-diagnostics-v1
+  status: APPROVED_AWAITING_ACTIVATION
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  activation:
+    bind_rule: >
+      This Work Package must first be merged to main. Immediately before the first A7-5
+      implementation write, read authoritative remote main exactly once, bind that SHA to
+      execution_base_sha on the implementation branch, and do not refresh or rebase afterward.
+    first_implementation_write_must_bind_execution_base: true
+
+  prior_phase:
+    id: A7_4
+    status: COMPLETE
+    implementation_merge_sha: ab1b1f410b6aabf674af51d6161a2efd0f6df6a4
+    closure_merge_sha: 6da7ee1feebcf85ac6e6638ed3a2283e6557a391
+    evidence: docs/evaluation/case-a-a7-4-durable-runtime-quality-observability.md
+
+  user_approval:
+    approved_on: 2026-10-05
+    scope: A7_5_ONLY
+    approval_interpretation: >
+      The user's "다음 진행" immediately after A7-4 closure is the repository-contract
+      immediate-next-single-task approval for A7-5 activation only. It does not authorize A7-6,
+      live GCP/provider execution, merge, or any cost-bearing action.
+
+  decision_gate:
+    engineering_axis:
+      - backend AI-service reliability
+      - observability based on real failure diagnosis
+      - AI output executable-correctness evidence
+    representative_case: Case A extension — Evidence-backed AI Quality and Semantic Reliability
+
+    operating_scenario: >
+      When generated Terraform fails the final executable validation boundary, operators must be able
+      to tell what bounded class of Terraform configuration error occurred without retaining the
+      failed HCL or arbitrary Terraform CLI text. A recurrence of the C2 validate failure should
+      provide enough safe evidence to distinguish common configuration-error mechanics.
+
+    observed_problem: >
+      C2 run 37016993776 used one frozen source/image/fixture/runtime identity. Attempt 1 passed the
+      complete integrated path, while attempt 2 failed with terminal category
+      terraform_validate_configuration. TerraformCliValidator already receives structured
+      terraform validate -json output, including valid/error_count/warning_count/diagnostics, but
+      currently reduces every invalid configuration to one coarse VALIDATE_CONFIGURATION reason and
+      discards the structured diagnostic distinctions.
+
+    impact: >
+      The current behavior is safe but too coarse for root-cause analysis. After the failed draft is
+      discarded, retained evidence cannot distinguish missing required arguments, unsupported
+      arguments/blocks, undeclared references, invalid function/value/type errors, syntax/configuration
+      failures, or an unknown Terraform diagnostic. Re-running live AI until a more convenient failure
+      appears would weaken the evidence rather than solve the diagnostic gap.
+
+    root_mechanism: >
+      The executable validator parses Terraform's JSON envelope only far enough to read the top-level
+      valid boolean. It does not reduce diagnostics into a bounded application-owned representation
+      before the temporary workspace and captured CLI output are deleted.
+
+    alternatives:
+      - id: KEEP_COARSE_VALIDATE_CONFIGURATION
+        decision: REJECT
+        reason: >
+          Preserves safety but leaves the exact observed C2 diagnostic gap unresolved and provides no
+          additional root-cause evidence.
+      - id: PERSIST_RAW_HCL_OR_TERRAFORM_DIAGNOSTIC_TEXT
+        decision: REJECT
+        reason: >
+          Raw generated HCL, summary/detail/snippet text, source ranges, and arbitrary CLI output can
+          contain user/generated values and create unnecessary sensitive-data and cardinality surface.
+      - id: BOUNDED_STRUCTURED_DIAGNOSTIC_REDUCTION
+        decision: SELECTED
+        reason: >
+          Consume Terraform validate -json diagnostics in memory, map only observed/tested diagnostic
+          shapes into a finite Terraformers-owned taxonomy with an UNKNOWN fallback, retain bounded
+          error/warning counts, and discard the raw diagnostic payload with the temporary workspace.
+          Preserve the existing top-level VALIDATE_CONFIGURATION contract so historical failure
+          semantics and downstream category matching are not rewritten.
+
+    decision_criteria:
+      correctness_and_durability: preserves_existing_executable_validation_and_fail_closed_behavior
+      failure_semantics: adds_subtype_evidence_without_reclassifying_top_level_failure
+      operational_complexity: local_parser_and_existing_Micrometer_MDC_only
+      cloud_portability: terraform_json_contract_not_cloud_provider_observability
+      sensitive_data_control: raw_HCL_and_diagnostic_text_never_cross_validator_boundary
+      implementation_scope: no_DB_migration_no_API_change_no_new_workflow
+      portfolio_value: explains_C2_variance_with_bounded_root_cause_evidence_instead_of_rerun_until_pass
+
+  selected_contract:
+    existing_top_level_contract:
+      exception: TerraformValidationFailureException
+      category: VALIDATE_CONFIGURATION
+      observability_category: terraform_validate_configuration
+      preserve_exactly: true
+      rule: >
+        A7-5 does not replace or split the existing top-level TerraformValidationFailureException
+        categories. It adds a bounded diagnostic summary only to VALIDATE_CONFIGURATION failures.
+
+    structured_input:
+      source: terraform_validate_json
+      fields_allowed_for_in_memory_reduction:
+        - valid
+        - error_count
+        - warning_count
+        - diagnostics_severity
+        - diagnostics_summary
+        - diagnostics_detail
+      fields_forbidden_from_persistence_or_export:
+        - raw_generated_HCL
+        - diagnostics_summary_text
+        - diagnostics_detail_text
+        - diagnostics_snippet
+        - diagnostics_source_code
+        - diagnostics_range_or_filename
+        - arbitrary_CLI_output
+
+    diagnostic_taxonomy:
+      rule: >
+        The exact final enum must be implementation-derived from deterministic Terraform JSON fixtures
+        and may contain only bounded classes with direct fixture support. Do not fabricate a category
+        merely because it is plausible. Unknown/unmatched diagnostics must map to UNKNOWN.
+      candidate_classes:
+        - MISSING_REQUIRED_ARGUMENT
+        - UNSUPPORTED_ARGUMENT_OR_BLOCK
+        - UNDECLARED_REFERENCE
+        - INVALID_FUNCTION_ARGUMENT
+        - INVALID_VALUE_OR_TYPE
+        - SYNTAX_OR_CONFIGURATION
+        - PROVIDER_CONFIGURATION
+        - UNKNOWN
+      minimum_fixture_proof:
+        - MISSING_REQUIRED_ARGUMENT
+        - UNSUPPORTED_ARGUMENT_OR_BLOCK
+        - UNDECLARED_REFERENCE
+        - UNKNOWN
+      no_dynamic_values_in_category: true
+
+    diagnostic_summary:
+      representation: bounded_application_owned_value
+      required_fields:
+        - diagnostic_classes
+        - error_count
+        - warning_count
+      class_collection_rule: deterministic_unique_sorted_bounded_set
+      count_rule: non_negative_bounded_integer
+      raw_text_retained: false
+      fingerprint_required: false
+
+    propagation:
+      validator: >
+        TerraformCliValidator reduces invalid validate -json diagnostics before deleting captured
+        output/workspace. TerraformDraftValidation may carry only the bounded diagnostic summary
+        needed to construct the typed exception; it must not carry raw diagnostics.
+      exception: >
+        TerraformValidationFailureException may carry the bounded diagnostic summary for
+        VALIDATE_CONFIGURATION. Existing fromSafeReason compatibility remains available where needed.
+      durable_failure_reason: >
+        The existing AnalysisJob failureReason may expose only a fixed machine-generated safe
+        diagnostic summary if required for durable read-back. It must never include Terraform
+        summary/detail/snippet text, HCL, resource names, paths, or arbitrary exception messages.
+        Prefer reusing the existing field over adding a migration.
+      quality_contract: >
+        A7-4 evidence-quality-v1 remains unchanged. Terraform executable failures continue to map to
+        TERRAFORM_EXECUTABLE_FAILURE; A7-5 diagnostic classes are RCA evidence, not a second quality
+        taxonomy.
+
+    observability:
+      reuse:
+        - AnalysisObservability
+        - AnalysisLogCorrelation
+      top_level_category_unchanged: true
+      metric_rule: >
+        If a diagnostic metric is added, use only bounded diagnostic class labels. Error/warning counts
+        are numeric measurements, never labels. Job/project/resource/path identifiers and raw messages
+        are forbidden metric labels.
+      log_rule: >
+        Emit at most one bounded diagnostic event per terminal executable-validation failure under the
+        existing analysisJobId MDC. The event may contain enum names and bounded counts only.
+      new_product: false
+
+    C2_evidence_boundary:
+      historical_run: 37016993776
+      historical_subtype: UNKNOWN_AND_MUST_REMAIN_UNKNOWN
+      historical_claim: >
+        Attempt 1 passed and attempt 2 failed at terraform_validate_configuration under one frozen
+        runtime identity. The exact invalid construct cannot be reconstructed and must not be guessed.
+      after_contract_claim: >
+        A deterministic fixture reproducing the same top-level VALIDATE_CONFIGURATION class must
+        demonstrate that future failures produce a bounded diagnostic class plus error/warning counts
+        while preserving the same top-level failure category and leaking no raw diagnostic text.
+      live_rerun_required: false
+
+  implementation_shape:
+    - >
+      Add a small bounded Terraform diagnostic value type/enum in the existing analysis package.
+      Do not introduce a generic observability framework or external dependency.
+    - >
+      Extend TerraformCliValidator validate-json parsing to reduce supported diagnostics in memory,
+      with deterministic UNKNOWN fallback. Keep init/provider-closure/timeout/internal handling intact.
+    - >
+      Preserve TerraformValidationFailureException.Category and AnalysisObservability.category()
+      top-level semantics.
+    - >
+      Propagate only the bounded summary far enough for safe terminal log/metric and, only if necessary,
+      the existing durable failureReason. Do not add a database migration or new API object.
+    - >
+      Add deterministic fixture tests covering supported mappings, counts, unknown fallback, and
+      sensitive/raw-text non-leakage.
+    - >
+      Re-express the C2 gap with a repository-only representative VALIDATE_CONFIGURATION fixture; do
+      not claim the fixture is the exact historical invalid construct.
+
+  acceptance:
+    - A7_4_closure_main_is_the_bound_base
+    - terraform_validate_json_is_reduced_to_a_bounded_application_owned_diagnostic_summary
+    - existing_TerraformValidationFailureException_top_level_categories_are_preserved
+    - existing_terraform_validate_configuration_observability_category_is_preserved
+    - minimum_fixture_supported_classes_include_missing_required_argument_unsupported_argument_or_block_undeclared_reference_and_UNKNOWN
+    - unmatched_or_changed_Terraform_diagnostic_text_falls_back_to_UNKNOWN_without_guessing
+    - error_and_warning_counts_are_bounded_numeric_values_not_metric_labels
+    - no_raw_failed_HCL_is_persisted_logged_uploaded_or_added_to_exception_messages
+    - no_raw_Terraform_summary_detail_snippet_range_filename_or_CLI_output_is_persisted_or_exported
+    - no_prompt_image_reference_content_credential_or_resource_identifier_is_added_to_diagnostics
+    - A7_4_TERRAFORM_EXECUTABLE_FAILURE_quality_mapping_is_unchanged
+    - AnalysisJob_retry_lease_claim_and_fencing_semantics_are_unchanged
+    - no_prompt_model_retrieval_generation_or_RAG_serving_behavior_changes
+    - no_DB_migration_is_added
+    - no_new_API_endpoint_or_quality_contract_field_is_added
+    - no_new_workflow_is_added
+    - existing_Backend_Local_Verification_remains_green
+    - existing_MariaDB_schema_and_repository_validation_remains_green
+    - representative_C2_class_fixture_proves_more_actionable_bounded_evidence_without_claiming_the_historical_subtype
+    - no_live_provider_GCP_OpenSearch_or_cost_action_occurs
+    - A7_6_is_not_started
+
+  allowed_paths:
+    - .agents/work-packages/case-a-a7-5-safe-executable-diagnostics-v1.yml
+    - .agents/work-packages/case-a-semantic-reliability-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+    - docs/evaluation/case-a-a7-5-safe-executable-diagnostics.md
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/**
+    - backend/src/test/resources/**
+
+  prohibited_paths:
+    - .github/workflows/**
+    - evaluation/**
+    - corpus/**
+    - frontend/**
+    - infra/**
+    - AGENTS.md
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - start_A7_6
+    - mutate_A7_0_A7_1_A7_2_A7_3_or_A7_4_acceptance
+    - change_Terraform_version_or_AWS_provider_version
+    - change_Terraform_init_or_validate_execution_mode
+    - persist_or_export_raw_failed_HCL
+    - persist_or_export_unbounded_Terraform_diagnostics
+    - add_database_migration
+    - add_new_API_endpoint
+    - change_evidence_quality_v1_taxonomy
+    - change_AnalysisJob_retry_lease_claim_or_fencing_semantics
+    - change_prompt_model_retrieval_generation_or_RAG_serving_behavior
+    - add_live_rerun_or_capacity_test
+    - live_Vertex_or_Bedrock_call
+    - live_GCP_action
+    - build_or_ingest_live_v4_corpus
+    - add_Langfuse_OpenTelemetry_or_other_observability_product
+    - add_new_workflow
+
+  validation:
+    required:
+      - TerraformCliValidator_focused_tests
+      - TerraformValidationFailureException_compatibility_tests
+      - AnalysisObservability_bounded_diagnostic_tests
+      - AnalysisJobRunner_safe_failure_non_leakage_tests_if_failureReason_changes
+      - representative_C2_class_fixture_test
+      - existing_backend_local_verification
+      - existing_MariaDB_schema_and_repository_validation
+      - git_diff_check
+    live_validation_required: false
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_execution_base_sha
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - Terraform_JSON_diagnostic_mapping_requires_raw_text_retention
+    - supported_category_cannot_be_proven_by_a_deterministic_fixture
+    - database_schema_change_is_required
+    - API_contract_change_is_required
+    - Terraform_or_provider_version_change_is_required
+    - retry_lease_claim_or_fencing_change_is_required
+    - prompt_model_retrieval_generation_or_RAG_change_is_required
+    - workflow_change_is_required
+    - live_or_cost_action_is_requested
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    A7_6_requires_separate_user_approval: true
+    live_action_requires_separate_user_approval: true
+    new_observability_product_requires_separate_user_approval: true

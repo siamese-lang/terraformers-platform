@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 NOT STARTED**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 APPROVED — IMPLEMENTATION NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-1 is closed at merge SHA `f9009ce8f9a744afee848b8e196b57de5860c78f`. A7-2 False-green Calibration is NOT STARTED and requires separate user approval before any implementation.**
+- Current single task: **A7-2 False-green Calibration is explicitly approved. Merge `.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml`, then bind its execution base once and implement only A7-2. Stop before A7-3.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 AWAITING USER APPROVAL**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 APPROVED / IMPLEMENTATION NOT STARTED**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -558,8 +558,9 @@ PR #202 merged as `f9009ce8f9a744afee848b8e196b57de5860c78f`.
 The original Case A retrieval-grounding/generalization closure remains retained; this extension does
 not invalidate it. Case B and Case C portfolio closures also remain retained.
 
-A7-2 — False-green Measurement and Offline Calibration — is **NOT STARTED**. No A7-2 Work Package
-is active. Starting A7-2 requires separate user approval and a newly bounded execution contract.
+A7-2 — False-green Measurement and Offline Calibration — is **APPROVED / IMPLEMENTATION NOT STARTED**.
+Its bounded execution contract is `.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml`.
+Implementation starts only after that contract is merged and its execution base is bound once.
 
 Do not start A7-2 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
 v4 corpus into a live vector store, or introduce an evaluator LLM / multi-model voting / new

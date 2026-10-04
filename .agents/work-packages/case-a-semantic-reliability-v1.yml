@@ -1,8 +1,21 @@
 work_package:
   id: case-a-semantic-reliability-v1
-  status: ACTIVE_A7_0
+  status: A7_0_COMPLETE_A7_1_AWAITING_USER_APPROVAL
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: dd34d1cec34d31783ca2d672c65311ce82fd2666
+
+  phase_gate:
+    completed_phase: A7_0
+    closure_evidence: docs/evaluation/case-a-a7-0-authoritative-knowledge-coverage.md
+    next_phase: A7_1
+    next_phase_status: NOT_STARTED
+    next_phase_requires_explicit_user_approval: true
+    measured_provider_schema_resource_count: 1526
+    measured_official_documented_schema_resource_count: 1514
+    measured_missing_official_document_resource_count: 12
+    selected_rag_scope: full_official_documented_schema_intersection
+    structural_authority_scope: full_provider_schema_universe
+    missing_official_docs_policy: explicit_knowledge_gap_not_fabricated_RAG_evidence
 
   goal: >
     Extend the already-closed Case A retrieval-grounding/generalization case into an

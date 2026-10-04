@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION SELECTED / IMPLEMENTATION NOT STARTED**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-0 authoritative knowledge coverage is ACTIVE on execution base `dd34d1cec34d31783ca2d672c65311ce82fd2666`. Measure v3/provider coverage, implement the scalable v4 corpus compiler, prove a previously unsupported resource can be compiled without a per-resource source-code allowlist change, and stop before A7-1.**
+- Current single task: **No implementation phase is active. A7-0 authoritative knowledge coverage is COMPLETE. A7-1 is the next candidate and must not start without explicit user approval.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 ACTIVE**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 NOT STARTED**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -36,9 +36,14 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Knowledge authority is frozen as:
   provider schema direct authority + pinned official provider docs/examples RAG + curated
   Terraformers project decisions.
-- Current v3 corpus limitation is explicit: 128 documents preserve a curated provider-resource
-  subset; A7-0 must replace the hard-coded resource allowlist with a scalable versioned compiler and
-  create a new corpus identity without mutating v3.
+- A7-0 exact coverage is closed: AWS Provider 5.100.0 exposes 1,526 managed-resource schemas;
+  1,514 intersect pinned official resource documentation and 12 have no official resource document.
+  Historical v3 covers only 30 resources (1.9659% of schema). The measured broad v4 candidate covers
+  all 1,514 documented schema resources with 5,395 total documents / 5,387 provider chunks,
+  14,833,335 JSONL bytes, approximately 2,654,504 embedding-input tokens, and zero official-evidence
+  extraction gaps. Structural authority remains all 1,526 schema resources; RAG scope is the full
+  1,514-resource schema/document intersection; the remaining 12 are explicit official-knowledge
+  gaps. v3 remains immutable.
 - No evaluator LLM or multi-model voting is part of the default design.
 - Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
   validation PASS while required grounding was incomplete.
@@ -529,35 +534,24 @@ No remaining M1 work.
 
 ## Immediate next work
 
-Case B and Case A are now **portfolio-closed**. Case A final evidence is recorded in
-[Case A Final Closure](evaluation/case-a-final-closure.md); do not add more canonical or holdout
-runs without a newly reproduced defect or changed requirement.
+A7-0 — Authoritative Knowledge Coverage — is **COMPLETE**. Closure evidence is recorded in
+[Case A A7-0 — Authoritative Knowledge Coverage](evaluation/case-a-a7-0-authoritative-knowledge-coverage.md).
 
-The next representative portfolio case is **Case C — Cloud Runtime Capacity & Safe Delivery**.
-The [Case C Measurement Readiness Audit](evaluation/case-c-measurement-readiness-audit.md) found the
-live baseline **NOT READY**. The
-[Case C Production-Representative Runtime Decision Gate](plans/active/case-c-representative-benchmark-runtime-decision.md)
-now records the production-representative backend runtime as the **preferred candidate**, not a
-final product selection.
+The next candidate is **A7-1 — Evidence-backed Quality Contract**. It is **NOT STARTED** and must
+not begin automatically. Explicit user approval is required before implementation.
 
-Before the runtime direction can be approved, three compatibility gates must be closed:
+The original Case A retrieval-grounding/generalization closure remains retained; this extension does
+not invalidate it. Case B and Case C portfolio closures also remain retained.
 
-1. MySQL 8.4 must run the full Flyway/JPA/Case B durable-processing contract;
-2. Cloud Storage must preserve the existing ObjectReader/ObjectWriter/ObjectRemover contract and
-   integrity semantics without domain/schema rewrites;
-3. Artifact Registry must fit the existing GitHub OIDC + GKE identity model with a dedicated,
-   least-privilege publisher/read path rather than reusing broad Terraform apply authority.
+A7-1, if approved, must implement only the frozen ADR-008 contract boundary: separate technical,
+knowledge, and quality status; distinguish missing official knowledge from retrieval miss; check
+generated resource types deterministically against provider schema and selected evidence; preserve
+project-decision grounding as a separate dimension; retain the conditional-on-extracted-facts
+runtime-quality boundary; and use a versioned persistent representation.
 
-Do not create the representative-runtime implementation Work Package, publish an image, create
-Cloud SQL/Storage/Artifact Registry resources, mutate IAM, apply Kubernetes resources, activate the
-node pool, generate load, or run rollout/rollback experiments until those compatibility results are
-reviewed and the final runtime selection is approved.
-
-Historical next-work text before A3 readiness was: obtain approval for the bounded **A3
-fixed-facts retrieval alternative comparison / decision**. It must isolate upstream fact/query
-variability from retrieval/ranking behavior without selecting or changing production retrieval
-semantics in advance. Do not start it automatically, do not begin an AI production change, and do
-not start Case C.
+Do not start A7-2 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
+v4 corpus into a live vector store, or introduce an evaluator LLM / multi-model voting / new
+observability product without the later phase gates and required explicit approvals.
 
 ## Do not revisit
 

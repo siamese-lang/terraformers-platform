@@ -1,0 +1,266 @@
+work_package:
+  id: case-a-a7-3-provider-partial-failures-v1
+  status: APPROVED_AWAITING_ACTIVATION
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  activation:
+    bind_rule: >
+      This Work Package must first be merged to main. Immediately before the first A7-3
+      implementation write, read authoritative remote main exactly once, bind that SHA to
+      execution_base_sha on the implementation branch, and do not refresh or rebase afterward.
+    first_implementation_write_must_bind_execution_base: true
+
+  prior_phase:
+    id: A7_2
+    status: COMPLETE
+    closure_evidence: docs/evaluation/case-a-a7-2-false-green-calibration.md
+    merge_sha: 9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6
+
+  user_approval:
+    approved_on: 2026-10-04
+    scope: A7_3_ONLY
+
+  goal: >
+    Implement only A7-3 of ADR-008: preserve bounded provider-neutral partial-failure semantics
+    across the existing analysis adapters so a successful transport/API exchange is not confused
+    with usable model output. Distinguish explicit provider content/safety blocks, output
+    truncation, empty successful responses, timeout, rate limiting, generic provider errors, and
+    response-format failures where the provider exposes deterministic evidence. Do not add durable
+    quality persistence, new retry behavior, live unsafe prompts, or a new observability product.
+
+  retained_evidence:
+    historical_provider_runtime:
+      source: evaluation/baselines/m3-live-baseline-metrics.json
+      workflow_run: 36379633596
+      limitation: >
+        The historical PROVIDER_RUNTIME traces retained only IllegalStateException and did not
+        preserve enough provider semantics to determine the underlying cause.
+    case_c_policy_false_failure:
+      workflow_run: 36949479621
+      interpretation: >
+        Repository-owned sensitive-credential validation rejected the draft. This is not evidence
+        of Vertex content/safety blocking and must not be reclassified as provider censorship.
+    existing_truncation:
+      interpretation: >
+        Vertex and Bedrock generation already preserve explicit max-token truncation separately.
+        A7-3 retains that behavior and does not reopen the accepted truncation correction.
+
+  selected_contract:
+    provider_neutral_outcomes:
+      normal_completion:
+        failure: false
+        rule: >
+          Normal provider completion remains success and is not encoded as a failure reason.
+      OUTPUT_TRUNCATED:
+        rule: >
+          Emit only when the provider explicitly reports an output/token limit condition such as
+          Vertex MAX_TOKENS or Bedrock max_tokens. Preserve the existing bounded truncation fallback.
+      CONTENT_BLOCKED:
+        rule: >
+          Emit only from explicit provider safety/content/refusal evidence exposed by the SDK or
+          response contract. Never infer content blocking from empty output, malformed JSON,
+          repository validation, or a generic provider error.
+      EMPTY_RESPONSE:
+        rule: >
+          Emit when the provider call itself completed but returned no usable text/content.
+          Do not collapse this into RESPONSE_FORMAT.
+      TIMEOUT:
+        rule: >
+          Preserve the existing AnalysisProviderTimeoutException boundary and current timeout retry
+          semantics. A7-3 classifies timeout but does not broaden or change retry policy.
+      RATE_LIMITED:
+        rule: >
+          Emit only from explicit provider throttling or HTTP 429 evidence. Classification does not
+          make rate limiting retryable in A7-3.
+      PROVIDER_ERROR:
+        rule: >
+          Provider/API/runtime failures that are neither timeout nor rate limit nor explicit content
+          block are retained as generic provider errors with bounded metadata only.
+      RESPONSE_FORMAT:
+        rule: >
+          Non-empty provider output that exists but violates the expected application response
+          structure remains a response-format failure rather than a provider content block.
+      INPUT_REJECTED:
+        rule: >
+          The existing application/model classification outcome for AMBIGUOUS or
+          NON_ARCHITECTURE_IMAGE remains separate from provider safety/content blocking.
+
+    application_boundary:
+      preferred_contract: AnalysisProviderFailureReason
+      rule: >
+        Extend and reuse the existing provider-neutral failure contract rather than creating
+        provider-specific application enums. Existing OUTPUT_TRUNCATED, INPUT_REJECTED, and
+        RESPONSE_FORMAT semantics must remain compatible.
+      timeout_boundary: >
+        AnalysisProviderTimeoutException remains a distinct provider-neutral exception because
+        AnalysisJobRunner already uses it for bounded retry ownership semantics.
+
+    fact_extraction_boundary:
+      rule: >
+        ArchitectureFactsExtractionException may retain historical PROVIDER_RUNTIME compatibility,
+        but new deterministically classified failures must preserve content-blocked, rate-limited,
+        timeout, empty-response, truncation, invalid-response, and generic provider-error
+        distinctions without raw provider payloads.
+
+    evaluation_mapping:
+      required_categories:
+        - OUTPUT_TRUNCATED
+        - PROVIDER_CONTENT_BLOCKED
+        - PROVIDER_EMPTY_RESPONSE
+        - PROVIDER_TIMEOUT
+        - PROVIDER_RATE_LIMITED
+        - PROVIDER_ERROR
+        - RESPONSE_FORMAT
+      historical_compatibility: >
+        Existing PROVIDER_RUNTIME traces remain historical evidence and are not rewritten.
+        New A7-3 deterministic mappings should use the more specific provider-neutral categories
+        when the signal is available.
+
+    observability_mapping:
+      rule: >
+        AnalysisObservability must derive low-cardinality provider failure categories from the same
+        provider-neutral exception/reason contract. Do not add job IDs, project IDs, resource names,
+        prompt content, model output, or raw provider messages as metric labels.
+
+    adapter_rules:
+      vertex_generation: >
+        MAX_TOKENS remains truncation. Explicit SDK finish reasons that unambiguously represent
+        safety/content/refusal must map to CONTENT_BLOCKED. Blank successful response maps to
+        EMPTY_RESPONSE. Explicit 429 maps to RATE_LIMITED. Timeout maps to TIMEOUT. Other provider
+        call failures map to PROVIDER_ERROR. Non-empty malformed application JSON remains
+        RESPONSE_FORMAT.
+      vertex_fact_extraction: >
+        Preserve current truncation/empty/invalid distinctions and add explicit content-block,
+        timeout, rate-limit, and generic provider-error classification from deterministic SDK
+        signals only.
+      bedrock_generation: >
+        Preserve max_tokens truncation and existing timeout handling. Explicit throttling maps to
+        RATE_LIMITED. Explicit provider refusal/content-block semantics map to CONTENT_BLOCKED only
+        if the current response/SDK exposes an unambiguous signal. Empty content maps to
+        EMPTY_RESPONSE. Other provider/API failures map to PROVIDER_ERROR.
+      bedrock_fact_extraction: >
+        Replace the current blanket failure collapse only to the extent deterministic Bedrock
+        signals are available: truncation, empty response, timeout, throttling, explicit content
+        block, invalid response, and generic provider error. Do not invent parity for signals Bedrock
+        does not expose.
+
+  implementation_shape:
+    - >
+      Extend the existing provider-neutral exception/reason contract and use it consistently at the
+      Vertex and Bedrock adapter boundaries. Do not add a second parallel taxonomy.
+    - >
+      Keep provider-specific finish/status inspection inside provider adapters. Application-facing
+      code and evaluation output receive only provider-neutral categories and bounded sanitized
+      metadata.
+    - >
+      Update EvaluationRunner failure mapping so generation and fact-extraction traces retain the
+      new provider-neutral distinctions without changing historical artifacts.
+    - >
+      Update AnalysisObservability low-cardinality categorization to follow the same neutral
+      reasons. Do not add new persistence or dashboards.
+    - >
+      Preserve AnalysisJobRunner's current timeout-only retry behavior. Adding RATE_LIMITED must not
+      alter isRetryable, max attempts, retry delay, ownership, or fencing.
+    - >
+      Add deterministic adapter/unit tests using synthetic provider responses/exceptions. No live
+      prompt or live model invocation is required or authorized.
+    - >
+      Add one A7-3 evidence document describing mapping, tests, provider-specific limits, and the
+      A7-4 persistence boundary.
+
+  acceptance:
+    - explicit_provider_content_block_is_not_response_format
+    - output_truncation_remains_distinct
+    - empty_successful_provider_response_is_distinct
+    - timeout_remains_distinct_and_existing_retry_semantics_are_unchanged
+    - explicit_rate_limit_is_distinct_without_new_retry_policy
+    - generic_provider_error_is_distinct
+    - malformed_non_empty_application_output_remains_response_format
+    - input_classification_rejection_is_not_provider_content_block
+    - vertex_generation_has_deterministic_partial_failure_tests
+    - vertex_fact_extraction_has_deterministic_partial_failure_tests
+    - bedrock_existing_observable_partial_failures_are_mapped_without_invented_signals
+    - evaluation_failure_categories_preserve_new_provider_neutral_distinctions
+    - observability_categories_follow_the_same_provider_neutral_contract
+    - provider_payload_prompt_image_and_generated_HCL_are_not_added_to_failure_evidence
+    - case_c_run_36949479621_is_not_reclassified_as_provider_content_block
+    - no_DB_API_or_AnalysisJob_quality_persistence_is_added_before_A7_4
+    - no_live_unsafe_prompt_or_model_call_is_required
+    - existing_backend_tests_remain_green
+
+  allowed_paths:
+    - .agents/work-packages/case-a-a7-3-provider-partial-failures-v1.yml
+    - .agents/work-packages/case-a-semantic-reliability-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+    - docs/evaluation/case-a-a7-3-provider-partial-failures.md
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/bedrock/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/main/java/com/terraformers/modernization/evaluation/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/bedrock/**
+    - backend/src/test/java/com/terraformers/modernization/reference/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/**
+
+  prohibited_paths:
+    - backend/src/main/resources/db/migration/**
+    - evaluation/**
+    - corpus/**
+    - scripts/rag/**
+    - .github/workflows/**
+    - frontend/**
+    - infra/**
+    - AGENTS.md
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - change_A7_3_acceptance
+    - start_A7_4
+    - mutate_historical_evaluation_artifacts
+    - add_database_migration
+    - persist_provider_failure_or_quality_fields_on_AnalysisJob
+    - expose_new_provider_failure_or_quality_fields_through_API
+    - change_timeout_retry_semantics
+    - make_rate_limit_retryable
+    - change_max_attempts_or_retry_delay
+    - change_prompt_model_retrieval_or_generation_quality_behavior
+    - bypass_or_weaken_provider_safety_controls
+    - intentionally_trigger_unsafe_live_content
+    - live_GCP_action
+    - live_Vertex_or_Bedrock_call
+    - create_or_modify_workflow
+    - add_evaluator_LLM
+    - add_multi_model_voting
+    - add_observability_product
+
+  validation:
+    required:
+      - focused_A7_3_unit_tests
+      - existing_provider_adapter_tests
+      - existing_evaluation_tests
+      - existing_backend_local_verification
+      - git_diff_check
+    live_validation_required: false
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_execution_base_sha
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - provider_signal_would_need_to_be_guessed
+    - retry_policy_change_is_required
+    - database_or_API_persistence_is_required
+    - prompt_model_retrieval_or_generation_behavior_change_is_required
+    - live_or_cost_action_is_requested
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    A7_4_requires_separate_user_approval: true
+    live_action_requires_separate_user_approval: true

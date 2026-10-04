@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 NOT STARTED**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 APPROVED — IMPLEMENTATION NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-2 is closed at merge SHA `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`. A7-3 Provider Partial Failures is NOT STARTED and requires separate user approval before activation.**
+- Current single task: **A7-3 Provider Partial Failures is explicitly approved. Merge `.agents/work-packages/case-a-a7-3-provider-partial-failures-v1.yml`, then bind its execution base once and implement only A7-3. Stop before A7-4.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 AWAITING USER APPROVAL**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 APPROVED / IMPLEMENTATION NOT STARTED**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -32,6 +32,8 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [.agents/work-packages/case-a-semantic-reliability-v1.yml](../.agents/work-packages/case-a-semantic-reliability-v1.yml)
 - A7-1 execution Work Package:
   [.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml](../.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml)
+- A7-2 execution Work Package:
+  [.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml](../.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml)
 - New representative claim: separate technical success, authoritative-knowledge coverage,
   evidence-backed runtime quality, labeled evaluation quality, provider partial failures, and safe
   executable diagnostics.
@@ -569,8 +571,9 @@ A7-2 — False-green Measurement and Offline Calibration — is **COMPLETE**. Cl
 recorded in [Case A A7-2 — False-green Measurement and Offline Calibration](evaluation/case-a-a7-2-false-green-calibration.md).
 PR #205 merged as `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`.
 
-A7-3 — Provider Partial Failures — is **NOT STARTED**. No A7-3 Work Package exists yet. Starting
-A7-3 requires separate user approval and a newly bounded execution contract.
+A7-3 — Provider Partial Failures — is **APPROVED / IMPLEMENTATION NOT STARTED**.
+Its bounded execution contract is `.agents/work-packages/case-a-a7-3-provider-partial-failures-v1.yml`.
+Implementation starts only after that contract is merged and its execution base is bound once.
 
 Do not start A7-3 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
 v4 corpus into a live vector store, or introduce an evaluator LLM / multi-model voting / new

@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 APPROVED / IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -418,6 +418,15 @@ Required:
 - compare runtime evidence status with labeled results.
 
 ### A7-3 — Provider partial failures
+
+A7-3 was explicitly approved on 2026-10-04. Execution is isolated in
+`.agents/work-packages/case-a-a7-3-provider-partial-failures-v1.yml`.
+
+The selected boundary is classification only: explicit provider content/safety blocks, truncation,
+empty successful responses, timeout, rate limiting, generic provider errors, and application
+response-format failures remain distinct where deterministic provider evidence exists. Existing
+timeout retry behavior is preserved; A7-3 does not make rate limiting retryable, add DB/API
+persistence, weaken provider safety controls, or require live unsafe prompts.
 
 Required:
 

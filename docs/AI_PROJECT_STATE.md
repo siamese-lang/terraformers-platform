@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 COMPLETE / A7-6 DECISION IMPLEMENTED — AWAITING REVIEW**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 COMPLETE / A7-6 COMPLETE / A7-7 APPROVED — ACTIVATION PENDING**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Review the A7-6 Observability Backend Decision. The selected current stack is repository-native observability; OpenTelemetry and Langfuse are deferred behind explicit evidence triggers. Stop before A7-7 and do not adopt a new dependency/runtime product.**
+- Current single task: **Activate A7-7 Broad v4 End-to-End Live Proof. First merge its bounded Work Package, then bind one execution base and prepare the existing ingestion/runtime workflows for v4. No live GCP mutation occurs before repository CI and the explicit live checkpoint.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 DECISION IMPLEMENTED / AWAITING REVIEW**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 APPROVED / ACTIVATION PENDING**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -68,7 +68,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   canonical repository smoke queries. Terraform Static Verification run `37191939292` completed
   successfully at scope level; its terraform/RAG job was skipped because PR #205 changed no
   terraform/RAG paths. Frozen canonical/holdout datasets were unchanged and no live AI/cloud
-  execution was used. A7-3 through A7-5 are complete; the A7-6 repository-only observability decision is implemented and awaits review.
+  execution was used. A7-3 through A7-6 are complete; A7-7 is approved because final closure now requires a real broad-v4 + persisted-quality end-to-end proof.
 - No evaluator LLM or multi-model voting is part of the default design.
 - Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
   validation PASS while required grounding was incomplete.
@@ -587,23 +587,23 @@ and A7-4 `TERRAFORM_EXECUTABLE_FAILURE`, adds only bounded fixture-backed diagno
 evidence, and retains no raw failed HCL or arbitrary Terraform diagnostic text. Historical C2 run
 `37016993776` remains subtype-unknown. No live C2/provider/GCP/OpenSearch action was performed.
 
-A7-6 — Observability Backend Decision — is **IMPLEMENTED / AWAITING REVIEW** under
-`.agents/work-packages/case-a-a7-6-observability-backend-decision-v1.yml`. The current selection is
-repository-native Micrometer + bounded MDC-correlated logs + durable AnalysisJob quality state +
-deterministic evaluation artifacts. OpenTelemetry is deferred as the preferred future
-instrumentation/transport standard if a cross-service or demonstrated trace-correlation gap appears.
-Langfuse is deferred unless one interactive LLM trace/score/release product becomes a demonstrated
-operator requirement. No dependency, telemetry exporter, runtime service, or cloud resource is added.
+A7-6 — Observability Backend Decision — is **COMPLETE** at merge SHA
+`a58d78181be642f3b3c2fdd38486c7d19fcc045e`; Terraform Static Verification `37217252459`
+passed. Repository-native observability remains selected; OpenTelemetry and Langfuse are deferred
+behind explicit evidence triggers.
 
-A7-7 is **REQUIRED AFTER A7-6 MERGE / NOT STARTED**. Final closure must include a bounded
-representative live proof that the broad v4 corpus is actually ingested and served by the live RAG
-path and that `evidence-quality-v1` is persisted and read back through the real AnalysisJob API.
-The same proof must include an authenticated negative control and final teardown to zero known
-Terraformers billable resources.
+A7-7 — Broad v4 End-to-End Live Proof — is **APPROVED / ACTIVATION PENDING** under
+`.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml`. Final closure requires a bounded
+live proof that all 5,395 v4 documents / 1,514 officially documented provider resources are actually
+served by the live RAG path, a positive AnalysisJob returns persisted `evidence-quality-v1`, an
+authenticated non-architecture negative control returns the expected NOT_APPLICABLE quality without
+Terraform output, and the recreated target runtime is torn down to the pre-A7-7 baseline.
 
-Do not start A7-7 until A7-6 is merged and an A7-7 Work Package freezes the exact live actions. Do
-not adopt OpenTelemetry/Langfuse/another observability product or perform live actions outside that
-bounded A7-7 contract without separate approval.
+The repository-preparation implementation must merge and pass CI before any live mutation. One
+explicit live checkpoint will then freeze the exact final main SHA, reviewed runtime plan/shape,
+backend image strategy, v4 ingestion contract, and teardown boundary. Do not adopt
+OpenTelemetry/Langfuse/another observability product or perform live actions outside the bounded
+A7-7 contract.
 
 ## Do not revisit
 

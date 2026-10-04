@@ -1,5 +1,13 @@
 # Case A A7-2 — False-green measurement and offline calibration
 
+## Status
+
+**COMPLETE — ACCEPTANCE PASS — A7-3 NOT STARTED**
+
+Implementation merge SHA:
+
+`9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`
+
 ## Scope and decision
 
 A7-2 adds a deterministic offline calibration boundary. It does not rerun a provider, change
@@ -39,3 +47,31 @@ java ... CaseAMeasurementLauncher \
 ```
 
 No canonical or holdout dataset file is changed by A7-2. A7-3 is outside this work package.
+
+
+## Validation and acceptance evidence
+
+- PR #205 merged as `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`.
+- Backend Local Verification run `37191939296`: **SUCCESS**.
+  - full `mvn clean test`
+  - application package
+  - MariaDB Flyway + Hibernate schema validation
+  - canonical repository smoke queries
+- Terraform Static Verification run `37191939292`: workflow **SUCCESS** at scope level.
+  - the terraform/RAG job was skipped because PR #205 changed no terraform/RAG paths.
+- Independent review aligned the historical VPC fixture with the frozen A2 evidence:
+  `tfref-v2-sg-relations` missing and exact required retrieval resources
+  `aws_vpc`, `aws_lb`, `aws_db_instance`, `aws_security_group` at `2/4` coverage.
+- Independent review also aligned `ValidationExpectation.FAIL` with actual `EvaluationRunner`
+  semantics: an expected invalid Terraform result is represented by validation stage `FAIL` with
+  `valid=false`, and is not technical success.
+- Frozen canonical and holdout dataset files were unchanged.
+- No live GCP, Vertex, Bedrock, prompt, model, retrieval, generation, DB/API, or workflow behavior
+  change was required.
+
+All A7-2 Work Package acceptance criteria passed.
+
+## Next gate
+
+A7-3 — Provider Partial Failures — is not started. It requires separate user approval and a newly
+bounded Work Package before implementation.

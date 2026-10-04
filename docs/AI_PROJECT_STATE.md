@@ -551,19 +551,15 @@ No remaining M1 work.
 A7-0 — Authoritative Knowledge Coverage — is **COMPLETE**. Closure evidence is recorded in
 [Case A A7-0 — Authoritative Knowledge Coverage](evaluation/case-a-a7-0-authoritative-knowledge-coverage.md).
 
-A7-1 — Evidence-backed Quality Contract — is **APPROVED / IMPLEMENTATION NOT STARTED**.
-The approved execution contract is
-[case-a-a7-1-evidence-quality-contract-v1.yml](../.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml).
-Implementation begins only after that contract is merged to main.
+A7-1 — Evidence-backed Quality Contract — is **COMPLETE**. Closure evidence is recorded in
+[Case A A7-1 — Evidence-backed Quality Contract](evaluation/case-a-a7-1-evidence-quality-contract.md).
+PR #202 merged as `f9009ce8f9a744afee848b8e196b57de5860c78f`.
 
 The original Case A retrieval-grounding/generalization closure remains retained; this extension does
 not invalidate it. Case B and Case C portfolio closures also remain retained.
 
-A7-1, if approved, must implement only the frozen ADR-008 contract boundary: separate technical,
-knowledge, and quality status; distinguish missing official knowledge from retrieval miss; check
-generated resource types deterministically against provider schema and selected evidence; preserve
-project-decision grounding as a separate dimension; retain the conditional-on-extracted-facts
-runtime-quality boundary; and use a versioned persistent representation.
+A7-2 — False-green Measurement and Offline Calibration — is **NOT STARTED**. No A7-2 Work Package
+is active. Starting A7-2 requires separate user approval and a newly bounded execution contract.
 
 Do not start A7-2 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
 v4 corpus into a live vector store, or introduce an evaluator LLM / multi-model voting / new

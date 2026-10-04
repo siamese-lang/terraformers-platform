@@ -9,6 +9,7 @@ import com.google.genai.types.FinishReason;
 import com.terraformers.modernization.analysis.vertex.VertexRuntimeProperties;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
@@ -124,6 +125,32 @@ class VertexArchitectureFactsExtractorTest {
                 ArchitectureFactsExtractionException.Reason.PROVIDER_CONTENT_BLOCKED);
         assertThat(failure.evaluationDetail()).isEqualTo("reason=PROVIDER_CONTENT_BLOCKED")
                 .doesNotContain(SECRET_PAYLOAD);
+    }
+
+    @Test
+    void distinguishesRateLimitTimeoutAndAbnormalFinishWithoutPayloadLeakage() {
+        com.google.genai.errors.ClientException rateLimited =
+                org.mockito.Mockito.mock(com.google.genai.errors.ClientException.class);
+        org.mockito.Mockito.when(rateLimited.code()).thenReturn(429);
+        ArchitectureFactsExtractionException throttled = failure(extractor((modelId, content, config) -> {
+            throw rateLimited;
+        }));
+        assertThat(throttled.reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.PROVIDER_RATE_LIMITED);
+
+        ArchitectureFactsExtractionException timeout = failure(extractor((modelId, content, config) -> {
+            throw new RuntimeException(new HttpTimeoutException("SENTINEL_PROVIDER_PAYLOAD"));
+        }));
+        assertThat(timeout.reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.PROVIDER_TIMEOUT);
+        assertThat(timeout.evaluationDetail()).doesNotContain("SENTINEL_PROVIDER_PAYLOAD");
+
+        ArchitectureFactsExtractionException abnormal = failure(extractor((modelId, content, config) ->
+                new VertexArchitectureFactsExtractor.VertexFactsResponse(
+                        "{\"summary\":\"looks valid\",\"components\":[],\"relationships\":[],\"resourceTypes\":[]}",
+                        FinishReason.Known.OTHER)));
+        assertThat(abnormal.reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.INVALID_RESPONSE);
     }
 
     @Test

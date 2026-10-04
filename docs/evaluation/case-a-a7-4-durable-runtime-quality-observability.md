@@ -1,6 +1,27 @@
 # Case A A7-4 — durable runtime quality observability
 
-Status: **APPROVED — IMPLEMENTATION NOT STARTED — LIVE VALIDATION NOT AUTHORIZED**
+Status: **COMPLETE — ACCEPTANCE PASS — A7-5 NOT STARTED — LIVE VALIDATION NOT PERFORMED**
+
+## Closure evidence
+
+- implementation PR: #213
+- implementation merge SHA: `ab1b1f410b6aabf674af51d6161a2efd0f6df6a4`
+- bounded repair commit: `0e457f7bd9339fc44f901bdd90b2c95f40c081b0`
+- first Backend Local Verification: run `37209621451` — failure
+  - MariaDB schema/repository validation already passed
+  - Maven reported one error in `AnalysisJobStateServiceTest.onlyOwnedFailurePublishesFailedProgress`
+  - root mechanism: the legacy four-argument `markFailedOwned` overload no longer entered its own
+    `REQUIRES_NEW` transaction before self-invoking the quality-aware overload
+- final Backend Local Verification: run `37210008792` — success
+  - Maven clean tests and package passed
+  - MariaDB Flyway/Hibernate schema validation passed
+  - canonical repository smoke queries passed
+- Terraform Static Verification: run `37210008786` — success
+- independent A7-4 acceptance review: **PASS**
+- no live Vertex/Bedrock call
+- no live GCP action
+- no v4 embedding/OpenSearch ingestion
+- A7-5 is not started
 
 ## Decision
 
@@ -20,13 +41,17 @@ The selected path reuses:
 
 No second quality oracle or observability product is selected.
 
-## Current measured gap
+## Pre-implementation measured gap
 
-Current main after A7-3 closure:
+A7-3 closure merge:
 
 `1038263076dc267d090e12503fc8670138c6b48c`
 
-The current repository has:
+A7-4 frozen execution base:
+
+`9beec226a1cc5c314d6e6f27a62e6b63f20abab1`
+
+Before A7-4 implementation, the repository had:
 
 - versioned in-memory A7-1 quality representation;
 - explicit A7-3 provider partial-failure mechanics;
@@ -34,7 +59,7 @@ The current repository has:
 - API read-back for result/failure fields;
 - low-cardinality operational metrics and job-correlated logs.
 
-It does **not** yet have:
+It did **not** yet have:
 
 - persisted technical/knowledge/quality/project-decision/runtime-boundary state;
 - persisted bounded quality reasons/version;
@@ -306,9 +331,9 @@ set, the current provider default branch, or fabricated resource names.
 A7-4 may therefore proceed with a compact versioned read-only coverage manifest carrying these 12
 gaps and the pinned provenance. This evidence does not claim that v4 is currently served or ingested.
 
-## Implementation evidence — awaiting review
+## Accepted implementation evidence
 
-**Status: A7-4 IMPLEMENTED / AWAITING REVIEW. Acceptance is not self-declared.**
+**Status: A7-4 COMPLETE — independent acceptance PASS.**
 
 The implementation adds `V20261004_007__add_analysis_job_quality_snapshot.sql`, with nullable bounded
 columns `quality_contract_version`, `technical_status`, `knowledge_status`, `quality_status`,
@@ -342,12 +367,13 @@ status/version/reason names and relies on existing `analysisJobId` MDC correlati
 Deterministic tests cover manifest provenance/gaps, provider attachment, one-pass Bedrock fact
 extraction, result-copy preservation, success/failure/input-rejection mappings, degraded and unknown
 snapshots, retry and stale-generation fencing, legacy-null API behavior, fresh persistence-context
-readback, and low-cardinality metric labels. Local Maven execution was attempted but this isolated
-environment returned HTTP 403 resolving the Spring Boot parent from Maven Central; authoritative
-Backend Local Verification and MariaDB Flyway/repository validation therefore remain PR CI review
-evidence rather than a local claim.
+readback, and low-cardinality metric labels. The isolated implementation environment could not
+resolve the Spring Boot parent from Maven Central, so final authority came from repository CI.
+Backend Local Verification `37210008792` passed Maven clean tests/package plus MariaDB
+Flyway/Hibernate and canonical repository smoke validation. Terraform Static Verification
+`37210008786` also passed.
 
 No live provider, embedding, OpenSearch, corpus ingestion, GCP, deployment, or cost-bearing action
 was performed. A7-5 was not started. Residual limitations are the intentional
 `CONDITIONAL_ON_EXTRACTED_FACTS` boundary, `UNKNOWN` project-decision applicability for arbitrary
-requests, null quality for legacy rows, and pending authoritative CI validation.
+requests, and null quality for legacy rows.

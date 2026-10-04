@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-2-false-green-calibration-v1
-  status: IMPLEMENTED_AWAITING_REVIEW
+  status: COMPLETE
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: aaf3b3bc42bca9604673e92cb05e6e87de66b480
 
@@ -193,6 +193,24 @@ work_package:
     - runtime_quality_would_need_to_be_used_as_ground_truth
     - live_or_cost_action_is_requested
     - acceptance_criteria_would_need_to_change
+
+  implementation_evidence:
+    document: docs/evaluation/case-a-a7-2-false-green-calibration.md
+    execution_base_sha: aaf3b3bc42bca9604673e92cb05e6e87de66b480
+    implementation_merge_sha: 9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6
+    validation_status: PASS
+    backend_local_verification:
+      run_id: 37191939296
+      conclusion: success
+      evidence: mvn_clean_test_and_package_plus_mariadb_schema_repository_validation
+    terraform_static_verification:
+      run_id: 37191939292
+      conclusion: success
+      scope_note: terraform_static_job_skipped_because_PR_205_changed_no_terraform_RAG_paths
+    independent_acceptance_review: PASS
+    frozen_dataset_files_changed: false
+    live_AI_or_cloud_execution: false
+    A7_3_status: NOT_STARTED
 
   completion:
     merge_requires_user_approval: true

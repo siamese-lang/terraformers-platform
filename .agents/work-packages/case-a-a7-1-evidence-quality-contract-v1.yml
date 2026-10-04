@@ -2,7 +2,7 @@ work_package:
   id: case-a-a7-1-evidence-quality-contract-v1
   status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: 2efa4dcc1425feafac896a069315416949fa7ab5
 
   activation:
     bind_rule: >

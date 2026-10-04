@@ -25,11 +25,16 @@ public final class CaseAMeasurementLauncher {
             EvaluationDataset dataset = new EvaluationDatasetLoader(mapper)
                     .load(Path.of(required(options, "dataset"))).dataset();
             value = new CaseAMeasurementReporter().create(run, dataset);
+        } else if (mode.equals("calibrate")) {
+            EvaluationRunResult run = mapper.readValue(Path.of(required(options, "result")).toFile(), EvaluationRunResult.class);
+            EvaluationDataset dataset = new EvaluationDatasetLoader(mapper)
+                    .load(Path.of(required(options, "dataset"))).dataset();
+            value = new CaseAQualityCalibrationReporter().create(run, dataset);
         } else if (mode.equals("aggregate")) {
             List<CaseAMeasurementReport> reports = Arrays.stream(required(options, "reports").split(","))
                     .map(Path::of).map(path -> read(mapper, path)).toList();
             value = new CaseAMultiRunAggregator().aggregate(reports);
-        } else throw new IllegalArgumentException("mode must be report or aggregate");
+        } else throw new IllegalArgumentException("mode must be report, calibrate, or aggregate");
         mapper.writerWithDefaultPrettyPrinter().writeValue(output.toFile(), value);
     }
 

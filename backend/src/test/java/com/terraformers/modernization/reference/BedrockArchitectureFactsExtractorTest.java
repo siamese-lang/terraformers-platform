@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse;
 import software.amazon.awssdk.services.bedrockruntime.model.ThrottlingException;
+import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
 
 class BedrockArchitectureFactsExtractorTest {
     @Test
@@ -93,6 +94,17 @@ class BedrockArchitectureFactsExtractorTest {
                 new IllegalStateException("SENTINEL_PROVIDER_PAYLOAD"));
         assertThat(failure(client).reason()).isEqualTo(
                 ArchitectureFactsExtractionException.Reason.PROVIDER_ERROR);
+
+        when(client.invokeModel(any(InvokeModelRequest.class))).thenReturn(raw("   "));
+        assertThat(failure(client).reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE);
+
+        when(client.invokeModel(any(InvokeModelRequest.class))).thenThrow(
+                ApiCallTimeoutException.builder().message("SENTINEL_PROVIDER_PAYLOAD").build());
+        ArchitectureFactsExtractionException timeout = failure(client);
+        assertThat(timeout.reason()).isEqualTo(
+                ArchitectureFactsExtractionException.Reason.PROVIDER_TIMEOUT);
+        assertThat(timeout.evaluationDetail()).doesNotContain("SENTINEL_PROVIDER_PAYLOAD");
     }
 
     private ArchitectureFactsExtractionException failure(BedrockRuntimeClient client) {

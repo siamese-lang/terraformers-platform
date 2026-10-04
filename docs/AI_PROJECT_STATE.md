@@ -12,13 +12,35 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
-- Mode: **Portfolio Case Closure**
-- Status: **REPRESENTATIVE CASE SET CLOSED / PRODUCTION HARDENING DEFERRED**
+- Mode: **Portfolio Case Extension**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION SELECTED / IMPLEMENTATION NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Portfolio representative-case work is closed with explicit residuals. Case C is PORTFOLIO_CLOSED_WITH_RESIDUALS; deferred capacity/hardening work requires a new explicit operational or portfolio decision.**
+- Current single task: **Merge the Case A semantic-reliability decision/Work Package, then implement the layered AI outcome and false-green measurement contract. Case B and Case C remain portfolio-closed; live GCP recreation is not authorized until a separate checkpoint.**
+
+### Case A semantic reliability extension control
+
+- Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
+- Extension status: **DECISION SELECTED — IMPLEMENTATION NOT STARTED**
+- New representative claim: distinguish provider transport/completion, pipeline correctness,
+  runtime quality signals, and labeled semantic quality; measure false-green outcomes and retain
+  bounded diagnostics for content blocking and executable correctness.
+- Active plan:
+  [Case A Semantic Reliability Extension](plans/active/case-a-semantic-reliability-extension.md)
+- Work Package:
+  [.agents/work-packages/case-a-semantic-reliability-v1.yml](../.agents/work-packages/case-a-semantic-reliability-v1.yml)
+- Historical VPC evidence already demonstrates the motivating false-green shape: retrieval,
+  generation, and validation PASS while required grounding was incomplete.
+- Case C run `36949479621` is classified as a repository-owned sensitive-credential policy
+  false failure, not proven Vertex censorship; PR #190 removed that over-constrained draft policy.
+- C2 run `37016993776` remains a separate executable-correctness diagnostic gap:
+  attempt 1 PASS, attempt 2 `terraform_validate_configuration`, exact invalid construct unavailable.
+- PR #196 final-documentation reconciliation is held until this extension reaches its new stopping
+  boundary.
+- GCP live recreation, model calls, deployment, and cost-bearing actions require a separate user
+  checkpoint after implementation/CI readiness.
 
 <!-- CASE_C_ARCHITECTURE_CLOSURE:START -->
 ### Case C portfolio closure control

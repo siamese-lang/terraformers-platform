@@ -351,6 +351,7 @@ work_package:
     - tests/rag/test_ingest_gcp_target_corpus.py
     - .github/workflows/gcp-target-corpus-ingestion.yml
     - .github/workflows/gcp-target-runtime-dependencies.yml
+    - .github/workflows/terraform-static-verification.yml
     - infra/kubernetes/overlays/gcp-target/backend-configmap-patch.yaml
 
   prohibited_paths:

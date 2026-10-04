@@ -67,6 +67,38 @@ class CaseAQualityCalibrationTest {
         assertFalseGreen(trace("run", "positive", EvaluationStageStatus.PASS, completeHits(), requiredResources(), false));
     }
 
+    @Test void expectedValidationFailureMatchesRunnerFailureTraceWithoutBecomingTechnicalSuccess() {
+        var baseDefinition = positiveDefinition();
+        var definition = new EvaluationCase(
+                baseDefinition.schemaVersion(), baseDefinition.datasetVersion(), baseDefinition.caseId(),
+                baseDefinition.input(), baseDefinition.expectedClassification(), baseDefinition.components(),
+                baseDefinition.relationships(), baseDefinition.resourceTypes(), baseDefinition.retrieval(),
+                baseDefinition.generation(), EvaluationCase.ValidationExpectation.FAIL, baseDefinition.notes());
+        var baseTrace = successfulPositiveTrace();
+        var failure = new EvaluationFailure(
+                EvaluationStage.VALIDATION,
+                EvaluationFailureCategory.TERRAFORM_STRUCTURAL_VALIDATION,
+                "expected invalid Terraform");
+        var validation = StageTrace.fail(
+                EvaluationStage.VALIDATION,
+                5,
+                new EvaluationTrace.ValidationEvidence(
+                        new EvaluationTrace.ValidationCheck("validator", false, "expected invalid Terraform"),
+                        List.of()),
+                failure);
+        var trace = new EvaluationTrace(
+                baseTrace.schemaVersion(), baseTrace.datasetVersion(), baseTrace.runId(), baseTrace.caseId(),
+                baseTrace.input(), baseTrace.configuration(), baseTrace.factExtraction(), baseTrace.retrieval(),
+                baseTrace.generation(), validation, new EvaluationTrace.FirstDivergence(
+                        EvaluationStage.VALIDATION, EvaluationFailureCategory.TERRAFORM_STRUCTURAL_VALIDATION));
+
+        var result = scorer.score(definition, trace);
+
+        assertThat(result.technicalSuccess()).isFalse();
+        assertThat(result.labeledQualitySuccess()).isTrue();
+        assertThat(result.falseGreen()).isFalse();
+    }
+
     @Test void incompleteProjectDecisionGroundingFailsFrozenLabel() {
         assertFalseGreen(trace("run", "positive", EvaluationStageStatus.PASS,
                 List.of(hit(1, "provider", "aws_vpc", "aws_security_group")), requiredResources(), true));

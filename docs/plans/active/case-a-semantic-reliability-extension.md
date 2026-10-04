@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 APPROVED / IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -394,6 +394,16 @@ Required:
 - explicit conditional-on-extracted-facts boundary.
 
 ### A7-2 — False-green measurement and calibration
+
+A7-2 was explicitly approved on 2026-10-04. Execution is isolated in
+`.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml`.
+
+The selected implementation boundary is repository-only: preserve the existing Case A grounding
+report unchanged and add a parallel versioned calibration report that computes deterministic
+`technicalSuccess`, `labeledQualitySuccess`, and
+`falseGreen = technicalSuccess && !labeledQualitySuccess` from frozen dataset labels. A7-1 runtime
+quality status, when available, is only a side-by-side calibration signal and never label truth.
+Canonical/holdout datasets remain immutable and no live AI rerun is authorized.
 
 Required:
 

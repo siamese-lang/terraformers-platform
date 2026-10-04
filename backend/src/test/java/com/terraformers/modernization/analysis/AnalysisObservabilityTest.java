@@ -59,6 +59,17 @@ class AnalysisObservabilityTest {
     }
 
     @Test
+    void classifiesRawProviderThrottlingBeforeAdapterWrapping() {
+        AnalysisObservability observability = new AnalysisObservability(
+                new PrometheusMeterRegistry(PrometheusConfig.DEFAULT));
+        software.amazon.awssdk.services.bedrockruntime.model.ThrottlingException throttled =
+                software.amazon.awssdk.services.bedrockruntime.model.ThrottlingException.builder()
+                        .statusCode(429).message("SENTINEL_PROVIDER_PAYLOAD").build();
+
+        assertThat(observability.category(throttled)).isEqualTo("provider_rate_limited");
+    }
+
+    @Test
     void classifiesAllNewProviderNeutralReasons() {
         AnalysisObservability observability = new AnalysisObservability(
                 new PrometheusMeterRegistry(PrometheusConfig.DEFAULT));

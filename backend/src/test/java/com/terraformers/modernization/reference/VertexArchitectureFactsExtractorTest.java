@@ -101,7 +101,8 @@ class VertexArchitectureFactsExtractorTest {
     @Test
     void distinguishesMaxTokens() {
         ArchitectureFactsExtractionException failure = failure(extractor((modelId, content, config) ->
-                new VertexArchitectureFactsExtractor.VertexFactsResponse(SECRET_PAYLOAD, FinishReason.Known.MAX_TOKENS))));
+                new VertexArchitectureFactsExtractor.VertexFactsResponse(
+                        SECRET_PAYLOAD, FinishReason.Known.MAX_TOKENS)));
 
         assertThat(failure.reason()).isEqualTo(ArchitectureFactsExtractionException.Reason.RESPONSE_TRUNCATED);
         assertThat(failure.evaluationDetail()).isEqualTo("reason=RESPONSE_TRUNCATED");

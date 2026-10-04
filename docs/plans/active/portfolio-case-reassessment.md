@@ -2,16 +2,24 @@
 
 ## Status
 
-**PORTFOLIO CASE SET CLOSED — PRODUCTION HARDENING DEFERRED**
+**CASE A SEMANTIC RELIABILITY EXTENSION SELECTED — CASE B/C CLOSED**
 
 This plan temporarily supersedes milestone progression. Its purpose is to restore the modernization
 project to its actual success criterion: creating a small number of technically defensible,
 repository-backed engineering cases rather than consuming milestone TODOs.
 
-No new product feature, architecture change, live GCP activation, or milestone advancement starts
-outside the approved representative-case process.
+The three-case portfolio set was previously closed. On 2026-10-04 the user explicitly approved one
+new Case A extension after reviewing an AI-backend operations perspective: distinguish technical
+success from AI output quality and make false-green/partial-failure states observable.
 
-The measurement and acceptance source of truth for all three cases is
+This does not invalidate the original Case A retrieval-grounding closure and does not reopen Case B
+or the selected Case C infrastructure claim. It adds a new Case A operating claim governed by
+[Case A Semantic Reliability Extension](case-a-semantic-reliability-extension.md).
+
+No live GCP activation or cost-bearing action starts from this planning decision. Live validation,
+if required after implementation, remains a separate checkpoint.
+
+The measurement and acceptance source of truth for the original three cases is
 [Portfolio Case Measurement & Acceptance Contract](portfolio-case-measurement-contract.md).
 
 ## Why this reassessment exists
@@ -70,9 +78,20 @@ Later runner diagnostics do not overwrite the canonical M3 source commit or base
 
 ## Case A — AI/RAG quality, performance and reliability
 
-**Current status: PORTFOLIO-CLOSED / PASS.** The authoritative final evidence is
-[Case A Final Closure](../../evaluation/case-a-final-closure.md). The sections below retain the
-historical reassessment path that led to the final decision.
+**Original retrieval-grounding claim: PORTFOLIO-CLOSED / PASS.**
+
+**Current extension status: SEMANTIC RELIABILITY EXTENSION SELECTED — IMPLEMENTATION NOT STARTED.**
+
+The authoritative original closure remains
+[Case A Final Closure](../../evaluation/case-a-final-closure.md).
+
+The new extension is
+[AI Semantic Reliability and Runtime Quality Observability](case-a-semantic-reliability-extension.md).
+It uses the historical grounding gap as a false-green baseline, distinguishes provider completion
+from usable output, adds an unlabeled runtime quality-signal boundary, retains labeled semantic
+truth only in frozen evaluation datasets, and addresses the retained C2 executable-diagnostic gap.
+
+The sections below retain the historical reassessment path that led to the original Case A closure.
 
 ### Existing evidence worth retaining
 

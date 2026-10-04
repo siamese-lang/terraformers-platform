@@ -1,8 +1,17 @@
 work_package:
   id: case-a-semantic-reliability-v1
-  status: A7_0_COMPLETE_A7_1_AWAITING_USER_APPROVAL
+  status: A7_0_COMPLETE_HANDOFF_TO_A7_1_WORK_PACKAGE
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: dd34d1cec34d31783ca2d672c65311ce82fd2666
+
+  execution_handoff:
+    reason: >
+      The original Work Package bound execution_base_sha once for A7-0 and stops when main drifts.
+      A7-0 implementation and closure were intentionally merged, so later phases must not overwrite
+      that historical execution base. A7-1 therefore uses its own bounded Work Package.
+    next_work_package: .agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml
+    user_approval: 2026-10-04
+    A7_1_implementation_started: false
 
   phase_gate:
     completed_phase: A7_0

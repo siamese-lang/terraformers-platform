@@ -441,7 +441,7 @@ or Terraform/HCL example.
         self.assertEqual(["AWS_PROVIDER_SCHEMA"], [document["documentType"] for document in target])
 
     def test_v4_does_not_count_unparsed_official_file_as_indexed_evidence(self):
-        output = self.workspace / "v4-unparsed"
+        output = self.workspace / "unparsed" / "v4"
         build_v4.build(self.args(output, ["aws_unparsed_resource"]))
         coverage = json.loads((output / "coverage-report.json").read_text(encoding="utf-8"))
 

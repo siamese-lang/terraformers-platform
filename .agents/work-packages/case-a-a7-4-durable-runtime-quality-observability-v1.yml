@@ -1,8 +1,8 @@
 work_package:
   id: case-a-a7-4-durable-runtime-quality-observability-v1
-  status: APPROVED_AWAITING_ACTIVATION
+  status: ACTIVE
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: 9beec226a1cc5c314d6e6f27a62e6b63f20abab1
 
   activation:
     bind_rule: >

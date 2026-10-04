@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 ROOT = Path(__file__).parents[2]
 SPEC = importlib.util.spec_from_file_location(
@@ -12,6 +13,12 @@ SPEC = importlib.util.spec_from_file_location(
 )
 build = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(build)
+
+V4_SPEC = importlib.util.spec_from_file_location(
+    "build_corpus_v4", ROOT / "scripts/rag/build-corpus-v4.py"
+)
+build_v4 = importlib.util.module_from_spec(V4_SPEC)
+V4_SPEC.loader.exec_module(build_v4)
 
 
 class BuildCorpusV2Tests(unittest.TestCase):
@@ -191,6 +198,229 @@ resource "aws_vpc" "public" {
             )["mappings"]["properties"]
             self.assertEqual("keyword", mapping["authority"]["type"])
             self.assertEqual("integer", mapping["priority"]["type"])
+
+
+class BuildCorpusV4Tests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.workspace = Path(self.temp.name)
+        self.provider = self.workspace / "provider"
+        docs = self.provider / "website/docs/r"
+        docs.mkdir(parents=True)
+        (docs / "vpc.html.markdown").write_text(
+            """---
+subcategory: "VPC (Virtual Private Cloud)"
+layout: "aws"
+page_title: "AWS: aws_vpc"
+---
+# Resource: aws_vpc
+
+Provides a VPC resource.
+
+## Example Usage
+
+Basic:
+
+```terraform
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+```
+""",
+            encoding="utf-8",
+        )
+        (docs / "lambda_function.html.markdown").write_text(
+            """---
+subcategory: "Lambda"
+layout: "aws"
+page_title: "AWS: aws_lambda_function"
+---
+# Resource: aws_lambda_function
+
+Provides a Lambda Function resource.
+
+## Example Usage
+
+Basic:
+
+```terraform
+resource "aws_lambda_function" "example" {
+  function_name = "example"
+  role          = aws_iam_role.example.arn
+  handler       = "index.handler"
+}
+```
+""",
+            encoding="utf-8",
+        )
+        self.schema = self.workspace / "schema.json"
+        self.schema.write_text(
+            json.dumps(
+                {
+                    "provider_schemas": {
+                        build_v4.PROVIDER_ADDRESS: {
+                            "resource_schemas": {
+                                "aws_vpc": {
+                                    "block": {
+                                        "attributes": {
+                                            "cidr_block": {"type": "string", "optional": True}
+                                        },
+                                        "block_types": {},
+                                    }
+                                },
+                                "aws_lambda_function": {
+                                    "block": {
+                                        "attributes": {
+                                            "function_name": {"type": "string", "required": True},
+                                            "role": {"type": "string", "required": True},
+                                            "handler": {"type": "string", "optional": True},
+                                        },
+                                        "block_types": {},
+                                    }
+                                },
+                                "aws_schema_only_resource": {
+                                    "block": {
+                                        "attributes": {
+                                            "name": {"type": "string", "required": True}
+                                        },
+                                        "block_types": {},
+                                    }
+                                },
+                            }
+                        }
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        self.v3 = self.workspace / "v3"
+        self.v3.mkdir()
+        (self.v3 / "documents.jsonl").write_text(
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "documentId": "tfaws-5.100.0-aws_vpc-schema",
+                            "documentType": "AWS_PROVIDER_SCHEMA",
+                            "resourceTypes": ["aws_vpc"],
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "documentId": "tfref-v2-private-entry",
+                            "title": "Private entry",
+                            "documentType": "TERRAFORMERS_PATTERN",
+                            "authority": "PROJECT_DECISION",
+                            "priority": 100,
+                            "sectionType": "project-pattern",
+                            "riskTags": [],
+                            "content": "CloudFront is the only public entry.",
+                            "services": ["cloudfront"],
+                            "resourceTypes": ["aws_cloudfront_distribution"],
+                            "architecturePattern": "cloudfront-only-public-entry",
+                            "securityConsiderations": ["private-origin"],
+                            "sourceVersion": "terraformers-reference-v3",
+                            "providerVersion": build_v4.PROVIDER_VERSION,
+                            "sourcePath": "docs/reference-retrieval.md",
+                            "sourceCommit": "c" * 40,
+                            "corpusVersion": "terraformers-reference-v3",
+                        }
+                    ),
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def args(self, output, resources):
+        return SimpleNamespace(
+            provider_source_dir=self.provider,
+            provider_schema_json=self.schema,
+            provider_source_commit="a" * 40,
+            project_source_commit="b" * 40,
+            v3_corpus_dir=self.v3,
+            output_dir=output,
+            resource=resources,
+            all_documented_resources=False,
+        )
+
+    def test_v4_builds_resource_absent_from_v3_without_source_allowlist(self):
+        output = self.workspace / "v4"
+        summary = build_v4.build(self.args(output, ["aws_lambda_function"]))
+        self.assertEqual("terraformers-reference-v4", summary["corpusVersion"])
+        self.assertEqual(1, summary["selectedResourceCount"])
+        self.assertEqual(1, summary["newResourceCountComparedWithV3"])
+
+        coverage = json.loads((output / "coverage-report.json").read_text(encoding="utf-8"))
+        self.assertEqual(3, coverage["providerSchemaResourceCount"])
+        self.assertEqual(2, coverage["officialDocumentationResourceCount"])
+        self.assertEqual(1, coverage["v3ProviderResourceCount"])
+        self.assertEqual(["aws_lambda_function"], coverage["newResourceTypesComparedWithV3"])
+
+        documents = [
+            json.loads(line)
+            for line in (output / "documents.jsonl").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        lambda_documents = [
+            document
+            for document in documents
+            if "aws_lambda_function" in document.get("resourceTypes", [])
+        ]
+        self.assertTrue(lambda_documents)
+        self.assertTrue(
+            any(document["documentType"] == "AWS_PROVIDER_DOC" for document in lambda_documents)
+        )
+        self.assertTrue(
+            any(document["documentType"] == "AWS_PROVIDER_SCHEMA" for document in lambda_documents)
+        )
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/checks/rag-corpus-contract-verification.py"),
+                "--corpus-dir",
+                str(output),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(0, completed.returncode, completed.stderr)
+
+    def test_v4_reports_schema_resource_without_official_doc_as_knowledge_gap(self):
+        output = self.workspace / "v4-schema-only"
+        build_v4.build(self.args(output, ["aws_schema_only_resource"]))
+        coverage = json.loads((output / "coverage-report.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            ["aws_schema_only_resource"],
+            coverage["selectedMissingOfficialDocumentationResourceTypes"],
+        )
+        self.assertEqual(0, coverage["selectedOfficialDocumentationResourceCount"])
+
+        documents = [
+            json.loads(line)
+            for line in (output / "documents.jsonl").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        target = [
+            document
+            for document in documents
+            if "aws_schema_only_resource" in document.get("resourceTypes", [])
+        ]
+        self.assertEqual(["AWS_PROVIDER_SCHEMA"], [document["documentType"] for document in target])
+
+    def test_v4_all_documented_mode_is_schema_intersection_not_allowlist(self):
+        args = self.args(self.workspace / "v4-all", None)
+        args.all_documented_resources = True
+        provider_schema = build_v4.schema_provider(self.schema)
+        self.assertEqual(
+            ["aws_lambda_function", "aws_vpc"],
+            build_v4.select_resources(args, provider_schema),
+        )
 
 
 if __name__ == "__main__":

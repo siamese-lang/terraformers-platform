@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 APPROVED — IMPLEMENTATION NOT STARTED**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 IMPLEMENTED — VALIDATION PENDING**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-1 Evidence-backed Quality Contract is approved but implementation has not started. Execute only `.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml` after this activation contract is merged; stop before A7-2.**
+- Current single task: **A7-1 Evidence-backed Quality Contract is implemented on execution base `2efa4dcc1425feafac896a069315416949fa7ab5`; validate this bounded implementation and stop before A7-2.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 APPROVED / IMPLEMENTATION NOT STARTED**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 IMPLEMENTED / VALIDATION PENDING**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -46,6 +46,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   extraction gaps. Structural authority remains all 1,526 schema resources; RAG scope is the full
   1,514-resource schema/document intersection; the remaining 12 are explicit official-knowledge
   gaps. v3 remains immutable.
+- A7-1 implementation defines `evidence-quality-v1` as a deterministic JSON-serializable
+  assessment with separate technical, knowledge, quality, and project-decision status. It
+  distinguishes official-knowledge absence from retrieval miss, checks generated resource types
+  against provider schema and selected official evidence, keeps project decisions as a separate
+  `TERRAFORMERS_PATTERN` dimension, and records the runtime quality boundary as
+  `CONDITIONAL_ON_EXTRACTED_FACTS`. AnalysisJob DB/API persistence remains deferred to A7-4.
 - No evaluator LLM or multi-model voting is part of the default design.
 - Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
   validation PASS while required grounding was incomplete.

@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 APPROVED / IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 IMPLEMENTED / VALIDATION PENDING — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -15,8 +15,9 @@ This extension adds one new portfolio question:
 The architecture decision is frozen in
 ADR-008 — Evidence-backed AI quality for Terraformers.
 
-Implementation is governed by
-.agents/work-packages/case-a-semantic-reliability-v1.yml.
+Extension direction is governed by
+`.agents/work-packages/case-a-semantic-reliability-v1.yml`; the active A7-1 execution unit is
+`.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml`.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
 
@@ -37,10 +38,11 @@ full 1,526-resource provider schema, while RAG ingestion targets the full 1,514-
 schema/official-document intersection. The remaining 12 schema resources are explicit official
 knowledge gaps; the project does not fabricate RAG evidence for them.
 
-A7-1 was explicitly approved on 2026-10-04. Because the original extension Work Package
-bound its execution base during A7-0 and has a stop-on-main-drift rule, A7-1 execution is isolated in
-`.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml` instead of overwriting the
-historical A7-0 base. A7-1 implementation does not start until that execution contract is merged.
+A7-1 was explicitly approved on 2026-10-04 and implemented on execution base
+`2efa4dcc1425feafac896a069315416949fa7ab5` through
+`.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml`. The implementation defines
+the deterministic `evidence-quality-v1` assessment and its focused tests while leaving AnalysisJob
+persistence/API exposure to A7-4. A7-2 is not started.
 
 ## 1. Why this extension exists
 

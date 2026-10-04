@@ -1,8 +1,8 @@
 work_package:
   id: case-a-a7-1-evidence-quality-contract-v1
-  status: ACTIVE
+  status: IMPLEMENTED_AWAITING_VALIDATION
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: 2efa4dcc1425feafac896a069315416949fa7ab5
 
   activation:
     bind_rule: >
@@ -232,6 +232,13 @@ work_package:
     - evaluator_LLM_or_model_voting_is_proposed
     - live_or_cost_action_is_requested
     - acceptance_criteria_would_need_to_change
+
+  implementation_evidence:
+    document: docs/evaluation/case-a-a7-1-evidence-quality-contract.md
+    contract_version: evidence-quality-v1
+    execution_base_sha: 2efa4dcc1425feafac896a069315416949fa7ab5
+    validation_status: PENDING_CI
+    A7_2_status: NOT_STARTED
 
   completion:
     merge_requires_user_approval: true

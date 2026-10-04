@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 COMPLETE / A7-6 NOT STARTED**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 COMPLETE / A7-6 DECISION IMPLEMENTED — AWAITING REVIEW**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-5 is closed at implementation merge SHA `c5840c05c60ec78dc3a8c698453424b587014814`. A7-6 Observability Backend Decision is NOT STARTED and requires separate user approval plus its own bounded Work Package before implementation or dependency adoption.**
+- Current single task: **Review the A7-6 Observability Backend Decision. The selected current stack is repository-native observability; OpenTelemetry and Langfuse are deferred behind explicit evidence triggers. Stop before A7-7 and do not adopt a new dependency/runtime product.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 AWAITING USER APPROVAL**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 DECISION IMPLEMENTED / AWAITING REVIEW**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -68,7 +68,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   canonical repository smoke queries. Terraform Static Verification run `37191939292` completed
   successfully at scope level; its terraform/RAG job was skipped because PR #205 changed no
   terraform/RAG paths. Frozen canonical/holdout datasets were unchanged and no live AI/cloud
-  execution was used. A7-3 through A7-5 are complete; A7-6 has not started.
+  execution was used. A7-3 through A7-5 are complete; the A7-6 repository-only observability decision is implemented and awaits review.
 - No evaluator LLM or multi-model voting is part of the default design.
 - Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
   validation PASS while required grounding was incomplete.
@@ -587,9 +587,17 @@ and A7-4 `TERRAFORM_EXECUTABLE_FAILURE`, adds only bounded fixture-backed diagno
 evidence, and retains no raw failed HCL or arbitrary Terraform diagnostic text. Historical C2 run
 `37016993776` remains subtype-unknown. No live C2/provider/GCP/OpenSearch action was performed.
 
-Do not start A7-6 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
-v4 corpus into a live vector store, or introduce an evaluator LLM / multi-model voting / new
-observability product without the later phase gates and required explicit approvals.
+A7-6 — Observability Backend Decision — is **IMPLEMENTED / AWAITING REVIEW** under
+`.agents/work-packages/case-a-a7-6-observability-backend-decision-v1.yml`. The current selection is
+repository-native Micrometer + bounded MDC-correlated logs + durable AnalysisJob quality state +
+deterministic evaluation artifacts. OpenTelemetry is deferred as the preferred future
+instrumentation/transport standard if a cross-service or demonstrated trace-correlation gap appears.
+Langfuse is deferred unless one interactive LLM trace/score/release product becomes a demonstrated
+operator requirement. No dependency, telemetry exporter, runtime service, or cloud resource is added.
+
+Do not start A7-7 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
+v4 corpus into a live vector store, or adopt OpenTelemetry/Langfuse/another observability product
+without the later phase gates and required explicit approvals.
 
 ## Do not revisit
 

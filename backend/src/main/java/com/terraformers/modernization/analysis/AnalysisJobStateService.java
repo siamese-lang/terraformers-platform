@@ -74,7 +74,8 @@ public class AnalysisJobStateService {
         return transitioned;
     }
 
-    boolean markFailedOwned(String jobId, long generation, Instant now, String failureReason) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean markFailedOwned(String jobId, long generation, Instant now, String failureReason) {
         return markFailedOwned(jobId, generation, now, failureReason,
                 TerminalQualityAssessmentMapper.failure(new IllegalStateException()));
     }

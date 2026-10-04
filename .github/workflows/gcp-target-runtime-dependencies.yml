@@ -17,6 +17,7 @@ on:
           - backend-replacement-durability
           - backend-live-validation
           - backend-live-validation-c2-stability
+          - a7-7-broad-v4-live-proof
           - capacity-baseline
           - runtime-live-acceptance
       expected_sha:
@@ -1455,7 +1456,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch' &&
-      (inputs.operation == 'backend-live-validation' || inputs.operation == 'backend-live-validation-c2-stability')
+      (inputs.operation == 'backend-live-validation' || inputs.operation == 'backend-live-validation-c2-stability' || inputs.operation == 'a7-7-broad-v4-live-proof')
     runs-on: ubuntu-latest
     environment: gcp-target-apply
     timeout-minutes: 90
@@ -1466,6 +1467,7 @@ jobs:
       ISSUER_URI: https://identity.example.test/case-c
       CLIENT_ID: case-c-runtime-client
       FIXTURE: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
+      NEGATIVE_FIXTURE: evaluation/terraformers-eval-v1/fixtures/case-06-non-architecture-dashboard.webp
 
     steps:
       - uses: actions/checkout@v5
@@ -1504,6 +1506,20 @@ jobs:
               }
               [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_SHA" ]] || {
                 echo 'C2 backend source SHA must equal the approved checked-out main SHA.' >&2
+                exit 1
+              }
+              ;;
+            a7-7-broad-v4-live-proof)
+              [[ "$CONFIRMATION" == RUN_A7_7_BROAD_V4_LIVE_PROOF ]] || {
+                echo 'A7-7 live proof requires confirmation RUN_A7_7_BROAD_V4_LIVE_PROOF.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+                echo 'A7-7 live proof requires an exact backend_source_sha.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_SHA" ]] || {
+                echo 'A7-7 backend source SHA must equal the approved checked-out main SHA.' >&2
                 exit 1
               }
               ;;
@@ -1555,14 +1571,59 @@ jobs:
           kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
           test -s "$FIXTURE"
 
-          if [[ "$OPERATION" == backend-live-validation-c2-stability ]]; then
+          if [[ "$OPERATION" == backend-live-validation-c2-stability || "$OPERATION" == a7-7-broad-v4-live-proof ]]; then
             runtime_source="$(
               kubectl -n "$NAMESPACE" exec deployment/terraformers-backend                 -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
             )"
             [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]] || {
-              echo "C2 runtime source revision mismatch: $runtime_source" >&2
+              echo "Runtime source revision mismatch: $runtime_source" >&2
               exit 1
             }
+          fi
+
+          if [[ "$OPERATION" == a7-7-broad-v4-live-proof ]]; then
+            test -s "$NEGATIVE_FIXTURE"
+            [[ "$(sha256sum "$FIXTURE" | awk '{print $1}')" == a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8 ]]
+            [[ "$(sha256sum "$NEGATIVE_FIXTURE" | awk '{print $1}')" == 12eb8590b89eaea0988d5038c7a9862eebc584039d88084fe91433848a53d36d ]]
+
+            [[ "$(
+              kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config                 -o jsonpath='{.data.CORPUS_VERSION}'
+            )" == terraformers-reference-v4 ]]
+            [[ "$(
+              kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config                 -o jsonpath='{.data.INDEX_NAME}'
+            )" == terraformers-reference-v4 ]]
+
+            runtime_retrieval="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend --                 sh -c 'printf "%s|%s" "$CORPUS_VERSION" "$INDEX_NAME"'
+            )"
+            [[ "$runtime_retrieval" == 'terraformers-reference-v4|terraformers-reference-v4' ]] || {
+              echo "A7-7 backend runtime retrieval identity mismatch: $runtime_retrieval" >&2
+              exit 1
+            }
+
+            mapping_json="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend --                 curl -fsS http://terraformers-opensearch:9200/terraformers-reference-v4/_mapping
+            )"
+            v4_checksum="$(
+              jq -r '."terraformers-reference-v4".mappings._meta.terraformers_corpus.checksum // empty'                 <<< "$mapping_json"
+            )"
+            [[ "$v4_checksum" =~ ^[0-9a-f]{64}$ ]] || {
+              echo 'A7-7 v4 index is missing the immutable corpus checksum.' >&2
+              exit 1
+            }
+            v4_corpus_version="$(
+              jq -r '."terraformers-reference-v4".mappings._meta.terraformers_corpus.corpus_version // empty'                 <<< "$mapping_json"
+            )"
+            [[ "$v4_corpus_version" == terraformers-reference-v4 ]]
+
+            count_json="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend --                 curl -fsS -H 'Content-Type: application/json'                   -X POST http://terraformers-opensearch:9200/terraformers-reference-v4/_count                   -d '{"query":{"term":{"corpusVersion":"terraformers-reference-v4"}}}'
+            )"
+            [[ "$(jq -r '.count' <<< "$count_json")" == 5395 ]] || {
+              echo "A7-7 v4 index document count mismatch: $(jq -r '.count' <<< "$count_json")" >&2
+              exit 1
+            }
+            echo "A77_V4_CHECKSUM=$v4_checksum" >> "$GITHUB_ENV"
           fi
 
       - name: Prepare ephemeral authenticated JWT fixture
@@ -1643,7 +1704,7 @@ jobs:
             printf '{"alg":"RS256","kid":"%s","typ":"JWT"}' "$kid"               | openssl base64 -A | tr '+/' '-_' | tr -d '='
           )"
           token_ttl=900
-          if [[ "$OPERATION" == backend-live-validation-c2-stability ]]; then
+          if [[ "$OPERATION" == backend-live-validation-c2-stability || "$OPERATION" == a7-7-broad-v4-live-proof ]]; then
             token_ttl=10800
           fi
           payload="$(

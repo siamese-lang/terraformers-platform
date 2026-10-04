@@ -1,8 +1,8 @@
 work_package:
   id: case-a-a7-5-safe-executable-diagnostics-v1
-  status: APPROVED_AWAITING_ACTIVATION
+  status: IMPLEMENTED_AWAITING_REVIEW
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: acc8debe415d6e0211bcf50aec28592a260e01b4
 
   activation:
     bind_rule: >

@@ -1,0 +1,1 @@
+{"format_version":"1.0","valid":false,"error_count":2,"warning_count":1,"diagnostics":[{"severity":"error","summary":"Unsupported block type","detail":"SENTINEL_DETAIL block"},{"severity":"error","summary":"Unsupported argument","detail":"SENTINEL_DETAIL argument"},{"severity":"warning","summary":"SENTINEL_WARNING_SUMMARY","detail":"SENTINEL_WARNING_DETAIL"}]}

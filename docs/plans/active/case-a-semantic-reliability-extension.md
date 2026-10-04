@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 APPROVED / IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 IMPLEMENTED / AWAITING REVIEW — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -16,7 +16,7 @@ The architecture decision is frozen in
 ADR-008 — Evidence-backed AI quality for Terraformers.
 
 Extension direction is governed by
-`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 through A7-4 are complete. A7-5 is explicitly approved in `.agents/work-packages/case-a-a7-5-safe-executable-diagnostics-v1.yml`; implementation has not started.
+`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 through A7-4 are complete. A7-5 is implemented on its frozen execution base under `.agents/work-packages/case-a-a7-5-safe-executable-diagnostics-v1.yml` and awaits independent review.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
 
@@ -43,7 +43,7 @@ A7-1 was explicitly approved on 2026-10-04, implemented on execution base
 `evidence-quality-v1` contract passed Backend Local Verification run `37188607802`.
 AnalysisJob persistence/API exposure remains deferred to A7-4. A7-2 closed after PR #205 merged as
 `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`; Backend Local Verification run `37191939296`
-passed. A7-3 implementation PR #208 merged as `fdb0e8a3f7e6656c46dd24e173894460ec09fd7f`; corrective PR #209 merged as `94869668ef177370701adcaae7e5c5473b3076ac`. Backend Local Verification `37198612965` and Terraform Static Verification `37198612964` passed. A7-4 PR #213 merged as `ab1b1f410b6aabf674af51d6161a2efd0f6df6a4`; bounded repair commit `0e457f7bd9339fc44f901bdd90b2c95f40c081b0` resolved the one initial transaction-boundary test error, and final Backend Local Verification `37210008792` plus Terraform Static Verification `37210008786` passed. A7-5 is approved; implementation has not started.
+passed. A7-3 implementation PR #208 merged as `fdb0e8a3f7e6656c46dd24e173894460ec09fd7f`; corrective PR #209 merged as `94869668ef177370701adcaae7e5c5473b3076ac`. Backend Local Verification `37198612965` and Terraform Static Verification `37198612964` passed. A7-4 PR #213 merged as `ab1b1f410b6aabf674af51d6161a2efd0f6df6a4`; bounded repair commit `0e457f7bd9339fc44f901bdd90b2c95f40c081b0` resolved the one initial transaction-boundary test error, and final Backend Local Verification `37210008792` plus Terraform Static Verification `37210008786` passed. A7-5 is implemented on its frozen execution base and awaits independent review.
 
 ## 1. Why this extension exists
 

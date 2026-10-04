@@ -139,9 +139,12 @@ class AnalysisJobOrchestratorTest {
                 List.of()
         );
         TerraformExecutableValidator executableValidator = mock(TerraformExecutableValidator.class);
+        TerraformDiagnosticSummary diagnosticSummary = new TerraformDiagnosticSummary(List.of(
+                TerraformDiagnosticSummary.DiagnosticClass.MISSING_REQUIRED_ARGUMENT), 1, 0);
         when(executableValidator.validate(anyString())).thenReturn(
                 new TerraformDraftValidation(false, "",
-                        "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation"));
+                        "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation",
+                        diagnosticSummary));
         AnalysisJobOrchestrator orchestrator = new AnalysisJobOrchestrator(
                 provider,
                 mock(ProgressPublisher.class),
@@ -157,6 +160,7 @@ class AnalysisJobOrchestratorTest {
                             TerraformValidationFailureException.Category.VALIDATE_CONFIGURATION);
                     assertThat(failure).hasMessage(
                             "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation");
+                    assertThat(failure.diagnosticSummary()).isEqualTo(diagnosticSummary);
                 });
 
         verify(executableValidator).validate("""

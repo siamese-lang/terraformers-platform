@@ -43,6 +43,22 @@ public class AnalysisObservability {
     public void jobFailed(Throwable exception) {
         jobs("failed").increment();
         failures("terraformers.analysis.failures", category(exception)).increment();
+        if (exception instanceof TerraformValidationFailureException terraformFailure
+                && terraformFailure.category() == TerraformValidationFailureException.Category.VALIDATE_CONFIGURATION
+                && terraformFailure.diagnosticSummary() != null) {
+            TerraformDiagnosticSummary summary = terraformFailure.diagnosticSummary();
+            summary.diagnosticClasses().forEach(diagnosticClass ->
+                    Counter.builder("terraformers.analysis.terraform.diagnostics")
+                            .tag("diagnostic", diagnosticClass.name())
+                            .register(meterRegistry).increment());
+            DistributionSummary.builder("terraformers.analysis.terraform.diagnostic.errors")
+                    .register(meterRegistry).record(summary.errorCount());
+            DistributionSummary.builder("terraformers.analysis.terraform.diagnostic.warnings")
+                    .register(meterRegistry).record(summary.warningCount());
+            log.warn("Terraform executable diagnostic classes={} errorCount={} warningCount={}",
+                    summary.diagnosticClasses().stream().map(Enum::name).toList(),
+                    summary.errorCount(), summary.warningCount());
+        }
     }
 
     public void terminalQuality(EvidenceQualityAssessment quality) {

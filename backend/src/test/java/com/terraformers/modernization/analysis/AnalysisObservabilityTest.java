@@ -159,6 +159,33 @@ class AnalysisObservabilityTest {
                 .doesNotContain(sensitive, rawHcl, "aws_db_instance", "password");
     }
 
+    @Test
+    void publishesBoundedTerraformDiagnosticEvidenceUnderUnchangedTopLevelCategory() {
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        AnalysisObservability observability = new AnalysisObservability(registry);
+        TerraformDiagnosticSummary summary = new TerraformDiagnosticSummary(java.util.List.of(
+                TerraformDiagnosticSummary.DiagnosticClass.UNKNOWN,
+                TerraformDiagnosticSummary.DiagnosticClass.MISSING_REQUIRED_ARGUMENT,
+                TerraformDiagnosticSummary.DiagnosticClass.UNKNOWN), 2, 1);
+        TerraformValidationFailureException failure = new TerraformValidationFailureException(
+                TerraformValidationFailureException.Category.VALIDATE_CONFIGURATION,
+                "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation", summary);
+
+        observability.jobFailed(failure);
+
+        assertThat(observability.category(failure)).isEqualTo("terraform_validate_configuration");
+        assertThat(failureCount(registry, "terraform_validate_configuration")).isEqualTo(1);
+        assertThat(registry.find("terraformers.analysis.terraform.diagnostics").meters())
+                .hasSize(2).allSatisfy(meter -> assertThat(meter.getId().getTags())
+                        .extracting(Tag::getKey).containsExactly("diagnostic"));
+        assertThat(registry.find("terraformers.analysis.terraform.diagnostic.errors").summary().totalAmount())
+                .isEqualTo(2);
+        assertThat(registry.find("terraformers.analysis.terraform.diagnostic.warnings").summary().totalAmount())
+                .isEqualTo(1);
+        assertThat(registry.scrape()).doesNotContain(
+                "SENTINEL_RAW_HCL", "SENTINEL_SUMMARY", "SENTINEL_DETAIL", "SENTINEL_PATH");
+    }
+
     private AnalysisProviderFailureException providerFailure(AnalysisProviderFailureReason reason) {
         return new AnalysisProviderFailureException(reason, new RuntimeException());
     }

@@ -307,7 +307,9 @@ def main() -> None:
             "v3ProviderResourceCount",
             "selectedResourceCount",
             "selectedOfficialDocumentationResourceCount",
+            "selectedOfficialEvidenceResourceCount",
             "selectedMissingOfficialDocumentationResourceTypes",
+            "selectedOfficialEvidenceExtractionGapResourceTypes",
             "newResourceTypesComparedWithV3",
             "providerDocumentChunkCount",
             "projectDecisionCount",
@@ -331,6 +333,7 @@ def main() -> None:
             "v3ProviderResourceCount",
             "selectedResourceCount",
             "selectedOfficialDocumentationResourceCount",
+            "selectedOfficialEvidenceResourceCount",
             "providerDocumentChunkCount",
             "projectDecisionCount",
         ):
@@ -340,6 +343,11 @@ def main() -> None:
         require_nonblank_list(
             coverage_report["selectedMissingOfficialDocumentationResourceTypes"],
             "selectedMissingOfficialDocumentationResourceTypes",
+            nonempty=False,
+        )
+        require_nonblank_list(
+            coverage_report["selectedOfficialEvidenceExtractionGapResourceTypes"],
+            "selectedOfficialEvidenceExtractionGapResourceTypes",
             nonempty=False,
         )
         require_nonblank_list(
@@ -355,12 +363,24 @@ def main() -> None:
             for document in provider_documents
             for resource_type in document["resourceTypes"]
         }
+        official_evidence_resource_types = {
+            str(resource_type)
+            for document in provider_documents
+            if document["documentType"] in {"AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE"}
+            for resource_type in document["resourceTypes"]
+        }
         project_decision_count = sum(
             document["documentType"] == "TERRAFORMERS_PATTERN" for document in documents
         )
         missing_official = set(
             str(value)
             for value in coverage_report["selectedMissingOfficialDocumentationResourceTypes"]
+        )
+        extraction_gaps = set(
+            str(value)
+            for value in coverage_report[
+                "selectedOfficialEvidenceExtractionGapResourceTypes"
+            ]
         )
         if coverage_report["selectedResourceCount"] != len(provider_resource_types):
             fail("coverage report selectedResourceCount does not match corpus provider resources")
@@ -370,6 +390,27 @@ def main() -> None:
             fail("coverage report projectDecisionCount does not match corpus")
         if not missing_official <= provider_resource_types:
             fail("coverage report missing official resources must be selected corpus resources")
+        if not extraction_gaps <= provider_resource_types:
+            fail("coverage report extraction-gap resources must be selected corpus resources")
+        if missing_official & extraction_gaps:
+            fail("coverage report source-missing and extraction-gap resources must be disjoint")
+        if official_evidence_resource_types & (missing_official | extraction_gaps):
+            fail("coverage report official-evidence resources overlap a knowledge gap")
+        if (
+            official_evidence_resource_types | missing_official | extraction_gaps
+            != provider_resource_types
+        ):
+            fail("coverage report official evidence and gap classes do not cover selected resources")
+        if (
+            coverage_report["selectedOfficialEvidenceResourceCount"]
+            != len(official_evidence_resource_types)
+        ):
+            fail("coverage report selectedOfficialEvidenceResourceCount does not match corpus")
+        if (
+            coverage_report["selectedOfficialDocumentationResourceCount"]
+            != len(official_evidence_resource_types | extraction_gaps)
+        ):
+            fail("coverage report selected official source count does not reconcile")
         if (
             coverage_report["selectedOfficialDocumentationResourceCount"] + len(missing_official)
             != coverage_report["selectedResourceCount"]

@@ -116,7 +116,7 @@ class EvidenceQualityAssessorTest {
                 TechnicalStatus.PASS,
                 List.of("aws_vpc"),
                 Set.of("aws_vpc"),
-                providerEvidence,
+                List.of(providerDocument("decision-1", "aws_vpc")),
                 "",
                 ProjectDecisionApplicability.APPLICABLE,
                 List.of("decision-1")

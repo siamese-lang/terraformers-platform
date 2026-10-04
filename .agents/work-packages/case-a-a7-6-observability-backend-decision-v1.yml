@@ -1,0 +1,220 @@
+work_package:
+  id: case-a-a7-6-observability-backend-decision-v1
+  status: IMPLEMENTED_AWAITING_REVIEW
+  execution_base_sha: 175de19a32d4aac906eabc0e222090cf0ddf9f69
+
+  prior_phase:
+    id: A7_5
+    status: COMPLETE
+    implementation_merge_sha: c5840c05c60ec78dc3a8c698453424b587014814
+    closure_merge_sha: 175de19a32d4aac906eabc0e222090cf0ddf9f69
+    evidence: docs/evaluation/case-a-a7-5-safe-executable-diagnostics.md
+
+  user_approval:
+    approved_on: 2026-10-05
+    scope: A7_6_ONLY
+    approval_interpretation: >
+      The user's "다음 진행" immediately after A7-5 closure authorizes the next bounded A7-6
+      decision task. It does not authorize dependency/runtime adoption, live GCP/provider action,
+      A7-7, or merge.
+
+  decision_gate:
+    engineering_axis:
+      - AI service observability
+      - backend operational diagnosis
+      - evidence-backed tool adoption
+
+    operating_scenario: >
+      Terraformers must explain one AnalysisJob across provider/retrieval/executable mechanics,
+      runtime quality state, and labeled evaluation evidence without exposing raw prompts, generated
+      HCL, credentials, or unbounded diagnostics. A new observability product is justified only if
+      A7-0 through A7-5 leave a demonstrated gap that materially weakens diagnosis or the portfolio claim.
+
+    current_repository_native_evidence:
+      runtime_metrics:
+        - Micrometer counters/timers/distribution summaries
+        - provider/retrieval outcome metrics
+        - stage duration and failure category metrics
+        - terminal evidence-quality metrics
+        - bounded Terraform diagnostic metrics
+      runtime_logs:
+        - analysisJobId MDC correlation
+        - source revision in console log pattern
+        - bounded stage/failure/quality/diagnostic events
+      durable_state:
+        - AnalysisJob terminal status
+        - provider/result identity
+        - persisted evidence-quality-v1 snapshot
+        - existing AnalysisJob API read-back
+      evaluation_artifacts:
+        - per-stage EvaluationTrace
+        - configuration fingerprint
+        - dataset/run/case identity
+        - retrieval/generation/validation evidence
+        - first-divergence semantics
+        - false-green calibration reports
+
+    actual_remaining_gap: >
+      Repository-native observability does not provide one interactive distributed-trace UI that
+      renders nested request spans, LLM/retrieval observations, and release comparisons together.
+      This is a convenience and exploration gap. The current architecture is one Spring Boot backend
+      with durable job state and explicit bounded stage/failure evidence; A7-0 through A7-5 do not
+      demonstrate a diagnosis or acceptance blocker caused by the absence of distributed tracing.
+
+    candidates:
+      - id: REPOSITORY_NATIVE
+        includes:
+          - Micrometer
+          - structured logs plus MDC
+          - durable AnalysisJob quality state
+          - deterministic evaluation artifacts
+        decision: SELECTED
+        reason: >
+          Already covers the project's current diagnostic claims with bounded low-cardinality data,
+          no new runtime dependency, no third-party telemetry surface, and no additional billable
+          infrastructure. It directly preserves the evidence generated in A7-0 through A7-5.
+      - id: OPENTELEMETRY
+        decision: DEFER
+        reason: >
+          OpenTelemetry Java traces, metrics, and logs are stable and the Java agent can add
+          zero-code edge instrumentation. It is the preferred future instrumentation/transport
+          standard if Terraformers becomes multi-service or A7-7 demonstrates a real cross-stage
+          trace-correlation gap. Today it would still require collector/export/backend decisions and
+          does not repair a demonstrated current blocker.
+      - id: LANGFUSE
+        decision: DEFER
+        reason: >
+          Langfuse provides LLM-oriented traces/observations, scores, releases, environments, and
+          experiment views. Current official SDKs are Python and JS/TS; other languages including
+          Java use OpenTelemetry ingestion. Self-hosting adds substantial infrastructure including
+          ClickHouse plus application/cache/database components. The project already owns its
+          deterministic quality/evaluation semantics, so adopting Langfuse now would duplicate
+          evidence surfaces without closing a demonstrated gap.
+
+    selected_contract:
+      current_backend: REPOSITORY_NATIVE
+      add_new_dependency: false
+      add_new_runtime_service: false
+      add_new_cloud_resource: false
+      add_new_telemetry_export: false
+      preserve_quality_oracle: evidence-quality-v1_and_frozen_labeled_evaluation
+      no_observability_product_as_quality_oracle: true
+
+      OpenTelemetry_future_trigger:
+        - multiple_services_or_processes_require_cross_service_trace_propagation
+        - A7_7_proves_job_MDC_stage_metrics_are_insufficient_for_root_cause
+        - operational_requirement_needs_vendor_neutral_trace_export
+      Langfuse_future_trigger:
+        - LLM_specific_trace_exploration_is_a_demonstrated_operator_requirement
+        - release_prompt_or_experiment_comparison_needs_one_interactive_product
+        - telemetry_privacy_and_hosting_cost_are_explicitly_accepted
+        - OpenTelemetry_ingestion_boundary_is_reviewed_for_Java
+
+      non_trigger:
+        - tool_popularity
+        - portfolio_breadth_for_its_own_sake
+        - desire_for_a_dashboard_without_an_evidence_gap
+
+  external_reference_snapshot:
+    reviewed_on: 2026-10-05
+    OpenTelemetry:
+      official_sources:
+        - https://opentelemetry.io/docs/languages/java/
+        - https://opentelemetry.io/docs/zero-code/java/agent/
+        - https://opentelemetry.io/docs/collector/
+      relevant_findings:
+        - Java traces_metrics_logs_stable
+        - Java_agent_supports_zero_code_instrumentation
+        - collector_is_vendor_neutral_receive_process_export_layer
+    Langfuse:
+      official_sources:
+        - https://langfuse.com/docs/observability/data-model
+        - https://langfuse.com/docs/observability/sdk/overview
+        - https://langfuse.com/docs/evaluation/evaluation-methods/scores-via-sdk
+        - https://langfuse.com/self-hosting/configuration/scaling
+      relevant_findings:
+        - trace_observation_session_model
+        - score_attachment_and_release_environment_analysis
+        - Python_and_JS_TS_SDKs_other_languages_via_OpenTelemetry
+        - self_hosted_v4_requires_multiple_runtime_storage_components
+
+  acceptance:
+    - A7_5_closure_main_is_the_execution_base
+    - repository_native_observability_capabilities_are_inventoried_from_current_code_and_evidence
+    - actual_remaining_observability_gap_is_stated_without_inventing_a_blocker
+    - repository_native_Langfuse_and_OpenTelemetry_are_compared_on_trace_score_job_release_correlation_privacy_cost_and_Java_integration
+    - external_product_capabilities_are_supported_by_current_official_documentation
+    - repository_native_is_selected_or_rejected_by_demonstrated_gap_not_tool_popularity
+    - OpenTelemetry_has_explicit_future_adoption_triggers
+    - Langfuse_has_explicit_future_adoption_triggers
+    - no_observability_product_is_made_the_quality_oracle
+    - no_dependency_runtime_service_cloud_resource_or_telemetry_export_is_added
+    - no_prompt_model_retrieval_generation_RAG_or_quality_semantics_change
+    - no_live_provider_GCP_OpenSearch_or_cost_action_occurs
+    - A7_7_is_not_started
+
+  allowed_paths:
+    - .agents/work-packages/case-a-a7-6-observability-backend-decision-v1.yml
+    - .agents/work-packages/case-a-semantic-reliability-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+    - docs/evaluation/case-a-a7-6-observability-backend-decision.md
+
+  prohibited_paths:
+    - backend/**
+    - .github/workflows/**
+    - evaluation/**
+    - corpus/**
+    - frontend/**
+    - infra/**
+    - AGENTS.md
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - start_A7_7
+    - add_Maven_dependency
+    - add_OpenTelemetry_agent_or_SDK
+    - add_Langfuse_dependency_or_endpoint
+    - deploy_observability_backend
+    - add_telemetry_export_destination
+    - add_cloud_resource
+    - change_evidence_quality_v1
+    - change_prompt_model_retrieval_generation_or_RAG_behavior
+    - live_Vertex_or_Bedrock_call
+    - live_GCP_action
+    - live_OpenSearch_action
+
+  validation:
+    required:
+      - official_source_comparison_review
+      - repository_native_inventory_review
+      - git_diff_check
+      - existing_repository_policy_scope_check_if_triggered
+    backend_CI_required: false
+    live_validation_required: false
+
+  stop_on:
+    - current_main_differs_from_execution_base_sha_before_first_write
+    - product_adoption_is_required_to_complete_A7_6
+    - dependency_runtime_or_cloud_change_is_requested
+    - A7_7_or_live_action_is_requested
+    - quality_oracle_change_is_requested
+    - acceptance_criteria_would_need_to_change
+
+  next_phase_decision:
+    A7_7_required: true
+    requirement_source: user_explicit_end_to_end_runtime_goal_2026_10_05
+    required_claim: >
+      The improved Terraformers must actually serve the broad v4 RAG corpus and persist/read back
+      evidence-quality-v1 in a representative end-to-end runtime before the extension can close.
+    repository_only_closure_allowed: false
+    live_scope_must_remain_bounded: true
+    teardown_required: true
+
+  completion:
+    merge_requires_user_approval: true
+    A7_7_requires_separate_user_approval: false
+    A7_7_live_execution_is_authorized_in_principle_after_A7_6_merge_and_its_own_bounded_work_package: true
+    any_observability_product_adoption_requires_separate_user_approval: true
+    live_action_outside_the_A7_7_work_package_requires_separate_user_approval: true

@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 DECISION IMPLEMENTED / AWAITING REVIEW — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -16,7 +16,7 @@ The architecture decision is frozen in
 ADR-008 — Evidence-backed AI quality for Terraformers.
 
 Extension direction is governed by
-`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 through A7-5 are complete. A7-5 closed at implementation merge SHA `c5840c05c60ec78dc3a8c698453424b587014814`; A7-6 has not started and requires separate user approval plus its own bounded Work Package.
+`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 through A7-5 are complete. A7-6 is a repository-only decision task under `.agents/work-packages/case-a-a7-6-observability-backend-decision-v1.yml`; the decision is implemented and awaits independent review.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
 
@@ -43,7 +43,7 @@ A7-1 was explicitly approved on 2026-10-04, implemented on execution base
 `evidence-quality-v1` contract passed Backend Local Verification run `37188607802`.
 AnalysisJob persistence/API exposure remains deferred to A7-4. A7-2 closed after PR #205 merged as
 `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`; Backend Local Verification run `37191939296`
-passed. A7-3 implementation PR #208 merged as `fdb0e8a3f7e6656c46dd24e173894460ec09fd7f`; corrective PR #209 merged as `94869668ef177370701adcaae7e5c5473b3076ac`. Backend Local Verification `37198612965` and Terraform Static Verification `37198612964` passed. A7-4 PR #213 merged as `ab1b1f410b6aabf674af51d6161a2efd0f6df6a4`; bounded repair commit `0e457f7bd9339fc44f901bdd90b2c95f40c081b0` resolved the one initial transaction-boundary test error, and final Backend Local Verification `37210008792` plus Terraform Static Verification `37210008786` passed. A7-5 PR #217 merged as `c5840c05c60ec78dc3a8c698453424b587014814`; Backend Local Verification `37215839871` and Terraform Static Verification `37215839970` passed. A7-6 is not started.
+passed. A7-3 implementation PR #208 merged as `fdb0e8a3f7e6656c46dd24e173894460ec09fd7f`; corrective PR #209 merged as `94869668ef177370701adcaae7e5c5473b3076ac`. Backend Local Verification `37198612965` and Terraform Static Verification `37198612964` passed. A7-4 PR #213 merged as `ab1b1f410b6aabf674af51d6161a2efd0f6df6a4`; bounded repair commit `0e457f7bd9339fc44f901bdd90b2c95f40c081b0` resolved the one initial transaction-boundary test error, and final Backend Local Verification `37210008792` plus Terraform Static Verification `37210008786` passed. A7-5 PR #217 merged as `c5840c05c60ec78dc3a8c698453424b587014814`; Backend Local Verification `37215839871` and Terraform Static Verification `37215839970` passed. A7-6 selects repository-native observability for the current portfolio scope and defers OpenTelemetry/Langfuse behind explicit future triggers.
 
 ## 1. Why this extension exists
 
@@ -498,16 +498,41 @@ Required:
 
 ### A7-6 — Observability backend decision
 
+**Status: DECISION IMPLEMENTED / AWAITING REVIEW.**
+
+A7-6 is executed on main base `175de19a32d4aac906eabc0e222090cf0ddf9f69` under
+`.agents/work-packages/case-a-a7-6-observability-backend-decision-v1.yml`.
+
+The measured remaining gap is an **interactive unified trace UI**, not a missing correctness or
+portfolio-evidence primitive. Current repository-native evidence already combines Micrometer stage /
+failure / quality metrics, `analysisJobId` MDC plus source revision logs, durable AnalysisJob quality
+state/API read-back, and deterministic evaluation/configuration/false-green artifacts.
+
+Selected now: **repository-native observability**.
+
+Deferred with explicit evidence triggers: **OpenTelemetry** as the preferred future
+instrumentation/transport standard, and **Langfuse** if a dedicated LLM trace/score/release UI becomes
+a demonstrated operator requirement.
+
+A7-6 adds no dependency, exporter, runtime service, cloud resource, or new quality oracle.
+
 Required:
 
 - compare native/Langfuse/OTel against actual remaining gap;
-- select or explicitly reject additional tooling.
+- select or explicitly reject additional tooling;
+- preserve explicit future adoption triggers rather than adopting tools for portfolio breadth.
 
 Any dependency/runtime adoption requires a separate user decision.
 
 ### A7-7 — Representative GCP live proof
 
-If repository-only evidence is insufficient, recreate the existing Case C representative topology.
+**Status: REQUIRED AFTER A7-6 MERGE — NOT STARTED.**
+
+Repository-only evidence is explicitly insufficient for final closure. The improved Terraformers
+must demonstrate that the broad v4 corpus is actually served by live retrieval and that the
+A7-4 `evidence-quality-v1` snapshot is persisted and readable through the real AnalysisJob API.
+
+Reuse the existing Case C representative topology; do not create a second architecture.
 
 Minimum evidence:
 
@@ -520,7 +545,9 @@ Minimum evidence:
 7. naturally observed provider/executable failures retained rather than rerun away;
 8. final reviewed teardown to zero known Terraformers billable resources.
 
-Live creation is a separate checkpoint.
+The user's 2026-10-05 end-to-end requirement authorizes A7-7 in principle after A7-6 is merged and
+an A7-7 bounded Work Package freezes the exact live actions. Actions outside that Work Package remain
+separate checkpoints.
 
 ### A7-8 — Integrated closure
 

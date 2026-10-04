@@ -1,5 +1,6 @@
 package com.terraformers.modernization.analysis;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +31,17 @@ class GeneratedTerraformContractInspectorTest {
                         failure -> org.assertj.core.api.Assertions.assertThat(failure.reason())
                                 .isEqualTo(GeneratedTerraformContractViolation.Reason
                                         .RESOURCE_OUTSIDE_AWS_PROVIDER_CONTRACT));
+    }
+
+    @Test
+    void extractsResourceTypesWithoutDuplicatingTheTerraformParser() {
+        assertThat(inspector.resourceTypes("""
+                resource "aws_vpc" "main" {}
+                resource "aws_subnet" "private_a" {}
+                resource "aws_subnet" "private_b" {}
+                resource "aws_not_real" "candidate" {}
+                """))
+                .containsExactly("aws_vpc", "aws_subnet", "aws_not_real");
     }
 
     @Test

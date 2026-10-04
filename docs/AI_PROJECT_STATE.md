@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 COMPLETE / A7-6 COMPLETE / A7-7 APPROVED — ACTIVATION PENDING**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 COMPLETE / A7-6 COMPLETE / A7-7 REPOSITORY IMPLEMENTED — AWAITING REVIEW / NO LIVE ACTION YET**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Activate A7-7 Broad v4 End-to-End Live Proof. First merge its bounded Work Package, then bind one execution base and prepare the existing ingestion/runtime workflows for v4. No live GCP mutation occurs before repository CI and the explicit live checkpoint.**
+- Current single task: **Review the A7-7 repository preparation against its frozen execution base and CI. Do not perform live GCP mutation yet. After repository merge, run read-only preflight and present the exact-value live checkpoint before recreation/ingestion/proof/teardown.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 APPROVED / ACTIVATION PENDING**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 REPOSITORY IMPLEMENTED / AWAITING REVIEW**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -592,18 +592,20 @@ A7-6 — Observability Backend Decision — is **COMPLETE** at merge SHA
 passed. Repository-native observability remains selected; OpenTelemetry and Langfuse are deferred
 behind explicit evidence triggers.
 
-A7-7 — Broad v4 End-to-End Live Proof — is **APPROVED / ACTIVATION PENDING** under
-`.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml`. Final closure requires a bounded
-live proof that all 5,395 v4 documents / 1,514 officially documented provider resources are actually
-served by the live RAG path, a positive AnalysisJob returns persisted `evidence-quality-v1`, an
-authenticated non-architecture negative control returns the expected NOT_APPLICABLE quality without
-Terraform output, and the recreated target runtime is torn down to the pre-A7-7 baseline.
+A7-7 — Broad v4 End-to-End Live Proof — is **REPOSITORY IMPLEMENTED / AWAITING REVIEW** under
+`.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml` on frozen execution base
+`13e398599ce69e087e9098b1413cad37c41edfd1`. Repository preparation now generalizes the protected
+GCP ingestion path to exact v3/v4 manifest contracts, deterministically builds broad v4 from the
+pinned provider source plus the schema copied from the exact backend runtime, switches only the GCP
+target runtime ConfigMap to `terraformers-reference-v4`, and adds one bounded existing-workflow
+operation for positive/negative authenticated persisted-quality proof.
 
-The repository-preparation implementation must merge and pass CI before any live mutation. One
-explicit live checkpoint will then freeze the exact final main SHA, reviewed runtime plan/shape,
-backend image strategy, v4 ingestion contract, and teardown boundary. Do not adopt
-OpenTelemetry/Langfuse/another observability product or perform live actions outside the bounded
-A7-7 contract.
+No live GCP, Vertex embedding/generation, OpenSearch ingestion, backend image publication, deployment,
+or teardown action has been performed in A7-7 yet. Repository review/CI must pass and merge first.
+Then a read-only preflight and one explicit exact-value live checkpoint will freeze final main SHA,
+runtime plan/shape, immutable image source, v4 ingestion contract, and teardown boundary before any
+cost-bearing mutation. Do not adopt OpenTelemetry/Langfuse/another observability product or perform
+actions outside the bounded A7-7 contract.
 
 ## Do not revisit
 

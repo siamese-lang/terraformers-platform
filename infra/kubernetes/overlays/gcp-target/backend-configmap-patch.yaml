@@ -19,10 +19,10 @@ data:
   OPENSEARCH_TRANSPORT: "http"
   OPENSEARCH_ENDPOINT: "http://terraformers-opensearch:9200"
   OPENSEARCH_TOP_K: "8"
-  INDEX_NAME: "terraformers-reference-v3"
+  INDEX_NAME: "terraformers-reference-v4"
   VECTOR_FIELD_NAME: "embedding"
   CONTENT_FIELD_NAME: "content"
-  CORPUS_VERSION: "terraformers-reference-v3"
+  CORPUS_VERSION: "terraformers-reference-v4"
   PROVIDER_VERSION: "5.100.0"
   EXPECTED_VECTOR_DIMENSION: "1024"
   GOOGLE_CLOUD_PROJECT: terraformers-platform

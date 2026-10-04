@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-4-durable-runtime-quality-observability-v1
-  status: IMPLEMENTED_AWAITING_REVIEW
+  status: COMPLETE
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: 9beec226a1cc5c314d6e6f27a62e6b63f20abab1
 
@@ -431,6 +431,29 @@ work_package:
     - new_observability_product_is_required
     - live_or_cost_action_is_requested
     - acceptance_criteria_would_need_to_change
+
+  implementation_evidence:
+    implementation_pr: 213
+    implementation_merge_sha: ab1b1f410b6aabf674af51d6161a2efd0f6df6a4
+    bounded_repair_commit: 0e457f7bd9339fc44f901bdd90b2c95f40c081b0
+    initial_backend_local_verification:
+      run_id: 37209621451
+      conclusion: failure
+      failure_scope: AnalysisJobStateService_legacy_overload_transaction_boundary
+      mariadb_schema_and_repository_validation: success
+    final_backend_local_verification:
+      run_id: 37210008792
+      conclusion: success
+      maven_clean_tests: success
+      mariadb_schema_and_repository_validation: success
+    terraform_static_verification:
+      run_id: 37210008786
+      conclusion: success
+    independent_acceptance: PASS
+    live_provider_validation_performed: false
+    live_GCP_validation_performed: false
+    v4_ingestion_performed: false
+    A7_5_status: NOT_STARTED
 
   completion:
     merge_requires_user_approval: true

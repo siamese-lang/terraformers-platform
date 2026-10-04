@@ -2,16 +2,24 @@
 
 ## Status
 
-**PORTFOLIO CASE SET CLOSED — PRODUCTION HARDENING DEFERRED**
+**CASE A EVIDENCE-BACKED QUALITY EXTENSION FROZEN — CASE B/C CLOSED**
 
 This plan temporarily supersedes milestone progression. Its purpose is to restore the modernization
 project to its actual success criterion: creating a small number of technically defensible,
 repository-backed engineering cases rather than consuming milestone TODOs.
 
-No new product feature, architecture change, live GCP activation, or milestone advancement starts
-outside the approved representative-case process.
+The three-case portfolio set was previously closed. On 2026-10-04 the user explicitly approved one
+new Case A extension after reviewing an AI-backend operations perspective: distinguish technical
+success from AI output quality and make false-green/partial-failure states observable.
 
-The measurement and acceptance source of truth for all three cases is
+This does not invalidate the original Case A retrieval-grounding closure and does not reopen Case B
+or the selected Case C infrastructure claim. It adds a new Case A operating claim governed by
+[Case A Semantic Reliability Extension](case-a-semantic-reliability-extension.md).
+
+No live GCP activation or cost-bearing action starts from this planning decision. Live validation,
+if required after implementation, remains a separate checkpoint.
+
+The measurement and acceptance source of truth for the original three cases is
 [Portfolio Case Measurement & Acceptance Contract](portfolio-case-measurement-contract.md).
 
 ## Why this reassessment exists
@@ -70,9 +78,29 @@ Later runner diagnostics do not overwrite the canonical M3 source commit or base
 
 ## Case A — AI/RAG quality, performance and reliability
 
-**Current status: PORTFOLIO-CLOSED / PASS.** The authoritative final evidence is
-[Case A Final Closure](../../evaluation/case-a-final-closure.md). The sections below retain the
-historical reassessment path that led to the final decision.
+**Original retrieval-grounding claim: PORTFOLIO-CLOSED / PASS.**
+
+**Current extension status: SEMANTIC RELIABILITY EXTENSION SELECTED — IMPLEMENTATION NOT STARTED.**
+
+The authoritative original closure remains
+[Case A Final Closure](../../evaluation/case-a-final-closure.md).
+
+The new extension is
+[Evidence-backed AI Quality and Semantic Reliability](case-a-semantic-reliability-extension.md),
+with architecture frozen by
+[ADR-008](../../architecture/decisions/ADR-008-evidence-backed-ai-quality.md).
+
+The extension uses the historical grounding gap as the false-green before-state and adds a
+provider-schema + official-RAG + project-decision authority model. It explicitly treats the current
+v3 corpus's limited resource coverage as a knowledge-architecture problem, separates corpus gaps
+from retrieval/generation failures, retains labeled truth only in frozen evaluation datasets, and
+addresses provider partial failures plus the retained C2 executable-diagnostic gap.
+
+The direction is now frozen. Implementation starts at A7-0 authoritative knowledge coverage and may
+not pivot to evaluator LLMs, new observability products, or a different cloud topology without
+repository/live evidence, an ADR-008 amendment, and explicit user approval.
+
+The sections below retain the historical reassessment path that led to the original Case A closure.
 
 ### Existing evidence worth retaining
 
@@ -116,6 +144,22 @@ The observed CloudFormation-shaped resource candidates, empty Terraform `resourc
 unfiltered semantic k-NN form a candidate mechanism, not causal proof or a selected fix. Repeated
 baseline and controlled alternative evidence must distinguish filtering, cutoff, query, ranking,
 and authority/priority effects before any production change.
+
+## Case A extension execution order
+
+1. A7-0 — authoritative knowledge coverage and scalable corpus compiler
+2. A7-1 — evidence-backed quality contract
+3. A7-2 — false-green measurement and canonical/holdout calibration
+4. A7-3 — provider partial-failure taxonomy
+5. A7-4 — durable runtime quality observability
+6. A7-5 — safe Terraform executable diagnostics
+7. A7-6 — repository-native vs Langfuse vs OpenTelemetry decision
+8. A7-7 — representative GCP live proof only if required, under a separate checkpoint
+9. A7-8 — integrated closure and final documentation reconciliation
+
+This order is normative. A later phase does not start merely because an earlier implementation PR
+exists; each phase must satisfy the Work Package acceptance boundary first. A7-7 remains cost/live
+gated.
 
 ## Case B — durable asynchronous AnalysisJob processing
 

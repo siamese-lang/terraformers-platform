@@ -94,20 +94,17 @@ def extract(text):
 def sync(d):
     PLAN.write_text(plan(d),encoding="utf-8")
     a=AI.read_text(encoding="utf-8")
-    lines=a.splitlines(); hits=[n for n,l in enumerate(lines) if l.startswith("- Current single task:")]
-    if len(hits)!=1: raise SystemExit("current task line missing/duplicated")
-    lines[hits[0]]=task(d); a="\n".join(lines)+("\n" if a.endswith("\n") else "")
-    if START in a: a=replace_block(a,state(d))
+    if START in a:
+        a=replace_block(a,state(d))
     else:
-        lines=a.splitlines(); idx=next(n for n,l in enumerate(lines) if l.startswith("- Current single task:"))
-        lines[idx+1:idx+1]=["",state(d),""]; a="\n".join(lines).rstrip()+"\n"
+        a=a.rstrip()+"\n\n"+state(d)+"\n"
     AI.write_text(a,encoding="utf-8")
     PORTFOLIO.write_text(replace_block(PORTFOLIO.read_text(encoding="utf-8"),portfolio(d)),encoding="utf-8")
 
 def check(d):
     if PLAN.read_text(encoding="utf-8")!=plan(d): raise SystemExit("generated architecture plan is stale; run --sync")
     a=AI.read_text(encoding="utf-8")
-    if task(d) not in a or extract(a)!=state(d): raise SystemExit("AI project state is stale; run --sync")
+    if extract(a)!=state(d): raise SystemExit("AI project Case C block is stale; run --sync")
     if extract(PORTFOLIO.read_text(encoding="utf-8"))!=portfolio(d): raise SystemExit("portfolio plan is stale; run --sync")
     c=CAPACITY.read_text(encoding="utf-8")
     for marker in ["status: DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE","live_baseline: DEFERRED_NOT_REQUIRED_FOR_PORTFOLIO_CLOSURE","next_checkpoint: NONE_PORTFOLIO_CLOSED"]:

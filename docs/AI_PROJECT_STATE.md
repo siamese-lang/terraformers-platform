@@ -12,13 +12,51 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
-- Mode: **Portfolio Case Closure**
-- Status: **REPRESENTATIVE CASE SET CLOSED / PRODUCTION HARDENING DEFERRED**
+- Mode: **Portfolio Case Extension**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION SELECTED / IMPLEMENTATION NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Portfolio representative-case work is closed with explicit residuals. Case C is PORTFOLIO_CLOSED_WITH_RESIDUALS; deferred capacity/hardening work requires a new explicit operational or portfolio decision.**
+- Current single task: **Accept and merge the frozen Case A evidence-backed-quality decision, then start A7-0 authoritative knowledge coverage. Case B and Case C remain portfolio-closed; live GCP recreation is not authorized until a separate checkpoint.**
+
+### Case A evidence-backed quality extension control
+
+- Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
+- Extension status: **DIRECTION FROZEN — IMPLEMENTATION NOT STARTED**
+- Architecture freeze:
+  [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
+- Active plan:
+  [Case A Evidence-backed AI Quality and Semantic Reliability](plans/active/case-a-semantic-reliability-extension.md)
+- Work Package:
+  [.agents/work-packages/case-a-semantic-reliability-v1.yml](../.agents/work-packages/case-a-semantic-reliability-v1.yml)
+- New representative claim: separate technical success, authoritative-knowledge coverage,
+  evidence-backed runtime quality, labeled evaluation quality, provider partial failures, and safe
+  executable diagnostics.
+- Knowledge authority is frozen as:
+  provider schema direct authority + pinned official provider docs/examples RAG + curated
+  Terraformers project decisions.
+- Current v3 corpus limitation is explicit: 128 documents preserve a curated provider-resource
+  subset; A7-0 must replace the hard-coded resource allowlist with a scalable versioned compiler and
+  create a new corpus identity without mutating v3.
+- No evaluator LLM or multi-model voting is part of the default design.
+- Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
+  validation PASS while required grounding was incomplete.
+- Case C run `36949479621` remains a repository-owned sensitive-credential policy false failure,
+  not proven Vertex censorship; PR #190 removed that over-constrained draft policy.
+- C2 run `37016993776` remains the executable-diagnostic gap: attempt 1 PASS, attempt 2
+  `terraform_validate_configuration`, exact invalid construct unavailable.
+- Frozen implementation sequence:
+  A7-0 knowledge coverage → A7-1 evidence-backed quality contract → A7-2 false-green calibration →
+  A7-3 provider partial failures → A7-4 durable runtime quality observability → A7-5 safe Terraform
+  diagnostics → A7-6 observability product decision → A7-7 representative live proof if required →
+  A7-8 integrated closure.
+- Direction changes require evidence that a frozen ADR-008 assumption is materially false or
+  insufficient, a written ADR amendment, and explicit user approval. New frameworks/articles alone
+  do not authorize scope changes.
+- PR #196 final-documentation reconciliation remains held until A7-8.
+- GCP live recreation, model calls, deployment, and cost-bearing actions require a separate user
+  checkpoint after implementation/CI readiness.
 
 <!-- CASE_C_ARCHITECTURE_CLOSURE:START -->
 ### Case C portfolio closure control

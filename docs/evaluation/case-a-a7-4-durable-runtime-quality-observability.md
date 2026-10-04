@@ -121,6 +121,56 @@ Repository-only validation is sufficient for A7-4 implementation:
 
 No live Vertex, Bedrock, OpenSearch, GCP, or cost-bearing action is authorized.
 
+## Recovered A7-0 exact official-knowledge gap evidence
+
+The first A7-4 Codex execution correctly stopped with
+`A7_0_KNOWLEDGE_GAP_MANIFEST_UNVERIFIED` because its environment could not download the pinned
+HashiCorp artifacts/source through the proxy and the exact 12-resource set had not been committed.
+
+The gap set was then independently reproduced from the same pinned public provider source:
+
+- provider source commit:
+  `f7a3b98da589ab1d52756b0dcee0dbf2de83d635`
+- `internal/service` Git tree:
+  `08ac3f85622b439f826da9b5677414f0f0b86fda`
+- `website/docs/r` Git tree:
+  `fda313b7ec2d69be5077056340ba25d6dc763b0d`
+- generated service package files inspected: **256**
+- managed resource `TypeName` values extracted only from
+  `FrameworkResources()` and `SDKResources()`: **1,526**
+- same-commit official `website/docs/r/*.html.markdown` intersection: **1,514**
+- exact managed-resource difference: **12**
+
+The exact sorted gap set is:
+
+~~~text
+aws_account_region
+aws_alb
+aws_alb_listener
+aws_alb_listener_certificate
+aws_alb_listener_rule
+aws_alb_target_group
+aws_alb_target_group_attachment
+aws_api_gateway_rest_api_put
+aws_ec2_image_block_public_access
+aws_pinpoint_email_template
+aws_rds_custom_db_engine_version
+aws_securityhub_configuration_policy_association
+~~~
+
+The extraction intentionally excluded data-source `TypeName` entries. A preliminary unscoped
+`TypeName` scan was rejected because it mixed data sources with managed resources; the accepted
+reproduction parses only the two generated managed-resource registry functions.
+
+The reproduced cardinalities exactly match the accepted A7-0 measurements
+(`1,526 / 1,514 / 12`). This resolves the A7-4 preflight evidence blocker without deriving
+knowledge availability from current retrieval hits and without running a live provider, embedding,
+OpenSearch, or GCP operation.
+
+A7-4 may use this exact set to build the compact read-only runtime coverage manifest described by
+the Work Package. The runtime manifest must retain the pinned commit/count provenance above.
+
+
 ## Next gate
 
 A7-5 does not start automatically. It requires separate user approval after A7-4 implementation,

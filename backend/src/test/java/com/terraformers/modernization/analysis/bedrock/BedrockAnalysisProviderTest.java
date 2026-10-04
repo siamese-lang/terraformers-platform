@@ -138,9 +138,24 @@ class BedrockAnalysisProviderTest {
         verify(formatClient, times(1)).invokeModel(any(InvokeModelRequest.class));
 
         BedrockRuntimeClient runtimeClient = mock(BedrockRuntimeClient.class);
-        when(runtimeClient.invokeModel(any(InvokeModelRequest.class))).thenThrow(new IllegalStateException("network unavailable"));
-        assertThatThrownBy(() -> provider(runtimeClient).analyze(context())).isInstanceOf(IllegalStateException.class);
+        IllegalStateException runtimeFailure = new IllegalStateException("network unavailable");
+        when(runtimeClient.invokeModel(any(InvokeModelRequest.class))).thenThrow(runtimeFailure);
+        assertThatThrownBy(() -> provider(runtimeClient).analyze(context()))
+                .isInstanceOfSatisfying(AnalysisProviderFailureException.class,
+                        failure -> assertThat(failure.reason())
+                                .isEqualTo(AnalysisProviderFailureReason.PROVIDER_ERROR))
+                .hasCause(runtimeFailure);
         verify(runtimeClient, times(1)).invokeModel(any(InvokeModelRequest.class));
+
+        BedrockRuntimeClient throttledClient = mock(BedrockRuntimeClient.class);
+        when(throttledClient.invokeModel(any(InvokeModelRequest.class))).thenThrow(
+                software.amazon.awssdk.services.bedrockruntime.model.ThrottlingException.builder()
+                        .statusCode(429).message("SENTINEL_PROVIDER_PAYLOAD").build());
+        assertThatThrownBy(() -> provider(throttledClient).analyze(context()))
+                .isInstanceOfSatisfying(AnalysisProviderFailureException.class,
+                        failure -> assertThat(failure.reason())
+                                .isEqualTo(AnalysisProviderFailureReason.RATE_LIMITED));
+        verify(throttledClient, times(1)).invokeModel(any(InvokeModelRequest.class));
 
         BedrockRuntimeClient timeoutClient = mock(BedrockRuntimeClient.class);
         when(timeoutClient.invokeModel(any(InvokeModelRequest.class)))

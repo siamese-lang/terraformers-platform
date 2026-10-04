@@ -247,7 +247,7 @@ jobs:
           {
             echo "CORPUS_DIR=$corpus_dir"
             echo 'CORPUS_DIR_NAME=v4'
-            echo 'CORPUS_CONTRACT_JSON='${RUNNER_TEMP}'/corpus-contract.json'
+            echo "CORPUS_CONTRACT_JSON=${RUNNER_TEMP}/corpus-contract.json"
           } >> "$GITHUB_ENV"
 
       - name: Start ephemeral Workload Identity ingestion pod

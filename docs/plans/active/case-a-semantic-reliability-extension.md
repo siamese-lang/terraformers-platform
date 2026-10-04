@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 IMPLEMENTED / AWAITING REVIEW — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 NOT STARTED — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -16,8 +16,7 @@ The architecture decision is frozen in
 ADR-008 — Evidence-backed AI quality for Terraformers.
 
 Extension direction is governed by
-`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 and A7-2 are complete; A7-3 is
-implemented in its bounded execution Work Package and awaits independent review.
+`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1, A7-2, and A7-3 are complete. A7-4 has no active Work Package and is not started.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
 
@@ -44,7 +43,7 @@ A7-1 was explicitly approved on 2026-10-04, implemented on execution base
 `evidence-quality-v1` contract passed Backend Local Verification run `37188607802`.
 AnalysisJob persistence/API exposure remains deferred to A7-4. A7-2 closed after PR #205 merged as
 `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`; Backend Local Verification run `37191939296`
-passed. A7-3 is implemented and awaiting independent acceptance review.
+passed. A7-3 implementation PR #208 merged as `fdb0e8a3f7e6656c46dd24e173894460ec09fd7f`; corrective PR #209 merged as `94869668ef177370701adcaae7e5c5473b3076ac`. Backend Local Verification `37198612965` and Terraform Static Verification `37198612964` passed. A7-4 is not started.
 
 ## 1. Why this extension exists
 
@@ -419,10 +418,12 @@ Required:
 
 ### A7-3 — Provider partial failures
 
-A7-3 was explicitly approved on 2026-10-04 and is implemented awaiting review. Execution is isolated in
-`.agents/work-packages/case-a-a7-3-provider-partial-failures-v1.yml`. The implementation extends the
-existing provider-neutral failure contract, preserves timeout-only retry semantics, and adds no
-DB/API persistence or live provider validation.
+A7-3 was explicitly approved on 2026-10-04 and is complete. Execution is recorded in
+`.agents/work-packages/case-a-a7-3-provider-partial-failures-v1.yml`. PR #208 merged as
+`fdb0e8a3f7e6656c46dd24e173894460ec09fd7f`; its null-safety corrective PR #209 merged as
+`94869668ef177370701adcaae7e5c5473b3076ac`. The accepted implementation extends the existing
+provider-neutral failure contract, preserves timeout-only retry semantics, and adds no DB/API
+persistence or live provider validation.
 
 The selected boundary is classification only: explicit provider content/safety blocks, truncation,
 empty successful responses, timeout, rate limiting, generic provider errors, and application

@@ -103,6 +103,11 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
             throw ArchitectureFactsExtractionException.provider(
                     ArchitectureFactsExtractionException.Reason.PROVIDER_CONTENT_BLOCKED, "", "", null);
         }
+        if (response.finishReason() != FinishReason.Known.STOP
+                && response.finishReason() != FinishReason.Known.FINISH_REASON_UNSPECIFIED) {
+            throw ArchitectureFactsExtractionException.response(
+                    ArchitectureFactsExtractionException.Reason.INVALID_RESPONSE, null);
+        }
         String responseText = response.text();
         if (responseText == null || responseText.isBlank()) {
             throw ArchitectureFactsExtractionException.response(

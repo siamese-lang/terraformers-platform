@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-2-false-green-calibration-v1
-  status: ACTIVE
+  status: IMPLEMENTED_AWAITING_REVIEW
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: aaf3b3bc42bca9604673e92cb05e6e87de66b480
 

@@ -1,0 +1,100 @@
+package com.terraformers.modernization.evaluation;
+
+import com.terraformers.modernization.analysis.EvidenceQualityAssessment.QualityStatus;
+import com.terraformers.modernization.evaluation.CaseAQualityCalibrationReport.CaseResult;
+import com.terraformers.modernization.evaluation.CaseAQualityCalibrationReport.RuntimeQualityComparison;
+import com.terraformers.modernization.evaluation.EvaluationCase.InputClassification;
+import com.terraformers.modernization.evaluation.EvaluationCase.ValidationExpectation;
+import com.terraformers.modernization.evaluation.EvaluationTrace.GenerationEvidence;
+
+/** Applies only deterministic frozen-dataset labels; it does not perform model-based evaluation. */
+public final class CaseAQualityCalibrationScorer {
+    private final RetrievalGroundingScorer groundingScorer = new RetrievalGroundingScorer();
+
+    public CaseResult score(EvaluationCase definition, EvaluationTrace trace) {
+        return score(definition, trace, null);
+    }
+
+    public CaseResult score(EvaluationCase definition, EvaluationTrace trace, QualityStatus runtimeQualityStatus) {
+        if (!definition.caseId().equals(trace.caseId())) throw new IllegalArgumentException("caseId mismatch");
+        boolean architecture = definition.expectedClassification() == InputClassification.ARCHITECTURE_DIAGRAM;
+        boolean technical = architecture ? architectureTechnicalSuccess(trace) : negativeTechnicalSuccess(trace);
+        RetrievalGroundingAssessment grounding = groundingScorer.score(definition, trace);
+        GenerationEvidence generation = trace.generation().evidence();
+        boolean labeled = architecture
+                ? architectureLabelSuccess(definition, trace, generation, grounding)
+                : negativeLabelSuccess(definition, generation);
+        return new CaseResult(trace.caseId(), definition.expectedClassification(),
+                generation == null ? null : generation.observedClassification(), architecture, technical, labeled,
+                technical && !labeled, grounding, runtimeQualityStatus, comparison(runtimeQualityStatus, labeled));
+    }
+
+    private boolean architectureTechnicalSuccess(EvaluationTrace trace) {
+        return trace.factExtraction().status() == EvaluationStageStatus.PASS
+                && trace.retrieval().status() == EvaluationStageStatus.PASS
+                && trace.generation().status() == EvaluationStageStatus.PASS
+                && trace.validation().status() == EvaluationStageStatus.PASS
+                && trace.firstDivergence() == null;
+    }
+
+    private boolean negativeTechnicalSuccess(EvaluationTrace trace) {
+        return trace.factExtraction().status() == EvaluationStageStatus.PASS
+                && trace.generation().status() == EvaluationStageStatus.PASS
+                && permittedOptionalStage(trace.retrieval().status())
+                && permittedOptionalStage(trace.validation().status())
+                && trace.firstDivergence() == null;
+    }
+
+    private boolean permittedOptionalStage(EvaluationStageStatus status) {
+        return status == EvaluationStageStatus.PASS || status == EvaluationStageStatus.NOT_RUN;
+    }
+
+    private boolean architectureLabelSuccess(EvaluationCase definition, EvaluationTrace trace,
+            GenerationEvidence generation, RetrievalGroundingAssessment grounding) {
+        if (generation == null || generation.observedClassification() != definition.expectedClassification()) return false;
+        boolean groundingComplete = completeWhenRequired(definition.retrieval().requiredProjectDecisionIds(),
+                        grounding.projectDecisionCoverage())
+                && completeWhenRequired(definition.retrieval().requiredResourceTypes(),
+                        grounding.resourceTypeCoverage());
+        boolean generatedComplete = grounding.requiredGeneratedResourceMatched()
+                == grounding.requiredGeneratedResourceTotal()
+                && grounding.forbiddenGeneratedResourceCount() == 0;
+        return groundingComplete && generatedComplete && validationMatches(definition.validation(), trace);
+    }
+
+    private boolean complete(RetrievalGroundingAssessment.Coverage coverage) {
+        return coverage.matched() == coverage.total();
+    }
+
+    private boolean completeWhenRequired(java.util.List<String> required,
+            RetrievalGroundingAssessment.Coverage coverage) {
+        return required.isEmpty() || coverage != null && complete(coverage);
+    }
+
+    private boolean validationMatches(ValidationExpectation expected, EvaluationTrace trace) {
+        Boolean valid = trace.validation().evidence() == null ? null
+                : trace.validation().evidence().applicationValidator().valid();
+        return switch (expected) {
+            case PASS -> trace.validation().status() == EvaluationStageStatus.PASS && Boolean.TRUE.equals(valid);
+            case FAIL -> trace.validation().status() == EvaluationStageStatus.PASS && Boolean.FALSE.equals(valid);
+            case NOT_APPLICABLE -> trace.validation().status() == EvaluationStageStatus.NOT_RUN;
+        };
+    }
+
+    private boolean negativeLabelSuccess(EvaluationCase definition, GenerationEvidence generation) {
+        return definition.validation() == ValidationExpectation.NOT_APPLICABLE
+                && generation != null
+                && generation.observedClassification() == definition.expectedClassification()
+                && generation.terraformCode().isBlank()
+                && generation.generatedResourceTypes().isEmpty();
+    }
+
+    private RuntimeQualityComparison comparison(QualityStatus status, boolean labeled) {
+        if (status == null) return RuntimeQualityComparison.UNAVAILABLE;
+        if (status == QualityStatus.UNKNOWN || status == QualityStatus.NOT_APPLICABLE) {
+            return RuntimeQualityComparison.INDETERMINATE;
+        }
+        boolean runtimePositive = status == QualityStatus.EVIDENCE_BACKED;
+        return runtimePositive == labeled ? RuntimeQualityComparison.MATCH : RuntimeQualityComparison.MISMATCH;
+    }
+}

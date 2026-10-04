@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 APPROVED / IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 IMPLEMENTED / AWAITING REVIEW — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -42,8 +42,8 @@ A7-1 was explicitly approved on 2026-10-04, implemented on execution base
 `2efa4dcc1425feafac896a069315416949fa7ab5`, and merged as
 `f9009ce8f9a744afee848b8e196b57de5860c78f`. The deterministic
 `evidence-quality-v1` contract passed Backend Local Verification run `37188607802`.
-AnalysisJob persistence/API exposure remains deferred to A7-4. A7-2 is not started and requires
-separate user approval.
+AnalysisJob persistence/API exposure remains deferred to A7-4. A7-2 is implemented and awaits
+review and the ordinary user merge checkpoint.
 
 ## 1. Why this extension exists
 
@@ -395,7 +395,7 @@ Required:
 
 ### A7-2 — False-green measurement and calibration
 
-A7-2 was explicitly approved on 2026-10-04. Execution is isolated in
+A7-2 was explicitly approved on 2026-10-04 and is implemented awaiting review. Execution is isolated in
 `.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml`.
 
 The selected implementation boundary is repository-only: preserve the existing Case A grounding

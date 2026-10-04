@@ -183,6 +183,30 @@ work_package:
 
     official_knowledge_coverage:
       authority: A7_0_pinned_AWS_provider_5_100_0_measurement
+      preflight_recovery:
+        status: VERIFIED
+        evidence: docs/evaluation/case-a-a7-4-durable-runtime-quality-observability.md
+        provider_source_commit: f7a3b98da589ab1d52756b0dcee0dbf2de83d635
+        provider_commit_tree: 5a6a39a237cfdb28cf9f4fdb4a6e00fdf1affe36
+        provider_internal_service_tree: 08ac3f85622b439f826da9b5677414f0f0b86fda
+        provider_official_resource_docs_tree: fda313b7ec2d69be5077056340ba25d6dc763b0d
+        generated_service_package_registry_count: 256
+        verified_managed_resource_count: 1526
+        verified_official_documented_managed_resource_count: 1514
+        verified_missing_official_document_count: 12
+        exact_missing_official_document_resource_types:
+          - aws_account_region
+          - aws_alb
+          - aws_alb_listener
+          - aws_alb_listener_certificate
+          - aws_alb_listener_rule
+          - aws_alb_target_group
+          - aws_alb_target_group_attachment
+          - aws_api_gateway_rest_api_put
+          - aws_ec2_image_block_public_access
+          - aws_pinpoint_email_template
+          - aws_rds_custom_db_engine_version
+          - aws_securityhub_configuration_policy_association
       provider_schema_resource_count: 1526
       official_documented_schema_resource_count: 1514
       schema_resources_without_official_document_count: 12

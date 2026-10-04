@@ -62,7 +62,20 @@ V3_RUNTIME = {
     "vectorField": "embedding",
     "contentField": "content",
 }
-EXPECTED_RUNTIME_BY_MAJOR = {1: HISTORICAL_RUNTIME, 2: HISTORICAL_RUNTIME, 3: V3_RUNTIME}
+V4_RUNTIME = {
+    "awsProviderVersion": "5.100.0",
+    "embeddingModelId": "gemini-embedding-001",
+    "vectorDimension": 1024,
+    "indexName": "terraformers-reference-v4",
+    "vectorField": "embedding",
+    "contentField": "content",
+}
+EXPECTED_RUNTIME_BY_MAJOR = {
+    1: HISTORICAL_RUNTIME,
+    2: HISTORICAL_RUNTIME,
+    3: V3_RUNTIME,
+    4: V4_RUNTIME,
+}
 CORPUS_VERSION_PATTERN = re.compile(r"^terraformers-reference-v([1-9][0-9]*)$")
 FORBIDDEN = [
     (re.compile(r"(?<!\d)\d{12}(?!\d)"), "account-like identifier"),
@@ -171,6 +184,8 @@ def main() -> None:
             fail(f"manifest {key} must be {value!r}")
     if manifest["checksumAlgorithm"] != "SHA-256":
         fail("checksumAlgorithm must be SHA-256")
+    if major >= 4 and manifest.get("coverageReportFile") != "coverage-report.json":
+        fail("v4+ corpus manifest must declare coverage-report.json")
 
     provider_source_version = f"v{manifest['awsProviderVersion']}"
     source_manifest = load_json(corpus / "source-manifest.json")
@@ -276,6 +291,105 @@ def main() -> None:
     if manifest["documentCount"] != len(documents) or manifest["chunkCount"] != len(documents):
         fail("manifest documentCount and chunkCount must equal JSONL chunk count")
 
+    coverage_report = None
+    if major >= 4:
+        coverage_report = load_json(corpus / "coverage-report.json")
+        if not isinstance(coverage_report, dict):
+            fail("coverage report must be a JSON object")
+        required_coverage = {
+            "corpusVersion",
+            "providerVersion",
+            "providerSourceCommit",
+            "providerSchemaSha256",
+            "providerSchemaResourceCount",
+            "officialDocumentationResourceCount",
+            "schemaResourcesWithoutOfficialDocumentationCount",
+            "v3ProviderResourceCount",
+            "selectedResourceCount",
+            "selectedOfficialDocumentationResourceCount",
+            "selectedMissingOfficialDocumentationResourceTypes",
+            "newResourceTypesComparedWithV3",
+            "providerDocumentChunkCount",
+            "projectDecisionCount",
+        }
+        missing_coverage = sorted(required_coverage - set(coverage_report))
+        if missing_coverage:
+            fail("coverage report is missing required fields: " + ", ".join(missing_coverage))
+        if coverage_report["corpusVersion"] != version:
+            fail("coverage report corpusVersion must match manifest")
+        if coverage_report["providerVersion"] != manifest["awsProviderVersion"]:
+            fail("coverage report providerVersion must match manifest")
+        require_nonblank_string(
+            coverage_report["providerSourceCommit"], "coverage report providerSourceCommit"
+        )
+        if not re.fullmatch(r"[0-9a-f]{64}", str(coverage_report["providerSchemaSha256"])):
+            fail("coverage report providerSchemaSha256 must be a lowercase SHA-256")
+        for field in (
+            "providerSchemaResourceCount",
+            "officialDocumentationResourceCount",
+            "schemaResourcesWithoutOfficialDocumentationCount",
+            "v3ProviderResourceCount",
+            "selectedResourceCount",
+            "selectedOfficialDocumentationResourceCount",
+            "providerDocumentChunkCount",
+            "projectDecisionCount",
+        ):
+            value = coverage_report[field]
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                fail(f"coverage report {field} must be a non-negative integer")
+        require_nonblank_list(
+            coverage_report["selectedMissingOfficialDocumentationResourceTypes"],
+            "selectedMissingOfficialDocumentationResourceTypes",
+            nonempty=False,
+        )
+        require_nonblank_list(
+            coverage_report["newResourceTypesComparedWithV3"],
+            "newResourceTypesComparedWithV3",
+            nonempty=False,
+        )
+        provider_documents = [
+            document for document in documents if document["documentType"] in PROVIDER_TYPES
+        ]
+        provider_resource_types = {
+            str(resource_type)
+            for document in provider_documents
+            for resource_type in document["resourceTypes"]
+        }
+        project_decision_count = sum(
+            document["documentType"] == "TERRAFORMERS_PATTERN" for document in documents
+        )
+        missing_official = set(
+            str(value)
+            for value in coverage_report["selectedMissingOfficialDocumentationResourceTypes"]
+        )
+        if coverage_report["selectedResourceCount"] != len(provider_resource_types):
+            fail("coverage report selectedResourceCount does not match corpus provider resources")
+        if coverage_report["providerDocumentChunkCount"] != len(provider_documents):
+            fail("coverage report providerDocumentChunkCount does not match corpus")
+        if coverage_report["projectDecisionCount"] != project_decision_count:
+            fail("coverage report projectDecisionCount does not match corpus")
+        if not missing_official <= provider_resource_types:
+            fail("coverage report missing official resources must be selected corpus resources")
+        if (
+            coverage_report["selectedOfficialDocumentationResourceCount"] + len(missing_official)
+            != coverage_report["selectedResourceCount"]
+        ):
+            fail("coverage report selected official/missing counts do not reconcile")
+        if coverage_report["providerSchemaResourceCount"] < coverage_report["selectedResourceCount"]:
+            fail("coverage report provider schema universe is smaller than selected resources")
+        if (
+            coverage_report["officialDocumentationResourceCount"]
+            > coverage_report["providerSchemaResourceCount"]
+        ):
+            fail("coverage report official documented resources exceed provider schema universe")
+        provider_commits = {
+            str(document["sourceCommit"])
+            for document in provider_documents
+            if document["documentType"] in PROVIDER_TYPES
+        }
+        if provider_commits != {coverage_report["providerSourceCommit"]}:
+            fail("coverage report providerSourceCommit does not match provider documents")
+
     schema = load_json(corpus / "index-schema.json")
     if not isinstance(schema, dict):
         fail("index schema must be a JSON object")
@@ -325,6 +439,8 @@ def main() -> None:
         "indexSchema": schema,
         "documents": sorted_documents,
     }
+    if coverage_report is not None:
+        checksum_input["coverageReport"] = coverage_report
     digest = hashlib.sha256(canonical(checksum_input).encode("utf-8")).hexdigest()
     summary = {
         "corpusVersion": version,

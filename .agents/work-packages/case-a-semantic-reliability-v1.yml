@@ -1,6 +1,6 @@
 work_package:
   id: case-a-semantic-reliability-v1
-  status: A7_2_IMPLEMENTED_AWAITING_REVIEW
+  status: A7_2_COMPLETE_A7_3_AWAITING_USER_APPROVAL
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: dd34d1cec34d31783ca2d672c65311ce82fd2666
 
@@ -9,18 +9,19 @@ work_package:
       The original Work Package bound execution_base_sha once for A7-0 and stops when main drifts.
       A7-0 implementation and closure were intentionally merged, so later phases must not overwrite
       that historical execution base. A7-1 therefore uses its own bounded Work Package.
-    next_work_package: .agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml
+    next_work_package: NOT_CREATED_A7_3_REQUIRES_USER_APPROVAL
     user_approval: 2026-10-04
     A7_1_implementation_started: true
     A7_1_status: COMPLETE
     A7_1_merge_sha: f9009ce8f9a744afee848b8e196b57de5860c78f
 
   phase_gate:
-    completed_phase: A7_1
-    closure_evidence: docs/evaluation/case-a-a7-1-evidence-quality-contract.md
-    next_phase: A7_2
-    next_phase_status: IMPLEMENTED_AWAITING_REVIEW
-    next_phase_requires_explicit_user_approval: false
+    completed_phase: A7_2
+    closure_evidence: docs/evaluation/case-a-a7-2-false-green-calibration.md
+    completed_phase_merge_sha: 9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6
+    next_phase: A7_3
+    next_phase_status: NOT_STARTED
+    next_phase_requires_explicit_user_approval: true
     measured_provider_schema_resource_count: 1526
     measured_official_documented_schema_resource_count: 1514
     measured_missing_official_document_resource_count: 12

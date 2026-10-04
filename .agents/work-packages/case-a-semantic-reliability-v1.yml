@@ -1,8 +1,8 @@
 work_package:
   id: case-a-semantic-reliability-v1
-  status: READY_FOR_ACTIVATION_AFTER_DECISION_MERGE
+  status: ACTIVE_A7_0
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: null
+  execution_base_sha: dd34d1cec34d31783ca2d672c65311ce82fd2666
 
   goal: >
     Extend the already-closed Case A retrieval-grounding/generalization case into an

@@ -60,7 +60,8 @@ jobs:
             tests/rag/test_build_corpus_v2.py \
             tests/rag/test_curate_corpus_v2.py \
             tests/rag/test_derive_corpus_v3.py \
-            tests/rag/test_ingest_corpus.py
+            tests/rag/test_ingest_corpus.py \
+            tests/rag/test_ingest_gcp_target_corpus.py
 
       - name: Verify GCP target delivery and billing fallback gates
         run: |

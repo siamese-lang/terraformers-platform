@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 IMPLEMENTED — VALIDATION PENDING**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-1 Evidence-backed Quality Contract is implemented on execution base `2efa4dcc1425feafac896a069315416949fa7ab5`; validate this bounded implementation and stop before A7-2.**
+- Current single task: **A7-1 is closed at merge SHA `f9009ce8f9a744afee848b8e196b57de5860c78f`. A7-2 False-green Calibration is NOT STARTED and requires separate user approval before any implementation.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 IMPLEMENTED / VALIDATION PENDING**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 AWAITING USER APPROVAL**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -52,6 +52,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   against provider schema and selected official evidence, keeps project decisions as a separate
   `TERRAFORMERS_PATTERN` dimension, and records the runtime quality boundary as
   `CONDITIONAL_ON_EXTRACTED_FACTS`. AnalysisJob DB/API persistence remains deferred to A7-4.
+- A7-1 closure evidence: `docs/evaluation/case-a-a7-1-evidence-quality-contract.md`.
+  PR #202 merged as `f9009ce8f9a744afee848b8e196b57de5860c78f`; Backend Local Verification
+  run `37188607802` passed `mvn clean test`, package, MariaDB Flyway/Hibernate validation, and
+  canonical repository smoke queries. Terraform Static Verification run `37188607799` completed
+  successfully at scope level; its terraform/RAG job was skipped because PR #202 changed no
+  terraform/RAG paths. No A7-2 implementation has started.
 - No evaluator LLM or multi-model voting is part of the default design.
 - Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
   validation PASS while required grounding was incomplete.
@@ -545,19 +551,15 @@ No remaining M1 work.
 A7-0 — Authoritative Knowledge Coverage — is **COMPLETE**. Closure evidence is recorded in
 [Case A A7-0 — Authoritative Knowledge Coverage](evaluation/case-a-a7-0-authoritative-knowledge-coverage.md).
 
-A7-1 — Evidence-backed Quality Contract — is **APPROVED / IMPLEMENTATION NOT STARTED**.
-The approved execution contract is
-[case-a-a7-1-evidence-quality-contract-v1.yml](../.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml).
-Implementation begins only after that contract is merged to main.
+A7-1 — Evidence-backed Quality Contract — is **COMPLETE**. Closure evidence is recorded in
+[Case A A7-1 — Evidence-backed Quality Contract](evaluation/case-a-a7-1-evidence-quality-contract.md).
+PR #202 merged as `f9009ce8f9a744afee848b8e196b57de5860c78f`.
 
 The original Case A retrieval-grounding/generalization closure remains retained; this extension does
 not invalidate it. Case B and Case C portfolio closures also remain retained.
 
-A7-1, if approved, must implement only the frozen ADR-008 contract boundary: separate technical,
-knowledge, and quality status; distinguish missing official knowledge from retrieval miss; check
-generated resource types deterministically against provider schema and selected evidence; preserve
-project-decision grounding as a separate dimension; retain the conditional-on-extracted-facts
-runtime-quality boundary; and use a versioned persistent representation.
+A7-2 — False-green Measurement and Offline Calibration — is **NOT STARTED**. No A7-2 Work Package
+is active. Starting A7-2 requires separate user approval and a newly bounded execution contract.
 
 Do not start A7-2 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
 v4 corpus into a live vector store, or introduce an evaluator LLM / multi-model voting / new

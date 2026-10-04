@@ -1,315 +1,322 @@
-# Terraformers Modernization
+# Terraformers Platform
 
-## Lifecycle 상태
+## Project status
 
-| 구분 | 정확한 상태 |
+Terraformers is a portfolio-oriented modernization of the original 5-person AWS Cloud School team
+project. The repository now closes on three evidence-backed engineering cases rather than on a list
+of technologies or CI milestones.
+
+| Case | Portfolio role | Final status |
+|---|---|---|
+| Case A | AI/RAG retrieval grounding and evaluation | PORTFOLIO-CLOSED / PASS |
+| Case B | Backend durable asynchronous processing | PORTFOLIO-CLOSED / PASS |
+| Case C | GCP production-representative runtime and immutable delivery | PORTFOLIO-CLOSED / RESIDUAL RISKS ACCEPTED |
+
+Observability is supporting evidence across A/B/C, not a fourth independent case.
+
+The representative GCP runtime has been torn down. Final inventory confirmed no remaining
+Terraformers GKE clusters, Compute Engine VMs, Persistent Disks, static addresses, GCS buckets, or
+Artifact Registry repositories. The Terraform state bucket and GitHub-to-GCP bootstrap identities
+were also removed. The repository therefore describes a verified historical runtime and retained
+source/evidence, not a currently online service.
+
+Canonical current-state checkpoint:
+[docs/AI_PROJECT_STATE.md](docs/AI_PROJECT_STATE.md)
+
+## 1. Service scenario
+
+A user uploads a cloud architecture image. The Spring Boot backend accepts an AnalysisJob and runs
+the following provider-neutral lifecycle:
+
+~~~text
+authenticated upload
+  -> durable AnalysisJob acceptance
+  -> architecture fact extraction
+  -> semantic reference retrieval
+  -> Terraform draft generation
+  -> executable Terraform validation
+  -> durable result persistence
+  -> result read-back
+~~~
+
+The generated Terraform is an editable/reference draft. This project does not claim unattended
+production terraform apply of generated output.
+
+## 2. Why the project was modernized
+
+The original team project proved a service concept, but it did not provide enough evidence for
+three questions that matter in a technical portfolio:
+
+1. Does the AI/RAG path use retrieved evidence reliably, or does it merely call an LLM?
+2. What happens to accepted asynchronous work when the process crashes, retries, duplicates, or
+   partially persists a result?
+3. Can the application run on a real cloud target with durable state, immutable delivery, and
+   evidence-backed operational decisions after AWS is no longer available?
+
+The modernization work therefore focused on measurable engineering problems rather than adding
+frameworks for their own sake.
+
+## 3. Case A — AI/RAG retrieval grounding and evaluation
+
+### Problem
+
+A successful generation/validation result did not prove that the retrieval stage had actually
+provided the required repository/provider evidence. The baseline also exposed fact-extraction
+failures and the risk of overfitting known evaluation fixtures.
+
+### Selected mechanism
+
+- Vertex AI multimodal fact extraction and generation
+- gemini-embedding-001 query embeddings
+- OpenSearch semantic retrieval
+- evidence-role-aware bounded selection
+- adaptive evidence capacity for architectures requiring more than eight independent references
+- frozen canonical and holdout datasets
+- negative controls and first-divergence tracking
+
+The project did not introduce LangChain, LangGraph, or LangSmith merely to add framework names.
+The active analysis path is a bounded, explicit pipeline; evaluation and observability needs are
+covered by repository-owned contracts and evidence.
+
+### Final evidence
+
+Canonical post-correction N=3 runs:
+
+- 36803174654
+- 36803781744
+- 36804600570
+
+Result:
+
+- fact extraction: 18/18 PASS
+- retrieval: 18/18 PASS
+- VPC project-decision coverage: 3/3 PASS
+- VPC required-resource coverage: 4/4 x 3 PASS
+- grounding gaps: 0/12
+- positive Terraform validation: 12/12 PASS
+- negative controls: 6/6 correct
+- first divergence: 0
+
+Frozen holdout run 36805478708 also passed with complete grounding for both positive cases and
+correct classification of both negative controls.
+
+See:
+[Case A Final Closure](docs/evaluation/case-a-final-closure.md)
+
+## 4. Case B — durable asynchronous AnalysisJob processing
+
+### Before-state
+
+The earlier in-process execution model could strand accepted PENDING/RUNNING work after process
+loss, permit duplicate terminal execution, lacked durable bounded retry, and could leave an object
+residue after relational finalization or cleanup failure.
+
+### Architecture decision
+
+ADR-007 selected MariaDB as the durable AnalysisJob ownership/work source with:
+
+- durable eligibility
+- atomic claim/reclaim
+- time-bounded leases
+- generation fencing
+- bounded local executor
+- timeout-only bounded retry
+- deterministic result identity
+- durable pre-write result intent
+- fenced relational finalization
+- durable cleanup accountability and recovery
+
+RabbitMQ without an outbox was rejected for the current atomic-acceptance requirement because it
+would introduce a DB-commit-to-publish gap. Transactional Outbox plus RabbitMQ remains a deferred
+alternative if measured scale, fan-out, or service boundaries justify the added operational layer.
+
+### Final evidence
+
+Run 36555800770 passed the backend suite and real MariaDB 11.4 schema/repository validation.
+
+The integrated 12-row matrix covers:
+
+- accepted work surviving process loss
+- reclaim after lease expiry
+- duplicate delivery
+- provider timeout and retry
+- retry exhaustion
+- object-write then DB-finalization failure
+- failed compensation and later cleanup recovery
+- concurrent claim on real MariaDB
+- stale-worker fencing
+- normal success/read-back
+
+Case B guarantees durable ownership/fencing and accountable side effects. It does not claim
+exactly-once external provider invocation.
+
+See:
+[Case B Integrated Closure](docs/evaluation/case-b-integrated-closure.md)
+
+## 5. Case C — GCP production-representative runtime and immutable delivery
+
+### Selected runtime
+
+~~~text
+GitHub Actions / OIDC-WIF
+  -> Artifact Registry immutable backend image
+  -> GKE Standard
+       |-- Spring Boot backend
+       |-- OpenSearch
+  -> Vertex AI
+  -> dedicated Compute Engine MariaDB 11.4 VM
+       -> dedicated Persistent Disk
+  -> GCS source/result object persistence
+  -> Secret Manager + GKE Secret Sync
+~~~
+
+Cloud SQL/MySQL was evaluated but not treated as a drop-in replacement after MySQL 8.4 rejected
+the retained Flyway migration contract. MariaDB inside GKE was also rejected for the first
+representative runtime because database pressure would share the same worker boundary as
+backend/OpenSearch and weaken later bottleneck attribution.
+
+### Live evidence
+
+- 36851221194 — runtime dependencies applied
+- 36854218346 — Kubernetes prerequisites verified
+- 36889896239 — authenticated integrated path PASS
+- 36891629279 — backend replacement durability PASS
+- 37015159218 — exact source image publication
+- 37015932695 — exact digest rollout and embedded source-revision verification
+
+The integrated live path proved:
+
+~~~text
+authenticated upload
+  -> durable AnalysisJob
+  -> real Vertex fact extraction/generation
+  -> Vertex embedding
+  -> OpenSearch retrieval
+  -> GCS source/result persistence
+  -> terminal success
+  -> Terraform read-back
+~~~
+
+### Capacity stopping decision
+
+A capacity run was deliberately stopped before tuning because executable-Terraform correctness was
+not stable enough to provide a trustworthy workload prerequisite. The project does not claim a
+production saturation limit, HPA tuning result, or capacity improvement curve.
+
+See:
+[Case C Final Portfolio Closure](docs/evaluation/case-c-portfolio-closure.md)
+
+## 6. Observability as supporting evidence
+
+The repository uses observability to explain concrete failure/runtime behavior, not as a decorative
+dashboard requirement.
+
+Current repository-owned signals include:
+
+- Spring Boot Actuator and Prometheus export
+- analysis started/succeeded/failed counters
+- bounded failure categories
+- total analysis duration
+- provider-neutral stage duration and stage failure category
+- queue wait
+- claim/dispatch/lease/retry/recovery/cleanup signals
+- executor rejection
+- analysisJobId MDC correlation
+- build/source revision in logs
+
+A relational-finalization failure was used to show why coarse job-level failure signals were
+insufficient. The minimal telemetry change made analysis execution, result finalization failure, and
+compensation independently machine-identifiable without introducing a tracing backend.
+
+The project does not claim a completed Grafana, OpenTelemetry Collector, distributed tracing,
+Cloud Trace, or SLO/alerting platform.
+
+See:
+[M7 Observability Closure](docs/plans/active/M7-observability.md)
+
+## 7. Final cloud teardown
+
+The GCP runtime was destroyed after evidence collection.
+
+The initial 29-resource Terraform destroy partially completed and then encountered a GCE 409 while
+the MariaDB VM deletion and data-disk detach overlapped. A reviewed subset recovery deleted the one
+remaining Terraform-managed MariaDB data disk and left canonical Terraform state empty.
+
+After bootstrap cleanup, an independent project inventory found one state-external GKE CSI disk:
+
+- pvc-17c2bb7e-eb1e-4474-9531-41418c77c7df
+- 15 GiB
+- pd-standard
+
+It matched the OpenSearch PVC contract, had no remaining workload owner, and was deleted manually.
+A final gcloud compute disks list returned zero items. GKE, VM, static IP, GCS, Artifact Registry,
+and disk inventories were all empty for the Terraformers target.
+
+This is retained as an operations lesson: Terraform state zero is not sufficient proof that
+controller/CSI-created cloud resources are absent.
+
+See:
+[GCP Final Teardown Runbook](docs/runbooks/gcp-target-final-teardown.md)
+
+## 8. Technology boundary
+
+Primary current portfolio stack:
+
+| Area | Technologies |
 |---|---|
-| `last_verified_deployed_architecture` | EKS Backend, RDS, S3, Cognito, Bedrock, private AOSS, CloudFront private origin, External Secrets/IRSA, immutable ECR digest와 Argo CD GitOps를 사용한 마지막 검증 배포 구조 |
-| `current_aws_runtime_status` | 현재 실행 중인 AWS runtime 없음 |
-| `runtime_teardown_status` | verified — read-only runtime closure run `29904386655` passed; six runtime Terraform states와 exact active runtime AWS resource count가 모두 0 |
-| `bootstrap_closure_status` | deletion complete; bootstrap and live-smoke residuals removed |
-| `project_scoped_zero_resource_proof` | complete on 2026-07-22 |
-| `redeployment_status` | documented, not executed |
-
-이 README의 기능·아키텍처·workload 설명은 **현재 online service의 주장**이 아니라 마지막으로 검증된 배포와 저장소 구현 범위다. Bootstrap deletion is complete; full-zero-state redeployment remains documented, not executed. 상세 canonical source는 [`docs/project-system-overview.md`](docs/project-system-overview.md)다.
-
-## 1. 프로젝트 개요
-
-**Terraformers Modernization**은 2024년 AWS Cloud School 5인 팀 프로젝트 `Terraformers`를 기반으로, 기존 산출물을 현재 기준의 **백엔드·클라우드 인프라 운영환경 고도화 프로젝트**로 정리한 저장소입니다.
-
-원본 서비스는 사용자가 AWS 아키텍처 이미지를 업로드하면 AI 분석 결과를 바탕으로 Terraform 코드 초안을 생성하고, 프로젝트·파일·결과·댓글 등 관련 데이터를 웹에서 관리합니다.
-
-이 저장소의 목적은 서비스를 새로 만들거나 생성 AI 자체를 연구하는 것이 아닙니다. 기존 팀 결과물과 `siamese-lang/rdb-refactor`를 재사용하면서 다음을 보강했습니다.
-
-- Spring Boot API와 owner-based RDB domain
-- Flyway migration과 Hibernate schema validation
-- Cognito 사용자와 내부 사용자·프로젝트 소유권 연결
-- S3 object와 RDB metadata 책임 분리
-- Spring Boot 내부 Bedrock/AOSS 분석 orchestration
-- EKS, RDS, S3, SQS, Cognito, CloudFront, IAM, Secrets Manager Terraform 구성
-- External Secrets와 IRSA 기반 Secret·AWS 권한 전달
-- immutable ECR digest와 Argo CD GitOps
-- 승인형 Terraform plan/apply
-- CloudWatch/Application Signals/X-Ray 기반 관측성
-- AWS 전체 철거·재배포 lifecycle 문서화
-
-프로젝트 전체 구조를 가장 먼저 이해하려면 다음 문서를 읽습니다.
-
-- **[`docs/project-system-overview.md`](docs/project-system-overview.md): 기능, 요청 흐름, Backend·AWS 구성, 주요 설정과 설계 이유를 연결한 전체 안내서**
-- [`docs/current-operations-delivery-plan.md`](docs/current-operations-delivery-plan.md): 현재 종료 단계와 작업 순서
-- [`docs/portfolio/final-evidence-and-interview-guide.md`](docs/portfolio/final-evidence-and-interview-guide.md): 최종 증빙과 면접 설명
-
-## 2. 포트폴리오 제목
-
-```text
-Terraformers: 백엔드·클라우드 인프라 운영환경 고도화
-```
-
-영문 보조 제목:
-
-```text
-Terraformers Backend & Cloud Infrastructure Modernization
-```
-
-## 3. 마지막 검증 서비스 기능
-
-- Cognito 회원가입·로그인
-- 공개 프로젝트 조회
-- 인증 사용자의 프로젝트 생성과 이미지 업로드
-- 비동기 architecture analysis job 실행과 상태 조회
-- Bedrock architecture facts 추출
-- Titan embedding과 private AOSS vector retrieval
-- reference-aware Terraform 코드 초안 생성
-- 프로젝트 file tree와 원본 이미지·Terraform artifact 조회
-- Terraform `main.tf` 편집
-- 프로젝트 공개/비공개 전환과 soft-delete
-- 공개 프로젝트 댓글
-
-생성된 Terraform은 **검토 가능한 초안**이며 자동으로 `terraform apply`되지 않습니다.
-
-## 4. 마지막 검증 배포 아키텍처
-
-```text
-User Browser
-  |
-  | HTTPS
-  v
-CloudFront
-  |-- static route -> private versioned S3 through OAC
-  |-- /api/*       -> VPC origin -> internal ALB
-  v
-Spring Boot Backend on EKS
-  |-- Cognito JWT validation and RDB user mapping
-  |-- RDS MariaDB: users/projects/files/analysis_jobs/comments
-  |-- S3: architecture images and generated Terraform artifacts
-  |-- Bedrock: architecture facts and Terraform draft generation
-  |-- private AOSS: version-filtered vector retrieval
-  |-- SQS: available progress/result adapter; current publisher disabled
-  |-- CloudWatch/Application Signals/X-Ray: bounded telemetry
-  |-- Secrets Manager -> External Secrets -> Kubernetes Secret
-```
-
-기존 Python analysis service는 팀 프로젝트의 historical reference입니다. 현재 기본 runtime에서는 **Spring Boot Backend가 analysis job lifecycle과 AWS adapter orchestration을 소유**합니다.
-
-핵심 공개 경계:
-
-```text
-CloudFront only
-  -> private S3 frontend
-  -> private VPC origin
-     -> internal ALB
-        -> ClusterIP Backend Service / Pod IP
-```
-
-직접 public ALB, public AOSS, public Argo CD endpoint는 사용하지 않습니다.
-
-## 5. Backend와 데이터 책임
-
-### Backend
-
-- Cognito access token 검증
-- Cognito `sub`와 RDB user 매핑
-- owner/public/admin authorization
-- project, file, comment, analysis API
-- analysis job 상태 전이
-- Bedrock/AOSS/S3 adapter orchestration
-- 생성 Terraform 검증·저장
-- safe failure reason과 telemetry 기록
-
-### RDS MariaDB
-
-```text
-users
-  └─ projects
-       ├─ project_files
-       ├─ analysis_jobs
-       ├─ terraform_runs
-       └─ boards
-            ├─ comments
-            └─ board_reactions
-```
-
-RDB는 관계, 소유권, visibility, soft-delete, analysis status와 object metadata를 관리합니다.
-
-### S3
-
-- 업로드 architecture image bytes
-- 생성 Terraform result bytes
-- frontend static bundle
-- RAG corpus package/receipt
-- Terraform remote state
-
-S3 object와 RDB metadata가 서로 다른 책임을 가지므로 운영 검증에서는 양쪽 상태를 함께 확인합니다.
-
-## 6. 주요 기술과 설정
-
-| 영역 | 마지막 검증 기준 |
-|---|---|
-| Backend | Java 17, Spring Boot 3.3.2, Spring Data JPA |
-| Schema | Flyway, production `ddl-auto=validate` |
-| Database | RDS MariaDB |
-| Auth | Cognito + OAuth2 resource-server JWT |
-| Object storage | private/versioned S3 |
-| Analysis | Bedrock + Titan embedding + private AOSS |
-| Runtime | EKS managed node group |
-| Secret | RDS managed password + External Secrets |
-| Public delivery | CloudFront, private S3 OAC, private ALB VPC origin |
-| Image delivery | immutable ECR tag/digest + Argo CD |
-| Infrastructure | seven remote Terraform state components |
-| CI/CD identity | GitHub Actions OIDC |
-| Observability | CloudWatch, Container Insights, Application Signals, X-Ray, Micrometer |
-
-AWS runtime RAG 설정:
-
-```text
-analysis mode       integrated-java
-retrieval mode      REQUIRED
-generation model    global.anthropic.claude-sonnet-4-6
-embedding model     amazon.titan-embed-text-v2:0
-vector dimension    1024
-physical index      terraformers-reference-v1
-selected corpus     terraformers-reference-v2
-provider version    5.100.0
-topK                8
-```
-
-## 7. Terraform state 구성
-
-| State | 주요 책임 |
-|---|---|
-| `bootstrap` | state bucket, plan/apply roles, GitHub OIDC create-or-adopt boundary |
-| `network` | VPC, subnet, route, NAT, endpoint |
-| `runtime-dependencies` | ECR, upload/result S3, SQS, runtime Secret container |
-| `stateful-dependencies` | RDS, Cognito |
-| `eks-runtime` | EKS, node group, IRSA, observability |
-| `rag-runtime` | AOSS, corpus bucket, CodeBuild ingestion |
-| `frontend-delivery` | frontend S3/OAC, CloudFront, VPC origin |
-
-The bootstrap root can conditionally create a GitHub OIDC provider or adopt an existing provider ARN. The current live bootstrap state adopted an existing project-dedicated GitHub OIDC provider, so the provider itself is outside the 16 managed bootstrap addresses and requires separate final deletion; plan/apply roles remain in bootstrap state.
-
-Terraform apply는 merge 시 자동 실행하지 않습니다. Live plan을 검토한 뒤 protected environment와 exact approved contract를 통해 별도로 실행합니다.
-
-## 8. GitOps delivery
-
-```text
-Backend source commit
-  -> GitHub OIDC image workflow
-  -> immutable git-<full-sha> tag
-  -> ECR digest
-  -> digest-only GitOps pull request
-  -> integration merge
-  -> Argo CD reconciliation
-  -> Deployment image / Pod imageID parity
-```
-
-Image workflow는 `kubectl apply`나 `kubectl set image`를 실행하지 않습니다. Rollback은 이전 digest를 가리키는 Git commit으로 되돌립니다.
-
-마지막 검증 Backend workload 기준:
-
-- namespace `terraformers-runtime`
-- Deployment replica 1
-- Service `ClusterIP`
-- UID 10001, non-root, RuntimeDefault seccomp
-- startup/readiness/liveness probes
-- requests 250m/512Mi, limits 1CPU/1Gi
-- Java auto-instrumentation annotation
-
-단일 replica이므로 application high availability를 구현했다고 주장하지 않습니다.
-
-## 9. 검증 흐름
-
-PR 단계:
-
-```text
-Backend Local Verification
-Frontend CI
-Terraform Static Verification
-Runtime Contract Verification
-Backend Origin Contract Verification
-Pre-deployment Package Verification
-```
-
-승인 delivery 단계:
-
-```text
-Terraform live plan -> reviewed apply
-Backend image publish -> GitOps digest PR -> Argo CD
-RAG package -> private CodeBuild ingestion
-Frontend build -> private S3 sync -> limited CloudFront invalidation
-Browser/API/runtime/telemetry evidence
-```
-
-Workflow 성공만으로 실제 서비스 완료를 판단하지 않습니다. Git desired state, Pod runtime image, browser outcome, RDB/S3 상태와 telemetry를 함께 확인합니다.
-
-## 10. 팀 프로젝트와 후속 고도화 구분
-
-### 팀 프로젝트 당시
-
-- 5인 팀이 architecture image 기반 Terraform 생성 서비스를 구현
-- 백엔드 일부 기능과 배포 흐름 점검에 참여
-- S3, 인증, 결과 조회 등 서비스 흐름 검증에 참여
-
-### 후속 개인 고도화
-
-- 원본과 `rdb-refactor` 비교 및 재사용 범위 결정
-- canonical RDB domain과 인증/소유권 정렬
-- Spring Boot 통합 분석 runtime 구현·검증
-- AWS Terraform state와 실제 배포 복구
-- private RAG와 corpus v2 비교
-- External Secrets와 private origin
-- immutable digest GitOps
-- AWS-native observability
-- 장애 원인·수정·검증 기록
-- AWS inventory, teardown, redeployment runbook
-
-2024년 팀 구현 전체를 개인 작업으로 설명하지 않습니다.
-
-## 11. 주요 문서
-
-### 전체 이해와 방향
-
-- [`docs/project-system-overview.md`](docs/project-system-overview.md)
-- [`docs/current-operations-delivery-plan.md`](docs/current-operations-delivery-plan.md)
-- [`docs/source-rag-gitops-reuse-plan.md`](docs/source-rag-gitops-reuse-plan.md)
-
-### Backend와 데이터
-
-- [`docs/rdb-domain-realignment.md`](docs/rdb-domain-realignment.md)
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/deployment.md`](docs/deployment.md)
-
-### Delivery와 운영
-
-- [`docs/gitops-delivery.md`](docs/gitops-delivery.md)
-- [`docs/backend-origin-delivery.md`](docs/backend-origin-delivery.md)
-- [`docs/frontend-delivery.md`](docs/frontend-delivery.md)
-- [`docs/managed-secret-delivery.md`](docs/managed-secret-delivery.md)
-- [`docs/terraform-rag-runtime.md`](docs/terraform-rag-runtime.md)
-- [`docs/operations-visibility.md`](docs/operations-visibility.md)
-
-### 종료와 면접
-
-- [`docs/portfolio/final-evidence-and-interview-guide.md`](docs/portfolio/final-evidence-and-interview-guide.md)
-- [`docs/lifecycle/aws-resource-inventory.md`](docs/lifecycle/aws-resource-inventory.md)
-- [`docs/lifecycle/aws-teardown-runbook.md`](docs/lifecycle/aws-teardown-runbook.md)
-- [`docs/lifecycle/aws-redeploy-runbook.md`](docs/lifecycle/aws-redeploy-runbook.md)
-- [`docs/lifecycle/aws-runtime-teardown-closure.md`](docs/lifecycle/aws-runtime-teardown-closure.md)
-- [`docs/lifecycle/aws-final-zero-resource-proof.md`](docs/lifecycle/aws-final-zero-resource-proof.md)
-- [`docs/lifecycle/closure-progress.md`](docs/lifecycle/closure-progress.md)
-
-## 12. 의도적으로 주장하지 않는 범위
-
-- 생성 Terraform의 자동 배포 가능성
-- HPA/JMeter autoscaling 완료
-- 다중 Backend replica 기반 HA
-- multi-region disaster recovery
-- RDS restore drill 완료
-- 모든 AWS 리소스의 Terraform-only 관리
-- 통계적으로 충분한 RAG 품질 평가
-- 최종 live evidence가 없는 telemetry 성공
-
-## 13. 핵심 설명 문장
-
-```text
-팀 프로젝트에서는 기능 완성과 시연에 집중했지만, 이후 실제 서비스로 설명하려면 데이터 소유권, DB schema 정합성, AWS 의존성 연결, Secret 전달, 인프라 변경 통제, image와 runtime 일치, 관측성과 장애 대응, 전체 환경의 철거·재배포 절차가 필요하다고 판단했습니다. 그래서 기존 Terraformers와 RDB refactor 결과를 재사용해 Spring Boot 통합 분석 runtime, owner-based RDB domain, private AWS architecture, immutable digest GitOps, 승인형 Terraform과 운영 runbook을 연결했습니다.
-```
+| Backend | Java 17, Spring Boot 3.3.2, Spring Data JPA, Flyway |
+| Durable state | MariaDB 11.4 |
+| AI | Vertex AI Gemini generation/fact extraction, gemini-embedding-001 |
+| Retrieval | OpenSearch |
+| Object storage | GCS provider-neutral object boundary |
+| Runtime | GKE Standard + dedicated MariaDB Compute Engine VM |
+| Delivery | Artifact Registry, immutable digest, GitHub Actions |
+| Identity | GitHub OIDC / GCP Workload Identity Federation |
+| Secrets | Secret Manager + GKE Secret Sync |
+| Observability | Actuator, Micrometer, Prometheus-format metrics, bounded logs/MDC |
+| Infrastructure | Terraform |
+
+AWS-specific implementations remain in the repository as historical compatibility/reference assets.
+They are not the current live runtime.
+
+## 9. Scope and non-claims
+
+The repository intentionally does not claim:
+
+- every generated Terraform draft is deployment-correct
+- generated Terraform is automatically applied
+- exactly-once external AI-provider invocation
+- production-scale throughput or saturation limits
+- multi-replica zero-downtime availability
+- MariaDB HA or automatic failover
+- completed HPA/OpenSearch tuning
+- completed faulty-release rollback experiment
+- full distributed tracing/dashboard/alerting platform
+- unattended production Terraform apply safety
+
+These are residual or future production-hardening topics, not prerequisites for the selected
+portfolio cases.
+
+## 10. Team project and modernization contribution boundary
+
+The original service was a 5-person team project. Do not describe the entire original product as an
+individual implementation.
+
+The later modernization contribution is the repository-backed work around:
+
+- backend domain/runtime boundary cleanup
+- durable AnalysisJob ownership/recovery/retry/cleanup
+- provider-neutral cloud/AI adapters
+- RAG grounding measurement and evaluation
+- GCP representative runtime and delivery
+- operational telemetry and failure classification
+- infrastructure lifecycle and final cost/resource closure
+
+## 11. Recommended reading order
+
+1. [AI Project State](docs/AI_PROJECT_STATE.md)
+2. [Case A Final Closure](docs/evaluation/case-a-final-closure.md)
+3. [Case B Integrated Closure](docs/evaluation/case-b-integrated-closure.md)
+4. [Case C Final Portfolio Closure](docs/evaluation/case-c-portfolio-closure.md)
+5. [Final Evidence and Interview Guide](docs/portfolio/final-evidence-and-interview-guide.md)
+6. [GCP Final Teardown Runbook](docs/runbooks/gcp-target-final-teardown.md)

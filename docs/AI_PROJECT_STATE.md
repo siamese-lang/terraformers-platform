@@ -595,9 +595,15 @@ instrumentation/transport standard if a cross-service or demonstrated trace-corr
 Langfuse is deferred unless one interactive LLM trace/score/release product becomes a demonstrated
 operator requirement. No dependency, telemetry exporter, runtime service, or cloud resource is added.
 
-Do not start A7-7 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
-v4 corpus into a live vector store, or adopt OpenTelemetry/Langfuse/another observability product
-without the later phase gates and required explicit approvals.
+A7-7 is **REQUIRED AFTER A7-6 MERGE / NOT STARTED**. Final closure must include a bounded
+representative live proof that the broad v4 corpus is actually ingested and served by the live RAG
+path and that `evidence-quality-v1` is persisted and read back through the real AnalysisJob API.
+The same proof must include an authenticated negative control and final teardown to zero known
+Terraformers billable resources.
+
+Do not start A7-7 until A7-6 is merged and an A7-7 Work Package freezes the exact live actions. Do
+not adopt OpenTelemetry/Langfuse/another observability product or perform live actions outside that
+bounded A7-7 contract without separate approval.
 
 ## Do not revisit
 

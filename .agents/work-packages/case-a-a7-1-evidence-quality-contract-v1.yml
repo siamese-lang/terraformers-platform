@@ -1,0 +1,232 @@
+work_package:
+  id: case-a-a7-1-evidence-quality-contract-v1
+  status: ACTIVE
+  approved_base_sha: 9b2289920f6af13e3de739668a3a761cfcba1cbd
+  execution_base_sha: 9b2289920f6af13e3de739668a3a761cfcba1cbd
+
+  goal: >
+    Implement only A7-1 of ADR-008: a deterministic, versioned evidence-quality contract that
+    keeps technical status, authoritative-knowledge status, and evidence-backed quality status
+    separate; distinguishes a corpus knowledge gap from a retrieval miss; deterministically checks
+    generated AWS resource support against provider schema and selected evidence; preserves
+    project-decision grounding as a separate dimension; and explicitly states that runtime quality
+    is conditional on extracted facts.
+
+  prior_phase:
+    id: A7_0
+    status: COMPLETE
+    closure_evidence: docs/evaluation/case-a-a7-0-authoritative-knowledge-coverage.md
+    merge_sha: 9b2289920f6af13e3de739668a3a761cfcba1cbd
+
+  decision_source:
+    - docs/architecture/decisions/ADR-008-evidence-backed-ai-quality.md
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+    - docs/evaluation/case-a-a7-0-authoritative-knowledge-coverage.md
+
+  engineering_axis:
+    - AI/RAG quality measurement
+    - backend AI-service reliability
+
+  representative_case:
+    - Case A extension — Evidence-backed AI Quality and Semantic Reliability
+
+  allowed_paths:
+    - .agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml
+    - .agents/work-packages/case-a-semantic-reliability-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+    - docs/evaluation/case-a-a7-1-evidence-quality-contract.md
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/test/java/com/terraformers/modernization/reference/**
+
+  prohibited_paths:
+    - backend/src/main/resources/db/migration/**
+    - backend/src/main/java/com/terraformers/modernization/evaluation/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/**
+    - frontend/**
+    - infra/**
+    - .github/workflows/**
+    - corpus/**
+    - AGENTS.md
+
+  selected_contract:
+    contract_version: evidence-quality-v1
+
+    statuses:
+      technical:
+        - PASS
+        - FAIL
+      knowledge:
+        - COMPLETE
+        - INCOMPLETE
+        - UNKNOWN
+        - NOT_APPLICABLE
+      quality:
+        - EVIDENCE_BACKED
+        - DEGRADED
+        - UNKNOWN
+        - NOT_APPLICABLE
+      project_decision:
+        - COMPLETE
+        - INCOMPLETE
+        - UNKNOWN
+        - NOT_APPLICABLE
+
+    runtime_quality_boundary: CONDITIONAL_ON_EXTRACTED_FACTS
+
+    knowledge_mapping:
+      non_architecture:
+        knowledge_status: NOT_APPLICABLE
+        quality_status: NOT_APPLICABLE
+      architecture_without_deterministic_resource_facts:
+        knowledge_status: UNKNOWN
+        quality_status: UNKNOWN
+      extracted_resource_absent_from_provider_schema:
+        knowledge_status: UNKNOWN
+        quality_status: UNKNOWN
+        reason: RESOURCE_UNKNOWN_TO_PROVIDER
+      provider_schema_exists_but_official_knowledge_unavailable:
+        knowledge_status: INCOMPLETE
+        quality_status: UNKNOWN
+        reason: OFFICIAL_KNOWLEDGE_NOT_AVAILABLE
+      official_knowledge_available_but_required_resource_evidence_not_selected:
+        knowledge_status: COMPLETE
+        quality_status: DEGRADED
+        reason: REQUIRED_EVIDENCE_NOT_RETRIEVED
+
+    generated_output_mapping:
+      rule: >
+        Generated AWS resource types are checked deterministically against the provider schema and
+        selected ReferenceDocument.resourceTypes. The generation model is never asked to self-report
+        citations.
+      resource_absent_from_provider_schema:
+        quality_status: DEGRADED
+        reason: RESOURCE_UNKNOWN_TO_PROVIDER
+      schema_resource_not_supported_by_selected_evidence:
+        quality_status: DEGRADED
+        reason: GENERATED_RESOURCE_UNSUPPORTED_BY_EVIDENCE
+
+    project_decision_mapping:
+      applicability_unknown:
+        project_decision_status: UNKNOWN
+        effect: >
+          Do not invent a missing-decision failure. If no already-known degradation exists, overall
+          quality remains UNKNOWN rather than EVIDENCE_BACKED.
+      not_applicable:
+        project_decision_status: NOT_APPLICABLE
+      applicable_and_all_required_selected:
+        project_decision_status: COMPLETE
+      applicable_and_required_missing:
+        project_decision_status: INCOMPLETE
+        quality_status: DEGRADED
+        reason: REQUIRED_PROJECT_DECISION_NOT_RETRIEVED
+
+    quality_precedence: >
+      A deterministic degradation wins over UNKNOWN. In the absence of a known degradation,
+      unresolved knowledge or project-decision applicability yields UNKNOWN. EVIDENCE_BACKED is
+      emitted only when all applicable deterministic evidence dimensions are complete.
+
+    technical_independence: >
+      Technical PASS/FAIL is represented separately and does not get collapsed into knowledge or
+      quality status. A7-1 does not add Terraform/provider failure classification; later phases own
+      those failure mechanics.
+
+    persistent_representation_boundary: >
+      A7-1 must provide a stable JSON-serializable evidence-quality-v1 representation with a
+      round-trip compatibility test. It must not add AnalysisJob database columns, Flyway
+      migrations, or API exposure; durable job persistence belongs to A7-4.
+
+  implementation_shape:
+    - >
+      Add one immutable evidence-quality assessment representation under the analysis boundary with
+      the contract version, technical/knowledge/quality/project-decision statuses, bounded reasons,
+      and explicit CONDITIONAL_ON_EXTRACTED_FACTS boundary.
+    - >
+      Add one deterministic assessor whose inputs are extracted resource types, official-knowledge
+      availability, selected reference evidence, generated resource types, provider-schema
+      membership, and project-decision applicability/requirements. Do not call an LLM.
+    - >
+      Reuse AwsProviderSchemaCatalog and ReferenceDocument metadata. If a small read-only helper is
+      needed to enumerate generated resource types from existing Terraform inspection, extend the
+      existing inspector rather than adding a second Terraform parser.
+    - >
+      Keep official-knowledge availability as deterministic contract input for A7-1. Do not invent a
+      runtime source for it and do not activate/ingest v4 in this phase.
+    - >
+      Add focused unit tests covering knowledge gap versus retrieval miss, generated-resource
+      evidence support, project-decision UNKNOWN versus known missing, non-architecture
+      NOT_APPLICABLE, quality precedence, and JSON round-trip/version identity.
+    - >
+      Add one A7-1 evidence document describing the mapping, validation, and A7-4 persistence
+      boundary.
+
+  acceptance:
+    - technical_knowledge_and_quality_status_are_separate
+    - missing_official_knowledge_is_not_reported_as_AI_quality_failure
+    - retrieval_miss_is_distinguishable_from_corpus_knowledge_gap
+    - generated_resource_types_are_checked_against_provider_schema_and_selected_evidence
+    - project_decision_relationship_evidence_is_preserved_as_a_separate_dimension
+    - runtime_quality_claim_is_explicitly_conditional_on_extracted_facts
+    - quality_contract_has_a_versioned_JSON_serializable_representation
+    - no_AnalysisJob_DB_or_API_persistence_is_added_before_A7_4
+    - existing_provider_schema_and_RAG_tests_remain_green
+
+  allowed_actions:
+    - inspect_repository
+    - implement_evidence_quality_contract
+    - add_focused_unit_tests
+    - run_existing_backend_tests
+    - run_existing_RAG_and_static_checks
+    - update_A7_1_evidence_and_state_docs
+    - create_pull_request
+    - inspect_CI_once
+    - perform_one_bounded_corrective_iteration_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - change_A7_1_acceptance
+    - start_A7_2
+    - add_database_migration
+    - persist_quality_fields_on_AnalysisJob
+    - expose_quality_fields_through_API
+    - modify_evaluation_false_green_outputs
+    - change_provider_partial_failure_taxonomy
+    - change_prompt_or_model
+    - tune_retrieval
+    - ingest_or_activate_v4
+    - create_or_modify_workflow
+    - live_GCP_action
+    - live_Vertex_or_Bedrock_call
+    - add_evaluator_LLM
+    - add_multi_model_voting
+    - add_observability_product
+
+  validation:
+    required:
+      - focused_A7_1_unit_tests
+      - existing_backend_relevant_unit_tests
+      - existing_RAG_corpus_contract_and_tests
+      - git_diff_check
+    live_validation_required: false
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_execution_base_sha
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - allowed_path_outside_scope_is_required
+    - database_or_API_persistence_is_required_to_pass_A7_1
+    - runtime_official_knowledge_source_would_need_to_be_invented
+    - prompt_model_or_retrieval_behavior_change_is_required
+    - evaluator_LLM_or_model_voting_is_proposed
+    - live_or_cost_action_is_requested
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    A7_2_requires_separate_user_approval: true
+    live_action_requires_separate_user_approval: true

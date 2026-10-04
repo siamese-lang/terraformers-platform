@@ -13,23 +13,25 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 NOT STARTED**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 APPROVED — IMPLEMENTATION NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **No implementation phase is active. A7-0 authoritative knowledge coverage is COMPLETE. A7-1 is the next candidate and must not start without explicit user approval.**
+- Current single task: **A7-1 Evidence-backed Quality Contract is approved but implementation has not started. Execute only `.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml` after this activation contract is merged; stop before A7-2.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 NOT STARTED**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 APPROVED / IMPLEMENTATION NOT STARTED**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
   [Case A Evidence-backed AI Quality and Semantic Reliability](plans/active/case-a-semantic-reliability-extension.md)
-- Work Package:
+- Extension/A7-0 Work Package:
   [.agents/work-packages/case-a-semantic-reliability-v1.yml](../.agents/work-packages/case-a-semantic-reliability-v1.yml)
+- A7-1 execution Work Package:
+  [.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml](../.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml)
 - New representative claim: separate technical success, authoritative-knowledge coverage,
   evidence-backed runtime quality, labeled evaluation quality, provider partial failures, and safe
   executable diagnostics.
@@ -537,8 +539,10 @@ No remaining M1 work.
 A7-0 — Authoritative Knowledge Coverage — is **COMPLETE**. Closure evidence is recorded in
 [Case A A7-0 — Authoritative Knowledge Coverage](evaluation/case-a-a7-0-authoritative-knowledge-coverage.md).
 
-The next candidate is **A7-1 — Evidence-backed Quality Contract**. It is **NOT STARTED** and must
-not begin automatically. Explicit user approval is required before implementation.
+A7-1 — Evidence-backed Quality Contract — is **APPROVED / IMPLEMENTATION NOT STARTED**.
+The approved execution contract is
+[case-a-a7-1-evidence-quality-contract-v1.yml](../.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml).
+Implementation begins only after that contract is merged to main.
 
 The original Case A retrieval-grounding/generalization closure remains retained; this extension does
 not invalidate it. Case B and Case C portfolio closures also remain retained.

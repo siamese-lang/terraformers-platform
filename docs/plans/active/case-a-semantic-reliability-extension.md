@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 APPROVED / IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -37,7 +37,10 @@ full 1,526-resource provider schema, while RAG ingestion targets the full 1,514-
 schema/official-document intersection. The remaining 12 schema resources are explicit official
 knowledge gaps; the project does not fabricate RAG evidence for them.
 
-A7-1 requires a separate explicit user start decision and is not started by this closure.
+A7-1 was explicitly approved on 2026-10-04. Because the original extension Work Package
+bound its execution base during A7-0 and has a stop-on-main-drift rule, A7-1 execution is isolated in
+`.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml` instead of overwriting the
+historical A7-0 base. A7-1 implementation does not start until that execution contract is merged.
 
 ## 1. Why this extension exists
 

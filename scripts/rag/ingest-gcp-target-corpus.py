@@ -95,7 +95,7 @@ def validate_embedding(response: object, dimension: int = 1024) -> list[float]:
     except (KeyError, TypeError):
         fail("Vertex embedding response has no vector values")
     if not isinstance(values, list) or len(values) != dimension:
-        fail("Vertex embedding vector dimension does not match 1024")
+        fail(f"Vertex embedding vector dimension does not match {dimension}")
     if any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
            for value in values):
         fail("Vertex embedding response contains a non-finite value")

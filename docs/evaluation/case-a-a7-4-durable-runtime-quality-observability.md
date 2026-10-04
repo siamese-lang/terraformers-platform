@@ -42,6 +42,59 @@ It does **not** yet have:
 - terminal quality metrics/log event;
 - restart-proof quality read-back.
 
+## Recovered A7-0 official-knowledge gap evidence
+
+The A7-4 preflight initially stopped because the exact 12-resource official-documentation gap set
+was not committed and the Codex environment could not download the pinned provider artifacts.
+
+The gap set was subsequently reproduced independently from the **same pinned provider source
+commit** used by A7-0:
+
+- provider source commit: `f7a3b98da589ab1d52756b0dcee0dbf2de83d635`
+- commit tree: `5a6a39a237cfdb28cf9f4fdb4a6e00fdf1affe36`
+- `internal/service` tree: `08ac3f85622b439f826da9b5677414f0f0b86fda`
+- `website/docs/r` tree: `fda313b7ec2d69be5077056340ba25d6dc763b0d`
+- generated service-package registries inspected: **256**
+- unique managed resource `TypeName` values from only `FrameworkResources()` and
+  `SDKResources()`: **1,526**
+- official `website/docs/r/*.html.markdown` files in the pinned docs tree: **1,520**
+- managed resources with matching official documentation filenames: **1,514**
+- managed resources without matching official documentation: **12**
+
+Only the managed-resource registry functions were parsed. Data-source `TypeName` values were
+explicitly excluded.
+
+The exact sorted gap set is:
+
+- `aws_account_region`
+- `aws_alb`
+- `aws_alb_listener`
+- `aws_alb_listener_certificate`
+- `aws_alb_listener_rule`
+- `aws_alb_target_group`
+- `aws_alb_target_group_attachment`
+- `aws_api_gateway_rest_api_put`
+- `aws_ec2_image_block_public_access`
+- `aws_pinpoint_email_template`
+- `aws_rds_custom_db_engine_version`
+- `aws_securityhub_configuration_policy_association`
+
+Therefore:
+
+```text
+1,526 managed schema/source registry resources
+- 12 schema-known resources without official resource documentation
+= 1,514 officially documented managed resources
+```
+
+This exactly matches the accepted A7-0 measurement. The result is derived from pinned provider
+source structure, not current retrieval hits, not the historical v3 corpus, and not a fabricated
+allowlist.
+
+A7-4 may now package this exact set as compact versioned read-only coverage metadata, preserving the
+pinned provider commit/tree provenance above. This recovery does not imply that v4 is served or
+ingested.
+
 ## Persistence boundary
 
 A7-4 uses one additive Flyway migration. Existing rows are not backfilled with guessed quality.

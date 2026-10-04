@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-1-evidence-quality-contract-v1
-  status: IMPLEMENTED_AWAITING_VALIDATION
+  status: COMPLETE
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: 2efa4dcc1425feafac896a069315416949fa7ab5
 
@@ -237,7 +237,20 @@ work_package:
     document: docs/evaluation/case-a-a7-1-evidence-quality-contract.md
     contract_version: evidence-quality-v1
     execution_base_sha: 2efa4dcc1425feafac896a069315416949fa7ab5
-    validation_status: PENDING_CI
+    validation_status: PASS
+    implementation_merge_sha: f9009ce8f9a744afee848b8e196b57de5860c78f
+    backend_local_verification:
+      run_id: 37188607802
+      conclusion: success
+      evidence: mvn_clean_test_and_package_plus_mariadb_schema_repository_validation
+    terraform_static_verification:
+      run_id: 37188607799
+      conclusion: success
+      scope_note: terraform_static_job_skipped_because_PR_202_changed_no_terraform_RAG_paths
+    RAG_regression_note: >
+      PR #202 did not modify corpus, scripts/rag, tests/rag, or the RAG contract verifier. The
+      A7-0 RAG verification baseline therefore remains unchanged; no new RAG behavior is claimed.
+    acceptance_review: PASS
     A7_2_status: NOT_STARTED
 
   completion:

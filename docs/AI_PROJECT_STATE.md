@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 NOT STARTED**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 APPROVED — IMPLEMENTATION NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-4 is closed at implementation merge SHA `ab1b1f410b6aabf674af51d6161a2efd0f6df6a4`. A7-5 Safe Executable Diagnostics is NOT STARTED and requires separate user approval plus its own bounded Work Package before implementation.**
+- Current single task: **A7-5 Safe Executable Diagnostics is explicitly approved. Merge `.agents/work-packages/case-a-a7-5-safe-executable-diagnostics-v1.yml`, then bind its execution base once and implement only A7-5. Stop before A7-6.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 AWAITING USER APPROVAL**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 APPROVED / IMPLEMENTATION NOT STARTED**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -34,6 +34,8 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml](../.agents/work-packages/case-a-a7-1-evidence-quality-contract-v1.yml)
 - A7-2 execution Work Package:
   [.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml](../.agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml)
+- A7-5 execution Work Package:
+  [.agents/work-packages/case-a-a7-5-safe-executable-diagnostics-v1.yml](../.agents/work-packages/case-a-a7-5-safe-executable-diagnostics-v1.yml)
 - New representative claim: separate technical success, authoritative-knowledge coverage,
   evidence-backed runtime quality, labeled evaluation quality, provider partial failures, and safe
   executable diagnostics.
@@ -66,7 +68,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   canonical repository smoke queries. Terraform Static Verification run `37191939292` completed
   successfully at scope level; its terraform/RAG job was skipped because PR #205 changed no
   terraform/RAG paths. Frozen canonical/holdout datasets were unchanged and no live AI/cloud
-  execution was used. A7-3 and A7-4 are complete; A7-5 has not started.
+  execution was used. A7-3 and A7-4 are complete; A7-5 is approved but implementation has not started.
 - No evaluator LLM or multi-model voting is part of the default design.
 - Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
   validation PASS while required grounding was incomplete.
@@ -575,7 +577,12 @@ A7-3 — Provider Partial Failures — is **COMPLETE** at merge SHA `fdb0e8a3f7e
 
 A7-4 — Durable Runtime Quality Observability — is **COMPLETE** at implementation merge SHA `ab1b1f410b6aabf674af51d6161a2efd0f6df6a4`. Accepted evidence is `docs/evaluation/case-a-a7-4-durable-runtime-quality-observability.md`. The first Backend Local Verification run `37209621451` exposed one transaction-boundary regression while MariaDB validation already passed; bounded repair commit `0e457f7bd9339fc44f901bdd90b2c95f40c081b0` corrected it. Final Backend Local Verification `37210008792` and Terraform Static Verification `37210008786` both passed. No live provider/GCP action or v4 ingestion was performed.
 
-Do not start A7-5 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
+A7-5 — Safe Executable Diagnostics — is **APPROVED / IMPLEMENTATION NOT STARTED** under
+`.agents/work-packages/case-a-a7-5-safe-executable-diagnostics-v1.yml`. It preserves the existing
+`terraform_validate_configuration` top-level contract and will reduce Terraform `validate -json`
+diagnostics to bounded enum/count evidence without retaining raw failed HCL or diagnostic text.
+
+Do not start A7-6 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
 v4 corpus into a live vector store, or introduce an evaluator LLM / multi-model voting / new
 observability product without the later phase gates and required explicit approvals.
 

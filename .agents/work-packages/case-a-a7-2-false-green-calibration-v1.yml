@@ -1,0 +1,200 @@
+work_package:
+  id: case-a-a7-2-false-green-calibration-v1
+  status: APPROVED_AWAITING_ACTIVATION
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  activation:
+    bind_rule: >
+      This Work Package must first be merged to main. Immediately before the first A7-2
+      implementation write, read authoritative remote main exactly once, bind that SHA to
+      execution_base_sha on the implementation branch, and do not refresh or rebase afterward.
+    first_implementation_write_must_bind_execution_base: true
+
+  prior_phase:
+    id: A7_1
+    status: COMPLETE
+    closure_evidence: docs/evaluation/case-a-a7-1-evidence-quality-contract.md
+    merge_sha: f9009ce8f9a744afee848b8e196b57de5860c78f
+
+  user_approval:
+    approved_on: 2026-10-04
+    scope: A7_2_ONLY
+
+  goal: >
+    Implement only A7-2 of ADR-008: deterministic false-green measurement and offline calibration
+    using frozen evaluation labels. Add technical success, labeled quality success, and false-green
+    to Case A canonical/holdout reporting without changing production retrieval/generation behavior,
+    without treating the A7-1 runtime evidence status as ground truth, and without rerunning live AI.
+
+  authoritative_evidence:
+    historical_false_green:
+      source: docs/evaluation/case-a-retrieval-grounding-a2-baseline.md
+      source_commit: 96c6442026f6c57a30a9b248a8af115df1e7f2e4
+      vpc_runs:
+        - 36574906125
+        - 36576165161
+        - 36577747809
+      retained_mechanics:
+        fact_extraction_pass: 3/3
+        retrieval_pass: 3/3
+        generated_output_valid: 3/3
+        grounding_gap: 3/3
+        project_decision_matched: [1, 0, 0]
+        project_decision_total: [1, 1, 1]
+        required_resource_matched: [3, 2, 3]
+        required_resource_total: [4, 4, 4]
+      canonical_false_green_example:
+        run: 36576165161
+        project_decision_coverage: 0/1
+        required_resource_coverage: 2/4
+        downstream_generation_and_validation: successful
+    final_canonical:
+      source: docs/evaluation/case-a-final-closure.md
+      runs:
+        - 36803174654
+        - 36803781744
+        - 36804600570
+      expected:
+        grounding_gaps: 0/12
+        positive_validation: 12/12
+        negative_controls: 6/6
+    frozen_holdout:
+      source: docs/evaluation/case-a-final-closure.md
+      run: 36805478708
+      dataset: terraformers-eval-holdout-v1
+      expected:
+        positive_grounding_gaps: 0/2
+        positive_validation: 2/2
+        negative_controls: 2/2
+
+  label_contract:
+    formula: false_green = technical_success AND NOT labeled_quality_success
+
+    technical_success:
+      architecture: >
+        FACT_EXTRACTION, RETRIEVAL, GENERATION, and VALIDATION are PASS and firstDivergence is null.
+        This field describes pipeline mechanics only and must not inspect expected semantic labels.
+      negative_control: >
+        FACT_EXTRACTION and GENERATION are PASS, firstDivergence is null, and RETRIEVAL/VALIDATION
+        contain no FAIL or BLOCKED stage. RETRIEVAL may be PASS or NOT_RUN and VALIDATION may be
+        NOT_RUN because those stages are not required for a negative-control outcome.
+
+    labeled_quality_success:
+      architecture: >
+        Observed classification matches the frozen expected classification; required project-decision
+        grounding is complete; required retrieval resource-type grounding is complete; all required
+        generated Terraform resource types are present; no forbidden generated Terraform resource
+        type is present; and the frozen validation expectation is satisfied.
+      negative_control: >
+        Observed classification matches AMBIGUOUS or NON_ARCHITECTURE_IMAGE as frozen by the
+        dataset, generated Terraform text is blank, generated resource types are empty, and
+        validation is not required.
+
+    runtime_evidence_comparison: >
+      A7-1 EvidenceQualityAssessment.QualityStatus may be supplied as an optional comparison signal
+      and recorded beside labeled_quality_success. It is never used to compute the label and is never
+      named or treated as ground truth. Existing traces that do not contain a runtime quality status
+      remain valid and report the comparison signal as unavailable.
+
+  implementation_shape:
+    - >
+      Add a new versioned Case A calibration report, expected identity
+      case-a-quality-calibration-v1, rather than changing the existing
+      case-a-retrieval-grounding-report-v1 contract.
+    - >
+      Embed the existing CaseAMeasurementReport unchanged inside the calibration report so all
+      previous Case A grounding/count/latency metrics are preserved.
+    - >
+      Add one deterministic labeled-quality scorer/reporter producing per-case technicalSuccess,
+      labeledQualitySuccess, falseGreen, bounded label evidence, and optional A7-1 runtime quality
+      status for side-by-side calibration.
+    - >
+      Add a CaseAMeasurementLauncher mode for offline calibration from an existing EvaluationRunResult
+      plus its frozen dataset. Do not change live evaluation execution.
+    - >
+      Add deterministic tests that machine-represent the retained VPC false-green mechanics,
+      prove the final canonical/holdout pass semantics, cover both negative-control classes, and
+      prove runtime evidence status does not define labeled ground truth.
+    - >
+      Add one A7-2 evidence document. Existing historical datasets, raw run identities, A7-0/A7-1
+      evidence, and prior Case A measurement outputs remain immutable.
+
+  acceptance:
+    - historical_VPC_false_green_is_machine_representable
+    - false_green_is_exactly_technical_success_and_not_labeled_quality_success
+    - canonical_output_reports_technical_labeled_and_false_green
+    - holdout_output_reports_technical_labeled_and_false_green
+    - previous_Case_A_measurement_report_is_preserved_unchanged_inside_calibration_output
+    - architecture_labels_use_frozen_classification_grounding_generation_and_validation_expectations
+    - negative_controls_require_correct_classification_and_empty_Terraform
+    - runtime_evidence_status_is_optional_comparison_signal_not_ground_truth
+    - frozen_canonical_and_holdout_dataset_files_are_unchanged
+    - no_live_AI_or_cloud_execution_is_required
+    - existing_backend_and_Case_A_tests_remain_green
+
+  allowed_paths:
+    - .agents/work-packages/case-a-a7-2-false-green-calibration-v1.yml
+    - .agents/work-packages/case-a-semantic-reliability-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+    - docs/evaluation/case-a-a7-2-false-green-calibration.md
+    - backend/src/main/java/com/terraformers/modernization/evaluation/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/**
+
+  prohibited_paths:
+    - evaluation/terraformers-eval-v1/**
+    - evaluation/terraformers-eval-holdout-v1/**
+    - evaluation/baselines/**
+    - corpus/**
+    - scripts/rag/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/main/resources/db/migration/**
+    - .github/workflows/**
+    - frontend/**
+    - infra/**
+    - AGENTS.md
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - change_A7_2_acceptance
+    - start_A7_3
+    - mutate_frozen_dataset_labels_or_fixtures
+    - modify_existing_historical_baseline_evidence
+    - change_prompt_model_retrieval_or_generation_behavior
+    - change_A7_1_quality_contract
+    - use_runtime_evidence_quality_as_label_ground_truth
+    - add_evaluator_LLM
+    - add_multi_model_voting
+    - add_database_or_API_persistence
+    - create_or_modify_workflow
+    - live_GCP_action
+    - live_Vertex_or_Bedrock_call
+    - rerun_canonical_or_holdout_live_evaluations
+
+  validation:
+    required:
+      - focused_A7_2_unit_tests
+      - existing_evaluation_tests
+      - existing_backend_local_verification
+      - git_diff_check
+    live_validation_required: false
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_execution_base_sha
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - frozen_dataset_change_is_required
+    - production_retrieval_generation_or_model_change_is_required
+    - runtime_quality_would_need_to_be_used_as_ground_truth
+    - live_or_cost_action_is_requested
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    A7_3_requires_separate_user_approval: true
+    live_action_requires_separate_user_approval: true

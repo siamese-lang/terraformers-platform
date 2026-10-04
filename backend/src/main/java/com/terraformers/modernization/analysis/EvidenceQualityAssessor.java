@@ -150,6 +150,9 @@ public final class EvidenceQualityAssessor {
                 Set<String> required = normalized(input.requiredProjectDecisionIds());
                 Set<String> selectedIds = new TreeSet<>();
                 for (ReferenceDocument reference : safeReferences(input.selectedReferences())) {
+                    if (!"TERRAFORMERS_PATTERN".equals(reference.documentType())) {
+                        continue;
+                    }
                     if (reference.id() != null && !reference.id().isBlank()) {
                         selectedIds.add(reference.id().strip());
                     }

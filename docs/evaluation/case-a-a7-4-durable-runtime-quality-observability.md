@@ -149,6 +149,41 @@ must stop instead of fabricating the list.
 This metadata does not mean v4 is served. A7-4 does not perform embedding, OpenSearch ingestion, or
 live corpus deployment.
 
+### Verified exact A7-0 knowledge-gap set
+
+The A7-4 preflight blocker was resolved without a live provider/runtime action by independently
+reading the pinned public provider source commit
+`f7a3b98da589ab1d52756b0dcee0dbf2de83d635` through GitHub's repository API.
+
+The pinned resource documentation tree contains 1,520 Markdown files:
+
+- 1,514 use the exact `.html.markdown` path recognized by the A7-0 compiler;
+- 6 use legacy/non-matching `.markdown` names.
+
+The generated managed-resource registries confirm those six legacy-named resources are managed
+schema resources. The registries also expose six `aws_alb*` compatibility resource aliases with
+no matching `.html.markdown` document.
+
+Combined with the accepted A7-0 measurement of 1,526 schema resources and a 1,514-resource
+schema/document intersection, the following 12 distinct resources exhaust the exact official
+documentation gap set:
+
+- `aws_account_region`
+- `aws_api_gateway_rest_api_put`
+- `aws_ec2_image_block_public_access`
+- `aws_pinpoint_email_template`
+- `aws_rds_custom_db_engine_version`
+- `aws_securityhub_configuration_policy_association`
+- `aws_alb`
+- `aws_alb_listener`
+- `aws_alb_listener_certificate`
+- `aws_alb_listener_rule`
+- `aws_alb_target_group`
+- `aws_alb_target_group_attachment`
+
+This set is now verified A7-0 evidence for A7-4. It must be represented as compact coverage metadata,
+not expanded into a 1,514-resource production allowlist.
+
 ## API and observability boundary
 
 `GET /api/analysis/jobs/{id}` gains one nullable additive quality object. Legacy rows without a

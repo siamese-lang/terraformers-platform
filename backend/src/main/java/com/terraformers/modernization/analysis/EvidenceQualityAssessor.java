@@ -116,7 +116,7 @@ public final class EvidenceQualityAssessor {
                 qualityStatus,
                 projectDecisions.status(),
                 RuntimeQualityBoundary.CONDITIONAL_ON_EXTRACTED_FACTS,
-                reasons,
+                List.copyOf(reasons),
                 extracted,
                 missingOfficialKnowledge,
                 missingSelectedEvidence,

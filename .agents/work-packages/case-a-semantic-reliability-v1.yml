@@ -1,0 +1,290 @@
+work_package:
+  id: case-a-semantic-reliability-v1
+  status: READY_FOR_ACTIVATION_AFTER_DECISION_MERGE
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: null
+
+  goal: >
+    Extend the already-closed Case A retrieval-grounding case into an AI service reliability case
+    that distinguishes transport/provider success, pipeline correctness, runtime quality signals,
+    and labeled semantic quality; detects false-green outcomes; preserves bounded diagnostics for
+    provider content blocking and Terraform executable failures; and proves the selected contract
+    with repository tests plus one separately approved representative live validation if required.
+
+  decision_source:
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+
+  engineering_axis:
+    - AI/RAG evaluation and targeted improvement
+    - backend AI-service reliability
+    - observability from real failure diagnosis
+
+  representative_case:
+    - Case A extension — AI Semantic Reliability and Runtime Quality Observability
+
+  closure_boundary:
+    original_case_a_claim: >
+      The existing Case A retrieval-grounding/generalization closure remains valid and is not
+      retroactively reopened. This extension adds a new operational claim about distinguishing
+      technical success from output quality.
+    new_claim: >
+      The service can distinguish provider/pipeline health from output-quality evidence, identify
+      bounded false-green states, and preserve enough low-cardinality diagnostic evidence to explain
+      content blocking, semantic-quality degradation, and executable-Terraform correctness failures
+      without exposing raw prompts, generated HCL, credentials, or unbounded payloads.
+
+  activation:
+    bind_rule: >
+      Immediately before the first implementation write after this decision PR merges, read
+      authoritative GitHub remote main exactly once and bind that SHA to execution_base_sha.
+      Do not automatically refresh or rebase after activation.
+    stop_on_main_drift: true
+
+  allowed_paths:
+    - .agents/work-packages/case-a-semantic-reliability-v1.yml
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/portfolio-case-reassessment.md
+    - docs/evaluation/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/main/java/com/terraformers/modernization/evaluation/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/main/resources/db/migration/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/**
+    - backend/src/test/java/com/terraformers/modernization/reference/**
+    - backend/src/test/resources/**
+    - .github/workflows/gcp-target-evaluation-baseline.yml
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+
+  prohibited_paths:
+    - frontend/**
+    - infra/terraform/**
+    - infra/kubernetes/**
+    - AGENTS.md
+    - corpus/**
+
+  allowed_actions:
+    - inspect_repository
+    - bind_execution_base_once
+    - define_layered_AI_outcome_model
+    - add_false_green_measurement_to_existing_evaluation_outputs
+    - add_provider_content_blocked_failure_semantics
+    - add_bounded_provider_finish_reason_observability
+    - add_runtime_quality_signal_contract
+    - persist_bounded_runtime_quality_signal_if_selected_by_decision
+    - expose_bounded_runtime_quality_signal_in_existing_analysis_job_API_if_selected
+    - add_low_cardinality_quality_metrics_and_job_correlated_logs
+    - add_safe_Terraform_validation_diagnostic_taxonomy
+    - compare_repository_native_observability_with_Langfuse_and_OpenTelemetry
+    - modify_existing_evaluation_or_runtime_workflow_only_when_required_for_accepted_evidence
+    - run_existing_backend_and_static_checks
+    - create_pull_request
+    - inspect_CI_once
+    - perform_one_bounded_corrective_iteration_within_same_failure_class
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - create_new_cloud_architecture
+    - change_GCP_resource_topology_in_this_work_package
+    - live_GCP_creation_without_separate_user_checkpoint
+    - live_AI_evaluation_without_separate_user_checkpoint
+    - arbitrary_model_change
+    - arbitrary_prompt_tuning
+    - arbitrary_retrieval_tuning
+    - corpus_expansion_for_the_purpose_of_making_a_gate_pass
+    - safety_validator_bypass
+    - disable_provider_safety_controls
+    - upload_raw_prompts_or_generated_HCL_as_monitoring_artifacts
+    - use_job_or_project_identifiers_as_metric_labels
+    - next_work_package_start
+
+  selected_contract:
+    outcome_layers:
+      provider_transport:
+        purpose: >
+          Distinguish a successful SDK/HTTP exchange from a usable model completion.
+        bounded_outcomes:
+          - normal_stop
+          - output_truncated
+          - content_blocked
+          - empty_response
+          - provider_timeout
+          - provider_rate_limited
+          - provider_error
+      pipeline_correctness:
+        purpose: >
+          Preserve existing fact-extraction, retrieval, generation, structural contract,
+          provider-schema contract, and Terraform CLI correctness boundaries.
+      runtime_quality_signal:
+        purpose: >
+          Produce a bounded per-job quality signal from observable runtime evidence without
+          pretending that unlabeled production input has ground truth.
+        required_semantics:
+          - signal_ok
+          - degraded
+          - unknown
+          - not_applicable
+      labeled_semantic_quality:
+        purpose: >
+          Use only frozen evaluation expectations to decide semantic success/failure and quantify
+          false-green outcomes.
+
+    false_green_definition: >
+      For labeled evaluation only, false_green is true when the accepted technical-success
+      predicate passes while the labeled semantic-quality predicate fails.
+
+    technical_success_definition: >
+      The exact predicate must be derived from existing Case A stage evidence and validation
+      contracts. It may not silently redefine prior PASS semantics.
+
+    semantic_success_definition: >
+      For architecture fixtures, semantic success requires the frozen expected classification,
+      complete required project-decision/resource grounding, required generated-resource coverage,
+      zero forbidden generated resources, and the accepted validation contract. For negative
+      controls it requires the expected rejection/classification and no Terraform output.
+
+    runtime_signal_boundary: >
+      Runtime quality signals are proxies based on observable facts/retrieval/generation/validation
+      evidence. They must never be described as labeled semantic truth.
+
+  prior_evidence_to_reuse:
+    false_green_baseline:
+      source: docs/plans/active/case-a-retrieval-grounding-decision.md
+      evidence: >
+        Historical VPC traces include retrieval PASS, generation PASS, and validation PASS while
+        required grounding coverage was incomplete. This is the canonical technical-success /
+        semantic-failure baseline.
+    repository_safety_false_failure:
+      run_id: 36949479621
+      interpretation: >
+        Generated Terraform was rejected by the repository hard-coded-sensitive-credential policy
+        before Terraform CLI validation. PRs #176/#177 added a bounded recovery, and PR #190 later
+        removed the policy-only credential/account/placeholder rejection and the dedicated recovery
+        because generated Terraform is an editable/reference draft.
+      current_status: RESOLVED_BY_PR_190
+    unresolved_executable_variance:
+      run_id: 37016993776
+      interpretation: >
+        Attempt 1 passed and attempt 2 failed with terminal category
+        terraform_validate_configuration under one frozen runtime identity. Raw failed HCL was
+        intentionally not retained, leaving the exact invalid construct unrecoverable.
+      current_status: RETAINED_DIAGNOSTIC_GAP
+
+  implementation_phases:
+    - id: A7_1
+      title: False-green measurement contract
+      acceptance:
+        - existing historical false-green evidence is machine-representable
+        - canonical and holdout outputs report technical_success semantic_success and false_green
+        - negative-control semantics are included
+        - prior Case A closure metrics remain reproducible
+    - id: A7_2
+      title: Provider partial-failure taxonomy
+      acceptance:
+        - Vertex abnormal finish reasons are not collapsed into generic response_format when a bounded provider-neutral category exists
+        - provider content blocking is distinguishable from transport success
+        - no provider safety setting is weakened merely to make generation succeed
+        - tests cover content-blocked and empty-response behavior without live unsafe prompts
+    - id: A7_3
+      title: Runtime quality signal and observability
+      acceptance:
+        - a successful AnalysisJob can expose a separate bounded quality signal
+        - the signal is derived from observable evidence and explicitly not ground truth
+        - metrics are low-cardinality and job identity remains in logs or persisted state
+        - a degraded quality signal does not silently become SUCCEEDED-without-quality-context
+        - backward-compatible API/schema behavior is tested
+    - id: A7_4
+      title: Executable correctness diagnostics
+      acceptance:
+        - Terraform init/validate failures retain a bounded diagnostic category beyond the current coarse terminal bucket when safely derivable
+        - raw HCL credentials prompts and unbounded CLI output are not persisted or exported
+        - the prior 37016993776 failure class would be more actionable under the new taxonomy
+    - id: A7_5
+      title: Observability backend decision
+      acceptance:
+        - repository-native Micrometer/evaluation artifacts, Langfuse, and OpenTelemetry-based options are compared against the actual required signals
+        - any new observability product is selected only if it closes a demonstrated trace/score/correlation gap
+        - technology adoption is not required merely for portfolio breadth
+    - id: A7_6
+      title: Representative live validation
+      acceptance:
+        - live execution occurs only after a separate user checkpoint
+        - if GCP is required, reuse the existing representative architecture and IaC rather than inventing a second topology
+        - exact source/image/config identity is frozen
+        - authenticated service path exposes the selected quality signal
+        - at least one positive architecture request proves technical success plus runtime quality signal
+        - at least one negative-control request proves correct no-Terraform behavior
+        - any observed provider content block or executable failure is retained as evidence rather than rerun away
+        - final cloud resources are returned to an explicitly reviewed closure state
+    - id: A7_7
+      title: Integrated extension closure
+      acceptance:
+        - before/after false-green evidence is documented
+        - runtime-vs-labeled-quality distinction is explicit
+        - operational metrics and diagnostics support the claim
+        - residual risks and non-claims are preserved
+        - final portfolio documents are updated before project closure
+
+  observability_product_decision:
+    candidates:
+      - repository_native_micrometer_plus_evaluation_artifacts
+      - langfuse
+      - opentelemetry_plus_existing_metrics
+    decision_dimensions:
+      - model_call_trace_visibility
+      - quality_score_attachment
+      - job_and_release_correlation
+      - Java_integration_complexity
+      - self_host_or_managed_runtime_cost
+      - sensitive_payload_control
+      - additional_GCP_resource_cost
+      - portfolio_explanatory_value
+    no_default_winner: true
+
+  live_sequence_after_implementation_merge:
+    requires_separate_user_checkpoint: true
+    preliminary_checks:
+      - current_main_and_exact_image_identity
+      - GCP_project_billing_and_remaining_credit
+      - quota_and_region_capacity
+      - current_model_access
+      - absence_of_conflicting_Terraformers_runtime
+      - reviewed_rebootstrap_and_teardown_path
+    permitted_result: >
+      If the accepted evidence requires a full representative service path, recreate the existing
+      GCP runtime through the repository's reviewed bootstrap/IaC/delivery paths. A reduced or new
+      architecture requires a separate architecture decision.
+    cleanup_required: true
+
+  validation:
+    required:
+      - existing_Backend_Local_Verification
+      - existing_Terraform_Static_Verification_when_workflow_or_state_docs_change
+      - focused_unit_and_integration_tests_for_new_outcome_and_quality_contracts
+      - git_diff_check
+    live_validation_is_separate: true
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_bound_execution_base
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - allowed_path_outside_scope_is_required
+    - existing_GCP_topology_requires_design_change
+    - provider_safety_controls_would_need_to_be_weakened
+    - labeled_semantic_truth_would_be_inferred_for_unlabeled_runtime_input
+    - new_observability_product_is_required_without_comparison_and_user_decision
+    - live_or_cost_action_is_requested_without_user_checkpoint
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    live_action_requires_separate_user_approval: true
+    new_observability_product_requires_user_approval: true
+    final_case_extension_closure_requires_user_approval: true
+    next_work_package_requires_user_approval: true

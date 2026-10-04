@@ -1,519 +1,519 @@
-# Case A Extension — AI Semantic Reliability and Runtime Quality Observability
+# Case A Extension — Evidence-backed AI Quality and Semantic Reliability
 
 ## Status
 
-**DECISION SELECTED — IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**DIRECTION FROZEN — IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
-This extension adds a new portfolio claim:
+This extension adds one new portfolio question:
 
-> An AI-backed service must distinguish transport/provider success, pipeline correctness, and output
-> quality. A technically successful request can still be a semantic-quality failure, and a model
-> provider can return a successful SDK/HTTP exchange without usable output.
+> How does Terraformers decide whether an apparently successful AI result is supported by
+> authoritative Terraform evidence, and how does it distinguish knowledge, retrieval, generation,
+> provider, and executable-correctness failures?
 
-The extension is therefore not "add more monitoring" and not "install Langfuse." It is an AI
-service reliability case with an explicit outcome model, false-green measurement, runtime quality
-signals, and bounded diagnostics.
+The architecture decision is frozen in
+ADR-008 — Evidence-backed AI quality for Terraformers.
 
-Implementation is governed by:
+Implementation is governed by
+.agents/work-packages/case-a-semantic-reliability-v1.yml.
 
-.agents/work-packages/case-a-semantic-reliability-v1.yml
+PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
 
 ## 1. Why this extension exists
 
-The repository already contains evidence that traditional success indicators can be false green.
+The repository already contains a direct false-green before-state.
 
-The retained Case A VPC baseline recorded:
+A retained VPC evaluation trace recorded fact extraction PASS, retrieval PASS, generation PASS,
+Terraform validation PASS, and no first divergence, while the same result had incomplete required
+grounding:
 
-- fact extraction PASS;
-- retrieval PASS;
-- generation PASS;
-- Terraform validation PASS;
-- no first divergence;
+- project-decision coverage: 0/1
+- required resource-type coverage: 2/4
 
-while the same trace had incomplete required grounding:
+The generated Terraform still contained the expected major resources.
 
-- required project decision coverage: 0/1;
-- required resource-type coverage: 2/4.
+Therefore technical pipeline success did not prove that the result was grounded in the evidence
+contract the project intended to rely on.
 
-Generation still produced the required Terraform resources.
+Case A later corrected this specific retrieval problem and passed canonical N=3 plus the frozen
+holdout. This extension does not reopen that accepted result. It operationalizes the deeper lesson.
 
-That means "retrieval completed + generation completed + validation passed" did not prove that the
-AI/RAG result satisfied the intended semantic grounding contract.
+## 2. Final architecture direction
 
-The later Case A correction solved that specific retrieval-grounding problem and passed canonical
-N=3 plus frozen holdout. The new question is operational:
+The extension is centered on **Authoritative RAG Evidence**, not on another LLM evaluator.
 
-> Can the service itself expose the difference between technical success and output-quality
-> evidence instead of requiring a later offline forensic analysis?
+~~~text
+architecture image
+  -> AI fact extraction
+  -> provider schema authority
+  -> official provider docs/examples retrieval
+  -> curated Terraformers project-decision retrieval
+  -> evidence-backed generation
+  -> generated-resource/evidence support check
+  -> provider-schema check
+  -> Terraform executable validation
+  -> durable technical / knowledge / quality state
+~~~
 
-## 2. Related Case C evidence
+The runtime quality claim is conditional on the extracted architecture facts. Fact extraction itself
+remains probabilistic and is calibrated with labeled canonical/holdout expectations.
 
-Three Case C observations deepen the same problem from different boundaries.
+## 3. Knowledge authority model
 
-### 2.1 Repository-owned policy false failure — resolved
+### 3.1 Provider schema
 
-Live-validation run 36949479621 produced Terraform containing a hard-coded credential-like
-literal. The repository's TerraformDraftValidator rejected it before Terraform CLI validation.
+The pinned AWS Provider schema is deterministic authority for resource existence, attribute names,
+required/optional/computed fields, field types, and nested block structure.
 
-PR #176 defined, and PR #177 implemented, one bounded Vertex regeneration for this class.
+When the resource type is known, this is a direct lookup problem, not a vector-search problem.
 
-PR #190 later changed the product contract: generated Terraform is an editable/reference draft, so
-credential/account/placeholder-like literals alone are not a sufficient reason to reject the
-draft. The dedicated sensitive-credential regeneration path was removed.
+### 3.2 Official provider docs/examples
 
-This incident must not be misreported as proven Vertex censorship. It was a repository-owned
-policy boundary that was later judged over-constrained.
+Pinned official provider documentation and examples are authoritative RAG evidence for resource
+semantics and usage.
 
-### 2.2 Executable correctness variance — unresolved diagnostic gap
+Every generated corpus document must preserve provider version, provider source commit, source path,
+document type, authority, stable document ID, corpus version, and checksum/provenance.
 
-C2 run 37016993776 used one frozen runtime/source/image identity:
+Official examples are not treated as the unique answer key for a user architecture. They are valid
+usage evidence.
 
-- attempt 1: PASS;
-- attempt 2: CORRECTNESS_FAILURE;
-- terminal category: terraform_validate_configuration;
-- gate stopped at 1/5.
+### 3.3 Terraformers project decisions
 
-The failed HCL was intentionally not retained. The current safe evidence therefore identifies the
-failure stage but cannot reconstruct the exact invalid construct.
+Repository-owned project decisions remain separate curated evidence for questions provider docs do
+not answer alone, such as security-group relationships, private-origin choices, EKS/IRSA
+relationships, and project-specific architecture constraints.
 
-This is an observability problem worth fixing: safe diagnostics should reveal a useful bounded
-failure class without uploading raw generated Terraform.
+They remain manually reviewed and few.
 
-### 2.3 Provider content blocking is not explicitly modeled
+## 4. Corpus problem and selected correction
 
-Current VertexGenerationStage checks finishReason. MAX_TOKENS receives a specific truncation
-path. Any other non-normal finish reason becomes VertexResponseFormatException, and
-VertexAnalysisProvider maps that to generic provider-neutral RESPONSE_FORMAT.
+### 4.1 Current limitation
 
-That collapses different conditions:
+terraformers-reference-v3 contains 128 documents, but v3 preserved the earlier curated content.
+The current provider corpus is built from a hard-coded resource dictionary covering only a limited
+subset of AWS resources.
 
-- actual malformed/invalid response;
-- provider content/safety blocking;
-- other abnormal provider stop reasons.
+The existing structure therefore cannot serve as a universal quality oracle.
 
-A provider content block may occur after a successful request exchange but still yield no usable
-output. That must be represented independently from HTTP/SDK transport success.
+### 4.2 New corpus direction
 
-No claim is made that the historical Case C sensitive-credential incident was a Vertex safety
-block. The two failure classes are explicitly separated.
+Create a new corpus identity, expected as terraformers-reference-v4.
 
-## 3. Outcome model
+Do not mutate v3; v3 remains historical Case A evidence.
 
-The selected design uses four outcome layers.
+The new compiler must remove the source-code requirement to add every supported resource to a
+hard-coded RESOURCE_SPECS dictionary.
 
-### Layer 1 — provider transport/completion
+It must be able to:
 
-Question:
+1. inspect the pinned provider schema/source;
+2. accept or discover arbitrary provider resource types;
+3. validate each resource against provider schema;
+4. locate official documentation deterministically;
+5. generate bounded overview/example/schema evidence;
+6. preserve stable provenance and sanitization;
+7. generate machine-readable provider/corpus coverage reports.
 
-> Did the provider exchange produce a usable completion?
+At least one resource absent from v3 must be built and verified without editing compiler source.
 
-Bounded outcome vocabulary should distinguish at least:
+### 4.3 Full versus bounded provider corpus
 
-- normal_stop
-- output_truncated
-- content_blocked
-- empty_response
-- provider_timeout
-- provider_rate_limited
-- provider_error
+The architecture supports both bounded resource-set compilation and discovered broad/full-provider
+compilation.
 
-The exact provider-specific finish reasons remain adapter details. Generic application code should
-receive a provider-neutral classification.
+The actual v4 ingestion scope is selected from measured provider resource count, official
+documentation availability, document/chunk count, embedding-call volume, index size, and ingestion
+duration/cost.
 
-A successful HTTP/SDK exchange does not imply normal_stop.
+This is a measured implementation decision inside the frozen architecture, not permission to return
+to the old hand-curated thirty-resource allowlist.
 
-### Layer 2 — pipeline correctness
+If schema exists but official docs are unavailable, the state is a knowledge coverage gap, not an
+AI failure.
 
-Question:
+## 5. Outcome state model
 
-> Did the repository-owned analysis pipeline complete its required technical contracts?
+The AnalysisJob/result path must not overload one success field.
 
-Existing boundaries remain authoritative:
+### Technical status
 
-- source read;
-- fact extraction;
-- retrieval execution;
-- generation response contract;
-- required-grounding presence contract;
-- generated resource/provider contract;
-- structural Terraform draft validation;
-- Terraform CLI executable validation;
-- durable result finalization.
+- PASS
+- FAIL
 
-This layer answers technical correctness, not semantic truth.
+### Knowledge status
 
-### Layer 3 — runtime quality signal
+- COMPLETE
+- INCOMPLETE
+- UNKNOWN
+- NOT_APPLICABLE
 
-Question:
+### Quality status
 
-> For an unlabeled real service request, do the observable signals indicate a healthy or degraded
-> output?
-
-This signal is deliberately not called ground truth.
-
-Required states:
-
-- SIGNAL_OK
+- EVIDENCE_BACKED
 - DEGRADED
 - UNKNOWN
 - NOT_APPLICABLE
 
-Candidate observable evidence includes:
+### Contract version
 
-- extracted architecture resource types;
-- selected reference resource-type coverage;
-- selected reference count/authority/risk metadata;
-- generated resource types;
-- generation warnings;
-- structural/executable validation result;
-- provider completion reason.
+The initial quality contract identity is evidence-quality-v1.
 
-The exact rule must be deterministic and versioned.
+It is persisted with the result so later rule changes do not silently reinterpret historical jobs.
 
-A successful AnalysisJob may therefore be SUCCEEDED while separately exposing qualitySignal =
-DEGRADED when the technical result is usable but observable quality evidence is incomplete.
+## 6. Failure/reason taxonomy
 
-The job must not silently look fully healthy in that state.
+The system must distinguish mechanics instead of reporting one generic poor-quality bucket.
 
-### Layer 4 — labeled semantic quality
+Minimum bounded reasons include:
 
-Question:
+- RESOURCE_UNKNOWN_TO_PROVIDER
+- OFFICIAL_KNOWLEDGE_NOT_AVAILABLE
+- REQUIRED_EVIDENCE_NOT_RETRIEVED
+- REQUIRED_PROJECT_DECISION_NOT_RETRIEVED
+- GENERATED_RESOURCE_UNSUPPORTED_BY_EVIDENCE
+- PROVIDER_CONTENT_BLOCKED
+- PROVIDER_OUTPUT_TRUNCATED
+- PROVIDER_EMPTY_RESPONSE
+- PROVIDER_TIMEOUT
+- PROVIDER_RATE_LIMITED
+- PROVIDER_ERROR
+- PROVIDER_SCHEMA_FAILURE
+- TERRAFORM_EXECUTABLE_FAILURE
 
-> Against a frozen evaluation case with expected truth, did the output meet the semantic contract?
+Implementation may split a reason only when observed mechanics justify a smaller bounded taxonomy.
+It may not replace these distinctions with free-text errors.
 
-This layer is available only for labeled evaluation datasets.
+## 7. Runtime evidence-backed quality
 
-For positive architecture fixtures, semantic success requires:
+### 7.1 Resource evidence
 
-- expected input classification;
-- complete required project-decision grounding;
-- complete required resource-type grounding;
-- complete required generated-resource coverage;
-- zero forbidden generated resources;
-- accepted validation result.
+For extracted architecture resource types:
 
-For negative controls, semantic success requires:
+- check provider-schema existence;
+- check official knowledge availability;
+- record selected evidence coverage.
 
-- expected rejected/non-architecture classification;
-- no Terraform output.
+This creates explicit distinctions:
 
-Do not infer this layer for arbitrary user input.
+~~~text
+schema exists + docs unavailable
+  -> knowledge INCOMPLETE
 
-## 4. False-green contract
+docs available + required evidence not selected
+  -> retrieval gap
 
-For labeled evaluation:
+evidence selected + generation adds unsupported resource
+  -> generation evidence gap
+~~~
 
-technical_success = true
+### 7.2 Generated-output support
 
-means the existing accepted technical stage/validation predicate passed.
+Generated resource types are matched deterministically against exact provider schema and selected
+reference resourceTypes.
 
-semantic_success = true
+Do not ask the generation model to self-report citations.
 
-means the frozen expected semantic contract passed.
+### 7.3 Relationship/project-decision evidence
 
-false_green = technical_success && !semantic_success
+Resource coverage alone is not enough.
 
-The exact technical-success predicate must be derived from the current evaluation schema so the
-extension does not rewrite history.
+Project-decision/relationship evidence remains a separate dimension.
 
-The first required deliverable is a machine-readable 2x2 outcome matrix:
+For frozen evaluation fixtures, exact required decision IDs are labeled truth.
 
-| | semantic success | semantic failure |
-|---|---:|---:|
-| technical success | true positive success | **false green** |
-| technical failure | technical failure | combined failure |
+For arbitrary runtime requests, a missing project decision becomes a failure only when applicability
+can be derived deterministically. Otherwise that dimension remains UNKNOWN rather than being guessed.
 
-Negative controls must be represented explicitly rather than omitted.
+## 8. Input-interpretation boundary
 
-## 5. Runtime quality signal design
+The system cannot prove from runtime evidence alone that image fact extraction captured every
+component in the user's diagram.
 
-The runtime signal must be useful but modest in claim.
+Therefore runtime quality is evidence-backed quality conditional on extracted facts.
 
-### Resource grounding signal
+Canonical and holdout evaluation continue to test input classification, components, relationships,
+resource types, retrieval expectations, and generation expectations.
 
-When architecture facts contain concrete AWS provider resource types, compare them with the
-resource-type metadata represented in the final selected references.
+No second LLM judge or multi-model voting layer is part of the default architecture.
 
-Record bounded counts:
+## 9. False-green measurement
 
-- observed fact resource-type total;
-- reference-covered resource-type total;
-- missing coverage count.
+False green is defined only where labeled truth exists.
 
-Do not emit resource names as metric labels.
+For a frozen evaluation fixture:
 
-If the fact resource set is non-empty and selected reference coverage is incomplete, the runtime
-quality signal may become DEGRADED.
+~~~text
+false_green = technical_success AND NOT labeled_quality_success
+~~~
 
-If facts do not provide a meaningful resource set, the signal should become UNKNOWN, not PASS.
+labeled_quality_success uses the frozen expected classification, required resource grounding,
+required project-decision grounding, required generated-resource coverage, forbidden-resource
+absence, and accepted validation result.
 
-### Generated-output signal
+Negative controls require expected classification/rejection and empty Terraform.
 
-A generated architecture output cannot be SIGNAL_OK unless existing structural/provider/executable
-contracts pass.
+The implementation must re-express the historical VPC false-green before-state, final canonical N=3,
+and frozen holdout without modifying the historical Case A result.
 
-Generated-resource comparison may contribute to the runtime signal only where the relationship to
-the observed facts is technically justified. The implementation must not assume every extracted
-resource type must always appear as a top-level generated resource.
+The labeled datasets serve as calibration/benchmark evidence for the runtime evidence model. They
+are not required as production labels for each request.
 
-### Persistence and API
+## 10. Provider partial-failure model
 
-Preferred direction:
+A successful SDK/HTTP exchange does not imply usable AI output.
 
-- persist a bounded quality-signal status;
-- persist a bounded reason code;
-- persist a quality-contract version;
-- expose them in the existing AnalysisJob result API;
-- preserve backward compatibility.
+Current Vertex handling already distinguishes output truncation but can collapse other abnormal
+finish reasons into a generic response-format failure.
 
-This gives post-run evidence even after process restart and prevents quality state from existing
-only as ephemeral metrics.
+The extension must distinguish bounded outcomes where available:
 
-Any DB migration must be additive.
+- normal completion
+- output truncation
+- provider content/safety block
+- empty response
+- timeout
+- rate limit
+- generic provider error
 
-## 6. Provider partial-failure taxonomy
+Provider-specific metadata stays inside the adapter. Application-facing state is provider-neutral.
 
-The Vertex adapter currently has enough response metadata to distinguish abnormal completion from
-normal completion.
+The Case C run 36949479621 is not evidence of Vertex censorship. It was rejected by a
+repository-owned hard-coded-sensitive-credential rule that PR #190 later removed.
 
-Selected direction:
+Provider safety controls will not be weakened to make a test pass.
 
-- introduce a provider-neutral content-blocked failure reason;
-- map known provider content/safety stop reasons to that category;
-- preserve OUTPUT_TRUNCATED separately;
-- preserve malformed/invalid response as RESPONSE_FORMAT;
-- preserve empty response as a bounded separate reason if the API contract can support it cleanly.
+## 11. Executable correctness diagnostics
 
-Observability must expose the bounded provider outcome without prompts, response text, safety
-payloads, image bytes, or user-specific labels.
+C2 run 37016993776 retained attempt 1 PASS and attempt 2
+terraform_validate_configuration under one frozen runtime identity, but no raw failed HCL.
 
-Provider safety settings must not be weakened merely to obtain a passing test.
+That was safe but too coarse for root-cause analysis.
 
-Deterministic tests should construct blocked/empty provider responses. A live intentionally unsafe
-prompt is not required.
+The new direction keeps raw HCL private and derives bounded diagnostics from structured Terraform
+JSON output.
 
-## 7. Terraform executable diagnostic taxonomy
+Candidate classes are accepted only when supported by real/fixture diagnostics, for example missing
+required argument, unsupported argument, invalid reference, invalid function argument, invalid
+value/type, syntax/configuration, provider configuration/closure, and unknown/other.
 
-The current terminal category terraform_validate_configuration is too coarse to explain the
-remaining Case C variance.
+The exact final taxonomy is implementation-derived.
 
-The selected direction is not to retain failed HCL.
+Allowed retained evidence is bounded category, bounded error/warning counts, and optionally a
+sanitized stable diagnostic fingerprint.
 
-Instead, inspect Terraform's structured JSON diagnostic output and preserve only bounded derived
-metadata where safe, for example categories such as:
+Forbidden retained evidence is raw generated HCL, credentials, arbitrary CLI output, and
+prompt/reference payloads.
 
-- missing required argument;
-- unsupported argument;
-- invalid reference;
-- invalid function argument;
-- invalid value/type;
-- provider configuration/closure;
-- syntax/configuration class;
-- unknown/other.
+## 12. Runtime persistence and observability
 
-The exact taxonomy must follow actual Terraform JSON diagnostics observed in tests; do not invent
-categories that cannot be derived reliably.
+The preferred product contract is additive persistence on the durable AnalysisJob/result boundary:
 
-Allowed evidence:
+- technical status
+- knowledge status
+- quality status
+- bounded reason
+- quality-contract version
 
-- bounded diagnostic category;
-- error/warning count;
-- optionally a stable diagnostic fingerprint derived from sanitized bounded fields.
+The existing result API should expose the bounded state with compatibility tests.
 
-Forbidden evidence:
+Metrics must remain low cardinality. Job/project/resource names do not become metric labels.
 
-- raw generated HCL;
-- secret values;
-- complete CLI output;
-- arbitrary diagnostic detail;
-- prompt/reference content.
+Job identity remains in durable state/log correlation.
 
-The acceptance question is:
+A backend restart/replacement must not erase the quality state.
 
-> If run 37016993776 happened again, would the retained evidence identify a technically useful
-> failure class without exposing the generated file?
+## 13. Observability-product decision
 
-## 8. Observability backend decision
+A new product is not preselected.
 
-A new observability product is eligible, not mandatory.
+Compare:
 
-Compare three candidates.
+1. repository-native Micrometer + evaluation artifacts
+2. Langfuse
+3. OpenTelemetry + existing metrics
 
-### A. Repository-native Micrometer + evaluation artifacts
+Compare model-call trace visibility, quality-score attachment, job/release/config correlation, Java
+integration, sensitive payload control, self-hosted/managed cost, extra GCP footprint, actual RCA
+value, and portfolio explanatory value.
 
-Advantages:
+Langfuse, if selected, records and explores Terraformers-owned traces/scores. It is not the quality
+oracle.
 
-- already integrated into Spring Boot;
-- low-cardinality application metrics exist;
-- existing job/source correlation;
-- lowest operational cost.
+A product is adopted only if A7-0 through A7-5 leave a demonstrated observability gap.
 
-Potential gap:
+## 14. Implementation sequence
 
-- model-call trace/score exploration may remain fragmented across logs and evaluation artifacts.
+### A7-0 — Authoritative knowledge coverage
 
-### B. Langfuse
+Required:
 
-Evaluate whether it materially adds:
+- machine-report current v3 resource coverage;
+- machine-report full pinned provider-schema resource universe;
+- implement v4 compiler without per-resource source allowlist edits;
+- prove at least one previously unsupported resource can be built without compiler-source change;
+- report schema/docs/index coverage separately;
+- preserve v3 unchanged;
+- select bounded/broad v4 ingestion from measured size/cost.
 
-- LLM/model-call traces;
-- prompt/config identity;
-- evaluation score attachment;
-- model latency/token/cost visibility;
-- release/job correlation;
-- useful investigation workflow.
+### A7-1 — Evidence-backed quality contract
 
-Also evaluate:
+Required:
 
-- Java integration path;
-- payload privacy/control;
-- self-hosted or managed cost;
-- another persistence/service dependency;
-- whether existing artifacts already answer the same questions.
+- separate technical, knowledge, and quality status;
+- separate corpus gap from retrieval gap;
+- deterministic generated-resource/evidence support;
+- separate relationship/project-decision dimension;
+- versioned durable quality representation;
+- explicit conditional-on-extracted-facts boundary.
 
-### C. OpenTelemetry + existing metrics
+### A7-2 — False-green measurement and calibration
 
-Evaluate whether standardized tracing materially improves:
+Required:
 
-- async request/job propagation;
-- model/retrieval/storage span correlation;
-- release-level RCA.
+- machine-represent historical false green;
+- add technical success, labeled quality success, and false green to canonical/holdout outputs;
+- preserve all previous Case A acceptance metrics;
+- include negative-control semantics;
+- compare runtime evidence status with labeled results.
 
-Do not select it solely to populate trace_id.
+### A7-3 — Provider partial failures
 
-### Decision rule
+Required:
 
-Select a new product only if the implemented layered outcome model leaves a demonstrated
-trace/score/correlation question that repository-native evidence cannot answer cleanly.
+- provider content block is not generic response-format failure;
+- truncation/empty/timeout/rate limit/generic provider error stay distinct where observable;
+- deterministic tests;
+- no intentionally unsafe live prompt requirement.
 
-The comparison itself is required; adoption is not.
+### A7-4 — Durable runtime quality observability
 
-## 9. Implementation phases
+Required:
 
-### A7-1 — false-green measurement
+- persist technical/knowledge/quality/reason/version;
+- expose through API;
+- low-cardinality metrics;
+- job-correlated logs;
+- durability across backend restart/replacement.
 
-Add technical/semantic/false-green fields to the existing evaluation output or derived report.
+### A7-5 — Safe executable diagnostics
 
-Re-score preserved before-state and current after-state.
+Required:
 
-Required evidence:
+- parse bounded Terraform JSON diagnostic classes;
+- no raw failed HCL retention;
+- show that a recurrence of the C2 class would produce more actionable evidence.
 
-- historical VPC false green is representable;
-- final canonical N=3 and holdout produce the expected after-state;
-- existing Case A acceptance metrics remain unchanged.
+### A7-6 — Observability backend decision
 
-### A7-2 — provider partial-failure semantics
+Required:
 
-Implement and test bounded provider completion/outcome classification.
+- compare native/Langfuse/OTel against actual remaining gap;
+- select or explicitly reject additional tooling.
 
-No prompt/model/retrieval change.
+Any dependency/runtime adoption requires a separate user decision.
 
-### A7-3 — runtime quality signal
+### A7-7 — Representative GCP live proof
 
-Add deterministic runtime signal calculation, bounded persistence/API exposure, metrics, and logs.
+If repository-only evidence is insufficient, recreate the existing Case C representative topology.
 
-No labeled-truth claim for arbitrary user input.
+Minimum evidence:
 
-### A7-4 — executable diagnostics
+1. exact source/image/corpus/quality-contract identity;
+2. authenticated positive architecture request;
+3. terminal AnalysisJob/result read-back;
+4. persisted quality state visible through API;
+5. RAG/quality metrics/log evidence;
+6. authenticated negative control with no Terraform output;
+7. naturally observed provider/executable failures retained rather than rerun away;
+8. final reviewed teardown to zero known Terraformers billable resources.
 
-Add safe structured Terraform diagnostic classification.
+Live creation is a separate checkpoint.
 
-Do not preserve raw failed generated Terraform.
+### A7-8 — Integrated closure
 
-### A7-5 — observability product decision
+Close only when the project can explain with evidence:
 
-Use evidence from A7-1 through A7-4 to decide whether repository-native observability is enough or
-whether Langfuse/OpenTelemetry adds material value.
+- what authoritative knowledge exists;
+- whether knowledge was missing versus retrieval failed;
+- whether generation was supported by retrieved evidence;
+- whether provider completion was actually usable;
+- whether Terraform was executable;
+- why a technically successful result was trusted/degraded/unknown;
+- how runtime evidence compares against labeled canonical/holdout truth;
+- why an observability product was selected or rejected;
+- any live service proof and final teardown.
 
-Any new product requires explicit user approval before dependency/runtime adoption.
+## 15. Secondary measurements
 
-### A7-6 — representative live validation
+Latency and usage remain supporting evidence.
 
-If repository-only evidence cannot prove the service-level claim, recreate the existing GCP
-representative runtime.
+Where Vertex reliably exposes token/usage metadata, preserve it under the same run/config identity.
 
-Do not invent a second architecture.
+Do not fabricate unavailable token or cost values.
 
-Live prerequisites:
+No independent cost-optimization case is created unless new measured evidence justifies it.
 
-- fresh project/billing/credit/quota/model-access check;
-- reviewed bootstrap recreation;
-- exact source/image identity;
-- existing GKE/OpenSearch + Vertex + MariaDB VM/PD + GCS + Secret Manager/Secret Sync + Artifact
-  Registry topology unless a separate architecture decision changes it.
+## 16. Explicitly rejected default directions
 
-Minimum live evidence:
+Do not add by default:
 
-1. authenticated positive architecture request;
-2. terminal AnalysisJob/result read-back;
-3. runtime quality signal visible through API and metrics/logs;
-4. authenticated negative-control request with no Terraform output;
-5. exact release/config identity;
-6. no rerun-until-lucky behavior.
+- LLM-as-a-judge
+- multiple-model voting
+- LangGraph
+- dynamic-config dashboard
+- runtime on-demand provider-document scraping/embedding
+- a new vector database
+- a second GCP architecture
+- Grafana/Loki/Tempo merely for breadth
+- safety-filter bypass
+- raw failed HCL logging
 
-A naturally occurring provider content block or Terraform executable failure must be retained as
-evidence. It must not be automatically discarded.
+Any reconsideration must satisfy the direction-change rule below.
 
-After live evidence, cloud teardown/cost closure is mandatory again.
+## 17. Direction-change protocol
 
-### A7-7 — integrated closure
+This section is the anti-drift rule for the extension.
 
-Close only when the project can explain:
+The following axes are frozen by ADR-008:
 
-- why HTTP/job success is insufficient;
-- what false green means;
-- which signals are technical vs semantic;
-- what can be measured online without labels;
-- what requires labeled evaluation;
-- how provider content blocking is distinguished from malformed output;
-- how executable failures are diagnosed safely;
-- whether/why Langfuse or OpenTelemetry was selected or rejected;
-- live service evidence if it was required;
-- residual risks.
+1. authority hierarchy;
+2. scalable corpus compiler;
+3. no default evaluator LLM;
+4. separate technical/knowledge/runtime-quality/labeled-quality states;
+5. resource plus relationship/project-decision grounding;
+6. explicit provider partial failures;
+7. bounded safe Terraform diagnostics;
+8. evidence-gated observability tool adoption;
+9. optional reuse of the existing GCP topology only;
+10. mandatory teardown after any recreated live runtime.
 
-## 10. Acceptance boundary
+During implementation, a new article, framework, vendor product, or interesting technology is not
+sufficient reason to change direction.
 
-The extension is successful if it produces a technically defensible answer to this question:
+A direction change requires:
 
-> How does Terraformers know whether the AI service is healthy when the request itself succeeded?
+1. repository or live evidence that a frozen assumption is materially false or insufficient;
+2. identification of the exact affected frozen axis;
+3. a written ADR-008 amendment proposal;
+4. explicit user approval before implementation follows the new direction.
 
-The answer must not be merely:
+A normal implementation bug is handled inside the current phase and does not reopen the architecture.
 
-- HTTP 200;
-- AnalysisJob SUCCEEDED;
-- provider call did not throw;
-- Prometheus is reachable;
-- Terraform text is non-empty.
+## 18. Stop rule
 
-It must show a layered outcome contract and measured evidence.
+Stop the extension when:
 
-## 11. Explicit non-claims
-
-Even after this extension, do not claim:
-
-- semantic ground truth for arbitrary unlabeled user inputs;
-- perfect hallucination detection;
-- statistically strong long-run reliability from a handful of runs;
-- automatic production-safe Terraform deployment;
-- exactly-once model invocation;
-- safety-filter bypass;
-- complete production SLOs unless separately measured.
-
-## 12. Stop rule
-
-Do not continue merely to add AI tooling.
-
-Stop when:
-
+- authoritative knowledge coverage is scalable and measured;
 - false-green before/after is measurable;
-- runtime quality signal is durable and observable;
-- provider partial failures are explicitly classified;
-- executable correctness diagnostics are actionable and bounded;
-- observability backend decision is evidence-backed;
-- the selected service-level claim has sufficient live or deterministic evidence;
-- final portfolio documents accurately reflect the result.
+- runtime evidence-backed quality is durable and observable;
+- knowledge/retrieval/generation failures are distinguishable;
+- provider partial failures are explicit;
+- Terraform diagnostics are safe and actionable;
+- observability tool decision is evidence-backed;
+- required live proof, if any, is complete;
+- final repository/portfolio documents are reconciled.
 
-A new GCP live environment is justified only for the service-level validation above, not for
-repeating already-proven Case A canonical closure.
+After A7-8, further AI framework or monitoring work requires a new operational requirement or new
+contradictory evidence.

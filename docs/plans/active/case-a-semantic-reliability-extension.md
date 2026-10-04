@@ -526,7 +526,13 @@ Any dependency/runtime adoption requires a separate user decision.
 
 ### A7-7 — Representative GCP live proof
 
-If repository-only evidence is insufficient, recreate the existing Case C representative topology.
+**Status: REQUIRED AFTER A7-6 MERGE — NOT STARTED.**
+
+Repository-only evidence is explicitly insufficient for final closure. The improved Terraformers
+must demonstrate that the broad v4 corpus is actually served by live retrieval and that the
+A7-4 `evidence-quality-v1` snapshot is persisted and readable through the real AnalysisJob API.
+
+Reuse the existing Case C representative topology; do not create a second architecture.
 
 Minimum evidence:
 
@@ -539,7 +545,9 @@ Minimum evidence:
 7. naturally observed provider/executable failures retained rather than rerun away;
 8. final reviewed teardown to zero known Terraformers billable resources.
 
-Live creation is a separate checkpoint.
+The user's 2026-10-05 end-to-end requirement authorizes A7-7 in principle after A7-6 is merged and
+an A7-7 bounded Work Package freezes the exact live actions. Actions outside that Work Package remain
+separate checkpoints.
 
 ### A7-8 — Integrated closure
 

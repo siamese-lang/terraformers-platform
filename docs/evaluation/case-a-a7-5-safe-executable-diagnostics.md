@@ -1,6 +1,26 @@
 # Case A A7-5 — safe executable diagnostics
 
-Status: **IMPLEMENTED — AWAITING REVIEW — LIVE VALIDATION NOT AUTHORIZED**
+Status: **COMPLETE — ACCEPTANCE PASS — A7-6 NOT STARTED — LIVE VALIDATION NOT PERFORMED**
+
+## Closure evidence
+
+- feature implementation PR: #216
+- feature merge SHA: `0ce33a2302cfda87bcbf505d67b71257958a2b80`
+- main validation/implementation PR: #217
+- implementation merge SHA: `c5840c05c60ec78dc3a8c698453424b587014814`
+- Backend Local Verification `37215839871`: **SUCCESS**
+  - Flyway migration uniqueness: 7 unique migrations
+  - Maven clean tests: success
+  - application package: success
+  - MariaDB Flyway/Hibernate schema validation: success
+  - canonical repository smoke queries: success
+- Terraform Static Verification `37215839970`: **SUCCESS**
+  - scope/workflow policy checks: success
+  - Terraform static job: skipped because A7-5 changed no Terraform paths
+- independent A7-5 acceptance: **PASS**
+- no live C2 rerun
+- no Vertex/Bedrock/GCP/OpenSearch/cost-bearing action
+- A7-6 is not started
 
 ## Decision
 
@@ -153,8 +173,10 @@ the same top-level class as C2. It does not reconstruct or assign a subtype to h
 
 Local focused Maven execution was attempted, but dependency resolution was blocked by the execution
 environment returning HTTP 403 for Maven Central's Spring Boot parent POM. No dependency or
-repository workaround was introduced. Authoritative GitHub Backend Local Verification and MariaDB
-schema/repository validation therefore remain pending independent review.
+repository workaround was introduced. Final authority came from repository CI: Backend Local
+Verification `37215839871` passed Flyway uniqueness, Maven clean tests/package, MariaDB
+Flyway/Hibernate validation, and canonical repository smoke queries. Terraform Static Verification
+`37215839970` passed its scope/policy checks.
 
 ## Next gate
 

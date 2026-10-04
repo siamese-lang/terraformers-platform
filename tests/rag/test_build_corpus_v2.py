@@ -475,6 +475,11 @@ or Terraform/HCL example.
             )
         )
         self.assertEqual(0, report["corpusOfficialEvidenceResourceCount"])
+        self.assertEqual(
+            ["aws_unparsed_resource"],
+            report["corpusOfficialEvidenceExtractionGapResourceTypes"],
+        )
+        self.assertEqual(1, report["corpusOfficialEvidenceExtractionGapCount"])
         self.assertEqual(0.0, report["corpusCoverageOfOfficialDocumentedResources"])
         self.assertEqual(
             3,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-shot Vertex/OpenSearch ingestion for the immutable v3 target corpus."""
+"""One-shot Vertex/OpenSearch ingestion for supported immutable Terraformers corpora."""
 from __future__ import annotations
 
 import argparse
@@ -16,14 +16,23 @@ from pathlib import Path
 from typing import Callable
 
 ROOT = Path(__file__).resolve().parents[2]
-EXPECTED_CONTRACT = {
-    "corpusVersion": "terraformers-reference-v3",
-    "indexName": "terraformers-reference-v3",
-    "embeddingModelId": "gemini-embedding-001",
-    "vectorDimension": 1024,
-    "vectorField": "embedding",
-    "contentField": "content",
-    "documentCount": 128,
+SUPPORTED_CONTRACTS = {
+    "terraformers-reference-v3": {
+        "indexName": "terraformers-reference-v3",
+        "embeddingModelId": "gemini-embedding-001",
+        "vectorDimension": 1024,
+        "vectorField": "embedding",
+        "contentField": "content",
+        "documentCount": 128,
+    },
+    "terraformers-reference-v4": {
+        "indexName": "terraformers-reference-v4",
+        "embeddingModelId": "gemini-embedding-001",
+        "vectorDimension": 1024,
+        "vectorField": "embedding",
+        "contentField": "content",
+        "documentCount": 5395,
+    },
 }
 CHECKSUM_META_KEY = "terraformers_corpus"
 VERTEX_RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
@@ -46,15 +55,32 @@ def validate_contract(corpus: Path) -> dict[str, object]:
         return json.load(summary)
 
 
+def validate_supported_manifest(manifest: dict[str, object]) -> dict[str, object]:
+    version = manifest.get("corpusVersion")
+    if version not in SUPPORTED_CONTRACTS:
+        fail(f"unsupported corpusVersion: {version!r}")
+    expected = SUPPORTED_CONTRACTS[str(version)]
+    for name, value in expected.items():
+        if manifest.get(name) != value:
+            fail(f"manifest {name} must be {value!r} for {version}")
+    if manifest.get("chunkCount") != manifest.get("documentCount"):
+        fail("manifest chunkCount must equal documentCount")
+    return expected
+
+
 def load_corpus(corpus: Path) -> tuple[dict[str, object], dict[str, object], list[dict[str, object]], str]:
     contract = validate_contract(corpus)
     manifest = json.loads((corpus / "corpus-manifest.json").read_text(encoding="utf-8"))
-    for name, expected in EXPECTED_CONTRACT.items():
-        if manifest.get(name) != expected:
-            fail(f"manifest {name} must be {expected!r}")
+    validate_supported_manifest(manifest)
+    if contract.get("corpusVersion") != manifest.get("corpusVersion"):
+        fail("contract corpusVersion must match manifest")
+    if contract.get("documentCount") != manifest.get("documentCount"):
+        fail("contract documentCount must match manifest")
     schema = json.loads((corpus / "index-schema.json").read_text(encoding="utf-8"))
     documents = [json.loads(line) for line in
                  (corpus / "documents.jsonl").read_text(encoding="utf-8").splitlines() if line]
+    if len(documents) != manifest["documentCount"]:
+        fail("documents.jsonl count must equal manifest documentCount")
     return manifest, schema, documents, str(contract["sha256"])
 
 
@@ -145,23 +171,25 @@ class VertexDocumentEmbedder:
     def __init__(self, project: str, location: str, model: str, token: Callable[[], str],
                  transport: JsonHttpClient | None = None,
                  sleeper: Callable[[float], None] = time.sleep,
-                 pacing_seconds: float = VERTEX_PACING_SECONDS):
+                 pacing_seconds: float = VERTEX_PACING_SECONDS,
+                 dimension: int = 1024):
         host = "aiplatform.googleapis.com" if location == "global" else f"{location}-aiplatform.googleapis.com"
         self.path = (f"/v1/projects/{urllib.parse.quote(project, safe='')}/locations/{location}"
                      f"/publishers/google/models/{model}:predict")
         self.transport = transport or JsonHttpClient(f"https://{host}", lambda: {"Authorization": f"Bearer {token()}"})
         self.sleeper = sleeper
         self.pacing_seconds = pacing_seconds
+        self.dimension = dimension
 
     def embed(self, text: str) -> list[float]:
         body = {
             "instances": [{"content": text, "task_type": "RETRIEVAL_DOCUMENT"}],
-            "parameters": {"outputDimensionality": 1024},
+            "parameters": {"outputDimensionality": self.dimension},
         }
         for attempt in range(len(VERTEX_BACKOFF_SECONDS) + 1):
             try:
                 _, response = self.transport.request("POST", self.path, body)
-                vector = validate_embedding(response)
+                vector = validate_embedding(response, self.dimension)
                 if self.pacing_seconds > 0:
                     self.sleeper(self.pacing_seconds)
                 return vector
@@ -229,7 +257,7 @@ def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: d
         ensure_mapping(mapping, schema)
         previous = stored_checksum(mapping)
         if previous is None:
-            fail("existing v3 index has no corpus checksum metadata")
+            fail("existing index has no corpus checksum metadata")
         if previous != checksum:
             fail("corpus version checksum changed; bump corpus version")
 
@@ -252,8 +280,9 @@ def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: d
         "query": {"term": {"corpusVersion": manifest["corpusVersion"]}}
     })
     count = int(count_response["count"])
-    if count != EXPECTED_CONTRACT["documentCount"]:
-        fail("final corpus-version document count must be exactly 128")
+    expected_count = int(manifest["documentCount"])
+    if count != expected_count:
+        fail(f"final corpus-version document count must be exactly {expected_count}")
     if representative is None:
         representative = embedder.embed(str(documents[0][manifest["contentField"]]))
     _, search_response = client.request("POST", f"/{index}/_search", {
@@ -276,7 +305,7 @@ def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: d
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Ingest the v3 corpus with Vertex document embeddings.")
+    parser = argparse.ArgumentParser(description="Ingest a supported Terraformers corpus with Vertex document embeddings.")
     parser.add_argument("--corpus-dir", type=Path, default=ROOT / "corpus/terraformers-reference/v3")
     parser.add_argument("--opensearch-endpoint", required=True)
     parser.add_argument("--project", required=True)
@@ -298,7 +327,13 @@ def main() -> None:
         return str(credentials.token)
 
     client = JsonHttpClient(args.opensearch_endpoint)
-    embedder = VertexDocumentEmbedder(args.project, args.location, str(manifest["embeddingModelId"]), token)
+    embedder = VertexDocumentEmbedder(
+        args.project,
+        args.location,
+        str(manifest["embeddingModelId"]),
+        token,
+        dimension=int(manifest["vectorDimension"]),
+    )
     receipt = ingest(client, embedder, manifest, schema, documents, checksum)
     rendered = json.dumps(receipt, sort_keys=True)
     if args.receipt:

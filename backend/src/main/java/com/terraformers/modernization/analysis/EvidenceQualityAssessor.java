@@ -117,14 +117,14 @@ public final class EvidenceQualityAssessor {
                 projectDecisions.status(),
                 RuntimeQualityBoundary.CONDITIONAL_ON_EXTRACTED_FACTS,
                 List.copyOf(reasons),
-                extracted,
-                missingOfficialKnowledge,
-                missingSelectedEvidence,
-                generated,
-                generatedAbsentFromProvider,
-                generatedWithoutSelectedEvidence,
+                List.copyOf(extracted),
+                List.copyOf(missingOfficialKnowledge),
+                List.copyOf(missingSelectedEvidence),
+                List.copyOf(generated),
+                List.copyOf(generatedAbsentFromProvider),
+                List.copyOf(generatedWithoutSelectedEvidence),
                 input.requiredProjectDecisionIds(),
-                projectDecisions.missing()
+                List.copyOf(projectDecisions.missing())
         );
     }
 

@@ -2,186 +2,184 @@
 
 ## Status
 
-**ACTIVE — OBSERVABILITY BASELINE / CORRELATION GAP FIRST**
+SUPERSEDED / ABSORBED AS SUPPORTING EVIDENCE — CLOSED FOR PORTFOLIO PURPOSE
 
-M6 is complete. M7 does not start by installing a dashboard or tracing backend. It first proves what
-the current repository can and cannot explain about one real/injected failure, then adds only the
-signals needed for reproducible RCA.
+M7 is no longer an active independent milestone.
 
-## Objective
+The project was later reorganized around three representative engineering cases:
 
-Make at least one failure explainable from repository-owned signals:
+- Case A — AI/RAG retrieval grounding and evaluation
+- Case B — backend durable asynchronous processing
+- Case C — GCP production-representative runtime and immutable delivery
 
-`request/job identity → stage progression → failure category → resulting state → recovery/compensation`
+Observability is retained as supporting evidence across those cases rather than as a fourth case or
+as a requirement to deploy a full monitoring platform.
 
-Success means an operator can follow evidence to the root cause and resulting state. Dashboard
-installation alone is not evidence.
+No unfinished item in the historical M7 checklist authorizes automatic implementation.
 
-## Current observability facts
+## Original objective
 
-Existing assets:
+The useful M7 objective was:
 
-- Spring Boot Actuator;
-- Prometheus Micrometer registry;
-- CloudWatch registry retained for AWS compatibility but disabled in the GCP target profile;
-- `terraformers.analysis.jobs{outcome=...}`;
-- `terraformers.analysis.failures{category=...}`;
-- `terraformers.analysis.duration`;
-- executor rejection metric;
-- Bedrock/AOSS compatibility metrics;
-- console log pattern containing `trace_id`, `span_id`, `analysisJobId`, and source revision;
-- `AnalysisLogCorrelation` that places `analysisJobId` in MDC while the async job runner executes.
+~~~text
+request/job identity
+  -> stage progression
+  -> failure category
+  -> resulting state
+  -> recovery/compensation
+~~~
 
-Observed gaps:
+The goal was to make at least one failure explainable from repository-owned signals. Dashboard
+installation by itself was never an acceptance criterion.
 
-1. the backend has no Micrometer tracing bridge/exporter dependency, so the configured
-   `trace_id`/`span_id` fields are not currently proven to carry repository-owned trace context;
-2. request context is not proven to propagate across the transaction/async-executor boundary;
-3. the current active Vertex/OpenSearch path is not instrumented by the AWS-specific
-   `recordBedrock`/`recordAoss` metrics;
-4. Vertex facts/retrieval/generation/validation/finalization do not share one standardized
-   provider-neutral stage telemetry contract;
-5. no repository-owned evidence currently demonstrates RCA of one failure by joining logs and
-   metrics for the same analysis job.
+That objective produced useful telemetry changes before milestone-driven progression was stopped.
 
-These are M7 baseline statements, not a requirement to deploy OpenTelemetry, Grafana, or another
-backend.
+## Baseline evidence retained
 
-## Non-goals
+PR #86, merged as 46b87be8284e127d8d7fa070d04fb6561a1948a5, captured the deterministic
+relational-finalization failure before adding new telemetry.
 
-Do not add these merely because M7 has started:
+The baseline proved:
 
-- Grafana;
-- Prometheus server deployment;
+- analysisJobId was present in the failure/compensation log context;
+- trace_id/span_id were not backed by a proven tracing implementation;
+- terraformers.analysis.jobs with outcome=failed incremented;
+- the global failure category was only other;
+- total analysis duration was recorded;
+- compensation success was visible only as free-text log behavior.
+
+The important gap was therefore not the absence of Grafana or a tracing backend. The gap was that
+the application could not machine-distinguish the exact stage and compensation outcome of the same
+known failure.
+
+## Minimal telemetry correction retained
+
+PR #88, merged as 294d630d1610f801830091d43ec41100f3172747, introduced provider-neutral
+stage telemetry.
+
+The retained signal contract includes:
+
+- terraformers.analysis.stage.duration with bounded stage/outcome dimensions;
+- terraformers.analysis.stage.failures with bounded stage/category dimensions;
+- provider-neutral result_finalization failure classification;
+- stage-correlated logs under analysisJobId MDC.
+
+For the same deterministic failure, the repository can distinguish:
+
+1. analysis_execution — success
+2. result_finalize — failure / result_finalization
+3. compensation — success
+4. terminal job state — FAILED
+
+This is the required before/after observability improvement.
+
+## Current repository-owned signal set
+
+The later Case B/Case C implementation expanded the bounded operational signal set.
+
+Current code includes:
+
+- terraformers.analysis.jobs
+- terraformers.analysis.failures
+- terraformers.analysis.duration
+- terraformers.analysis.stage.duration
+- terraformers.analysis.stage.failures
+- terraformers.analysis.claims
+- terraformers.analysis.dispatch
+- terraformers.analysis.lease.renewals
+- terraformers.analysis.retries
+- terraformers.analysis.cleanup
+- terraformers.analysis.cleanup.scan.candidates
+- terraformers.analysis.dispatch.scan.candidates
+- terraformers.analysis.recovery.delay
+- terraformers.analysis.queue.wait
+- terraformers.analysis.executor.rejections
+
+Historical Bedrock/AOSS compatibility metrics also remain, but they are not the provider-neutral
+current portfolio boundary.
+
+Current AnalysisTelemetryStage values are intentionally limited to repository-owned boundaries:
+
+- analysis_execution
+- result_finalize
+- compensation
+- cleanup_recovery
+
+Job-specific identity belongs in logs/MDC rather than metric labels. The metrics use bounded
+dimensions such as stage, outcome, and category.
+
+## Correlation boundary
+
+The current repository includes AnalysisLogCorrelation, which scopes analysisJobId into MDC for
+asynchronous job execution and restores the previous MDC value afterwards.
+
+The project does not claim a completed distributed tracing system.
+
+Historical PR #90 proposed a stronger request-to-job correlation proof but was closed without merge.
+It must not be cited as merged evidence. Current portfolio claims are therefore limited to the
+job-scoped MDC and bounded metric/log evidence that exists on main.
+
+Case C additionally proved Actuator/Prometheus reachability across backend pod replacement. That is
+runtime visibility evidence, not a distributed-tracing claim.
+
+## Supporting role in Case B
+
+Observability supports the durable-processing case by exposing bounded signals for:
+
+- claim outcomes
+- dispatch outcomes
+- lease renewal/loss
+- retry scheduling/exhaustion
+- cleanup outcomes
+- recovery delay
+- queue wait
+- executor rejection
+- final failure category
+
+The correctness claim itself still comes from durable MariaDB state transitions, fencing, tests, and
+the integrated B5 matrix. Metrics do not replace those state invariants.
+
+## Supporting role in Case C
+
+Observability supports Case C by allowing the live runtime to classify failures and correlate them
+with the deployed source revision.
+
+The final infrastructure case deliberately does not claim:
+
+- a Grafana dashboard platform;
 - OpenTelemetry Collector;
-- Jaeger;
-- Tempo;
+- Jaeger or Tempo;
 - Cloud Trace;
-- Elasticsearch/Loki logging stack;
-- arbitrary SLOs or alert thresholds;
-- a new GitHub Actions workflow;
-- a second GCP observability environment.
+- fully populated trace_id/span_id;
+- production SLOs or alert thresholds.
 
-A tracing bridge/exporter is eligible only if job/log/metric correlation cannot meet the RCA exit
-condition without it.
+Those are deferred production-hardening options, not hidden prerequisites for the selected
+portfolio claim.
 
-## Signal design rules
+## Signal design rules retained
 
-- Never use `analysisJobId`, user id, project id, prompt content, object key, or error message as a
-  metric tag. Those are high-cardinality or sensitive dimensions.
-- Job-specific correlation belongs in structured/log MDC context.
-- Metrics use bounded dimensions such as `stage`, `outcome`, `category`, and provider family.
-- Provider-neutral application metrics must not be named `bedrock` or `aoss`.
-- Existing AWS compatibility metrics may remain for historical adapters.
-- Failure logs must preserve category and stage without exposing provider payloads, prompts, image
-  bytes, credentials, or internal exception messages.
-- Reuse `BUILD_SOURCE_REVISION` for release/source correlation.
+The following rules remain valid:
 
-## M7-1 — Current signal baseline
+- do not use analysisJobId, user id, project id, prompt content, object key, raw exception message,
+  or generated Terraform content as metric tags;
+- keep job-specific identity in bounded logs/MDC;
+- use bounded metric dimensions such as stage, outcome, category, and provider family;
+- preserve failure category/stage without logging provider payloads, prompts, image bytes,
+  credentials, or secret values;
+- preserve build/source revision for release correlation.
 
-**Status: TODO**
+## Closure decision
 
-Use one existing deterministic failure path to capture what current logs and metrics can explain
-without adding instrumentation.
+The observability problem identified at M7 activation has enough evidence for the portfolio:
 
-Preferred scenario:
+- a concrete before-state exists;
+- the missing diagnostic dimension was isolated;
+- the correction was minimal and provider-neutral;
+- the same failure became stage- and compensation-explainable;
+- the resulting signals were reused by later backend/cloud work;
+- no evidence demonstrated that a larger tracing/dashboard stack was necessary.
 
-- M6-3 relational finalization failure after successful object write, because it traverses analysis,
-  validation, storage, relational finalization, compensation, and terminal state.
+Therefore M7 should not remain ACTIVE or TODO.
 
-Record:
-
-- job state transitions;
-- existing log lines and MDC fields;
-- current metrics/counters before and after;
-- which exact stage can/cannot be identified;
-- whether `trace_id`/`span_id` are populated;
-- whether compensation success is machine-identifiable.
-
-The purpose is to locate the observability gap, not re-test M6 reliability.
-
-## M7-2 — Provider-neutral stage telemetry
-
-**Status: BLOCKED ON M7-1**
-
-If M7-1 confirms the expected gap, add one low-cardinality stage contract covering the active
-analysis lifecycle. Candidate stage names are limited to repository-owned boundaries such as:
-
-- `source_read`;
-- `fact_extraction`;
-- `retrieval`;
-- `generation`;
-- `validation`;
-- `result_store`;
-- `result_finalize`;
-- `compensation`.
-
-The exact list must follow actual code boundaries rather than create synthetic stages.
-
-Required signal shape:
-
-- stage duration;
-- stage outcome;
-- bounded failure category;
-- logs inherit `analysisJobId` and source revision;
-- active Vertex/OpenSearch execution uses the same contract;
-- no per-job metric labels.
-
-Prefer extending `AnalysisObservability` over creating a parallel telemetry subsystem.
-
-## M7-3 — Async correlation boundary
-
-**Status: BLOCKED ON M7-1**
-
-Determine whether `analysisJobId` plus source revision is sufficient to connect the accepted
-request to async execution and resulting state.
-
-If request-to-job correlation is incomplete, implement the smallest propagation mechanism:
-
-- preserve a bounded correlation id/job id across the executor handoff; or
-- add Micrometer tracing context propagation only if it materially improves the RCA evidence.
-
-Do not add a trace exporter/backend merely to make `trace_id` non-empty.
-
-## M7-4 — Failure RCA evidence
-
-**Status: TODO**
-
-Re-run one failure scenario after the minimum instrumentation change and produce a repository-owned
-RCA record containing:
-
-1. trigger/reproduction;
-2. job/correlation identity;
-3. ordered stage signals;
-4. first failed stage/category;
-5. persisted job/object result;
-6. recovery/compensation signal;
-7. exact source revision;
-8. operator conclusion.
-
-The evidence must be derivable from emitted signals, not from reading source code after the fact.
-
-## M7-5 — Observability closure
-
-**Status: TODO**
-
-M7 is complete when:
-
-1. one real/injected failure has a reproducible RCA from repository-owned metrics/logs/trace signals;
-2. the same job can be followed through the async lifecycle using bounded correlation context;
-3. the active Vertex/OpenSearch path has provider-neutral stage visibility where required by the
-   RCA;
-4. failure category and resulting state/recovery are visible without sensitive payloads;
-5. no high-cardinality metric tags were introduced;
-6. any tracing dependency/backend addition is justified by evidence rather than convention.
-
-## Runtime / cost rule
-
-M7 should begin entirely with local deterministic evidence. Do not reactivate the GCP target merely
-to prove log/metric plumbing. A bounded live target run is eligible only if M7 local evidence cannot
-validate the active Vertex/OpenSearch signal path.
-
-## Immediate next single task
-
-Execute M7-1 using the existing M6-3 partial-success failure harness. Capture current emitted
-metrics/log correlation and identify the smallest missing signal before changing instrumentation.
+Any future monitoring/tracing work requires a new explicit operational requirement or a new
+portfolio claim. It must not restart from the old M7 checklist automatically.

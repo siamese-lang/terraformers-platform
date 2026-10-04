@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 IMPLEMENTED — AWAITING REVIEW**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 NOT STARTED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Review A7-3 Provider Partial Failures implementation and CI. Stop before A7-4.**
+- Current single task: **A7-3 is closed at merge SHA `fdb0e8a3f7e6656c46dd24e173894460ec09fd7f`. A7-4 Durable Runtime Quality Observability is NOT STARTED and requires a separate bounded Work Package before implementation.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 IMPLEMENTED / AWAITING REVIEW**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 AWAITING USER APPROVAL**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -66,7 +66,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   canonical repository smoke queries. Terraform Static Verification run `37191939292` completed
   successfully at scope level; its terraform/RAG job was skipped because PR #205 changed no
   terraform/RAG paths. Frozen canonical/holdout datasets were unchanged and no live AI/cloud
-  execution was used. A7-3 is implemented and awaiting independent review.
+  execution was used. A7-3 is complete; A7-4 has not started.
 - No evaluator LLM or multi-model voting is part of the default design.
 - Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
   validation PASS while required grounding was incomplete.
@@ -571,8 +571,7 @@ A7-2 — False-green Measurement and Offline Calibration — is **COMPLETE**. Cl
 recorded in [Case A A7-2 — False-green Measurement and Offline Calibration](evaluation/case-a-a7-2-false-green-calibration.md).
 PR #205 merged as `9ced20a4e9fc7fb42c6499d08bf5d7c66052f6f6`.
 
-A7-3 — Provider Partial Failures — is **IMPLEMENTED / AWAITING REVIEW**.
-Its bounded execution contract is `.agents/work-packages/case-a-a7-3-provider-partial-failures-v1.yml` and evidence draft is `docs/evaluation/case-a-a7-3-provider-partial-failures.md`.
+A7-3 — Provider Partial Failures — is **COMPLETE** at merge SHA `fdb0e8a3f7e6656c46dd24e173894460ec09fd7f`. Its accepted evidence is `docs/evaluation/case-a-a7-3-provider-partial-failures.md`; corrective PR #209 merged as `94869668ef177370701adcaae7e5c5473b3076ac`. Backend Local Verification `37198612965` and Terraform Static Verification `37198612964` both passed. A7-4 is NOT STARTED.
 
 Do not start A7-4 or any later phase, recreate GCP runtime, call Vertex for live evidence, ingest the
 v4 corpus into a live vector store, or introduce an evaluator LLM / multi-model voting / new

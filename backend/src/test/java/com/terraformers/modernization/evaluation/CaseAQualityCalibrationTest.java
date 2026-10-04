@@ -17,9 +17,11 @@ class CaseAQualityCalibrationTest {
 
     @Test void historicalVpcEquivalentIsMachineRepresentableAsFalseGreen() {
         var definition = definition("vpc", InputClassification.ARCHITECTURE_DIAGRAM,
-                List.of("project-decision"), List.of("aws_vpc", "aws_subnet", "aws_lb", "aws_db_instance"));
+                List.of("tfref-v2-sg-relations"),
+                List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group"));
         var trace = trace("historical", "vpc", EvaluationStageStatus.PASS,
-                List.of(hit(1, "provider", "aws_vpc", "aws_subnet")), requiredResources(), true);
+                List.of(hit(1, "schema-vpc", "aws_vpc"), hit(2, "schema-lb", "aws_lb")),
+                requiredResources(), true);
 
         var result = scorer.score(definition, trace);
 

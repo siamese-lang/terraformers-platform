@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -117,10 +118,43 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
                     "Terraform CLI validation returned malformed diagnostics");
         }
         if (validation.exitCode() != 0 || !diagnostics.path("valid").asBoolean()) {
-            return failure(content, TerraformValidationFailureException.Category.VALIDATE_CONFIGURATION,
-                    "generated Terraform failed Terraform CLI validation");
+            TerraformDiagnosticSummary summary = reduceDiagnostics(diagnostics);
+            return new TerraformDraftValidation(false, content,
+                    "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation", summary);
         }
         return new TerraformDraftValidation(true, content, null);
+    }
+
+    private TerraformDiagnosticSummary reduceDiagnostics(JsonNode envelope) {
+        List<TerraformDiagnosticSummary.DiagnosticClass> classes = new ArrayList<>();
+        JsonNode diagnostics = envelope.path("diagnostics");
+        if (diagnostics.isArray()) {
+            for (JsonNode diagnostic : diagnostics) {
+                if ("error".equals(diagnostic.path("severity").asText().toLowerCase(Locale.ROOT))) {
+                    classes.add(classify(diagnostic.path("summary").asText()));
+                }
+            }
+        }
+        return new TerraformDiagnosticSummary(classes,
+                boundedJsonCount(envelope.path("error_count")),
+                boundedJsonCount(envelope.path("warning_count")));
+    }
+
+    private int boundedJsonCount(JsonNode value) {
+        if (!value.canConvertToInt()) return 0;
+        return Math.max(0, Math.min(value.asInt(), TerraformDiagnosticSummary.MAX_COUNT));
+    }
+
+    private TerraformDiagnosticSummary.DiagnosticClass classify(String summary) {
+        // Raw text is used only for these fixture-backed exact Terraform summary forms and is never returned.
+        return switch (summary) {
+            case "Missing required argument" -> TerraformDiagnosticSummary.DiagnosticClass.MISSING_REQUIRED_ARGUMENT;
+            case "Unsupported argument", "Unsupported block type" ->
+                    TerraformDiagnosticSummary.DiagnosticClass.UNSUPPORTED_ARGUMENT_OR_BLOCK;
+            case "Reference to undeclared resource", "Reference to undeclared input variable",
+                    "Reference to undeclared module" -> TerraformDiagnosticSummary.DiagnosticClass.UNDECLARED_REFERENCE;
+            default -> TerraformDiagnosticSummary.DiagnosticClass.UNKNOWN;
+        };
     }
 
     private Path createWorkspace() throws IOException {

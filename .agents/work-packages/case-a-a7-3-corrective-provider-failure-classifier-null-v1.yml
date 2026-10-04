@@ -1,0 +1,83 @@
+work_package:
+  id: case-a-a7-3-corrective-provider-failure-classifier-null-v1
+  status: ACTIVE
+  source_pr: 208
+  source_pr_head_sha: 12d7d90e1b3b45bc4e580ec7fa77fcb8578c51cb
+  execution_base_sha: 12d7d90e1b3b45bc4e580ec7fa77fcb8578c51cb
+
+  purpose: >
+    Correct only the A7-3 blocker discovered after the bounded repair budget was exhausted:
+    ProviderFailureClassifier.isRateLimited() null-unboxes a nullable Integer returned by
+    statusCode(Throwable), causing NullPointerException for ordinary non-HTTP exceptions.
+
+  evidence:
+    backend_local_verification_run: 37196930086
+    failing_job: 111420641595
+    root_failure: >
+      ProviderFailureClassifier.isRateLimited() compares statusCode(current) == 429.
+      statusCode(current) returns null for exceptions without a numeric status accessor, which
+      triggers Integer auto-unboxing and NullPointerException.
+    downstream_failures_are_not_independent: true
+
+  correction_contract:
+    required_code_change: >
+      Make the 429 comparison null-safe without changing the meaning of RATE_LIMITED.
+      A missing status code must not be treated as rate limited.
+    required_regression_proof:
+      - null_status_code_returns_not_rate_limited_without_throwing
+      - explicit_429_remains_rate_limited
+      - throttling_exception_name_or_explicit_throttling_signal_remains_rate_limited
+      - ordinary_runtime_exception_remains_not_rate_limited
+    preserve:
+      - A7_3_provider_neutral_taxonomy
+      - timeout_retry_semantics
+      - rate_limit_non_retryability
+      - provider_content_block_mapping
+      - empty_response_mapping
+      - evaluation_mapping
+      - observability_mapping
+      - existing_PR_208_bound_base
+    must_not:
+      - change_A7_3_acceptance
+      - redesign_ProviderFailureClassifier
+      - add_new_failure_categories
+      - alter_timeout_detection
+      - alter_retry_policy
+      - modify_DB_or_API
+      - start_A7_4
+      - modify_prompt_model_retrieval_generation_behavior
+      - use_live_provider_calls
+
+  allowed_paths:
+    - .agents/work-packages/case-a-a7-3-corrective-provider-failure-classifier-null-v1.yml
+    - backend/src/main/java/com/terraformers/modernization/analysis/ProviderFailureClassifier.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/ProviderFailureClassifierTest.java
+
+  prohibited_paths:
+    - .github/workflows/**
+    - backend/src/main/resources/db/migration/**
+    - evaluation/**
+    - corpus/**
+    - scripts/rag/**
+    - frontend/**
+    - infra/**
+
+  validation:
+    focused:
+      - cd backend && mvn -q -Dtest=ProviderFailureClassifierTest test
+    required_after_child_merge_into_PR_208_branch:
+      - existing_Backend_Local_Verification
+      - existing_Terraform_Static_Verification
+    no_new_workflow: true
+
+  stop_on:
+    - any_required_change_outside_allowed_paths
+    - second_distinct_failure_class
+    - A7_3_semantic_change_required
+    - retry_policy_change_required
+    - live_provider_call_required
+
+  completion:
+    target_branch: codex/implement-a7-3-provider-partial-failures
+    merge_requires_user_approval: true
+    parent_PR_208_remains_unmerged_until_parent_CI_passes: true

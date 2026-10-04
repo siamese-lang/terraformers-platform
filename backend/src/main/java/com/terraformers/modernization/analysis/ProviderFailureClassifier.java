@@ -9,7 +9,9 @@ public final class ProviderFailureClassifier {
 
     public static boolean isRateLimited(Throwable failure) {
         for (Throwable current = failure; current != null; current = current.getCause()) {
-            if (statusCode(current) == 429 || current.getClass().getSimpleName().toLowerCase().contains("throttl")) {
+            Integer status = statusCode(current);
+            if (Integer.valueOf(429).equals(status)
+                    || current.getClass().getSimpleName().toLowerCase().contains("throttl")) {
                 return true;
             }
         }

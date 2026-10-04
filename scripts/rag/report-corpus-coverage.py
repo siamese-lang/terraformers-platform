@@ -38,9 +38,10 @@ def schema_resources(path: Path) -> set[str]:
     return set(resources)
 
 
-def corpus_resources(corpus_dir: Path) -> tuple[set[str], set[str], int]:
+def corpus_resources(corpus_dir: Path) -> tuple[set[str], set[str], set[str], int]:
     provider_resources: set[str] = set()
     schema_document_resources: set[str] = set()
+    official_evidence_resources: set[str] = set()
     project_decisions = 0
     for line in (corpus_dir / "documents.jsonl").read_text(encoding="utf-8").splitlines():
         if not line.strip():
@@ -56,7 +57,14 @@ def corpus_resources(corpus_dir: Path) -> tuple[set[str], set[str], int]:
         provider_resources.update(values)
         if document_type == "AWS_PROVIDER_SCHEMA":
             schema_document_resources.update(values)
-    return provider_resources, schema_document_resources, project_decisions
+        elif document_type in {"AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE"}:
+            official_evidence_resources.update(values)
+    return (
+        provider_resources,
+        schema_document_resources,
+        official_evidence_resources,
+        project_decisions,
+    )
 
 
 def official_document_resources(provider_source_dir: Path) -> set[str]:
@@ -74,7 +82,9 @@ def report(args: argparse.Namespace) -> dict[str, object]:
     corpus_dir = args.corpus_dir.resolve()
     schema_path = args.provider_schema_json.resolve()
     schema = schema_resources(schema_path)
-    corpus, corpus_schema_docs, project_decisions = corpus_resources(corpus_dir)
+    corpus, corpus_schema_docs, corpus_official_evidence, project_decisions = corpus_resources(
+        corpus_dir
+    )
     result: dict[str, object] = {
         "corpusVersion": json.loads(
             (corpus_dir / "corpus-manifest.json").read_text(encoding="utf-8")
@@ -84,6 +94,7 @@ def report(args: argparse.Namespace) -> dict[str, object]:
         "providerSchemaResourceCount": len(schema),
         "corpusProviderResourceCount": len(corpus),
         "corpusProviderSchemaDocumentResourceCount": len(corpus_schema_docs),
+        "corpusOfficialEvidenceResourceCount": len(corpus_official_evidence),
         "corpusCoverageOfProviderSchema": round(len(corpus & schema) / len(schema), 6),
         "corpusResourcesAbsentFromProviderSchema": sorted(corpus - schema),
         "providerSchemaResourcesAbsentFromCorpusCount": len(schema - corpus),
@@ -99,10 +110,15 @@ def report(args: argparse.Namespace) -> dict[str, object]:
                 "officialDocumentedProviderSchemaResourceCount": len(documented_schema),
                 "providerSchemaResourcesWithoutOfficialDocumentCount": len(schema - official),
                 "corpusCoverageOfOfficialDocumentedResources": round(
-                    len(corpus & documented_schema) / len(documented_schema), 6
+                    len(corpus_official_evidence & documented_schema)
+                    / len(documented_schema),
+                    6,
                 )
                 if documented_schema
                 else 0.0,
+                "officialDocumentedProviderSchemaResourcesWithoutCorpusEvidenceCount": len(
+                    documented_schema - corpus_official_evidence
+                ),
             }
         )
     return result

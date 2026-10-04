@@ -3,6 +3,7 @@ package com.terraformers.modernization.reference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.terraformers.modernization.analysis.bedrock.BedrockRuntimeProperties;
+import com.terraformers.modernization.analysis.ProviderFailureClassifier;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.util.Base64;
 import java.util.List;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
+import software.amazon.awssdk.core.exception.ApiCallAttemptTimeoutException;
+import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
 
 /** Bounded vision stage used only to derive retrieval facts, never Terraform. */
 @Component
@@ -45,34 +48,66 @@ public class BedrockArchitectureFactsExtractor implements ArchitectureFactsExtra
             String response = client.invokeModel(InvokeModelRequest.builder().modelId(requireModelId())
                     .contentType("application/json").accept("application/json").body(SdkBytes.fromUtf8String(request)).build())
                     .body().asUtf8String();
+            if (response == null || response.isBlank()) {
+                throw ArchitectureFactsExtractionException.response(
+                        ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE, null);
+            }
             JsonNode root = objectMapper.readTree(response);
             if ("max_tokens".equals(root.path("stop_reason").asText())) {
-                throw new IllegalStateException("Bedrock facts response reached max_tokens");
+                throw ArchitectureFactsExtractionException.response(
+                        ArchitectureFactsExtractionException.Reason.RESPONSE_TRUNCATED, null);
             }
             JsonNode content = root.path("content");
-            if (!content.isArray()) throw new IllegalStateException("Bedrock facts response has no content array");
+            if (!content.isArray()) throw ArchitectureFactsExtractionException.response(
+                    ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE, null);
             JsonNode textBlock = null;
             for (JsonNode block : content) {
                 if ("text".equals(block.path("type").asText()) && block.path("text").isTextual()) { textBlock = block; break; }
             }
-            if (textBlock == null) throw new IllegalStateException("Bedrock facts response has no text block");
+            if (textBlock == null || textBlock.path("text").asText().isBlank()) {
+                throw ArchitectureFactsExtractionException.response(
+                        ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE, null);
+            }
             String text = extractFactsJsonObject(textBlock.path("text").asText());
             JsonNode facts = objectMapper.readTree(text);
-            if (!facts.isObject()) throw new IllegalStateException("Bedrock facts response is not a JSON object");
-            if (!facts.path("summary").isMissingNode() && !facts.path("summary").isTextual()) throw new IllegalStateException("Bedrock facts summary must be text");
+            if (!facts.isObject()) throw invalid(null);
+            if (!facts.path("summary").isMissingNode() && !facts.path("summary").isTextual()) throw invalid(null);
             ArchitectureRetrievalFacts result = new ArchitectureRetrievalFacts(facts.path("summary").asText(""), strings(facts.path("components")),
                     strings(facts.path("relationships")), strings(facts.path("resourceTypes")));
-            if (result.isEmpty()) throw new IllegalStateException("Bedrock facts response is empty");
+            if (result.isEmpty()) throw ArchitectureFactsExtractionException.response(
+                    ArchitectureFactsExtractionException.Reason.EMPTY_FACTS, null);
             return result;
+        } catch (ArchitectureFactsExtractionException exception) {
+            throw exception;
+        } catch (ApiCallAttemptTimeoutException | ApiCallTimeoutException exception) {
+            throw provider(ArchitectureFactsExtractionException.Reason.PROVIDER_TIMEOUT, exception);
+        } catch (RuntimeException exception) {
+            throw provider(ProviderFailureClassifier.isTimeout(exception)
+                    ? ArchitectureFactsExtractionException.Reason.PROVIDER_TIMEOUT
+                    : ProviderFailureClassifier.isRateLimited(exception)
+                    ? ArchitectureFactsExtractionException.Reason.PROVIDER_RATE_LIMITED
+                    : ArchitectureFactsExtractionException.Reason.PROVIDER_ERROR, exception);
         } catch (Exception exception) {
-            throw new IllegalStateException("failed to extract architecture retrieval facts", exception);
+            throw invalid(exception);
         }
+    }
+
+    private ArchitectureFactsExtractionException invalid(Throwable cause) {
+        return ArchitectureFactsExtractionException.response(
+                ArchitectureFactsExtractionException.Reason.INVALID_RESPONSE, cause);
+    }
+
+    private ArchitectureFactsExtractionException provider(
+            ArchitectureFactsExtractionException.Reason reason, RuntimeException cause) {
+        Integer status = ProviderFailureClassifier.statusCode(cause);
+        return ArchitectureFactsExtractionException.provider(reason,
+                status == null ? "" : status.toString(), cause.getClass().getSimpleName(), cause);
     }
 
     private String extractFactsJsonObject(String responseText) {
         String normalized = responseText.strip();
         int objectStart = normalized.indexOf('{');
-        if (objectStart < 0) throw new IllegalStateException("Bedrock facts response has no JSON object");
+        if (objectStart < 0) throw invalid(null);
 
         int depth = 0;
         boolean inString = false;
@@ -99,7 +134,7 @@ public class BedrockArchitectureFactsExtractor implements ArchitectureFactsExtra
                 if (depth == 0) return normalized.substring(objectStart, index + 1);
             }
         }
-        throw new IllegalStateException("Bedrock facts response has an incomplete JSON object");
+        throw invalid(null);
     }
 
     private String requireModelId() {
@@ -110,10 +145,10 @@ public class BedrockArchitectureFactsExtractor implements ArchitectureFactsExtra
 
     private List<String> strings(JsonNode node) {
         if (node.isMissingNode()) return List.of();
-        if (!node.isArray()) throw new IllegalStateException("Bedrock facts collection must be an array");
+        if (!node.isArray()) throw invalid(null);
         java.util.ArrayList<String> values = new java.util.ArrayList<>();
         node.forEach(value -> {
-            if (!value.isTextual()) throw new IllegalStateException("Bedrock facts collection elements must be text");
+            if (!value.isTextual()) throw invalid(null);
             values.add(value.asText());
         });
         return values;

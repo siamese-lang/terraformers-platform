@@ -8,8 +8,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 
 class BedrockResponseParserTest {
+
+    @Test
+    void distinguishesMissingSuccessfulContentFromMalformedNonEmptyOutput() {
+        assertThatThrownBy(() -> parser.parse("{\"content\":[]}"))
+                .isInstanceOfSatisfying(AnalysisProviderFailureException.class,
+                        failure -> assertThat(failure.reason())
+                                .isEqualTo(AnalysisProviderFailureReason.EMPTY_RESPONSE));
+        assertThatThrownBy(() -> parser.parse("{not-json"))
+                .isInstanceOf(BedrockResponseFormatException.class);
+    }
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final BedrockResponseParser parser = new BedrockResponseParser(objectMapper);

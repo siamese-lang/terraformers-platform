@@ -1,8 +1,8 @@
 work_package:
   id: case-a-a7-3-provider-partial-failures-v1
-  status: APPROVED_AWAITING_ACTIVATION
+  status: IMPLEMENTED_AWAITING_REVIEW
   approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: UNBOUND
+  execution_base_sha: c9adae19c5d8cb6c4d888c3b5ed0bf8cadae647d
 
   activation:
     bind_rule: >
@@ -259,6 +259,15 @@ work_package:
     - prompt_model_retrieval_or_generation_behavior_change_is_required
     - live_or_cost_action_is_requested
     - acceptance_criteria_would_need_to_change
+
+  implementation_state:
+    status: IMPLEMENTED_AWAITING_REVIEW
+    evidence_document: docs/evaluation/case-a-a7-3-provider-partial-failures.md
+    live_validation_performed: false
+    timeout_retry_semantics_changed: false
+    rate_limit_retry_added: false
+    database_or_api_persistence_added: false
+    A7_4_started: false
 
   completion:
     merge_requires_user_approval: true

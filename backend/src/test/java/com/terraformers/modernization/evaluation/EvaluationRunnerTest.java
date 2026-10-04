@@ -31,6 +31,40 @@ import org.junit.jupiter.api.io.TempDir;
 
 class EvaluationRunnerTest {
 
+    @Test
+    void mapsEveryProviderNeutralPartialFailureCategory() {
+        EvaluationRunner runner = runner(source -> new ArchitectureRetrievalFacts("", List.of(), List.of(), List.of()),
+                retriever(), generator());
+
+        assertThat(runner.generationFailureCategory(providerFailure(
+                com.terraformers.modernization.analysis.AnalysisProviderFailureReason.OUTPUT_TRUNCATED)))
+                .isEqualTo(EvaluationFailureCategory.OUTPUT_TRUNCATED);
+        assertThat(runner.generationFailureCategory(providerFailure(
+                com.terraformers.modernization.analysis.AnalysisProviderFailureReason.CONTENT_BLOCKED)))
+                .isEqualTo(EvaluationFailureCategory.PROVIDER_CONTENT_BLOCKED);
+        assertThat(runner.generationFailureCategory(providerFailure(
+                com.terraformers.modernization.analysis.AnalysisProviderFailureReason.EMPTY_RESPONSE)))
+                .isEqualTo(EvaluationFailureCategory.PROVIDER_EMPTY_RESPONSE);
+        assertThat(runner.generationFailureCategory(new com.terraformers.modernization.analysis.AnalysisProviderTimeoutException(
+                new RuntimeException())))
+                .isEqualTo(EvaluationFailureCategory.PROVIDER_TIMEOUT);
+        assertThat(runner.generationFailureCategory(providerFailure(
+                com.terraformers.modernization.analysis.AnalysisProviderFailureReason.RATE_LIMITED)))
+                .isEqualTo(EvaluationFailureCategory.PROVIDER_RATE_LIMITED);
+        assertThat(runner.generationFailureCategory(providerFailure(
+                com.terraformers.modernization.analysis.AnalysisProviderFailureReason.PROVIDER_ERROR)))
+                .isEqualTo(EvaluationFailureCategory.PROVIDER_ERROR);
+        assertThat(runner.generationFailureCategory(providerFailure(
+                com.terraformers.modernization.analysis.AnalysisProviderFailureReason.RESPONSE_FORMAT)))
+                .isEqualTo(EvaluationFailureCategory.RESPONSE_FORMAT);
+    }
+
+    private com.terraformers.modernization.analysis.AnalysisProviderFailureException providerFailure(
+            com.terraformers.modernization.analysis.AnalysisProviderFailureReason reason) {
+        return new com.terraformers.modernization.analysis.AnalysisProviderFailureException(
+                reason, new RuntimeException("SENTINEL_PROVIDER_PAYLOAD"));
+    }
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test

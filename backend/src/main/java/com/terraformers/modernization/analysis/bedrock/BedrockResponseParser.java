@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -75,12 +77,17 @@ public class BedrockResponseParser {
     }
 
     private JsonNode parseResponseBody(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.EMPTY_RESPONSE, null);
+        }
         try {
             JsonNode root = objectMapper.readTree(responseBody);
             if (root == null || !root.isObject()) {
                 throw new BedrockResponseFormatException("Bedrock response format is invalid");
             }
             return root;
+        } catch (AnalysisProviderFailureException exception) {
+            throw exception;
         } catch (Exception exception) {
             throw new BedrockResponseFormatException("Bedrock response format is invalid", exception);
         }
@@ -108,9 +115,11 @@ public class BedrockResponseParser {
             }
             String text = builder.toString().strip();
             if (text.isBlank()) {
-                throw new IllegalStateException("Bedrock response text is empty");
+                throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.EMPTY_RESPONSE, null);
             }
             return text;
+        } catch (AnalysisProviderFailureException exception) {
+            throw exception;
         } catch (Exception exception) {
             throw new BedrockResponseFormatException("Bedrock response format is invalid", exception);
         }

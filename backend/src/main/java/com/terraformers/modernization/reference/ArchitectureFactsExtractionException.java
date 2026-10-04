@@ -13,6 +13,10 @@ public final class ArchitectureFactsExtractionException extends RuntimeException
 
     public enum Reason {
         PROVIDER_RUNTIME,
+        PROVIDER_CONTENT_BLOCKED,
+        PROVIDER_TIMEOUT,
+        PROVIDER_RATE_LIMITED,
+        PROVIDER_ERROR,
         RESPONSE_TRUNCATED,
         EMPTY_RESPONSE,
         INVALID_RESPONSE,
@@ -53,8 +57,19 @@ public final class ArchitectureFactsExtractionException extends RuntimeException
         );
     }
 
+    public static ArchitectureFactsExtractionException provider(
+            Reason reason, String providerStatus, String providerErrorType, Throwable cause) {
+        if (reason != Reason.PROVIDER_CONTENT_BLOCKED && reason != Reason.PROVIDER_TIMEOUT
+                && reason != Reason.PROVIDER_RATE_LIMITED && reason != Reason.PROVIDER_ERROR) {
+            throw new IllegalArgumentException("reason is not a classified provider failure");
+        }
+        return new ArchitectureFactsExtractionException(reason, providerStatus, providerErrorType, null, cause);
+    }
+
     public static ArchitectureFactsExtractionException response(Reason reason, Throwable cause) {
-        if (reason == Reason.PROVIDER_RUNTIME) {
+        if (reason == Reason.PROVIDER_RUNTIME || reason == Reason.PROVIDER_CONTENT_BLOCKED
+                || reason == Reason.PROVIDER_TIMEOUT || reason == Reason.PROVIDER_RATE_LIMITED
+                || reason == Reason.PROVIDER_ERROR) {
             throw new IllegalArgumentException("provider runtime failures require providerRuntime");
         }
         return new ArchitectureFactsExtractionException(reason, "", "", null, cause);

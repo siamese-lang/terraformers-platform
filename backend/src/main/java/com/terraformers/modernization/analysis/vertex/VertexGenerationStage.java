@@ -11,6 +11,10 @@ import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisGenerationStage;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
+import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
+import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
+import com.terraformers.modernization.analysis.ProviderFailureClassifier;
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.storage.ObjectContent;
@@ -84,7 +88,12 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                 Part.fromText(promptBuilder.build(source, references, schemaEvidence, compact))
         );
 
-        GenerateContentResponse response = client.models.generateContent(modelId, content, config);
+        GenerateContentResponse response;
+        try {
+            response = client.models.generateContent(modelId, content, config);
+        } catch (RuntimeException exception) {
+            throw providerCallFailure(exception);
+        }
         Integer outputTokens = response.usageMetadata()
                 .flatMap(metadata -> metadata.candidatesTokenCount())
                 .orElse(null);
@@ -93,19 +102,9 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                 ? FinishReason.Known.FINISH_REASON_UNSPECIFIED
                 : finishReason.knownEnum();
 
-        if (known == FinishReason.Known.MAX_TOKENS) {
-            throw new VertexOutputTruncatedException(outputTokens);
-        }
-        if (known != FinishReason.Known.STOP
-                && known != FinishReason.Known.FINISH_REASON_UNSPECIFIED) {
-            throw new VertexResponseFormatException(
-                    "Vertex generation stopped before a normal completion: " + finishReason);
-        }
+        requireNormalCompletion(known, finishReason, outputTokens);
 
-        String text = response.text();
-        if (text == null || text.isBlank()) {
-            throw new VertexResponseFormatException("Vertex response text is empty");
-        }
+        String text = requireResponseText(response.text());
 
         try {
             return responseParser.parse(
@@ -126,5 +125,44 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                     exception.getCause()
             );
         }
+    }
+
+    RuntimeException providerCallFailure(RuntimeException exception) {
+        if (ProviderFailureClassifier.isTimeout(exception)) {
+            return new AnalysisProviderTimeoutException(exception);
+        }
+        AnalysisProviderFailureReason reason = ProviderFailureClassifier.isRateLimited(exception)
+                ? AnalysisProviderFailureReason.RATE_LIMITED
+                : AnalysisProviderFailureReason.PROVIDER_ERROR;
+        return new AnalysisProviderFailureException(reason, exception);
+    }
+
+    void requireNormalCompletion(FinishReason.Known known, FinishReason finishReason, Integer outputTokens) {
+        if (known == FinishReason.Known.MAX_TOKENS) {
+            throw new VertexOutputTruncatedException(outputTokens);
+        }
+        if (isContentBlocked(known)) {
+            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.CONTENT_BLOCKED, null);
+        }
+        if (known != FinishReason.Known.STOP
+                && known != FinishReason.Known.FINISH_REASON_UNSPECIFIED) {
+            throw new VertexResponseFormatException(
+                    "Vertex generation stopped before a normal completion: " + finishReason);
+        }
+    }
+
+    String requireResponseText(String text) {
+        if (text == null || text.isBlank()) {
+            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.EMPTY_RESPONSE, null);
+        }
+        return text;
+    }
+
+    public static boolean isContentBlocked(FinishReason.Known reason) {
+        return switch (reason) {
+            case SAFETY, RECITATION, BLOCKLIST, PROHIBITED_CONTENT, SPII, IMAGE_SAFETY,
+                    IMAGE_PROHIBITED_CONTENT, IMAGE_RECITATION -> true;
+            default -> false;
+        };
     }
 }

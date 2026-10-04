@@ -132,6 +132,25 @@ class AnalysisJobRunnerTest {
     }
 
     @Test
+    void rateLimitedProviderFailureIsTerminalWithoutRetryExpansion() {
+        Fixture fixture = fixture();
+        AnalysisJobEntity running = runningJob(1, 11);
+        AnalysisProviderFailureException failure = new AnalysisProviderFailureException(
+                AnalysisProviderFailureReason.RATE_LIMITED, new RuntimeException("SENTINEL_PROVIDER_PAYLOAD"));
+        when(fixture.state.claimEligible("job-rate-limited", NOW, NOW.plusSeconds(60)))
+                .thenReturn(Optional.of(running));
+        when(fixture.orchestrator.executeProviderAndValidate(running)).thenThrow(failure);
+        when(fixture.state.markFailedOwned("job-rate-limited", 11, NOW,
+                AnalysisJobRunner.GENERIC_FAILURE_REASON)).thenReturn(true);
+
+        fixture.runner.run("job-rate-limited");
+
+        verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
+        verify(fixture.state).markFailedOwned(
+                "job-rate-limited", 11, NOW, AnalysisJobRunner.GENERIC_FAILURE_REASON);
+    }
+
+    @Test
     void rawStorageTimeoutCauseIsTerminalWithoutRetry() {
         Fixture fixture = fixture();
         AnalysisJobEntity running = runningJob(1, 10);

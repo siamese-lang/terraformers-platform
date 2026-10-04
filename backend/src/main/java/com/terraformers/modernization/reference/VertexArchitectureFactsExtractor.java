@@ -11,11 +11,12 @@ import com.google.genai.types.Part;
 import com.google.genai.types.ThinkingConfig;
 import com.google.genai.types.ThinkingLevel;
 import com.terraformers.modernization.analysis.vertex.VertexRuntimeProperties;
+import com.terraformers.modernization.analysis.ProviderFailureClassifier;
+import com.terraformers.modernization.analysis.vertex.VertexGenerationStage;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -39,8 +40,6 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
             Describe architecture facts only; never generate Terraform, Markdown, or explanatory prose.
             """;
 
-    private static final Set<Integer> TRANSIENT_HTTP_STATUSES = Set.of(408, 429, 500, 502, 503, 504);
-
     private final VertexFactsClient factsClient;
     private final ObjectMapper objectMapper;
     private final VertexRuntimeProperties properties;
@@ -53,9 +52,9 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
     ) {
         this((modelId, content, config) -> {
             GenerateContentResponse response = client.models.generateContent(modelId, content, config);
-            boolean truncated = response.finishReason() != null
-                    && response.finishReason().knownEnum() == FinishReason.Known.MAX_TOKENS;
-            return new VertexFactsResponse(response.text(), truncated);
+            FinishReason.Known finish = response.finishReason() == null
+                    ? FinishReason.Known.FINISH_REASON_UNSPECIFIED : response.finishReason().knownEnum();
+            return new VertexFactsResponse(response.text(), finish);
         }, objectMapper, properties);
     }
 
@@ -96,9 +95,18 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
             throw ArchitectureFactsExtractionException.response(
                     ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE, null);
         }
-        if (response.truncated()) {
+        if (response.finishReason() == FinishReason.Known.MAX_TOKENS) {
             throw ArchitectureFactsExtractionException.response(
                     ArchitectureFactsExtractionException.Reason.RESPONSE_TRUNCATED, null);
+        }
+        if (VertexGenerationStage.isContentBlocked(response.finishReason())) {
+            throw ArchitectureFactsExtractionException.provider(
+                    ArchitectureFactsExtractionException.Reason.PROVIDER_CONTENT_BLOCKED, "", "", null);
+        }
+        if (response.finishReason() != FinishReason.Known.STOP
+                && response.finishReason() != FinishReason.Known.FINISH_REASON_UNSPECIFIED) {
+            throw ArchitectureFactsExtractionException.response(
+                    ArchitectureFactsExtractionException.Reason.INVALID_RESPONSE, null);
         }
         String responseText = response.text();
         if (responseText == null || responseText.isBlank()) {
@@ -174,12 +182,13 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
 
     private ArchitectureFactsExtractionException providerFailure(RuntimeException exception) {
         Integer status = googleStatusCode(exception);
-        return ArchitectureFactsExtractionException.providerRuntime(
-                status == null ? "" : Integer.toString(status),
-                safeErrorType(exception),
-                status == null ? null : TRANSIENT_HTTP_STATUSES.contains(status),
-                exception
-        );
+        ArchitectureFactsExtractionException.Reason reason = ProviderFailureClassifier.isTimeout(exception)
+                ? ArchitectureFactsExtractionException.Reason.PROVIDER_TIMEOUT
+                : ProviderFailureClassifier.isRateLimited(exception)
+                ? ArchitectureFactsExtractionException.Reason.PROVIDER_RATE_LIMITED
+                : ArchitectureFactsExtractionException.Reason.PROVIDER_ERROR;
+        return ArchitectureFactsExtractionException.provider(reason,
+                status == null ? "" : Integer.toString(status), safeErrorType(exception), exception);
     }
 
     private Integer googleStatusCode(Throwable exception) {
@@ -213,6 +222,6 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
         VertexFactsResponse generate(String modelId, Content content, GenerateContentConfig config);
     }
 
-    record VertexFactsResponse(String text, boolean truncated) {
+    record VertexFactsResponse(String text, FinishReason.Known finishReason) {
     }
 }

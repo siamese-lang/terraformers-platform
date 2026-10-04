@@ -92,10 +92,7 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
         try {
             response = client.models.generateContent(modelId, content, config);
         } catch (RuntimeException exception) {
-            if (ProviderFailureClassifier.isTimeout(exception)) throw new AnalysisProviderTimeoutException(exception);
-            AnalysisProviderFailureReason reason = ProviderFailureClassifier.isRateLimited(exception)
-                    ? AnalysisProviderFailureReason.RATE_LIMITED : AnalysisProviderFailureReason.PROVIDER_ERROR;
-            throw new AnalysisProviderFailureException(reason, exception);
+            throw providerCallFailure(exception);
         }
         Integer outputTokens = response.usageMetadata()
                 .flatMap(metadata -> metadata.candidatesTokenCount())
@@ -105,22 +102,9 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                 ? FinishReason.Known.FINISH_REASON_UNSPECIFIED
                 : finishReason.knownEnum();
 
-        if (known == FinishReason.Known.MAX_TOKENS) {
-            throw new VertexOutputTruncatedException(outputTokens);
-        }
-        if (isContentBlocked(known)) {
-            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.CONTENT_BLOCKED, null);
-        }
-        if (known != FinishReason.Known.STOP
-                && known != FinishReason.Known.FINISH_REASON_UNSPECIFIED) {
-            throw new VertexResponseFormatException(
-                    "Vertex generation stopped before a normal completion: " + finishReason);
-        }
+        requireNormalCompletion(known, finishReason, outputTokens);
 
-        String text = response.text();
-        if (text == null || text.isBlank()) {
-            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.EMPTY_RESPONSE, null);
-        }
+        String text = requireResponseText(response.text());
 
         try {
             return responseParser.parse(
@@ -141,6 +125,37 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                     exception.getCause()
             );
         }
+    }
+
+    RuntimeException providerCallFailure(RuntimeException exception) {
+        if (ProviderFailureClassifier.isTimeout(exception)) {
+            return new AnalysisProviderTimeoutException(exception);
+        }
+        AnalysisProviderFailureReason reason = ProviderFailureClassifier.isRateLimited(exception)
+                ? AnalysisProviderFailureReason.RATE_LIMITED
+                : AnalysisProviderFailureReason.PROVIDER_ERROR;
+        return new AnalysisProviderFailureException(reason, exception);
+    }
+
+    void requireNormalCompletion(FinishReason.Known known, FinishReason finishReason, Integer outputTokens) {
+        if (known == FinishReason.Known.MAX_TOKENS) {
+            throw new VertexOutputTruncatedException(outputTokens);
+        }
+        if (isContentBlocked(known)) {
+            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.CONTENT_BLOCKED, null);
+        }
+        if (known != FinishReason.Known.STOP
+                && known != FinishReason.Known.FINISH_REASON_UNSPECIFIED) {
+            throw new VertexResponseFormatException(
+                    "Vertex generation stopped before a normal completion: " + finishReason);
+        }
+    }
+
+    String requireResponseText(String text) {
+        if (text == null || text.isBlank()) {
+            throw new AnalysisProviderFailureException(AnalysisProviderFailureReason.EMPTY_RESPONSE, null);
+        }
+        return text;
     }
 
     public static boolean isContentBlocked(FinishReason.Known reason) {

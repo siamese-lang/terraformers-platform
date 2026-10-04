@@ -2,7 +2,7 @@
 
 ## Status
 
-**DIRECTION FROZEN — IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 NOT STARTED — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -19,6 +19,25 @@ Implementation is governed by
 .agents/work-packages/case-a-semantic-reliability-v1.yml.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
+
+
+A7-0 closed on the measured AWS Provider 5.100.0 universe:
+
+- provider-schema resources: **1,526**
+- schema resources with official resource documentation: **1,514**
+- schema resources without official resource documentation: **12**
+- historical v3 provider-resource coverage: **30 / 1,526 (1.9659%)**
+- broad v4 candidate: **1,514 provider resources**, **5,395 total documents**, **5,387 provider chunks**
+- candidate JSONL size: **14,833,335 bytes**
+- candidate content volume: **10,618,014 characters**, approximately **2,654,504 tokens** at the retained 4-characters/token sizing estimate
+- official-evidence extraction gaps in the broad candidate: **0**
+
+The selected A7-0 scope is therefore not a bounded legacy subset. Structural authority remains the
+full 1,526-resource provider schema, while RAG ingestion targets the full 1,514-resource
+schema/official-document intersection. The remaining 12 schema resources are explicit official
+knowledge gaps; the project does not fabricate RAG evidence for them.
+
+A7-1 requires a separate explicit user start decision and is not started by this closure.
 
 ## 1. Why this extension exists
 

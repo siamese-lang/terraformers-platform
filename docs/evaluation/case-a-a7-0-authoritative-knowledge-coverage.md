@@ -2,150 +2,185 @@
 
 ## Status
 
-**IMPLEMENTATION IN PROGRESS — LIVE/COST ACTION NOT REQUIRED**
+**COMPLETE — A7-1 NOT STARTED — LIVE/COST ACTION NOT REQUIRED**
 
-Execution base:
+Implementation execution base:
 
 `dd34d1cec34d31783ca2d672c65311ce82fd2666`
 
-This checkpoint implements the first phase of ADR-008. It does not activate v4 in the serving
-runtime and does not modify the historical v3 corpus.
+PR #198 merged as:
+
+`e91a789df241efc509b8854ebb2e364dce79a013`
+
+The historical `terraformers-reference-v3` corpus remains unchanged. A7-0 establishes the
+authoritative provider-knowledge universe, removes the per-resource compiler allowlist, measures
+the broad v4 candidate, and selects the ingestion scope. It does not activate v4 in the serving
+runtime and does not start A7-1.
 
 ## Problem
 
-The current v3 corpus contains 128 documents but represents only 30 AWS provider resource types.
+The historical v3 corpus contains 128 documents but represents only 30 AWS provider resource
+types. That was sufficient for the original Case A fixtures but cannot distinguish, for arbitrary
+valid resources, among:
 
-That is sufficient for the original Case A evaluation fixtures but insufficient as a general
-quality oracle. If a runtime request contains a valid AWS resource outside that subset, a missing
-retrieval result could mean:
+- provider resource not supported;
+- provider supports the resource but official usage knowledge is unavailable;
+- authoritative knowledge exists but was not indexed;
+- authoritative indexed knowledge exists but retrieval missed it.
 
-- the corpus does not contain the official knowledge;
-- the retriever failed to select available evidence; or
-- the provider does not support the resource.
+The historical v2 compiler also required a source-code `RESOURCE_SPECS` entry for every supported
+resource.
 
-Those are different failure classes and must not be collapsed.
+## Immutable v3 baseline
 
-The historical v2 builder encodes provider support in a source-code `RESOURCE_SPECS` dictionary,
-so a new resource requires a code edit before it can even be compiled.
-
-## Immutable baseline
-
-The committed `terraformers-reference-v3` remains unchanged.
-
-Measured from current main:
+The retained v3 baseline is:
 
 - document count: 128
 - provider resource types represented: 30
 - Terraformers project decisions: 8
-- provider version: 5.100.0
+- AWS Provider version: 5.100.0
 - provider source commit: `f7a3b98da589ab1d52756b0dcee0dbf2de83d635`
 
-The 30 provider resource types are:
+PR #198 CI run `37182581821` passed the RAG tooling regression:
 
-`aws_cloudfront_distribution`,
-`aws_cloudfront_origin_access_control`,
-`aws_cloudwatch_log_group`,
-`aws_cloudwatch_metric_alarm`,
-`aws_cognito_user_pool`,
-`aws_cognito_user_pool_client`,
-`aws_db_instance`,
-`aws_db_subnet_group`,
-`aws_ecr_repository`,
-`aws_eks_cluster`,
-`aws_eks_node_group`,
-`aws_iam_policy`,
-`aws_iam_role`,
-`aws_iam_role_policy_attachment`,
-`aws_internet_gateway`,
-`aws_lb`,
-`aws_lb_listener`,
-`aws_lb_target_group`,
-`aws_nat_gateway`,
-`aws_opensearchserverless_access_policy`,
-`aws_opensearchserverless_collection`,
-`aws_route`,
-`aws_route_table`,
-`aws_s3_bucket`,
-`aws_s3_bucket_policy`,
-`aws_security_group`,
-`aws_sqs_queue`,
-`aws_subnet`,
-`aws_vpc`,
-`aws_vpc_security_group_ingress_rule`.
+- v1 corpus contract: PASS
+- v2 corpus contract: PASS
+- v3 corpus contract: PASS
+- RAG tests: 17 / 17 PASS
+- additional static tests: 40 / 40 PASS
 
-The pinned provider source tree has 1,514 `website/docs/r/*.html.markdown` files. That source-tree
-count is not substituted for the provider-schema resource count. The exact schema universe must be
-reported from the real `terraform providers schema -json` output.
+The v3 contract digest remained:
 
-## Selected implementation
+`df8c198f0648827d754e1ef92ff4c07b1397e7dd36a06487eebfee1443ce892f`
 
-### Scalable v4 compiler
+## Implemented A7-0 compiler and coverage contract
 
-`scripts/rag/build-corpus-v4.py`:
+PR #198 added the versioned v4 compiler and coverage reporter with these properties:
 
-- accepts arbitrary `aws_*` resource names;
-- validates them against the supplied pinned provider schema;
-- derives official documentation paths from the resource type;
-- can build an explicit bounded resource set or the full documented/schema intersection;
-- always produces schema evidence for selected valid provider resources;
-- records missing official docs as knowledge coverage gaps;
-- preserves source version/commit/path and sanitization/risk metadata;
-- carries forward curated Terraformers project decisions from v3;
-- writes a machine-readable `coverage-report.json`;
-- uses a new `terraformers-reference-v4` identity.
+- arbitrary `aws_*` managed resources are validated from the supplied provider schema;
+- official documentation paths are derived deterministically rather than from a production
+  per-resource source-code dictionary;
+- a resource absent from v3, including `aws_lambda_function` in the regression fixture, is built
+  without changing compiler source;
+- provider schema, official source-document presence, and actually indexed official evidence are
+  separate coverage dimensions;
+- source-file presence does not count as indexed official evidence when the parser emits no
+  `AWS_PROVIDER_DOC` or `AWS_PROVIDER_EXAMPLE` chunk;
+- source-missing and evidence-extraction-gap resources are separate machine-readable classes;
+- provider version, source commit, source path, schema SHA-256, document authority/type, corpus
+  identity, and project-decision provenance are retained;
+- Terraformers project decisions remain a separate curated authority;
+- v3 remains immutable.
 
-There is no production per-resource `choices=RESOURCE_SPECS` allowlist.
+The regression specifically prevents the false-green case:
 
-### Coverage reporter
+~~~text
+official source file exists
+  + parser emits no official evidence
+  + schema evidence exists
+  != official RAG coverage
+~~~
 
-`scripts/rag/report-corpus-coverage.py` independently reports:
+## Exact AWS Provider 5.100.0 measurement
 
-- provider-schema resource universe;
-- committed corpus provider-resource coverage;
-- corpus provider-schema document coverage;
-- project-decision count;
-- optional official-document/source coverage;
-- schema file SHA-256.
+The exact schema was generated through the existing `backend/Dockerfile` path, which pins and
+checksum-verifies Terraform 1.8.5 and AWS Provider 5.100.0 before running:
 
-This is the required distinction between "knowledge absent" and "retrieval missed available
-knowledge."
+`terraform providers schema -json`
 
-### v4 contract
+The provider source used for documentation comparison was pinned to:
 
-`scripts/checks/rag-corpus-contract-verification.py` registers the v4 runtime identity and requires
-the coverage report to reconcile with the generated provider documents and selected resource set.
+`f7a3b98da589ab1d52756b0dcee0dbf2de83d635`
 
-v1/v2/v3 runtime contracts are unchanged.
+Measured universe:
 
-## Acceptance evidence still required
+| Measurement | Result |
+| --- | ---: |
+| Provider schema resources | 1,526 |
+| Schema resources with official resource documentation | 1,514 |
+| Schema resources without official resource documentation | 12 |
+| Historical v3 provider resources | 30 |
+| v3 coverage of provider schema | 1.9659% |
+| v3 coverage of officially documented schema resources | 1.9815% |
 
-Before A7-0 can close:
+This confirms that the historical 1,514 provider-document-file count is not the provider schema
+universe. The actual AWS Provider 5.100.0 managed-resource universe is 1,526.
 
-1. CI must pass the v1/v2/v3 regression and the new v4 compiler tests.
-2. A resource absent from committed v3 must be compiled under v4 without changing compiler source.
-3. The real AWS Provider 5.100.0 schema JSON must be supplied to
-   `report-corpus-coverage.py` so the provider-schema universe count is recorded.
-4. A bounded-vs-broad/full v4 ingestion decision must be made from the measured resource/document
-   and embedding volume.
-5. v3 directory digest/content must remain unchanged.
+## Broad v4 candidate measurement
 
-Until those are satisfied, A7-1 does not start.
+The broad candidate was built from the complete schema/official-document intersection rather than
+from the historical allowlist.
+
+| Measurement | Result |
+| --- | ---: |
+| Candidate provider resources | 1,514 |
+| Coverage of provider schema | 99.2136% |
+| Coverage of officially documented schema resources | 100% |
+| Resources with indexed official evidence | 1,514 |
+| Official-evidence extraction gaps | 0 |
+| Total candidate documents | 5,395 |
+| Provider document chunks | 5,387 |
+| JSONL bytes | 14,833,335 |
+| Content characters | 10,618,014 |
+| Approximate embedding input at 4 chars/token | 2,654,504 tokens |
+
+No Vertex embedding request, OpenSearch ingestion, GCP runtime creation, or other live/cost-bearing
+action was performed to obtain this measurement.
+
+## Selected ingestion scope
+
+A7-0 selects **broad/full authoritative coverage**, with the word "full" split by authority type:
+
+1. **Structural authority:** all **1,526** AWS Provider 5.100.0 schema resources remain available as
+   deterministic direct-lookup authority.
+2. **RAG evidence scope:** ingest the complete **1,514-resource** intersection for which the pinned
+   provider schema and pinned official resource documentation both exist.
+3. **Official-knowledge gaps:** the remaining **12** schema resources are explicitly represented as
+   resources whose provider structure exists but whose official RAG knowledge is unavailable.
+   Terraformers does not fabricate substitute official evidence for them.
+
+A bounded 30-resource-style subset is rejected. The measured broad candidate is only 5,395
+documents / 14.8 MB JSONL / approximately 2.65M input tokens, so retaining the old allowlist for
+size reasons would reintroduce an artificial knowledge boundary. Exact live embedding billing is
+not claimed because ingestion was intentionally not executed; any future cost-bearing ingestion
+remains separately gated.
+
+## A7-0 acceptance
+
+| Acceptance criterion | Result |
+| --- | --- |
+| Current v3 provider-resource coverage machine reported | PASS |
+| Real provider-schema resource universe machine reported | PASS — 1,526 |
+| v4 builder removes per-resource source-code allowlist requirement | PASS |
+| Resource absent from v3 builds without builder source change | PASS |
+| Schema / official source / indexed official evidence reported separately | PASS |
+| Provider version / commit / path / checksum provenance preserved | PASS |
+| Project decisions remain separate curated authority | PASS |
+| Historical v3 unchanged | PASS |
+| Bounded vs broad/full scope selected from measured volume | PASS — broad/full selected |
+
+**A7-0 closure: PASS.**
 
 ## Non-claims
 
-This checkpoint does not claim:
+A7-0 does not claim:
 
 - v4 is currently served by OpenSearch;
-- all 1,514 provider documentation files correspond one-to-one with provider schema resources;
-- every provider resource has usable official documentation;
-- broad/full v4 has been embedded;
-- corpus expansion alone proves output quality;
-- current live runtime exists.
+- all 1,526 schema resources have official RAG evidence;
+- the 12 schema-only resources have fabricated replacement knowledge;
+- broad v4 has been embedded or deployed;
+- corpus expansion alone proves generated-output quality;
+- retrieval will always select the available authoritative evidence;
+- an evaluator LLM is required or selected;
+- a live GCP runtime currently exists.
 
-## Live boundary
+Those boundaries belong to later phases.
 
-No GCP resource, Vertex embedding request, OpenSearch ingestion, deployment, or other cost-bearing
-action is authorized by A7-0 implementation.
+## Next gate
 
-If later v4 ingestion or representative runtime proof is required, it occurs under the separately
-declared live checkpoint in A7-7.
+A7-1 — Evidence-backed Quality Contract — is the next candidate phase.
+
+It must not start automatically. A separate explicit user decision is required before implementation.
+
+No GCP resource recreation, Vertex call, corpus ingestion, deployment, or other cost-bearing action
+is authorized by this A7-0 closure.

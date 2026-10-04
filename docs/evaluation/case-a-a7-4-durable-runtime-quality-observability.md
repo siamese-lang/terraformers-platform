@@ -228,3 +228,45 @@ the Work Package. The runtime manifest must retain the pinned commit/count prove
 
 A7-5 does not start automatically. It requires separate user approval after A7-4 implementation,
 independent acceptance, merge, and closure.
+
+
+## A7-0 official-knowledge gap recovery evidence
+
+The A7-4 preflight originally stopped because the exact 12-resource A7-0 official-documentation gap
+set had not been committed and the Codex execution environment could not download the pinned
+provider artifacts/source.
+
+The gap set was subsequently reproduced directly from the pinned public provider source commit:
+
+- provider source commit: `f7a3b98da589ab1d52756b0dcee0dbf2de83d635`
+- `internal/service` tree: `08ac3f85622b439f826da9b5677414f0f0b86fda`
+- official `website/docs/r` tree: `fda313b7ec2d69be5077056340ba25d6dc763b0d`
+- generated service-package registries inspected: 256
+- managed resource registrations were taken only from generated
+  `FrameworkResources()` and `SDKResources()` `TypeName` entries; data-source registrations were
+  excluded
+- reconstructed managed-resource registrations: 1,526
+- exact-name managed resources with official `.html.markdown` resource documentation: 1,514
+- exact-name official-documentation gaps: 12
+
+The sorted verified gap set is:
+
+1. `aws_account_region`
+2. `aws_alb`
+3. `aws_alb_listener`
+4. `aws_alb_listener_certificate`
+5. `aws_alb_listener_rule`
+6. `aws_alb_target_group`
+7. `aws_alb_target_group_attachment`
+8. `aws_api_gateway_rest_api_put`
+9. `aws_ec2_image_block_public_access`
+10. `aws_pinpoint_email_template`
+11. `aws_rds_custom_db_engine_version`
+12. `aws_securityhub_configuration_policy_association`
+
+The reconstructed counts exactly match the accepted A7-0 measurement
+(`1,526 / 1,514 / 12`). This recovery did not use the current retrieval hits, the v3 30-resource
+set, the current provider default branch, or fabricated resource names.
+
+A7-4 may therefore proceed with a compact versioned read-only coverage manifest carrying these 12
+gaps and the pinned provenance. This evidence does not claim that v4 is currently served or ingested.

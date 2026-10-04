@@ -1,0 +1,356 @@
+work_package:
+  id: case-a-a7-4-durable-runtime-quality-observability-v1
+  status: APPROVED_AWAITING_ACTIVATION
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: UNBOUND
+
+  activation:
+    bind_rule: >
+      This Work Package must first be merged to main. Immediately before the first A7-4
+      implementation write, read authoritative remote main exactly once, bind that SHA to
+      execution_base_sha on the implementation branch, and do not refresh or rebase afterward.
+    first_implementation_write_must_bind_execution_base: true
+
+  prior_phase:
+    id: A7_3
+    status: COMPLETE
+    implementation_merge_sha: fdb0e8a3f7e6656c46dd24e173894460ec09fd7f
+    closure_merge_sha: 1038263076dc267d090e12503fc8670138c6b48c
+    evidence: docs/evaluation/case-a-a7-3-provider-partial-failures.md
+
+  user_approval:
+    approved_on: 2026-10-04
+    scope: A7_4_ONLY
+
+  decision_gate:
+    engineering_axis:
+      - AI/RAG quality measurement
+      - backend AI-service reliability
+      - observability based on real failure diagnosis
+    representative_case: Case A extension — Evidence-backed AI Quality and Semantic Reliability
+
+    operating_scenario: >
+      A terminal AnalysisJob must keep the quality interpretation that was true when the job ran.
+      API clients and operators must be able to distinguish technical completion from evidence-backed,
+      degraded, unknown, or not-applicable quality after a process restart or backend replacement,
+      without replaying the model call or reinterpreting the job under a later corpus/quality rule.
+
+    observed_problem: >
+      A7-1 defines the versioned evidence-quality-v1 assessment and A7-3 preserves provider failure
+      mechanics, but current AnalysisJob persistence stores only workflow/result fields and free-text
+      failureReason. AnalysisJobResponse exposes no bounded quality state. EvidenceQualityAssessment
+      is not attached to AnalysisResult or persisted, and the existing Micrometer/logging surfaces do
+      not publish terminal quality outcomes.
+
+    impact: >
+      A technically successful job cannot be distinguished durably from degraded or unknown evidence
+      quality. After restart, the system can read the Terraform result but cannot recover the exact
+      quality interpretation without recomputation. Recomputing later could silently reinterpret
+      historical jobs when corpus coverage or rules change.
+
+    root_mechanism: >
+      Quality state currently ends at an in-memory decision contract and is not part of the durable
+      terminal AnalysisJob mutation. The provider path also discards the extracted-fact/reference
+      context needed to compute the A7-1 assessment before job finalization.
+
+    alternatives:
+      - id: RECOMPUTE_ON_API_READ
+        decision: REJECT
+        reason: >
+          Would make historical job meaning depend on the current corpus/schema/decision rules and
+          still lacks the original selected-reference context after restart.
+      - id: PERSIST_RAW_EVIDENCE_AND_REPLAY
+        decision: REJECT
+        reason: >
+          Would unnecessarily retain prompts/model payloads/generated diagnostics, increase privacy
+          and storage surface, and duplicate evidence that A7-1 intentionally reduces to a bounded
+          deterministic assessment.
+      - id: PERSIST_BOUNDED_TERMINAL_SNAPSHOT
+        decision: SELECTED
+        reason: >
+          Compute the versioned A7-1 assessment while facts/references/generated output are still in
+          memory, carry only that bounded snapshot through AnalysisResult, and persist it atomically
+          with the existing owned terminal job transition. Expose the persisted snapshot through the
+          existing API and reuse Micrometer/MDC for low-cardinality observability.
+
+    decision_criteria:
+      correctness_and_durability: selected_snapshot_preserves_historical_meaning
+      failure_semantics: selected_snapshot_keeps_technical_and_quality_axes_separate
+      operational_complexity: reuses_existing_AnalysisJob_MariaDB_Micrometer_and_MDC
+      cloud_portability: no_new_cloud_service_or_vendor_observability_dependency
+      sensitive_data_control: bounded_enums_only_no_raw_prompt_image_HCL_or_provider_payload
+      portfolio_value: directly_explains_why_pipeline_success_is_not_equivalent_to_trusted_output
+
+  selected_contract:
+    source_contract:
+      quality_contract: EvidenceQualityAssessment
+      contract_version: evidence-quality-v1
+      no_parallel_quality_taxonomy: true
+      rule: >
+        A7-4 may add a small persistence/transport snapshot type or mapper, but technical, knowledge,
+        quality, project-decision, runtime-boundary, and evidence-quality reason semantics must come
+        from EvidenceQualityAssessment rather than a second independently-defined quality model.
+
+    terminal_snapshot_timing:
+      success: >
+        Compute the evidence-quality-v1 assessment before terminal finalization while extracted facts,
+        selected ReferenceDocuments, generated Terraform, and provider-schema context are still
+        available. Carry the assessment on the provider result to the job finalization boundary.
+      failure: >
+        Persist a bounded terminal snapshot without replay. Provider failures use A7-3 mechanics where
+        they map to existing EvidenceQualityAssessment.Reason values. Terraform executable failure may
+        use TERRAFORM_EXECUTABLE_FAILURE. Failures with no evidence-quality reason remain technical
+        FAIL with knowledge/quality UNKNOWN and an empty bounded reason list; do not invent a false
+        evidence reason.
+      input_rejected: >
+        INPUT_REJECTED is a valid no-Terraform classification outcome rather than provider censorship.
+        Persist technical PASS with knowledge/quality/project-decision NOT_APPLICABLE when the existing
+        provider-neutral INPUT_REJECTED reason reaches the terminal boundary. Do not infer semantic
+        correctness beyond that classification.
+      retry_rule: >
+        Do not persist a terminal quality snapshot for a retry that is being rescheduled. Persist only
+        when the owned job reaches a terminal SUCCEEDED or FAILED transition.
+
+    persistence:
+      table: analysis_jobs
+      migration: one_additive_Flyway_migration
+      required_fields:
+        - quality_contract_version
+        - technical_status
+        - knowledge_status
+        - quality_status
+        - project_decision_status
+        - runtime_quality_boundary
+        - quality_reasons
+      storage_rule: >
+        Persist only bounded enum/version values. quality_reasons may be encoded as a deterministic
+        bounded list of EvidenceQualityAssessment.Reason names; no arbitrary message or payload is
+        allowed in this field.
+      legacy_rows: >
+        Existing/pre-A7-4 rows remain null/unavailable. Do not backfill or guess historical quality.
+      terminal_atomicity: >
+        Success snapshot fields are saved in the same owned finalization transaction as SUCCEEDED.
+        Final FAILED snapshot fields are written in the same fenced markFailedOwned transition.
+        Stale generations must not update quality state.
+
+    success_quality_computation:
+      extracted_facts: preserve ArchitectureRetrievalFacts through the provider pipeline until assessment
+      selected_evidence: use the exact ReferenceDocument list selected for that request
+      generated_output: use the generated Terraform before result context is discarded
+      provider_schema: reuse AwsProviderSchemaCatalog
+      project_decision_applicability: >
+        UNKNOWN by default unless applicability is already deterministic from repository-owned
+        evidence. Do not infer applicability merely from a plausible resource/architecture pattern.
+      consequence: >
+        A successful job may legitimately be quality UNKNOWN. Deterministic evidence gaps may make it
+        DEGRADED. Do not force EVIDENCE_BACKED merely to make positive-path tests look better.
+
+    official_knowledge_coverage:
+      authority: A7_0_pinned_AWS_provider_5_100_0_measurement
+      provider_schema_resource_count: 1526
+      official_documented_schema_resource_count: 1514
+      schema_resources_without_official_document_count: 12
+      rule: >
+        Official-knowledge availability must not be inferred from the selected references. A7-4 may
+        package a compact versioned read-only coverage manifest derived from the exact A7-0 pinned
+        provider schema/source measurement so corpus knowledge gaps remain distinct from evidence
+        selection/retrieval gaps.
+      manifest_preference: >
+        Prefer a compact manifest of the 12 explicit official-knowledge gaps plus provider version,
+        provider-source commit, counts, and contract identity rather than a hand-maintained 1514-item
+        production allowlist.
+      anti_fabrication: >
+        The exact gap set must be reproducible from the A7-0 pinned source/schema evidence. If the
+        implementation environment cannot reproduce or verify it, stop for reviewer decision rather
+        than inventing resource names or deriving knowledge availability from current retrieval hits.
+      no_ingestion: >
+        This manifest is coverage metadata only. A7-4 does not embed/ingest terraformers-reference-v4
+        or perform a live OpenSearch/embedding operation.
+
+    analysis_result_boundary:
+      rule: >
+        AnalysisResult may carry an optional EvidenceQualityAssessment. Preserve the existing
+        constructor/API compatibility used by tests and stub providers where practical. Production
+        Vertex/Bedrock architecture-success paths must attach the assessment; withTerraformCode must
+        preserve it across Terraform sanitization.
+
+    api:
+      endpoint: GET /api/analysis/jobs/{id}
+      shape: >
+        Add one backward-compatible nullable nested quality object to AnalysisJobResponse. It should
+        expose contractVersion, technicalStatus, knowledgeStatus, qualityStatus,
+        projectDecisionStatus, runtimeQualityBoundary, and bounded reasons.
+      legacy_behavior: quality_is_null_when_no_persisted_snapshot_exists
+      do_not_expose:
+        - raw_prompt
+        - image_bytes_or_base64
+        - raw_provider_payload
+        - generated_HCL_as_quality_evidence
+        - unbounded_exception_or_Terraform_diagnostic_text
+
+    metrics:
+      reuse: AnalysisObservability_Micrometer
+      required:
+        - terminal_quality_status_counter
+        - bounded_quality_reason_counter
+      label_rule: >
+        Use only finite enum values such as technical/knowledge/quality status and reason. Do not use
+        job ID, project ID, resource type/name, reference ID, model output, exception message, or
+        contract payload as metric labels.
+      no_new_product: true
+
+    logs:
+      reuse: AnalysisLogCorrelation_MDC
+      rule: >
+        Emit one bounded terminal quality log containing enum/version/reason names. Job identity stays
+        in existing analysisJobId MDC correlation and must not be duplicated as a metric label.
+      no_payload_logging: true
+
+    failure_mapping:
+      OUTPUT_TRUNCATED: PROVIDER_OUTPUT_TRUNCATED
+      CONTENT_BLOCKED: PROVIDER_CONTENT_BLOCKED
+      EMPTY_RESPONSE: PROVIDER_EMPTY_RESPONSE
+      RATE_LIMITED: PROVIDER_RATE_LIMITED
+      PROVIDER_ERROR: PROVIDER_ERROR
+      timeout: PROVIDER_TIMEOUT
+      terraform_executable_failure: TERRAFORM_EXECUTABLE_FAILURE
+      response_format: >
+        Preserve A7-3 response-format semantics in existing failure metrics/logs/failureReason. Do not
+        collapse it to PROVIDER_ERROR merely to populate a quality reason; an empty quality reason list
+        is preferable to a false reason.
+      generic_non_quality_failure: >
+        technical FAIL, knowledge UNKNOWN, quality UNKNOWN, project-decision UNKNOWN, bounded quality
+        reasons empty.
+
+  implementation_shape:
+    - >
+      Add exactly one additive migration for the bounded terminal quality snapshot. Do not redesign
+      AnalysisJob durable processing or ownership/fencing.
+    - >
+      Add entity accessors and deterministic serialization/parsing for the bounded reason list.
+    - >
+      Carry successful A7-1 assessment through AnalysisResult to markSucceededOwned.
+    - >
+      Preserve extracted facts alongside references in Bedrock retrieval just as Vertex already does;
+      do not add a second model/fact extraction pass.
+    - >
+      Reuse AwsProviderSchemaCatalog and GeneratedTerraformContractInspector for both providers rather
+      than introducing provider-specific quality algorithms.
+    - >
+      Add/read the A7-0 official-knowledge coverage manifest only if its exact provenance/gap set can
+      be verified. Do not change RAG serving scope.
+    - >
+      Persist terminal failure snapshots through the existing fenced markFailedOwned path without
+      changing retry eligibility or attempt/lease semantics.
+    - >
+      Expose a nullable nested quality snapshot in AnalysisJobResponse.
+    - >
+      Record low-cardinality terminal quality metrics and a bounded MDC-correlated log.
+    - >
+      Add repository/API/restart regression coverage proving persisted state survives a new read
+      context without recomputation.
+
+  acceptance:
+    - A7_3_closure_main_is_the_bound_base
+    - evidence_quality_v1_is_reused_not_reimplemented_as_a_parallel_quality_model
+    - successful_architecture_job_persists_versioned_technical_knowledge_quality_project_decision_boundary_and_reasons
+    - failed_terminal_job_persists_technical_FAIL_without_replaying_provider_calls
+    - input_rejection_persists_technical_PASS_and_quality_NOT_APPLICABLE_without_Terraform
+    - retry_reschedule_does_not_persist_terminal_quality
+    - stale_generation_cannot_mutate_quality_state
+    - pre_A7_4_rows_remain_unavailable_without_backfill_guessing
+    - official_knowledge_availability_is_not_derived_from_selected_retrieval_hits
+    - official_knowledge_gap_and_missing_selected_evidence_remain_distinguishable
+    - project_decision_applicability_is_UNKNOWN_unless_deterministic
+    - successful_job_can_be_DEGRADED_or_UNKNOWN_without_being_marked_technical_FAIL
+    - existing_GET_analysis_job_API_exposes_nullable_bounded_quality_snapshot
+    - API_addition_is_backward_compatible
+    - terminal_quality_state_survives_repository_context_or_backend_restart_readback
+    - quality_metrics_have_only_low_cardinality_enum_labels
+    - job_identity_remains_in_MDC_or_persisted_state_not_metric_labels
+    - no_raw_prompt_image_provider_payload_generated_HCL_or_unbounded_diagnostic_is_persisted_or_exported
+    - timeout_retry_rate_limit_and_ownership_semantics_are_unchanged
+    - no_v4_embedding_ingestion_or_live_provider_GCP_action_occurs
+    - no_Langfuse_OpenTelemetry_or_new_observability_product_is_added
+    - existing_backend_and_MariaDB_schema_validation_remain_green
+
+  allowed_paths:
+    - .agents/work-packages/case-a-a7-4-durable-runtime-quality-observability-v1.yml
+    - .agents/work-packages/case-a-semantic-reliability-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/case-a-semantic-reliability-extension.md
+    - docs/evaluation/case-a-a7-4-durable-runtime-quality-observability.md
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/bedrock/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/main/resources/db/migration/**
+    - backend/src/main/resources/quality/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/bedrock/**
+    - backend/src/test/java/com/terraformers/modernization/reference/**
+    - backend/src/test/resources/quality/**
+
+  prohibited_paths:
+    - evaluation/**
+    - corpus/terraformers-reference/v1/**
+    - corpus/terraformers-reference/v2/**
+    - corpus/terraformers-reference/v3/**
+    - .github/workflows/**
+    - frontend/**
+    - infra/**
+    - AGENTS.md
+
+  prohibited_actions:
+    - merge
+    - direct_main_write
+    - start_A7_5
+    - mutate_A7_0_A7_1_A7_2_or_A7_3_acceptance
+    - reinterpret_historical_jobs_by_backfill
+    - change_AnalysisJob_retry_lease_claim_or_fencing_semantics
+    - make_rate_limit_retryable
+    - change_prompt_model_retrieval_or_generation_behavior
+    - change_RAG_serving_scope
+    - build_or_ingest_live_v4_corpus
+    - live_Vertex_or_Bedrock_call
+    - live_GCP_action
+    - add_evaluator_LLM_or_model_voting
+    - add_Langfuse_OpenTelemetry_or_other_observability_product
+    - add_new_workflow
+    - log_or_persist_raw_prompt_image_provider_payload_generated_HCL_or_unbounded_Terraform_diagnostics
+
+  validation:
+    required:
+      - focused_EvidenceQuality_persistence_tests
+      - provider_quality_attachment_tests
+      - AnalysisJobRepository_tests
+      - AnalysisJobStateService_and_Runner_tests
+      - AnalysisJobControllerIntegrationTest
+      - restart_or_fresh_repository_context_readback_test
+      - AnalysisObservability_tests
+      - existing_backend_local_verification
+      - existing_MariaDB_schema_and_repository_validation
+      - git_diff_check
+    live_validation_required: false
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - current_main_differs_from_execution_base_sha
+    - second_failure_after_one_bounded_repair
+    - failure_class_changes
+    - exact_A7_0_official_knowledge_gap_manifest_cannot_be_reproduced_or_verified
+    - quality_state_would_need_raw_payload_or_generated_HCL
+    - project_decision_applicability_would_need_to_be_guessed
+    - retry_lease_claim_or_fencing_change_is_required
+    - RAG_serving_or_ingestion_change_is_required
+    - new_observability_product_is_required
+    - live_or_cost_action_is_requested
+    - acceptance_criteria_would_need_to_change
+
+  completion:
+    merge_requires_user_approval: true
+    A7_5_requires_separate_user_approval: true
+    live_action_requires_separate_user_approval: true
+    new_observability_product_requires_separate_user_approval: true

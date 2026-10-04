@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 NOT STARTED — LIVE GCP NOT AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 APPROVED / IMPLEMENTATION NOT STARTED — LIVE GCP NOT AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -16,7 +16,7 @@ The architecture decision is frozen in
 ADR-008 — Evidence-backed AI quality for Terraformers.
 
 Extension direction is governed by
-`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1, A7-2, and A7-3 are complete. A7-4 has no active Work Package and is not started.
+`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1, A7-2, and A7-3 are complete. A7-4 is explicitly approved in `.agents/work-packages/case-a-a7-4-durable-runtime-quality-observability-v1.yml`; implementation has not started.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
 
@@ -439,6 +439,19 @@ Required:
 - no intentionally unsafe live prompt requirement.
 
 ### A7-4 — Durable runtime quality observability
+
+A7-4 was explicitly approved on 2026-10-04. Execution is isolated in
+`.agents/work-packages/case-a-a7-4-durable-runtime-quality-observability-v1.yml`.
+
+The selected decision is **persist bounded terminal quality snapshots instead of recomputing on API
+read**. A7-1 `evidence-quality-v1` remains the quality contract. The snapshot is computed while
+facts, selected references, and generated output are still available, then stored atomically with
+the owned terminal AnalysisJob transition. Existing MariaDB, Micrometer, and MDC correlation are
+reused; no new observability product is introduced.
+
+A7-4 does not deploy or ingest v4, change prompts/models/retrieval, alter retry/lease/fencing, or
+perform live provider/GCP actions. Official-knowledge availability must come from reproducible
+A7-0 pinned coverage metadata, never from the current retrieval hits.
 
 Required:
 

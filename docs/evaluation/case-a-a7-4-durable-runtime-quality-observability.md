@@ -1,0 +1,127 @@
+# Case A A7-4 — durable runtime quality observability
+
+Status: **APPROVED — IMPLEMENTATION NOT STARTED — LIVE VALIDATION NOT AUTHORIZED**
+
+## Decision
+
+A7-4 will persist the bounded quality interpretation at the terminal AnalysisJob transition.
+
+It will not recompute historical quality on API read. The current job record survives backend
+restart, while the facts/reference context used by `EvidenceQualityAssessment` does not. A later
+recomputation could therefore reinterpret an old job under a changed corpus or rule set.
+
+The selected path reuses:
+
+- `EvidenceQualityAssessment` / `evidence-quality-v1`;
+- the existing durable `analysis_jobs` boundary and Case B ownership fencing;
+- `AnalysisJobResponse`;
+- Micrometer in `AnalysisObservability`;
+- `analysisJobId` MDC correlation.
+
+No second quality oracle or observability product is selected.
+
+## Current measured gap
+
+Current main after A7-3 closure:
+
+`1038263076dc267d090e12503fc8670138c6b48c`
+
+The current repository has:
+
+- versioned in-memory A7-1 quality representation;
+- explicit A7-3 provider partial-failure mechanics;
+- durable job lifecycle/result storage;
+- API read-back for result/failure fields;
+- low-cardinality operational metrics and job-correlated logs.
+
+It does **not** yet have:
+
+- persisted technical/knowledge/quality/project-decision/runtime-boundary state;
+- persisted bounded quality reasons/version;
+- quality state in the AnalysisJob API;
+- terminal quality metrics/log event;
+- restart-proof quality read-back.
+
+## Persistence boundary
+
+A7-4 uses one additive Flyway migration. Existing rows are not backfilled with guessed quality.
+
+A terminal snapshot contains only bounded version/enum/reason values:
+
+- contract version;
+- technical status;
+- knowledge status;
+- quality status;
+- project-decision status;
+- runtime quality boundary;
+- deterministic bounded reason names.
+
+Raw prompts, images, provider payloads, generated HCL, reference content, or arbitrary exception /
+Terraform diagnostic text are not quality persistence.
+
+Success snapshot fields are committed with the owned SUCCEEDED transition. Final failure snapshot
+fields are committed with the existing fenced FAILED transition. Retry rescheduling is not a
+terminal outcome and must not persist a terminal quality snapshot.
+
+## Runtime computation boundary
+
+Successful provider paths must compute A7-1 quality while the original facts, selected
+`ReferenceDocument` objects, and generated Terraform are still in memory.
+
+Project-decision applicability remains UNKNOWN unless a repository-owned deterministic rule says
+otherwise. A successful job may therefore legitimately have quality UNKNOWN. A deterministic
+evidence gap may make a technically successful job DEGRADED. A7-4 must not force
+EVIDENCE_BACKED to make a positive path look better.
+
+A provider-neutral INPUT_REJECTED outcome is treated as a valid technical classification result:
+technical PASS with quality/knowledge/project-decision NOT_APPLICABLE and no Terraform output.
+
+## Official-knowledge boundary
+
+A7-0 measured AWS Provider 5.100.0 as:
+
+- schema resources: 1,526;
+- schema resources with official documentation: 1,514;
+- schema resources without official documentation: 12.
+
+A7-4 may package compact read-only coverage metadata derived from that exact pinned source/schema
+measurement. It must not infer official-knowledge availability from selected retrieval hits.
+
+The preferred representation stores the 12 explicit official-knowledge gaps plus provenance,
+rather than introducing a hand-maintained 1,514-resource production allowlist.
+
+If the exact gap set cannot be reproduced or verified from the A7-0 pinned evidence, implementation
+must stop instead of fabricating the list.
+
+This metadata does not mean v4 is served. A7-4 does not perform embedding, OpenSearch ingestion, or
+live corpus deployment.
+
+## API and observability boundary
+
+`GET /api/analysis/jobs/{id}` gains one nullable additive quality object. Legacy rows without a
+snapshot return no quality object rather than guessed state.
+
+Micrometer records only finite status/reason labels. Job/project/resource/reference identifiers do
+not become metric labels.
+
+The terminal quality log uses the existing `analysisJobId` MDC and bounded enum/version values
+only.
+
+## Validation
+
+Repository-only validation is sufficient for A7-4 implementation:
+
+- focused quality persistence tests;
+- provider quality attachment tests;
+- ownership/stale-generation/retry regression;
+- API compatibility;
+- fresh repository-context/restart read-back;
+- Micrometer cardinality checks;
+- full Backend Local Verification including MariaDB Flyway/Hibernate/repository validation.
+
+No live Vertex, Bedrock, OpenSearch, GCP, or cost-bearing action is authorized.
+
+## Next gate
+
+A7-5 does not start automatically. It requires separate user approval after A7-4 implementation,
+independent acceptance, merge, and closure.

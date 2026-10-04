@@ -210,6 +210,8 @@ public class AnalysisObservability {
             };
         }
         if (exception instanceof AnalysisProviderTimeoutException) return "timeout";
+        if (ProviderFailureClassifier.isRateLimited(exception)) return "provider_rate_limited";
+        if (ProviderFailureClassifier.isTimeout(exception)) return "timeout";
         if (exception instanceof RejectedExecutionException) return "executor_rejected";
         String simple = exception == null ? "" : exception.getClass().getSimpleName().toLowerCase(Locale.ROOT);
         if (simple.contains("timeout")) return "timeout";

@@ -1,6 +1,23 @@
 # Case A A7-3 — provider partial failures
 
-Status: **IMPLEMENTED_AWAITING_REVIEW**
+Status: **COMPLETE — ACCEPTANCE PASS — A7-4 NOT STARTED**
+
+## Closure evidence
+
+- implementation PR: #208
+- implementation merge SHA: `fdb0e8a3f7e6656c46dd24e173894460ec09fd7f`
+- corrective PR: #209
+- corrective merge SHA: `94869668ef177370701adcaae7e5c5473b3076ac`
+- Backend Local Verification: run `37198612965` — success
+  - Maven clean tests passed
+  - MariaDB Flyway/Hibernate validation passed
+  - canonical repository smoke queries passed
+- Terraform Static Verification: run `37198612964` — success
+- independent acceptance: **PASS**
+- no live Vertex/Bedrock call
+- no live GCP action
+- no DB migration or API persistence added
+- A7-4 is not started
 
 ## Outcome and taxonomy
 

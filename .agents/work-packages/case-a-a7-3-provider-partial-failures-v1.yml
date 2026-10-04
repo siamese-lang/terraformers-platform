@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-3-provider-partial-failures-v1
-  status: IMPLEMENTED_AWAITING_REVIEW
+  status: COMPLETE
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: c9adae19c5d8cb6c4d888c3b5ed0bf8cadae647d
 
@@ -261,13 +261,31 @@ work_package:
     - acceptance_criteria_would_need_to_change
 
   implementation_state:
-    status: IMPLEMENTED_AWAITING_REVIEW
+    status: COMPLETE
     evidence_document: docs/evaluation/case-a-a7-3-provider-partial-failures.md
     live_validation_performed: false
     timeout_retry_semantics_changed: false
     rate_limit_retry_added: false
     database_or_api_persistence_added: false
     A7_4_started: false
+
+  implementation_evidence:
+    implementation_pr: 208
+    implementation_merge_sha: fdb0e8a3f7e6656c46dd24e173894460ec09fd7f
+    corrective_pr: 209
+    corrective_merge_sha: 94869668ef177370701adcaae7e5c5473b3076ac
+    backend_local_verification:
+      run_id: 37198612965
+      conclusion: success
+      maven_clean_tests: success
+      mariadb_schema_and_repository_validation: success
+    terraform_static_verification:
+      run_id: 37198612964
+      conclusion: success
+    independent_acceptance: PASS
+    live_provider_validation_performed: false
+    live_GCP_validation_performed: false
+    A7_4_status: NOT_STARTED
 
   completion:
     merge_requires_user_approval: true

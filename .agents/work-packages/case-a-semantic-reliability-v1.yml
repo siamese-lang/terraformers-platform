@@ -1,6 +1,6 @@
 work_package:
   id: case-a-semantic-reliability-v1
-  status: A7_4_COMPLETE_HANDOFF_TO_A7_5_WORK_PACKAGE
+  status: A7_5_IMPLEMENTED_AWAITING_REVIEW
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: dd34d1cec34d31783ca2d672c65311ce82fd2666
 
@@ -20,7 +20,7 @@ work_package:
     closure_evidence: docs/evaluation/case-a-a7-4-durable-runtime-quality-observability.md
     completed_phase_merge_sha: ab1b1f410b6aabf674af51d6161a2efd0f6df6a4
     next_phase: A7_5
-    next_phase_status: APPROVED_IMPLEMENTATION_NOT_STARTED
+    next_phase_status: IMPLEMENTED_AWAITING_REVIEW
     next_phase_requires_explicit_user_approval: false
     measured_provider_schema_resource_count: 1526
     measured_official_documented_schema_resource_count: 1514

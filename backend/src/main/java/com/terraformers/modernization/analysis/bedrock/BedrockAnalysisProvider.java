@@ -11,12 +11,17 @@ import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisResult;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
+import com.terraformers.modernization.analysis.EvidenceQualityAssessment;
+import com.terraformers.modernization.analysis.EvidenceQualityAssessor;
+import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
 import com.terraformers.modernization.reference.ArchitectureFactsExtractor;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.BedrockArchitectureFactsExtractor;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceQuery;
 import com.terraformers.modernization.reference.ReferenceRetriever;
+import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
+import com.terraformers.modernization.reference.OfficialKnowledgeCoverageCatalog;
 import com.terraformers.modernization.reference.RetrievalMode;
 import com.terraformers.modernization.reference.RetrievalQueryTextBuilder;
 import com.terraformers.modernization.storage.ObjectContent;
@@ -44,6 +49,9 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
     private final RetrievalQueryTextBuilder queryTextBuilder;
     private final AnalysisObservability observability;
     private final AnalysisGenerationStage generationStage;
+    private final EvidenceQualityAssessor qualityAssessor;
+    private final AwsProviderSchemaCatalog schemaCatalog;
+    private final OfficialKnowledgeCoverageCatalog knowledgeCoverage;
 
     @Autowired
     public BedrockAnalysisProvider(
@@ -54,7 +62,10 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
             BedrockArchitectureFactsExtractor factsExtractor,
             RetrievalQueryTextBuilder queryTextBuilder,
             AnalysisObservability observability,
-            BedrockGenerationStage generationStage
+            BedrockGenerationStage generationStage,
+            EvidenceQualityAssessor qualityAssessor,
+            AwsProviderSchemaCatalog schemaCatalog,
+            OfficialKnowledgeCoverageCatalog knowledgeCoverage
     ) {
         this.objectReader = objectReader;
         this.referenceRetriever = referenceRetriever;
@@ -64,6 +75,17 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
         this.queryTextBuilder = queryTextBuilder;
         this.observability = observability;
         this.generationStage = generationStage;
+        this.qualityAssessor = qualityAssessor;
+        this.schemaCatalog = schemaCatalog;
+        this.knowledgeCoverage = knowledgeCoverage;
+    }
+
+    public BedrockAnalysisProvider(ObjectReader objectReader, ReferenceRetriever referenceRetriever,
+            AnalysisRuntimeProperties properties, BedrockRuntimeProperties bedrockProperties,
+            BedrockArchitectureFactsExtractor factsExtractor, RetrievalQueryTextBuilder queryTextBuilder,
+            AnalysisObservability observability, BedrockGenerationStage generationStage) {
+        this(objectReader, referenceRetriever, properties, bedrockProperties, factsExtractor, queryTextBuilder,
+                observability, generationStage, null, null, null);
     }
 
     public BedrockAnalysisProvider(
@@ -92,7 +114,7 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
                         promptBuilder,
                         responseParser,
                         observability
-                )
+                ), null, null, null
         );
     }
 
@@ -122,7 +144,8 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
                 context.sourceKey()
         ));
 
-        List<ReferenceDocument> references = retrieveReferences(source);
+        RetrievalOutcome retrieval = retrieveReferences(source);
+        List<ReferenceDocument> references = retrieval.references();
         AnalysisGenerationResult generated = generationStage.generate(context, source, references);
         RequiredGroundingPolicy.requireForArchitecture(
                 properties.getRetrievalMode(), generated, references);
@@ -134,7 +157,8 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
                 generated.components(),
                 generated.relationships(),
                 generated.warnings(),
-                references.stream().map(ReferenceDocument::id).toList()
+                references.stream().map(ReferenceDocument::id).toList(),
+                assess(retrieval, generated.terraformCode())
         );
         log.info(
                 "analysis pipeline outcome=success corpusVersion={} providerVersion={} referenceCount={} elapsedMs={}",
@@ -146,19 +170,25 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
         return result;
     }
 
-    private List<ReferenceDocument> retrieveReferences(ObjectContent source) {
+    private RetrievalOutcome retrieveReferences(ObjectContent source) {
         RetrievalMode mode = properties.getRetrievalMode();
         if (mode == null) {
             throw new IllegalStateException("terraformers.analysis.retrieval-mode must be set");
         }
         if (mode == RetrievalMode.DISABLED) {
-            return List.of();
+            return new RetrievalOutcome(new ArchitectureRetrievalFacts("", List.of(), List.of(), List.of()), List.of());
         }
         long started = System.nanoTime();
+        ArchitectureRetrievalFacts facts;
         try {
-            long factsStartedAt = System.nanoTime();
-            ArchitectureRetrievalFacts facts = factsExtractor.extract(source);
-            long factsElapsedMs = (System.nanoTime() - factsStartedAt) / 1_000_000;
+            facts = factsExtractor.extract(source);
+        } catch (RuntimeException exception) {
+            logRetrievalFailure(mode, started, exception);
+            if (mode == RetrievalMode.REQUIRED) throw exception;
+            return new RetrievalOutcome(new ArchitectureRetrievalFacts("", List.of(), List.of(), List.of()), List.of());
+        }
+        long factsElapsedMs = (System.nanoTime() - started) / 1_000_000;
+        try {
             long searchStartedAt = System.nanoTime();
             List<ReferenceDocument> references = observability.recordAoss(() -> referenceRetriever.retrieve(
                     new ReferenceQuery(queryTextBuilder.build(facts), properties.getOpensearchMaxEvidence())
@@ -176,23 +206,34 @@ public class BedrockAnalysisProvider implements AnalysisProvider {
                     searchElapsedMs,
                     (System.nanoTime() - started) / 1_000_000
             );
-            return references;
+            return new RetrievalOutcome(facts, references);
         } catch (RuntimeException exception) {
-            log.warn(
-                    "reference retrieval outcome=failure mode={} corpusVersion={} providerVersion={} topK={} errorClass={} elapsedMs={}",
-                    mode,
-                    properties.getCorpusVersion(),
-                    properties.getProviderVersion(),
-                    properties.getOpensearchTopK(),
-                    exception.getClass().getSimpleName(),
-                    (System.nanoTime() - started) / 1_000_000
-            );
+            logRetrievalFailure(mode, started, exception);
             if (mode == RetrievalMode.REQUIRED) {
                 throw exception;
             }
-            return List.of();
+            return new RetrievalOutcome(facts, List.of());
         }
     }
+
+    private void logRetrievalFailure(RetrievalMode mode, long started, RuntimeException exception) {
+        log.warn(
+                "reference retrieval outcome=failure mode={} corpusVersion={} providerVersion={} topK={} errorClass={} elapsedMs={}",
+                mode, properties.getCorpusVersion(), properties.getProviderVersion(), properties.getOpensearchTopK(),
+                exception.getClass().getSimpleName(), (System.nanoTime() - started) / 1_000_000);
+    }
+
+    private EvidenceQualityAssessment assess(RetrievalOutcome retrieval, String terraform) {
+        if (qualityAssessor == null || schemaCatalog == null || knowledgeCoverage == null) return null;
+        List<String> resources = retrieval.facts().resourceTypes();
+        return qualityAssessor.assess(new EvidenceQualityAssessor.Input(
+                EvidenceQualityAssessment.TechnicalStatus.PASS,
+                com.terraformers.modernization.analysis.AnalysisInputClassification.ARCHITECTURE_DIAGRAM,
+                resources, knowledgeCoverage.availableFor(resources, schemaCatalog), retrieval.references(),
+                terraform, EvidenceQualityAssessor.ProjectDecisionApplicability.UNKNOWN, List.of()));
+    }
+
+    private record RetrievalOutcome(ArchitectureRetrievalFacts facts, List<ReferenceDocument> references) {}
 
     private String requireModelId() {
         if (bedrockProperties.getModelId() == null || bedrockProperties.getModelId().isBlank()) {

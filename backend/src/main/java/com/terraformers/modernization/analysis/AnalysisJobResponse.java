@@ -22,6 +22,7 @@ public record AnalysisJobResponse(
         List<String> detectedRelationships,
         List<String> warnings,
         String failureReason,
+        Quality quality,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -44,9 +45,25 @@ public record AnalysisJobResponse(
                 splitLines(entity.getDetectedRelationships()),
                 splitLines(entity.getAnalysisWarnings()),
                 entity.getFailureReason(),
+                Quality.from(entity),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
+    }
+
+    public record Quality(String contractVersion,
+            EvidenceQualityAssessment.TechnicalStatus technicalStatus,
+            EvidenceQualityAssessment.KnowledgeStatus knowledgeStatus,
+            EvidenceQualityAssessment.QualityStatus qualityStatus,
+            EvidenceQualityAssessment.ProjectDecisionStatus projectDecisionStatus,
+            EvidenceQualityAssessment.RuntimeQualityBoundary runtimeQualityBoundary,
+            List<EvidenceQualityAssessment.Reason> reasons) {
+        static Quality from(AnalysisJobEntity entity) {
+            if (entity.getQualityContractVersion() == null) return null;
+            return new Quality(entity.getQualityContractVersion(), entity.getTechnicalStatus(),
+                    entity.getKnowledgeStatus(), entity.getQualityStatus(), entity.getProjectDecisionStatus(),
+                    entity.getRuntimeQualityBoundary(), entity.qualityReasonValues());
+        }
     }
 
     private static List<String> splitLines(String value) {

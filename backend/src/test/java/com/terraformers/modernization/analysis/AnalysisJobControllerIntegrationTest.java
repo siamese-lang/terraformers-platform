@@ -75,7 +75,8 @@ class AnalysisJobControllerIntegrationTest {
                 .andExpect(jsonPath("$.resultFileId").isNumber())
                 .andExpect(jsonPath("$.status").value("SUCCEEDED"))
                 .andExpect(jsonPath("$.resultObjectKey", not(nullValue())))
-                .andExpect(jsonPath("$.resultPreview", not(nullValue())));
+                .andExpect(jsonPath("$.resultPreview", not(nullValue())))
+                .andExpect(jsonPath("$.quality").value(nullValue()));
     }
 
     private JsonNode createOwnedProjectAndSourceFile() throws Exception {

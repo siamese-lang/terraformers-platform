@@ -9,6 +9,8 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -68,6 +70,32 @@ public class AnalysisJobEntity {
 
     @Column(name = "failure_reason", length = 2000)
     private String failureReason;
+
+    @Column(name = "quality_contract_version", length = 64)
+    private String qualityContractVersion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "technical_status", length = 32)
+    private EvidenceQualityAssessment.TechnicalStatus technicalStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "knowledge_status", length = 32)
+    private EvidenceQualityAssessment.KnowledgeStatus knowledgeStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "quality_status", length = 32)
+    private EvidenceQualityAssessment.QualityStatus qualityStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "project_decision_status", length = 32)
+    private EvidenceQualityAssessment.ProjectDecisionStatus projectDecisionStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "runtime_quality_boundary", length = 64)
+    private EvidenceQualityAssessment.RuntimeQualityBoundary runtimeQualityBoundary;
+
+    @Column(name = "quality_reasons", length = 512)
+    private String qualityReasons;
 
     @Column(name = "attempt_count", nullable = false)
     private int attemptCount;
@@ -219,6 +247,32 @@ public class AnalysisJobEntity {
 
     public void setFailureReason(String failureReason) {
         this.failureReason = failureReason;
+    }
+
+    public String getQualityContractVersion() { return qualityContractVersion; }
+    public EvidenceQualityAssessment.TechnicalStatus getTechnicalStatus() { return technicalStatus; }
+    public EvidenceQualityAssessment.KnowledgeStatus getKnowledgeStatus() { return knowledgeStatus; }
+    public EvidenceQualityAssessment.QualityStatus getQualityStatus() { return qualityStatus; }
+    public EvidenceQualityAssessment.ProjectDecisionStatus getProjectDecisionStatus() { return projectDecisionStatus; }
+    public EvidenceQualityAssessment.RuntimeQualityBoundary getRuntimeQualityBoundary() { return runtimeQualityBoundary; }
+    public String getQualityReasons() { return qualityReasons; }
+
+    public void setQualityAssessment(EvidenceQualityAssessment assessment) {
+        if (assessment == null) return;
+        qualityContractVersion = assessment.contractVersion();
+        technicalStatus = assessment.technicalStatus();
+        knowledgeStatus = assessment.knowledgeStatus();
+        qualityStatus = assessment.qualityStatus();
+        projectDecisionStatus = assessment.projectDecisionStatus();
+        runtimeQualityBoundary = assessment.runtimeQualityBoundary();
+        qualityReasons = assessment.reasons().stream().map(Enum::name).sorted()
+                .reduce((left, right) -> left + "," + right).orElse("");
+    }
+
+    public List<EvidenceQualityAssessment.Reason> qualityReasonValues() {
+        if (qualityReasons == null || qualityReasons.isBlank()) return List.of();
+        return Arrays.stream(qualityReasons.split(","))
+                .map(EvidenceQualityAssessment.Reason::valueOf).toList();
     }
 
     public int getAttemptCount() { return attemptCount; }

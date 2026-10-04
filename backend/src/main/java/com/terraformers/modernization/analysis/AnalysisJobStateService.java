@@ -60,13 +60,23 @@ public class AnalysisJobStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean markFailedOwned(String jobId, long generation, Instant now, String failureReason) {
+    public boolean markFailedOwned(String jobId, long generation, Instant now, String failureReason,
+            EvidenceQualityAssessment quality) {
+        String reasons = quality.reasons().stream().map(Enum::name).sorted()
+                .reduce((left, right) -> left + "," + right).orElse("");
         boolean transitioned = repository.markFailedOwned(jobId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED,
-                generation, now, failureReason) == 1;
+                generation, now, failureReason, quality.contractVersion(), quality.technicalStatus(),
+                quality.knowledgeStatus(), quality.qualityStatus(), quality.projectDecisionStatus(),
+                quality.runtimeQualityBoundary(), reasons) == 1;
         if (transitioned) {
             repository.findById(jobId).ifPresent(orchestrator::publishFailedProgress);
         }
         return transitioned;
+    }
+
+    boolean markFailedOwned(String jobId, long generation, Instant now, String failureReason) {
+        return markFailedOwned(jobId, generation, now, failureReason,
+                TerminalQualityAssessmentMapper.failure(new IllegalStateException()));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -105,6 +115,7 @@ public class AnalysisJobStateService {
                     writeResult,
                     orchestrator.registerGeneratedTerraform(entity.getProjectId(), result, writeResult)
             );
+            entity.setQualityAssessment(result.qualityAssessment());
             if (!reference.key().equals(entity.getResultObjectKey())) {
                 throw new IllegalStateException("successful result key does not match durable object intent");
             }

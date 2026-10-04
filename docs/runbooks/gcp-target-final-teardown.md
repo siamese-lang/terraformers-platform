@@ -219,3 +219,116 @@ GCP runtime closure is complete only when:
 At that point the repository retains only source code, GitHub history/evidence and non-billable
 repository configuration; the closed GCP target no longer has persistent project resources that were
 created for this portfolio runtime.
+
+
+## Observed final closure result
+
+The teardown procedure above has now been executed and the GCP target is closed.
+
+### Initial full teardown
+
+Run 37029807484 passed the reviewed 29-delete destroy-plan contract and entered the protected apply
+job.
+
+The apply removed most target resources but Terraform later failed while the MariaDB VM deletion
+and dedicated data-disk detach overlapped. GCE returned a 409 conflicting-operation error.
+
+This was treated as a partial destroy, not as a reason to rerun the original 29-delete contract.
+
+### Reviewed subset recovery
+
+After the partial destroy, the canonical remote Terraform state contained exactly one managed
+resource:
+
+google_compute_disk.mariadb_data[0]
+
+PR #195 added a fail-closed recovery contract that still uses the original reviewed address set but
+permits the exact current subset count.
+
+Recovery run 37032634263 produced:
+
+- operation: teardown
+- changed managed resources: 1
+- address: google_compute_disk.mariadb_data[0]
+- action: delete
+- contract gate: PASS
+- final Terraform managed state: empty
+
+The same run reported the named GKE, MariaDB VM/PD, runtime GCS bucket, Artifact Registry
+repository, MariaDB secrets, and target VPC absent.
+
+### Bootstrap cleanup
+
+After runtime teardown, the independently authenticated bootstrap cleanup removed:
+
+- every version of the Terraform state object;
+- the Terraform state bucket;
+- terraformers-plan;
+- terraformers-apply;
+- terraformers-image-publish;
+- their project IAM bindings;
+- terraformers-github Workload Identity Pool/provider.
+
+Final script result:
+
+gcp_target_bootstrap_cleanup=passed
+
+### Independent residual inventory and CSI orphan
+
+The workflow summary alone was not accepted as final cost closure.
+
+A separate provider inventory was run after bootstrap cleanup.
+
+It showed:
+
+- GKE: no target cluster
+- Compute Engine VM: 0
+- static addresses: 0
+- GCS buckets: 0
+- Artifact Registry repositories: 0
+- Compute Engine disks: one remaining disk
+
+The remaining disk was:
+
+- name: pvc-17c2bb7e-eb1e-4474-9531-41418c77c7df
+- zone: asia-northeast3-a
+- size: 15 GiB
+- type: pd-standard
+- status: READY
+
+Those attributes matched the OpenSearch StatefulSet PVC contract
+(data-terraformers-opensearch-0 / terraformers-pd-standard / 15 GiB) and the dynamically
+provisioned GKE CSI disk naming convention.
+
+This means the earlier teardown summary line reporting the OpenSearch PVC disk absent was not
+sufficient final proof. The state-external CSI disk survived the namespace/runtime teardown.
+
+After confirming the workload owner was gone, the orphan disk was deleted manually.
+
+Final verification:
+
+gcloud compute disks list --project=terraformers-platform
+
+returned:
+
+Listed 0 items.
+
+### Final interpretation
+
+The final GCP cost/resource closure therefore relies on two evidence layers:
+
+1. Terraform and bootstrap ownership closure; and
+2. an independent cloud-provider inventory for controller/CSI-created resources outside Terraform
+   state.
+
+The operational lesson is explicit:
+
+Terraform managed state empty does not imply cloud resource inventory empty.
+
+Kubernetes controllers and CSI provisioners may create billable resources whose lifecycle is not
+represented by the root Terraform state. A final teardown must therefore include an independent
+provider inventory before declaring cost closure.
+
+No additional runtime recreation or teardown-workflow hardening is required for this closed
+portfolio environment. The observed residual and its manual correction are retained as final
+operations evidence.

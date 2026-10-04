@@ -202,8 +202,19 @@ work_package:
     - quality_oracle_change_is_requested
     - acceptance_criteria_would_need_to_change
 
+  next_phase_decision:
+    A7_7_required: true
+    requirement_source: user_explicit_end_to_end_runtime_goal_2026_10_05
+    required_claim: >
+      The improved Terraformers must actually serve the broad v4 RAG corpus and persist/read back
+      evidence-quality-v1 in a representative end-to-end runtime before the extension can close.
+    repository_only_closure_allowed: false
+    live_scope_must_remain_bounded: true
+    teardown_required: true
+
   completion:
     merge_requires_user_approval: true
-    A7_7_requires_separate_user_approval: true
+    A7_7_requires_separate_user_approval: false
+    A7_7_live_execution_is_authorized_in_principle_after_A7_6_merge_and_its_own_bounded_work_package: true
     any_observability_product_adoption_requires_separate_user_approval: true
-    live_action_requires_separate_user_approval: true
+    live_action_outside_the_A7_7_work_package_requires_separate_user_approval: true

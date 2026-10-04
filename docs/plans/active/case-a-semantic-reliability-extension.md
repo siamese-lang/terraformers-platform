@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 APPROVED / ACTIVATION PENDING — LIVE GCP MUTATION NOT YET AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 REPOSITORY IMPLEMENTED / AWAITING REVIEW — LIVE GCP MUTATION NOT YET AUTHORIZED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -16,7 +16,7 @@ The architecture decision is frozen in
 ADR-008 — Evidence-backed AI quality for Terraformers.
 
 Extension direction is governed by
-`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 through A7-6 are complete. A7-7 is explicitly approved under `.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml`; activation must merge before repository preparation begins, and live mutation remains gated by the later exact-value checkpoint.
+`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 through A7-6 are complete. A7-7 repository preparation is implemented under `.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml` on frozen base `13e398599ce69e087e9098b1413cad37c41edfd1` and awaits review/CI; live mutation remains gated by the later exact-value checkpoint.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
 
@@ -527,10 +527,11 @@ Any dependency/runtime adoption requires a separate user decision.
 
 ### A7-7 — Representative GCP live proof
 
-**Status: APPROVED / ACTIVATION PENDING.**
+**Status: REPOSITORY IMPLEMENTED / AWAITING REVIEW — NO LIVE ACTION YET.**
 
 Repository-only evidence is explicitly insufficient for final closure. A7-7 is isolated in
-`.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml`.
+`.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml` and its repository preparation is
+implemented on frozen base `13e398599ce69e087e9098b1413cad37c41edfd1`.
 
 The improved Terraformers must demonstrate that the broad v4 corpus is actually built, ingested, and
 served by live retrieval and that the A7-4 `evidence-quality-v1` snapshot is persisted and readable

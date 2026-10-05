@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 COMPLETE / A7-6 COMPLETE / A7-7 REPOSITORY IMPLEMENTED — AWAITING REVIEW / NO LIVE ACTION YET**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 COMPLETE / A7-6 COMPLETE / A7-7 REPOSITORY IMPLEMENTED — BOOTSTRAP RESTORE GATED / NO LIVE ACTION YET**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-7 repository preparation is merged. The first GitHub read-only preflight (run 37278756126) proved the final Case C bootstrap was also deleted: OIDC failed with invalid_target before any GCP query. Next, use independently authenticated Cloud Shell for a read-only bootstrap/runtime inventory, then present one exact-value live checkpoint covering bootstrap recreation, runtime recreation, v4 proof, runtime teardown, and final bootstrap cleanup. No live mutation before that checkpoint.**
+- Current single task: **A7-7 repository preparation is merged and the independent Cloud Shell inventory is complete. Runtime/state bucket/three delivery service accounts are absent, while `terraformers-github` is `DELETED` soft-delete until `2026-11-01T16:21:59.782737490Z`; provider state is unresolved while the parent is deleted. The plan is corrected to require a bootstrap-restore checkpoint first (undelete existing pool, verify exact restored provider, recreate exact bucket/SAs only), then the existing read-only GitHub/Terraform preflight, then a separate runtime-live checkpoint. No GCP mutation before the bootstrap-restore checkpoint.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 REPOSITORY IMPLEMENTED / AWAITING REVIEW**
+- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 REPOSITORY IMPLEMENTED / BOOTSTRAP RESTORE GATED**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -601,10 +601,12 @@ target runtime ConfigMap to `terraformers-reference-v4`, and adds one bounded ex
 operation for positive/negative authenticated persisted-quality proof.
 
 No live GCP, Vertex embedding/generation, OpenSearch ingestion, backend image publication, deployment,
-or teardown action has been performed in A7-7 yet. Repository review/CI must pass and merge first.
-Then a read-only preflight and one explicit exact-value live checkpoint will freeze final main SHA,
-runtime plan/shape, immutable image source, v4 ingestion contract, and teardown boundary before any
-cost-bearing mutation. Do not adopt OpenTelemetry/Langfuse/another observability product or perform
+or teardown action has been performed in A7-7 yet. The independent Cloud Shell inventory now proves
+that the WIF pool is retained in DELETED soft-delete state rather than permanently absent. The
+corrected live sequence is: bootstrap-restore checkpoint → undelete/verify the existing WIF and
+recreate only the exact reviewed state bucket/service accounts → existing read-only OIDC/quota/
+Terraform preflight → runtime-live checkpoint → bounded A7-7 runtime/proof/cleanup. Do not create a
+replacement WIF provider, adopt OpenTelemetry/Langfuse/another observability product, or perform
 actions outside the bounded A7-7 contract.
 
 ## Do not revisit

@@ -1,6 +1,37 @@
 # Case A A7-7 — broad v4 end-to-end live proof
 
-Status: **REPOSITORY IMPLEMENTED — BOOTSTRAP RESTORE GATED — NO LIVE ACTION YET**
+Status: **LIVE EVIDENCE RETAINED — EMBEDDING MODEL ASSUMPTION INVALIDATED — BOUNDED MODEL CORRECTION APPROVED / REPOSITORY IMPLEMENTATION**
+
+## Live model-correction evidence
+
+A7-7 live execution invalidated the original v4 embedding-model assumption without invalidating the
+broad-corpus design.
+
+- Ingestion run `37317012191` reached the real v4 embedding path but only about 1,095 of 5,395
+  documents were present after more than 100 minutes before the run was cancelled as unable to
+  finish inside the 180-minute workflow bound.
+- Bounded eight-worker ingestion was then merged in PR #231.
+- Run `37332461233` reproduced the exact 5,395-document corpus build and then failed in the real
+  embedding step with `RESOURCE_EXHAUSTED` on
+  `global_embed_content_requests_per_minute_per_base_model`.
+- The project's effective quota is 5 requests/minute for the `gemini-embedding` base model used by
+  `gemini-embedding-001`, versus 300,000 requests/minute for the
+  `gemini-embedding-2` base model. At 5 requests/minute, 5,395 document embeddings require about
+  18 hours before network latency, so the original model cannot satisfy the reviewed 180-minute
+  ingestion boundary.
+- The user explicitly approved a bounded architecture correction to
+  `gemini-embedding-2` with 1536-dimensional vectors. Historical v3 remains immutable on
+  `gemini-embedding-001 / 1024`.
+- Embedding 2 uses asymmetric inline retrieval semantics:
+  documents are `title: {title} | text: {content}`; backend queries are
+  `task: search result | query: {content}`. The v4 index is rebuilt from scratch because the old
+  and new model spaces are incompatible.
+- Because backend query embedding semantics and the GCP target profile change, the existing backend
+  image is no longer eligible for A7-7 reuse. A new immutable backend image must be published and
+  deployed before corrected v4 ingestion and live proof.
+
+This correction changes neither provider authority, broad-corpus counts, OpenSearch topology,
+quality taxonomy, nor positive/negative acceptance semantics.
 
 ## Required claim
 

@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-7-broad-v4-live-proof-v1
-  status: IMPLEMENTED_AWAITING_REVIEW
+  status: REPOSITORY_IMPLEMENTED_BOOTSTRAP_RESTORE_GATED
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: 13e398599ce69e087e9098b1413cad37c41edfd1
 
@@ -26,10 +26,13 @@ work_package:
       The improved Terraformers must actually operate end-to-end with broad v4 RAG and persisted
       quality. Repository-only evidence is insufficient for final closure.
     interpretation: >
-      A7-7 is required. The user authorizes preparation of the bounded live-proof path. Actual GCP
-      mutation/cost/destructive workflow dispatch occurs only after the repository implementation is
-      merged, read-only preflight identifies the exact runtime/image/state contract, and one explicit
-      live-execution checkpoint presents those exact values.
+      A7-7 is required. Repository preparation is already merged, but live GCP mutation remains
+      gated. The independently authenticated inventory proved that the delivery bootstrap is not a
+      simple ABSENT baseline: the state bucket and three delivery service accounts are absent while
+      terraformers-github is in Google Cloud DELETED soft-delete state. Restore only that reviewed
+      bootstrap after a bootstrap-specific checkpoint. Only after restored GitHub OIDC makes the
+      existing read-only preflight possible may a second runtime-live checkpoint freeze the exact
+      Terraform plan/image/runtime values.
 
   goal: >
     Prove in the existing Case C representative GCP topology that the improved Terraformers actually
@@ -260,49 +263,116 @@ work_package:
 
   actual_pre_A7_7_baseline:
     source: >
-      Case C final teardown Stage 2 intentionally removed the Terraform state bucket,
-      terraformers-plan / terraformers-apply / terraformers-image-publish service accounts, and the
-      terraformers-github Workload Identity Pool/provider after runtime residual verification.
-      GitHub environments and non-secret environment variables remained.
+      Case C final teardown Stage 2 removed the Terraform state bucket and the
+      terraformers-plan / terraformers-apply / terraformers-image-publish service accounts, and
+      issued deletion of the terraformers-github Workload Identity Pool after runtime residual
+      verification. Google Cloud retains a deleted Workload Identity Pool in recoverable
+      soft-delete state for its deletion-retention window, so deletion must not be represented as
+      immediate permanent absence.
+    observed_on: "2026-10-05"
     runtime_resources: ABSENT
     terraform_state_bucket: ABSENT
-    WIF_pool_and_provider: ABSENT
+    WIF_pool:
+      name: projects/21647422237/locations/global/workloadIdentityPools/terraformers-github
+      state: DELETED
+      expire_time: "2026-11-01T16:21:59.782737490Z"
+      recovery_action: UNDELETE_EXISTING_POOL
+      create_same_name_while_deleted: FORBIDDEN
+    WIF_provider:
+      name: projects/21647422237/locations/global/workloadIdentityPools/terraformers-github/providers/terraformers-main
+      observed_state: UNRESOLVED_WHILE_PARENT_POOL_DELETED
+      read_only_result: >-
+        gcloud providers list --show-deleted returned an empty list and NOT_FOUND because the parent
+        pool is deleted; the direct IAM REST providers listing returned the same parent NOT_FOUND.
+      recovery_rule: >-
+        Undelete the existing pool first, then verify that terraformers-main is restored and exactly
+        matches the reviewed issuer, attribute mapping and attribute condition. Do not create or
+        update a replacement provider as a fallback. If the provider is not restored exactly, STOP.
     plan_service_account: ABSENT
     apply_service_account: ABSENT
     image_publish_service_account: ABSENT
     enabled_Google_APIs: MAY_REMAIN
     GitHub_environments_and_variables: RETAINED_REPOSITORY_CONFIGURATION
+    bootstrap_restore_permissions:
+      iam_workloadIdentityPools_undelete: GRANTED
+      iam_workloadIdentityPoolProviders_undelete: GRANTED
+      iam_serviceAccounts_create: GRANTED
+      iam_serviceAccounts_getIamPolicy: GRANTED
+      iam_serviceAccounts_setIamPolicy: GRANTED
+      resourcemanager_projects_setIamPolicy: GRANTED
+      serviceusage_services_enable: GRANTED
+      storage_buckets_create: GRANTED
     first_A7_7_preflight_attempt:
       run_id: 37278756126
       conclusion: failure_before_GCP_resource_query
-      failure: >
-        google-github-actions/auth returned invalid_target for the deleted
-        terraformers-github/providers/terraformers-main provider.
-      interpretation: >
-        This is expected evidence of the true post-teardown bootstrap baseline, not a quota,
-        Terraform plan, or runtime failure.
+      failure: >-
+        google-github-actions/auth returned invalid_target for
+        terraformers-github/providers/terraformers-main.
+      interpretation: >-
+        This is bootstrap-lifecycle evidence, not a quota, Terraform plan, or target-runtime
+        failure. The later independent inventory resolved the pool itself as DELETED soft-delete.
+
+  bootstrap_restore_contract:
+    scope: EXISTING_REVIEWED_DELIVERY_BOOTSTRAP_ONLY
+    WIF_pool:
+      action: UNDELETE_EXISTING_POOL
+      name: terraformers-github
+      do_not_create_duplicate: true
+    WIF_provider:
+      action: VERIFY_PROVIDER_AFTER_POOL_UNDELETE
+      name: terraformers-main
+      expected_issuer_uri: https://token.actions.githubusercontent.com
+      expected_attribute_mapping:
+        google.subject: assertion.sub
+        attribute.repository_owner_id: assertion.repository_owner_id
+        attribute.repository_id: assertion.repository_id
+        attribute.ref: assertion.ref
+      expected_attribute_condition: >-
+        assertion.repository_owner_id=='174786754' &&
+        assertion.repository_id=='1374031315' &&
+        assertion.ref=='refs/heads/main'
+      mismatch_action: STOP
+      create_or_update_as_fallback: FORBIDDEN
+    terraform_state_bucket:
+      action: RECREATE_EXACT_REVIEWED_BUCKET
+      name: terraformers-platform-tfstate-21647422237
+      location: asia-northeast3
+      uniform_bucket_level_access: REQUIRED
+      public_access_prevention: REQUIRED
+      object_versioning: REQUIRED
+    service_accounts:
+      action: RECREATE_SAME_EMAILS_AND_REAPPLY_REVIEWED_BINDINGS
+      identities:
+        - terraformers-plan@terraformers-platform.iam.gserviceaccount.com
+        - terraformers-apply@terraformers-platform.iam.gserviceaccount.com
+        - terraformers-image-publish@terraformers-platform.iam.gserviceaccount.com
+      note: >-
+        Recreated service accounts receive new underlying identities; do not assume deleted-account
+        IAM state is inherited. Reapply only the repository-reviewed WIF/project/bucket bindings.
+    runtime_resources_created_in_this_step: false
 
   live_execution_sequence:
     - id: BOOTSTRAP_READ_ONLY_INVENTORY
+      result: COMPLETE
       action: >
-        From independently authenticated Cloud Shell, verify target runtime resources, canonical
-        state bucket, terraformers-github WIF pool/provider, and plan/apply/image-publish service
-        accounts are absent. Verify the active project/project number and that required bootstrap
-        create/IAM permissions remain available. Do not mutate GCP in this step.
+        Independently authenticated Cloud Shell verified the target runtime and state bucket absent,
+        all three delivery service accounts absent, and terraformers-github in DELETED soft-delete
+        state through 2026-11-01T16:21:59.782737490Z. Provider lookup is unresolved while the parent
+        pool is deleted. Required undelete/create/IAM permissions are granted. No mutation occurred.
     - id: BOOTSTRAP_RESTORE
       action: >
-        After the explicit live checkpoint, recreate the previously reviewed delivery bootstrap only:
-        state bucket terraformers-platform-tfstate-21647422237 with UBLA/versioning/public-access
-        prevention, terraformers-github/terraformers-main OIDC provider restricted to the immutable
-        repository owner/repository IDs and refs/heads/main, terraformers-plan, terraformers-apply,
-        and terraformers-image-publish identities plus their previously reviewed least-privilege
-        bindings. Do not create target runtime resources in this step.
+        After the bootstrap-restore checkpoint, undelete the existing terraformers-github pool;
+        verify the restored terraformers-main provider exactly matches the reviewed issuer, immutable
+        repository-ID mapping and refs/heads/main condition; recreate the exact state bucket and the
+        three reviewed delivery service accounts with their existing reviewed bindings. Do not create
+        or update a replacement WIF provider, and do not create target runtime resources in this step.
     - id: PRECHECK
       action: >
-        With restored GitHub OIDC/bootstrap, run the existing read-only full-shape quota/cost
-        preflight and the protected foundation preflight. Require absent target runtime, empty
-        canonical runtime state, protected state bucket, and the reviewed exact 12-create foundation
-        plan with no update/delete/replacement/additional managed resource.
+        With the reviewed bootstrap restored, run the existing GitHub OIDC identity check, read-only
+        full-shape quota/cost preflight, and protected foundation preflight. Require absent target
+        runtime, empty canonical runtime state, protected state bucket, and the reviewed exact
+        12-create foundation plan with no update/delete/replacement/additional managed resource.
+        Present these exact results at the separate runtime-live checkpoint before FOUNDATION.
     - id: FOUNDATION
       action: >
         Recreate only the previously selected Case C GCP foundation and delivery/runtime dependencies
@@ -342,19 +412,42 @@ work_package:
         remain because they were intentionally retained by the prior final teardown.
 
   live_checkpoint:
-    required_before_first_GCP_mutation: true
-    single_checkpoint_may_authorize_whole_bounded_sequence: true
-    checkpoint_must_present:
-      - exact_final_main_SHA
-      - exact_independent_bootstrap_inventory_result
-      - exact_bootstrap_restore_contract
-      - exact_read_only_preflight_result
-      - exact_Terraform_plan_contract_for_recreation
-      - expected_runtime_shape_and_region
-      - exact_backend_image_source_SHA_strategy
-      - broad_v4_embedding_volume_approx_2654504_input_tokens
-      - expected_ingestion_document_count_5395
-      - teardown_strategy_and_expected_state_count_rule
+    model: TWO_STAGE_TO_REMOVE_BOOTSTRAP_PREFLIGHT_CYCLE
+    bootstrap_restore_checkpoint:
+      required_before_first_GCP_mutation: true
+      authorizes_only:
+        - undelete_existing_terraformers_github_pool
+        - verify_restored_terraformers_main_provider
+        - recreate_exact_reviewed_state_bucket
+        - recreate_three_reviewed_delivery_service_accounts_and_bindings
+      must_present:
+        - exact_main_SHA
+        - independent_read_only_inventory
+        - terraformers_github_DELETED_state_and_expire_time
+        - provider_unresolved_due_to_deleted_parent
+        - exact_bootstrap_restore_contract
+        - required_undelete_create_IAM_permissions
+      explicitly_does_not_authorize:
+        - target_runtime_foundation
+        - backend_image_publication
+        - Vertex_embedding_or_generation
+        - OpenSearch_ingestion
+        - A7_7_positive_or_negative_correctness_requests
+    runtime_live_checkpoint:
+      required_after_bootstrap_restore_and_read_only_preflight: true
+      required_before_target_runtime_or_cost_bearing_mutation: true
+      must_present:
+        - exact_current_main_SHA
+        - restored_bootstrap_verification
+        - exact_read_only_quota_cost_preflight_result
+        - exact_Terraform_plan_contract_for_recreation
+        - reviewed_12_create_foundation_plan_with_zero_update_delete_replace
+        - expected_runtime_shape_and_region
+        - exact_backend_image_source_SHA_strategy
+        - broad_v4_embedding_volume_approx_2654504_input_tokens
+        - expected_ingestion_document_count_5395
+        - runtime_teardown_and_final_bootstrap_cleanup_strategy
+      may_authorize_remaining_bounded_A7_7_sequence: true
     actions_outside_work_package_require_new_approval: true
 
   repository_acceptance_before_live:
@@ -387,7 +480,8 @@ work_package:
     - all_recreated_target_runtime_resources_are_torn_down
     - Terraform_state_bucket_is_absent_after_final_cleanup
     - plan_apply_image_publish_service_accounts_are_absent_after_final_cleanup
-    - terraformers_github_WIF_pool_provider_is_absent_after_final_cleanup
+    - terraformers_github_WIF_pool_is_DELETED_soft_delete_or_later_permanently_absent_after_final_cleanup
+    - terraformers_main_provider_is_not_ACTIVE_after_final_cleanup
     - final_GCP_baseline_matches_pre_A7_7_final_teardown
     - A7_8_is_not_started
 
@@ -424,6 +518,14 @@ work_package:
     - backend_image_publication
     - runtime_deployment
     - teardown
+
+  prohibited_actions_after_bootstrap_restore_until_runtime_live_checkpoint:
+    - target_runtime_foundation_or_dependency_mutation
+    - Vertex_embedding_or_generation_call
+    - OpenSearch_live_ingestion
+    - backend_image_publication
+    - runtime_deployment
+    - A7_7_positive_or_negative_correctness_request
 
   prohibited_actions:
     - start_A7_8
@@ -477,6 +579,8 @@ work_package:
     - quality_contract_change_is_required
     - backend_domain_code_change_is_required
     - unexpected_Terraform_plan_action_or_resource_address_appears
+    - restored_WIF_provider_is_missing_or_differs_from_reviewed_contract
+    - duplicate_or_replacement_WIF_pool_provider_creation_would_be_required
     - live_preflight_shows_insufficient_quota_or_unknown_cost_boundary
     - positive_or_negative_control_reaches_unexpected_terminal_semantics
     - teardown_plan_contains_unknown_create_update_replace_action

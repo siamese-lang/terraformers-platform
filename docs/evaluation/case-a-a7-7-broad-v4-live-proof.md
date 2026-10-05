@@ -1,6 +1,6 @@
 # Case A A7-7 — broad v4 end-to-end live proof
 
-Status: **REPOSITORY IMPLEMENTED — AWAITING REVIEW/CI — NO LIVE ACTION YET**
+Status: **REPOSITORY IMPLEMENTED — BOOTSTRAP RESTORE GATED — NO LIVE ACTION YET**
 
 ## Required claim
 
@@ -168,38 +168,63 @@ The acceptance target is return to the pre-A7-7 baseline:
 - no runtime Secret Manager secrets;
 - no target VPC.
 
-The actual pre-A7-7 baseline has **no bootstrap control-plane resources**. Case C final teardown
-Stage 2 intentionally deleted:
+The independently authenticated 2026-10-05 inventory refined the pre-A7-7 bootstrap baseline:
 
-- `terraformers-platform-tfstate-21647422237` including all object versions;
-- `terraformers-plan`;
-- `terraformers-apply`;
-- `terraformers-image-publish`;
-- the `terraformers-github` Workload Identity Pool and its `terraformers-main` provider.
+- `terraformers-platform-tfstate-21647422237`: absent;
+- `terraformers-plan`: absent;
+- `terraformers-apply`: absent;
+- `terraformers-image-publish`: absent;
+- `terraformers-github`: `DELETED` soft-delete, expiring
+  `2026-11-01T16:21:59.782737490Z`;
+- `terraformers-main`: not directly classifiable while the parent pool is deleted. Both the
+  provider-list command with `--show-deleted` and the direct IAM REST listing returned parent
+  `NOT_FOUND`.
 
-GitHub environments/non-secret variables and enabled shared APIs were intentionally retained.
+The operator also confirmed the required pool/provider undelete permissions plus the existing
+service-account/IAM/state-bucket recreation permissions. No mutation occurred during this inventory.
 
-Therefore A7-7 must recreate that reviewed delivery bootstrap before GitHub OIDC preflight can run,
-and must delete it again after the live proof. Final acceptance requires returning to the same fully
-closed baseline, not leaving WIF/service accounts/state storage behind.
+Therefore A7-7 must not create another `terraformers-github` pool or replacement provider. The
+bootstrap restore is:
+
+1. undelete the existing `terraformers-github` pool;
+2. verify the restored `terraformers-main` provider is ACTIVE and exactly matches the reviewed
+   GitHub issuer, immutable owner/repository-ID attribute mapping and `refs/heads/main` condition;
+3. STOP if that provider is not restored exactly; do not create/update a fallback provider;
+4. recreate the exact reviewed state bucket with UBLA, public-access prevention and versioning;
+5. recreate the three reviewed delivery service-account emails and reapply only their reviewed
+   WIF/project/bucket bindings.
+
+Recreated service accounts are treated as new underlying identities; deleted-account IAM state is
+not assumed to carry forward.
 
 ## Before live execution
 
-A7-7 repository preparation must first merge and pass CI.
+A7-7 repository preparation is already merged. The first GitHub read-only preflight attempt, run
+`37278756126`, failed in `google-github-actions/auth@v3` with `invalid_target` before any GCP
+resource query. The later Cloud Shell inventory shows why: the WIF pool is still retained in
+soft-delete state while the state bucket and delivery service accounts are absent.
 
-The first GitHub read-only preflight attempt, run `37278756126`, failed in
-`google-github-actions/auth@v3` with `invalid_target` before any GCP resource query. This matches
-the deliberate final-teardown baseline: the configured
-`terraformers-github/providers/terraformers-main` provider no longer exists.
+The previous plan incorrectly required one checkpoint before *any* mutation while also requiring
+that checkpoint to contain the exact GitHub/Terraform preflight result. Those conditions form a
+cycle because that preflight cannot authenticate until the reviewed bootstrap is restored.
 
-Because GitHub OIDC itself is absent, the next read-only evidence must come from an independently
-authenticated Cloud Shell administrator. Confirm that runtime resources, state bucket, WIF
-pool/provider, and plan/apply/image-publish service accounts are absent and that the exact historical
-bootstrap can be recreated.
+The corrected bounded sequence is:
 
-Then present one explicit live checkpoint containing the exact main SHA, independent bootstrap
-inventory, reviewed bootstrap-recreation contract, runtime plan/shape, image source strategy, v4
-embedding volume/document count, and the two-stage teardown boundary (runtime teardown followed by
-bootstrap cleanup).
+1. **bootstrap-restore checkpoint** — present exact main SHA, independent inventory, WIF DELETED
+   state/expiry, undelete permissions, and the exact reviewed bootstrap restore contract;
+2. restore only that bootstrap; create no target runtime;
+3. run the existing GitHub OIDC identity check plus read-only quota/cost and exact Terraform
+   foundation preflight;
+4. **runtime-live checkpoint** — present the exact preflight/12-create plan, runtime shape, image
+   source strategy, v4 embedding/document contract, and teardown boundary;
+5. only then allow the remaining bounded runtime recreation → image → v4 ingestion → positive and
+   negative proof → runtime teardown → bootstrap cleanup sequence.
 
-No live/cost mutation is authorized before that checkpoint.
+Final bootstrap cleanup again deletes the pool. Immediate acceptance therefore requires
+`terraformers-github` to be non-ACTIVE and in the reviewed `DELETED` soft-delete state (or, if
+the retention window has elapsed, permanently absent), not fictitious immediate permanent absence.
+The provider must likewise not remain ACTIVE.
+
+No GCP mutation is authorized before the bootstrap-restore checkpoint. No target-runtime,
+Vertex/OpenSearch, image-publication, or correctness-proof mutation is authorized before the later
+runtime-live checkpoint.

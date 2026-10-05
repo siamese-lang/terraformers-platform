@@ -258,11 +258,51 @@ work_package:
         Infrastructure setup/ingestion resume with the identical corpus checksum is not treated as a
         hidden correctness rerun, but all workflow attempts remain evidence.
 
+  actual_pre_A7_7_baseline:
+    source: >
+      Case C final teardown Stage 2 intentionally removed the Terraform state bucket,
+      terraformers-plan / terraformers-apply / terraformers-image-publish service accounts, and the
+      terraformers-github Workload Identity Pool/provider after runtime residual verification.
+      GitHub environments and non-secret environment variables remained.
+    runtime_resources: ABSENT
+    terraform_state_bucket: ABSENT
+    WIF_pool_and_provider: ABSENT
+    plan_service_account: ABSENT
+    apply_service_account: ABSENT
+    image_publish_service_account: ABSENT
+    enabled_Google_APIs: MAY_REMAIN
+    GitHub_environments_and_variables: RETAINED_REPOSITORY_CONFIGURATION
+    first_A7_7_preflight_attempt:
+      run_id: 37278756126
+      conclusion: failure_before_GCP_resource_query
+      failure: >
+        google-github-actions/auth returned invalid_target for the deleted
+        terraformers-github/providers/terraformers-main provider.
+      interpretation: >
+        This is expected evidence of the true post-teardown bootstrap baseline, not a quota,
+        Terraform plan, or runtime failure.
+
   live_execution_sequence:
+    - id: BOOTSTRAP_READ_ONLY_INVENTORY
+      action: >
+        From independently authenticated Cloud Shell, verify target runtime resources, canonical
+        state bucket, terraformers-github WIF pool/provider, and plan/apply/image-publish service
+        accounts are absent. Verify the active project/project number and that required bootstrap
+        create/IAM permissions remain available. Do not mutate GCP in this step.
+    - id: BOOTSTRAP_RESTORE
+      action: >
+        After the explicit live checkpoint, recreate the previously reviewed delivery bootstrap only:
+        state bucket terraformers-platform-tfstate-21647422237 with UBLA/versioning/public-access
+        prevention, terraformers-github/terraformers-main OIDC provider restricted to the immutable
+        repository owner/repository IDs and refs/heads/main, terraformers-plan, terraformers-apply,
+        and terraformers-image-publish identities plus their previously reviewed least-privilege
+        bindings. Do not create target runtime resources in this step.
     - id: PRECHECK
       action: >
-        Read-only current-state/quota/cost preflight. Verify the pre-A7-7 target runtime is absent and
-        bootstrap state/WIF identities are the expected baseline.
+        With restored GitHub OIDC/bootstrap, run the existing read-only full-shape quota/cost
+        preflight and the protected foundation preflight. Require absent target runtime, empty
+        canonical runtime state, protected state bucket, and the reviewed exact 12-create foundation
+        plan with no update/delete/replacement/additional managed resource.
     - id: FOUNDATION
       action: >
         Recreate only the previously selected Case C GCP foundation and delivery/runtime dependencies
@@ -283,22 +323,31 @@ work_package:
         metrics, and bounded correlated-log evidence.
     - id: TEARDOWN
       action: >
-        Use the existing protected teardown workflow with the exact reviewed state/delete count.
-        Remove the recreated target runtime, Kubernetes namespace/PVC disk, runtime object bucket,
-        Artifact Registry runtime repository/images, runtime secrets, MariaDB VM/PD, GKE target,
-        and target VPC.
+        Use the existing protected runtime teardown workflow with the exact reviewed state/delete
+        count. Remove the recreated target runtime, Kubernetes namespace/PVC disk, runtime object
+        bucket, Artifact Registry runtime repository/images, runtime secrets, MariaDB VM/PD, GKE
+        target, and target VPC.
+    - id: BOOTSTRAP_CLEANUP
+      action: >
+        After runtime residual verification and empty canonical managed state, run the reviewed final
+        bootstrap cleanup from an independently authenticated Cloud Shell. Remove all versions/objects
+        from terraformers-platform-tfstate-21647422237, delete that state bucket, remove project IAM
+        bindings for the exact plan/apply/image-publish identities, delete those three service
+        accounts, and delete terraformers-github WIF pool/provider.
     - id: RESIDUAL_CHECK
       action: >
-        Verify all A7-7-created/recreated target-runtime cost-bearing resources are absent. Existing
-        bootstrap state bucket/WIF/service-account control-plane identities may remain only if they
-        exactly match the pre-A7-7 baseline and contain no recreated runtime resource outside canonical
-        state history.
+        Verify A7-7 returns to the actual pre-A7-7 baseline: no target runtime resources, no
+        Terraform state bucket, no plan/apply/image-publish service accounts, and no terraformers-github
+        WIF pool/provider. Enabled shared Google APIs and GitHub environments/non-secret variables may
+        remain because they were intentionally retained by the prior final teardown.
 
   live_checkpoint:
     required_before_first_GCP_mutation: true
     single_checkpoint_may_authorize_whole_bounded_sequence: true
     checkpoint_must_present:
       - exact_final_main_SHA
+      - exact_independent_bootstrap_inventory_result
+      - exact_bootstrap_restore_contract
       - exact_read_only_preflight_result
       - exact_Terraform_plan_contract_for_recreation
       - expected_runtime_shape_and_region
@@ -336,7 +385,10 @@ work_package:
     - bounded_quality_and_stage_metrics_logs_are_observed
     - any_natural_failure_is_retained_not_rerun_away
     - all_recreated_target_runtime_resources_are_torn_down
-    - pre_A7_7_bootstrap_baseline_is_not_expanded
+    - Terraform_state_bucket_is_absent_after_final_cleanup
+    - plan_apply_image_publish_service_accounts_are_absent_after_final_cleanup
+    - terraformers_github_WIF_pool_provider_is_absent_after_final_cleanup
+    - final_GCP_baseline_matches_pre_A7_7_final_teardown
     - A7_8_is_not_started
 
   allowed_paths:

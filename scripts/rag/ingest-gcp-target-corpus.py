@@ -29,8 +29,8 @@ SUPPORTED_CONTRACTS = {
     },
     "terraformers-reference-v4": {
         "indexName": "terraformers-reference-v4",
-        "embeddingModelId": "gemini-embedding-001",
-        "vectorDimension": 1024,
+        "embeddingModelId": "gemini-embedding-2",
+        "vectorDimension": 1536,
         "vectorField": "embedding",
         "contentField": "content",
         "documentCount": 5395,
@@ -41,6 +41,7 @@ VERTEX_RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 VERTEX_BACKOFF_SECONDS = (1, 2, 4, 8, 16, 32)
 VERTEX_PACING_SECONDS = 0.5
 INGESTION_WORKERS = 8
+EMBEDDING_2_MODEL = "gemini-embedding-2"
 
 
 def fail(message: str) -> None:
@@ -88,21 +89,43 @@ def load_corpus(corpus: Path) -> tuple[dict[str, object], dict[str, object], lis
 
 
 def validate_embedding(response: object, dimension: int = 1024) -> list[float]:
-    if not isinstance(response, dict) or not isinstance(response.get("predictions"), list):
-        fail("Vertex embedding response has no predictions")
-    predictions = response["predictions"]
-    if len(predictions) != 1:
-        fail("Vertex document embedding response must contain exactly one embedding")
-    try:
-        values = predictions[0]["embeddings"]["values"]
-    except (KeyError, TypeError):
+    values: object | None = None
+    if isinstance(response, dict):
+        predictions = response.get("predictions")
+        if isinstance(predictions, list):
+            if len(predictions) != 1:
+                fail("Vertex document embedding response must contain exactly one embedding")
+            candidate = predictions[0]
+            if isinstance(candidate, dict):
+                embedded = candidate.get("embeddings")
+                if isinstance(embedded, dict):
+                    values = embedded.get("values")
+
+        embeddings = response.get("embeddings")
+        if values is None and isinstance(embeddings, list):
+            if len(embeddings) != 1:
+                fail("Vertex document embedding response must contain exactly one embedding")
+            candidate = embeddings[0]
+            if isinstance(candidate, dict):
+                values = candidate.get("values")
+
+        embedding = response.get("embedding")
+        if values is None and isinstance(embedding, dict):
+            values = embedding.get("values")
+
+    if not isinstance(values, list):
         fail("Vertex embedding response has no vector values")
-    if not isinstance(values, list) or len(values) != dimension:
+    if len(values) != dimension:
         fail(f"Vertex embedding vector dimension does not match {dimension}")
     if any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
            for value in values):
         fail("Vertex embedding response contains a non-finite value")
     return [float(value) for value in values]
+
+
+def prepare_embedding_2_document(text: str, title: str | None) -> str:
+    normalized_title = title.strip() if isinstance(title, str) and title.strip() else "none"
+    return f"title: {normalized_title} | text: {text.strip()}"
 
 
 class HttpRequestError(RuntimeError):
@@ -176,19 +199,31 @@ class VertexDocumentEmbedder:
                  sleeper: Callable[[float], None] = time.sleep,
                  pacing_seconds: float = VERTEX_PACING_SECONDS,
                  dimension: int = 1024):
-        host = "aiplatform.googleapis.com" if location == "global" else f"{location}-aiplatform.googleapis.com"
+        self.model = model
+        if model == EMBEDDING_2_MODEL:
+            host = f"aiplatform.{location}.rep.googleapis.com"
+            method = "embedContent"
+        else:
+            host = "aiplatform.googleapis.com" if location == "global" else f"{location}-aiplatform.googleapis.com"
+            method = "predict"
         self.path = (f"/v1/projects/{urllib.parse.quote(project, safe='')}/locations/{location}"
-                     f"/publishers/google/models/{model}:predict")
+                     f"/publishers/google/models/{model}:{method}")
         self.transport = transport or JsonHttpClient(f"https://{host}", lambda: {"Authorization": f"Bearer {token()}"})
         self.sleeper = sleeper
         self.pacing_seconds = pacing_seconds
         self.dimension = dimension
 
-    def embed(self, text: str) -> list[float]:
-        body = {
-            "instances": [{"content": text, "task_type": "RETRIEVAL_DOCUMENT"}],
-            "parameters": {"outputDimensionality": self.dimension},
-        }
+    def embed(self, text: str, title: str | None = None) -> list[float]:
+        if self.model == EMBEDDING_2_MODEL:
+            body = {
+                "content": {"parts": [{"text": prepare_embedding_2_document(text, title)}]},
+                "embedContentConfig": {"outputDimensionality": self.dimension},
+            }
+        else:
+            body = {
+                "instances": [{"content": text, "task_type": "RETRIEVAL_DOCUMENT"}],
+                "parameters": {"outputDimensionality": self.dimension},
+            }
         for attempt in range(len(VERTEX_BACKOFF_SECONDS) + 1):
             try:
                 _, response = self.transport.request("POST", self.path, body)
@@ -276,7 +311,10 @@ def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: d
                                    accepted=(200, 404))
         if status == 200:
             return None
-        vector = embedder.embed(str(document[manifest["contentField"]]))
+        vector = embedder.embed(
+            str(document[manifest["contentField"]]),
+            str(document.get("title") or ""),
+        )
         client.request("PUT", f"/{index}/_doc/{encoded_id}",
                        {**document, str(manifest["vectorField"]): vector}, accepted=(200, 201))
         return vector
@@ -308,7 +346,10 @@ def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: d
     if count != expected_count:
         fail(f"final corpus-version document count must be exactly {expected_count}")
     if representative is None:
-        representative = embedder.embed(str(documents[0][manifest["contentField"]]))
+        representative = embedder.embed(
+            str(documents[0][manifest["contentField"]]),
+            str(documents[0].get("title") or ""),
+        )
     _, search_response = client.request("POST", f"/{index}/_search", {
         "size": 3,
         "query": {"knn": {manifest["vectorField"]: {"vector": representative, "k": 3,

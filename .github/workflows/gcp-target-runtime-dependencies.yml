@@ -537,6 +537,7 @@ jobs:
       - name: Apply isolated runtime prerequisites
         run: |
           set -euo pipefail
+          kubectl apply -f infra/kubernetes/overlays/gcp-target/namespace.yaml
           kubectl apply -k infra/kubernetes/overlays/gcp-target/runtime-dependencies
 
           mariadb_ip="$(

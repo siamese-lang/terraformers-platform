@@ -1044,11 +1044,12 @@ jobs:
             kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.availableReplicas}'
           )" == 1 ]]
 
-          runtime_source="$(
-            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend               -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+          runtime_identity="$(
+            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend               -c backend -- sh -c 'printf "%s|%s|%s|%s|%s|%s" "$BUILD_SOURCE_REVISION" "$CORPUS_VERSION" "$INDEX_NAME" "$VERTEX_EMBEDDING_MODEL_ID" "$VERTEX_EMBEDDING_DIMENSION" "$EXPECTED_VECTOR_DIMENSION"'
           )"
-          [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]] || {
-            echo "Runtime source revision mismatch: $runtime_source" >&2
+          expected_runtime_identity="$BACKEND_SOURCE_SHA|terraformers-reference-v4|terraformers-reference-v4|gemini-embedding-2|1536|1536"
+          [[ "$runtime_identity" == "$expected_runtime_identity" ]] || {
+            echo "Runtime identity mismatch: $runtime_identity" >&2
             exit 1
           }
 
@@ -1063,7 +1064,9 @@ jobs:
             printf -- '- Workflow SHA: `%s`\n' "$GITHUB_SHA"
             printf -- '- Previous image: `%s`\n' "$EXPECTED_CURRENT_BACKEND_IMAGE"
             printf -- '- Target image: `%s`\n' "$BACKEND_IMAGE"
-            printf -- '- Embedded source SHA: `%s`\n' "$runtime_source"
+            printf -- '- Embedded source SHA: `%s`\n' "$BACKEND_SOURCE_SHA"
+            echo '- Runtime corpus/index: `terraformers-reference-v4`'
+            echo '- Runtime embedding identity: `gemini-embedding-2 / 1536`'
             echo '- Ready replicas: `1/1`'
             echo '- Backend health: `UP`'
             echo '- Terraform/IAM/GCP resource mutation: none'

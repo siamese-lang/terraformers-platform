@@ -127,6 +127,11 @@ jobs:
               --filter='name=terraformers-target AND location=asia-northeast3-a' \
               --format='value(currentNodeCount)'
           )"
+          if [[ -z "$current_nodes" ]]; then
+            current_nodes=0
+            echo 'terraformers-target cluster is absent; treating currentNodeCount as 0 for the teardown baseline.' \
+              >> "$GITHUB_STEP_SUMMARY"
+          fi
           [[ "$current_nodes" =~ ^[01]$ ]] || {
             echo "Expected terraformers-target currentNodeCount to be 0 or 1, got: ${current_nodes:-missing}" >&2
             exit 1

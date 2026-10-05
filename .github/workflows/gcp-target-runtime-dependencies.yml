@@ -616,6 +616,9 @@ jobs:
       PROJECT_ID: terraformers-platform
       ZONE: asia-northeast3-a
       NAMESPACE: terraformers-target
+      IMAGE_BASE: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend
+      BACKEND_IMAGE: ${{ inputs.backend_image }}
+      BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
 
     steps:
       - uses: actions/checkout@v5
@@ -634,6 +637,18 @@ jobs:
             exit 1
           }
           [[ "$CONFIRMATION" == APPLY_REVIEWED_CASE_C_BACKEND_DEPLOYMENT_1 ]]
+          [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]] || {
+            echo 'backend-deployment requires an exact immutable backend_image.' >&2
+            exit 1
+          }
+          [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'backend-deployment requires a full 40-character backend_source_sha.' >&2
+            exit 1
+          }
+          [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_SHA" ]] || {
+            echo 'Backend source SHA does not match the approved workflow SHA.' >&2
+            exit 1
+          }
 
       - uses: google-github-actions/auth@v3
         with:
@@ -650,6 +665,32 @@ jobs:
           project_id: terraformers-platform
           cluster_name: terraformers-target
           location: asia-northeast3-a
+
+      - name: Verify immutable backend image provenance
+        run: |
+          set -euo pipefail
+          approved_digest="${BACKEND_IMAGE##*@}"
+          source_tag="${IMAGE_BASE}:${BACKEND_SOURCE_SHA}"
+
+          source_tag_digest="$(
+            gcloud artifacts docker images describe "$source_tag" \
+              --project="$PROJECT_ID" \
+              --format='value(image_summary.digest)'
+          )"
+          [[ "$source_tag_digest" == "$approved_digest" ]] || {
+            echo "Source-SHA tag digest mismatch: tag=$source_tag_digest approved=$approved_digest" >&2
+            exit 1
+          }
+
+          immutable_digest="$(
+            gcloud artifacts docker images describe "$BACKEND_IMAGE" \
+              --project="$PROJECT_ID" \
+              --format='value(image_summary.digest)'
+          )"
+          [[ "$immutable_digest" == "$approved_digest" ]] || {
+            echo "Immutable backend image digest mismatch: resolved=$immutable_digest approved=$approved_digest" >&2
+            exit 1
+          }
 
       - name: Verify backend deployment prerequisites
         run: |
@@ -704,11 +745,49 @@ jobs:
         run: |
           set -euo pipefail
           rendered="${RUNNER_TEMP}/gcp-target-rendered.yaml"
-          kubectl kustomize infra/kubernetes/overlays/gcp-target > "$rendered"
+          overlay_dir="${GITHUB_WORKSPACE}/infra/kubernetes/overlays/gcp-target"
+          runtime_overlay="$(mktemp -d "${overlay_dir}/.backend-image-XXXXXX")"
+          trap 'rm -rf "$runtime_overlay"' EXIT
+
+          cat > "${runtime_overlay}/kustomization.yaml" <<EOF
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+            - ..
+          images:
+            - name: ${IMAGE_BASE}
+              newName: ${IMAGE_BASE}
+              digest: ${BACKEND_IMAGE##*@}
+          EOF
+
+          kubectl kustomize "$runtime_overlay" > "$rendered"
+
+          mapfile -t backend_images < <(
+            awk '$1 == "image:" && $2 ~ /terraformers-backend/ { print $2 }' "$rendered"
+          )
+          [[ "${#backend_images[@]}" == 1 ]] || {
+            echo "Rendered manifest must contain exactly one backend container image; found ${#backend_images[@]}." >&2
+            exit 1
+          }
+          [[ "${backend_images[0]}" == "$BACKEND_IMAGE" ]] || {
+            echo "Rendered backend image mismatch: ${backend_images[0]}" >&2
+            exit 1
+          }
 
           grep -Fq "image: $BACKEND_IMAGE" "$rendered"
-          ! grep -Fq 'registry.example.com/terraformers-backend' "$rendered"
-          ! grep -Fq 'immutable-target-sha' "$rendered"
+          ! grep -Fq 'replace-with-immutable-tag' "$rendered"
+          ! grep -Fq 'registry.example.com' "$rendered"
+          ! grep -Fq 'public.ecr.aws/example/terraformers-backend' "$rendered"
+
+          stale_digest="$(
+            awk -v approved="$BACKEND_IMAGE" \
+              '$1 == "image:" && $2 ~ /terraformers-backend@sha256:/ && $2 != approved { print $2 }' \
+              "$rendered"
+          )"
+          [[ -z "$stale_digest" ]] || {
+            echo "Rendered manifest contains a stale backend digest: $stale_digest" >&2
+            exit 1
+          }
 
           grep -Fq 'GOOGLE_CLOUD_PROJECT: terraformers-platform' "$rendered"
           grep -Fq 'TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID: case-c-runtime-client' "$rendered"
@@ -760,13 +839,30 @@ jobs:
               -o jsonpath='{.spec.type}'
           )" == ClusterIP ]]
 
+          runtime_source="$(
+            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend \
+              -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+          )"
+          [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]] || {
+            echo "Runtime source revision mismatch: $runtime_source" >&2
+            exit 1
+          }
+
+          health="$(
+            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend \
+              -c backend -- curl -fsS http://127.0.0.1:8080/actuator/health
+          )"
+          jq -e '.status == "UP"' <<< "$health" >/dev/null
+
           {
             echo '## Case C backend deployment'
             echo
             printf -- '- Source SHA: `%s`\n' "$GITHUB_SHA"
             printf -- '- Immutable backend image: `%s`\n' "$actual_image"
+            printf -- '- Embedded source SHA: `%s`\n' "$runtime_source"
             echo '- Ready replicas: 1/1'
             echo '- Service exposure: ClusterIP'
+            echo '- Backend health: UP'
             echo '- Runtime prerequisites reused; no new IAM/cloud resource mutation'
             echo '- Load generation / rollout / rollback: not executed in this checkpoint'
           } >> "$GITHUB_STEP_SUMMARY"

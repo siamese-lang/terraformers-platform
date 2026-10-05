@@ -13,17 +13,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0 COMPLETE / A7-1 COMPLETE / A7-2 COMPLETE / A7-3 COMPLETE / A7-4 COMPLETE / A7-5 COMPLETE / A7-6 COMPLETE / A7-7 REPOSITORY IMPLEMENTED — BOOTSTRAP RESTORE GATED / NO LIVE ACTION YET**
+- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0..A7-6 COMPLETE / A7-7 LIVE EXECUTION ACTIVE — EMBEDDING MODEL ASSUMPTION INVALIDATED — BOUNDED MODEL CORRECTION APPROVED**
 - Active reassessment plan:
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-7 repository preparation is merged and the independent Cloud Shell inventory is complete. Runtime/state bucket/three delivery service accounts are absent, while `terraformers-github` is `DELETED` soft-delete until `2026-11-01T16:21:59.782737490Z`; provider state is unresolved while the parent is deleted. The plan is corrected to require a bootstrap-restore checkpoint first (undelete existing pool, verify exact restored provider, recreate exact bucket/SAs only), then the existing read-only GitHub/Terraform preflight, then a separate runtime-live checkpoint. No GCP mutation before the bootstrap-restore checkpoint.**
+- Current single task: **A7-7 runtime/bootstrap restoration and backend deployment progressed to broad-v4 ingestion. Live ingestion evidence proved the frozen `gemini-embedding-001` assumption infeasible under the project's effective 5 requests/minute quota: run `37317012191` could not complete inside the 180-minute boundary and run `37332461233` failed with `RESOURCE_EXHAUSTED`. The explicitly approved bounded correction is v4-only `gemini-embedding-2 / 1536`, with inline document/query retrieval semantics, full v4 re-embedding, and a newly published/deployed backend image. Historical v3 remains immutable. No further live mutation until this repository correction is merged and reviewed.**
 
 ### Case A evidence-backed quality extension control
 
 - Original Case A retrieval-grounding/generalization closure: **RETAINED / NOT INVALIDATED**
-- Extension status: **DIRECTION FROZEN — A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 REPOSITORY IMPLEMENTED / BOOTSTRAP RESTORE GATED**
+- Extension status: **DIRECTION FROZEN — A7-0..A7-6 COMPLETE — A7-7 LIVE EVIDENCE RETAINED / MODEL CORRECTION APPROVED**
 - Architecture freeze:
   [ADR-008 Evidence-backed AI Quality](architecture/decisions/ADR-008-evidence-backed-ai-quality.md)
 - Active plan:
@@ -69,6 +69,12 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   successfully at scope level; its terraform/RAG job was skipped because PR #205 changed no
   terraform/RAG paths. Frozen canonical/holdout datasets were unchanged and no live AI/cloud
   execution was used. A7-3 through A7-6 are complete; A7-7 is approved because final closure now requires a real broad-v4 + persisted-quality end-to-end proof.
+- A7-7 live embedding evidence supersedes only the v4 model/dimension implementation detail:
+  `gemini-embedding-001` has an effective project quota of 5 requests/minute and cannot embed
+  5,395 documents inside the reviewed workflow bound; `gemini-embedding-2` has a measured
+  300,000 requests/minute effective project quota. The approved v4 identity is now
+  `gemini-embedding-2 / 1536`; v3 remains `gemini-embedding-001 / 1024`. The provider/corpus
+  authority model and ADR-008 quality architecture are unchanged.
 - No evaluator LLM or multi-model voting is part of the default design.
 - Historical VPC evidence is the canonical false-green before-state: retrieval, generation, and
   validation PASS while required grounding was incomplete.

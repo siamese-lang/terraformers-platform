@@ -25,12 +25,15 @@ class RecordingTransport:
 
 
 class FakeEmbedder:
-    def __init__(self):
+    def __init__(self, dimension=1024):
         self.texts = []
+        self.titles = []
+        self.dimension = dimension
 
-    def embed(self, text):
+    def embed(self, text, title=None):
         self.texts.append(text)
-        return [0.25] * 1024
+        self.titles.append(title)
+        return [0.25] * self.dimension
 
 
 class FakeOpenSearch:
@@ -95,6 +98,8 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
         manifest.update({
             "corpusVersion": "terraformers-reference-v4",
             "indexName": "terraformers-reference-v4",
+            "embeddingModelId": "gemini-embedding-2",
+            "vectorDimension": 1536,
             "documentCount": 5395,
             "chunkCount": 5395,
         })
@@ -103,8 +108,8 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
 
         self.assertEqual(5395, expected["documentCount"])
         self.assertEqual("terraformers-reference-v4", expected["indexName"])
-        self.assertEqual("gemini-embedding-001", expected["embeddingModelId"])
-        self.assertEqual(1024, expected["vectorDimension"])
+        self.assertEqual("gemini-embedding-2", expected["embeddingModelId"])
+        self.assertEqual(1536, expected["vectorDimension"])
 
     def test_unknown_corpus_version_fails_closed(self):
         manifest = dict(self.manifest)
@@ -112,19 +117,38 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "unsupported corpusVersion"):
             gcp_ingest.validate_supported_manifest(manifest)
 
-    def test_vertex_request_uses_document_semantics_and_1024_dimensions(self):
+    def test_v3_vertex_request_preserves_document_semantics_and_1024_dimensions(self):
         transport = RecordingTransport()
         embedder = gcp_ingest.VertexDocumentEmbedder(
             "project", "global", "gemini-embedding-001", lambda: "token", transport,
             sleeper=lambda _: None, pacing_seconds=0,
         )
 
-        vector = embedder.embed("document text")
+        vector = embedder.embed("document text", "ignored title")
 
         self.assertEqual(1024, len(vector))
+        path = transport.calls[0][1]
         body = transport.calls[0][2]
+        self.assertTrue(path.endswith("gemini-embedding-001:predict"))
         self.assertEqual("RETRIEVAL_DOCUMENT", body["instances"][0]["task_type"])
         self.assertEqual(1024, body["parameters"]["outputDimensionality"])
+
+    def test_v4_vertex_request_uses_embedding2_inline_document_semantics_and_1536_dimensions(self):
+        transport = RecordingTransport({"embedding": {"values": [0.25] * 1536}})
+        embedder = gcp_ingest.VertexDocumentEmbedder(
+            "project", "global", "gemini-embedding-2", lambda: "token", transport,
+            sleeper=lambda _: None, pacing_seconds=0, dimension=1536,
+        )
+
+        vector = embedder.embed("document text", "VPC example")
+
+        self.assertEqual(1536, len(vector))
+        path = transport.calls[0][1]
+        body = transport.calls[0][2]
+        self.assertTrue(path.endswith("gemini-embedding-2:embedContent"))
+        self.assertEqual("title: VPC example | text: document text", body["content"]["parts"][0]["text"])
+        self.assertNotIn("taskType", body["embedContentConfig"])
+        self.assertEqual(1536, body["embedContentConfig"]["outputDimensionality"])
 
     def test_vertex_retries_transient_429_with_bounded_backoff(self):
         class FlakyTransport:
@@ -269,17 +293,21 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
         manifest.update({
             "corpusVersion": "terraformers-reference-v4",
             "indexName": "terraformers-reference-v4",
+            "embeddingModelId": "gemini-embedding-2",
+            "vectorDimension": 1536,
             "documentCount": 5395,
             "chunkCount": 5395,
         })
+        schema = json.loads(json.dumps(self.schema))
+        schema["mappings"]["properties"]["embedding"]["dimension"] = 1536
         client = FakeOpenSearch(
-            self.schema,
+            schema,
             checksum=self.checksum,
             count=5395,
             corpus_version="terraformers-reference-v4",
         )
         receipt = gcp_ingest.ingest(
-            client, FakeEmbedder(), manifest, self.schema, self.documents[:1], self.checksum
+            client, FakeEmbedder(dimension=1536), manifest, schema, self.documents[:1], self.checksum
         )
         self.assertEqual("terraformers-reference-v4", receipt["corpus_version"])
         self.assertEqual(5395, receipt["document_count"])

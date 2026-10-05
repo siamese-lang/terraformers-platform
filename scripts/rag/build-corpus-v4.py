@@ -19,8 +19,8 @@ PROVIDER_VERSION = "5.100.0"
 PROVIDER_SOURCE_VERSION = f"v{PROVIDER_VERSION}"
 PROVIDER_ADDRESS = "registry.terraform.io/hashicorp/aws"
 INDEX_NAME = "terraformers-reference-v4"
-EMBEDDING_MODEL_ID = "gemini-embedding-001"
-VECTOR_DIMENSION = 1024
+EMBEDDING_MODEL_ID = "gemini-embedding-2"
+VECTOR_DIMENSION = 1536
 VECTOR_FIELD = "embedding"
 CONTENT_FIELD = "content"
 

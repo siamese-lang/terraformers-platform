@@ -134,7 +134,7 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
         self.assertEqual(1024, body["parameters"]["outputDimensionality"])
 
     def test_v4_vertex_request_uses_embedding2_inline_document_semantics_and_1536_dimensions(self):
-        transport = RecordingTransport({"embeddings": [{"values": [0.25] * 1536}]})
+        transport = RecordingTransport({"embedding": {"values": [0.25] * 1536}})
         embedder = gcp_ingest.VertexDocumentEmbedder(
             "project", "global", "gemini-embedding-2", lambda: "token", transport,
             sleeper=lambda _: None, pacing_seconds=0, dimension=1536,

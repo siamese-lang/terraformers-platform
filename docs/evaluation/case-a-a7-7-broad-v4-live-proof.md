@@ -228,3 +228,18 @@ The provider must likewise not remain ACTIVE.
 No GCP mutation is authorized before the bootstrap-restore checkpoint. No target-runtime,
 Vertex/OpenSearch, image-publication, or correctness-proof mutation is authorized before the later
 runtime-live checkpoint.
+
+## Bounded live-discovered correction
+
+GitHub Actions run `37305845953`, operation `kubernetes-prerequisites`, exposed a hidden ordering
+assumption after A7-7 began from its fully torn-down Kubernetes baseline: applying the isolated
+`runtime-dependencies` Kustomization failed because `terraformers-target` did not exist. The
+Kustomization selects that namespace, while Kustomize's default root-only load restriction prevents
+it from directly loading the canonical manifest from its parent directory.
+
+The bounded correction makes the existing `kubernetes-prerequisites` workflow operation
+self-contained: it applies the canonical `namespace.yaml` first, then applies the isolated child
+Kustomization normally. It does not weaken Kustomize load restrictions, add another namespace
+manifest or a backend Deployment, or change IAM, Terraform, or the A7-7 acceptance boundary. The
+child overlay must continue to render the existing prerequisite resources with no backend
+Deployment.

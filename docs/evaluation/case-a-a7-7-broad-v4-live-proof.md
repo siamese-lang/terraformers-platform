@@ -103,6 +103,13 @@ The bounded repository path now contains:
 
 Live execution has not started. Repository CI and independent review are the next gate.
 
+After PR #221 merged and the target runtime remained torn down, the existing full-shape quota/cost
+preflight was found to reject the correct empty-cluster baseline because
+`gcloud container clusters list` returns an empty value when `terraformers-target` is absent.
+A bounded corrective change normalizes that exact absence to `currentNodeCount=0`; any nonempty
+value other than 0 or 1 still fails closed. The separate protected foundation preflight already
+handles an empty canonical Terraform state and requires the reviewed 12-create foundation plan.
+
 ## Positive control
 
 Use frozen case `arch-vpc-three-tier` and its exact fixture SHA.

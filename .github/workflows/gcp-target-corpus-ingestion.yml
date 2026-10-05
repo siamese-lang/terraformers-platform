@@ -400,7 +400,11 @@ jobs:
             printf -- '- Documents: `%s`\n' "$expected_count"
             printf -- '- Corpus checksum: `%s`\n' "$expected_checksum"
             printf -- '- Embedding model: `%s`\n' "$expected_model"
-            echo '- Embedding task: `RETRIEVAL_DOCUMENT`'
+            if [[ "$expected_model" == gemini-embedding-2 ]]; then
+              echo '- Embedding semantics: `title: {title} | text: {content}` (Embedding 2 inline retrieval document format)'
+            else
+              echo '- Embedding task: `RETRIEVAL_DOCUMENT`'
+            fi
             printf -- '- Vector dimension: `%s`\n' "$expected_dimension"
             printf -- '- OpenSearch index: `%s`\n' "$expected_index"
             printf -- '- Outcome: `%s`\n' "$(jq -r '.outcome' "${RUNNER_TEMP}/ingestion-receipt.json")"

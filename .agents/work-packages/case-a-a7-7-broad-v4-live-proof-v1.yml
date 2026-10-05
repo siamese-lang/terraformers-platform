@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-7-broad-v4-live-proof-v1
-  status: IMPLEMENTED_AWAITING_REVIEW
+  status: REPOSITORY_IMPLEMENTED_BOOTSTRAP_RESTORE_GATED
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: 13e398599ce69e087e9098b1413cad37c41edfd1
 

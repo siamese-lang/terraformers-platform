@@ -979,19 +979,44 @@ jobs:
           )" == 1 ]]
 
           kubectl auth can-i patch deployments.apps -n "$NAMESPACE" | grep -Fxq yes
+          kubectl auth can-i patch configmaps -n "$NAMESPACE" | grep -Fxq yes
+
+      - name: Apply reviewed backend runtime config
+        run: |
+          set -euo pipefail
+          kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config -o json             | jq '.data' > "${RUNNER_TEMP}/backend-runtime-config-before.json"
+
+          kubectl -n "$NAMESPACE" patch configmap terraformers-backend-runtime-config             --type=merge             -p '{"data":{"INDEX_NAME":"terraformers-reference-v4","CORPUS_VERSION":"terraformers-reference-v4","VERTEX_EMBEDDING_MODEL_ID":"gemini-embedding-2","VERTEX_EMBEDDING_DIMENSION":"1536","EXPECTED_VECTOR_DIMENSION":"1536"}}'
+
+          [[ "$(
+            kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config               -o jsonpath='{.data.VERTEX_EMBEDDING_MODEL_ID}'
+          )" == gemini-embedding-2 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config               -o jsonpath='{.data.VERTEX_EMBEDDING_DIMENSION}'
+          )" == 1536 ]]
+          [[ "$(
+            kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config               -o jsonpath='{.data.EXPECTED_VECTOR_DIMENSION}'
+          )" == 1536 ]]
 
       - name: Roll out exact immutable backend revision
         env:
           BACKEND_IMAGE: ${{ inputs.backend_image }}
         run: |
           set -euo pipefail
+          restore_config() {
+            rollback_patch="$(jq -c '{data:.}' "${RUNNER_TEMP}/backend-runtime-config-before.json")"
+            kubectl -n "$NAMESPACE" patch configmap terraformers-backend-runtime-config               --type=merge -p "$rollback_patch" || true
+          }
+
           if ! kubectl -n "$NAMESPACE" set image               deployment/terraformers-backend               "backend=$BACKEND_IMAGE"; then
-            echo 'Failed to submit backend image update.' >&2
+            echo 'Failed to submit backend image update; restoring previous runtime ConfigMap.' >&2
+            restore_config
             exit 1
           fi
 
           if ! kubectl -n "$NAMESPACE" rollout status               deployment/terraformers-backend --timeout=7m; then
-            echo 'Backend revision did not become Ready; reverting to previous ReplicaSet revision.' >&2
+            echo 'Backend revision did not become Ready; restoring ConfigMap and previous ReplicaSet revision.' >&2
+            restore_config
             kubectl -n "$NAMESPACE" rollout undo deployment/terraformers-backend || true
             kubectl -n "$NAMESPACE" rollout status deployment/terraformers-backend --timeout=5m || true
             kubectl -n "$NAMESPACE" get deployment terraformers-backend -o wide || true
@@ -1019,11 +1044,12 @@ jobs:
             kubectl -n "$NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.availableReplicas}'
           )" == 1 ]]
 
-          runtime_source="$(
-            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend               -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+          runtime_identity="$(
+            kubectl -n "$NAMESPACE" exec deployment/terraformers-backend               -c backend -- sh -c 'printf "%s|%s|%s|%s|%s|%s" "$BUILD_SOURCE_REVISION" "$CORPUS_VERSION" "$INDEX_NAME" "$VERTEX_EMBEDDING_MODEL_ID" "$VERTEX_EMBEDDING_DIMENSION" "$EXPECTED_VECTOR_DIMENSION"'
           )"
-          [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]] || {
-            echo "Runtime source revision mismatch: $runtime_source" >&2
+          expected_runtime_identity="$BACKEND_SOURCE_SHA|terraformers-reference-v4|terraformers-reference-v4|gemini-embedding-2|1536|1536"
+          [[ "$runtime_identity" == "$expected_runtime_identity" ]] || {
+            echo "Runtime identity mismatch: $runtime_identity" >&2
             exit 1
           }
 
@@ -1038,7 +1064,9 @@ jobs:
             printf -- '- Workflow SHA: `%s`\n' "$GITHUB_SHA"
             printf -- '- Previous image: `%s`\n' "$EXPECTED_CURRENT_BACKEND_IMAGE"
             printf -- '- Target image: `%s`\n' "$BACKEND_IMAGE"
-            printf -- '- Embedded source SHA: `%s`\n' "$runtime_source"
+            printf -- '- Embedded source SHA: `%s`\n' "$BACKEND_SOURCE_SHA"
+            echo '- Runtime corpus/index: `terraformers-reference-v4`'
+            echo '- Runtime embedding identity: `gemini-embedding-2 / 1536`'
             echo '- Ready replicas: `1/1`'
             echo '- Backend health: `UP`'
             echo '- Terraform/IAM/GCP resource mutation: none'

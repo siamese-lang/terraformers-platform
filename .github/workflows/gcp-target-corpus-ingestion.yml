@@ -198,7 +198,7 @@ jobs:
           provider_commit='f7a3b98da589ab1d52756b0dcee0dbf2de83d635'
           provider_dir="${RUNNER_TEMP}/terraform-provider-aws"
           schema_json="${RUNNER_TEMP}/aws-provider-5.100.0.json"
-          corpus_dir="${RUNNER_TEMP}/terraformers-reference-v4"
+          corpus_dir="${RUNNER_TEMP}/v4"
 
           [[ "$(
             kubectl -n "$TARGET_NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.readyReplicas}'

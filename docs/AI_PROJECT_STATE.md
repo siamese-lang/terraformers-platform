@@ -18,7 +18,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
 - Measurement/acceptance source of truth:
   [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **Review the A7-7 repository preparation against its frozen execution base and CI. Do not perform live GCP mutation yet. After repository merge, run read-only preflight and present the exact-value live checkpoint before recreation/ingestion/proof/teardown.**
+- Current single task: **A7-7 repository preparation is merged. The first GitHub read-only preflight (run 37278756126) proved the final Case C bootstrap was also deleted: OIDC failed with invalid_target before any GCP query. Next, use independently authenticated Cloud Shell for a read-only bootstrap/runtime inventory, then present one exact-value live checkpoint covering bootstrap recreation, runtime recreation, v4 proof, runtime teardown, and final bootstrap cleanup. No live mutation before that checkpoint.**
 
 ### Case A evidence-backed quality extension control
 

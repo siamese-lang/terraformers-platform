@@ -543,6 +543,14 @@ authenticated backend live-validation workflow. No new workflow or architecture 
 
 Reuse the existing Case C representative topology; do not create a second architecture.
 
+The actual Case C final baseline also deleted the delivery bootstrap: state bucket, plan/apply/image
+publisher service accounts, and the GitHub WIF pool/provider are absent. Therefore A7-7 must first
+recreate the **same reviewed bootstrap**, not a new identity architecture. The initial GitHub
+preflight run `37278756126` failed at OIDC token exchange with `invalid_target`, before any quota
+or Terraform query, which confirms that baseline assumption was wrong rather than revealing a
+runtime defect. The final A7-7 teardown must include both runtime teardown and the existing Stage 2
+bootstrap cleanup so the project returns to the same fully closed baseline.
+
 Minimum evidence:
 
 1. exact source/image/corpus/quality-contract identity;

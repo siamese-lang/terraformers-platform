@@ -168,15 +168,38 @@ The acceptance target is return to the pre-A7-7 baseline:
 - no runtime Secret Manager secrets;
 - no target VPC.
 
-The pre-existing bootstrap state bucket and WIF/service-account identities may remain only at the
-same baseline that existed before A7-7; A7-7 must not add a new residual bootstrap surface.
+The actual pre-A7-7 baseline has **no bootstrap control-plane resources**. Case C final teardown
+Stage 2 intentionally deleted:
+
+- `terraformers-platform-tfstate-21647422237` including all object versions;
+- `terraformers-plan`;
+- `terraformers-apply`;
+- `terraformers-image-publish`;
+- the `terraformers-github` Workload Identity Pool and its `terraformers-main` provider.
+
+GitHub environments/non-secret variables and enabled shared APIs were intentionally retained.
+
+Therefore A7-7 must recreate that reviewed delivery bootstrap before GitHub OIDC preflight can run,
+and must delete it again after the live proof. Final acceptance requires returning to the same fully
+closed baseline, not leaving WIF/service accounts/state storage behind.
 
 ## Before live execution
 
 A7-7 repository preparation must first merge and pass CI.
 
-Then perform one read-only preflight and present one explicit live checkpoint containing the exact
-main SHA, reviewed runtime plan/shape, image source strategy, v4 embedding volume/document count,
-and teardown boundary.
+The first GitHub read-only preflight attempt, run `37278756126`, failed in
+`google-github-actions/auth@v3` with `invalid_target` before any GCP resource query. This matches
+the deliberate final-teardown baseline: the configured
+`terraformers-github/providers/terraformers-main` provider no longer exists.
+
+Because GitHub OIDC itself is absent, the next read-only evidence must come from an independently
+authenticated Cloud Shell administrator. Confirm that runtime resources, state bucket, WIF
+pool/provider, and plan/apply/image-publish service accounts are absent and that the exact historical
+bootstrap can be recreated.
+
+Then present one explicit live checkpoint containing the exact main SHA, independent bootstrap
+inventory, reviewed bootstrap-recreation contract, runtime plan/shape, image source strategy, v4
+embedding volume/document count, and the two-stage teardown boundary (runtime teardown followed by
+bootstrap cleanup).
 
 No live/cost mutation is authorized before that checkpoint.

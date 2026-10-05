@@ -167,6 +167,31 @@ work_package:
         - embedding_model_gemini-embedding-001
         - vector_dimension_1024
 
+    backend_artifact_identity:
+      decision: DECOUPLE_DEPLOYMENT_REVISION_FROM_BACKEND_ARTIFACT_REVISION
+      deployment_revision: >
+        expected_sha identifies the exact reviewed main revision containing the deployment workflow,
+        runtime configuration and live-proof contract.
+      artifact_source_revision: >
+        backend_source_sha identifies the exact main revision from which the immutable backend image
+        was built and is verified through the protected source-SHA Artifact Registry tag.
+      reuse_rule: >
+        A later workflow, Kubernetes or documentation-only correction does not require rebuilding the
+        backend image when git diff between backend_source_sha and expected_sha is empty under
+        backend/**. If backend/** differs, deployment and live proof fail closed until a new image is
+        published.
+      runtime_binding: >
+        The committed GCP overlay contains no deployment-specific digest. The protected deployment
+        workflow renders the reviewed overlay, requires exactly one non-deployable backend image
+        placeholder, replaces only that rendered placeholder with the approved immutable digest, and
+        verifies the exact image before Kubernetes apply.
+      evidence:
+        - exact_deployment_main_SHA
+        - exact_backend_artifact_source_SHA
+        - exact_backend_image_digest
+        - Artifact_Registry_source_SHA_tag_resolves_to_exact_digest
+        - runtime_BUILD_SOURCE_REVISION_matches_backend_artifact_source_SHA
+
     live_validation_workflow:
       file: .github/workflows/gcp-target-runtime-dependencies.yml
       required_change: >
@@ -184,7 +209,8 @@ work_package:
         sha256: 12eb8590b89eaea0988d5038c7a9862eebc584039d88084fe91433848a53d36d
       preconditions:
         - deployed_backend_image_is_exact_immutable_digest
-        - BUILD_SOURCE_REVISION_equals_approved_main_SHA
+        - BUILD_SOURCE_REVISION_equals_backend_artifact_source_SHA
+        - backend_tree_at_artifact_source_matches_approved_main
         - ConfigMap_INDEX_NAME_is_terraformers-reference-v4
         - ConfigMap_CORPUS_VERSION_is_terraformers-reference-v4
         - OpenSearch_v4_index_checksum_metadata_exists
@@ -192,9 +218,11 @@ work_package:
 
   live_acceptance:
     identity:
-      - exact_main_source_SHA
+      - exact_deployment_main_SHA
+      - exact_backend_artifact_source_SHA
       - exact_backend_image_digest
-      - BUILD_SOURCE_REVISION_matches_main_SHA
+      - BUILD_SOURCE_REVISION_matches_backend_artifact_source_SHA
+      - backend_tree_at_artifact_source_matches_deployment_main
       - provider_version_5_100_0
       - corpus_version_terraformers-reference-v4
       - v4_corpus_checksum
@@ -379,7 +407,10 @@ work_package:
         using existing protected workflows and reviewed Terraform plans.
     - id: BACKEND_IMAGE
       action: >
-        Build/publish one immutable backend image from the exact A7-7 main source SHA and record its digest.
+        Build/publish one immutable backend image from a reviewed A7-7 main source SHA and record its
+        source SHA and digest. Later workflow/Kubernetes/documentation-only corrections do not require
+        republishing when backend/** is unchanged; the protected deployment and live-proof workflows
+        must prove backend tree equivalence before reusing that image.
     - id: OPENSEARCH_AND_BACKEND
       action: >
         Deploy the existing OpenSearch and backend runtime with v4 ConfigMap identity. Do not change topology.

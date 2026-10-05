@@ -645,8 +645,11 @@ jobs:
             echo 'backend-deployment requires a full 40-character backend_source_sha.' >&2
             exit 1
           }
-          [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_SHA" ]] || {
-            echo 'Backend source SHA does not match the approved workflow SHA.' >&2
+          if [[ "$BACKEND_SOURCE_SHA" != "$GITHUB_SHA" ]]; then
+            git fetch --no-tags --depth=1 origin "$BACKEND_SOURCE_SHA"
+          fi
+          git diff --quiet "$BACKEND_SOURCE_SHA" "$GITHUB_SHA" -- backend || {
+            echo 'Backend source tree differs from the approved deployment revision; publish a new backend image.' >&2
             exit 1
           }
 
@@ -744,23 +747,30 @@ jobs:
       - name: Render and verify exact backend deployment
         run: |
           set -euo pipefail
+          rendered_base="${RUNNER_TEMP}/gcp-target-rendered-base.yaml"
           rendered="${RUNNER_TEMP}/gcp-target-rendered.yaml"
-          overlay_dir="${GITHUB_WORKSPACE}/infra/kubernetes/overlays/gcp-target"
-          runtime_overlay="$(mktemp -d "${overlay_dir}/.backend-image-XXXXXX")"
-          trap 'rm -rf "$runtime_overlay"' EXIT
+          placeholder="${IMAGE_BASE}:replace-with-immutable-tag"
 
-          cat > "${runtime_overlay}/kustomization.yaml" <<EOF
-          apiVersion: kustomize.config.k8s.io/v1beta1
-          kind: Kustomization
-          resources:
-            - ..
-          images:
-            - name: ${IMAGE_BASE}
-              newName: ${IMAGE_BASE}
-              digest: ${BACKEND_IMAGE##*@}
-          EOF
+          kubectl kustomize infra/kubernetes/overlays/gcp-target > "$rendered_base"
 
-          kubectl kustomize "$runtime_overlay" > "$rendered"
+          PLACEHOLDER="$placeholder" BACKEND_IMAGE="$BACKEND_IMAGE" \
+            python3 - "$rendered_base" "$rendered" <<'PY'
+          import os
+          import pathlib
+          import sys
+
+          source = pathlib.Path(sys.argv[1])
+          target = pathlib.Path(sys.argv[2])
+          text = source.read_text()
+          placeholder = "image: " + os.environ["PLACEHOLDER"]
+          replacement = "image: " + os.environ["BACKEND_IMAGE"]
+          count = text.count(placeholder)
+          if count != 1:
+              raise SystemExit(
+                  f"expected exactly one backend image placeholder in rendered manifest, found {count}"
+              )
+          target.write_text(text.replace(placeholder, replacement))
+          PY
 
           mapfile -t backend_images < <(
             awk '$1 == "image:" && $2 ~ /terraformers-backend/ { print $2 }' "$rendered"
@@ -857,7 +867,8 @@ jobs:
           {
             echo '## Case C backend deployment'
             echo
-            printf -- '- Source SHA: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Deployment workflow SHA: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Backend artifact source SHA: `%s`\n' "$BACKEND_SOURCE_SHA"
             printf -- '- Immutable backend image: `%s`\n' "$actual_image"
             printf -- '- Embedded source SHA: `%s`\n' "$runtime_source"
             echo '- Ready replicas: 1/1'
@@ -1601,10 +1612,6 @@ jobs:
                 echo 'C2 stability gate requires an exact backend_source_sha.' >&2
                 exit 1
               }
-              [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_SHA" ]] || {
-                echo 'C2 backend source SHA must equal the approved checked-out main SHA.' >&2
-                exit 1
-              }
               ;;
             a7-7-broad-v4-live-proof)
               [[ "$CONFIRMATION" == RUN_A7_7_BROAD_V4_LIVE_PROOF ]] || {
@@ -1615,16 +1622,23 @@ jobs:
                 echo 'A7-7 live proof requires an exact backend_source_sha.' >&2
                 exit 1
               }
-              [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_SHA" ]] || {
-                echo 'A7-7 backend source SHA must equal the approved checked-out main SHA.' >&2
-                exit 1
-              }
               ;;
             *)
               echo "Unsupported backend live-validation operation: $OPERATION" >&2
               exit 1
               ;;
           esac
+
+          if [[ "$OPERATION" == backend-live-validation-c2-stability || "$OPERATION" == a7-7-broad-v4-live-proof ]]; then
+            if [[ "$BACKEND_SOURCE_SHA" != "$GITHUB_SHA" ]]; then
+              git fetch --no-tags --depth=1 origin "$BACKEND_SOURCE_SHA"
+            fi
+            git diff --quiet "$BACKEND_SOURCE_SHA" "$GITHUB_SHA" -- backend || {
+              echo 'Backend source tree differs from the approved validation revision; publish and deploy a new backend image first.' >&2
+              exit 1
+            }
+          fi
+
           [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]] || {
             echo 'backend live validation requires an exact immutable backend_image.' >&2
             exit 1
@@ -2308,7 +2322,6 @@ jobs:
             kubectl -n "$NAMESPACE" exec deployment/terraformers-backend               -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
           )"
           [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]]
-          [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_MAIN_SHA" ]]
 
           jq -n             --arg main_sha "$EXPECTED_MAIN_SHA"             --arg backend_image "$BACKEND_IMAGE"             --arg backend_source_sha "$BACKEND_SOURCE_SHA"             --arg fixture_sha256 "$actual_fixture_sha"             --arg backend_pod_uid "$backend_pod_uid"             --argjson backend_restart_count "$backend_restart_count"             --argjson repeat_count "$repeat_count"             '{
               main_sha: $main_sha,

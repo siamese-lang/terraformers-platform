@@ -64,8 +64,8 @@ V3_RUNTIME = {
 }
 V4_RUNTIME = {
     "awsProviderVersion": "5.100.0",
-    "embeddingModelId": "gemini-embedding-001",
-    "vectorDimension": 1024,
+    "embeddingModelId": "gemini-embedding-2",
+    "vectorDimension": 1536,
     "indexName": "terraformers-reference-v4",
     "vectorField": "embedding",
     "contentField": "content",

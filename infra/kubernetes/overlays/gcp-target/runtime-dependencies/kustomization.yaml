@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: terraformers-target
 resources:
+  - ../namespace.yaml
   - secret-sync-serviceaccount.yaml
   - secret-provider-class.yaml
   - secret-sync.yaml

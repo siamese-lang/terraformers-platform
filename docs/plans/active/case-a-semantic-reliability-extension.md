@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 REPOSITORY IMPLEMENTED / AWAITING REVIEW — LIVE GCP MUTATION NOT YET AUTHORIZED**
+**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 REPOSITORY IMPLEMENTED — BOOTSTRAP RESTORE GATED — NO LIVE GCP MUTATION YET**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -16,7 +16,7 @@ The architecture decision is frozen in
 ADR-008 — Evidence-backed AI quality for Terraformers.
 
 Extension direction is governed by
-`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 through A7-6 are complete. A7-7 repository preparation is implemented under `.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml` on frozen base `13e398599ce69e087e9098b1413cad37c41edfd1` and awaits review/CI; live mutation remains gated by the later exact-value checkpoint.
+`.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 through A7-6 are complete. A7-7 repository preparation is implemented under `.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml` on frozen base `13e398599ce69e087e9098b1413cad37c41edfd1`. Live execution is now gated by the corrected two-stage lifecycle: restore only the reviewed delivery bootstrap after its checkpoint, run the existing read-only OIDC/quota/Terraform preflight, then require the runtime-live checkpoint before target-runtime mutation.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
 
@@ -543,13 +543,23 @@ authenticated backend live-validation workflow. No new workflow or architecture 
 
 Reuse the existing Case C representative topology; do not create a second architecture.
 
-The actual Case C final baseline also deleted the delivery bootstrap: state bucket, plan/apply/image
-publisher service accounts, and the GitHub WIF pool/provider are absent. Therefore A7-7 must first
-recreate the **same reviewed bootstrap**, not a new identity architecture. The initial GitHub
-preflight run `37278756126` failed at OIDC token exchange with `invalid_target`, before any quota
-or Terraform query, which confirms that baseline assumption was wrong rather than revealing a
-runtime defect. The final A7-7 teardown must include both runtime teardown and the existing Stage 2
-bootstrap cleanup so the project returns to the same fully closed baseline.
+The actual Case C final bootstrap baseline is asymmetric. The state bucket and the
+plan/apply/image-publisher service accounts are absent, while the independently authenticated
+2026-10-05 inventory shows `terraformers-github` in Google Cloud `DELETED` soft-delete state
+with expire time `2026-11-01T16:21:59.782737490Z`. Provider lookup is unresolved while its parent
+pool is deleted. Therefore A7-7 must **undelete the existing pool**, verify that the restored
+`terraformers-main` provider exactly matches the reviewed issuer/mapping/condition, and STOP rather
+than create/update a replacement if it does not. The exact state bucket and three service accounts
+are recreated through the existing reviewed bootstrap contract.
+
+The initial GitHub preflight run `37278756126` failed at OIDC token exchange with
+`invalid_target` before any quota or Terraform query. That makes a single pre-mutation checkpoint
+containing a Terraform plan impossible: GitHub OIDC must first be restored before the read-only
+preflight can run. The corrected sequence therefore uses a bootstrap-restore checkpoint followed by
+the existing read-only OIDC/quota/Terraform preflight and a separate runtime-live checkpoint. Final
+cleanup must again delete the pool through the existing Stage 2 cleanup, returning it to DELETED
+soft-delete/non-ACTIVE semantics rather than pretending deletion produces immediate permanent
+absence.
 
 Minimum evidence:
 

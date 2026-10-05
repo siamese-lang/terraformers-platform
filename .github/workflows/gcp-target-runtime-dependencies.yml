@@ -979,6 +979,7 @@ jobs:
           )" == 1 ]]
 
           kubectl auth can-i patch deployments.apps -n "$NAMESPACE" | grep -Fxq yes
+          kubectl auth can-i patch configmaps -n "$NAMESPACE" | grep -Fxq yes
 
       - name: Roll out exact immutable backend revision
         env:

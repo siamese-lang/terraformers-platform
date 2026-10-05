@@ -1,6 +1,6 @@
 # Case A A7-7 — broad v4 end-to-end live proof
 
-Status: **APPROVED — ACTIVATION PENDING — NO LIVE ACTION YET**
+Status: **REPOSITORY IMPLEMENTED — AWAITING REVIEW/CI — NO LIVE ACTION YET**
 
 ## Required claim
 
@@ -72,6 +72,36 @@ Before any embedding request the built corpus must reproduce the A7-0 broad cont
 | Total documents | 5,395 |
 
 Any mismatch stops live execution.
+
+## Repository preparation implemented
+
+Frozen execution base:
+
+`13e398599ce69e087e9098b1413cad37c41edfd1`
+
+The bounded repository path now contains:
+
+- manifest-driven GCP ingestion support for the exact immutable v3 and broad v4 contracts;
+- preserved historical v3 document-count/checksum behavior and new v4 fail-closed tests;
+- deterministic broad-v4 live build from provider commit
+  `f7a3b98da589ab1d52756b0dcee0dbf2de83d635` and the AWS Provider 5.100.0 schema copied from the
+  exact deployed backend image/runtime;
+- exact pre-embedding gates for 1,526 schema resources, 1,514 documented/selected resources,
+  5,387 provider chunks, 8 project decisions, 5,395 documents, and zero extraction gaps;
+- the existing protected GCP corpus-ingestion workflow extended with
+  `INGEST_A7_7_REFERENCE_V4`, not a new workflow;
+- GCP target backend runtime identity changed from v3 to
+  `INDEX_NAME/CORPUS_VERSION=terraformers-reference-v4`;
+- one `a7-7-broad-v4-live-proof` operation in the existing authenticated backend validation
+  workflow;
+- positive assertions for correlated v4 retrieval, generated Terraform read-back, and persisted
+  `evidence-quality-v1`;
+- negative assertions for `rejected_input`, no Terraform result, and persisted
+  PASS / NOT_APPLICABLE quality semantics;
+- bounded evidence artifacts containing identities, statuses, quality enums/counts, checksum, and
+  reference count only — not raw prompt/image/reference/HCL/embedding content.
+
+Live execution has not started. Repository CI and independent review are the next gate.
 
 ## Positive control
 

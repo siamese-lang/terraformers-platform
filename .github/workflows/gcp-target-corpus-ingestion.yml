@@ -7,8 +7,15 @@ on:
         description: Exact trusted main commit SHA being used for live ingestion.
         required: true
         type: string
+      corpus_version:
+        description: Exact immutable corpus contract to ingest.
+        required: true
+        type: choice
+        options:
+          - terraformers-reference-v3
+          - terraformers-reference-v4
       confirmation:
-        description: Use INGEST_M3_R3B_REFERENCE_V3.
+        description: Use the exact confirmation token for the selected corpus version.
         required: true
         type: string
 
@@ -25,7 +32,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: gcp-target-apply
-    timeout-minutes: 30
+    timeout-minutes: 180
     env:
       CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
       TARGET_NAMESPACE: terraformers-target
@@ -42,6 +49,7 @@ jobs:
       - name: Validate trusted ingestion request
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CORPUS_VERSION: ${{ inputs.corpus_version }}
           CONFIRMATION: ${{ inputs.confirmation }}
           WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
           APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
@@ -57,10 +65,24 @@ jobs:
             echo 'Approved SHA does not match the checked-out main commit.' >&2
             exit 1
           }
-          [[ "$CONFIRMATION" == INGEST_M3_R3B_REFERENCE_V3 ]] || {
-            echo 'Live v3 ingestion requires confirmation INGEST_M3_R3B_REFERENCE_V3.' >&2
-            exit 1
-          }
+          case "$CORPUS_VERSION" in
+            terraformers-reference-v3)
+              [[ "$CONFIRMATION" == INGEST_M3_R3B_REFERENCE_V3 ]] || {
+                echo 'Live v3 ingestion requires confirmation INGEST_M3_R3B_REFERENCE_V3.' >&2
+                exit 1
+              }
+              ;;
+            terraformers-reference-v4)
+              [[ "$CONFIRMATION" == INGEST_A7_7_REFERENCE_V4 ]] || {
+                echo 'A7-7 v4 ingestion requires confirmation INGEST_A7_7_REFERENCE_V4.' >&2
+                exit 1
+              }
+              ;;
+            *)
+              echo "Unsupported corpus version: $CORPUS_VERSION" >&2
+              exit 1
+              ;;
+          esac
           [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]] || {
             echo 'Unexpected Kubernetes deployment identity.' >&2
             exit 1
@@ -71,15 +93,22 @@ jobs:
           }
 
       - name: Verify committed v3 contract
+        if: inputs.corpus_version == 'terraformers-reference-v3'
         run: |
           set -euo pipefail
-          python3 scripts/checks/rag-corpus-contract-verification.py             --corpus-dir corpus/terraformers-reference/v3             --summary-json "${RUNNER_TEMP}/v3-contract.json"
+          python3 scripts/checks/rag-corpus-contract-verification.py             --corpus-dir corpus/terraformers-reference/v3             --summary-json "${RUNNER_TEMP}/corpus-contract.json"
 
           jq -e '
             .corpusVersion == "terraformers-reference-v3"
             and .documentCount == 128
             and (.sha256 | type == "string" and length == 64)
-          ' "${RUNNER_TEMP}/v3-contract.json" >/dev/null
+          ' "${RUNNER_TEMP}/corpus-contract.json" >/dev/null
+
+          {
+            echo 'CORPUS_DIR=corpus/terraformers-reference/v3'
+            echo 'CORPUS_DIR_NAME=v3'
+            echo "CORPUS_CONTRACT_JSON=${RUNNER_TEMP}/corpus-contract.json"
+          } >> "$GITHUB_ENV"
 
       - uses: google-github-actions/auth@v3
         with:
@@ -162,6 +191,65 @@ jobs:
             exit 1
           }
 
+      - name: Build exact broad v4 corpus from pinned authority
+        if: inputs.corpus_version == 'terraformers-reference-v4'
+        run: |
+          set -euo pipefail
+          provider_commit='f7a3b98da589ab1d52756b0dcee0dbf2de83d635'
+          provider_dir="${RUNNER_TEMP}/terraform-provider-aws"
+          schema_json="${RUNNER_TEMP}/aws-provider-5.100.0.json"
+          corpus_dir="${RUNNER_TEMP}/terraformers-reference-v4"
+
+          [[ "$(
+            kubectl -n "$TARGET_NAMESPACE" get deployment terraformers-backend               -o jsonpath='{.status.readyReplicas}'
+          )" == 1 ]] || {
+            echo 'A7-7 v4 corpus build requires one ready backend replica.' >&2
+            exit 1
+          }
+
+          runtime_source="$(
+            kubectl -n "$TARGET_NAMESPACE" exec deployment/terraformers-backend               -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
+          )"
+          [[ "$runtime_source" == "$GITHUB_SHA" ]] || {
+            echo "Backend source revision mismatch: $runtime_source" >&2
+            exit 1
+          }
+
+          kubectl -n "$TARGET_NAMESPACE" exec deployment/terraformers-backend             -c backend -- cat /opt/terraform-provider-schema/aws-5.100.0.json > "$schema_json"
+          test -s "$schema_json"
+
+          git init -q "$provider_dir"
+          git -C "$provider_dir" remote add origin https://github.com/hashicorp/terraform-provider-aws.git
+          git -C "$provider_dir" fetch -q --depth=1 origin "$provider_commit"
+          git -C "$provider_dir" checkout -q --detach FETCH_HEAD
+          [[ "$(git -C "$provider_dir" rev-parse HEAD)" == "$provider_commit" ]]
+
+          python3 scripts/rag/build-corpus-v4.py             --provider-source-dir "$provider_dir"             --provider-schema-json "$schema_json"             --provider-source-commit "$provider_commit"             --project-source-commit "$GITHUB_SHA"             --output-dir "$corpus_dir"             --all-documented-resources
+
+          python3 scripts/checks/rag-corpus-contract-verification.py             --corpus-dir "$corpus_dir"             --summary-json "${RUNNER_TEMP}/corpus-contract.json"
+
+          jq -e '
+            .corpusVersion == "terraformers-reference-v4"
+            and .documentCount == 5395
+            and (.sha256 | type == "string" and length == 64)
+          ' "${RUNNER_TEMP}/corpus-contract.json" >/dev/null
+
+          jq -e '
+            .providerSchemaResourceCount == 1526
+            and .officialDocumentationResourceCount == 1514
+            and .selectedResourceCount == 1514
+            and .selectedOfficialEvidenceResourceCount == 1514
+            and (.selectedOfficialEvidenceExtractionGapResourceTypes | length) == 0
+            and .providerDocumentChunkCount == 5387
+            and .projectDecisionCount == 8
+          ' "$corpus_dir/coverage-report.json" >/dev/null
+
+          {
+            echo "CORPUS_DIR=$corpus_dir"
+            echo 'CORPUS_DIR_NAME=v4'
+            echo "CORPUS_CONTRACT_JSON=${RUNNER_TEMP}/corpus-contract.json"
+          } >> "$GITHUB_ENV"
+
       - name: Start ephemeral Workload Identity ingestion pod
         run: |
           set -euo pipefail
@@ -187,7 +275,7 @@ jobs:
               - name: ingestion
                 image: python:3.13-slim
                 imagePullPolicy: IfNotPresent
-                command: ["python", "-c", "import time; time.sleep(1800)"]
+                command: ["python", "-c", "import time; time.sleep(10800)"]
                 securityContext:
                   allowPrivilegeEscalation: false
                   capabilities:
@@ -233,7 +321,20 @@ jobs:
       - name: Transfer exact ingestion bundle
         run: |
           set -euo pipefail
-          tar -czf "${RUNNER_TEMP}/rag-ingestion-bundle.tgz"             scripts/rag/ingest-gcp-target-corpus.py             scripts/rag/requirements-gcp.txt             scripts/checks/rag-corpus-contract-verification.py             corpus/terraformers-reference/v3             docs/source-rag-gitops-reuse-plan.md             infra/terraform/envs/eks-runtime/main.tf             infra/terraform/envs/rag-runtime/main.tf             infra/terraform/envs/rag-runtime/outputs.tf
+          bundle_root="${RUNNER_TEMP}/rag-ingestion-bundle"
+          rm -rf "$bundle_root"
+          mkdir -p             "$bundle_root/scripts/rag"             "$bundle_root/scripts/checks"             "$bundle_root/corpus/terraformers-reference"             "$bundle_root/docs"             "$bundle_root/infra/terraform/envs/eks-runtime"             "$bundle_root/infra/terraform/envs/rag-runtime"
+
+          cp scripts/rag/ingest-gcp-target-corpus.py "$bundle_root/scripts/rag/"
+          cp scripts/rag/requirements-gcp.txt "$bundle_root/scripts/rag/"
+          cp scripts/checks/rag-corpus-contract-verification.py "$bundle_root/scripts/checks/"
+          cp docs/source-rag-gitops-reuse-plan.md "$bundle_root/docs/"
+          cp infra/terraform/envs/eks-runtime/main.tf "$bundle_root/infra/terraform/envs/eks-runtime/"
+          cp infra/terraform/envs/rag-runtime/main.tf "$bundle_root/infra/terraform/envs/rag-runtime/"
+          cp infra/terraform/envs/rag-runtime/outputs.tf "$bundle_root/infra/terraform/envs/rag-runtime/"
+          cp -R "$CORPUS_DIR" "$bundle_root/corpus/terraformers-reference/$CORPUS_DIR_NAME"
+
+          tar -C "$bundle_root" -czf "${RUNNER_TEMP}/rag-ingestion-bundle.tgz" .
 
           kubectl -n "$TARGET_NAMESPACE" exec -i "$INGESTION_POD" --             python -c '
           import sys
@@ -251,45 +352,73 @@ jobs:
           set -euo pipefail
           kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             python -m pip install               --disable-pip-version-check               --no-cache-dir               --target /tmp/terraformers-ingestion-deps               -r /tmp/workspace/scripts/rag/requirements-gcp.txt
 
-      - name: Ingest terraformers-reference-v3
+      - name: Ingest selected immutable corpus
+        env:
+          CORPUS_VERSION: ${{ inputs.corpus_version }}
         run: |
           set -euo pipefail
-          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             env PYTHONPATH=/tmp/terraformers-ingestion-deps             python /tmp/workspace/scripts/rag/ingest-gcp-target-corpus.py               --project terraformers-platform               --location global               --opensearch-endpoint "http://${OPENSEARCH_SERVICE}:9200"               --receipt /tmp/terraformers-reference-v3-receipt.json
+          receipt="/tmp/${CORPUS_VERSION}-receipt.json"
+          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             env PYTHONPATH=/tmp/terraformers-ingestion-deps             python /tmp/workspace/scripts/rag/ingest-gcp-target-corpus.py               --corpus-dir "/tmp/workspace/corpus/terraformers-reference/${CORPUS_DIR_NAME}"               --project terraformers-platform               --location global               --opensearch-endpoint "http://${OPENSEARCH_SERVICE}:9200"               --receipt "$receipt"
 
-          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             cat /tmp/terraformers-reference-v3-receipt.json             > "${RUNNER_TEMP}/ingestion-receipt.json"
+          kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             cat "$receipt" > "${RUNNER_TEMP}/ingestion-receipt.json"
 
       - name: Verify ingestion receipt
+        env:
+          CORPUS_VERSION: ${{ inputs.corpus_version }}
         run: |
           set -euo pipefail
-          expected_checksum="$(
-            jq -r '.sha256' "${RUNNER_TEMP}/v3-contract.json"
-          )"
+          expected_checksum="$(jq -r '.sha256' "$CORPUS_CONTRACT_JSON")"
+          expected_count="$(jq -r '.documentCount' "$CORPUS_CONTRACT_JSON")"
+          manifest="$CORPUS_DIR/corpus-manifest.json"
+          expected_index="$(jq -r '.indexName' "$manifest")"
+          expected_model="$(jq -r '.embeddingModelId' "$manifest")"
+          expected_dimension="$(jq -r '.vectorDimension' "$manifest")"
 
-          jq -e --arg checksum "$expected_checksum" '
-            .corpus_version == "terraformers-reference-v3"
+          jq -e             --arg version "$CORPUS_VERSION"             --arg checksum "$expected_checksum"             --arg index "$expected_index"             --arg model "$expected_model"             --argjson count "$expected_count"             --argjson dimension "$expected_dimension" '
+            .corpus_version == $version
             and .checksum == $checksum
-            and .document_count == 128
-            and .index_name == "terraformers-reference-v3"
-            and .embedding_model_id == "gemini-embedding-001"
-            and .vector_dimension == 1024
+            and .document_count == $count
+            and .index_name == $index
+            and .embedding_model_id == $model
+            and .vector_dimension == $dimension
             and (.representative_hit_ids | type == "array" and length > 0)
             and (.outcome == "ingested" or .outcome == "already-ingested")
           ' "${RUNNER_TEMP}/ingestion-receipt.json" >/dev/null
 
           {
-            echo '## M3-R3b live corpus ingestion'
+            echo '## GCP target live corpus ingestion'
             echo
             printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
-            echo '- Corpus: `terraformers-reference-v3`'
-            echo '- Documents: `128`'
-            echo '- Embedding model: `gemini-embedding-001`'
+            printf -- '- Corpus: `%s`\n' "$CORPUS_VERSION"
+            printf -- '- Documents: `%s`\n' "$expected_count"
+            printf -- '- Corpus checksum: `%s`\n' "$expected_checksum"
+            printf -- '- Embedding model: `%s`\n' "$expected_model"
             echo '- Embedding task: `RETRIEVAL_DOCUMENT`'
-            echo '- Vector dimension: `1024`'
-            echo '- OpenSearch index: `terraformers-reference-v3`'
+            printf -- '- Vector dimension: `%s`\n' "$expected_dimension"
+            printf -- '- OpenSearch index: `%s`\n' "$expected_index"
             printf -- '- Outcome: `%s`\n' "$(jq -r '.outcome' "${RUNNER_TEMP}/ingestion-receipt.json")"
             printf -- '- Representative hit IDs: `%s`\n' "$(jq -r '.representative_hit_ids | join(",")' "${RUNNER_TEMP}/ingestion-receipt.json")"
-            echo '- Receipt contains no document content or credentials.'
+            echo '- Receipt contains no document content, embedding vectors, or credentials.'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare bounded ingestion evidence
+        run: |
+          set -euo pipefail
+          evidence_dir="${RUNNER_TEMP}/ingestion-evidence"
+          mkdir -p "$evidence_dir"
+          cp "$CORPUS_CONTRACT_JSON" "$evidence_dir/contract.json"
+          cp "${RUNNER_TEMP}/ingestion-receipt.json" "$evidence_dir/receipt.json"
+          if [[ -f "$CORPUS_DIR/coverage-report.json" ]]; then
+            cp "$CORPUS_DIR/coverage-report.json" "$evidence_dir/coverage-report.json"
+          fi
+
+      - name: Upload bounded ingestion evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcp-corpus-ingestion-${{ github.run_id }}
+          path: ${{ runner.temp }}/ingestion-evidence
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Delete ephemeral ingestion pod
         if: always()

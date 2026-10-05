@@ -1,6 +1,6 @@
 work_package:
   id: case-a-semantic-reliability-v1
-  status: A7_6_COMPLETE_HANDOFF_TO_A7_7_WORK_PACKAGE
+  status: A7_7_REPOSITORY_IMPLEMENTED_AWAITING_REVIEW
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: dd34d1cec34d31783ca2d672c65311ce82fd2666
 
@@ -20,7 +20,7 @@ work_package:
     closure_evidence: docs/evaluation/case-a-a7-6-observability-backend-decision.md
     completed_phase_merge_sha: a58d78181be642f3b3c2fdd38486c7d19fcc045e
     next_phase: A7_7
-    next_phase_status: APPROVED_ACTIVATION_PENDING
+    next_phase_status: REPOSITORY_IMPLEMENTED_AWAITING_REVIEW
     next_phase_requires_explicit_user_approval: false
     measured_provider_schema_resource_count: 1526
     measured_official_documented_schema_resource_count: 1514

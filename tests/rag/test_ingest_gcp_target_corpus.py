@@ -34,13 +34,22 @@ class FakeEmbedder:
 
 
 class FakeOpenSearch:
-    def __init__(self, schema, checksum=None, existing_documents=None, count=128, hits=None):
+    def __init__(
+        self,
+        schema,
+        checksum=None,
+        existing_documents=None,
+        count=128,
+        hits=None,
+        corpus_version="terraformers-reference-v3",
+    ):
         self.schema = schema
         self.checksum = checksum
         self.exists = checksum is not None
         self.documents = dict(existing_documents or {})
         self.count = count
         self.hits = hits if hits is not None else [{"_id": "doc-1", "_source": {"documentId": "doc-1"}}]
+        self.corpus_version = corpus_version
         self.calls = []
 
     def request(self, method, path, body=None, accepted=(200,)):
@@ -54,7 +63,7 @@ class FakeOpenSearch:
             index = path.split("/")[1]
             mapping = json.loads(json.dumps(self.schema["mappings"]))
             mapping["_meta"] = {gcp_ingest.CHECKSUM_META_KEY: {
-                "corpus_version": "terraformers-reference-v3", "checksum": self.checksum}}
+                "corpus_version": self.corpus_version, "checksum": self.checksum}}
             return 200, {index: {"mappings": mapping}}
         if method == "HEAD" and "/_doc/" in path:
             return (200 if path.rsplit("/", 1)[1] in self.documents else 404), {}
@@ -76,11 +85,32 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
         )
 
     def test_v3_contract_is_loaded_from_manifest(self):
-        self.assertEqual(gcp_ingest.EXPECTED_CONTRACT, {
-            key: self.manifest[key] for key in gcp_ingest.EXPECTED_CONTRACT
-        })
+        expected = gcp_ingest.SUPPORTED_CONTRACTS["terraformers-reference-v3"]
+        self.assertEqual(expected, {key: self.manifest[key] for key in expected})
         self.assertEqual(128, len(self.documents))
         self.assertEqual(64, len(self.checksum))
+
+    def test_v4_manifest_contract_is_supported_with_exact_broad_count(self):
+        manifest = dict(self.manifest)
+        manifest.update({
+            "corpusVersion": "terraformers-reference-v4",
+            "indexName": "terraformers-reference-v4",
+            "documentCount": 5395,
+            "chunkCount": 5395,
+        })
+
+        expected = gcp_ingest.validate_supported_manifest(manifest)
+
+        self.assertEqual(5395, expected["documentCount"])
+        self.assertEqual("terraformers-reference-v4", expected["indexName"])
+        self.assertEqual("gemini-embedding-001", expected["embeddingModelId"])
+        self.assertEqual(1024, expected["vectorDimension"])
+
+    def test_unknown_corpus_version_fails_closed(self):
+        manifest = dict(self.manifest)
+        manifest["corpusVersion"] = "terraformers-reference-v99"
+        with self.assertRaisesRegex(RuntimeError, "unsupported corpusVersion"):
+            gcp_ingest.validate_supported_manifest(manifest)
 
     def test_vertex_request_uses_document_semantics_and_1024_dimensions(self):
         transport = RecordingTransport()
@@ -228,11 +258,33 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
         self.assertEqual("already-ingested", receipt["outcome"])
         self.assertFalse(any(method == "PUT" and "/_doc/" in path for method, path, _ in client.calls))
 
-    def test_final_count_above_or_below_128_fails(self):
+    def test_final_count_above_or_below_manifest_count_fails(self):
         for count in (127, 129):
             client = FakeOpenSearch(self.schema, checksum=self.checksum, count=count)
             with self.subTest(count=count), self.assertRaisesRegex(RuntimeError, "exactly 128"):
                 gcp_ingest.ingest(client, FakeEmbedder(), self.manifest, self.schema, [], self.checksum)
+
+    def test_v4_ingest_uses_v4_index_and_manifest_document_count(self):
+        manifest = dict(self.manifest)
+        manifest.update({
+            "corpusVersion": "terraformers-reference-v4",
+            "indexName": "terraformers-reference-v4",
+            "documentCount": 5395,
+            "chunkCount": 5395,
+        })
+        client = FakeOpenSearch(
+            self.schema,
+            checksum=self.checksum,
+            count=5395,
+            corpus_version="terraformers-reference-v4",
+        )
+        receipt = gcp_ingest.ingest(
+            client, FakeEmbedder(), manifest, self.schema, self.documents[:1], self.checksum
+        )
+        self.assertEqual("terraformers-reference-v4", receipt["corpus_version"])
+        self.assertEqual(5395, receipt["document_count"])
+        self.assertEqual("terraformers-reference-v4", receipt["index_name"])
+        self.assertTrue(any(path == "/terraformers-reference-v4/_count" for _, path, _ in client.calls))
 
     def test_representative_knn_hit_is_required(self):
         client = FakeOpenSearch(self.schema, checksum=self.checksum, hits=[])

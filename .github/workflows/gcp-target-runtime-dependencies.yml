@@ -17,6 +17,7 @@ on:
           - backend-replacement-durability
           - backend-live-validation
           - backend-live-validation-c2-stability
+          - a7-7-broad-v4-live-proof
           - capacity-baseline
           - runtime-live-acceptance
       expected_sha:
@@ -1455,7 +1456,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch' &&
-      (inputs.operation == 'backend-live-validation' || inputs.operation == 'backend-live-validation-c2-stability')
+      (inputs.operation == 'backend-live-validation' || inputs.operation == 'backend-live-validation-c2-stability' || inputs.operation == 'a7-7-broad-v4-live-proof')
     runs-on: ubuntu-latest
     environment: gcp-target-apply
     timeout-minutes: 90
@@ -1466,6 +1467,7 @@ jobs:
       ISSUER_URI: https://identity.example.test/case-c
       CLIENT_ID: case-c-runtime-client
       FIXTURE: evaluation/terraformers-eval-v1/fixtures/case-01-vpc-three-tier.webp
+      NEGATIVE_FIXTURE: evaluation/terraformers-eval-v1/fixtures/case-06-non-architecture-dashboard.webp
 
     steps:
       - uses: actions/checkout@v5
@@ -1504,6 +1506,20 @@ jobs:
               }
               [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_SHA" ]] || {
                 echo 'C2 backend source SHA must equal the approved checked-out main SHA.' >&2
+                exit 1
+              }
+              ;;
+            a7-7-broad-v4-live-proof)
+              [[ "$CONFIRMATION" == RUN_A7_7_BROAD_V4_LIVE_PROOF ]] || {
+                echo 'A7-7 live proof requires confirmation RUN_A7_7_BROAD_V4_LIVE_PROOF.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+                echo 'A7-7 live proof requires an exact backend_source_sha.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_SOURCE_SHA" == "$EXPECTED_SHA" ]] || {
+                echo 'A7-7 backend source SHA must equal the approved checked-out main SHA.' >&2
                 exit 1
               }
               ;;
@@ -1555,14 +1571,59 @@ jobs:
           kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
           test -s "$FIXTURE"
 
-          if [[ "$OPERATION" == backend-live-validation-c2-stability ]]; then
+          if [[ "$OPERATION" == backend-live-validation-c2-stability || "$OPERATION" == a7-7-broad-v4-live-proof ]]; then
             runtime_source="$(
               kubectl -n "$NAMESPACE" exec deployment/terraformers-backend                 -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
             )"
             [[ "$runtime_source" == "$BACKEND_SOURCE_SHA" ]] || {
-              echo "C2 runtime source revision mismatch: $runtime_source" >&2
+              echo "Runtime source revision mismatch: $runtime_source" >&2
               exit 1
             }
+          fi
+
+          if [[ "$OPERATION" == a7-7-broad-v4-live-proof ]]; then
+            test -s "$NEGATIVE_FIXTURE"
+            [[ "$(sha256sum "$FIXTURE" | awk '{print $1}')" == a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8 ]]
+            [[ "$(sha256sum "$NEGATIVE_FIXTURE" | awk '{print $1}')" == 12eb8590b89eaea0988d5038c7a9862eebc584039d88084fe91433848a53d36d ]]
+
+            [[ "$(
+              kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config                 -o jsonpath='{.data.CORPUS_VERSION}'
+            )" == terraformers-reference-v4 ]]
+            [[ "$(
+              kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config                 -o jsonpath='{.data.INDEX_NAME}'
+            )" == terraformers-reference-v4 ]]
+
+            runtime_retrieval="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend --                 sh -c 'printf "%s|%s" "$CORPUS_VERSION" "$INDEX_NAME"'
+            )"
+            [[ "$runtime_retrieval" == 'terraformers-reference-v4|terraformers-reference-v4' ]] || {
+              echo "A7-7 backend runtime retrieval identity mismatch: $runtime_retrieval" >&2
+              exit 1
+            }
+
+            mapping_json="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend --                 curl -fsS http://terraformers-opensearch:9200/terraformers-reference-v4/_mapping
+            )"
+            v4_checksum="$(
+              jq -r '."terraformers-reference-v4".mappings._meta.terraformers_corpus.checksum // empty'                 <<< "$mapping_json"
+            )"
+            [[ "$v4_checksum" =~ ^[0-9a-f]{64}$ ]] || {
+              echo 'A7-7 v4 index is missing the immutable corpus checksum.' >&2
+              exit 1
+            }
+            v4_corpus_version="$(
+              jq -r '."terraformers-reference-v4".mappings._meta.terraformers_corpus.corpus_version // empty'                 <<< "$mapping_json"
+            )"
+            [[ "$v4_corpus_version" == terraformers-reference-v4 ]]
+
+            count_json="$(
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend --                 curl -fsS -H 'Content-Type: application/json'                   -X POST http://terraformers-opensearch:9200/terraformers-reference-v4/_count                   -d '{"query":{"term":{"corpusVersion":"terraformers-reference-v4"}}}'
+            )"
+            [[ "$(jq -r '.count' <<< "$count_json")" == 5395 ]] || {
+              echo "A7-7 v4 index document count mismatch: $(jq -r '.count' <<< "$count_json")" >&2
+              exit 1
+            }
+            echo "A77_V4_CHECKSUM=$v4_checksum" >> "$GITHUB_ENV"
           fi
 
       - name: Prepare ephemeral authenticated JWT fixture
@@ -1643,7 +1704,7 @@ jobs:
             printf '{"alg":"RS256","kid":"%s","typ":"JWT"}' "$kid"               | openssl base64 -A | tr '+/' '-_' | tr -d '='
           )"
           token_ttl=900
-          if [[ "$OPERATION" == backend-live-validation-c2-stability ]]; then
+          if [[ "$OPERATION" == backend-live-validation-c2-stability || "$OPERATION" == a7-7-broad-v4-live-proof ]]; then
             token_ttl=10800
           fi
           payload="$(
@@ -1788,6 +1849,322 @@ jobs:
             printf -- '- Provider: `%s`\n' "$(jq -r '.provider' "$job_json")"
             printf -- '- Result object key: `%s`\n' "$result_key"
             echo '- Generated Terraform read through backend: `PASS`'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run A7-7 broad v4 persisted-quality live proof
+        if: inputs.operation == 'a7-7-broad-v4-live-proof'
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+        run: |
+          set -euo pipefail
+          token="$(cat "${RUNNER_TEMP}/case-c-access.token")"
+          evidence_dir="${RUNNER_TEMP}/a7-7-live-proof"
+          mkdir -p "$evidence_dir"
+
+          positive_upload="${RUNNER_TEMP}/a7-7-positive-upload.json"
+          positive_headers="${RUNNER_TEMP}/a7-7-positive-upload.headers"
+          positive_job="${RUNNER_TEMP}/a7-7-positive-job.json"
+          positive_draft="${RUNNER_TEMP}/a7-7-positive-draft.json"
+          negative_upload="${RUNNER_TEMP}/a7-7-negative-upload.json"
+          negative_headers="${RUNNER_TEMP}/a7-7-negative-upload.headers"
+          negative_job="${RUNNER_TEMP}/a7-7-negative-job.json"
+          negative_draft="${RUNNER_TEMP}/a7-7-negative-draft.json"
+          metrics="${RUNNER_TEMP}/a7-7-metrics.txt"
+          backend_log="${RUNNER_TEMP}/a7-7-backend.log"
+          pf_log="${RUNNER_TEMP}/a7-7-port-forward.log"
+
+          bounded_job() {
+            jq '{
+              id,
+              projectId,
+              status,
+              provider,
+              resultFileId,
+              hasResultObjectKey: (.resultObjectKey != null),
+              failureReason,
+              quality
+            }' "$1"
+          }
+
+          kubectl -n "$NAMESPACE" port-forward service/terraformers-backend 18080:80             >"$pf_log" 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid" >/dev/null 2>&1 || true' EXIT
+
+          ready=false
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/actuator/health                 | jq -e '.status == "UP"' >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          [[ "$ready" == true ]] || {
+            echo 'A7-7 backend port-forward did not become healthy.' >&2
+            exit 1
+          }
+
+          positive_code="$(
+            curl -sS -D "$positive_headers" -o "$positive_upload" -w '%{http_code}'               -H "Authorization: Bearer ${token}"               -F "file=@${FIXTURE};type=image/webp"               -F "projectName=a7-7-positive-${GITHUB_RUN_ID}"               http://127.0.0.1:18080/api/upload
+          )"
+          [[ "$positive_code" == 201 ]] || {
+            echo "A7-7 positive upload returned HTTP ${positive_code}, expected 201." >&2
+            exit 1
+          }
+          jq -e '
+            .storageProvider == "gcs"
+            and .binaryPersisted == true
+            and (.analysisJobId | type == "string" and length > 0)
+            and (.projectId | type == "number")
+            and (.sourceFileId | type == "number")
+            and .sourceBucket == "terraformers-runtime-objects-21647422237"
+          ' "$positive_upload" >/dev/null
+
+          positive_job_id="$(jq -r '.analysisJobId' "$positive_upload")"
+          positive_project_id="$(jq -r '.projectId' "$positive_upload")"
+          positive_terminal=""
+          for _ in $(seq 1 240); do
+            job_code="$(
+              curl -sS -o "$positive_job" -w '%{http_code}'                 -H "Authorization: Bearer ${token}"                 "http://127.0.0.1:18080/api/analysis/jobs/${positive_job_id}"
+            )"
+            [[ "$job_code" == 200 ]] || {
+              echo "A7-7 positive job read returned HTTP ${job_code}." >&2
+              exit 1
+            }
+            positive_terminal="$(jq -r '.status' "$positive_job")"
+            case "$positive_terminal" in
+              SUCCEEDED) break ;;
+              FAILED)
+                echo 'A7-7 positive control reached FAILED; retaining bounded terminal evidence.' >&2
+                bounded_job "$positive_job" >&2
+                kubectl -n "$NAMESPACE" logs deployment/terraformers-backend                   -c backend --since=30m >"$backend_log" 2>/dev/null || true
+                awk -v job="analysisJobId=${positive_job_id}" '
+                  index($0, job) &&
+                  $0 ~ /(reference retrieval outcome=|analysis stage outcome=failure|Analysis job failed outcome=failed|Analysis retry scheduled|Analysis retry budget exhausted|Terraform executable diagnostic)/ { print }
+                ' "$backend_log" >&2 || true
+                exit 1
+                ;;
+              PENDING|RUNNING) sleep 5 ;;
+              *)
+                echo "Unexpected A7-7 positive job status: ${positive_terminal}" >&2
+                exit 1
+                ;;
+            esac
+          done
+          [[ "$positive_terminal" == SUCCEEDED ]] || {
+            echo "A7-7 positive job did not reach SUCCEEDED: ${positive_terminal}" >&2
+            exit 1
+          }
+
+          jq -e '
+            .status == "SUCCEEDED"
+            and (.provider | type == "string" and length > 0)
+            and (.resultFileId | type == "number")
+            and (.resultObjectKey | type == "string" and length > 0)
+            and .failureReason == null
+            and .quality != null
+            and .quality.contractVersion == "evidence-quality-v1"
+            and .quality.technicalStatus == "PASS"
+            and .quality.knowledgeStatus == "COMPLETE"
+            and .quality.qualityStatus != "NOT_APPLICABLE"
+            and .quality.projectDecisionStatus != "NOT_APPLICABLE"
+            and .quality.runtimeQualityBoundary == "CONDITIONAL_ON_EXTRACTED_FACTS"
+            and (.quality.reasons | type == "array")
+            and all(.quality.reasons[];
+              . == "RESOURCE_UNKNOWN_TO_PROVIDER"
+              or . == "OFFICIAL_KNOWLEDGE_NOT_AVAILABLE"
+              or . == "REQUIRED_EVIDENCE_NOT_RETRIEVED"
+              or . == "REQUIRED_PROJECT_DECISION_NOT_RETRIEVED"
+              or . == "GENERATED_RESOURCE_UNSUPPORTED_BY_EVIDENCE"
+              or . == "PROVIDER_CONTENT_BLOCKED"
+              or . == "PROVIDER_OUTPUT_TRUNCATED"
+              or . == "PROVIDER_EMPTY_RESPONSE"
+              or . == "PROVIDER_TIMEOUT"
+              or . == "PROVIDER_RATE_LIMITED"
+              or . == "PROVIDER_ERROR"
+              or . == "PROVIDER_SCHEMA_FAILURE"
+              or . == "TERRAFORM_EXECUTABLE_FAILURE")
+          ' "$positive_job" >/dev/null
+
+          positive_draft_code="$(
+            curl -sS -o "$positive_draft" -w '%{http_code}'               -H "Authorization: Bearer ${token}"               "http://127.0.0.1:18080/api/projects/${positive_project_id}/terraform/main.tf"
+          )"
+          [[ "$positive_draft_code" == 200 ]] || {
+            echo "A7-7 positive Terraform read returned HTTP ${positive_draft_code}." >&2
+            exit 1
+          }
+          jq -e             --arg job_id "$positive_job_id"             --arg result_key "$(jq -r '.resultObjectKey' "$positive_job")" '
+            .latestAnalysisJobId == $job_id
+            and .latestResultObjectKey == $result_key
+            and (.content | type == "string" and length > 0)
+          ' "$positive_draft" >/dev/null
+          rm -f "$positive_draft"
+
+          kubectl -n "$NAMESPACE" logs deployment/terraformers-backend             -c backend --since=30m >"$backend_log"
+          positive_retrieval_line="$(
+            grep -F "analysisJobId=${positive_job_id}" "$backend_log"               | grep -F 'Vertex reference retrieval outcome=success mode=REQUIRED corpusVersion=terraformers-reference-v4 referenceCount='               | tail -n 1 || true
+          )"
+          [[ -n "$positive_retrieval_line" ]] || {
+            echo 'A7-7 positive job has no correlated v4 retrieval-success log.' >&2
+            exit 1
+          }
+          positive_reference_count="$(
+            sed -n 's/.*referenceCount=\([0-9][0-9]*\).*/\1/p' <<< "$positive_retrieval_line"
+          )"
+          [[ "$positive_reference_count" =~ ^[1-9][0-9]*$ ]] || {
+            echo "A7-7 positive retrieval referenceCount is not positive: ${positive_reference_count:-missing}" >&2
+            exit 1
+          }
+
+          negative_code="$(
+            curl -sS -D "$negative_headers" -o "$negative_upload" -w '%{http_code}'               -H "Authorization: Bearer ${token}"               -F "file=@${NEGATIVE_FIXTURE};type=image/webp"               -F "projectName=a7-7-negative-${GITHUB_RUN_ID}"               http://127.0.0.1:18080/api/upload
+          )"
+          [[ "$negative_code" == 201 ]] || {
+            echo "A7-7 negative upload returned HTTP ${negative_code}, expected 201." >&2
+            exit 1
+          }
+          jq -e '
+            .storageProvider == "gcs"
+            and .binaryPersisted == true
+            and (.analysisJobId | type == "string" and length > 0)
+            and (.projectId | type == "number")
+          ' "$negative_upload" >/dev/null
+
+          negative_job_id="$(jq -r '.analysisJobId' "$negative_upload")"
+          negative_project_id="$(jq -r '.projectId' "$negative_upload")"
+          negative_terminal=""
+          for _ in $(seq 1 240); do
+            job_code="$(
+              curl -sS -o "$negative_job" -w '%{http_code}'                 -H "Authorization: Bearer ${token}"                 "http://127.0.0.1:18080/api/analysis/jobs/${negative_job_id}"
+            )"
+            [[ "$job_code" == 200 ]] || {
+              echo "A7-7 negative job read returned HTTP ${job_code}." >&2
+              exit 1
+            }
+            negative_terminal="$(jq -r '.status' "$negative_job")"
+            case "$negative_terminal" in
+              FAILED) break ;;
+              SUCCEEDED)
+                echo 'A7-7 negative control unexpectedly reached SUCCEEDED.' >&2
+                bounded_job "$negative_job" >&2
+                exit 1
+                ;;
+              PENDING|RUNNING) sleep 5 ;;
+              *)
+                echo "Unexpected A7-7 negative job status: ${negative_terminal}" >&2
+                exit 1
+                ;;
+            esac
+          done
+          [[ "$negative_terminal" == FAILED ]] || {
+            echo "A7-7 negative job did not reach FAILED: ${negative_terminal}" >&2
+            exit 1
+          }
+
+          jq -e '
+            .status == "FAILED"
+            and .resultFileId == null
+            and .resultObjectKey == null
+            and .quality != null
+            and .quality.contractVersion == "evidence-quality-v1"
+            and .quality.technicalStatus == "PASS"
+            and .quality.knowledgeStatus == "NOT_APPLICABLE"
+            and .quality.qualityStatus == "NOT_APPLICABLE"
+            and .quality.projectDecisionStatus == "NOT_APPLICABLE"
+            and .quality.runtimeQualityBoundary == "CONDITIONAL_ON_EXTRACTED_FACTS"
+            and .quality.reasons == []
+          ' "$negative_job" >/dev/null
+
+          negative_draft_code="$(
+            curl -sS -o "$negative_draft" -w '%{http_code}'               -H "Authorization: Bearer ${token}"               "http://127.0.0.1:18080/api/projects/${negative_project_id}/terraform/main.tf"
+          )"
+          [[ "$negative_draft_code" == 404 ]] || {
+            echo "A7-7 negative Terraform read returned HTTP ${negative_draft_code}, expected 404." >&2
+            exit 1
+          }
+          rm -f "$negative_draft"
+
+          kubectl -n "$NAMESPACE" logs deployment/terraformers-backend             -c backend --since=30m >"$backend_log"
+          grep -F "analysisJobId=${negative_job_id}" "$backend_log"             | grep -F 'Analysis job failed outcome=failed exceptionCategory=rejected_input'             >/dev/null || {
+              echo 'A7-7 negative job has no correlated rejected_input terminal log.' >&2
+              exit 1
+            }
+
+          curl -fsS http://127.0.0.1:18080/actuator/prometheus > "$metrics"
+          grep '^terraformers_analysis_jobs_total{' "$metrics" >/dev/null
+          grep '^terraformers_analysis_stage_duration_seconds_count{' "$metrics" >/dev/null
+          grep '^terraformers_analysis_quality_terminal_total{' "$metrics"             | grep 'contract="evidence-quality-v1"'             | grep 'technical="PASS"' >/dev/null
+          grep '^terraformers_analysis_quality_terminal_total{' "$metrics"             | grep 'contract="evidence-quality-v1"'             | grep 'knowledge="NOT_APPLICABLE"'             | grep 'quality="NOT_APPLICABLE"' >/dev/null
+          grep '^terraformers_analysis_failures_total{' "$metrics"             | grep 'category="rejected_input"' >/dev/null
+
+          jq -n             --arg source_sha "$GITHUB_SHA"             --arg backend_image "$BACKEND_IMAGE"             --arg backend_source_sha "$BACKEND_SOURCE_SHA"             --arg corpus_version "terraformers-reference-v4"             --arg index_name "terraformers-reference-v4"             --arg corpus_checksum "$A77_V4_CHECKSUM"             --arg positive_fixture_sha "a254981735b1060513251cfd9d6dcab82de8a818730f10b128d1c3904635c8c8"             --arg negative_fixture_sha "12eb8590b89eaea0988d5038c7a9862eebc584039d88084fe91433848a53d36d"             --arg positive_job_id "$positive_job_id"             --arg positive_status "$positive_terminal"             --argjson positive_reference_count "$positive_reference_count"             --arg positive_quality_contract "$(jq -r '.quality.contractVersion' "$positive_job")"             --arg positive_technical "$(jq -r '.quality.technicalStatus' "$positive_job")"             --arg positive_knowledge "$(jq -r '.quality.knowledgeStatus' "$positive_job")"             --arg positive_quality "$(jq -r '.quality.qualityStatus' "$positive_job")"             --arg positive_project_decision "$(jq -r '.quality.projectDecisionStatus' "$positive_job")"             --arg positive_runtime_boundary "$(jq -r '.quality.runtimeQualityBoundary' "$positive_job")"             --argjson positive_reasons "$(jq '.quality.reasons' "$positive_job")"             --arg negative_job_id "$negative_job_id"             --arg negative_status "$negative_terminal"             --arg negative_quality_contract "$(jq -r '.quality.contractVersion' "$negative_job")"             '{
+              source_sha: $source_sha,
+              backend_image: $backend_image,
+              backend_source_sha: $backend_source_sha,
+              corpus: {
+                version: $corpus_version,
+                index: $index_name,
+                checksum: $corpus_checksum,
+                document_count: 5395
+              },
+              fixtures: {
+                positive_sha256: $positive_fixture_sha,
+                negative_sha256: $negative_fixture_sha
+              },
+              positive: {
+                analysis_job_id: $positive_job_id,
+                terminal_status: $positive_status,
+                retrieval_reference_count: $positive_reference_count,
+                terraform_readable_nonempty: true,
+                quality: {
+                  contractVersion: $positive_quality_contract,
+                  technicalStatus: $positive_technical,
+                  knowledgeStatus: $positive_knowledge,
+                  qualityStatus: $positive_quality,
+                  projectDecisionStatus: $positive_project_decision,
+                  runtimeQualityBoundary: $positive_runtime_boundary,
+                  reasons: $positive_reasons
+                }
+              },
+              negative: {
+                analysis_job_id: $negative_job_id,
+                terminal_status: $negative_status,
+                terraform_result_absent: true,
+                quality: {
+                  contractVersion: $negative_quality_contract,
+                  technicalStatus: "PASS",
+                  knowledgeStatus: "NOT_APPLICABLE",
+                  qualityStatus: "NOT_APPLICABLE",
+                  projectDecisionStatus: "NOT_APPLICABLE",
+                  runtimeQualityBoundary: "CONDITIONAL_ON_EXTRACTED_FACTS",
+                  reasons: []
+                }
+              },
+              observability: {
+                jobs_metric_present: true,
+                stage_metric_present: true,
+                terminal_quality_metric_present: true,
+                rejected_input_metric_present: true,
+                positive_v4_retrieval_log_present: true,
+                negative_rejected_input_log_present: true
+              }
+            }' > "$evidence_dir/evidence.json"
+
+          {
+            echo '## A7-7 broad v4 persisted-quality live proof'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Backend image: `%s`\n' "$BACKEND_IMAGE"
+            echo '- Corpus/index: `terraformers-reference-v4`'
+            printf -- '- Corpus checksum: `%s`\n' "$A77_V4_CHECKSUM"
+            echo '- Live v4 documents: `5395`'
+            printf -- '- Positive AnalysisJob: `%s` / `SUCCEEDED`\n' "$positive_job_id"
+            printf -- '- Positive retrieval references: `%s`\n' "$positive_reference_count"
+            printf -- '- Positive quality: `%s / %s / %s / %s`\n'               "$(jq -r '.quality.technicalStatus' "$positive_job")"               "$(jq -r '.quality.knowledgeStatus' "$positive_job")"               "$(jq -r '.quality.qualityStatus' "$positive_job")"               "$(jq -r '.quality.projectDecisionStatus' "$positive_job")"
+            printf -- '- Negative AnalysisJob: `%s` / `FAILED(rejected_input)`\n' "$negative_job_id"
+            echo '- Negative quality: `PASS / NOT_APPLICABLE / NOT_APPLICABLE / NOT_APPLICABLE`'
+            echo '- Negative Terraform result: `absent`'
+            echo '- Raw prompt/image/reference/HCL/embedding content: not uploaded.'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run C2 five-request repeated correctness stability gate
@@ -2156,6 +2533,15 @@ jobs:
             kubectl -n "$NAMESPACE" rollout restart deployment/terraformers-jwks
             kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
           fi
+
+      - name: Upload bounded A7-7 live-proof evidence
+        if: ${{ always() && inputs.operation == 'a7-7-broad-v4-live-proof' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: case-a-a7-7-live-proof-${{ github.run_id }}
+          path: ${{ runner.temp }}/a7-7-live-proof
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Upload sanitized C2 stability evidence
         if: ${{ always() && inputs.operation == 'backend-live-validation-c2-stability' }}

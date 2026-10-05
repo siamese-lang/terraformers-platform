@@ -201,7 +201,11 @@ class VertexDocumentEmbedder:
                  dimension: int = 1024):
         self.model = model
         if model == EMBEDDING_2_MODEL:
-            host = f"aiplatform.{location}.rep.googleapis.com"
+            host = (
+                "aiplatform.googleapis.com"
+                if location == "global"
+                else f"aiplatform.{location}.rep.googleapis.com"
+            )
             method = "embedContent"
         else:
             host = "aiplatform.googleapis.com" if location == "global" else f"{location}-aiplatform.googleapis.com"

@@ -133,6 +133,20 @@ class GcpTargetCorpusIngestionTests(unittest.TestCase):
         self.assertEqual("RETRIEVAL_DOCUMENT", body["instances"][0]["task_type"])
         self.assertEqual(1024, body["parameters"]["outputDimensionality"])
 
+    def test_embedding2_global_endpoint_uses_aiplatform_global_host(self):
+        embedder = gcp_ingest.VertexDocumentEmbedder(
+            "project", "global", "gemini-embedding-2", lambda: "token",
+            sleeper=lambda _: None, pacing_seconds=0, dimension=1536,
+        )
+        self.assertEqual("https://aiplatform.googleapis.com", embedder.transport.endpoint)
+
+    def test_embedding2_us_multiregion_endpoint_uses_rep_host(self):
+        embedder = gcp_ingest.VertexDocumentEmbedder(
+            "project", "us", "gemini-embedding-2", lambda: "token",
+            sleeper=lambda _: None, pacing_seconds=0, dimension=1536,
+        )
+        self.assertEqual("https://aiplatform.us.rep.googleapis.com", embedder.transport.endpoint)
+
     def test_v4_vertex_request_uses_embedding2_inline_document_semantics_and_1536_dimensions(self):
         transport = RecordingTransport({"embedding": {"values": [0.25] * 1536}})
         embedder = gcp_ingest.VertexDocumentEmbedder(

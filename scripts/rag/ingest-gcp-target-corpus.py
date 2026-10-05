@@ -12,7 +12,9 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from threading import Lock
 from typing import Callable
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,6 +40,7 @@ CHECKSUM_META_KEY = "terraformers_corpus"
 VERTEX_RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 VERTEX_BACKOFF_SECONDS = (1, 2, 4, 8, 16, 32)
 VERTEX_PACING_SECONDS = 0.5
+INGESTION_WORKERS = 8
 
 
 def fail(message: str) -> None:
@@ -265,16 +268,37 @@ def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: d
     client.request("PUT", f"/{index}/_mapping", {"_meta": metadata})
     indexed = 0
     representative: list[float] | None = None
-    for document in documents:
+
+    def ingest_document(document: dict[str, object]) -> list[float] | None:
         document_id = str(document["documentId"])
-        status, _ = client.request("HEAD", f"/{index}/_doc/{urllib.parse.quote(document_id, safe='')}",
+        encoded_id = urllib.parse.quote(document_id, safe="")
+        status, _ = client.request("HEAD", f"/{index}/_doc/{encoded_id}",
                                    accepted=(200, 404))
-        if status == 404:
-            vector = embedder.embed(str(document[manifest["contentField"]]))
-            representative = representative or vector
-            client.request("PUT", f"/{index}/_doc/{urllib.parse.quote(document_id, safe='')}",
-                           {**document, str(manifest["vectorField"]): vector}, accepted=(200, 201))
-            indexed += 1
+        if status == 200:
+            return None
+        vector = embedder.embed(str(document[manifest["contentField"]]))
+        client.request("PUT", f"/{index}/_doc/{encoded_id}",
+                       {**document, str(manifest["vectorField"]): vector}, accepted=(200, 201))
+        return vector
+
+    with ThreadPoolExecutor(max_workers=INGESTION_WORKERS) as executor:
+        futures = [executor.submit(ingest_document, document) for document in documents]
+        try:
+            for completed, future in enumerate(as_completed(futures), 1):
+                vector = future.result()
+                if vector is not None:
+                    representative = representative or vector
+                    indexed += 1
+                if completed % 100 == 0 or completed == len(futures):
+                    print(json.dumps({
+                        "checked": completed,
+                        "indexed_this_run": indexed,
+                        "total": len(futures),
+                    }, sort_keys=True), flush=True)
+        except Exception:
+            for future in futures:
+                future.cancel()
+            raise
     client.request("POST", f"/{index}/_refresh", {})
     _, count_response = client.request("POST", f"/{index}/_count", {
         "query": {"term": {"corpusVersion": manifest["corpusVersion"]}}
@@ -320,11 +344,13 @@ def main() -> None:
     import google.auth
     from google.auth.transport.requests import Request
     credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+    token_lock = Lock()
 
     def token() -> str:
-        if not credentials.valid:
-            credentials.refresh(Request())
-        return str(credentials.token)
+        with token_lock:
+            if not credentials.valid:
+                credentials.refresh(Request())
+            return str(credentials.token)
 
     client = JsonHttpClient(args.opensearch_endpoint)
     embedder = VertexDocumentEmbedder(

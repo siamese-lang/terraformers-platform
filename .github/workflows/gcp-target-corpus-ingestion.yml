@@ -210,8 +210,15 @@ jobs:
           runtime_source="$(
             kubectl -n "$TARGET_NAMESPACE" exec deployment/terraformers-backend               -c backend -- sh -c 'printf "%s" "$BUILD_SOURCE_REVISION"'
           )"
-          [[ "$runtime_source" == "$GITHUB_SHA" ]] || {
-            echo "Backend source revision mismatch: $runtime_source" >&2
+          [[ "$runtime_source" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "Backend runtime source revision is not a full commit SHA: $runtime_source" >&2
+            exit 1
+          }
+          if [[ "$runtime_source" != "$GITHUB_SHA" ]]; then
+            git fetch --no-tags --depth=1 origin "$runtime_source"
+          fi
+          git diff --quiet "$runtime_source" "$GITHUB_SHA" -- backend || {
+            echo 'Backend source tree differs from the approved ingestion revision; publish and deploy a new backend image first.' >&2
             exit 1
           }
 

@@ -21,20 +21,34 @@ public class VertexEmbeddingProvider implements EmbeddingProvider {
         this.properties = properties;
     }
 
+    static boolean usesInlineSearchInstruction(String modelId) {
+        return "gemini-embedding-2".equals(modelId);
+    }
+
+    static String prepareQueryInput(String modelId, String text) {
+        String normalized = text.strip();
+        if (usesInlineSearchInstruction(modelId)) {
+            return "task: search result | query: " + normalized;
+        }
+        return normalized;
+    }
+
     @Override
     public List<Float> embed(String text) {
         if (text == null || text.isBlank()) {
             throw new IllegalArgumentException("embedding text must not be blank");
         }
         int expectedDimension = properties.requireEmbeddingDimension();
-        EmbedContentConfig config = EmbedContentConfig.builder()
-                .taskType("RETRIEVAL_QUERY")
-                .outputDimensionality(expectedDimension)
-                .build();
+        String modelId = properties.requireEmbeddingModelId();
+        EmbedContentConfig.Builder configBuilder = EmbedContentConfig.builder()
+                .outputDimensionality(expectedDimension);
+        if (!usesInlineSearchInstruction(modelId)) {
+            configBuilder.taskType("RETRIEVAL_QUERY");
+        }
         EmbedContentResponse response = client.models.embedContent(
-                properties.requireEmbeddingModelId(),
-                text.strip(),
-                config
+                modelId,
+                prepareQueryInput(modelId, text),
+                configBuilder.build()
         );
 
         List<ContentEmbedding> embeddings = response.embeddings()

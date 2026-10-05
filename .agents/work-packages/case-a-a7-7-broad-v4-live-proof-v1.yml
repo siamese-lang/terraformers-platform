@@ -1,6 +1,6 @@
 work_package:
   id: case-a-a7-7-broad-v4-live-proof-v1
-  status: REPOSITORY_IMPLEMENTED_BOOTSTRAP_RESTORE_GATED
+  status: LIVE_EVIDENCE_MODEL_CORRECTION_APPROVED_REPOSITORY_IMPLEMENTATION
   approved_base_sha: BIND_AT_ACTIVATION
   execution_base_sha: 13e398599ce69e087e9098b1413cad37c41edfd1
 
@@ -68,12 +68,37 @@ work_package:
       total_document_count: 5395
       provider_document_chunk_count: 5387
       project_decision_count: 8
-      embedding_model_id: gemini-embedding-001
-      vector_dimension: 1024
+      embedding_model_id: gemini-embedding-2
+      vector_dimension: 1536
     historical_v3:
       corpus_version: terraformers-reference-v3
       document_count: 128
       immutable: true
+
+  approved_model_correction:
+    approved_on: 2026-10-06
+    repository_base_sha: faaaf0f89376cddc59ac7a0f4caf7087cdb25878
+    evidence:
+      - run_37317012191_embedded_1095_of_5395_before_cancellation_after_over_100_minutes
+      - run_37332461233_failed_with_RESOURCE_EXHAUSTED_on_global_embed_content_requests_per_minute_per_base_model
+      - project_effective_quota_gemini_embedding_is_5_requests_per_minute
+      - project_effective_quota_gemini_embedding_2_is_300000_requests_per_minute
+    decision:
+      model: gemini-embedding-2
+      vector_dimension: 1536
+      document_semantics: "title: {title} | text: {content}"
+      query_semantics: "task: search result | query: {content}"
+      historical_v3_unchanged: true
+      full_v4_reembedding_required: true
+      new_backend_image_required: true
+    rationale: >
+      The original gemini-embedding-001 assumption is materially false for broad live v4 ingestion
+      in this project: its effective quota of 5 requests/minute makes 5,395 online document
+      embeddings require roughly 18 hours before request latency, which cannot satisfy the reviewed
+      180-minute workflow boundary. Gemini Embedding 2 preserves the retrieval architecture,
+      supports 1536-dimensional output, and has a project effective quota of 300,000 requests/minute.
+      Because the old and new embedding spaces are incompatible, the v4 index must be rebuilt; v3
+      remains historical and immutable.
 
   selected_runtime:
     project: terraformers-platform
@@ -139,15 +164,16 @@ work_package:
         historical v3 operation and add an exact A7-7 v4 operation/confirmation.
       v4_confirmation: INGEST_A7_7_REFERENCE_V4
       timeout_budget: >
-        Broad v4 contains 5,395 documents. The existing 0.5-second document-embedding pacing alone
-        can exceed 45 minutes; the workflow timeout must be explicitly sufficient without removing
-        bounded pacing/retry merely to make CI faster.
+        Broad v4 contains 5,395 documents. Live evidence proved gemini-embedding-001 is infeasible
+        under this project's 5 requests/minute effective quota. The approved v4 correction uses
+        gemini-embedding-2 with bounded eight-worker ingestion under the measured 300,000
+        requests/minute effective quota while preserving bounded retry/backoff.
       v4_receipt_gate:
         - corpus_version_terraformers-reference-v4
         - document_count_5395
         - index_name_terraformers-reference-v4
-        - embedding_model_gemini-embedding-001
-        - vector_dimension_1024
+        - embedding_model_gemini-embedding-2
+        - vector_dimension_1536
         - checksum_is_64_char_sha256
         - representative_hit_ids_nonempty
         - outcome_ingested_or_already_ingested
@@ -164,8 +190,8 @@ work_package:
         - RETRIEVAL_MODE_REQUIRED
         - OPENSEARCH_TOP_K_8
         - provider_version_5_100_0
-        - embedding_model_gemini-embedding-001
-        - vector_dimension_1024
+        - embedding_model_gemini-embedding-2
+        - vector_dimension_1536
 
     backend_artifact_identity:
       decision: DECOUPLE_DEPLOYMENT_REVISION_FROM_BACKEND_ARTIFACT_REVISION
@@ -178,8 +204,10 @@ work_package:
       reuse_rule: >
         A later workflow, Kubernetes or documentation-only correction does not require rebuilding the
         backend image when git diff between backend_source_sha and expected_sha is empty under
-        backend/**. If backend/** differs, deployment and live proof fail closed until a new image is
-        published.
+        backend/**. This approved model correction changes backend query-embedding semantics and the
+        GCP target runtime profile, so the pre-correction backend image MUST NOT be reused. Publish
+        and deploy a new immutable backend image from corrected main before v4 ingestion/live proof.
+        Any later backend/** difference remains fail-closed.
       runtime_binding: >
         The committed GCP overlay contains no deployment-specific digest. The protected deployment
         workflow renders the reviewed overlay, requires exactly one non-deployable backend image
@@ -524,8 +552,13 @@ work_package:
     - docs/plans/active/case-a-semantic-reliability-extension.md
     - docs/evaluation/case-a-a7-6-observability-backend-decision.md
     - docs/evaluation/case-a-a7-7-broad-v4-live-proof.md
+    - scripts/rag/build-corpus-v4.py
+    - scripts/checks/rag-corpus-contract-verification.py
     - scripts/rag/ingest-gcp-target-corpus.py
     - tests/rag/test_ingest_gcp_target_corpus.py
+    - backend/src/main/java/com/terraformers/modernization/reference/VertexEmbeddingProvider.java
+    - backend/src/test/java/com/terraformers/modernization/reference/VertexEmbeddingProviderTest.java
+    - backend/src/main/resources/application-gcp-target.yml
     - .github/workflows/gcp-target-corpus-ingestion.yml
     - .github/workflows/gcp-target-runtime-dependencies.yml
     - .github/workflows/gcp-target-terraform-plan.yml
@@ -533,7 +566,6 @@ work_package:
     - infra/kubernetes/overlays/gcp-target/backend-configmap-patch.yaml
 
   prohibited_paths:
-    - backend/src/main/java/**
     - backend/src/main/resources/db/migration/**
     - corpus/terraformers-reference/v1/**
     - corpus/terraformers-reference/v2/**
@@ -566,7 +598,7 @@ work_package:
     - add_Langfuse_OpenTelemetry_or_other_observability_product
     - add_evaluator_LLM_or_model_voting
     - change_provider_version
-    - change_embedding_model
+    - change_embedding_model_beyond_approved_gemini_embedding_2
     - change_quality_taxonomy
     - change_retry_lease_claim_or_fencing_semantics
     - change_prompt_or_generation_model_for_convenience
@@ -606,9 +638,9 @@ work_package:
     - broad_v4_counts_do_not_reconcile_with_A7_0
     - v4_ingestion_requires_weakening_checksum_or_count_gates
     - runtime_needs_a_new_topology
-    - provider_or_embedding_model_change_is_required
+    - approved_gemini_embedding_2_or_1536_contract_requires_further_change
     - quality_contract_change_is_required
-    - backend_domain_code_change_is_required
+    - backend_change_beyond_query_embedding_semantics_is_required
     - unexpected_Terraform_plan_action_or_resource_address_appears
     - restored_WIF_provider_is_missing_or_differs_from_reviewed_contract
     - duplicate_or_replacement_WIF_pool_provider_creation_would_be_required
@@ -624,6 +656,9 @@ work_package:
       - scripts/rag/ingest-gcp-target-corpus.py now accepts exact v3/v4 manifest contracts
       - historical v3 128-document behavior remains explicit and tested
       - broad v4 requires exact 5,395-document contract
+      - live quota evidence supersedes the original v4 embedding assumption with gemini-embedding-2 / 1536
+      - v4 document embeddings use inline title/text formatting and backend queries use inline search-result instructions
+      - this correction changes backend/**, therefore a new immutable backend image is required before ingestion
       - protected corpus workflow builds v4 from pinned provider source plus schema copied from exact backend runtime
       - GCP backend ConfigMap serves terraformers-reference-v4
       - existing runtime-dependencies workflow exposes one a7-7-broad-v4-live-proof operation

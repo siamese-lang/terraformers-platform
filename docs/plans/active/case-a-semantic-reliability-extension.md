@@ -2,7 +2,7 @@
 
 ## Status
 
-**A7-0 COMPLETE — A7-1 COMPLETE — A7-2 COMPLETE — A7-3 COMPLETE — A7-4 COMPLETE — A7-5 COMPLETE — A7-6 COMPLETE — A7-7 REPOSITORY IMPLEMENTED — BOOTSTRAP RESTORE GATED — NO LIVE GCP MUTATION YET**
+**A7-0..A7-6 COMPLETE — A7-7 LIVE EXECUTION ACTIVE — EMBEDDING MODEL ASSUMPTION INVALIDATED — BOUNDED MODEL CORRECTION APPROVED**
 
 The original Case A retrieval-grounding/generalization closure remains valid.
 
@@ -19,6 +19,16 @@ Extension direction is governed by
 `.agents/work-packages/case-a-semantic-reliability-v1.yml`. A7-1 through A7-6 are complete. A7-7 repository preparation is implemented under `.agents/work-packages/case-a-a7-7-broad-v4-live-proof-v1.yml` on frozen base `13e398599ce69e087e9098b1413cad37c41edfd1`. Live execution is now gated by the corrected two-stage lifecycle: restore only the reviewed delivery bootstrap after its checkpoint, run the existing read-only OIDC/quota/Terraform preflight, then require the runtime-live checkpoint before target-runtime mutation.
 
 PR #196 remains intentionally unmerged until this extension reaches its closure boundary.
+
+A7-7 live execution has now supplied the evidence required to revise one implementation detail.
+The original v4 choice `gemini-embedding-001 / 1024` is infeasible for broad online ingestion in
+this project because its effective quota is 5 requests/minute. Run `37317012191` could not finish
+the 5,395-document ingestion inside the 180-minute workflow bound, and run `37332461233` failed
+with `RESOURCE_EXHAUSTED` after bounded concurrency exposed that quota directly. The project
+quota for `gemini-embedding-2` is 300,000 requests/minute. The user therefore approved a v4-only
+correction to `gemini-embedding-2 / 1536`, inline asymmetric search formatting, full v4
+re-embedding, and a new backend image. Historical v3 remains immutable and ADR-008's frozen
+authority/quality/topology axes are unchanged.
 
 
 A7-0 closed on the measured AWS Provider 5.100.0 universe:

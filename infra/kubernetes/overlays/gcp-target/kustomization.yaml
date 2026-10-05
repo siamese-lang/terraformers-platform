@@ -15,4 +15,3 @@ patches:
 images:
   - name: public.ecr.aws/example/terraformers-backend
     newName: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend
-    digest: sha256:a9331bc8026075390cedd8bfcdc8625b5cc69cdf16cd3799e2029beff6f857ae

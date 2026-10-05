@@ -1703,11 +1703,20 @@ jobs:
             [[ "$(
               kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config                 -o jsonpath='{.data.INDEX_NAME}'
             )" == terraformers-reference-v4 ]]
+            [[ "$(
+              kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config                 -o jsonpath='{.data.VERTEX_EMBEDDING_MODEL_ID}'
+            )" == gemini-embedding-2 ]]
+            [[ "$(
+              kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config                 -o jsonpath='{.data.VERTEX_EMBEDDING_DIMENSION}'
+            )" == 1536 ]]
+            [[ "$(
+              kubectl -n "$NAMESPACE" get configmap terraformers-backend-runtime-config                 -o jsonpath='{.data.EXPECTED_VECTOR_DIMENSION}'
+            )" == 1536 ]]
 
             runtime_retrieval="$(
-              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend --                 sh -c 'printf "%s|%s" "$CORPUS_VERSION" "$INDEX_NAME"'
+              kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend --                 sh -c 'printf "%s|%s|%s|%s|%s" "$CORPUS_VERSION" "$INDEX_NAME" "$VERTEX_EMBEDDING_MODEL_ID" "$VERTEX_EMBEDDING_DIMENSION" "$EXPECTED_VECTOR_DIMENSION"'
             )"
-            [[ "$runtime_retrieval" == 'terraformers-reference-v4|terraformers-reference-v4' ]] || {
+            [[ "$runtime_retrieval" == 'terraformers-reference-v4|terraformers-reference-v4|gemini-embedding-2|1536|1536' ]] || {
               echo "A7-7 backend runtime retrieval identity mismatch: $runtime_retrieval" >&2
               exit 1
             }

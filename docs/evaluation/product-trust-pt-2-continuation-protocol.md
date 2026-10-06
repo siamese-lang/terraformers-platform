@@ -1,6 +1,6 @@
 # PT-2 bounded continuation procedure
 
-Procedure `pt2-realistic-continuation-v1` is a bounded correction to the already-executed
+Procedure `pt2-realistic-continuation-v2` is a bounded correction to the already-executed
 `pt2-realistic-baseline-v2`. It exists only because authoritative run `37480519016` produced
 valid partial evidence: case 01 reached terminal success, case 02 was accepted once and remained
 non-terminal beyond the frozen 420-second measurement window, and cases 03-10 were never submitted.
@@ -8,6 +8,17 @@ non-terminal beyond the frozen 420-second measurement window, and cases 03-10 we
 This procedure does not replace, reinterpret, or rerun those observations. It preserves the original
 420-second latency censoring for case 02 and permits only read-only recovery of that exact accepted
 job plus first submission of the previously NOT_RUN cases.
+
+Draft continuation v1 (protocol SHA-256
+`28d225feceb2240d127a9fe7b0f33d3bbca836ecc2913bd3b6ff2a9721be1b00`)
+and its later clarified SHA-256 `d24bdec4065d647ac4ae5cf21afb76b4e98fd9d50faacd3f3e72783313ace482`
+were untrusted ChatGPT implementation, not accepted work and never dispatched. USER authorized Codex to audit
+PR #245 on the same branch. The audited handoff head is
+`f2afda0e2e5957b161749d752ba2400593212fb7`, including five commits after the supplied
+`a8cd0270ed89321cea20ed5a66e02f99cd3b5321`. This repository-only corrective iteration
+does not spend or reset the Work Package's autonomous repair counter or rebind its original
+execution base `3caae454661d21d84c3e469a7d76aff5633d5b26`. PR #245 is based on the
+explicitly merged workflow main `c3e9ed4e854778dfb2eefbc0182ae53a008025bf`.
 
 ## Frozen prior evidence
 
@@ -26,8 +37,17 @@ Continuation is valid only when all of the following exact prior identities are 
 - cases 03-10: `NOT_RUN`, zero upload attempts
 
 The continuation workflow must verify GitHub artifact metadata, download that exact artifact, verify
-the inventory and every file checksum, and fail closed on any mismatch. No regenerated or hand-built
-summary may substitute for the prior artifact.
+the downloaded ZIP digest, inventory and exact file set with every file checksum, and fail closed
+on any mismatch. Archive traversal, duplicate paths and symbolic links are rejected. No regenerated
+or hand-built summary may substitute for the prior artifact. The runner repeats these checks before
+any API observation or new inference. GitHub metadata also binds repository, workflow, event,
+completed failed run, attempt and dispatch source.
+
+The existing global GCP concurrency group is preserved. All workflow-dispatch history for the existing
+evaluation workflow is read before the auth fixture is prepared. The current run must be main-only,
+attempt 1, at the exact dispatch SHA and named `PT-2 continuation of 37480519016`. Any earlier
+continuation dispatch with that title stops the new run, including when it has a different run ID
+and `run_attempt=1`. There is no automatic second continuation batch after partial evidence.
 
 ## Recovery before any new inference
 
@@ -39,18 +59,28 @@ Production ownership is keyed by the authenticated external identity subject. Th
 uses a newly generated run-specific signing key/JWK but authenticates as the original fixture subject
 `case-c-37480519016` (and matching fixture email) so the exact prior job/project remains owner-readable.
 The signing-key `kid` remains unique to the continuation run. No prior private key or token is reused,
-and this identity continuity is permitted only for this bound recovery/continuation path.
+and this identity continuity is permitted only for this bound recovery/continuation operation with
+the exact original numeric run ID. Other helper operations cannot override their current fixture
+subject. Authentication validators and owner-scoped production API checks remain unchanged.
 
 If the exact job is already terminal, preserve the terminal response, project readback, Terraform
-readback when present, and newly available correlated logs. The drain bound remains anchored to the
-original acceptance time; it is never reset by this continuation. Because this correction is dispatched
-after the original 1200-second-from-acceptance drain bound has elapsed, a recovery read that still shows
-PENDING/RUNNING stops immediately without uploading case 03. An inaccessible or identity-mismatched
-job also stops the continuation.
+readback when present, and newly available correlated logs. If it is still PENDING/RUNNING, poll that
+same job only within any remaining part of the 1200 seconds from its **original** accepted-response
+receipt. Once that bound is exhausted, a nonterminal recovery response stops without uploading
+case 03; it does not receive a fresh 1200-second window. A terminal first recovery response is usable
+as later semantic/trust evidence even after that bound. An inaccessible or identity-mismatched job,
+project or Terraform readback also stops. Recovery errors retain an error record and an all-NOT_RUN
+continuation ledger.
+
+For this actual handoff the original 1200-second-from-acceptance bound has already elapsed.
+A first recovery read still showing PENDING/RUNNING therefore stops immediately. Continuation
+never resets that clock or claims the older censored sample as uncensored.
 
 The recovery observation may complete semantic/trust review for case 02, but its latency sample remains
-`>420s` censored with the original 424846 ms observation. A later terminal timestamp must never replace
-the original censored measurement.
+censored at the original 420-second observation policy with the original 424846 ms observation.
+That elapsed censor receipt is not an exact terminal time or proof the job remained running for all
+424846 ms; the original last-nonterminal receipts remain available. A later terminal timestamp must
+never replace the original censored measurement.
 
 ## First and only submission of cases 03-10
 
@@ -76,6 +106,19 @@ seconds from acceptance. A drained terminal observation is recorded separately a
 censored latency sample into an uncensored sample. If the same job is still non-terminal at the drain
 bound, stop; later cases remain NOT_RUN.
 
+Bounds apply to response receipt, not merely GET initiation. A terminal response arriving after 420
+seconds remains censored even when its request started earlier. If it arrives within 1200 seconds,
+that same response may supply separate drain evidence; no extra inference or duplicate GET is needed.
+A terminal response arriving after 1200 seconds is preserved as a late observation and stops before
+the next upload. Read-only requests have the original bounded transport timeout; waits are clipped to
+the remaining observation window. The accepted job is never cancelled or resubmitted.
+
+The submission entrypoint rejects cases 01/02, previously attempted records and input/truth disguised
+as an eligible case. Duplicate prior/new job or project identities stop and preserve the actual raw
+acceptance. Main is checked immediately before each POST. Lost/malformed acceptance, auth or identity
+failure stops without another POST. Natural terminal failures are retained and may be followed by the
+next first submission. Admission rejections are preserved without claiming a complete terminal baseline.
+
 This separation prevents one latency tail from erasing the remaining benchmark while also preventing
 overlapping accepted jobs from contaminating queue/latency evidence.
 
@@ -85,6 +128,12 @@ Reuse the exact retained production AnalysisJob path, GKE/OpenSearch substrate, 
 ephemeral JWT/JWKS fixture and immutable backend image/source checks already accepted for PT-2.
 No product code, prompt/model, RAG, scorer, truth, IAM, infrastructure, backend rollout or runtime
 configuration may be changed by this correction.
+
+JWT/JWKS restoration remains fixture-only and fail-closed. Even restoration failure removes this
+run's private key, token, signature and Authorization header files, retains an ownership marker for
+the un-restored fixture and reports failure. Backend deployment is never restarted. Existing workflow
+180-minute budget and 3-hour token expiry remain hard limits; exhausting either yields partial evidence,
+not a repeat or overlap authorization.
 
 The original `pt2-realistic-baseline-v2` procedure and run artifact remain immutable evidence.
 The continuation gets its own run ID, artifact ID/digest and inventory. Independent review must bind

@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Bounded continuation for the already-started PT-2 realistic baseline."""
 import argparse
+from datetime import datetime, timezone
 import importlib.util
 import json
 import re
+import stat
 import time
+import zipfile
 from pathlib import Path
 
 BASELINE_FILE = Path(__file__).with_name("pt2-realistic-baseline.py")
@@ -12,9 +15,9 @@ _spec = importlib.util.spec_from_file_location("pt2_baseline", BASELINE_FILE)
 pt2 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(pt2)
 
-CONTINUATION_PROCEDURE = "pt2-realistic-continuation-v1"
+CONTINUATION_PROCEDURE = "pt2-realistic-continuation-v2"
 CONTINUATION_PROTOCOL = "docs/evaluation/product-trust-pt-2-continuation-protocol.md"
-CONTINUATION_PROTOCOL_SHA256 = "d24bdec4065d647ac4ae5cf21afb76b4e98fd9d50faacd3f3e72783313ace482"
+CONTINUATION_PROTOCOL_SHA256 = "1658b5c328fdfde9671542373309e68165d7aae6f4b973d0b781f03890b097ee"
 
 PRIOR_RUN_ID = 37480519016
 PRIOR_RUN_ATTEMPT = 1
@@ -34,10 +37,67 @@ CONTINUATION_CASE_IDS = pt2.CASE_IDS[2:]
 MEASUREMENT_DEADLINE_SECONDS = 420
 DRAIN_DEADLINE_SECONDS = 1200
 POLL_INTERVAL_SECONDS = 5
+CONTINUATION_RUN_TITLE = "PT-2 continuation of 37480519016"
 
 
 def _read_json(path):
     return json.loads(path.read_text())
+
+
+def verify_prior_binding(archive, run_metadata, artifact_metadata):
+    run = _read_json(run_metadata)
+    artifact = _read_json(artifact_metadata)
+    if (run.get("id") != PRIOR_RUN_ID or run.get("run_attempt") != PRIOR_RUN_ATTEMPT
+            or run.get("head_sha") != PRIOR_DISPATCH_SHA or run.get("status") != "completed"
+            or run.get("conclusion") != "failure" or run.get("event") != "workflow_dispatch"
+            or run.get("path") != ".github/workflows/gcp-target-evaluation-baseline.yml"
+            or run.get("repository", {}).get("full_name") != "siamese-lang/terraformers-platform"):
+        raise ValueError("prior GitHub run identity mismatch")
+    if (artifact.get("id") != PRIOR_ARTIFACT_ID
+            or artifact.get("name") != f"pt2-realistic-baseline-{PRIOR_RUN_ID}"
+            or artifact.get("expired") is not False
+            or artifact.get("digest") != PRIOR_ARTIFACT_DIGEST
+            or artifact.get("workflow_run", {}).get("id") != PRIOR_RUN_ID
+            or artifact.get("workflow_run", {}).get("head_sha") != PRIOR_DISPATCH_SHA):
+        raise ValueError("prior GitHub artifact identity mismatch")
+    if "sha256:" + pt2.digest(archive) != PRIOR_ARTIFACT_DIGEST:
+        raise ValueError("prior artifact archive digest mismatch")
+
+
+def extract_prior_archive(archive, prior_artifact, run_metadata, artifact_metadata):
+    verify_prior_binding(archive, run_metadata, artifact_metadata)
+    # Validate every entry before creating files; never follow links or allow duplicate paths.
+    with zipfile.ZipFile(archive) as bundle:
+        names = set()
+        for entry in bundle.infolist():
+            path = Path(entry.filename)
+            if (path.is_absolute() or ".." in path.parts or "\\" in entry.filename
+                    or str(path) in names or stat.S_ISLNK(entry.external_attr >> 16)):
+                raise ValueError("unsafe prior artifact archive path")
+            names.add(str(path))
+        prior_artifact.mkdir(parents=True, exist_ok=False)
+        bundle.extractall(prior_artifact)
+    _verify_artifact_inventory(prior_artifact)
+
+
+def verify_dispatch_history(history_path, run_id, dispatch_sha):
+    if not re.fullmatch(r"[0-9]+", run_id):
+        raise ValueError("invalid continuation run ID")
+    history = _read_json(history_path)
+    runs = [run for page in history for run in page["workflow_runs"]]
+    prior = [run for run in runs if run.get("id") == PRIOR_RUN_ID]
+    if len(prior) != 1 or prior[0].get("head_sha") != PRIOR_DISPATCH_SHA:
+        raise ValueError("dispatch history does not extend through the authoritative prior run")
+    current = [run for run in runs if run.get("id") == int(run_id)]
+    if (len(current) != 1 or current[0].get("run_attempt") != 1
+            or current[0].get("head_sha") != dispatch_sha
+            or current[0].get("head_branch") != "main"
+            or current[0].get("event") != "workflow_dispatch"
+            or current[0].get("display_title") != CONTINUATION_RUN_TITLE):
+        raise ValueError("current continuation run identity mismatch")
+    if any(run.get("display_title") == CONTINUATION_RUN_TITLE and run["id"] < int(run_id)
+           for run in runs):
+        raise ValueError("prior continuation dispatch exists; human review required, never repeat uploads")
 
 
 def _verify_artifact_inventory(prior_artifact):
@@ -45,12 +105,21 @@ def _verify_artifact_inventory(prior_artifact):
     if pt2.digest(inventory_path) != PRIOR_INVENTORY_SHA256:
         raise ValueError("prior artifact inventory identity mismatch")
     inventory = _read_json(inventory_path)
+    if any(path.is_symlink() for path in prior_artifact.rglob("*")):
+        raise ValueError("prior artifact contains a symbolic link")
+    expected = set()
     for entry in inventory.get("files", []):
         path = prior_artifact / entry["path"]
-        if not path.resolve().is_relative_to(prior_artifact.resolve()):
+        if (path.is_symlink() or not path.resolve().is_relative_to(prior_artifact.resolve())
+                or entry["path"] in expected):
             raise ValueError("prior artifact inventory path escapes root")
+        expected.add(entry["path"])
         if not path.is_file() or pt2.digest(path) != entry["sha256"]:
             raise ValueError("prior artifact file checksum mismatch: " + entry["path"])
+    actual = {str(path.relative_to(prior_artifact)) for path in prior_artifact.rglob("*")
+              if path.is_file() and path != inventory_path}
+    if actual != expected:
+        raise ValueError("prior artifact file set mismatch")
 
 
 def _verify_frozen_inputs(root):
@@ -78,6 +147,7 @@ def _verify_frozen_inputs(root):
     state = _read_json(root / ".agents/state/product-trust-v1.json")
     candidate = state["candidate"]
     approval = state["liveBaselineApproval"]
+    phase = state["phaseExecution"]["PT-2"]
     if (candidate.get("status") != "FROZEN"
             or candidate.get("truthApprovedBy") != "USER"
             or candidate.get("frozenIdentitySha256") != pt2.IDENTITY
@@ -87,12 +157,16 @@ def _verify_frozen_inputs(root):
             or approval.get("approvedBy") != "USER"
             or approval.get("gate") != "LIVE_REALISTIC_BASELINE"
             or approval.get("candidateRevision") != 3
-            or approval.get("candidateIdentitySha256") != pt2.IDENTITY):
+            or approval.get("candidateIdentitySha256") != pt2.IDENTITY
+            or approval.get("executionBaseSha") != pt2.BASE
+            or phase.get("executionBaseSha") != pt2.BASE
+            or phase.get("workPackage") != "product-trust-pt-2-current-system-realistic-live-baseline-v1"):
         raise ValueError("external frozen truth/live approval mismatch")
     return dataset
 
 
-def verify(root, prior_artifact):
+def verify(root, prior_artifact, archive, run_metadata, artifact_metadata):
+    verify_prior_binding(archive, run_metadata, artifact_metadata)
     dataset = _verify_frozen_inputs(root)
     protocol_path = root / CONTINUATION_PROTOCOL
     if pt2.digest(protocol_path) != CONTINUATION_PROTOCOL_SHA256:
@@ -105,6 +179,8 @@ def verify(root, prior_artifact):
 
     procedure = _read_json(cases_dir / "procedure.json")
     if (procedure.get("procedureVersion") != pt2.PROCEDURE
+            or procedure.get("protocolSha256") != pt2.digest(root / pt2.PROTOCOL)
+            or procedure.get("executionBaseSha") != pt2.BASE
             or procedure.get("runId") != f"pt2-realistic-{PRIOR_RUN_ID}"
             or procedure.get("dispatchSha") != PRIOR_DISPATCH_SHA
             or procedure.get("candidateIdentitySha256") != pt2.IDENTITY):
@@ -142,13 +218,14 @@ def _poll_same_job(client, directory, job_id, project_id, prefix, start_clock, d
             elapsed = max(0, round((observed["monotonic"] - start_clock) * 1000))
             status = job.get("status")
             if status in ("SUCCEEDED", "FAILED"):
+                # Caller must distinguish receipt after the measurement/drain deadline.
                 return job, observed, last_nonterminal_ms
             if status not in ("PENDING", "RUNNING"):
                 raise ValueError("unexpected AnalysisJob status")
             last_nonterminal_ms = elapsed
         elif observed["httpStatus"] in (401, 403, 404):
             raise ValueError("accepted job inaccessible; do not resubmit")
-        wait(POLL_INTERVAL_SECONDS)
+        wait(min(POLL_INTERVAL_SECONDS, max(0, deadline_seconds - (clock() - start_clock))))
     return None, None, last_nonterminal_ms
 
 
@@ -156,12 +233,16 @@ def _readback(client, directory, job_id, project_id, terminal, logs, since):
     project_response = client.request("GET", f"/api/projects/{project_id}", directory, "project")
     draft_response = client.request("GET", f"/api/projects/{project_id}/terraform/main.tf", directory, "terraform")
     project, draft = project_response["json"], draft_response["json"]
-    if project_response["httpStatus"] == 200:
+    if project_response["transportExitCode"] == 0 and project_response["httpStatus"] == 200:
         if not isinstance(project, dict) or project.get("projectId") != project_id \
                 or project.get("latestAnalysisJobId") != job_id:
             raise ValueError("project readback job identity mismatch")
     else:
-        project = None
+        raise ValueError("project readback inaccessible; stop without another upload")
+    if (draft_response["transportExitCode"] != 0
+            or draft_response["httpStatus"] not in (200, 404)
+            or (terminal and terminal["status"] == "SUCCEEDED" and draft_response["httpStatus"] != 200)):
+        raise ValueError("Terraform readback inaccessible; stop without another upload")
     if draft_response["httpStatus"] == 200:
         if not isinstance(draft, dict) or draft.get("projectId") != project_id \
                 or draft.get("latestAnalysisJobId") != job_id or not isinstance(draft.get("content"), str) \
@@ -177,12 +258,15 @@ def _readback(client, directory, job_id, project_id, terminal, logs, since):
 
 
 def recover_prior_case2(client, output, prior_observations, logs=pt2.collect_logs,
-                        clock=time.monotonic, wait=time.sleep, drain_deadline=DRAIN_DEADLINE_SECONDS):
+                        clock=time.monotonic, wait=time.sleep, drain_deadline=DRAIN_DEADLINE_SECONDS,
+                        wall_clock=lambda: datetime.now(timezone.utc)):
     prior_row = prior_observations["cases"][1]
     directory = output / "prior-case2-recovery"
     directory.mkdir()
     start_stamp = pt2.stamp()
     start = clock()
+    original_age = max(0, (wall_clock() - datetime.fromisoformat(
+        prior_row["acceptedResponseObservedAt"])).total_seconds())
     observed = client.request(
         "GET", "/api/analysis/jobs/" + CASE2_JOB_ID, directory, "recovery-job-poll-000"
     )
@@ -204,15 +288,23 @@ def recover_prior_case2(client, output, prior_observations, logs=pt2.collect_log
         "recoveryTerminalObserved": status in ("SUCCEEDED", "FAILED"),
     }
     if status in ("PENDING", "RUNNING"):
-        record["status"] = "RECOVERY_TERMINAL_NOT_OBSERVED"
-        record["reason"] = "original job is already beyond the 1200-second-from-acceptance drain bound"
-        pt2.write_json(directory / "recovery.json", record)
-        return False
+        terminal, observed, _ = _poll_same_job(
+            client, directory, CASE2_JOB_ID, CASE2_PROJECT_ID, "recovery-drain-job-poll",
+            start - original_age, drain_deadline, clock=clock, wait=wait
+        )
+        if terminal is not None and observed["monotonic"] - start + original_age <= drain_deadline:
+            status = terminal["status"]
+        else:
+            record["status"] = "RECOVERY_TERMINAL_NOT_OBSERVED"
+            record["reason"] = "original acceptance drain bound exhausted; no new upload"
+            pt2.write_json(directory / "recovery.json", record)
+            return False
     if status not in ("SUCCEEDED", "FAILED"):
         raise ValueError("unexpected prior case 02 AnalysisJob status")
 
     record.update(
         status="RECOVERED_" + status,
+        recoveryTerminalObserved=True,
         recoveryTerminalObservedAt=observed["observedAt"],
         recoveryElapsedMs=max(0, round((observed["monotonic"] - start) * 1000)),
         quality=terminal.get("quality"),
@@ -232,9 +324,14 @@ def recover_prior_case2(client, output, prior_observations, logs=pt2.collect_log
 def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_jobs,
                  read_main=pt2.current_main, logs=pt2.collect_logs, clock=time.monotonic,
                  wait=time.sleep, measurement_deadline=MEASUREMENT_DEADLINE_SECONDS,
-                 drain_deadline=DRAIN_DEADLINE_SECONDS, checkpoint=lambda: None):
-    if read_main() != dispatch_sha:
-        raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT; stop before the next case")
+                 drain_deadline=DRAIN_DEADLINE_SECONDS, checkpoint=lambda: None, seen_projects=None):
+    if (case["caseId"] not in CONTINUATION_CASE_IDS or record.get("caseId") != case["caseId"]
+            or record.get("status") != "NOT_RUN" or record.get("uploadAttempts") != 0):
+        raise ValueError("only previously NOT_RUN cases 03-10 may receive one first submission")
+    expected_case = next(item for item in _read_json(root / "evaluation" / pt2.DATASET / "dataset.json")["cases"]
+                         if item["caseId"] == case["caseId"])
+    if case != expected_case:
+        raise ValueError("continuation case does not match frozen truth/input")
     fixture = root / "evaluation" / pt2.DATASET / case["input"]["path"]
     if pt2.digest(fixture) != case["input"]["sha256"]:
         raise ValueError("fixture changed before submission")
@@ -242,10 +339,12 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
     directory = output / case["caseId"]
     directory.mkdir()
     pt2.write_json(directory / "frozen-truth.json", case)
+    client.request("GET", "/actuator/prometheus", directory, "metrics-before")
+    if read_main() != dispatch_sha:
+        raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT; stop before the next case")
     record.update(status="SUBMISSION_STARTED", uploadAttempts=1, requestStartedAt=pt2.stamp())
     pt2.write_json(directory / "submission-started.json", dict(record))
     checkpoint()
-    client.request("GET", "/actuator/prometheus", directory, "metrics-before")
     upload = client.request("POST", "/api/upload", directory, "upload", fixture=fixture,
                                project_name=run_id + "-" + case["caseId"])
     if upload["transportExitCode"] != 0:
@@ -265,9 +364,18 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
         checkpoint()
         return False
     job_id, project_id = accepted["analysisJobId"], accepted["projectId"]
+    if seen_projects is None:
+        seen_projects = {5, CASE2_PROJECT_ID}
     if job_id in seen_jobs or job_id in (CASE1_JOB_ID, CASE2_JOB_ID):
+        record.update(status="INDETERMINATE_ACCEPTANCE", analysisJobId=job_id, projectId=project_id)
+        checkpoint()
         raise ValueError("duplicate accepted job identity")
+    if project_id in seen_projects:
+        record.update(status="INDETERMINATE_ACCEPTANCE", analysisJobId=job_id, projectId=project_id)
+        checkpoint()
+        raise ValueError("duplicate accepted project identity")
     seen_jobs.add(job_id)
+    seen_projects.add(project_id)
 
     accepted_clock = upload["monotonic"]
     record.update(
@@ -281,7 +389,7 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
         client, directory, job_id, project_id, "job-poll", accepted_clock,
         measurement_deadline, clock=clock, wait=wait
     )
-    censored = terminal is None
+    censored = terminal is None or observed["monotonic"] - accepted_clock > measurement_deadline
     if censored:
         record.update(
             status="TERMINAL_NOT_OBSERVED_AT_MEASUREMENT_DEADLINE",
@@ -289,10 +397,12 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
             lastNonterminalAfterAcceptanceMs=last_nonterminal,
         )
         checkpoint()
-        terminal, observed, drain_last = _poll_same_job(
-            client, directory, job_id, project_id, "drain-job-poll",
-            accepted_clock, drain_deadline, clock=clock, wait=wait
-        )
+        drain_last = last_nonterminal
+        if terminal is None:
+            terminal, observed, drain_last = _poll_same_job(
+                client, directory, job_id, project_id, "drain-job-poll",
+                accepted_clock, drain_deadline, clock=clock, wait=wait
+            )
         record["lastDrainNonterminalAfterAcceptanceMs"] = drain_last
         if terminal is None:
             record["drainStatus"] = "TERMINAL_NOT_OBSERVED"
@@ -301,7 +411,8 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
             _readback(client, directory, job_id, project_id, None, logs, record["requestStartedAt"])
             return False
         record.update(
-            drainStatus="TERMINAL_OBSERVED",
+            drainStatus=("TERMINAL_OBSERVED" if observed["monotonic"] - accepted_clock <= drain_deadline
+                         else "TERMINAL_OBSERVED_AFTER_DRAIN_DEADLINE"),
             drainTerminalStatus=terminal["status"],
             drainTerminalObservedAt=observed["observedAt"],
             drainTerminalAfterAcceptanceObservedMs=max(0, round((observed["monotonic"] - accepted_clock) * 1000)),
@@ -347,14 +458,19 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
         "originalLatencyMeasurementPreserved": True,
         "latency": record,
     })
-    return True
+    return not censored or record["drainStatus"] == "TERMINAL_OBSERVED"
 
 
 def run(root, prior_artifact, output, run_id, dispatch_sha, client,
         read_main=pt2.current_main, logs=pt2.collect_logs, clock=time.monotonic,
         wait=time.sleep, measurement_deadline=MEASUREMENT_DEADLINE_SECONDS,
-        drain_deadline=DRAIN_DEADLINE_SECONDS):
-    dataset, prior_observations = verify(root, prior_artifact)
+        drain_deadline=DRAIN_DEADLINE_SECONDS, archive=None, run_metadata=None, artifact_metadata=None,
+        history_path=None):
+    dataset, prior_observations = verify(root, prior_artifact, archive, run_metadata, artifact_metadata)
+    if not 0 < measurement_deadline <= MEASUREMENT_DEADLINE_SECONDS \
+            or not measurement_deadline <= drain_deadline <= DRAIN_DEADLINE_SECONDS:
+        raise ValueError("measurement/drain bounds exceed the frozen procedure")
+    verify_dispatch_history(history_path, run_id.removeprefix("pt2-continuation-"), dispatch_sha)
     output.mkdir(parents=True, exist_ok=False)
     pt2.write_json(output / "procedure.json", {
         "procedureVersion": CONTINUATION_PROCEDURE,
@@ -380,6 +496,7 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
     records = [{"caseId": case_id, "status": "NOT_RUN", "uploadAttempts": 0}
                for case_id in CONTINUATION_CASE_IDS]
     seen_jobs = set()
+    seen_projects = {5, CASE2_PROJECT_ID}
     checkpoint_number = 0
 
     def checkpoint():
@@ -388,31 +505,25 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
         checkpoint_number += 1
 
     checkpoint()
-    if not recover_prior_case2(
-        client, output, prior_observations, logs=logs, clock=clock, wait=wait,
-        drain_deadline=drain_deadline
-    ):
-        pt2.write_json(output / "continuation-observations.json", {
-            "runId": run_id,
-            "priorRunId": PRIOR_RUN_ID,
-            "cases": records,
-            "priorCase2Recovered": False,
-            "continuationComplete": False,
-            "phaseAcceptance": "INDEPENDENT_REVIEW_REQUIRED",
-        })
-        return False
-
+    recovered, errored = False, False
     continuation_cases = [case for case in dataset["cases"] if case["caseId"] in CONTINUATION_CASE_IDS]
     try:
+        recovered = recover_prior_case2(
+            client, output, prior_observations, logs=logs, clock=clock, wait=wait,
+            drain_deadline=drain_deadline
+        )
+        if not recovered:
+            return False
         for case, record in zip(continuation_cases, records):
             if not observe_case(
                 root, case, record, client, run_id, dispatch_sha, output, seen_jobs,
                 read_main=read_main, logs=logs, clock=clock, wait=wait,
                 measurement_deadline=measurement_deadline, drain_deadline=drain_deadline,
-                checkpoint=checkpoint
+                checkpoint=checkpoint, seen_projects=seen_projects
             ):
                 break
     except Exception as error:
+        errored = True
         pt2.write_json(output / "observation-error.json", {
             "errorClass": type(error).__name__,
             "reason": str(error),
@@ -420,14 +531,15 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
         raise
     finally:
         checkpoint()
-        complete = all(row["status"] not in ("NOT_RUN", "SUBMISSION_STARTED", "ACCEPTED", "INDETERMINATE_ACCEPTANCE")
-                        and row.get("drainStatus") != "TERMINAL_NOT_OBSERVED"
-                        for row in records)
+        complete = recovered and not errored and all(
+            row["status"] in ("SUCCEEDED", "FAILED") or (
+                row["status"] == "TERMINAL_NOT_OBSERVED_AT_MEASUREMENT_DEADLINE"
+                and row.get("drainStatus") == "TERMINAL_OBSERVED") for row in records)
         pt2.write_json(output / "continuation-observations.json", {
             "runId": run_id,
             "priorRunId": PRIOR_RUN_ID,
             "cases": records,
-            "priorCase2Recovered": True,
+            "priorCase2Recovered": recovered,
             "continuationComplete": complete,
             "phaseAcceptance": "INDEPENDENT_REVIEW_REQUIRED",
         })
@@ -436,32 +548,44 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("verify", "run", "inventory"))
+    parser.add_argument("action", choices=("extract-prior", "verify", "run", "inventory"))
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--prior-artifact", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--run-id")
     parser.add_argument("--token-file", type=Path)
     parser.add_argument("--dispatch-sha")
+    parser.add_argument("--prior-archive", type=Path)
+    parser.add_argument("--prior-run-metadata", type=Path)
+    parser.add_argument("--prior-artifact-metadata", type=Path)
+    parser.add_argument("--dispatch-history", type=Path)
     args = parser.parse_args()
 
-    if args.action == "verify":
-        if not args.prior_artifact:
-            parser.error("verify requires --prior-artifact")
-        dataset, _ = verify(args.root, args.prior_artifact)
+    if args.action in ("verify", "extract-prior"):
+        if not all((args.prior_artifact, args.prior_archive, args.prior_run_metadata, args.prior_artifact_metadata)):
+            parser.error("prior verification requires artifact directory, archive and both GitHub metadata files")
+        if args.action == "extract-prior":
+            extract_prior_archive(args.prior_archive, args.prior_artifact,
+                                  args.prior_run_metadata, args.prior_artifact_metadata)
+        dataset, _ = verify(args.root, args.prior_artifact, args.prior_archive,
+                            args.prior_run_metadata, args.prior_artifact_metadata)
         print(f"Verified prior PT-2 run and {len(dataset['cases'])} frozen cases; no live calls.")
     elif args.action == "inventory":
         if not args.output:
             parser.error("inventory requires --output")
         pt2.inventory(args.output)
     else:
-        if not all((args.prior_artifact, args.output, args.run_id, args.token_file, args.dispatch_sha)):
-            parser.error("run requires prior artifact, output, run-id, token-file and dispatch SHA")
+        if not all((args.prior_artifact, args.output, args.run_id, args.token_file, args.dispatch_sha,
+                    args.prior_archive, args.prior_run_metadata, args.prior_artifact_metadata,
+                    args.dispatch_history)):
+            parser.error("run requires prior binding/history files, output, run-id, token-file and dispatch SHA")
         client = pt2.CurlClient(args.token_file)
         try:
             complete = run(
                 args.root, args.prior_artifact, args.output, args.run_id,
-                args.dispatch_sha, client
+                args.dispatch_sha, client, archive=args.prior_archive,
+                run_metadata=args.prior_run_metadata, artifact_metadata=args.prior_artifact_metadata,
+                history_path=args.dispatch_history
             )
         finally:
             client.close()

@@ -18,6 +18,15 @@ identity_run_id="${IDENTITY_RUN_ID:-${GITHUB_RUN_ID}}"
   echo 'IDENTITY_RUN_ID must be a numeric GitHub run ID.' >&2
   exit 1
 }
+if [[ "$OPERATION" == pt2-realistic-continuation ]]; then
+  [[ "$identity_run_id" == 37480519016 ]] || {
+    echo 'PT-2 continuation requires the exact original fixture owner.' >&2
+    exit 1
+  }
+elif [[ "$identity_run_id" != "$GITHUB_RUN_ID" ]]; then
+  echo 'Fixture owner override is restricted to the bound PT-2 continuation operation.' >&2
+  exit 1
+fi
 
 kubectl -n "$NAMESPACE" get configmap terraformers-jwks             -o jsonpath='{.data.jwks\.json}' > "$previous_jwks"
 test -s "$previous_jwks"
@@ -84,7 +93,7 @@ header="$(
   printf '{"alg":"RS256","kid":"%s","typ":"JWT"}' "$kid"               | openssl base64 -A | tr '+/' '-_' | tr -d '='
 )"
 token_ttl=900
-if [[ "$OPERATION" == backend-live-validation-c2-stability || "$OPERATION" == a7-7-broad-v4-live-proof || "$OPERATION" == pt2-realistic-baseline ]]; then
+if [[ "$OPERATION" == backend-live-validation-c2-stability || "$OPERATION" == a7-7-broad-v4-live-proof || "$OPERATION" == pt2-realistic-baseline || "$OPERATION" == pt2-realistic-continuation ]]; then
   token_ttl=10800
 fi
 payload="$(
@@ -99,6 +108,9 @@ chmod 600 "$private_key" "$token_file" "$unsigned" "$signature"
 }
 restore_fixture() {
 previous_jwks="${RUNNER_TEMP}/previous-jwks.json"
+# Even failed restoration must remove this run's private key/token/header material.
+# Retain the ownership marker on failure so the un-restored fixture is never claimed as clean.
+trap 'rm -f "${RUNNER_TEMP}/case-c-private.pem" "${RUNNER_TEMP}/case-c-access.token" "${RUNNER_TEMP}/case-c-unsigned.token" "${RUNNER_TEMP}/case-c-signature.bin" "${RUNNER_TEMP}/case-c-modulus.bin" "${RUNNER_TEMP}"/pt2-auth-*' EXIT
 if [[ -s "$previous_jwks" && -f "${RUNNER_TEMP}/ephemeral-jwks-owned.marker" ]]; then
   jq -e ' .keys == [] ' "$previous_jwks" >/dev/null
   kubectl -n "$NAMESPACE" create configmap terraformers-jwks               --from-file=jwks.json="$previous_jwks"               --dry-run=client -o yaml               | kubectl apply -f -
@@ -106,7 +118,7 @@ if [[ -s "$previous_jwks" && -f "${RUNNER_TEMP}/ephemeral-jwks-owned.marker" ]];
   kubectl -n "$NAMESPACE" rollout status deployment/terraformers-jwks --timeout=2m
 fi
 
-rm -f "${RUNNER_TEMP}/ephemeral-jwks-owned.marker" "${RUNNER_TEMP}/case-c-private.pem" "${RUNNER_TEMP}/case-c-access.token" "${RUNNER_TEMP}/case-c-unsigned.token" "${RUNNER_TEMP}/case-c-signature.bin" "${RUNNER_TEMP}/case-c-modulus.bin"
+rm -f "${RUNNER_TEMP}/ephemeral-jwks-owned.marker"
 
 }
 case "${1:-}" in

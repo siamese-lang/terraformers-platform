@@ -1,4 +1,5 @@
 name: GCP Target Evaluation Baseline
+run-name: ${{ inputs.evaluation_scope == 'pt2-realistic-continuation' && 'PT-2 continuation of 37480519016' || 'GCP Target Evaluation Baseline' }}
 
 on:
   workflow_dispatch:
@@ -1370,7 +1371,14 @@ jobs:
           set -euo pipefail
           output_dir="${RUNNER_TEMP}/pt2-realistic-continuation"
           prior_dir="${RUNNER_TEMP}/pt2-prior-artifact"
-          mkdir -p "$output_dir" "$prior_dir"
+          mkdir -p "$output_dir"
+          prior_archive="${RUNNER_TEMP}/pt2-prior-artifact.zip"
+
+          # A new workflow_dispatch is also a repeat, even if run_attempt is 1.
+          # The existing global GCP concurrency group keeps this check/submission lane serialized.
+          gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/gcp-target-evaluation-baseline.yml/runs?event=workflow_dispatch&per_page=100" \
+            | jq --slurp '.' > "$output_dir/dispatch-history.json"
 
           gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PRIOR_RUN_ID}" > "$output_dir/prior-run-metadata.json"
           jq -e --arg sha "$PRIOR_DISPATCH_SHA" '
@@ -1387,10 +1395,19 @@ jobs:
             and .workflow_run.head_sha == $sha
           ' "$output_dir/prior-artifact-metadata.json" >/dev/null
 
-          gh run download "$PRIOR_RUN_ID" --repo "$GITHUB_REPOSITORY" \
-            --name "pt2-realistic-baseline-${PRIOR_RUN_ID}" --dir "$prior_dir"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${PRIOR_ARTIFACT_ID}/zip" > "$prior_archive"
 
-          python3 scripts/evaluation/pt2-realistic-continuation.py verify --prior-artifact="$prior_dir"
+          python3 scripts/evaluation/pt2-realistic-continuation.py extract-prior \
+            --prior-artifact="$prior_dir" --prior-archive="$prior_archive" \
+            --prior-run-metadata="$output_dir/prior-run-metadata.json" \
+            --prior-artifact-metadata="$output_dir/prior-artifact-metadata.json"
+          python3 - "$output_dir/dispatch-history.json" "$GITHUB_RUN_ID" "$GITHUB_SHA" <<'PY'
+          import importlib.util, pathlib, sys
+          spec = importlib.util.spec_from_file_location("continuation", "scripts/evaluation/pt2-realistic-continuation.py")
+          continuation = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(continuation)
+          continuation.verify_dispatch_history(pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3])
+          PY
           jq -e --arg image "$BACKEND_IMAGE" --arg source "$BACKEND_SOURCE_SHA" '
             .backendImage == $image and .backendSourceSha == $source
             and .productionSourceEquivalent == true and .configurationVerified == true
@@ -1400,7 +1417,7 @@ jobs:
         if: inputs.evaluation_scope == 'pt2-realistic-baseline' || inputs.evaluation_scope == 'pt2-realistic-continuation'
         env:
           NAMESPACE: terraformers-target
-          OPERATION: pt2-realistic-baseline
+          OPERATION: ${{ inputs.evaluation_scope }}
           IDENTITY_RUN_ID: ${{ inputs.evaluation_scope == 'pt2-realistic-continuation' && '37480519016' || github.run_id }}
           ISSUER_URI: https://identity.example.test/case-c
           CLIENT_ID: case-c-runtime-client
@@ -1468,6 +1485,10 @@ jobs:
 
           python3 scripts/evaluation/pt2-realistic-continuation.py run \
             --prior-artifact="$prior_dir" \
+            --prior-archive="${RUNNER_TEMP}/pt2-prior-artifact.zip" \
+            --prior-run-metadata="$output_dir/prior-run-metadata.json" \
+            --prior-artifact-metadata="$output_dir/prior-artifact-metadata.json" \
+            --dispatch-history="$output_dir/dispatch-history.json" \
             --run-id="pt2-continuation-${GITHUB_RUN_ID}" \
             --token-file="${RUNNER_TEMP}/case-c-access.token" \
             --dispatch-sha="$GITHUB_SHA" \

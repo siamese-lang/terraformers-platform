@@ -2,19 +2,24 @@
 
 ## Status
 
-**PROGRAM APPROVED — PT-1 REVISED CANDIDATE READY / HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE**
+**PROGRAM APPROVED — PT-1 COMPLETE / HUMAN_REQUIRED: LIVE_REALISTIC_BASELINE**
 
-The user approved `product-trust-v1` on 2026-10-06. PT-1 activated on exact main
-`0bb244756c2a2e1d3d6d11d0342e98e155f8662c` and retains that execution base. The first candidate was rejected in human review; the explicitly
-authorized visual corrective iteration prepared candidate revision 2. The latest structured PR review
-passed its visual fidelity but required source/adaptation and support-resource truth corrections.
-Human-authorized iteration 2 submits candidate revision 3 with all ten input images byte-for-byte
-unchanged. Original acceptance, component/topology truth and forbidden interpretations are retained;
-autonomous repairs remain 1. Open-PR recovery first reads the latest structured acceptance feedback;
-full standing rules and the unresolved independent review checkpoint are recorded in durable state.
+PT-1 is complete after [independent acceptance](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394) of candidate revision 3 and
+[explicit USER truth-freeze approval](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324) at `2026-10-06T12:04:51Z`.
+Frozen identity: `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`; reviewed source head `a5b890d565daa250e02e67e0eb5608c128eae637`;
+PR #241 merged at `d98d03367c5b63a5321311763e9852c53fe65eae`. The merge preceded truth approval and did not substitute for it.
+The original PT-1 execution base `0bb244756c2a2e1d3d6d11d0342e98e155f8662c`, frozen candidate bytes, source/topology truth,
+original acceptance and repair history are retained.
+
+This repository-only state/document sync uses exact merged main `d98d03367c5b63a5321311763e9852c53fe65eae` as its separate base.
 See [PT-1 review evidence](../../evaluation/product-trust-pt-1-realistic-input-freeze.md) and
-[the candidate images/truth](../../../evaluation/terraformers-realistic-v1/README.md). Truth is not
-frozen; merge and any PT-2 live baseline remain separate human checkpoints.
+[the immutable candidate images/truth](../../../evaluation/terraformers-realistic-v1/README.md).
+Current freeze authority is recorded outside the pinned candidate snapshot in durable state and
+review evidence; its historical NOT_APPROVED/null markers are not edited into a new identity.
+
+PT-2 is the next declared phase but remains blocked at **LIVE_REALISTIC_BASELINE**. No PT-2 Work
+Package, execution base, model run or live action is activated by this transition. Separate explicit
+user approval is still required. This state/document PR also has no automatic merge authority.
 
 This plan supersedes automatic progression to A7-8 and teardown. It does not invalidate repository
 evidence merely because it is old; it reclassifies each claim according to whether it proves an
@@ -97,6 +102,8 @@ The final product claim requires evidence for five user guarantees:
 
 ### PT-1 — Realistic-input benchmark design and freeze
 
+**Status: COMPLETE.** The approved revision-3 bytes and truth are frozen at the binding above.
+
 Repository-only until the truth set is frozen.
 
 Build a small but diverse realistic dataset before observing live results. Target approximately ten
@@ -116,6 +123,8 @@ repository-owned faithful test diagram rather than copying copyrighted artwork.
 **Human gate:** `REALISTIC_DATASET_TRUTH_FREEZE`.
 
 ### PT-2 — Current-system realistic live baseline
+
+**Status: HUMAN_REQUIRED / LIVE_REALISTIC_BASELINE; not activated or executed.**
 
 Use the frozen PT-1 dataset against the current production-equivalent path exactly once under a
 reviewed live checkpoint.

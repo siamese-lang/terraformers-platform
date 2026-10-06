@@ -4,11 +4,11 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
-  "activePhase": "PT-1",
-  "lastCompletedPhase": "P0_PROGRAM_PROTOCOL",
-  "activeWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
-  "activePullRequest": 241,
-  "humanGate": "REALISTIC_DATASET_TRUTH_FREEZE",
+  "activePhase": null,
+  "lastCompletedPhase": "PT-1",
+  "activeWorkPackage": null,
+  "activePullRequest": 242,
+  "humanGate": "LIVE_REALISTIC_BASELINE",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
@@ -22,30 +22,36 @@
     "PT-1 may activate only after this approval/state transition is merged; the executor then binds the exact post-merge main SHA once.",
     "PT-1 candidate prepared without model/cloud actions; reference-based redraws are not user-upload generalization proof. Stop before human truth freeze and merge.",
     "Candidate revision 1 was rejected in human truth review. Explicitly authorized corrective iteration 1 prepared revision 2; original execution base and autonomous-repair count remain unchanged. Truth remains unapproved.",
-    "Structured PR review of candidate 2 passed visual fidelity but required two truth-contract corrections. Human-authorized iteration 2 submits candidate 3 with unchanged fixture bytes; autonomous repairs remain 1 and truth remains unapproved."
+    "Structured PR review of candidate 2 passed visual fidelity but required two truth-contract corrections. Human-authorized iteration 2 submits candidate 3 with unchanged fixture bytes; autonomous repairs remain 1 and truth remains unapproved.",
+    "Historical candidate notes above describe preparation before approval. Independent review 6015807394 accepted candidate 3; explicit USER approval 6015857324 subsequently froze its exact identity and authorized PT-1 completion after PR #241 merged. PT-2 remains unapproved and unstarted.",
+    "Frozen dataset/identity/provenance bytes are immutable pre-approval snapshots. Current truth approval is recorded outside those pinned bytes in candidate/truthFreezeApproval and review evidence; their historical null approval or NOT_APPROVED markers do not replace the later explicit approval."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
   "executionBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
-  "resultBeforeHumanGate": "REALISTIC_DATASET_CANDIDATE_READY",
+  "resultBeforeHumanGate": "PT_1_COMPLETE_PT_2_BLOCKED",
   "autoRepairsUsed": 1,
-  "acceptanceBeforeHumanFreeze": "TRUTH_CONTRACT_CORRECTION_SUBMITTED_INDEPENDENT_REVIEW_PENDING",
-  "activePullRequestBranch": "codex/product-trust-pt-1-realistic-input-benchmark",
+  "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
+  "activePullRequestBranch": "codex/product-trust-pt-1-freeze-state-sync",
   "candidate": {
     "directory": "evaluation/terraformers-realistic-v1",
     "identityPath": "evaluation/terraformers-realistic-v1/candidate-identity.json",
     "identitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
-    "truthApprovedBy": null,
-    "truthFrozenAt": null,
+    "truthApprovedBy": "USER",
+    "truthFrozenAt": "2026-10-06T12:04:51Z",
     "modelUnderTestRunCount": 0,
     "candidateRevision": 3,
-    "supersededIdentitySha256": "c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852"
+    "supersededIdentitySha256": "c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852",
+    "status": "FROZEN",
+    "frozenIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+    "frozenSourceHeadSha": "a5b890d565daa250e02e67e0eb5608c128eae637",
+    "truthFreezeApprovalCommentId": 6015857324,
+    "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "Independent acceptance re-review and explicit REALISTIC_DATASET_TRUTH_FREEZE of candidate 3 at the new identity",
-    "Separate PR merge checkpoint; merge is not authorized",
-    "PT-2 live baseline remains unapproved and ineligible"
+    "PT-2 remains blocked at LIVE_REALISTIC_BASELINE pending separate explicit user approval; no execution or Work Package activation",
+    "Repository-only state/document PR remains subject to its separate merge checkpoint; no merge authority granted"
   ],
   "evidenceDocument": "docs/evaluation/product-trust-pt-1-realistic-input-freeze.md",
   "validation": {
@@ -95,11 +101,28 @@
       "diffCheck": "PASS",
       "oneOffAuditInitialFailure": "External helper used NON_ARCHITECTURE instead of declared NON_ARCHITECTURE_IMAGE; corrected helper only, no candidate or acceptance change.",
       "oneOffAuditCorrectedResult": "PASS",
-      "independentAcceptancePending": true
+      "independentAcceptancePending": false,
+      "independentAcceptanceReviewCommentId": 6015807394
+    },
+    "truthFreezeStateSync": {
+      "status": "PASS",
+      "approvalReviewMergeBinding": "PASS",
+      "jsonYamlStateConsistency": "PASS",
+      "frozenIdentityFilesVerified": 26,
+      "fixtureFilesUnchanged": 20,
+      "perCaseTruthSectionsPreserved": 10,
+      "originalPt1ExecutionBaseAndRepairHistoryPreserved": "PASS",
+      "pt2NotActivatedOrAuthorized": "PASS",
+      "stateDocumentOnlyScopeFiles": 5,
+      "diffCheck": "PASS",
+      "backendTestsRerun": false,
+      "reasonBackendTestsReused": "No candidate, loader, source, dependency or scoring change; prior accepted deterministic evidence reused.",
+      "modelUnderTestCalls": 0,
+      "liveCloudActions": 0
     }
   },
-  "activePullRequestUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241",
-  "lastObservedMainSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
+  "activePullRequestUrl": "https://github.com/siamese-lang/terraformers-platform/pull/242",
+  "lastObservedMainSha": "d98d03367c5b63a5321311763e9852c53fe65eae",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -134,7 +157,9 @@
       ],
       "fixtureBytesChanged": false,
       "autonomousRepair": false,
-      "modelUnderTestRunCount": 0
+      "modelUnderTestRunCount": 0,
+      "independentAcceptance": "PASS",
+      "independentAcceptanceReviewCommentId": 6015807394
     }
   ],
   "prReviewFeedbackPolicy": {
@@ -158,30 +183,113 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6015448816,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015448816",
-    "decision": "CHANGES_REQUIRED",
-    "reviewedHeadSha": "44b73b02840abbaf1da8349e124e73fe5ccb6e5e",
-    "observedPrHeadShaBeforeCorrection": "44b73b02840abbaf1da8349e124e73fe5ccb6e5e",
+    "commentId": 6015807394,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394",
+    "decision": "ACCEPTED",
+    "pullRequest": 241,
+    "reviewedHeadSha": "a5b890d565daa250e02e67e0eb5608c128eae637",
+    "observedPrHeadSha": "a5b890d565daa250e02e67e0eb5608c128eae637",
     "workPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
     "executionBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
-    "commitsAfterReviewedHeadBeforeCorrection": 0,
-    "visualFidelityFinding": "PASSED",
-    "blockers": [
-      {
-        "id": "BLOCKER-1",
-        "finding": "Source provenance/adaptation wording",
-        "correction": "Source Cognito authentication separated from intentional candidate omission and HTTP API choice"
-      },
-      {
-        "id": "BLOCKER-2",
-        "finding": "Implementation-support resource requirements",
-        "correction": "All six positives audited; support-only creation requirements moved to acceptable with mandatory topology preserved"
-      }
+    "candidateRevision": 3,
+    "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+    "independentAcceptance": "PASS",
+    "resolvedBlockers": [
+      "BLOCKER-1",
+      "BLOCKER-2"
     ],
-    "correctionStatus": "SUBMITTED_PENDING_INDEPENDENT_REVIEW",
-    "fixtureBytesPreserved": true,
-    "liveOrModelActionAuthorized": false,
+    "humanTruthFreezeGrantedByReview": false,
+    "mergeAuthorizedByReview": false,
     "pt2Authorized": false
+  },
+  "lastCompletedWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
+  "lastCompletedPullRequest": 241,
+  "nextPhase": "PT-2",
+  "executionBaseWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
+  "truthFreezeApproval": {
+    "marker": "[HUMAN_GATE_APPROVAL:v1]",
+    "commentId": 6015857324,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324",
+    "gate": "REALISTIC_DATASET_TRUTH_FREEZE",
+    "decision": "APPROVED",
+    "approvedBy": "USER",
+    "approvedAt": "2026-10-06T12:04:51Z",
+    "candidateRevision": 3,
+    "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+    "candidateSourceHeadSha": "a5b890d565daa250e02e67e0eb5608c128eae637",
+    "mergedPullRequest": 241,
+    "mergedMainSha": "d98d03367c5b63a5321311763e9852c53fe65eae",
+    "independentAcceptanceReviewCommentId": 6015807394,
+    "pt1CompletionAuthorized": true,
+    "pt2LiveBaselineAuthorized": false,
+    "liveModelOrGcpActionAuthorized": false,
+    "mergeAuthorityGrantedByThisGate": false
+  },
+  "phaseCompletion": {
+    "PT-1": {
+      "status": "COMPLETE",
+      "workPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
+      "executionBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
+      "sourceHeadSha": "a5b890d565daa250e02e67e0eb5608c128eae637",
+      "mergedPullRequest": 241,
+      "mergedMainSha": "d98d03367c5b63a5321311763e9852c53fe65eae",
+      "mergedAt": "2026-10-06T12:04:15Z",
+      "independentAcceptance": "PASS",
+      "independentAcceptanceReviewCommentId": 6015807394,
+      "truthFreezeApprovalCommentId": 6015857324,
+      "completedAt": "2026-10-06T12:04:51Z"
+    }
+  },
+  "blockedNextPhase": {
+    "phase": "PT-2",
+    "status": "AWAITING_HUMAN_APPROVAL",
+    "humanGate": "LIVE_REALISTIC_BASELINE",
+    "executionAuthorized": false,
+    "executionStarted": false,
+    "workPackage": null,
+    "executionBaseSha": null,
+    "modelUnderTestRunCount": 0,
+    "liveCloudActions": 0
+  },
+  "prReviewFeedbackHistory": [
+    {
+      "commentId": 6015448816,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015448816",
+      "decision": "CHANGES_REQUIRED",
+      "reviewedHeadSha": "44b73b02840abbaf1da8349e124e73fe5ccb6e5e",
+      "observedPrHeadShaBeforeCorrection": "44b73b02840abbaf1da8349e124e73fe5ccb6e5e",
+      "workPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
+      "executionBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
+      "commitsAfterReviewedHeadBeforeCorrection": 0,
+      "visualFidelityFinding": "PASSED",
+      "blockers": [
+        {
+          "id": "BLOCKER-1",
+          "finding": "Source provenance/adaptation wording",
+          "correction": "Source Cognito authentication separated from intentional candidate omission and HTTP API choice"
+        },
+        {
+          "id": "BLOCKER-2",
+          "finding": "Implementation-support resource requirements",
+          "correction": "All six positives audited; support-only creation requirements moved to acceptable with mandatory topology preserved"
+        }
+      ],
+      "correctionStatus": "SUBMITTED_PENDING_INDEPENDENT_REVIEW",
+      "fixtureBytesPreserved": true,
+      "liveOrModelActionAuthorized": false,
+      "pt2Authorized": false
+    }
+  ],
+  "repositoryStateUpdate": {
+    "task": "PT-1 truth-freeze and phase-completion state sync",
+    "lane": "M1_EVIDENCE_STATE",
+    "authorization": "User explicitly requested only a repository state/document PR on merged main d98d03367c5b63a5321311763e9852c53fe65eae; stop before PT-2.",
+    "executionBaseSha": "d98d03367c5b63a5321311763e9852c53fe65eae",
+    "branch": "codex/product-trust-pt-1-freeze-state-sync",
+    "pullRequest": 242,
+    "status": "PR_OPEN",
+    "mergeAuthorized": false,
+    "pt2Activated": false,
+    "pullRequestUrl": "https://github.com/siamese-lang/terraformers-platform/pull/242"
   }
 }

@@ -8,12 +8,17 @@ final class CaseATestFixtures {
     static ConfigurationIdentity identity() { return new ConfigurationIdentity("terraformers-reference-v3", "5.100.0", "vertex", "vertex", "REQUIRED", 8, "gemini-3.8-flash", "gemini-embedding-001", "legacy-hash", "LOW", 800, 8192); }
     static EvaluationCase definition(String id, InputClassification classification, List<String> decisions, List<String> retrievalResources) {
         boolean positive = classification == InputClassification.ARCHITECTURE_DIAGRAM;
+        List<String> requiredResources = positive
+                ? List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")
+                : List.of();
+        List<String> forbiddenResources = positive ? List.of("aws_s3_bucket") : List.of();
         return new EvaluationCase("m3-evaluation-v1", "dataset", id,
                 new InputFixture("fixtures/x.webp", "abc", "image/webp"), classification,
-                TextExpectation.empty(), TextExpectation.empty(), TextExpectation.empty(),
+                TextExpectation.empty(), TextExpectation.empty(),
+                new TextExpectation(requiredResources, List.of(), forbiddenResources),
                 new RetrievalExpectation(List.of(), List.of(), retrievalResources, decisions, List.of()),
                 new GenerationExpectation(positive, new TextExpectation(
-                        List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group"), List.of(), List.of("aws_s3_bucket"))),
+                        requiredResources, List.of(), forbiddenResources)),
                 positive ? ValidationExpectation.PASS : ValidationExpectation.NOT_APPLICABLE, List.of());
     }
     static EvaluationTrace trace(String run, String id, EvaluationStageStatus retrievalStatus, List<ReferenceHit> hits,

@@ -83,16 +83,6 @@ The final product claim requires evidence for five user guarantees:
 
 ## Program sequence
 
-### PT-0 — Product-trust contract and evidence reset
-
-Repository-only.
-
-- freeze the product-trust success criteria;
-- classify historical evidence as retained, downgraded or superseded;
-- record that A7-8 and teardown are deferred while the current live runtime is intentionally retained;
-- define realistic-input and user-facing success terminology;
-- do not modify production behavior.
-
 ### PT-1 — Realistic-input benchmark design and freeze
 
 Repository-only until the truth set is frozen.
@@ -207,7 +197,12 @@ Do not convert the cost-gated representative GCP environment into automatic depl
 
 ### PT-8 — Final integrated product proof
 
-Build/publish/deploy the final reviewed revision once and run the bounded final product proof:
+Build/publish/deploy the final reviewed backend/runtime revision once. Compose the final claim from
+that live runtime proof plus PT-6 browser evidence. Re-run browser E2E only if relevant user-facing
+behavior changed after PT-6. Do **not** add a public GCP frontend workload or ingress merely to make
+this phase "fully live".
+
+Run the bounded final product proof:
 
 - realistic-image fidelity;
 - representative repeated cases for stochastic stability;

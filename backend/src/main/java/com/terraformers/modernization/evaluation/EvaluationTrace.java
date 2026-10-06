@@ -292,8 +292,13 @@ public record EvaluationTrace(
     public record ValidationCheck(
             String name,
             boolean valid,
-            String reason
+            String reason,
+            com.terraformers.modernization.analysis.TerraformDiagnosticSummary diagnosticSummary
     ) {
+        public ValidationCheck(String name, boolean valid, String reason) {
+            this(name, valid, reason, null);
+        }
+
         public ValidationCheck {
             name = requireText(name, "name");
             reason = normalize(reason);

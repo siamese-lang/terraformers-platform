@@ -65,9 +65,10 @@ class BoundedBaselineTest(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.output = Path(self.temp.name) / 'cases'
+        self.root = self.copy_root('pre-start-scenario')
 
     def run_fake(self, client, **kwargs):
-        return pt2.run(ROOT, self.output, 'test-run', SHA, client, read_main=kwargs.pop('read_main',lambda:SHA),
+        return pt2.run(self.root, self.output, 'test-run', SHA, client, read_main=kwargs.pop('read_main',lambda:SHA),
                        clock=lambda:client.time, wait=client.wait, logs=lambda job,since:{'jobId':job,'stageTimings':[]},
                        deadline=20, **kwargs)
 
@@ -149,14 +150,33 @@ class BoundedBaselineTest(unittest.TestCase):
             self.run_fake(client,read_main=lambda:next(values))
         self.assertEqual(len(client.posts),1)
 
-    def copy_root(self):
-        root = Path(self.temp.name) / 'changed'
+    def copy_root(self, name='changed'):
+        root = Path(self.temp.name) / name
         shutil.copytree(ROOT / 'evaluation' / pt2.DATASET,root / 'evaluation' / pt2.DATASET)
         for relative in ('.agents/state/product-trust-v1.json',pt2.PROTOCOL):
             target = root / relative
             target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy(ROOT / relative,target)
+        # Unit scenarios represent an unexecuted v2 batch independently of the real durable state.
+        # Never reset repository state or relax the production guard after an actual baseline.
+        state_path=root/'.agents/state/product-trust-v1.json'
+        state=json.loads(state_path.read_text())
+        state['phaseExecution']['PT-2']['baselineExecutionStarted']=False
+        state['phaseExecution']['PT-2']['modelUnderTestRunCount']=0
+        state_path.write_text(json.dumps(state))
         return root
+
+    def test_started_baseline_or_consumed_cases_stop_before_any_product_API(self):
+        for field,value in [('baselineExecutionStarted',True),('modelUnderTestRunCount',1)]:
+            with self.subTest(field=field):
+                root=self.copy_root(field)
+                state_path=root/'.agents/state/product-trust-v1.json';state=json.loads(state_path.read_text())
+                state['phaseExecution']['PT-2'][field]=value;state_path.write_text(json.dumps(state))
+                client=FakeClient()
+                with self.assertRaisesRegex(ValueError,'baseline already started'):
+                    pt2.run(root,self.output,'test',SHA,client)
+                self.assertEqual(client.calls,[])
+                self.assertFalse(self.output.exists())
 
     def test_fixture_tamper_prevents_any_submission(self):
         root = self.copy_root()

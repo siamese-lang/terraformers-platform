@@ -2,6 +2,7 @@
 import importlib.util
 from datetime import datetime, timedelta, timezone
 import json
+import hashlib
 from pathlib import Path
 import shutil
 import tempfile
@@ -16,6 +17,20 @@ cont = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(cont)
 ROOT = Path(__file__).resolve().parents[2]
 SHA = "continuation-dispatch-sha"
+RECOVERY_RUN_ID = cont.ZERO_RUN_ID + 1
+
+
+def history_run(run_id, sha, title=cont.CONTINUATION_RUN_TITLE):
+    return {"id": run_id, "run_attempt": 1, "head_sha": sha, "head_branch": "main",
+            "event": "workflow_dispatch", "display_title": title, "workflow_id": cont.WORKFLOW_ID,
+            "path": cont.WORKFLOW_PATH, "repository": {"full_name": cont.REPOSITORY},
+            "status": "completed", "conclusion": "failure"}
+
+
+def history_pages(extra=()):
+    runs = [history_run(RECOVERY_RUN_ID, SHA), history_run(cont.ZERO_RUN_ID, cont.ZERO_DISPATCH_SHA),
+            history_run(cont.PRIOR_RUN_ID, cont.PRIOR_DISPATCH_SHA, "original baseline"), *extra]
+    return [{"total_count": len(runs), "workflow_runs": runs}]
 
 
 def frozen_dataset():
@@ -524,33 +539,30 @@ class PriorEvidenceGuardTest(unittest.TestCase):
 
     def test_existing_output_refuses_repeat_and_prior_bytes_stay_unchanged(self):
         before={str(path.relative_to(self.prior)):path.read_bytes() for path in self.prior.rglob("*") if path.is_file()}
-        history={"id":99,"run_attempt":1,"head_sha":SHA,"head_branch":"main","event":"workflow_dispatch",
-                 "display_title":cont.CONTINUATION_RUN_TITLE}
-        self.history.write_text(json.dumps([{"workflow_runs":[history,{"id":cont.PRIOR_RUN_ID,"head_sha":cont.PRIOR_DISPATCH_SHA}]}]))
+        self.history.write_text(json.dumps(history_pages()))
         output=self.directory/"already-attempted";output.mkdir()
         client=FakeClient()
-        with self.pinned(),self.assertRaises(FileExistsError):
-            cont.run(ROOT,self.prior,output,"pt2-continuation-99",SHA,client,
+        with self.pinned(),patch.object(cont,"verify_zero_inference_exception"),self.assertRaises(FileExistsError):
+            cont.run(ROOT,self.prior,output,f"pt2-continuation-{RECOVERY_RUN_ID}",SHA,client,
                      archive=self.archive,run_metadata=self.run_meta,artifact_metadata=self.artifact_meta,
                      history_path=self.history)
         self.assertEqual(client.calls,[])
         self.assertEqual(before,{str(path.relative_to(self.prior)):path.read_bytes() for path in self.prior.rglob("*") if path.is_file()})
 
     def test_dispatch_history_rejects_new_run_repeat_and_rerun_and_wrong_head(self):
-        current={"id":99,"run_attempt":1,"head_sha":SHA,"head_branch":"main", "event":"workflow_dispatch",
-                 "display_title":cont.CONTINUATION_RUN_TITLE}
-        prior={"id":cont.PRIOR_RUN_ID,"head_sha":cont.PRIOR_DISPATCH_SHA}
-        self.history.write_text(json.dumps([{"workflow_runs":[current,prior]}]))
-        cont.verify_dispatch_history(self.history,"99",SHA)
-        for runs in [[{**current,"run_attempt":2}], [{**current,"head_sha":"wrong"}],
-                     [{**current,"head_branch":"feature"}], [],
-                     [{**current,"id":98},current]]:
-            with self.subTest(runs=runs):
-                self.history.write_text(json.dumps([{"workflow_runs":runs+[prior]}]))
-                with self.assertRaises(ValueError):cont.verify_dispatch_history(self.history,"99",SHA)
-        self.history.write_text(json.dumps([{"workflow_runs":[current]}]))
+        self.history.write_text(json.dumps(history_pages()))
+        with patch.object(cont,"verify_zero_inference_exception"):
+            cont.verify_dispatch_history(self.history,str(RECOVERY_RUN_ID),SHA)
+        for field,value in [("run_attempt",2),("head_sha","wrong"),("head_branch","feature"),
+                            ("workflow_id",0),("path","other.yml"),("event","push")]:
+            with self.subTest(field=field):
+                pages=history_pages();pages[0]["workflow_runs"][0][field]=value
+                self.history.write_text(json.dumps(pages))
+                with self.assertRaises(ValueError):cont.verify_dispatch_history(self.history,str(RECOVERY_RUN_ID),SHA)
+        pages=history_pages();pages[0]["workflow_runs"]=pages[0]["workflow_runs"][:2];pages[0]["total_count"]=2
+        self.history.write_text(json.dumps(pages))
         with self.assertRaisesRegex(ValueError,"history does not extend"):
-            cont.verify_dispatch_history(self.history,"99",SHA)
+            cont.verify_dispatch_history(self.history,str(RECOVERY_RUN_ID),SHA)
 
     def test_duplicate_archive_path_is_rejected_before_extraction(self):
         import warnings
@@ -564,6 +576,217 @@ class PriorEvidenceGuardTest(unittest.TestCase):
         with self.pinned(),self.assertRaisesRegex(ValueError,"unsafe"):
             cont.extract_prior_archive(self.archive,self.directory/"extracted",self.run_meta,self.artifact_meta)
         self.assertFalse((self.directory/"extracted").exists())
+
+
+class ZeroInferenceRecoveryGuardTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.directory = Path(self.temp.name)
+        self.evidence = self.directory / "zero-inference"
+        self.evidence.mkdir()
+        for name in cont.ZERO_FILES:
+            (self.evidence / name).write_text("{}")
+        (self.evidence / "runtime-identity.json").write_text(json.dumps({
+            "dispatchSha": cont.ZERO_DISPATCH_SHA, "executionBaseSha": cont.pt2.BASE,
+            "protocolSha256": "1658b5c328fdfde9671542373309e68165d7aae6f4b973d0b781f03890b097ee",
+            "productionSourceEquivalent": True, "configurationVerified": True,
+        }))
+        self.archive = self.directory / "source.zip"
+        self.run_path = self.directory / "run.json"
+        self.artifact_path = self.directory / "artifact.json"
+        self.jobs_path = self.directory / "jobs.json"
+        self.history = self.directory / "history.json"
+        self.run_meta = history_run(cont.ZERO_RUN_ID, cont.ZERO_DISPATCH_SHA)
+        self.artifact_meta = {"id": cont.ZERO_ARTIFACT_ID,
+                              "name": f"pt2-realistic-continuation-{cont.ZERO_RUN_ID}",
+                              "expired": False,
+                              "workflow_run": {"id": cont.ZERO_RUN_ID, "head_sha": cont.ZERO_DISPATCH_SHA}}
+        steps = [{"number": number, "name": name, "status": "completed", "conclusion": conclusion}
+                 for number, (name, conclusion) in cont.ZERO_STEPS.items()]
+        self.steps_sha = hashlib.sha256(json.dumps(steps, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        self.jobs_meta = {"total_count": 1, "jobs": [{"id": cont.ZERO_JOB_ID,
+                          "run_id": cont.ZERO_RUN_ID, "run_attempt": 1, "head_sha": cont.ZERO_DISPATCH_SHA,
+                          "name": "baseline", "status": "completed", "conclusion": "failure", "steps": steps}]}
+        self.seal()
+        self.write_metadata()
+        self.history.write_text(json.dumps(history_pages()))
+
+    def seal(self):
+        (self.evidence / "artifact-sha256.json").unlink(missing_ok=True)
+        cont.pt2.inventory(self.evidence)
+        self.inventory_sha = cont.pt2.digest(self.evidence / "artifact-sha256.json")
+        with zipfile.ZipFile(self.archive, "w") as archive:
+            for path in self.evidence.rglob("*"):
+                if path.is_file(): archive.write(path, path.relative_to(self.evidence))
+        self.archive_digest = "sha256:" + cont.pt2.digest(self.archive)
+        self.artifact_meta["digest"] = self.archive_digest
+
+    def write_metadata(self):
+        self.run_path.write_text(json.dumps(self.run_meta))
+        self.artifact_path.write_text(json.dumps(self.artifact_meta))
+        self.jobs_path.write_text(json.dumps(self.jobs_meta))
+
+    def pinned(self):
+        # Only synthetic fixture checksums are patched; there is no production override input.
+        return patch.multiple(cont, ZERO_ARTIFACT_DIGEST=self.archive_digest,
+                              ZERO_INVENTORY_SHA256=self.inventory_sha, ZERO_JOB_STEPS_SHA256=self.steps_sha)
+
+    def binding(self):
+        return {"recovery_artifact": self.evidence, "recovery_archive": self.archive,
+                "recovery_run_metadata": self.run_path, "recovery_artifact_metadata": self.artifact_path,
+                "recovery_job_metadata": self.jobs_path}
+
+    def assert_blocked_before_http(self):
+        client = FakeClient()
+        with self.pinned(), patch.object(cont, "verify", return_value=(frozen_dataset(), prior_observations())), \
+                self.assertRaises(ValueError):
+            cont.run(ROOT, self.directory / "prior", self.directory / "out",
+                     f"pt2-continuation-{RECOVERY_RUN_ID}", SHA, client,
+                     history_path=self.history, **self.binding())
+        self.assertEqual(client.calls, [])
+        self.assertEqual(client.posts, [])
+        self.assertFalse((self.directory / "out").exists())
+
+    def test_full_guard_allows_only_first_submissions_and_preserves_case02_censor(self):
+        client = FakeClient()
+        prior = prior_observations()
+        before = json.dumps(prior, sort_keys=True)
+        with self.pinned(), patch.object(cont, "verify", return_value=(frozen_dataset(), prior)):
+            self.assertTrue(cont.run(ROOT, self.directory / "prior", self.directory / "out",
+                f"pt2-continuation-{RECOVERY_RUN_ID}", SHA, client,
+                read_main=lambda: SHA, logs=lambda job, since: {"jobId": job},
+                clock=lambda: client.time, wait=client.wait, history_path=self.history, **self.binding()))
+        self.assertEqual(client.posts, [case + ".png" for case in cont.CONTINUATION_CASE_IDS])
+        self.assertEqual(json.dumps(prior, sort_keys=True), before)
+        recovered=json.loads((self.directory / "out/prior-case2-recovery/recovery.json").read_text())
+        self.assertEqual(recovered["originalCensoredObservationMs"], 424846)
+        self.assertNotIn("acceptedToTerminalObservedMs", recovered)
+
+    def test_run_and_artifact_metadata_tampering_stops_before_http(self):
+        fields = [("run", "id", cont.ZERO_RUN_ID + 1), ("run", "run_attempt", 2), ("run", "run_attempt", True),
+                  ("run", "head_sha", "wrong"), ("run", "head_branch", "other"),
+                  ("run", "event", "push"), ("run", "path", "other.yml"),
+                  ("run", "workflow_id", 0), ("run", "status", "in_progress"),
+                  ("run", "conclusion", "success"), ("run", "display_title", "other"),
+                  ("run", "repository", {"full_name": "other/repo"}),
+                  ("artifact", "id", 0), ("artifact", "name", "other"),
+                  ("artifact", "expired", True), ("artifact", "digest", "sha256:wrong"),
+                  ("artifact", "workflow_run", {"id": 0, "head_sha": cont.ZERO_DISPATCH_SHA}),
+                  ("artifact", "workflow_run", {"id": cont.ZERO_RUN_ID, "head_sha": "wrong"})]
+        for category, field, value in fields:
+            with self.subTest(category=category, field=field):
+                target = self.run_path if category == "run" else self.artifact_path
+                original = target.read_text(); changed = json.loads(original); changed[field] = value
+                target.write_text(json.dumps(changed)); self.assert_blocked_before_http(); target.write_text(original)
+
+    def test_job_identity_and_set_tampering_stops_before_http(self):
+        original = self.jobs_path.read_text()
+        for field, value in [("id", 0), ("run_id", 0), ("run_attempt", 2), ("run_attempt", True), ("head_sha", "wrong"),
+                             ("name", "other"), ("status", "in_progress"), ("conclusion", "success")]:
+            with self.subTest(field=field):
+                changed=json.loads(original);changed["jobs"][0][field]=value
+                self.jobs_path.write_text(json.dumps(changed));self.assert_blocked_before_http()
+        for jobs in [[], self.jobs_meta["jobs"] * 2]:
+            changed={"total_count":len(jobs),"jobs":jobs};self.jobs_path.write_text(json.dumps(changed))
+            self.assert_blocked_before_http()
+        self.jobs_path.write_text(original)
+
+    def test_every_bound_job_step_and_extra_step_is_fail_closed(self):
+        original=self.jobs_path.read_text()
+        for index in range(len(self.jobs_meta["jobs"][0]["steps"])):
+            for field,value in [("number",999),("name","other"),("status","in_progress"),("conclusion","success" if index in (1,2,3) else "skipped")]:
+                with self.subTest(index=index,field=field):
+                    changed=json.loads(original);changed["jobs"][0]["steps"][index][field]=value
+                    self.jobs_path.write_text(json.dumps(changed));self.assert_blocked_before_http()
+        for mode in ["missing", "duplicate", "extra"]:
+            changed=json.loads(original);steps=changed["jobs"][0]["steps"]
+            if mode=="missing":steps.pop(0)
+            elif mode=="duplicate":steps.append(steps[0])
+            else:steps.append({"number":42,"name":"unexpected upload","status":"completed","conclusion":"success"})
+            self.jobs_path.write_text(json.dumps(changed));self.assert_blocked_before_http()
+        self.jobs_path.write_text(original)
+
+    def test_actual_archive_bytes_and_inventory_file_hashes_are_required(self):
+        original=self.archive.read_bytes();self.archive.write_bytes(original+b"altered")
+        self.assert_blocked_before_http();self.archive.write_bytes(original)
+        inventory=self.evidence/"artifact-sha256.json";original=inventory.read_bytes()
+        inventory.write_bytes(original+b" ");self.assert_blocked_before_http();inventory.write_bytes(original)
+        path=self.evidence/"retained-configuration.txt";original=path.read_bytes()
+        path.write_bytes(original+b"altered");self.assert_blocked_before_http();path.write_bytes(original)
+
+    def test_case_recovery_or_submission_files_and_even_empty_case_directory_are_rejected(self):
+        for name in ["cases/submission-started.json","recovery.json","accepted-job.json","model-result.json"]:
+            with self.subTest(name=name):
+                path=self.evidence/name;path.parent.mkdir(exist_ok=True);path.write_text("{}")
+                self.seal();self.write_metadata();self.assert_blocked_before_http();path.unlink()
+                if path.parent!=self.evidence:path.parent.rmdir()
+        (self.evidence/"cases").mkdir();self.seal();self.write_metadata();self.assert_blocked_before_http()
+
+    def test_extraction_rejects_paths_links_duplicates_and_unexpected_entries(self):
+        import warnings
+        for name,mode,duplicate in [("../escape",0o100600,False),("runtime-identity.json",0o120777,False),
+                                    ("cases/",0o040755,False),("runtime-identity.json",0o100600,True)]:
+            with self.subTest(name=name,mode=mode,duplicate=duplicate):
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore",UserWarning)
+                    with zipfile.ZipFile(self.archive,"w") as archive:
+                        entry=zipfile.ZipInfo(name);entry.external_attr=mode<<16;archive.writestr(entry,"unsafe")
+                        if duplicate:archive.writestr(entry,"again")
+                self.archive_digest="sha256:"+cont.pt2.digest(self.archive)
+                self.artifact_meta["digest"]=self.archive_digest;self.write_metadata()
+                with self.pinned(),self.assertRaises(ValueError):
+                    cont.extract_recovery_archive(self.archive,self.directory/"extracted",self.run_path,self.artifact_path,self.jobs_path)
+                self.assertFalse((self.directory/"extracted").exists())
+                self.assertFalse((self.directory/"escape").exists())
+
+    def test_missing_proof_cannot_exempt_run(self):
+        for key in self.binding():
+            kwargs=self.binding();kwargs[key]=None
+            with self.subTest(key=key),self.pinned(),self.assertRaises(ValueError):
+                cont.verify_dispatch_history(self.history,str(RECOVERY_RUN_ID),SHA,**kwargs)
+
+    def test_complete_repository_pagination_and_cross_workflow_runs_are_supported(self):
+        pages=history_pages([history_run(1,"other","unrelated workflow")]);pages[0]["workflow_runs"][-1]["workflow_id"]=0
+        runs=pages[0]["workflow_runs"];pages=[{"total_count":len(runs),"workflow_runs":runs[:2]},
+                                         {"total_count":len(runs),"workflow_runs":runs[2:]}]
+        self.history.write_text(json.dumps(pages))
+        with self.pinned():cont.verify_dispatch_history(self.history,str(RECOVERY_RUN_ID),SHA,**self.binding())
+
+    def test_incomplete_stale_duplicate_or_mixed_page_history_blocks(self):
+        examples=[]
+        pages=history_pages();pages[0]["total_count"]+=1;examples.append(pages)
+        pages=history_pages();pages[0]["workflow_runs"].pop(0);pages[0]["total_count"]-=1;examples.append(pages)
+        pages=history_pages();pages[0]["workflow_runs"].pop(1);pages[0]["total_count"]-=1;examples.append(pages)
+        pages=history_pages();pages[0]["workflow_runs"].append(pages[0]["workflow_runs"][0]);pages[0]["total_count"]+=1;examples.append(pages)
+        examples.append([{"total_count":3,"workflow_runs":history_pages()[0]["workflow_runs"][:1]},
+                         {"total_count":4,"workflow_runs":history_pages()[0]["workflow_runs"][1:]}])
+        examples.append([])
+        examples.append([None])
+        for pages in examples:
+            self.history.write_text(json.dumps(pages));self.assert_blocked_before_http()
+
+    def test_every_non_exempt_continuation_including_failed_or_other_workflow_blocks(self):
+        for status,workflow in [("failure",cont.WORKFLOW_ID),("cancelled",cont.WORKFLOW_ID),
+                                ("success",cont.WORKFLOW_ID),("failure",0)]:
+            earlier=history_run(cont.ZERO_RUN_ID-1,"other");earlier.update(conclusion=status,workflow_id=workflow)
+            self.history.write_text(json.dumps(history_pages([earlier])));self.assert_blocked_before_http()
+        self.history.write_text(json.dumps(history_pages([history_run(RECOVERY_RUN_ID+1,"other")])));self.assert_blocked_before_http()
+
+    def test_source_id_cannot_be_rerun_and_a_second_recovery_cannot_bypass_with_fresh_id(self):
+        for run_id in [cont.ZERO_RUN_ID,cont.PRIOR_RUN_ID]:
+            with self.subTest(run_id=run_id),self.assertRaisesRegex(ValueError,"cannot be rerun"):
+                cont.verify_dispatch_history(self.history,str(run_id),cont.ZERO_DISPATCH_SHA,**self.binding())
+        pages=history_pages([history_run(RECOVERY_RUN_ID+1,SHA)])
+        self.history.write_text(json.dumps(pages))
+        with self.pinned(),self.assertRaisesRegex(ValueError,"prior continuation dispatch"):
+            cont.verify_dispatch_history(self.history,str(RECOVERY_RUN_ID+1),SHA,**self.binding())
+
+    def test_exception_history_source_binding_is_required(self):
+        for field,value in [("run_attempt",2),("head_sha","wrong"),("conclusion","success"),
+                            ("display_title","other"),("repository",{"full_name":"other/repo"})]:
+            pages=history_pages();pages[0]["workflow_runs"][1][field]=value
+            self.history.write_text(json.dumps(pages));self.assert_blocked_before_http()
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 ## Status
 
-**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 CORRECTED PROCEDURE PENDING INDEPENDENT REVIEW / HUMAN_REQUIRED: MERGE_CHECKPOINT**
+**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 INCOMPLETE / BOUNDED RECOVERY CORRECTION PENDING INDEPENDENT REVIEW / HUMAN_REQUIRED: MERGE_CHECKPOINT**
 
 PT-1 is complete after [independent acceptance](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394) of candidate revision 3 and
 [explicit USER truth-freeze approval](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324) at `2026-10-06T12:04:51Z`.
@@ -17,14 +17,26 @@ The [PT-2 Work Package](../../../.agents/work-packages/product-trust-pt-2-curren
 and [frozen measurement procedure](../../evaluation/product-trust-pt-2-measurement-protocol.md)
 prepare one bounded scope in the existing protected evaluation workflow. The main-only guard
 requires a human merge checkpoint before dispatch. No new workflow, credential path, production
-quality change or runtime rollout is authorized. PT-2 has made zero model/GCP calls.
+quality change or runtime rollout is authorized. Original baseline run `37480519016` accepted
+cases 01/02 once; case 01 completed and case 02 remains originally latency-censored at `424846 ms`.
+Cases 03–10 remain NOT_RUN. Provider RPC totals are unobserved; PT-2 result acceptance is pending.
 
 [Independent feedback](https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6017268972)
 required correction before spending any baseline calls. Procedure v2 submits one authenticated
 production AnalysisJob per input, recording actual persisted quality, project/API status, Terraform,
 acceptance/terminal receipt latency and existing same-job logs. Unemitted internal stages remain
 NOT_OBSERVED without a second inference. The human-authorized iteration preserves autonomous
-repair counters; independent correction acceptance remains pending. PT-2 is unstarted/incomplete.
+repair counters; [preparation acceptance](https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6018265429)
+was followed by USER merge and the preserved incomplete live baseline.
+
+The accepted continuation was also merged, then run `37500000739` failed on an incomplete history
+response before authentication/product API observation/inference. Its artifact `11429522041` and
+original failure remain authoritative. [Recovery review 6021688827](https://github.com/siamese-lang/terraformers-platform/pull/245#issuecomment-6021688827)
+plus explicit USER approval authorize only one bounded repository-only corrective PR on the existing
+branch/base. Continuation v3 permits only that exact evidence-bound zero-inference exception,
+requires complete repository-wide history, and preserves prior-case/censor/drain/truth/runtime boundaries.
+The current correction has zero live/model actions; independent acceptance and explicit merge are
+required before future continuation. Autonomous repair counters are unchanged. PT-3 is blocked.
 
 Freeze the handoff as one preparation PR, then the immutable Actions run/artifact and structured
 independent result review. Fold accepted PT-2 completion/evidence into the next substantive PT-3 or

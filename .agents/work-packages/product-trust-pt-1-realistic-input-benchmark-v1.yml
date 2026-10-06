@@ -2,7 +2,7 @@ work_package:
   id: product-trust-pt-1-realistic-input-benchmark-v1
   program: product-trust-v1
   phase: PT-1
-  status: HUMAN_REQUIRED
+  status: COMPLETE
   approved_base_sha: 0bb244756c2a2e1d3d6d11d0342e98e155f8662c
   execution_base_sha: 0bb244756c2a2e1d3d6d11d0342e98e155f8662c
 
@@ -192,15 +192,16 @@ work_package:
     PT_2_live_execution_requires_separate_user_approval: true
 
   execution_evidence:
-    result: REALISTIC_DATASET_CANDIDATE_READY
+    result: REALISTIC_DATASET_TRUTH_FROZEN
     human_gate: REALISTIC_DATASET_TRUTH_FREEZE
+    human_gate_status: APPROVED
     candidate_identity_sha256: 04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014
     evidence_document: docs/evaluation/product-trust-pt-1-realistic-input-freeze.md
     auto_repairs_used: 1
     model_under_test_calls: 0
     live_cloud_actions: 0
-    truth_frozen: false
-    phase_complete: false
+    truth_frozen: true
+    phase_complete: true
 
   human_review_corrective_iteration:
     iteration: 1
@@ -228,7 +229,31 @@ work_package:
     autonomous_repair: false
     execution_base_rebound: false
     blockers_addressed_in_submission: [BLOCKER-1, BLOCKER-2]
-    independent_acceptance_pending: true
-    result: TRUTH_CONTRACT_CORRECTION_SUBMITTED_PENDING_INDEPENDENT_REVIEW
+    independent_acceptance_pending: false
+    independent_acceptance_review_comment_id: 6015807394
+    result: TRUTH_CONTRACT_CORRECTION_ACCEPTED
     human_gate: REALISTIC_DATASET_TRUTH_FREEZE
     standing_review_loop: .agents/state/product-trust-v1.json#prReviewFeedbackPolicy
+
+  human_truth_freeze:
+    decision: APPROVED
+    truth_approved_by: USER
+    truth_frozen_at: "2026-10-06T12:04:51Z"
+    approval_comment_id: 6015857324
+    approval_url: https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324
+    candidate_revision: 3
+    frozen_candidate_identity_sha256: 04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014
+    candidate_source_head_sha: a5b890d565daa250e02e67e0eb5608c128eae637
+    independent_acceptance: PASS
+    independent_acceptance_review_comment_id: 6015807394
+    independent_acceptance_review_url: https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394
+    merged_pr: 241
+    merged_main_sha: d98d03367c5b63a5321311763e9852c53fe65eae
+    original_execution_base_preserved: true
+    phase_complete: true
+    next_phase_status: HUMAN_REQUIRED
+    next_phase_human_gate: LIVE_REALISTIC_BASELINE
+    PT_2_activated: false
+    PT_2_live_execution_authorized: false
+    live_model_or_GCP_action_authorized: false
+    merge_authority_granted_by_this_gate: false

@@ -1,18 +1,33 @@
-# PT-1 realistic-input candidate: corrected truth-freeze review
+# PT-1 realistic-input truth freeze and phase completion
 
-**CANDIDATE REVISION 3 / HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE**
+**CANDIDATE REVISION 3 FROZEN — PT-1 COMPLETE / HUMAN_REQUIRED: LIVE_REALISTIC_BASELINE**
 
-The latest [structured independent review](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015448816) is `CHANGES_REQUIRED` for reviewed head `44b73b02840abbaf1da8349e124e73fe5ccb6e5e`. No commits existed after that head at recovery. Visual fidelity passed; two truth-contract blockers remain for independent re-review. This user-authorized metadata-only corrective iteration submits corrections to those blockers, preserves all fixture bytes and original acceptance, and does not approve truth.
+The latest [structured independent review](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394) is **ACCEPTED / PASS** for reviewed head
+`a5b890d565daa250e02e67e0eb5608c128eae637` and candidate identity `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`. Both blockers from review 6015448816 are
+resolved. That review did not itself grant truth freeze, merge or PT-2 authority.
 
-## Execution and candidate history
+The subsequent [explicit human approval](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324) grants **REALISTIC_DATASET_TRUTH_FREEZE**
+and **PT-1 completion**, approved by **USER** at **2026-10-06T12:04:51Z**. It binds candidate revision 3,
+the exact identity/source head and merged PR #241 at `d98d03367c5b63a5321311763e9852c53fe65eae`. It explicitly excludes PT-2 live
+baseline, live/model/GCP action and merge authority.
 
-- Execution base remains `0bb244756c2a2e1d3d6d11d0342e98e155f8662c`; branch `codex/product-trust-pt-1-realistic-input-benchmark` and [PR #241](https://github.com/siamese-lang/terraformers-platform/pull/241) are reused. Remote main matched the bound base at recovery; no activation/rebinding, refresh or rebase occurred.
-- Candidate 1 identity `8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8` was rejected for visual fidelity. Candidate 2 identity `c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852` passed visual review but is superseded for truth-contract correction. Exact identities are archived in [candidate history](../../evaluation/terraformers-realistic-v1/candidate-history.json); old metadata is available at each recorded immutable head.
-- New candidate-3 identity: `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`. [candidate-identity.json](../../evaluation/terraformers-realistic-v1/candidate-identity.json) pins 26 files, including both archived identities and all 20 unchanged PNG/SVG assets. This new metadata identity is unapproved.
-- Autonomous repairs remain **1**. Human-authorized corrective iterations are separately recorded as **2**; no autonomous counter reset or repair-limit increase.
-- `truthApprovedBy`/`truthFrozenAt` remain null; `modelUnderTestRunCount` remains **0**. No model, Vertex/Gemini, live GCP/OpenSearch, PT-2 or merge action occurred.
+## Execution and approval binding
 
-## Review blockers and submitted corrections
+- PT-1 execution base remains `0bb244756c2a2e1d3d6d11d0342e98e155f8662c`. Reviewed source head is `a5b890d565daa250e02e67e0eb5608c128eae637`; PR #241
+  merged at `d98d03367c5b63a5321311763e9852c53fe65eae` on `2026-10-06T12:04:15Z`. The later explicit approval is separate from merge.
+- State/document sync branch `codex/product-trust-pt-1-freeze-state-sync` starts from exact new main `d98d03367c5b63a5321311763e9852c53fe65eae`. It does not rebind
+  the completed PT-1 execution or activate PT-2.
+- Frozen candidate-3 identity: `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`. [candidate-identity.json](../../evaluation/terraformers-realistic-v1/candidate-identity.json)
+  and all **26** pinned files are unchanged, including **20** PNG/SVG assets, truth/provenance and both
+  archived prior identities. Those files are immutable pre-approval snapshots; their historical
+  NOT_APPROVED/null markers are retained. Current `truthApprovedBy: USER`, `truthFrozenAt: 2026-10-06T12:04:51Z`
+  and the frozen identity are recorded outside that hash set in durable program state and this evidence.
+- Candidate 1 was rejected for visual fidelity; candidate 2 passed visual review but required truth-contract
+  correction. Exact superseded identities remain in [candidate history](../../evaluation/terraformers-realistic-v1/candidate-history.json).
+- Autonomous repairs remain **1** and separate human corrective iterations **2**. Model-under-test runs remain **0**.
+  This sync performs no model/Vertex/Gemini, live GCP/OpenSearch, PT-2 or merge action.
+
+## Accepted review corrections
 
 | Review blocker | Submitted correction | Preserved boundary |
 | --- | --- | --- |
@@ -25,7 +40,7 @@ Resource intent requires valid architecture semantics, not newly creating every 
 
 For the remainder of this `product-trust-v1` conversation, every start/resume with an open active Work Package PR first inspects PR conversation, reviews and inline history. The latest `[PRODUCT_TRUST_REVIEW:v1]` comment is authoritative feedback for its reviewed head. The complete user-specified rule is durably recorded in `prReviewFeedbackPolicy` in program state: compare heads before editing, resolve only unresolved blockers on the same branch/base, record human-authorized corrections separately, validate proportionally and return to the original gate. Acceptance feedback/CI cannot authorize merge or bypass any human gate.
 
-## Validation for this revision
+## Historical deterministic validation of candidate 3
 
 - `mvn -o -f backend/pom.xml -Dtest=EvaluationDatasetLoaderTest test`: **4 tests, 0 failures, 0 errors, 0 skips; BUILD SUCCESS**. Run once offline against candidate 3; production/test Java was unchanged and already compiled.
 - Identity/preservation audit: **PASS**, all **26** identity entries, exact archived candidate-2 identity, all **20** PNG/SVG assets byte-for-byte identical to reviewed head, and all **10** review sections consistent with the manifest/provenance. Every source-document record, component/relationship list, material forbidden interpretation and all four controls are preserved. Only seven support-resource requirements across four cases were reclassified; all six positives have audit rationale.
@@ -45,12 +60,12 @@ For the remainder of this `product-trust-v1` conversation, every start/resume wi
 | No model-under-test execution / output-driven edits | Run count stays 0; metadata corrections respond only to independent review, without model output. |
 | Existing synthetic datasets unchanged | This iteration touches only allowed PT-1 metadata/state/review paths; no synthetic fixture or production/test behavior change. |
 | No production behavior or live cloud change | Prompt/model/RAG/retrieval/scorer/evaluator, corpus, workflow and infrastructure remain unchanged. No live action occurred. |
-| Case register and remaining uncertainties | Each case still has full truth, provenance, visual differences and realism limitations. Portal factual uncertainty is explicitly distinguished from pending human approval of adaptations. |
-| Program stops at truth-freeze gate | HUMAN_REQUIRED; approver/freeze timestamp null, PT-1 incomplete, PT-2 ineligible, merge unapproved. Latest CHANGES_REQUIRED feedback awaits independent re-review. |
+| Case register and remaining uncertainties | Each case still has full truth, provenance, visual differences and realism limitations. Portal factual uncertainty is explicitly distinguished from the candidate adaptations now covered by explicit human approval. |
+| Program stops at truth-freeze gate | Candidate preparation stopped at the original gate. Explicit USER approval subsequently froze its exact identity and authorized PT-1 completion; PT-2 remains blocked at its separate LIVE_REALISTIC_BASELINE gate. |
 
 ## Per-case human review
 
-The images embedded below are the exact candidate PNG inputs, not thumbnails with extra truth captions burned into them. Source/semantic labels and material forbidden interpretations are intentionally kept in this document/provenance only. Every case remains unapproved.
+The images embedded below are the exact candidate PNG inputs, not thumbnails with extra truth captions burned into them. Source/semantic labels and material forbidden interpretations are intentionally kept in this document/provenance only. All ten cases are covered by the exact revision-3 approval binding above. Their truth and recorded realism limitations remain unchanged.
 
 ### pt1-01-serverless-portal
 
@@ -107,7 +122,7 @@ Allowed support types: `aws_apigatewayv2_integration`, `aws_apigatewayv2_route`,
 
 **Remaining realism limitation.** A deliberately composed vector export, not a collected portal diagram. S3/CloudFront/DynamoDB text still aids recognition; the original symbols do not test official AWS icon recognition.
 
-**Truth uncertainty / human decision.** Source authentication facts were rechecked against the recorded AWS source. The two scope/API choices are explicit candidate adaptations, not unresolved source guesses; remainingTruthUncertainties is empty for factual uncertainty. Human acceptance of those adaptations and all truth remains pending. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
 ### pt1-02-order-fanout
 
@@ -165,7 +180,7 @@ Moved from REQUIRED to ACCEPTABLE: `aws_sqs_queue_policy`.
 
 **Remaining realism limitation.** Original messaging sketch with readable SNS/SQS labels; it is not a real exported deployment diagram and has no screenshot noise. Dashed links are diagram notation, not a measurement of consumer runtime behavior.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
 ### pt1-03-parallel-lookup
 
@@ -220,7 +235,7 @@ Moved from REQUIRED to ACCEPTABLE: `aws_iam_role`.
 
 **Remaining realism limitation.** A repository-owned mock editor, not an AWS console screenshot or exact Workflow Studio replica. Tasks and service context remain legible; human review must confirm that graph/palette separation and fork/join notation are natural enough.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
 ### pt1-04-analytics-catalog
 
@@ -276,7 +291,7 @@ Allowed support types: `aws_glue_catalog_table`, `aws_iam_role`, `aws_iam_policy
 
 **Remaining realism limitation.** Vector graph paper and a regular oblique font approximate a sketch; they do not reproduce handwriting, camera artifacts or proprietary diagram icons. S3/Glue/Athena labels still identify service families.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
 ### pt1-05-private-web-fleet
 
@@ -336,7 +351,7 @@ Moved from REQUIRED to ACCEPTABLE: `aws_launch_template`, `aws_route_table`, `aw
 
 **Remaining realism limitation.** A clean network export with only two AZs and short legible labels; no tool-specific AWS icons or real production topology are claimed. Shared web-alb and web-asg labels need human visual confirmation against the unchanged one-ALB/one-ASG semantic intent.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
 ### pt1-06-thumbnail-pipeline
 
@@ -390,7 +405,7 @@ Moved from REQUIRED to ACCEPTABLE: `aws_lambda_permission`, `aws_iam_role`.
 
 **Remaining realism limitation.** Synthetic notebook texture and regular font; not an actual photographed notebook. Original symbols and S3/λ cues narrow interpretation; the set does not establish performance on arbitrary hand-drawn or official-icon diagrams.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
 ### pt1-07-unresolved-design
 
@@ -424,7 +439,7 @@ Input SHA-256: `3fe4fbd6b7dcf95185eea8f112cf27231f45f7bbb2ceac6e5172a44c51903835
 
 **Remaining realism limitation.** Original faux whiteboard, not a collected design-session photo. It is visibly a conceptual architecture sketch; the candidate AMBIGUOUS label reflects insufficient deployable provider/resource intent, not an assertion that it is non-architecture.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
 ### pt1-08-partial-export
 
@@ -458,7 +473,7 @@ Input SHA-256: `387153c1823fdf84ca19309459ff29a4ebf7205c72e7b38cfc2f8a1c5074e32d
 
 **Remaining realism limitation.** Cropping is deliberately constructed rather than sampled from a real user export. The central word process and generic endpoint shapes cannot bind cloud resources; human review must confirm the rejection label remains justified.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
 ### pt1-09-sprint-board
 
@@ -492,7 +507,7 @@ Input SHA-256: `080461617408a5346fad0e1660bd067e3e035d5b21a95547bee1e9cb84f3097d
 
 **Remaining realism limitation.** A mock UI, not a real browser screenshot. It covers misleading service-name mentions but lacks the full clutter and incidental data of an actual team board.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
 ### pt1-10-workshop-table
 
@@ -526,10 +541,19 @@ Input SHA-256: `e6b9b281784f869526f3deb3096919a36b620ff4106c76d32434478b3d8fe672
 
 **Remaining realism limitation.** A clean digitally constructed agenda, not a scanned real document. It does not cover natural photographs, OCR corruption or other broad non-architecture image categories.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** No unresolved factual uncertainty is added. This case is covered by the explicit USER revision-3 truth-freeze binding above; its recorded realism limitations remain. Approval fixes the evaluation truth, without asserting any measured model fidelity.
 
-## Human checkpoint
+## Repository-only completion validation
 
-Review all ten unchanged exact input images and the corrected full truth at the new candidate-3 identity. Submitted corrections require independent acceptance review; `CHANGES_REQUIRED` remains the latest review decision until a new review is posted. The original Work Package requires: **"Stop at the REALISTIC_DATASET_TRUTH_FREEZE human gate with a reviewable candidate."**
+Approval/review/merge binding, JSON/YAML state consistency, all 26 immutable identity entries and
+state/document-only scope are checked deterministically for this sync. Candidate inputs, truth and
+loader code are unchanged, so the prior passing loader tests are reused; no Maven/backend/live test is rerun.
+Deterministic validation: **PASS** for approval/review/merge binding, JSON/YAML consistency, all **26** identity entries and **20** unchanged PNG/SVG files, all **10** preserved per-case truth sections, original PT-1 base/repair history and the unactivated PT-2 gate. Exactly **5** state/document files change; `git diff --check` passes. No backend test, model or live/cloud action was run for this sync.
 
-State remains `HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE`. PT-1 is not complete, PT-2 is not eligible or started, and merge is not authorized. The immediate next single task is human review and explicit truth freeze of revision 3; any later PT-2 live baseline has its separate checkpoint.
+## Next human checkpoint
+
+PT-1 is **COMPLETE** and candidate revision 3 is frozen by USER approval 6015857324. The next
+declared phase is PT-2, but the program stops at **HUMAN_REQUIRED: LIVE_REALISTIC_BASELINE**.
+No PT-2 Work Package or execution base is activated, and no model/live/GCP action is authorized.
+The immediate next program decision is separate explicit live-baseline approval. The repository-only
+state/document PR is left open for its own review/merge checkpoint; this task does not merge it.

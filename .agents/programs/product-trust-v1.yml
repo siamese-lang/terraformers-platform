@@ -62,26 +62,11 @@ program:
     - MERGE_WHEN_NOT_SEPARATELY_PREAUTHORIZED
 
   phases:
-    - id: PT-0
-      title: Product trust contract and evidence reset
-      kind: repository
-      depends_on: []
-      auto_start_after_program_approval: true
-      human_gate_before_start: null
-      objective: >
-        Freeze user-facing trust criteria, reclassify historical evidence, and formally defer A7-8
-        and teardown without changing production behavior.
-      completion:
-        - historical_evidence_is_classified_as_retained_downgraded_or_superseded
-        - realistic_product_claim_boundary_is_explicit
-        - current_live_runtime_is_marked_intentionally_retained_for_PT_2
-        - no_production_behavior_change
-
     - id: PT-1
       title: Realistic input benchmark design and freeze
       kind: repository
-      depends_on: [PT-0]
-      auto_start_after_dependencies: true
+      depends_on: []
+      auto_start_after_program_approval: true
       human_gate_before_completion: REALISTIC_DATASET_TRUTH_FREEZE
       objective: >
         Create a small diverse realistic-input dataset with provenance and human-reviewable truth
@@ -191,8 +176,10 @@ program:
       auto_start_after_dependencies: false
       human_gate_before_start: FINAL_PRODUCT_LIVE_PROOF
       objective: >
-        Deploy the final reviewed revision once and run the bounded realistic browser-to-result,
-        trust, latency, authorization and release-identity proof without rerun-until-green.
+        Deploy the final reviewed backend/runtime revision once and compose that live proof with the
+        PT-6 browser evidence. Re-run browser E2E only when relevant user-facing behavior changed.
+        Do not add a public GCP frontend/ingress merely to make PT-8 "more live". Preserve natural
+        failures and do not rerun until green.
 
     - id: PT-9
       title: Teardown and final portfolio closure

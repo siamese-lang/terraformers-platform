@@ -162,7 +162,7 @@ public final class CaseAQualityCalibrationScorer {
         if (sourceIndex < 0 || targetIndex < 0 || sourceIndex >= targetIndex) {
             return false;
         }
-        if (!hasForwardRelationSignal(normalizedActual, sourceIndex, targetIndex)) {
+        if (!hasForwardRelationSignal(normalizedActual, source, sourceIndex, targetIndex)) {
             return false;
         }
 
@@ -175,17 +175,22 @@ public final class CaseAQualityCalibrationScorer {
         return qualifierTokens.stream().allMatch(normalizedActual::contains);
     }
 
-    private boolean hasForwardRelationSignal(String normalizedActual, int sourceIndex, int targetIndex) {
-        java.util.Set<String> negations = java.util.Set.of("no", "not", "never", "cannot", "without");
-        java.util.List<String> allTokens = java.util.Arrays.stream(normalizedActual.split("\\s+"))
+    private boolean hasForwardRelationSignal(
+            String normalizedActual,
+            String source,
+            int sourceIndex,
+            int targetIndex
+    ) {
+        int relationStart = Math.min(targetIndex, sourceIndex + source.length());
+        String between = " " + normalizedActual.substring(relationStart, targetIndex).strip() + " ";
+        java.util.List<String> relationTokens = java.util.Arrays.stream(between.strip().split("\\s+"))
                 .filter(token -> !token.isBlank())
                 .toList();
-        if (allTokens.stream().anyMatch(negations::contains)
-                || (" " + normalizedActual + " ").contains(" can t ")) {
+
+        java.util.Set<String> negations = java.util.Set.of("no", "not", "never", "cannot", "without");
+        if (relationTokens.stream().anyMatch(negations::contains) || between.contains(" can t ")) {
             return false;
         }
-
-        String between = " " + normalizedActual.substring(sourceIndex, targetIndex) + " ";
         if (between.contains(" from ") || between.contains(" by ")) {
             return false;
         }
@@ -194,7 +199,7 @@ public final class CaseAQualityCalibrationScorer {
                 "send", "sent", "forward", "route", "connect", "quer", "write", "read",
                 "host", "associate", "protect", "assume", "access", "invoke", "call",
                 "direct", "deliver", "pass", "reach", "link", "attach", "use");
-        return java.util.Arrays.stream(between.strip().split("\\s+"))
+        return relationTokens.stream()
                 .anyMatch(token -> forwardVerbStems.stream().anyMatch(token::startsWith));
     }
 

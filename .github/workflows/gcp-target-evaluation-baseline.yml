@@ -868,11 +868,13 @@ jobs:
               calibration="$output_dir/a7-7-v4-canonical-calibration-${attempt}.json"
               echo "### Canonical run ${attempt}"
               echo
-              echo '| Case | Technical | Label | Fact resources | Retrieval resources | Project decisions | Handoff | Generated required | Forbidden generated | CLI validation | First divergence |'
-              echo '|---|---|---|---|---|---|---|---|---|---|---|'
+              echo '| Case | Technical | Label | Components | Relationships | Fact resources | Retrieval resources | Project decisions | Handoff | Generated required | Forbidden generated | CLI validation | First divergence |'
+              echo '|---|---|---|---|---|---|---|---|---|---|---|---|---|'
               jq -r '
                 .cases[] |
                 "| \(.caseId) | \(.technicalSuccess) | \(.labeledQualitySuccess) | " +
+                "\(.componentCoverage.requiredMatched)/\(.componentCoverage.requiredTotal); forbidden=\(.componentCoverage.forbiddenMatched) | " +
+                "\(.relationshipCoverage.requiredMatched)/\(.relationshipCoverage.requiredTotal); forbidden=\(.relationshipCoverage.forbiddenMatched) | " +
                 "\(.requiredFactResourceMatched)/\(.requiredFactResourceTotal) | " +
                 (if .grounding.resourceTypeCoverage == null then "N/A" else "\(.grounding.resourceTypeCoverage.matched)/\(.grounding.resourceTypeCoverage.total)" end) + " | " +
                 (if .grounding.projectDecisionCoverage == null then "N/A" else "\(.grounding.projectDecisionCoverage.matched)/\(.grounding.projectDecisionCoverage.total)" end) + " | " +
@@ -900,11 +902,13 @@ jobs:
 
             echo '### Frozen holdout'
             echo
-            echo '| Case | Technical | Label | Fact resources | Retrieval resources | Project decisions | Handoff | Generated required | Forbidden generated | CLI validation | First divergence |'
-            echo '|---|---|---|---|---|---|---|---|---|---|---|'
+            echo '| Case | Technical | Label | Components | Relationships | Fact resources | Retrieval resources | Project decisions | Handoff | Generated required | Forbidden generated | CLI validation | First divergence |'
+            echo '|---|---|---|---|---|---|---|---|---|---|---|---|---|'
             jq -r '
               .cases[] |
               "| \(.caseId) | \(.technicalSuccess) | \(.labeledQualitySuccess) | " +
+              "\(.componentCoverage.requiredMatched)/\(.componentCoverage.requiredTotal); forbidden=\(.componentCoverage.forbiddenMatched) | " +
+              "\(.relationshipCoverage.requiredMatched)/\(.relationshipCoverage.requiredTotal); forbidden=\(.relationshipCoverage.forbiddenMatched) | " +
               "\(.requiredFactResourceMatched)/\(.requiredFactResourceTotal) | " +
               (if .grounding.resourceTypeCoverage == null then "N/A" else "\(.grounding.resourceTypeCoverage.matched)/\(.grounding.resourceTypeCoverage.total)" end) + " | " +
               (if .grounding.projectDecisionCoverage == null then "N/A" else "\(.grounding.projectDecisionCoverage.matched)/\(.grounding.projectDecisionCoverage.total)" end) + " | " +

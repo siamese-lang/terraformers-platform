@@ -12,13 +12,41 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
-- Mode: **Portfolio Case Extension**
-- Status: **CASE A SEMANTIC RELIABILITY EXTENSION / A7-0..A7-6 COMPLETE / A7-7 LIVE EXECUTION ACTIVE — EMBEDDING MODEL ASSUMPTION INVALIDATED — BOUNDED MODEL CORRECTION APPROVED**
-- Active reassessment plan:
-  [Portfolio Case Reassessment](plans/active/portfolio-case-reassessment.md)
-- Measurement/acceptance source of truth:
-  [Portfolio Case Measurement & Acceptance Contract](plans/active/portfolio-case-measurement-contract.md)
-- Current single task: **A7-7 runtime/bootstrap restoration and backend deployment progressed to broad-v4 ingestion. Live ingestion evidence proved the frozen `gemini-embedding-001` assumption infeasible under the project's effective 5 requests/minute quota: run `37317012191` could not complete inside the 180-minute boundary and run `37332461233` failed with `RESOURCE_EXHAUSTED`. The explicitly approved bounded correction is v4-only `gemini-embedding-2 / 1536`, with inline document/query retrieval semantics, full v4 re-embedding, and a newly published/deployed backend image. Historical v3 remains immutable. No further live mutation until this repository correction is merged and reviewed.**
+- Mode: **Product Trust Reassessment**
+- Status: **AUTONOMOUS PRODUCT TRUST PROGRAM DEFINED — AWAITING EXPLICIT PROGRAM APPROVAL**
+- Active plan:
+  [Product Trust Modernization](plans/active/product-trust-modernization.md)
+- Program contract:
+  [.agents/programs/product-trust-v1.yml](../.agents/programs/product-trust-v1.yml)
+- Durable program state:
+  [.agents/state/product-trust-v1.json](../.agents/state/product-trust-v1.json)
+- Current single task: **P0 defines the autonomous Product Trust execution protocol and revised PT plan. On merge, no PT phase starts until the user explicitly approves `product-trust-v1`; the first eligible phase is PT-1 realistic-input benchmark design. A7-8 and teardown are deferred. The currently recreated GCP representative runtime is intentionally retained because rebuilding it is expensive and PT-2 requires a frozen realistic-input baseline before final teardown.**
+
+
+## Product Trust reassessment checkpoint
+
+The latest product-level review found that the previous portfolio closures do not by themselves
+prove that a real user can trust the service. The most important new limitation is external validity:
+all canonical and holdout positive evaluation fixtures are repository-owned synthetic diagrams. They
+remain useful regression controls but cannot alone support a realistic-image generalization claim.
+
+Additional confirmed product gaps:
+
+- runtime evidence quality is conditional on extracted facts;
+- the backend can persist UNKNOWN/DEGRADED quality while the current UI primarily presents terminal
+  AnalysisJob completion;
+- real Vertex/Gemini latency has stochastic multi-minute tails while user progress is coarse;
+- representative GCP authentication uses a deterministic JWKS fixture rather than a permanent
+  production IdP, although project ownership/authorization mechanics are retained evidence;
+- protected-main and image-build CI/CD boundaries remain repository-side audit candidates.
+
+The revised Product Trust plan explicitly excludes Kubernetes/GKE platform reselection, MSA
+decomposition, capacity/HPA/HA work, rollback/canary redesign without new evidence, and technology
+adoption for breadth.
+
+Historical Case A/B/C evidence is not discarded wholesale. Product Trust classifies it as direct
+mechanism evidence or controlled-regression evidence and permits realistic product evidence to
+narrow or supersede broader historical claims.
 
 ### Case A evidence-backed quality extension control
 
@@ -636,13 +664,15 @@ Without new evidence, an ADR where needed, and the change gate, do not:
 ## Working rules
 
 Before any future task: (1) verify current GitHub `main` SHA, (2) read `AGENTS.md`, (3) read this
-document, (4) read `MASTER_PLAN.md`, and (5) read the
-[active M4 plan](plans/active/M4-ai-targeted-improvement.md). Follow the M4 evidence chain:
-M4-1 diagnostics → existing-runtime resume prerequisite → M4-2 bounded live reproduction → M4-3
-truncation-targeted change → M4-4 same-dataset comparison. Do not create a second cloud runtime and
-do not add generic retry/backoff without new retryable-provider evidence. Retain the
-[completed M2 plan](plans/active/M2-runtime-parity.md) and [completed M1 plan](plans/active/M1-cloud-decoupling.md)
-as historical milestone evidence.
+document, (4) if `product-trust-v1` is approved/active read
+`.agents/programs/product-trust-v1.yml` and `.agents/state/product-trust-v1.json`, and (5) read only
+the plan/evidence referenced by the current program phase or active Work Package. Historical M0-M9
+and A1-A7 sections below remain evidence history; they do not authorize automatic progression.
+
+Until `product-trust-v1` receives explicit user approval, no PT phase is authorized. A7-8 and
+teardown remain deferred. Do not create a second cloud runtime. The existing representative GCP
+runtime may be retained only for the bounded Product Trust measurements/proofs declared by the
+program, then must return through the reviewed teardown boundary.
 
 For a substantive change, record an observed problem, reproducible evidence, a change that directly addresses it, and same-condition revalidation. Establish a fixed evaluation baseline before AI changes, reproduce a failure before reliability changes, and require diagnosis evidence—not dashboard count—for observability completion.
 

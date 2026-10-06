@@ -1,0 +1,216 @@
+program:
+  id: product-trust-v1
+  version: 1
+  status: DRAFTED_AWAITING_PROGRAM_APPROVAL
+  activation_base_sha: BIND_AT_ACTIVATION
+  plan: docs/plans/active/product-trust-modernization.md
+  state: .agents/state/product-trust-v1.json
+
+  goal: >
+    Establish whether Terraformers is trustworthy as an actual user-facing AI service on realistic
+    architecture inputs, correct only evidence-backed defects, then complete one integrated live
+    proof and teardown.
+
+  primary_success_criteria:
+    - realistic_input_fidelity_is_measured_against_frozen_human_reviewable_truth
+    - false_trusted_success_is_measured
+    - processing_success_and_output_trust_are_not_collapsed_for_the_user
+    - accepted_to_terminal_latency_and_truthful_progress_are_observable
+    - supported_private_project_access_is_fail_closed
+    - final_browser_user_flow_is_validated
+    - final_release_identity_is_source_and_digest_bound
+    - live_runtime_is_torn_down_after_final_acceptance
+
+  evidence_policy:
+    preserve_direct_mechanism_evidence:
+      - case_b_durable_job_semantics
+      - broad_v4_provider_schema_and_corpus_coverage
+      - real_terraform_cli_validation
+      - existing_owner_non_owner_authorization_evidence
+      - wif_immutable_image_and_source_binding
+      - real_provider_latency_and_stage_telemetry
+      - durable_quality_snapshot_persistence
+    downgrade_to_controlled_regression_only:
+      - terraformers_eval_v1_synthetic_positive_quality_claims
+      - terraformers_eval_holdout_v1_synthetic_positive_quality_claims
+      - synthetic_only_grounding_percentages
+      - single_synthetic_positive_live_proof_as_generalization_evidence
+    contradiction_rule: REALISTIC_PRODUCT_EVIDENCE_OVERRIDES_BROADER_HISTORICAL_CLAIMS
+
+  execution_policy:
+    github_is_durable_ssot: true
+    max_active_work_packages: 1
+    codex_cloud_preferred_executor: true
+    auto_create_next_eligible_work_package: true
+    auto_advance_repository_only_phases: true
+    auto_repair_limit: 1
+    auto_merge: false
+    rerun_until_green: false
+    refresh_execution_base_after_activation: false
+    unrelated_cleanup_or_refactor: false
+    next_phase_selection_must_follow_declared_dag: true
+
+  human_gates:
+    - PROGRAM_APPROVAL
+    - REALISTIC_DATASET_TRUTH_FREEZE
+    - LIVE_REALISTIC_BASELINE
+    - PRODUCT_OR_ARCHITECTURE_DECISION
+    - IAM_OR_SECURITY_BOUNDARY_EXPANSION
+    - NEW_PAID_OR_COST_INCREASING_CLOUD_ACTION
+    - FINAL_PRODUCT_LIVE_PROOF
+    - DESTRUCTIVE_TEARDOWN
+    - MERGE_WHEN_NOT_SEPARATELY_PREAUTHORIZED
+
+  phases:
+    - id: PT-1
+      title: Realistic input benchmark design and freeze
+      kind: repository
+      depends_on: []
+      auto_start_after_program_approval: true
+      human_gate_before_completion: REALISTIC_DATASET_TRUTH_FREEZE
+      objective: >
+        Create a small diverse realistic-input dataset with provenance and human-reviewable truth
+        before any live result is observed.
+      completion:
+        - realistic_positive_ambiguous_and_non_architecture_inputs_are_present
+        - provenance_and_redistribution_boundary_are_recorded
+        - expected_components_relationships_and_resource_intent_are_human_reviewable
+        - model_under_test_did_not_author_its_own_truth_labels
+        - dataset_identity_is_frozen_before_live_measurement
+
+    - id: PT-2
+      title: Current system realistic live baseline
+      kind: live_measurement
+      depends_on: [PT-1]
+      auto_start_after_dependencies: false
+      human_gate_before_start: LIVE_REALISTIC_BASELINE
+      objective: >
+        Measure the current production-equivalent system once on the frozen realistic dataset before
+        tuning prompts, retrieval, models, repair logic or scoring.
+      completion:
+        - input_fidelity_is_measured
+        - false_trusted_success_is_measured
+        - grounding_and_executable_validity_are_measured
+        - accepted_to_terminal_and_stage_latency_are_measured
+        - natural_failures_are_retained
+        - no_rerun_until_green
+
+    - id: PT-3
+      title: Baseline driven AI trust correction
+      kind: conditional_implementation
+      depends_on: [PT-2]
+      auto_start_after_dependencies: true
+      human_gate_when: PRODUCT_OR_ARCHITECTURE_DECISION
+      allowed_candidate_tracks:
+        - input_fidelity_or_human_confirmation_boundary
+        - generated_evidence_closure_versus_semantic_repair_gating
+        - bounded_existing_model_fact_or_classification_correction
+      prohibited_default_directions:
+        - second_judge_model
+        - model_voting
+        - langgraph
+        - new_vector_database
+        - new_model_family
+      objective: >
+        Correct only defects directly evidenced by PT-2. If correction requires a product choice,
+        write a decision brief and stop rather than choosing silently.
+
+    - id: PT-4
+      title: Trustworthy user status and waiting experience
+      kind: implementation
+      depends_on: [PT-3]
+      auto_start_after_dependencies: true
+      objective: >
+        Separate terminal processing state from output trust for the user and expose truthful durable
+        progress plus accepted-to-terminal latency without fake confidence or percent-complete values.
+      completion:
+        - unknown_or_degraded_quality_is_not_indistinguishable_from_fully_supported_output
+        - no_fake_numeric_confidence_is_added
+        - accepted_to_terminal_latency_is_observable
+        - truthful_stage_or_status_progress_survives_navigation_or_reload
+        - unsupported_latency_promise_is_removed_or_bounded_by_evidence
+
+    - id: PT-5
+      title: Access safety and authentication boundary audit
+      kind: audit_and_conditional_implementation
+      depends_on: [PT-4]
+      auto_start_after_dependencies: true
+      human_gate_when: IAM_OR_SECURITY_BOUNDARY_EXPANSION
+      objective: >
+        Audit the supported user/API flow for owner/non-owner/anonymous access, default-open routing
+        and relevant abuse boundaries. Do not adopt a new production IdP by default.
+      completion:
+        - supported_private_project_reads_and_mutations_are_owner_scoped
+        - public_routes_are_explicit_and_fail_closed_where_selected
+        - analysis_job_and_artifact_access_follow_project_ownership
+        - deterministic_JWKS_fixture_is_not_claimed_as_permanent_production_identity
+        - any_new_IdP_or_IAM_change_requires_human_decision
+
+    - id: PT-6
+      title: Browser level realistic user flow
+      kind: integration_validation
+      depends_on: [PT-5]
+      auto_start_after_dependencies: true
+      objective: >
+        Validate the browser-observable path from authentication and realistic upload through durable
+        progress, result/trust display and private-project access denial for another identity.
+
+    - id: PT-7
+      title: CI CD trust gates and operational handoff
+      kind: repository
+      depends_on: [PT-6]
+      auto_start_after_dependencies: true
+      objective: >
+        Correct demonstrated protected-main and pre-publication validation gaps and document the
+        source-to-live session handoff without enabling automatic GCP deploy-on-merge.
+      completion:
+        - relevant_changes_have_stable_required_merge_gates
+        - container_build_is_shifted_left_if_the_audit_justifies_it
+        - live_session_runbook_connects_source_publish_rollout_proof_and_teardown
+        - cost_gated_GCP_delivery_remains_human_approved
+
+    - id: PT-8
+      title: Final integrated product proof
+      kind: live_acceptance
+      depends_on: [PT-7]
+      auto_start_after_dependencies: false
+      human_gate_before_start: FINAL_PRODUCT_LIVE_PROOF
+      objective: >
+        Deploy the final reviewed backend/runtime revision once and compose that live proof with the
+        PT-6 browser evidence. Re-run browser E2E only when relevant user-facing behavior changed.
+        Do not add a public GCP frontend/ingress merely to make PT-8 "more live". Preserve natural
+        failures and do not rerun until green.
+
+    - id: PT-9
+      title: Teardown and final portfolio closure
+      kind: destructive_and_closure
+      depends_on: [PT-8]
+      auto_start_after_dependencies: false
+      human_gate_before_start: DESTRUCTIVE_TEARDOWN
+      objective: >
+        Remove the live runtime and bootstrap resources, verify residual cost/resource baseline, then
+        reconcile A7-8 and the final product-trust portfolio narrative.
+
+  explicitly_out_of_program:
+    - kubernetes_or_gke_platform_reselection
+    - microservice_decomposition
+    - capacity_curve_or_hpa_tuning
+    - multi_zone_or_database_ha
+    - zero_downtime_multi_replica_rollout_optimization
+    - rollback_or_canary_redesign_without_new_release_failure_evidence
+    - observability_product_adoption_for_breadth
+    - rabbitmq_kafka_redis_or_new_database
+    - production_IdP_replacement_by_default
+
+  stop_on:
+    - current_main_differs_from_bound_execution_base_during_active_work_package
+    - next_action_is_not_declared_by_program_or_active_work_package
+    - acceptance_criteria_would_need_weakening
+    - same_failure_requires_more_than_one_bounded_repair
+    - failure_class_changes
+    - realistic_truth_label_is_ambiguous
+    - architecture_or_product_choice_is_required
+    - IAM_or_security_boundary_expansion_is_required
+    - unexpected_live_cost_or_quota_boundary_appears
+    - destructive_action_is_required
+    - rerun_would_exist_only_to_obtain_a_green_result

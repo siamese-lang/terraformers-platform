@@ -94,8 +94,10 @@ target runtime을 한 번 구축하고 계속 확장·재사용하는 것**이�
     `approved_base_sha: BIND_AT_ACTIVATION`을 사용할 수 있다. 이 값은 "항상 최신 main 사용" 권한이
     아니다. 첫 implementation write 전에 GitHub remote `main`을 정확히 한 번 읽어
     `execution_base_sha`로 바인딩하고, 이후 current main이 그 SHA와 달라지면 즉시 STOP한다.
-  - Work Package가 끝나면 다음 Work Package를 자동 시작하지 않는다. 다음 후보는 제안할 수 있지만
-    상태는 `AWAITING_APPROVAL`이어야 한다.
+  - Work Package가 끝나면 다음 Work Package를 자동 시작하지 않는다. 단, 아래 **Autonomous Program
+    execution lane**에서 사용자가 프로그램 전체를 명시적으로 승인했고 durable program DAG가 다음
+    eligible Work Package를 이미 제한한 경우에는 그 범위 안에서만 자동 선택/준비할 수 있다.
+    일반 Work Package의 다음 후보는 `AWAITING_APPROVAL`이어야 한다.
 - 사용자가 승인한 **현재 한 작업만** 수행한다. 한 작업이 끝났다고 다음 branch/PR/subtask/milestone을
   자동으로 시작하지 않는다.
 - 사용자의 `다음 작업 진행`은 직전 완료 보고에서 명시한 **immediate next single task 하나**에 대한
@@ -157,7 +159,8 @@ Codex task에는 최소한 다음이 포함되어야 한다.
 - 실행할 기존 test/check;
 - 새 workflow/verifier 생성 금지 여부;
 - 완료 시 반환할 diff/test 결과;
-- 다음 milestone/subtask로 자동 진행 금지.
+- 다음 milestone/subtask로 자동 진행 금지. 단, 명시적으로 승인된 Autonomous Program의 declared DAG
+  안에서 다음 repository-only Work Package를 선택하는 것은 허용된 program transition으로 본다.
 
 Codex는 "backend reliability 개선", "AI/RAG 고도화"처럼 열린 목표를 받지 않는다. 한 번에 승인된
 implementation unit 하나만 수행한다. Approved Work Package의 동일 implementation unit 안에서는
@@ -332,6 +335,76 @@ Evidence는 의사결정과 완료 주장을 제한하는 조건이지, reposito
 - verification-only 변경 규모가 production/engineering 변경보다 커지는 작업은 자동 진행하지 않는다. baseline/evaluation/failure-injection처럼 milestone 자체가 측정인 경우를 제외하고, 왜 기존 자산 재사용으로 해결할 수 없는지 먼저 설명해야 한다.
 - generated artifacts, logs, one-off investigation output은 source control에 영구 보존할 필요가 있을 때만 commit한다. 그렇지 않으면 CI artifact 또는 PR evidence로 남긴다.
 - validation 성공은 프로젝트 목표 달성과 동일하지 않다. 완료 보고에는 반드시 '무엇이 실제로 개선되었는가'를 별도로 적고, 답이 '검증이 추가되었다'뿐이면 그 작업의 필요성을 재검토한다.
+
+
+## Autonomous Program execution lane
+
+일반 Work Package 방식은 기본값으로 유지한다. 다만 사용자가 하나의 장기 목표와 단계/DAG를 충분히
+검토한 뒤 **Autonomous Program 전체를 명시적으로 승인**한 경우, 반복적인 "다음 작업 진행" 지시를
+줄이기 위해 좁은 program-level autonomy를 사용할 수 있다.
+
+Autonomous Program은 다음 파일을 durable source로 사용한다.
+
+- `.agents/programs/<program-id>.yml` — 목표, 단계/DAG, 성공 기준, 허용된 자동 전이, human gate,
+  stop condition;
+- `.agents/state/<program-id>.json` — 현재 phase, active Work Package/PR, bound base SHA, blocker,
+  다음 eligible phase;
+- 관련 `docs/plans/active/` plan — 사람이 검토할 수 있는 문제/제품 관점과 evidence policy.
+
+### Program approval and activation
+
+- program manifest를 repository에 추가한 것 자체는 프로그램 실행 승인이 아니다.
+- 사용자가 program ID를 명시적으로 승인해야 `AWAITING_PROGRAM_APPROVAL → ACTIVE`로 전이할 수 있다.
+- activation 시 remote `main`을 한 번 읽고 `activationBaseSha`를 기록한다.
+- 실제 구현 Work Package는 기존 규칙대로 각 activation 시점의 exact main SHA에 묶이고, active
+  Work Package 중 main drift가 발생하면 STOP한다.
+- 동시에 active implementation Work Package는 하나만 허용한다.
+
+### Codex autonomy inside an approved Program
+
+승인된 program 안에서 **이미 실행 중인 Codex Cloud task/Goal**은 별도의 "다음 작업" 사용자 입력 없이
+다음 eligible repository 작업을 이어갈 수 있다. 이는 실행 권한이지 scheduler가 아니다. 저장소 state만으로
+새 Codex task가 자동 생성된다고 가정하지 않는다. executor가 종료되면 다음 invocation은 durable state에서
+재개하며, 별도 event integration이 실제 구성된 경우에만 그 invocation을 자동화할 수 있다.
+
+1. program/state/current main을 읽어 next eligible phase를 결정한다;
+2. declared phase objective와 acceptance 안에서 bounded Work Package를 생성/활성화한다;
+3. repository 조사, 구현, test, 동일 failure class의 1회 bounded repair, evidence/state 갱신,
+   PR 생성까지 수행한다;
+4. PR/CI가 완료되고 merge 후 repository state가 갱신되면 다음 eligible repository-only phase를
+   선택한다.
+
+이는 **목표를 스스로 발명하는 권한이 아니다**. manifest에 없는 phase, 새로운 기술/architecture,
+acceptance 완화, unrelated cleanup은 program autonomy에 포함되지 않는다.
+
+### Mandatory human gates
+
+Program manifest가 더 엄격한 gate를 정의할 수 있으며, 최소한 다음은 자동 진행하지 않는다.
+
+- program 최초 승인;
+- product/architecture decision이 필요한 분기;
+- 현실 truth/label처럼 모델이 스스로 정답을 만들면 안 되는 freeze;
+- IAM 또는 security boundary 확대;
+- 새 paid/cost-increasing live cloud action;
+- destructive teardown;
+- 자동 merge가 별도로 명시적으로 승인되지 않은 production PR merge.
+
+CI PASS만으로 다음 phase acceptance를 만들지 않는다. 자연 실패는 evidence로 남기며 rerun-until-green을
+금지한다.
+
+### Product Trust program
+
+현재 정의된 첫 Autonomous Program은 `product-trust-v1`이다.
+
+- contract: `.agents/programs/product-trust-v1.yml`
+- state: `.agents/state/product-trust-v1.json`
+- plan: `docs/plans/active/product-trust-modernization.md`
+
+이 program은 Kubernetes/GKE 플랫폼 재선정, MSA 전환, capacity/HPA/HA, 새 observability 제품 또는
+새 IdP 도입 자체를 목표로 하지 않는다. 현실 입력 fidelity, 사용자-visible trust, waiting experience,
+access safety, browser-level user flow, CI/CD trust gates와 최종 product proof만 다룬다.
+
+Program state가 `AWAITING_PROGRAM_APPROVAL`인 동안 PT phase를 시작하지 않는다.
 
 ## Completion report
 

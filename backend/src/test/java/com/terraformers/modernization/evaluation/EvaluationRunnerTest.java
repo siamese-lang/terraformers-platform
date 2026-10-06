@@ -10,6 +10,7 @@ import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisGenerationStage;
 import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
+import com.terraformers.modernization.analysis.TerraformDraftValidation;
 import com.terraformers.modernization.analysis.TerraformDraftValidator;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationDataset;
 import com.terraformers.modernization.evaluation.EvaluationTrace.ConfigurationIdentity;
@@ -30,6 +31,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class EvaluationRunnerTest {
+
+    @Test
+    void classifiesTerraformValidationFailureModes() {
+        assertThat(EvaluationRunner.validationFailureCategory(
+                new TerraformDraftValidation(false, "", "AWS_PROVIDER_CONTRACT: UNKNOWN_RESOURCE")))
+                .isEqualTo(EvaluationFailureCategory.TERRAFORM_PROVIDER_CONTRACT);
+        assertThat(EvaluationRunner.validationFailureCategory(
+                new TerraformDraftValidation(false, "", "INIT_CONFIGURATION: Terraform initialization/configuration failed")))
+                .isEqualTo(EvaluationFailureCategory.TERRAFORM_INIT_CONFIGURATION);
+        assertThat(EvaluationRunner.validationFailureCategory(
+                new TerraformDraftValidation(false, "", "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation")))
+                .isEqualTo(EvaluationFailureCategory.TERRAFORM_EXECUTABLE_VALIDATION);
+        assertThat(EvaluationRunner.validationFailureCategory(
+                new TerraformDraftValidation(false, "", "Terraform must contain at least one resource")))
+                .isEqualTo(EvaluationFailureCategory.TERRAFORM_STRUCTURAL_VALIDATION);
+    }
 
     @Test
     void mapsEveryProviderNeutralPartialFailureCategory() {

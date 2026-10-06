@@ -262,11 +262,18 @@ jobs:
           [[ "$service_type" == ClusterIP ]]
 
       - name: Start ephemeral Java baseline pod
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
         run: |
           set -euo pipefail
           kubectl -n "$TARGET_NAMESPACE" delete pod "$BASELINE_POD"             --ignore-not-found=true --wait=true
 
-          cat > "${RUNNER_TEMP}/baseline-pod.yaml" <<'EOF'
+          evaluation_image='eclipse-temurin:17-jdk-jammy'
+          if [[ "${A7_7_V4_EVALUATION:-false}" == true ]]; then
+            evaluation_image="$BACKEND_IMAGE"
+          fi
+
+          cat > "${RUNNER_TEMP}/baseline-pod.yaml" <<EOF
           apiVersion: v1
           kind: Pod
           metadata:
@@ -284,9 +291,9 @@ jobs:
                 type: RuntimeDefault
             containers:
               - name: baseline
-                image: eclipse-temurin:17-jdk-jammy
+                image: ${evaluation_image}
                 imagePullPolicy: IfNotPresent
-                command: ["/bin/sh", "-c", "sleep 2700"]
+                command: ["/bin/sh", "-c", "sleep 5400"]
                 securityContext:
                   allowPrivilegeEscalation: false
                   capabilities:
@@ -316,7 +323,41 @@ jobs:
           set -euo pipefail
           kubectl -n "$TARGET_NAMESPACE" exec -i "$BASELINE_POD" --             /bin/sh -c 'cat > /tmp/live-baseline.zip'             < "${RUNNER_TEMP}/live-baseline.zip"
 
-          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" --             /bin/sh -c 'rm -rf /tmp/workspace && mkdir -p /tmp/workspace && cd /tmp/workspace && jar xf /tmp/live-baseline.zip'
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- /bin/sh -c '
+            rm -rf /tmp/workspace &&
+            mkdir -p /tmp/workspace &&
+            cd /tmp/workspace &&
+            if command -v unzip >/dev/null 2>&1; then
+              unzip -q /tmp/live-baseline.zip
+            else
+              jar xf /tmp/live-baseline.zip
+            fi
+          '
+
+      - name: Verify A7-7 v4 production-equivalent substrate
+        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation'
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+        run: |
+          set -euo pipefail
+          [[ "$(kubectl -n "$TARGET_NAMESPACE" get pod "$BASELINE_POD" -o jsonpath='{.spec.containers[0].image}')" == "$BACKEND_IMAGE" ]]
+          [[ "$(kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- printenv BUILD_SOURCE_REVISION)" == "$BACKEND_SOURCE_SHA" ]]
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- terraform version | head -n 1 | grep -Fx 'Terraform v1.8.5'
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- test -s /opt/terraform-provider-schema/aws-5.100.0.json
+          plugin_count="$(kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- /bin/sh -c "find /opt/terraform-plugins/registry.terraform.io/hashicorp/aws/5.100.0/linux_amd64 -maxdepth 1 -type f -name 'terraform-provider-aws*' | wc -l")"
+          [[ "$plugin_count" == 1 ]]
+
+          count_json="$(kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- curl -fsS "http://${OPENSEARCH_SERVICE}:9200/terraformers-reference-v4/_count")"
+          jq -e '.count == 5395' <<< "$count_json" >/dev/null
+
+          mapping_json="$(kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- curl -fsS "http://${OPENSEARCH_SERVICE}:9200/terraformers-reference-v4/_mapping")"
+          jq -e --arg checksum "$A7_7_V4_CORPUS_CHECKSUM" '
+            .["terraformers-reference-v4"].mappings.properties.embedding.dimension == 1536
+            and .["terraformers-reference-v4"].mappings._meta.terraformers_corpus.corpus_version == "terraformers-reference-v4"
+            and .["terraformers-reference-v4"].mappings._meta.terraformers_corpus.checksum == $checksum
+          ' <<< "$mapping_json" >/dev/null
 
       - name: Run unchanged six-case M3 baseline
         if: inputs.evaluation_scope == 'm3-full-baseline'

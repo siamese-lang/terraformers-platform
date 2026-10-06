@@ -13,14 +13,21 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Product Trust Reassessment**
-- Status: **PRODUCT TRUST PROGRAM APPROVED — PT-1 CONTRACT READY / AWAITING POST-MERGE ACTIVATION**
+- Status: **PRODUCT TRUST PROGRAM APPROVED — PT-1 REVISED CANDIDATE READY / HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE**
 - Active plan:
   [Product Trust Modernization](plans/active/product-trust-modernization.md)
 - Program contract:
   [.agents/programs/product-trust-v1.yml](../.agents/programs/product-trust-v1.yml)
 - Durable program state:
   [.agents/state/product-trust-v1.json](../.agents/state/product-trust-v1.json)
-- Current single task: **The user explicitly approved `product-trust-v1` on 2026-10-06. PT-1 realistic-input benchmark design is the first eligible phase. Its Work Package must merge before a Codex executor binds the exact post-merge main SHA and starts repository-only PT-1 work. PT-1 may prepare a candidate but must stop at the `REALISTIC_DATASET_TRUTH_FREEZE` human gate before any live PT-2 run. A7-8 and teardown remain deferred; the recreated GCP runtime is intentionally retained.**
+- Current single task: **PT-1 candidate revision 3 submits the two structured-review truth-contract corrections under human-authorized iteration 2. Every revision-2 fixture byte and execution base `0bb244756c2a2e1d3d6d11d0342e98e155f8662c` are preserved. Execution is stopped at `HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE`. Human review must confirm the images, full truth and candidate identity before freeze; PR merge requires its separate checkpoint. PT-1 is not complete and PT-2 is not eligible. No model/cloud call was performed. A7-8 and teardown remain deferred; the recreated GCP runtime is intentionally retained.**
+- Active Work Package: [PT-1 realistic-input benchmark](../.agents/work-packages/product-trust-pt-1-realistic-input-benchmark-v1.yml).
+- Active PR: [#241](https://github.com/siamese-lang/terraformers-platform/pull/241), awaiting independent acceptance re-review and human truth freeze; merge remains a separate unapproved checkpoint.
+- Candidate/review evidence: [PT-1 human freeze checkpoint](evaluation/product-trust-pt-1-realistic-input-freeze.md).
+- Candidate revision 3 identity SHA-256: `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`; truth approver and freeze timestamp remain null.
+- Superseded candidate revision 1 identity: `8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8`, rejected in human review for answer leakage and insufficient visual realism. Autonomous repairs remain 1; human-authorized corrective iterations: 2.
+- Superseded candidate revision 2 identity: `c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852`; visual fidelity passed but source/adaptation and support-resource truth required correction.
+- Standing recovery instruction for this conversation: with an open active Work Package PR, inspect PR conversation/reviews first and apply the latest `[PRODUCT_TRUST_REVIEW:v1]` feedback for its reviewed head before continuing. Full rules are in durable `prReviewFeedbackPolicy`; latest review [6015448816](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015448816) remains `CHANGES_REQUIRED` pending re-review.
 
 
 ## Product Trust reassessment checkpoint

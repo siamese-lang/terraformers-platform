@@ -1,0 +1,501 @@
+{
+  "datasetVersion": "terraformers-realistic-v1",
+  "status": "CANDIDATE_AWAITING_HUMAN_TRUTH_FREEZE",
+  "executionBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
+  "truthApprovedBy": null,
+  "truthFrozenAt": null,
+  "modelUnderTestRunCount": 0,
+  "fixtureChangedInResponseToModelOutput": false,
+  "sourceDocuments": [
+    {
+      "id": "serverless-web",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/serverless-multi-tier-architectures-api-gateway-lambda/three-tier-architecture-overview.html",
+      "resolvedUrl": "https://aws.amazon.com/blogs/architecture/building-a-three-tier-architecture-on-a-budget/",
+      "accessedOn": "2026-10-06",
+      "sha256": "4038786e6674e8bac6066d2470480d1122065e37e907eac1efe4996cc20239f6",
+      "title": "Building a three-tier architecture on a budget | AWS Architecture Blog"
+    },
+    {
+      "id": "sns-fanout",
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/sns-sqs-as-subscriber.html",
+      "resolvedUrl": "https://docs.aws.amazon.com/sns/latest/dg/sns-sqs-as-subscriber.html",
+      "accessedOn": "2026-10-06",
+      "sha256": "032d76b83eba971481e8fca7a90f24406f00396827c17150acfa089305182514",
+      "title": "Fanout Amazon SNS notifications to Amazon SQS queues for asynchronous processing - Amazon Simple Notification Service"
+    },
+    {
+      "id": "sqs-workers",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html",
+      "resolvedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html",
+      "accessedOn": "2026-10-06",
+      "sha256": "1aa8cf413c7563b70e83198f634af1614934b5d8c33ec9a78ccf2724bc181ae5",
+      "title": "Using Lambda with Amazon SQS - AWS Lambda"
+    },
+    {
+      "id": "parallel-workflow",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-parallel.html",
+      "resolvedUrl": "https://docs.aws.amazon.com/step-functions/latest/dg/state-parallel.html",
+      "accessedOn": "2026-10-06",
+      "sha256": "72c78cd869a86efdf25a8a4ef09fd54bd44646b292a7493744e0e339f66b7236",
+      "title": "Parallel workflow state - AWS Step Functions"
+    },
+    {
+      "id": "athena-catalog",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/data-sources-glue.html",
+      "resolvedUrl": "https://docs.aws.amazon.com/athena/latest/ug/data-sources-glue.html",
+      "accessedOn": "2026-10-06",
+      "sha256": "cc1413b16628d682584bdbc7e4840737cfc74f6e07c1964989ddd90bae16695c",
+      "title": "Use AWS Glue Data Catalog to connect to your data - Amazon Athena"
+    },
+    {
+      "id": "private-subnets",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-example-private-subnets-nat.html",
+      "resolvedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-example-private-subnets-nat.html",
+      "accessedOn": "2026-10-06",
+      "sha256": "f2bcffa48368b187e496e230ef30dd8a38fbca5d45504cd23f1f3442b923dffe",
+      "title": "Example: VPC with servers in private subnets and NAT - Amazon Virtual Private Cloud"
+    },
+    {
+      "id": "s3-event",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-s3.html",
+      "resolvedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/with-s3.html",
+      "accessedOn": "2026-10-06",
+      "sha256": "32811cc9cab2301c44e99e44e783c5d078914526ad92d0f6b15b46df59f0b564",
+      "title": "Process Amazon S3 event notifications with Lambda - AWS Lambda"
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "pt1-01-serverless-portal",
+      "sourceIds": [
+        "serverless-web"
+      ],
+      "sourceBasis": "The selected AWS architecture blog describes S3/CloudFront presentation, API Gateway/Lambda business logic, DynamoDB data, and Amazon Cognito user-pool authentication. The PT-1 candidate intentionally scopes Cognito/authentication out. Its explicit HTTP API annotation and aws_apigatewayv2_api binding are PT-1 adaptations, not a claim that the source uniquely mandates HTTP API.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-01-serverless-portal.svg",
+        "sha256": "9cbfc2984c8fc2a2ba62f38efe42e81f8165b2fefa00352f36551055c397c3a3"
+      },
+      "layoutConditions": "Independent globe, bucket, hexagonal function/API and cylinder symbols; short labels; separate static/API lanes and bent ingress.",
+      "requiredResourceIntent": [
+        "Separate static S3 origin and HTTP API paths; Lambda owns business logic and DynamoDB stores application records."
+      ],
+      "acceptableSemanticVariants": [
+        "Service-name synonyms are acceptable; support resources are allowed. HTTP API annotation binds the v2 API resource, not a REST API swap."
+      ],
+      "reasonTerraformShouldNotBeGenerated": null,
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Colored symbol architecture / dot-grid export",
+      "visualDifferenceFromSyntheticBenchmark": "The canonical CloudFront case uses private ALB/EKS and the three-tier case uses ALB/RDS. This source topology instead has a static S3 origin alongside an HTTP API/Lambda/DynamoDB path, drawn as service symbols rather than the canonical text boxes. No canonical bytes or layout were reused.",
+      "remainingRealismLimitations": [
+        "A deliberately composed vector export, not a collected portal diagram. S3/CloudFront/DynamoDB text still aids recognition; the original symbols do not test official AWS icon recognition."
+      ],
+      "visibleSymbolMapping": [
+        "Browser symbol / Browser -> Browser users",
+        "globe / CloudFront -> Amazon CloudFront",
+        "bucket / S3 assets -> Amazon S3 website assets",
+        "hexagon / HTTP API -> Amazon API Gateway HTTP API",
+        "\u03bb / business -> AWS Lambda business logic",
+        "cylinder / DynamoDB -> Amazon DynamoDB application table"
+      ],
+      "sourceArchitectureFacts": [
+        "The source includes S3/CloudFront presentation, API Gateway/Lambda business logic and DynamoDB data.",
+        "The source includes Amazon Cognito user pools for user authentication."
+      ],
+      "candidateAdaptations": [
+        "Cognito/authentication is intentionally outside this bounded candidate image and truth; its omission does not describe the source.",
+        "The candidate explicitly selects HTTP API / aws_apigatewayv2_api. A REST API swap does not match this candidate label, although the source does not uniquely mandate the v2 API choice."
+      ],
+      "truthCertaintyBasis": "Source authentication facts were rechecked against the recorded AWS source. The two scope/API choices are explicit candidate adaptations, not unresolved source guesses; remainingTruthUncertainties is empty for factual uncertainty. Human acceptance of those adaptations and all truth remains pending.",
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "CloudFront, S3, explicitly labeled HTTP API, Lambda and DynamoDB are visible architecture nodes. Their required resource types remain unchanged.",
+        "supportBasis": "API wiring, Lambda permission/IAM and origin access controls remain acceptable support; valid supplied references may provide them.",
+        "movedFromRequiredToAcceptable": [],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
+    },
+    {
+      "caseId": "pt1-02-order-fanout",
+      "sourceIds": [
+        "sns-fanout",
+        "sqs-workers"
+      ],
+      "sourceBasis": "Composition of documented SNS-to-SQS fanout and Lambda SQS event-source mapping. Billing/audit names are original concrete roles; no storage destination is invented.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-02-order-fanout.svg",
+        "sha256": "b78b81022274bc151e04679d2342865b0a3482c71cf32ee019d142098ef60201"
+      },
+      "layoutConditions": "Actor, circular SNS topic, offset queue stacks, circular \u03bb workers, role labels and solid/dashed orthogonal connectors; asymmetric queue placement.",
+      "requiredResourceIntent": [
+        "One SNS topic fans out to two distinct SQS queues through subscriptions. Each queue feeds its own Lambda consumer using an event-source mapping. Valid SNS delivery and consumer access are required, but creation of a new queue-policy or IAM resource is not."
+      ],
+      "acceptableSemanticVariants": [
+        "Relationship arrows denote event/data flow; Lambda polls SQS rather than SQS invoking Lambda directly.",
+        "SNS delivery authorization and Lambda queue access may use existing policies/roles or equivalent valid references; aws_sqs_queue_policy and IAM resource creation are acceptable support, not required image truth."
+      ],
+      "reasonTerraformShouldNotBeGenerated": null,
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Monochrome messaging deployment sketch",
+      "visualDifferenceFromSyntheticBenchmark": "SNS-to-two-SQS-to-two-Lambda fanout is absent from the canonical/holdout positive topologies. Monospaced ink, actor/queue symbols and dashed consumer links replace the common colored rectangle grammar without restyling a canonical fixture.",
+      "remainingRealismLimitations": [
+        "Original messaging sketch with readable SNS/SQS labels; it is not a real exported deployment diagram and has no screenshot noise. Dashed links are diagram notation, not a measurement of consumer runtime behavior."
+      ],
+      "visibleSymbolMapping": [
+        "actor / publisher -> Order publisher",
+        "circle / SNS orders -> Amazon SNS orders topic",
+        "queue stack / billing SQS -> Amazon SQS billing queue",
+        "queue stack / audit SQS -> Amazon SQS audit queue",
+        "\u03bb / billing -> AWS Lambda billing worker",
+        "\u03bb / audit -> AWS Lambda audit worker"
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "The visible SNS-to-two-SQS fanout and separate SQS-to-Lambda consumers require topic, queues, functions and the semantic subscription/event-source bindings.",
+        "supportBasis": "A queue policy authorizes delivery rather than defining the fanout topology; existing authorization is valid. The image does not require new queue-policy/IAM creation.",
+        "movedFromRequiredToAcceptable": [
+          "aws_sqs_queue_policy"
+        ],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
+    },
+    {
+      "caseId": "pt1-03-parallel-lookup",
+      "sourceIds": [
+        "parallel-workflow"
+      ],
+      "sourceBasis": "Independent redraw of the documented LookupCustomerInfo parallel example with AddressFinder and PhoneFinder Lambda tasks, preserving both terminal branches.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-03-parallel-lookup.svg",
+        "sha256": "eeb3d21a0d28413ed6c7688e7b0d30116de33315f197def732446a027bd7ece7"
+      },
+      "layoutConditions": "Editor chrome and palette surrounding a state graph; rounded task nodes, \u03bb symbols, Parallel boundary, fork bar, join and Start/End nodes.",
+      "requiredResourceIntent": [
+        "A Step Functions Parallel state invokes two distinct Lambda tasks and joins their outputs. Workflow states are not separately deployed cloud services."
+      ],
+      "acceptableSemanticVariants": [
+        "Parallel/join can be described in words rather than as separate components; terminal result array is logical output, not a database.",
+        "Valid Step Functions/Lambda execution permissions may be supplied by existing role ARNs/policies; the image does not require creation of aws_iam_role."
+      ],
+      "reasonTerraformShouldNotBeGenerated": null,
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Original workflow-editor screen",
+      "visualDifferenceFromSyntheticBenchmark": "Canonical/holdout positives do not include a Step Functions parallel workflow or editing UI around the graph. The palette contains unused node types, so the graph and its containment must be distinguished from UI controls; this is not a restyled infrastructure chain.",
+      "remainingRealismLimitations": [
+        "A repository-owned mock editor, not an AWS console screenshot or exact Workflow Studio replica. Tasks and service context remain legible; human review must confirm that graph/palette separation and fork/join notation are natural enough."
+      ],
+      "visibleSymbolMapping": [
+        "Step Functions header -> AWS Step Functions state machine",
+        "Parallel / LookupCustomerInfo boundary and fork -> Parallel LookupCustomerInfo",
+        "\u03bb / AddressFinder -> AWS Lambda AddressFinder",
+        "\u03bb / PhoneFinder -> AWS Lambda PhoneFinder",
+        "join / End -> End / result array (logical output, not storage)"
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "The depicted Step Functions Parallel workflow and two Lambda tasks require the state machine and functions; branch/join semantics remain required.",
+        "supportBasis": "An existing execution role ARN and policies can authorize these calls. New IAM-role creation is not visible or independently required.",
+        "movedFromRequiredToAcceptable": [
+          "aws_iam_role"
+        ],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
+    },
+    {
+      "caseId": "pt1-04-analytics-catalog",
+      "sourceIds": [
+        "athena-catalog"
+      ],
+      "sourceBasis": "AWS documentation specifies Athena querying S3 using Glue metadata and optional crawler schema inference. This drawing explicitly selects crawler, a named workgroup and a separate S3 query-output bucket.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-04-analytics-catalog.svg",
+        "sha256": "27f73100a898eaae1be586f42b7e8708a42dba68eff49bf41e03615d5eabbcda"
+      },
+      "layoutConditions": "Unfilled bucket, gear, document-stack and query symbols, oblique short labels, grid background, long data/catalog/SQL connector routes and non-junction crossings.",
+      "requiredResourceIntent": [
+        "Separate source and query-output buckets; crawler populates the Glue database with schema; Athena workgroup queries source objects and writes query results."
+      ],
+      "acceptableSemanticVariants": [
+        "Metadata lookup may be described as Athena -> Glue; read-direction descriptions may reverse the data-flow arrow when the read semantics remain explicit. Crawler may create tables dynamically.",
+        "Existing Glue execution roles/policies are valid support; the crawler may create catalog tables dynamically. No new IAM role or explicit table resource is required by the image."
+      ],
+      "reasonTerraformShouldNotBeGenerated": null,
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Dense graph-paper data-platform sketch",
+      "visualDifferenceFromSyntheticBenchmark": "A crawler/catalog/query path separating schema from object flow is absent from the canonical/holdout positives. Dense metadata/data routes and original service symbols require more than reading a linear list of full service names.",
+      "remainingRealismLimitations": [
+        "Vector graph paper and a regular oblique font approximate a sketch; they do not reproduce handwriting, camera artifacts or proprietary diagram icons. S3/Glue/Athena labels still identify service families."
+      ],
+      "visibleSymbolMapping": [
+        "bucket / S3 raw.csv -> Amazon S3 source CSV objects",
+        "gear / Glue crawler -> AWS Glue crawler",
+        "stack / lake / Glue catalog -> AWS Glue Data Catalog lake database",
+        "query symbol / Athena analytics -> Amazon Athena analytics workgroup",
+        "bucket / S3 results -> Amazon S3 query results",
+        "browser / SQL client -> Analyst SQL client"
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "Source/results S3 buckets, Glue crawler/database and a named Athena workgroup are explicitly selected visible architecture intent; required types remain unchanged.",
+        "supportBasis": "IAM resources remain acceptable; crawler-created tables are valid without an explicit aws_glue_catalog_table resource.",
+        "movedFromRequiredToAcceptable": [],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
+    },
+    {
+      "caseId": "pt1-05-private-web-fleet",
+      "sourceIds": [
+        "private-subnets"
+      ],
+      "sourceBasis": "Independent redraw of documented two-AZ public/private VPC, ALB and Auto Scaling private servers, one NAT per AZ and S3 gateway endpoint. Select IPv4-only explicitly; two ALB nodes represent one logical load balancer.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-05-private-web-fleet.svg",
+        "sha256": "c6fadba49d354389cb3e7402d668a0a88f76ab409c19c8d322cb740480c5d2ed"
+      },
+      "layoutConditions": "Colored VPC/AZ/public/private boundaries, small hub/route/chip symbols, shared web-alb/web-asg names, per-AZ NAT labels and bent egress/endpoint routes.",
+      "requiredResourceIntent": [
+        "Two public and two private subnets across two AZs; one logical ALB and ASG with ASG-managed EC2 instances in private subnets. One NAT per AZ, private egress routing and S3 gateway endpoint remain required. The fleet needs a valid launch specification, routing and access configuration, but not new launch-template, route-table or security-group resources; standalone aws_instance resources are not mandatory."
+      ],
+      "acceptableSemanticVariants": [
+        "Route entries may be inline or standalone; ALB/ASG node placement can be expressed as shared resources. No IPv6 or egress-only gateway required.",
+        "A valid existing launch-template/specification reference, security-group IDs and route-table IDs may supply support. Routes may be inline or standalone on valid supplied tables. These alternatives must retain private instance placement, ALB-to-fleet traffic, per-AZ NAT egress and S3 endpoint routing."
+      ],
+      "reasonTerraformShouldNotBeGenerated": null,
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Nested network/subnet/AZ export",
+      "visualDifferenceFromSyntheticBenchmark": "Unlike the canonical ALB/RDS three-tier case and holdout SG/RDS case, this topology has an ASG private EC2 fleet, NAT per AZ and an S3 gateway endpoint. Nested boundaries and a shared cross-AZ group carry intent; no historical drawing was copied or merely restyled.",
+      "remainingRealismLimitations": [
+        "A clean network export with only two AZs and short legible labels; no tool-specific AWS icons or real production topology are claimed. Shared web-alb and web-asg labels need human visual confirmation against the unchanged one-ALB/one-ASG semantic intent."
+      ],
+      "visibleSymbolMapping": [
+        "VPC 10.0.0.0/16 -> VPC (IPv4)",
+        "AZ-a / AZ-b and public-a/public-b/private-a/private-b -> two AZs with public/private subnets",
+        "IGW -> Internet gateway",
+        "two hub symbols / web-alb -> one Application Load Balancer across AZs",
+        "NAT-a / NAT-b -> NAT gateway A / B",
+        "chips / EC2 web-01 / web-02 -> EC2 server A / B",
+        "dashed web-asg boundary -> Auto Scaling group",
+        "S3 gateway endpoint -> S3 gateway VPC endpoint"
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "VPC, public/private subnet and AZ boundaries, IGW, logical ALB/ASG, per-AZ NAT and S3 gateway endpoint are visible architecture intent. Routing and private placement remain required semantics.",
+        "supportBasis": "No separate launch-template, security-group or route-table node requires creation. Existing launch specifications, security-group IDs and route-table references with valid routes may provide equivalent support.",
+        "movedFromRequiredToAcceptable": [
+          "aws_launch_template",
+          "aws_route_table",
+          "aws_security_group"
+        ],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
+    },
+    {
+      "caseId": "pt1-06-thumbnail-pipeline",
+      "sourceIds": [
+        "s3-event"
+      ],
+      "sourceBasis": "The S3 Lambda documentation describes object-created notifications, invocation permission and using two buckets to prevent recursive output triggers. Thumbnail processing is an explicitly labeled instance of that pattern.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-06-thumbnail-pipeline.svg",
+        "sha256": "04e20a7b5c1e67ed3073dd8f441c12579e980fc32e17331058f1541abacfd262"
+      },
+      "layoutConditions": "Camera, bucket and \u03bb symbols with terse role labels, ruled-paper background, oblique text and a bent source-read return edge.",
+      "requiredResourceIntent": [
+        "Two distinct buckets; ObjectCreated notification on the source only invokes the thumbnail Lambda, which reads source objects and writes output. Valid S3 invocation authorization and Lambda read/write access are required, without requiring new permission or execution-role resource creation."
+      ],
+      "acceptableSemanticVariants": [
+        "Service synonyms and equivalent IAM support resources are acceptable; merging buckets is excluded by this explicitly chosen two-bucket diagram.",
+        "Existing execution-role ARNs, invocation permission and access policies may supply valid support; aws_lambda_permission and aws_iam_role creation are acceptable, not required. The source-only notification, read/write direction and two-bucket separation remain mandatory."
+      ],
+      "reasonTerraformShouldNotBeGenerated": null,
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Portrait notebook technical sketch",
+      "visualDifferenceFromSyntheticBenchmark": "This event-driven S3-to-Lambda-to-S3 processing topology differs from the canonical Spring Boot/MariaDB/object-content split. Its portrait symbol sketch and reverse read connector were constructed from the S3 event specification, not a restyled canonical image.",
+      "remainingRealismLimitations": [
+        "Synthetic notebook texture and regular font; not an actual photographed notebook. Original symbols and S3/\u03bb cues narrow interpretation; the set does not establish performance on arbitrary hand-drawn or official-icon diagrams."
+      ],
+      "visibleSymbolMapping": [
+        "camera -> Uploader camera client",
+        "bucket / S3 originals -> Amazon S3 original images",
+        "\u03bb / thumbnail -> AWS Lambda thumbnail processor",
+        "bucket / S3 thumbs -> Amazon S3 thumbnail output"
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "Two S3 buckets and the Lambda function are visible nodes; the source ObjectCreated-to-Lambda notification is the required event binding.",
+        "supportBasis": "Invocation permission and execution-role access must be valid but may already exist. The image does not require new aws_lambda_permission or aws_iam_role resources.",
+        "movedFromRequiredToAcceptable": [
+          "aws_lambda_permission",
+          "aws_iam_role"
+        ],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
+    },
+    {
+      "caseId": "pt1-07-unresolved-design",
+      "sourceIds": [],
+      "sourceBasis": "Original repository-owned design-notes control. It deliberately leaves provider, services and connectivity decisions unresolved.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-07-unresolved-design.svg",
+        "sha256": "f9f9112614ef6fcc010bea684cbff5aeaaeb83484533f7e7e2db734f1ea6ea85"
+      },
+      "layoutConditions": "Generic client/API/store nodes, an optional cache? bubble, uneven strokes and a dashed side link; no classification or rejection caption.",
+      "requiredResourceIntent": [],
+      "acceptableSemanticVariants": [],
+      "reasonTerraformShouldNotBeGenerated": "Generic client/API/store roles and an optional cache do not specify a cloud provider, concrete deployable services or deployment/security boundaries. Do not invent provider-specific Terraform.",
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Ordinary unfinished whiteboard notes",
+      "visualDifferenceFromSyntheticBenchmark": "This is an independently constructed generic request-flow sketch with a side cache option, not the canonical cropped API/cache fixture. Ambiguity is conveyed by generic roles and missing cloud/deployment choices, without explicitly teaching AMBIGUOUS.",
+      "remainingRealismLimitations": [
+        "Original faux whiteboard, not a collected design-session photo. It is visibly a conceptual architecture sketch; the candidate AMBIGUOUS label reflects insufficient deployable provider/resource intent, not an assertion that it is non-architecture."
+      ],
+      "visibleSymbolMapping": [
+        "client, API, store and cache? are generic roles; no AWS resource family is identified"
+      ]
+    },
+    {
+      "caseId": "pt1-08-partial-export",
+      "sourceIds": [],
+      "sourceBasis": "Original repository-owned partial-export control with intentionally missing provider/service labels and boundary panels. Not cropped from a third-party asset.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-08-partial-export.svg",
+        "sha256": "d5a32e2030728b27b48cd89770f02298ac508ee7da43b1d5ac2a5870517c34a6"
+      },
+      "layoutConditions": "Only the middle process node is complete; an ingress box, downstream storage cylinder, labels and a vertical connector end outside the viewport.",
+      "requiredResourceIntent": [],
+      "acceptableSemanticVariants": [],
+      "reasonTerraformShouldNotBeGenerated": "The middle process role and incomplete generic endpoints do not identify a provider or concrete resource intent. Omitted deployment context cannot be safely inferred.",
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Naturally partial diagram export",
+      "visualDifferenceFromSyntheticBenchmark": "The image is a new partial graph with actual geometric clipping rather than a cropped copy of a historical input or the former explicit [clipped] placeholders. No sentence explains that the viewer should reject it.",
+      "remainingRealismLimitations": [
+        "Cropping is deliberately constructed rather than sampled from a real user export. The central word process and generic endpoint shapes cannot bind cloud resources; human review must confirm the rejection label remains justified."
+      ],
+      "visibleSymbolMapping": [
+        "partially visible ingress / process / storage shapes do not name a provider or concrete service"
+      ]
+    },
+    {
+      "caseId": "pt1-09-sprint-board",
+      "sourceIds": [],
+      "sourceBasis": "Original repository-owned project-planning board control. Contains realistic cloud service mentions in task cards, with no architecture connections.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-09-sprint-board.svg",
+        "sha256": "3ba11e9be702757c52e891a761cc57ee2a67a8bf947637cd108aef1eefaccc75"
+      },
+      "layoutConditions": "Navigation bar, sprint label, status columns/counts, ticket cards, owner text and avatars; cloud terms appear only in task titles.",
+      "requiredResourceIntent": [],
+      "acceptableSemanticVariants": [],
+      "reasonTerraformShouldNotBeGenerated": "Task ownership/status columns and service-name mentions describe work items, not deployable components or relationships.",
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Original project-board interface",
+      "visualDifferenceFromSyntheticBenchmark": "Unlike historical metric/status-dashboard controls, this original board has normal work-item cards and ownership/status UI. It is not a reused screenshot, diagram restyle or service topology with an answer footer.",
+      "remainingRealismLimitations": [
+        "A mock UI, not a real browser screenshot. It covers misleading service-name mentions but lacks the full clutter and incidental data of an actual team board."
+      ],
+      "visibleSymbolMapping": [
+        "S3 retention and Lambda timeout appear as ticket titles, not deployable component nodes"
+      ]
+    },
+    {
+      "caseId": "pt1-10-workshop-table",
+      "sourceIds": [],
+      "sourceBasis": "Original repository-owned ordinary workshop schedule/table control. No copied personal or business information.",
+      "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
+      "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
+      "editableRepresentation": {
+        "path": "fixtures/pt1-10-workshop-table.svg",
+        "sha256": "ac17f13af95e908081e9d3d1ce781fc69a74024afe789bb404b864bee763df3b"
+      },
+      "layoutConditions": "Document sheet/shadow, date, timetable rows and supply list; no computing diagram or answer sentence.",
+      "requiredResourceIntent": [],
+      "acceptableSemanticVariants": [],
+      "reasonTerraformShouldNotBeGenerated": "A timetable and supplies list contain no computing architecture or infrastructure resource intent.",
+      "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
+      "remainingTruthUncertainties": [],
+      "reviewRequired": "Human must confirm visual readability, topology fidelity, resource intent and rejection labels; no truth is frozen.",
+      "visualGrammar": "Paper workshop agenda",
+      "visualDifferenceFromSyntheticBenchmark": "A nontechnical agenda adds a document/table control rather than another historical technical dashboard/status board. All text and geometry are original and no canonical fixture is reused.",
+      "remainingRealismLimitations": [
+        "A clean digitally constructed agenda, not a scanned real document. It does not cover natural photographs, OCR corruption or other broad non-architecture image categories."
+      ],
+      "visibleSymbolMapping": [
+        "Time/session/room/people/notes and supplies are ordinary agenda fields"
+      ]
+    }
+  ],
+  "limitations": [
+    "All positive inputs are independent reference-based recreations, not collected real user uploads.",
+    "Original symbols and varied layouts do not prove official AWS icon, camera noise, arbitrary screenshot or multilingual robustness.",
+    "No model results, quality metrics or latency claims exist.",
+    "Unchanged exact-string/resource-type scoring does not automatically establish semantic alias, cardinality or boundary correctness; no scorer behavior or acceptance criteria were changed."
+  ],
+  "candidateRevision": 3,
+  "humanReviewCorrection": {
+    "authorizedOn": "2026-10-06",
+    "authorization": "User explicitly authorized PT-1 human-review corrective iteration; same Work Package and PR #241 branch, no execution-base rebind.",
+    "reviewedHeadSha": "2cf8a73889c6f612f5594cc7620c503646642892",
+    "supersededIdentitySha256": "8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8",
+    "modelUnderTestRunCount": 0,
+    "autonomousRepair": false,
+    "findings": [
+      "Evaluation truth leaked into input captions/footers",
+      "Positive visual grammar was too uniform",
+      "Full service names overly dominated recognition",
+      "Controls explained their own rejection"
+    ]
+  },
+  "structuredPrReviewCorrection": {
+    "iteration": 2,
+    "authorizedOn": "2026-10-06",
+    "authorization": "User explicitly authorized continuation on PR #241 to correct unresolved structured-review blockers; separate from autonomous repair.",
+    "reviewCommentId": 6015448816,
+    "reviewUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015448816",
+    "decisionAtReviewedHead": "CHANGES_REQUIRED",
+    "reviewedHeadSha": "44b73b02840abbaf1da8349e124e73fe5ccb6e5e",
+    "supersededIdentitySha256": "c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852",
+    "fixtureBytesChanged": false,
+    "autonomousRepair": false,
+    "modelUnderTestRunCount": 0,
+    "findings": [
+      "BLOCKER-1 source facts versus candidate adaptations",
+      "BLOCKER-2 implementation-support resource requirements"
+    ],
+    "acceptanceStatus": "CORRECTION_SUBMITTED_PENDING_INDEPENDENT_REVIEW_AND_TRUTH_FREEZE"
+  }
+}

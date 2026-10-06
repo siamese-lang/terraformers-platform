@@ -1,0 +1,799 @@
+{
+  "schemaVersion": "m3-evaluation-v1",
+  "datasetVersion": "terraformers-realistic-v1",
+  "description": "Unfrozen PT-1 candidate: six independently redrawn public-reference AWS patterns, two incomplete designs and two non-architecture controls. Human truth review required; no realistic-generalization result is claimed.",
+  "cases": [
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-01-serverless-portal",
+      "input": {
+        "path": "fixtures/pt1-01-serverless-portal.png",
+        "sha256": "ec58701f5a1c610208ef24e74d30cd5ae0f0b35c16d5aabf7b22163adae7e9b7",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "Browser users",
+          "Amazon CloudFront",
+          "Amazon S3 website assets",
+          "Amazon API Gateway",
+          "AWS Lambda business logic",
+          "Amazon DynamoDB application table"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "Application Load Balancer",
+          "RDS Database",
+          "EKS"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "Browser users -> Amazon CloudFront",
+          "Amazon CloudFront -> Amazon S3 website assets",
+          "Browser users -> Amazon API Gateway",
+          "Amazon API Gateway -> AWS Lambda business logic",
+          "AWS Lambda business logic -> Amazon DynamoDB application table"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "Amazon CloudFront -> Application Load Balancer"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_cloudfront_distribution",
+          "aws_s3_bucket",
+          "aws_apigatewayv2_api",
+          "aws_lambda_function",
+          "aws_dynamodb_table"
+        ],
+        "acceptable": [
+          "aws_apigatewayv2_integration",
+          "aws_apigatewayv2_route",
+          "aws_apigatewayv2_stage",
+          "aws_lambda_permission",
+          "aws_iam_role",
+          "aws_iam_policy",
+          "aws_cloudfront_origin_access_control"
+        ],
+        "forbidden": [
+          "aws_lb",
+          "aws_db_instance",
+          "aws_eks_cluster"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION"
+        ],
+        "requiredResourceTypes": [
+          "aws_cloudfront_distribution",
+          "aws_s3_bucket",
+          "aws_apigatewayv2_api",
+          "aws_lambda_function",
+          "aws_dynamodb_table"
+        ],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_cloudfront_distribution",
+            "aws_s3_bucket",
+            "aws_apigatewayv2_api",
+            "aws_lambda_function",
+            "aws_dynamodb_table"
+          ],
+          "acceptable": [
+            "aws_apigatewayv2_integration",
+            "aws_apigatewayv2_route",
+            "aws_apigatewayv2_stage",
+            "aws_lambda_permission",
+            "aws_iam_role",
+            "aws_iam_policy",
+            "aws_cloudfront_origin_access_control"
+          ],
+          "forbidden": [
+            "aws_lb",
+            "aws_db_instance",
+            "aws_eks_cluster"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-02-order-fanout",
+      "input": {
+        "path": "fixtures/pt1-02-order-fanout.png",
+        "sha256": "f78bb2a4f0e66df7cc1f613aa739997b433a6757ee7f2d15a213d4c4e772194c",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "Order publisher",
+          "Amazon SNS orders topic",
+          "Amazon SQS billing queue",
+          "Amazon SQS audit queue",
+          "AWS Lambda billing worker",
+          "AWS Lambda audit worker"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "Amazon API Gateway",
+          "RDS Database"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "Order publisher -> Amazon SNS orders topic",
+          "Amazon SNS orders topic -> Amazon SQS billing queue",
+          "Amazon SNS orders topic -> Amazon SQS audit queue",
+          "Amazon SQS billing queue -> AWS Lambda billing worker",
+          "Amazon SQS audit queue -> AWS Lambda audit worker"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "Amazon SNS orders topic -> AWS Lambda billing worker",
+          "Amazon SNS orders topic -> AWS Lambda audit worker"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_sns_topic",
+          "aws_sns_topic_subscription",
+          "aws_sqs_queue",
+          "aws_lambda_function",
+          "aws_lambda_event_source_mapping"
+        ],
+        "acceptable": [
+          "aws_iam_role",
+          "aws_iam_policy",
+          "aws_sqs_queue_policy"
+        ],
+        "forbidden": [
+          "aws_db_instance"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION"
+        ],
+        "requiredResourceTypes": [
+          "aws_sns_topic",
+          "aws_sns_topic_subscription",
+          "aws_sqs_queue",
+          "aws_lambda_function",
+          "aws_lambda_event_source_mapping"
+        ],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_sns_topic",
+            "aws_sns_topic_subscription",
+            "aws_sqs_queue",
+            "aws_lambda_function",
+            "aws_lambda_event_source_mapping"
+          ],
+          "acceptable": [
+            "aws_iam_role",
+            "aws_iam_policy",
+            "aws_sqs_queue_policy"
+          ],
+          "forbidden": [
+            "aws_db_instance"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-03-parallel-lookup",
+      "input": {
+        "path": "fixtures/pt1-03-parallel-lookup.png",
+        "sha256": "b61251fada65971e1ba92557577861085a1c7df325b8c048bbb38b69f88a89a8",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "AWS Step Functions state machine",
+          "Parallel LookupCustomerInfo",
+          "AWS Lambda AddressFinder",
+          "AWS Lambda PhoneFinder"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "Amazon SQS",
+          "Amazon SNS",
+          "RDS Database"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "Parallel LookupCustomerInfo -> AWS Lambda AddressFinder",
+          "Parallel LookupCustomerInfo -> AWS Lambda PhoneFinder",
+          "AWS Lambda AddressFinder -> End / result array",
+          "AWS Lambda PhoneFinder -> End / result array"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "AWS Lambda AddressFinder -> AWS Lambda PhoneFinder"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_sfn_state_machine",
+          "aws_lambda_function"
+        ],
+        "acceptable": [
+          "aws_iam_policy",
+          "aws_iam_role_policy",
+          "aws_iam_role"
+        ],
+        "forbidden": [
+          "aws_sqs_queue",
+          "aws_sns_topic",
+          "aws_db_instance"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION"
+        ],
+        "requiredResourceTypes": [
+          "aws_sfn_state_machine",
+          "aws_lambda_function"
+        ],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_sfn_state_machine",
+            "aws_lambda_function"
+          ],
+          "acceptable": [
+            "aws_iam_policy",
+            "aws_iam_role_policy",
+            "aws_iam_role"
+          ],
+          "forbidden": [
+            "aws_sqs_queue",
+            "aws_sns_topic",
+            "aws_db_instance"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-04-analytics-catalog",
+      "input": {
+        "path": "fixtures/pt1-04-analytics-catalog.png",
+        "sha256": "7b13925481c47f774ee211516144c37ea4a3dfb88f68abbe00baaa83428e7dca",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "Amazon S3 source CSV objects",
+          "AWS Glue crawler",
+          "AWS Glue Data Catalog lake database",
+          "Amazon Athena analytics workgroup",
+          "Amazon S3 query results",
+          "Analyst SQL client"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "RDS Database",
+          "AWS Lambda"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "Amazon S3 source CSV objects -> AWS Glue crawler",
+          "AWS Glue crawler -> AWS Glue Data Catalog lake database",
+          "AWS Glue Data Catalog lake database -> Amazon Athena analytics workgroup",
+          "Amazon S3 source CSV objects -> Amazon Athena analytics workgroup",
+          "Amazon Athena analytics workgroup -> Amazon S3 query results",
+          "Analyst SQL client -> Amazon Athena analytics workgroup"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "AWS Glue crawler moves objects into AWS Glue Data Catalog"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_s3_bucket",
+          "aws_glue_crawler",
+          "aws_glue_catalog_database",
+          "aws_athena_workgroup"
+        ],
+        "acceptable": [
+          "aws_glue_catalog_table",
+          "aws_iam_role",
+          "aws_iam_policy"
+        ],
+        "forbidden": [
+          "aws_db_instance",
+          "aws_lambda_function"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION"
+        ],
+        "requiredResourceTypes": [
+          "aws_s3_bucket",
+          "aws_glue_crawler",
+          "aws_glue_catalog_database",
+          "aws_athena_workgroup"
+        ],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_s3_bucket",
+            "aws_glue_crawler",
+            "aws_glue_catalog_database",
+            "aws_athena_workgroup"
+          ],
+          "acceptable": [
+            "aws_glue_catalog_table",
+            "aws_iam_role",
+            "aws_iam_policy"
+          ],
+          "forbidden": [
+            "aws_db_instance",
+            "aws_lambda_function"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-05-private-web-fleet",
+      "input": {
+        "path": "fixtures/pt1-05-private-web-fleet.png",
+        "sha256": "4de17a100ac94ea9cd4c61be505fad45cc99dd3cb066fb484b7cbc2f5b50be32",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "VPC",
+          "Public subnet A",
+          "Public subnet B",
+          "Private subnet A",
+          "Private subnet B",
+          "Internet gateway",
+          "Application Load Balancer",
+          "NAT gateway A",
+          "NAT gateway B",
+          "EC2 server A",
+          "EC2 server B",
+          "Auto Scaling group",
+          "S3 gateway VPC endpoint"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "RDS Database",
+          "EKS",
+          "CloudFront"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "Internet clients -> Application Load Balancer",
+          "Application Load Balancer -> EC2 server A",
+          "Application Load Balancer -> EC2 server B",
+          "EC2 server A -> NAT gateway A",
+          "EC2 server B -> NAT gateway B",
+          "EC2 servers -> S3 gateway VPC endpoint"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "Internet clients -> EC2 servers directly",
+          "EC2 server A -> NAT gateway B"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_vpc",
+          "aws_subnet",
+          "aws_internet_gateway",
+          "aws_lb",
+          "aws_autoscaling_group",
+          "aws_nat_gateway",
+          "aws_vpc_endpoint"
+        ],
+        "acceptable": [
+          "aws_route",
+          "aws_route_table_association",
+          "aws_eip",
+          "aws_lb_listener",
+          "aws_lb_target_group",
+          "aws_vpc_endpoint_route_table_association",
+          "aws_launch_template",
+          "aws_route_table",
+          "aws_security_group"
+        ],
+        "forbidden": [
+          "aws_db_instance",
+          "aws_eks_cluster",
+          "aws_cloudfront_distribution"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION"
+        ],
+        "requiredResourceTypes": [
+          "aws_vpc",
+          "aws_subnet",
+          "aws_internet_gateway",
+          "aws_lb",
+          "aws_autoscaling_group",
+          "aws_nat_gateway",
+          "aws_vpc_endpoint"
+        ],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_vpc",
+            "aws_subnet",
+            "aws_internet_gateway",
+            "aws_lb",
+            "aws_autoscaling_group",
+            "aws_nat_gateway",
+            "aws_vpc_endpoint"
+          ],
+          "acceptable": [
+            "aws_route",
+            "aws_route_table_association",
+            "aws_eip",
+            "aws_lb_listener",
+            "aws_lb_target_group",
+            "aws_vpc_endpoint_route_table_association",
+            "aws_launch_template",
+            "aws_route_table",
+            "aws_security_group"
+          ],
+          "forbidden": [
+            "aws_db_instance",
+            "aws_eks_cluster",
+            "aws_cloudfront_distribution"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-06-thumbnail-pipeline",
+      "input": {
+        "path": "fixtures/pt1-06-thumbnail-pipeline.png",
+        "sha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "components": {
+        "required": [
+          "Uploader camera client",
+          "Amazon S3 original images",
+          "AWS Lambda thumbnail processor",
+          "Amazon S3 thumbnail output"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "Amazon SQS",
+          "RDS Database"
+        ]
+      },
+      "relationships": {
+        "required": [
+          "Uploader camera client -> Amazon S3 original images",
+          "Amazon S3 original images -> AWS Lambda thumbnail processor",
+          "AWS Lambda thumbnail processor reads Amazon S3 original images",
+          "AWS Lambda thumbnail processor -> Amazon S3 thumbnail output"
+        ],
+        "acceptable": [],
+        "forbidden": [
+          "Amazon S3 thumbnail output -> AWS Lambda thumbnail processor"
+        ]
+      },
+      "resourceTypes": {
+        "required": [
+          "aws_s3_bucket",
+          "aws_s3_bucket_notification",
+          "aws_lambda_function"
+        ],
+        "acceptable": [
+          "aws_iam_policy",
+          "aws_iam_role_policy",
+          "aws_s3_bucket_public_access_block",
+          "aws_lambda_permission",
+          "aws_iam_role"
+        ],
+        "forbidden": [
+          "aws_sqs_queue",
+          "aws_db_instance"
+        ]
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [
+          "PROVIDER_SCHEMA",
+          "PROVIDER_DOCUMENTATION"
+        ],
+        "requiredResourceTypes": [
+          "aws_s3_bucket",
+          "aws_s3_bucket_notification",
+          "aws_lambda_function"
+        ],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": true,
+        "terraformResourceTypes": {
+          "required": [
+            "aws_s3_bucket",
+            "aws_s3_bucket_notification",
+            "aws_lambda_function"
+          ],
+          "acceptable": [
+            "aws_iam_policy",
+            "aws_iam_role_policy",
+            "aws_s3_bucket_public_access_block",
+            "aws_lambda_permission",
+            "aws_iam_role"
+          ],
+          "forbidden": [
+            "aws_sqs_queue",
+            "aws_db_instance"
+          ]
+        }
+      },
+      "validation": "PASS",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-07-unresolved-design",
+      "input": {
+        "path": "fixtures/pt1-07-unresolved-design.png",
+        "sha256": "3fe4fbd6b7dcf95185eea8f112cf27231f45f7bbb2ceac6e5172a44c51903835",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "AMBIGUOUS",
+      "components": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [],
+        "requiredResourceTypes": [],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": false,
+        "terraformResourceTypes": {
+          "required": [],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "NOT_APPLICABLE",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-08-partial-export",
+      "input": {
+        "path": "fixtures/pt1-08-partial-export.png",
+        "sha256": "387153c1823fdf84ca19309459ff29a4ebf7205c72e7b38cfc2f8a1c5074e32d",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "AMBIGUOUS",
+      "components": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [],
+        "requiredResourceTypes": [],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": false,
+        "terraformResourceTypes": {
+          "required": [],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "NOT_APPLICABLE",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-09-sprint-board",
+      "input": {
+        "path": "fixtures/pt1-09-sprint-board.png",
+        "sha256": "080461617408a5346fad0e1660bd067e3e035d5b21a95547bee1e9cb84f3097d",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "NON_ARCHITECTURE_IMAGE",
+      "components": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [],
+        "requiredResourceTypes": [],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": false,
+        "terraformResourceTypes": {
+          "required": [],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "NOT_APPLICABLE",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    },
+    {
+      "schemaVersion": "m3-evaluation-v1",
+      "datasetVersion": "terraformers-realistic-v1",
+      "caseId": "pt1-10-workshop-table",
+      "input": {
+        "path": "fixtures/pt1-10-workshop-table.png",
+        "sha256": "e6b9b281784f869526f3deb3096919a36b620ff4106c76d32434478b3d8fe672",
+        "contentType": "image/png"
+      },
+      "expectedClassification": "NON_ARCHITECTURE_IMAGE",
+      "components": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "relationships": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "resourceTypes": {
+        "required": [],
+        "acceptable": [],
+        "forbidden": []
+      },
+      "retrieval": {
+        "requiredReferenceIds": [],
+        "acceptableAuthorities": [],
+        "requiredResourceTypes": [],
+        "requiredProjectDecisionIds": [],
+        "forbiddenRiskTags": []
+      },
+      "generation": {
+        "terraformExpected": false,
+        "terraformResourceTypes": {
+          "required": [],
+          "acceptable": [],
+          "forbidden": []
+        }
+      },
+      "validation": "NOT_APPLICABLE",
+      "notes": [
+        "Candidate truth only; requires human freeze before evaluation."
+      ]
+    }
+  ]
+}

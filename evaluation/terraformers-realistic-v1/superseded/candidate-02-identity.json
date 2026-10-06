@@ -1,0 +1,109 @@
+{
+  "identityVersion": "pt1-candidate-identity-v1",
+  "datasetVersion": "terraformers-realistic-v1",
+  "candidateRevision": 2,
+  "supersedesIdentitySha256": "8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8",
+  "approvalStatus": "NOT_APPROVED",
+  "files": [
+    {
+      "path": "dataset.json",
+      "sha256": "dcfc19da65ed05fef7e13bbf2661b5036f26cf0d2069da169594a3c908e6f276"
+    },
+    {
+      "path": "provenance.json",
+      "sha256": "b591afa6753f4f37af1c41bf2875865343baf61aea35a9afa1fcb39b7879ce86"
+    },
+    {
+      "path": "README.md",
+      "sha256": "1a71573a61fb50eff5a490c79f51eb0b6122665d9a3d2b6c3f02b4ddb4d842be"
+    },
+    {
+      "path": "candidate-history.json",
+      "sha256": "7540fd95f2555bd1e67fae39512c546335a24371c599e3a13d10d3bc07615020"
+    },
+    {
+      "path": "superseded/candidate-01-identity.json",
+      "sha256": "8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8"
+    },
+    {
+      "path": "fixtures/pt1-01-serverless-portal.png",
+      "sha256": "ec58701f5a1c610208ef24e74d30cd5ae0f0b35c16d5aabf7b22163adae7e9b7"
+    },
+    {
+      "path": "fixtures/pt1-01-serverless-portal.svg",
+      "sha256": "9cbfc2984c8fc2a2ba62f38efe42e81f8165b2fefa00352f36551055c397c3a3"
+    },
+    {
+      "path": "fixtures/pt1-02-order-fanout.png",
+      "sha256": "f78bb2a4f0e66df7cc1f613aa739997b433a6757ee7f2d15a213d4c4e772194c"
+    },
+    {
+      "path": "fixtures/pt1-02-order-fanout.svg",
+      "sha256": "b78b81022274bc151e04679d2342865b0a3482c71cf32ee019d142098ef60201"
+    },
+    {
+      "path": "fixtures/pt1-03-parallel-lookup.png",
+      "sha256": "b61251fada65971e1ba92557577861085a1c7df325b8c048bbb38b69f88a89a8"
+    },
+    {
+      "path": "fixtures/pt1-03-parallel-lookup.svg",
+      "sha256": "eeb3d21a0d28413ed6c7688e7b0d30116de33315f197def732446a027bd7ece7"
+    },
+    {
+      "path": "fixtures/pt1-04-analytics-catalog.png",
+      "sha256": "7b13925481c47f774ee211516144c37ea4a3dfb88f68abbe00baaa83428e7dca"
+    },
+    {
+      "path": "fixtures/pt1-04-analytics-catalog.svg",
+      "sha256": "27f73100a898eaae1be586f42b7e8708a42dba68eff49bf41e03615d5eabbcda"
+    },
+    {
+      "path": "fixtures/pt1-05-private-web-fleet.png",
+      "sha256": "4de17a100ac94ea9cd4c61be505fad45cc99dd3cb066fb484b7cbc2f5b50be32"
+    },
+    {
+      "path": "fixtures/pt1-05-private-web-fleet.svg",
+      "sha256": "c6fadba49d354389cb3e7402d668a0a88f76ab409c19c8d322cb740480c5d2ed"
+    },
+    {
+      "path": "fixtures/pt1-06-thumbnail-pipeline.png",
+      "sha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "path": "fixtures/pt1-06-thumbnail-pipeline.svg",
+      "sha256": "04e20a7b5c1e67ed3073dd8f441c12579e980fc32e17331058f1541abacfd262"
+    },
+    {
+      "path": "fixtures/pt1-07-unresolved-design.png",
+      "sha256": "3fe4fbd6b7dcf95185eea8f112cf27231f45f7bbb2ceac6e5172a44c51903835"
+    },
+    {
+      "path": "fixtures/pt1-07-unresolved-design.svg",
+      "sha256": "f9f9112614ef6fcc010bea684cbff5aeaaeb83484533f7e7e2db734f1ea6ea85"
+    },
+    {
+      "path": "fixtures/pt1-08-partial-export.png",
+      "sha256": "387153c1823fdf84ca19309459ff29a4ebf7205c72e7b38cfc2f8a1c5074e32d"
+    },
+    {
+      "path": "fixtures/pt1-08-partial-export.svg",
+      "sha256": "d5a32e2030728b27b48cd89770f02298ac508ee7da43b1d5ac2a5870517c34a6"
+    },
+    {
+      "path": "fixtures/pt1-09-sprint-board.png",
+      "sha256": "080461617408a5346fad0e1660bd067e3e035d5b21a95547bee1e9cb84f3097d"
+    },
+    {
+      "path": "fixtures/pt1-09-sprint-board.svg",
+      "sha256": "3ba11e9be702757c52e891a761cc57ee2a67a8bf947637cd108aef1eefaccc75"
+    },
+    {
+      "path": "fixtures/pt1-10-workshop-table.png",
+      "sha256": "e6b9b281784f869526f3deb3096919a36b620ff4106c76d32434478b3d8fe672"
+    },
+    {
+      "path": "fixtures/pt1-10-workshop-table.svg",
+      "sha256": "ac17f13af95e908081e9d3d1ce781fc69a74024afe789bb404b864bee763df3b"
+    }
+  ]
+}

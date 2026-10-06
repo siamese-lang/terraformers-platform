@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="730" viewBox="0 0 1180 730">
+<rect width="1180" height="730" fill="#f8f7f2"/>
+<text x="51.00" y="61" fill="#334155" font-family="DejaVu Sans" font-size="29" font-style="oblique">Request flow</text>
+<text x="940.00" y="62" fill="#334155" font-family="DejaVu Sans" font-size="18" font-style="oblique">v0.2</text>
+<polyline points="70.00,204.00 242.00,198.00 246.00,326.00 64.00,319.00 70.00,204.00" fill="none" stroke="#52635b" stroke-width="3"/>
+<text x="115.00" y="271" fill="#334155" font-family="DejaVu Sans" font-size="24" font-style="oblique">client</text>
+<polyline points="424.00,192.00 636.00,198.00 630.00,328.00 419.00,322.00 424.00,192.00" fill="none" stroke="#52635b" stroke-width="3"/>
+<text x="485.00" y="267" fill="#334155" font-family="DejaVu Sans" font-size="27" font-style="oblique">API</text>
+<rect x="886" y="217" width="114" height="90" rx="0" fill="#f8f7f2" stroke="#52635b" stroke-width="2"/>
+<ellipse cx="943.0" cy="306.5" rx="57.0" ry="12.5" fill="#f8f7f2" stroke="#52635b" stroke-width="2"/>
+<ellipse cx="943.0" cy="216.5" rx="57.0" ry="12.5" fill="#f8f7f2" stroke="#52635b" stroke-width="2"/>
+<polyline points="886.00,239.00 886.00,305.00" fill="none" stroke="#52635b" stroke-width="2"/>
+<polyline points="1000.00,239.00 1000.00,305.00" fill="none" stroke="#52635b" stroke-width="2"/>
+<text x="912.66" y="360" fill="#334155" font-family="DejaVu Sans" font-size="23" font-style="oblique">store</text>
+<polyline points="246.00,262.00 419.00,260.00" fill="none" stroke="#52635b" stroke-width="3"/>
+<polygon points="419.00,260.00 408.10,265.02 407.99,255.23" fill="#52635b" stroke="#52635b" stroke-width="1"/>
+<polyline points="636.00,263.00 886.00,263.00" fill="none" stroke="#52635b" stroke-width="3"/>
+<polygon points="886.00,263.00 875.04,267.89 875.04,258.11" fill="#52635b" stroke="#52635b" stroke-width="1"/>
+<ellipse cx="540.5" cy="534.0" rx="67.5" ry="44.0" fill="none" stroke="#64726b" stroke-width="2"/>
+<text x="495.00" y="537" fill="#334155" font-family="DejaVu Sans" font-size="22" font-style="oblique">cache?</text>
+<polyline points="530.00,328.00 529.00,490.00" fill="none" stroke="#64726b" stroke-width="2" stroke-dasharray="8 6"/>
+</svg>

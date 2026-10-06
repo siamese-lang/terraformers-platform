@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1010" viewBox="0 0 1440 1010">
+<rect width="1440" height="1010" fill="#ffffff"/>
+<text x="30.00" y="51" fill="#334155" font-family="DejaVu Sans" font-size="28">Web fleet</text>
+<text x="1140.00" y="49" fill="#64748b" font-family="DejaVu Sans" font-size="18">network / prod</text>
+<rect x="661" y="85" width="114" height="70" rx="7" fill="white" stroke="#64748b" stroke-width="2"/>
+<polyline points="661.00,105.00 775.00,105.00" fill="none" stroke="#64748b" stroke-width="2"/>
+<ellipse cx="676.0" cy="95.0" rx="2.0" ry="2.0" fill="#94a3b8" stroke="none" stroke-width="2"/>
+<ellipse cx="688.0" cy="95.0" rx="2.0" ry="2.0" fill="#94a3b8" stroke="none" stroke-width="2"/>
+<ellipse cx="700.0" cy="95.0" rx="2.0" ry="2.0" fill="#94a3b8" stroke="none" stroke-width="2"/>
+<polyline points="686.00,125.00 673.00,136.00 686.00,147.00" fill="none" stroke="#64748b" stroke-width="2"/>
+<polyline points="750.00,125.00 763.00,136.00 750.00,147.00" fill="none" stroke="#64748b" stroke-width="2"/>
+<text x="687.96" y="184" fill="#334155" font-family="DejaVu Sans" font-size="17">Clients</text>
+<rect x="28" y="216" width="1384" height="752" rx="0" fill="#f8fbfd" stroke="none" stroke-width="2"/>
+<polyline points="28.00,216.00 1412.00,216.00 1412.00,968.00 28.00,968.00 28.00,216.00" fill="none" stroke="#94a3b8" stroke-width="2"/>
+<text x="40.00" y="244" fill="#94a3b8" font-family="DejaVu Sans" font-size="18">VPC 10.0.0.0/16</text>
+<ellipse cx="719.0" cy="278.0" rx="45.0" ry="30.0" fill="#f1eafa" stroke="#89709e" stroke-width="2"/>
+<text x="698.41" y="284" fill="#334155" font-family="DejaVu Sans" font-size="20">IGW</text>
+<rect x="62" y="342" width="620" height="540" rx="0" fill="#f2f6fb" stroke="none" stroke-width="2"/>
+<polyline points="62.00,342.00 682.00,342.00 682.00,882.00 62.00,882.00 62.00,342.00" fill="none" stroke="#8497b3" stroke-width="2"/>
+<text x="74.00" y="370" fill="#8497b3" font-family="DejaVu Sans" font-size="18">AZ-a</text>
+<rect x="758" y="342" width="620" height="540" rx="0" fill="#f2f6fb" stroke="none" stroke-width="2"/>
+<polyline points="758.00,342.00 1378.00,342.00 1378.00,882.00 758.00,882.00 758.00,342.00" fill="none" stroke="#8497b3" stroke-width="2"/>
+<text x="770.00" y="370" fill="#8497b3" font-family="DejaVu Sans" font-size="18">AZ-b</text>
+<rect x="84" y="391" width="576" height="188" rx="0" fill="#eaf5ee" stroke="none" stroke-width="2"/>
+<polyline points="84.00,391.00 660.00,391.00 660.00,579.00 84.00,579.00 84.00,391.00" fill="none" stroke="#8fb6a1" stroke-width="2"/>
+<text x="96.00" y="419" fill="#8fb6a1" font-family="DejaVu Sans" font-size="18">public-a</text>
+<rect x="780" y="391" width="576" height="188" rx="0" fill="#eaf5ee" stroke="none" stroke-width="2"/>
+<polyline points="780.00,391.00 1356.00,391.00 1356.00,579.00 780.00,579.00 780.00,391.00" fill="none" stroke="#8fb6a1" stroke-width="2"/>
+<text x="792.00" y="419" fill="#8fb6a1" font-family="DejaVu Sans" font-size="18">public-b</text>
+<rect x="84" y="645" width="576" height="207" rx="0" fill="#fbf3e9" stroke="none" stroke-width="2"/>
+<polyline points="84.00,645.00 660.00,645.00 660.00,852.00 84.00,852.00 84.00,645.00" fill="none" stroke="#bea788" stroke-width="2"/>
+<text x="96.00" y="673" fill="#bea788" font-family="DejaVu Sans" font-size="18">private-a</text>
+<rect x="780" y="645" width="576" height="207" rx="0" fill="#fbf3e9" stroke="none" stroke-width="2"/>
+<polyline points="780.00,645.00 1356.00,645.00 1356.00,852.00 780.00,852.00 780.00,645.00" fill="none" stroke="#bea788" stroke-width="2"/>
+<text x="792.00" y="673" fill="#bea788" font-family="DejaVu Sans" font-size="18">private-b</text>
+<ellipse cx="234.0" cy="493.0" rx="34.0" ry="34.0" fill="#e3edf9" stroke="#3978ba" stroke-width="2"/>
+<polyline points="214.00,493.00 234.00,479.00 253.00,493.00 234.00,507.00 214.00,493.00" fill="none" stroke="#3978ba" stroke-width="2"/>
+<text x="200.38" y="552" fill="#334155" font-family="DejaVu Sans" font-size="17">web-alb</text>
+<ellipse cx="930.0" cy="493.0" rx="34.0" ry="34.0" fill="#e3edf9" stroke="#3978ba" stroke-width="2"/>
+<polyline points="910.00,493.00 930.00,479.00 949.00,493.00 930.00,507.00 910.00,493.00" fill="none" stroke="#3978ba" stroke-width="2"/>
+<text x="896.38" y="552" fill="#334155" font-family="DejaVu Sans" font-size="17">web-alb</text>
+<rect x="466" y="457" width="76" height="62" rx="8" fill="#eee5f6" stroke="#89709e" stroke-width="2"/>
+<polyline points="480.00,480.00 528.00,480.00" fill="none" stroke="#89709e" stroke-width="3"/>
+<polygon points="528.00,480.00 517.04,484.89 517.04,475.11" fill="#89709e" stroke="#89709e" stroke-width="1"/>
+<polyline points="528.00,497.00 480.00,497.00" fill="none" stroke="#89709e" stroke-width="3"/>
+<polygon points="480.00,497.00 490.96,492.11 490.96,501.89" fill="#89709e" stroke="#89709e" stroke-width="1"/>
+<text x="479.79" y="552" fill="#334155" font-family="DejaVu Sans" font-size="17">NAT-a</text>
+<rect x="1162" y="457" width="76" height="62" rx="8" fill="#eee5f6" stroke="#89709e" stroke-width="2"/>
+<polyline points="1176.00,480.00 1224.00,480.00" fill="none" stroke="#89709e" stroke-width="3"/>
+<polygon points="1224.00,480.00 1213.04,484.89 1213.04,475.11" fill="#89709e" stroke="#89709e" stroke-width="1"/>
+<polyline points="1224.00,497.00 1176.00,497.00" fill="none" stroke="#89709e" stroke-width="3"/>
+<polygon points="1176.00,497.00 1186.96,492.11 1186.96,501.89" fill="#89709e" stroke="#89709e" stroke-width="1"/>
+<text x="1175.60" y="552" fill="#334155" font-family="DejaVu Sans" font-size="17">NAT-b</text>
+<polyline points="116.00,684.00 1324.00,684.00 1324.00,834.00 116.00,834.00 116.00,684.00" fill="none" stroke="#c38b55" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="128.00" y="712" fill="#c38b55" font-family="DejaVu Sans" font-size="18">web-asg</text>
+<rect x="196" y="730" width="65" height="58" rx="4" fill="#fff1e4" stroke="#c9732a" stroke-width="2"/>
+<rect x="211" y="742" width="35" height="34" rx="0" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="208.00,722.00 208.00,730.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="208.00,788.00 208.00,796.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="224.00,722.00 224.00,730.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="224.00,788.00 224.00,796.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="240.00,722.00 240.00,730.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="240.00,788.00 240.00,796.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<text x="197.54" y="817" fill="#334155" font-family="DejaVu Sans" font-size="17">web-01</text>
+<text x="286.00" y="763" fill="#334155" font-family="DejaVu Sans" font-size="18">EC2</text>
+<rect x="892" y="730" width="65" height="58" rx="4" fill="#fff1e4" stroke="#c9732a" stroke-width="2"/>
+<rect x="907" y="742" width="35" height="34" rx="0" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="904.00,722.00 904.00,730.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="904.00,788.00 904.00,796.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="920.00,722.00 920.00,730.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="920.00,788.00 920.00,796.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="936.00,722.00 936.00,730.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<polyline points="936.00,788.00 936.00,796.00" fill="none" stroke="#c9732a" stroke-width="2"/>
+<text x="893.54" y="817" fill="#334155" font-family="DejaVu Sans" font-size="17">web-02</text>
+<text x="982.00" y="763" fill="#334155" font-family="DejaVu Sans" font-size="18">EC2</text>
+<rect x="590" y="903" width="258" height="44" rx="6" fill="#eaf5ee" stroke="#398a68" stroke-width="2"/>
+<text x="628.72" y="930" fill="#334155" font-family="DejaVu Sans" font-size="17">S3 gateway endpoint</text>
+<polyline points="718.00,155.00 718.00,248.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="718.00,248.00 713.11,237.04 722.89,237.04" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="696.00,308.00 696.00,322.00 234.00,322.00 234.00,459.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="234.00,459.00 229.11,448.04 238.89,448.04" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="742.00,308.00 742.00,322.00 930.00,322.00 930.00,459.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="930.00,459.00 925.11,448.04 934.89,448.04" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="234.00,527.00 234.00,730.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="234.00,730.00 229.11,719.04 238.89,719.04" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="930.00,527.00 925.00,730.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="925.00,730.00 920.38,718.93 930.16,719.17" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="261.00,761.00 504.00,761.00 504.00,519.00" fill="none" stroke="#89709e" stroke-width="2"/>
+<polygon points="504.00,519.00 508.89,529.96 499.11,529.96" fill="#89709e" stroke="#89709e" stroke-width="1"/>
+<polyline points="957.00,761.00 1200.00,761.00 1200.00,519.00" fill="none" stroke="#89709e" stroke-width="2"/>
+<polygon points="1200.00,519.00 1204.89,529.96 1195.11,529.96" fill="#89709e" stroke="#89709e" stroke-width="1"/>
+<text x="386.00" y="625" fill="#89709e" font-family="DejaVu Sans Mono" font-size="15">0.0.0.0/0</text>
+<text x="1080.00" y="625" fill="#89709e" font-family="DejaVu Sans Mono" font-size="15">0.0.0.0/0</text>
+<polyline points="261.00,783.00 347.00,783.00 347.00,925.00 590.00,925.00" fill="none" stroke="#398a68" stroke-width="2"/>
+<polygon points="590.00,925.00 579.04,929.89 579.04,920.11" fill="#398a68" stroke="#398a68" stroke-width="1"/>
+<polyline points="925.00,788.00 925.00,925.00 848.00,925.00" fill="none" stroke="#398a68" stroke-width="2"/>
+<polygon points="848.00,925.00 858.96,920.11 858.96,929.89" fill="#398a68" stroke="#398a68" stroke-width="1"/>
+</svg>

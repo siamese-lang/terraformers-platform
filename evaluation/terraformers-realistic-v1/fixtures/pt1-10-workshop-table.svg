@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1070" height="840" viewBox="0 0 1070 840">
+<rect width="1070" height="840" fill="#eeeae3"/>
+<rect x="48" y="36" width="981" height="775" rx="0" fill="#d3cec6" stroke="none" stroke-width="2"/>
+<rect x="35" y="25" width="981" height="775" rx="0" fill="#fffdf7" stroke="none" stroke-width="2"/>
+<text x="84.00" y="95" fill="#334155" font-family="DejaVu Sans" font-size="31">Community workshop</text>
+<text x="86.00" y="130" fill="#64748b" font-family="DejaVu Sans" font-size="18">Saturday, 17 October 2026</text>
+<text x="84.00" y="199" fill="#64748b" font-family="DejaVu Sans Mono" font-size="17">AGENDA</text>
+<text x="85.00" y="247" fill="#334155" font-family="DejaVu Sans" font-size="18">Time</text>
+<text x="236.00" y="247" fill="#334155" font-family="DejaVu Sans" font-size="18">Session</text>
+<text x="601.00" y="247" fill="#334155" font-family="DejaVu Sans" font-size="18">Room</text>
+<text x="730.00" y="247" fill="#334155" font-family="DejaVu Sans" font-size="18">People</text>
+<text x="862.00" y="247" fill="#334155" font-family="DejaVu Sans" font-size="18">Notes</text>
+<polyline points="84.00,263.00 966.00,263.00" fill="none" stroke="#8a8d8a" stroke-width="2"/>
+<text x="85.00" y="303" fill="#334155" font-family="DejaVu Sans" font-size="18">09:00</text>
+<text x="236.00" y="303" fill="#334155" font-family="DejaVu Sans" font-size="18">Welcome</text>
+<text x="601.00" y="303" fill="#334155" font-family="DejaVu Sans" font-size="18">A1</text>
+<text x="730.00" y="303" fill="#334155" font-family="DejaVu Sans" font-size="18">24</text>
+<text x="862.00" y="303" fill="#334155" font-family="DejaVu Sans" font-size="18">coffee</text>
+<polyline points="84.00,338.00 966.00,338.00" fill="none" stroke="#d5d6cc" stroke-width="1"/>
+<text x="85.00" y="380" fill="#334155" font-family="DejaVu Sans" font-size="18">10:00</text>
+<text x="236.00" y="380" fill="#334155" font-family="DejaVu Sans" font-size="18">Sketching</text>
+<text x="601.00" y="380" fill="#334155" font-family="DejaVu Sans" font-size="18">B2</text>
+<text x="730.00" y="380" fill="#334155" font-family="DejaVu Sans" font-size="18">18</text>
+<text x="862.00" y="380" fill="#334155" font-family="DejaVu Sans" font-size="18">markers</text>
+<polyline points="84.00,415.00 966.00,415.00" fill="none" stroke="#d5d6cc" stroke-width="1"/>
+<text x="85.00" y="457" fill="#334155" font-family="DejaVu Sans" font-size="18">11:00</text>
+<text x="236.00" y="457" fill="#334155" font-family="DejaVu Sans" font-size="18">Group review</text>
+<text x="601.00" y="457" fill="#334155" font-family="DejaVu Sans" font-size="18">A1</text>
+<text x="730.00" y="457" fill="#334155" font-family="DejaVu Sans" font-size="18">24</text>
+<text x="862.00" y="457" fill="#334155" font-family="DejaVu Sans" font-size="18">paper</text>
+<polyline points="84.00,492.00 966.00,492.00" fill="none" stroke="#d5d6cc" stroke-width="1"/>
+<text x="85.00" y="534" fill="#334155" font-family="DejaVu Sans" font-size="18">12:00</text>
+<text x="236.00" y="534" fill="#334155" font-family="DejaVu Sans" font-size="18">Lunch</text>
+<text x="601.00" y="534" fill="#334155" font-family="DejaVu Sans" font-size="18">Cafe</text>
+<text x="730.00" y="534" fill="#334155" font-family="DejaVu Sans" font-size="18">30</text>
+<text x="862.00" y="534" fill="#334155" font-family="DejaVu Sans" font-size="18">sandwiches</text>
+<polyline points="84.00,569.00 966.00,569.00" fill="none" stroke="#d5d6cc" stroke-width="1"/>
+<text x="85.00" y="664" fill="#334155" font-family="DejaVu Sans" font-size="20">Supplies</text>
+<text x="85.00" y="702" fill="#64748b" font-family="DejaVu Sans" font-size="18">40 sheets of paper · 30 pens · 30 name tags</text>
+</svg>

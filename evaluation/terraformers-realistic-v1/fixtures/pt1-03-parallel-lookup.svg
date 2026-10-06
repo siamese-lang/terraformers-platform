@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="900" viewBox="0 0 1080 900">
+<rect width="1080" height="900" fill="#f3f5f8"/>
+<rect x="0" y="0" width="1080" height="66" rx="0" fill="#202b3d" stroke="none" stroke-width="2"/>
+<text x="30.00" y="44" fill="white" font-family="DejaVu Sans" font-size="24">Workflow Studio</text>
+<text x="720.00" y="41" fill="#cbd5e1" font-family="DejaVu Sans" font-size="18">Customer lookup</text>
+<rect x="28" y="97" width="206" height="754" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1"/>
+<text x="45.00" y="142" fill="#334155" font-family="DejaVu Sans" font-size="19">States</text>
+<rect x="45" y="174" width="170" height="41" rx="4" fill="#f8fafc" stroke="#d1d9e4" stroke-width="1"/>
+<text x="59.00" y="201" fill="#334155" font-family="DejaVu Sans" font-size="17">Task</text>
+<rect x="45" y="227" width="170" height="41" rx="4" fill="#f8fafc" stroke="#d1d9e4" stroke-width="1"/>
+<text x="59.00" y="254" fill="#334155" font-family="DejaVu Sans" font-size="17">Choice</text>
+<rect x="45" y="280" width="170" height="41" rx="4" fill="#f8fafc" stroke="#d1d9e4" stroke-width="1"/>
+<text x="59.00" y="307" fill="#334155" font-family="DejaVu Sans" font-size="17">Parallel</text>
+<rect x="45" y="333" width="170" height="41" rx="4" fill="#f8fafc" stroke="#d1d9e4" stroke-width="1"/>
+<text x="59.00" y="360" fill="#334155" font-family="DejaVu Sans" font-size="17">Wait</text>
+<rect x="263" y="97" width="785" height="754" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1"/>
+<text x="284.00" y="135" fill="#334155" font-family="DejaVu Sans" font-size="18">Step Functions / LookupCustomerInfo</text>
+<rect x="571" y="182" width="170" height="52" rx="25" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+<text x="634.01" y="215" fill="#334155" font-family="DejaVu Sans" font-size="18">Start</text>
+<rect x="329" y="300" width="650" height="360" rx="0" fill="#fbf9fe" stroke="none" stroke-width="2"/>
+<polyline points="329.00,300.00 979.00,300.00 979.00,660.00 329.00,660.00 329.00,300.00" fill="none" stroke="#8866a5" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="341.00" y="328" fill="#8866a5" font-family="DejaVu Sans" font-size="18">Parallel / LookupCustomerInfo</text>
+<rect x="625" y="270" width="62" height="9" rx="0" fill="#8866a5" stroke="none" stroke-width="2"/>
+<rect x="374" y="403" width="240" height="103" rx="8" fill="white" stroke="#8a709f" stroke-width="2"/>
+<rect x="700" y="403" width="240" height="103" rx="8" fill="white" stroke="#8a709f" stroke-width="2"/>
+<text x="399.34" y="470.0" fill="#c9732a" font-family="DejaVu Sans" font-size="36">λ</text>
+<text x="725.34" y="470.0" fill="#c9732a" font-family="DejaVu Sans" font-size="36">λ</text>
+<text x="445.00" y="454" fill="#334155" font-family="DejaVu Sans" font-size="16">AddressFinder</text>
+<text x="771.00" y="454" fill="#334155" font-family="DejaVu Sans" font-size="16">PhoneFinder</text>
+<ellipse cx="656.0" cy="614.0" rx="14.0" ry="14.0" fill="#e9e0f2" stroke="#8866a5" stroke-width="2"/>
+<rect x="571" y="735" width="170" height="52" rx="25" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+<text x="638.90" y="767" fill="#334155" font-family="DejaVu Sans" font-size="18">End</text>
+<polyline points="656.00,234.00 656.00,270.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="656.00,270.00 651.11,259.04 660.89,259.04" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="625.00,275.00 494.00,275.00 494.00,403.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="494.00,403.00 489.11,392.04 498.89,392.04" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="687.00,275.00 820.00,275.00 820.00,403.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="820.00,403.00 815.11,392.04 824.89,392.04" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="494.00,506.00 494.00,614.00 642.00,614.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="642.00,614.00 631.04,618.89 631.04,609.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="820.00,506.00 820.00,614.00 670.00,614.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="670.00,614.00 680.96,609.11 680.96,618.89" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="656.00,628.00 656.00,735.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="656.00,735.00 651.11,724.04 660.89,724.04" fill="#334155" stroke="#334155" stroke-width="1"/>
+</svg>

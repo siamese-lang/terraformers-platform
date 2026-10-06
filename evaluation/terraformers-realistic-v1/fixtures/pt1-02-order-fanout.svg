@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="800" viewBox="0 0 1260 800">
+<rect width="1260" height="800" fill="#fffefa"/>
+<text x="40.00" y="58" fill="#334155" font-family="DejaVu Sans Mono" font-size="28">Order processing</text>
+<polyline points="40.00,84.00 1220.00,84.00" fill="none" stroke="#334155" stroke-width="1"/>
+<text x="440.00" y="127" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">Messaging</text>
+<text x="1020.00" y="127" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">Workers</text>
+<ellipse cx="98.0" cy="352.0" rx="21.0" ry="21.0" fill="white" stroke="#334155" stroke-width="2"/>
+<polyline points="98.00,373.00 98.00,415.00 61.00,445.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polyline points="98.00,415.00 135.00,445.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polyline points="60.00,390.00 136.00,390.00" fill="none" stroke="#334155" stroke-width="2"/>
+<text x="51.95" y="492" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">publisher</text>
+<ellipse cx="387.5" cy="372.5" rx="57.5" ry="57.5" fill="white" stroke="#334155" stroke-width="3"/>
+<text x="368.12" y="367" fill="#334155" font-family="DejaVu Sans Mono" font-size="22">SNS</text>
+<text x="355.47" y="467" fill="#334155" font-family="DejaVu Sans Mono" font-size="18">orders</text>
+<rect x="662" y="166" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="656" y="172" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="650" y="178" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="672" y="203" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<rect x="698" y="203" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<rect x="724" y="203" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="643.48" y="297" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">billing / SQS</text>
+<rect x="747" y="506" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="741" y="512" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="735" y="518" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="757" y="543" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<rect x="783" y="543" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<rect x="809" y="543" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="738.71" y="643" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">audit / SQS</text>
+<ellipse cx="1068.0" cy="195.0" rx="48.0" ry="48.0" fill="white" stroke="#334155" stroke-width="2"/>
+<text x="1054.39" y="214.0" fill="#334155" font-family="DejaVu Sans" font-size="46">λ</text>
+<text x="1032.18" y="283" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">billing</text>
+<ellipse cx="1068.0" cy="558.0" rx="48.0" ry="48.0" fill="white" stroke="#334155" stroke-width="2"/>
+<text x="1054.39" y="577.0" fill="#334155" font-family="DejaVu Sans" font-size="46">λ</text>
+<text x="1042.41" y="642" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">audit</text>
+<polyline points="139.00,372.00 330.00,372.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="330.00,372.00 319.04,376.89 319.04,367.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<text x="216.00" y="359" fill="#334155" font-family="DejaVu Sans Mono" font-size="16">event</text>
+<polyline points="445.00,351.00 542.00,351.00 542.00,218.00 650.00,218.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="650.00,218.00 639.04,222.89 639.04,213.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="445.00,394.00 597.00,394.00 597.00,558.00 735.00,558.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="735.00,558.00 724.04,562.89 724.04,553.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="772.00,218.00 943.00,218.00 943.00,195.00 1020.00,195.00" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="1020.00,195.00 1009.04,199.89 1009.04,190.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="857.00,558.00 1020.00,558.00" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="1020.00,558.00 1009.04,562.89 1009.04,553.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="969.00,136.00 969.00,692.00" fill="none" stroke="#a1a1aa" stroke-width="1" stroke-dasharray="8 6"/>
+</svg>

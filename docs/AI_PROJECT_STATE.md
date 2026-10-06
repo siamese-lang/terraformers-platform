@@ -20,7 +20,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   [.agents/programs/product-trust-v1.yml](../.agents/programs/product-trust-v1.yml)
 - Durable program state:
   [.agents/state/product-trust-v1.json](../.agents/state/product-trust-v1.json)
-- Current single task: **P0 defines the autonomous Product Trust execution protocol and revised PT plan. On merge, no PT phase starts until the user explicitly approves `product-trust-v1`. A7-8 and teardown are deferred. The currently recreated GCP representative runtime is intentionally retained because rebuilding it is expensive and PT-2 requires a frozen realistic-input baseline before final teardown.**
+- Current single task: **P0 defines the autonomous Product Trust execution protocol and revised PT plan. On merge, no PT phase starts until the user explicitly approves `product-trust-v1`; the first eligible phase is PT-1 realistic-input benchmark design. A7-8 and teardown are deferred. The currently recreated GCP representative runtime is intentionally retained because rebuilding it is expensive and PT-2 requires a frozen realistic-input baseline before final teardown.**
 
 
 ## Product Trust reassessment checkpoint

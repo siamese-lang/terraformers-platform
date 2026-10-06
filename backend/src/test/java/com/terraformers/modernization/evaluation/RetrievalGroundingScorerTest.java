@@ -59,6 +59,41 @@ class RetrievalGroundingScorerTest {
                 .containsExactlyInAnyOrder("aws_lb", "aws_db_instance", "aws_security_group");
         assertThat(result.generatedResourceOfficialEvidenceCoverage().missing())
                 .containsExactlyInAnyOrder("aws_lb", "aws_db_instance", "aws_security_group");
+        assertThat(result.groundingGap()).isFalse();
+    }
+
+    @Test void projectDecisionCoverageRequiresTerraformersPatternDocumentType() {
+        var definition = definition(
+                "x",
+                EvaluationCase.InputClassification.ARCHITECTURE_DIAGRAM,
+                List.of("decision"),
+                List.of("aws_vpc"));
+        var providerLookalike = new EvaluationTrace.ReferenceHit(
+                1,
+                "decision",
+                .9,
+                "same id, wrong document type",
+                "PROVIDER_DOCUMENTATION",
+                "AWS_PROVIDER_DOC",
+                "source",
+                List.of("aws_vpc"),
+                "5.100.0",
+                "terraformers-reference-v4",
+                100,
+                List.of());
+
+        var result = scorer.score(
+                definition,
+                trace(
+                        "r",
+                        "x",
+                        EvaluationStageStatus.PASS,
+                        List.of(providerLookalike, hit(2, "official", "aws_vpc")),
+                        List.of("aws_vpc"),
+                        true));
+
+        assertThat(result.projectDecisionCoverage().matched()).isZero();
+        assertThat(result.projectDecisionCoverage().missing()).containsExactly("decision");
         assertThat(result.groundingGap()).isTrue();
     }
 

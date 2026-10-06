@@ -1,44 +1,60 @@
 # PT-2 frozen realistic measurement procedure
 
-Procedure `pt2-realistic-baseline-v1` is frozen before any PT-2 inference or outcome inspection.
-The execution base is `3caae454661d21d84c3e469a7d76aff5633d5b26`, read once at activation.
-USER approved `LIVE_REALISTIC_BASELINE` and the bounded addition to the existing protected
-evaluation workflow. Merge remains a separate human checkpoint. PT-3 and teardown are unauthorized.
+Procedure `pt2-realistic-baseline-v2` is frozen before any PT-2 upload, inference or outcome inspection.
+It supersedes v1 (`a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae`),
+which was rejected before execution by [independent review](https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6017268972).
+The human-authorized correction addresses only that review's same-job observability and evidence-handoff blockers.
+It consumes no autonomous repair. No baseline has started.
 
-## Immutable inputs and system
+The execution base remains `3caae454661d21d84c3e469a7d76aff5633d5b26`, read once at activation.
+USER approved `LIVE_REALISTIC_BASELINE` and the bounded existing protected workflow extension.
+Independent acceptance and explicit merge approval are required before dispatch; neither CI success
+nor acceptance grants merge authority. PT-3 implementation and teardown remain unauthorized.
+
+## Immutable inputs and runtime
 
 Use `evaluation/terraformers-realistic-v1`, revision **3**, identity
 `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`.
-Verify the identity file itself, all 26 pinned files, and every manifest fixture before inference.
-Truth authority is the external PT-1 USER freeze binding; historical `NOT_APPROVED` fields in pinned
-pre-approval snapshots must not be rewritten. Do not pass truth/provenance/expected labels to Vertex.
+Verify the identity itself, all 26 pinned files, ten fixture checksums, external USER freeze binding,
+live approval and this procedure's SHA before inference and each fixture again before submission.
+Historical unapproved markers in pinned pre-approval snapshots are immutable history. Submit only
+the original PNG and a neutral project name; never submit truth, provenance or expected labels.
 
-Reuse `.github/workflows/gcp-target-evaluation-baseline.yml` through main-only `workflow_dispatch`,
-`gcp-target-apply`, existing WIF and backend KSA, retained GKE/OpenSearch, ephemeral evaluation pod,
-and artifact upload. The confirmation is `RUN_PT2_REALISTIC_BASELINE`. Pin the immutable image and
-embedded source to the retained backend and prove production source equivalence with dispatch main.
-Check the retained effective configuration against the unchanged broad-v4 launcher profile:
-Vertex generation `gemini-3.8-flash`, embedding `gemini-embedding-2`/1536, REQUIRED retrieval,
-`terraformers-reference-v4`, 5,395 documents, corpus checksum
-`da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a`, top K 8,
-existing evidence budget 16, AWS 5.100.0, Terraform 1.8.5, generation maximum 8,192 tokens, and
-the source defaults for fact/generation thinking. Abort on mismatch. Do not repair a mismatch by
-rollout, configuration change, reindexing, model substitution, or IAM expansion.
+Reuse `.github/workflows/gcp-target-evaluation-baseline.yml`, main-only `workflow_dispatch`,
+`gcp-target-apply`, `google-github-actions/auth@v3`, existing WIF/apply service account, retained
+`terraformers-target` GKE namespace, backend KSA and OpenSearch. No Codex GCP credential.
+Scope `pt2-realistic-baseline`, confirmation `RUN_PT2_REALISTIC_BASELINE`, workflow attempt **1**.
+An immutable retained backend image and its full embedded source SHA must be supplied. Prove all
+backend main source, POM and Dockerfile equal the trusted dispatch source. Record dispatch SHA
+separately; the approved merge checkpoint does not rebind the execution base. Unrelated main drift
+requires a stop; before each upload remote main must equal dispatch SHA.
 
-The existing launcher's initial query historically limits evidence to 8, whereas the unchanged
-production `VertexAnalysisProvider` requests its evidence budget of 16 (search top K remains 8).
-PT-2 alone supplies `EVALUATION_INITIAL_EVIDENCE_BUDGET=16`; the raw query records that limit.
-Historical scopes, scorers and production retrieval stay unchanged. Record this separate measurement
-setting alongside the existing configuration fingerprint, which does not encode evidence budget.
+Read-only preflight checks the single ready retained backend, effective configuration, Terraform
+1.8.5/AWS provider 5.100.0, generation `gemini-3.8-flash`, embedding `gemini-embedding-2`/1536,
+REQUIRED retrieval, top K 8, production evidence budget 16 and output limit 8192. Corpus must be
+`terraformers-reference-v4`, 5,395 documents, checksum
+`da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a`.
+Verify existing IAM/Kubernetes permissions; never grant missing permissions. Abort on mismatch,
+without rollout, backend configuration change, reindexing or substitution.
 
-The merged dispatch source is recorded separately from the bound execution base. An explicitly
-approved merge of this preparation is the allowed checkpoint transition; unrelated main drift
-requires a human decision. Never silently rebind the Work Package to dispatch main.
+The existing ephemeral evaluation pod is reused only for substrate/toolchain checks; it makes no
+model call. PT-2 skips standalone Java build/bundle/evaluation/scoring. Frozen inputs are included
+in the evidence bundle on the runner, not passed to another evaluator. All previous PT-2-only
+standalone evaluator changes are restored to the execution base.
 
-## Runs and failure preservation
+## One production job per input
 
-Run the existing `LiveEvaluationLauncher` broad-v4 production-equivalent path in SINGLE mode,
-sequentially, once per case, in this frozen order:
+The primary measurement is the proven A7-7 authenticated production path:
+
+`POST /api/upload → persisted AnalysisJob → GET exact job → project and Terraform readback`.
+
+Reuse the existing A7-7 portable JWT/JWKS fixture via the shared helper. Require an empty placeholder
+JWKS before mutation; use the existing issuer/client and short-lived run-specific identity. Only the
+JWKS fixture deployment restarts. No backend rollout, IdP/IAM expansion or new credential route.
+Restore the placeholder even after partial preparation, delete temporary token/private-key files,
+and never put them or Authorization headers in an artifact. No public ingress or browser is started.
+
+Submit sequentially in frozen order:
 
 1. `pt1-01-serverless-portal`
 2. `pt1-02-order-fanout`
@@ -51,89 +67,117 @@ sequentially, once per case, in this frozen order:
 9. `pt1-09-sprint-board`
 10. `pt1-10-workshop-table`
 
-No nondeterminism repeats are declared. One case invocation is not one provider request: preserve
-the existing bounded fact/generation behavior, including initial MAX_TOKENS compact fallback and
-at most one generated-resource closure/semantic repair. Do not add any outer provider retry.
+One upload attempt per input, at most one accepted job, zero outer submission retries and zero
+standalone model invocations. No nondeterminism repeats. Existing production internal provider/job
+retries, MAX_TOKENS compact fallback and bounded closure/repair are unchanged. Record observable
+attempt/retry logs; a single accepted job does not imply a single provider RPC.
 
-Before each invocation, flush an immutable STARTED ledger entry. The pod-side command has a
-420-second deadline and a 10-second kill grace, so loss of the runner connection cannot leave an
-unbounded Java process. Capture stdout, stderr, exit status, UTC start/end, monotonic wall duration,
-raw trace when produced, and diagnostic artifact absence. A timeout is censored operational
-evidence, not a fabricated stage trace. Preserve each result before starting the next case.
-Continue to later cases after a recorded case failure; stop on identity/configuration inconsistency.
-Never overwrite an attempt directory or rerun a workflow after a case has started without a new
-explicit human instruction. If interrupted, unstarted cases remain NOT_RUN. Read-only evidence
-collection and deterministic scoring may be resumed without another model call.
+Flush exclusive STARTED ledger evidence before POST. Capture request timestamp, HTTP acceptance
+response/receipt time, project/job/source identities and server timestamps. Validate ownership-path
+readback identities. Poll only that accepted job every five seconds for up to 420 seconds from
+acceptance receipt; HTTP reads have 10-second connect/20-second total bounds (25-second subprocess
+bound). Read failures may be polled again within this deadline; they never cause another upload.
+The last read may exceed the deadline by its bounded transport duration. Persist every poll.
 
-## Evidence and assessment
+Capture SUCCEEDED or FAILED naturally and continue after terminal failures. Preserve API rejection
+as admission failure, not successful classification. Lost/malformed/duplicate acceptance, auth
+failure, identity mismatch or main drift stops the batch without resubmission. A job not terminal
+by the observation deadline is **censored**, not declared FAILED; stop before another upload, retain
+the accepted job, and do not cancel/delete it. Unstarted cases remain NOT_RUN. Existing attempt
+directories cannot be resumed/overwritten by an inference run. Never rerun the workflow/batch to
+replace failures. Later read-only recovery of that exact job is permitted with separately labeled
+observation times; it cannot replace the original censored sample.
 
-The raw trace must retain extracted facts, query and ranked reference metadata, initial and final
-drafts, generated resource types, closure/repair indicators, final reference selection, validation
-diagnostics, earliest technical failure, and available stage times. Read selected OpenSearch
-documents by ID after inference to preserve their exact content; this is evidence capture, not a
-second retrieval or generation. Hash all artifact files in a final evidence inventory.
+## Same-job evidence and limits
 
-Reuse the unchanged `CaseAMeasurementLauncher` report and calibration modes. Exact-string scorer
-results remain exact-string results. Separately inspect semantic truth against the frozen required,
-acceptable and forbidden components, relationships and resource intent. Short labels/aliases count
-only when the trace or HCL demonstrates the same frozen entity/edge; cite the supporting evidence.
-Do not invent a new alias list or lower a threshold after seeing an outcome. Required logical
-cardinality and relationship direction matter; support-only acceptable resources are not required.
+For each accepted job preserve:
 
-For every case report these dimensions independently:
+- Full terminal AnalysisJob API response: summary, components, relationships, warnings, failure
+  reason, result identity and persisted `evidence-quality-v1` snapshot, including reasons/boundary.
+- Project API terminal semantics and `latestAnalysisJobId`; Terraform readback identity and full
+  `main.tf` (or actual HTTP failure). Require result key agreement with the same terminal job.
+- Acceptance/terminal UTC receipt timestamps and monotonic elapsed time; last nonterminal receipt.
+- Backend log lines correlated by that exact `analysisJobId`, including validation, reference
+  retrieval counts/corpus, retries, terminal failures and existing stage timing where emitted.
+  Logs are bounded to 5,000 recent lines since submission; gaps are explicitly NOT_OBSERVED.
+- Before/after Prometheus snapshots. These are cumulative context, not per-job timings or token
+  counts unless exclusivity is independently established. Correlated stage logs are primary.
+- Frozen truth worksheet and unchanged source copies of ProjectDetailPage/MyProjectsPage status
+  mappings, bound by dispatch source and artifact hashes.
 
-| Dimension | Frozen assessment rule |
+Project/API statuses are actual observations. Their current source-bound UI labels establish the
+presentation contract, not a browser execution claim (final browser flow remains PT-6). Backend
+EVIDENCE_BACKED claims and API-driven completion presentation claims are separate columns.
+Backend claim predicate: same job SUCCEEDED, technical PASS, quality EVIDENCE_BACKED.
+Presentation claim: same project's API reports SUCCEEDED, which current client maps to completion.
+A completion label alone is not renamed an evidence-backed promise.
+
+No second inference is permitted to recover richer trace. Raw extracted facts, ranked hits/document
+IDs, initial draft/repair details and internal fact/retrieval/generation timing are NOT_OBSERVED when
+not emitted by this job's existing APIs/logs. Do not fabricate EvaluationTrace fields, feed invented
+traces to calibration, or attribute downstream wrong output to an unseen upstream stage. Existing
+scorer/evaluator policies remain unchanged; semantic inspection uses the original frozen truth.
+
+## Frozen assessment rules
+
+After the single batch, derive a per-case table and aggregate analysis from these exact artifacts.
+Do not dispatch another model, tune truth/aliases/thresholds or replace failures during analysis.
+Every finding cites case/job ID, artifact path and observed field or HCL/log lines.
+
+| Dimension | Assessment |
 | --- | --- |
-| Classification | Record explicit generation classification when present. A provider/runtime failure is UNKNOWN, not correct rejection. A classifier's generic input rejection does not prove AMBIGUOUS vs NON_ARCHITECTURE discrimination. |
-| Component fidelity | Required entities recovered / frozen required entities, plus forbidden or invented entities; separate initial facts from generated summary/HCL. |
-| Relationship fidelity | Required directed semantic edges recovered / frozen required edges; identify forbidden edges and unsupported topology. |
-| Resource intent | Required resource types plus their intended use; a resource-type list alone cannot prove intent or cardinality. |
-| Evidence | Initial and closure/final hits, authority, provider/corpus identity, coverage of frozen intent and generated resources; evidence supporting wrong extracted facts is a separate failure. |
-| Terraform | Existing draft/schema/CLI result and diagnostics; executable validation means fmt/init/validate with backend disabled, never plan/apply or deployability proof. |
-| Trust | Actual persisted/API/UI evidence if available; otherwise NOT_MEASURED, separately from any source-based projection. |
-| Latency | Observed pipeline wall time and existing stage durations; censor timeout cases and never rename pipeline duration as accepted-to-terminal. |
+| Classification | Explicit observed classification if available; otherwise generated architecture vs explicit input rejection. Runtime/provider failure is UNKNOWN. Generic rejection cannot prove AMBIGUOUS vs NON_ARCHITECTURE distinction. |
+| Components | Frozen required entities recovered / required entities, plus invented/forbidden entities. Use persisted detected components and HCL; raw initial facts may be unobserved. |
+| Relationships | Frozen required directed semantic edges recovered / required edges; inspect actual HCL references/behavior and reported relationships, forbidden edges and logical cardinality. |
+| Resource intent | Required resource types and their frozen role/cardinality; type presence alone cannot establish intent. Support-only acceptable resources are not required. |
+| Retrieval/evidence | Persisted knowledge/quality reasons, correlated corpus/reference count and available authoritative substrate evidence. Rank/document coverage is UNKNOWN when absent. Evidence supporting wrong interpretation is separately recorded. |
+| Terraform | Actual persisted technical status and same-job draft/schema/CLI validation log/failure evidence plus full persisted HCL. CLI fmt/init/validate is not plan/apply or deployment proof. Missing detail is NOT_OBSERVED, never invented PASS. |
+| Trust/presentation | Actual terminal quality, project/API status and source-bound completion label. Report mismatches and missing quality independently; browser execution NOT_RUN. |
+| False trusted success | Requires actual same-job backend evidence-backed or API-driven success presentation **and** independently established frozen semantic truth violation. Separate backend and presentation findings; pending semantic review is not zero. |
+| Latency | Acceptance-response receipt to first terminal-response receipt, with last nonterminal/terminal observation interval and server timestamps separately. Polling/transport uncertainty is explicit; not exact server completion time. Censored samples are separate. |
 
-Classification denominator is all ten inputs, with a separate architecture/control split (6/4).
-Semantic fidelity denominators use the six positives and their original required labels. Report
-unobserved/blocked counts explicitly; a missing measurement is neither a pass nor an invented zero
-score. Macro and micro summaries must show numerator/denominator, exact-string and semantic results
-separately. Report stage-time sample counts, median and range; with N=10 do not claim a reliable p99
-or an SLO. Provider token/cost fields may remain unavailable; never fabricate a billed cost.
+Classification denominator is ten, split six architecture/four controls; report admission failures,
+unknown classification and ambiguity discrimination separately. Positive semantic denominators are
+original required truth for the six positives; report numerator/denominator for components, edges,
+intent, forbidden interpretations and exact logical cardinality. Accept an alias only if the same
+frozen entity/edge is demonstrated by observed output; record reasoning, not a post-outcome alias
+policy. Report macro/micro values, missing/blocked counts and control hallucinations. Missing evidence
+is neither a pass nor an invented zero score. For latency/stages report measured N, censored N,
+median and range; N=10 cannot support a reliable p99/SLO. Cost/tokens remain unavailable if absent.
 
-Distinguish the first supported semantic divergence from the runner's first technical failure:
-vision/input interpretation → retrieval/grounding → generation/topology → Terraform technical
-failure → trust/status presentation. Multiple defects may coexist. If an upstream stage is not
-observable, say UNKNOWN rather than assigning the downstream symptom to that stage.
+Distinguish first supported divergence: vision/input interpretation → retrieval/grounding →
+generation/topology → Terraform technical → trust/status presentation. Multiple failures may coexist.
+If initial interpretation/retrieval is unseen, record its cause UNKNOWN and cite the first observable
+wrong summary/HCL or quality/status mismatch. Preserve individual failures and produce concrete
+failure classes, evidence confidence, user impact and possible PT-3 decision requirements.
 
-## Trust and latency observability blocker
+## Authoritative post-merge handoff and Goal continuation
 
-The existing launcher explicitly creates **no Spring application context**. It does not accept an
-authenticated upload, create/persist an AnalysisJob, assess/persist its runtime quality, or execute a
-browser. Its calibration reporter receives no runtime quality map by default. Therefore actual
-persisted/user-visible trust, accepted-to-terminal latency, and actual false-trusted-success counts
-are **NOT_MEASURED by this path**, even when all pipeline stages pass.
+This PR contains only procedure/workflow preparation and its deterministic correction evidence.
+After independent acceptance and explicit human merge approval, resume the **same PT-2 Goal**:
+verify merged source/history and frozen procedure, then dispatch the authorized single batch through
+the existing protected workflow. No separate replacement, state-sync or normalization PR.
 
-Source inspection of `AnalysisJobResponse`, the quality finalizer and current frontend completion
-labels may explain a possible presentation gap, but it is a projection, not a runtime observation.
-An actual false trusted success requires both an observed trusted/presented success and a violation
-of frozen truth. A technically valid yet semantically wrong pipeline output is reported as a
-potential false trusted success until its actual persisted/user-visible state is observed.
+The GitHub Actions run plus immutable `upload-artifact@v4` artifact is authoritative live evidence.
+Bind run ID, attempt, dispatch SHA, retained image/source, execution base, dataset identity, procedure
+SHA, artifact ID/archive digest and SHA-256 file-inventory identity. Upload raw/partial failures with
+90-day retention even on workflow failure. Before expiry, preserve required raw evidence and derived
+per-case/aggregate analysis in the next substantive PT-3 or program-closure PR; never claim deleted
+artifacts remain retrievable. A fresh structured `[PRODUCT_TRUST_REVIEW:v1]` on the same preparation
+PR must bind the exact live run/artifact/inventory and derived analysis, validate original acceptance
+and state whether PT-2 is accepted or incomplete. Workflow green is not acceptance.
 
-This limitation is an unresolved original acceptance requirement. It is not permission to weaken
-PT-2, claim zero false trusted successes, call this a completed product baseline, or silently add
-another inference per input. Independent review must resolve a same-inference observational path
-before claiming those dimensions measured. Any procedure amendment must be frozen and reviewed
-before inference; it cannot be chosen after outcomes. The present preparation stops at merge review
-and does not treat an incomplete measurement as a completed baseline.
+PT-2 completion is durable only after that independent result acceptance. Fold its result, evidence
+binding and phase completion into the next substantive PT-3 or closure PR permitted by the Program
+DAG, not a dedicated post-run state PR. If a decision gate prevents implementation, prepare the
+repository decision/evidence deliverable within the next substantive Work Package and stop there.
+GitHub is authoritative for transient PR/branch lifecycle; durable program state stores only phase,
+approval, execution base, procedure, corrections and evidence. Do not register this PR as active state.
 
-## Handoff and acceptance
-
-Keep this Work Package, harness and evidence within this one PT-2 branch/Goal. This preparation
-opens one PR. No state-sync or normalization PR. The original one-PR completion requirement remains
-recorded: a merged preparation PR cannot receive a later evidence diff, so the evidence handoff
-after the required main-only merge must be settled at that human checkpoint, not assumed to grant
-a replacement PR. Program state records phase/base/procedure/run
-evidence, not active GitHub PR/branch lifecycle. On resume inspect PR feedback first, verify the
-authorized merge transition and frozen hashes. Baseline results require independent review, and the
-observability blocker must be resolved before claiming PT-2 complete. CI green is not acceptance. Do not merge,
-start PT-3, tune the system from results, or tear down the retained runtime.
+On every start/resume, inspect open/current Work Package PR conversation/review history first.
+Latest structured review governs its reviewed head; inspect later commits before editing, preserve
+same branch/base, address unresolved blockers only, distinguish human correction from autonomous
+repair and return to the original gate. After accepted+approved merge, autonomously choose the next
+DAG-eligible approved action without requiring repetitive continue prompts. Review acceptance never
+bypasses decision, live cost/security/IAM, destructive, budget or merge gates. Never start PT-3 on CI
+success or preparation acceptance; never self-approve truth, merge or tear down the retained runtime.

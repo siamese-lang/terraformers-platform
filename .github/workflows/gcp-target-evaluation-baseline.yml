@@ -98,6 +98,7 @@ jobs:
               }
               [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]]
               [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+              python3 scripts/evaluation/pt2-realistic-baseline.py verify
               echo 'A7_7_V4_EVALUATION=true' >> "$GITHUB_ENV"
               ;;
             m3-full-baseline)
@@ -194,19 +195,18 @@ jobs:
           }
 
       - uses: actions/setup-java@v5
+        if: inputs.evaluation_scope != 'pt2-realistic-baseline'
         with:
           distribution: temurin
           java-version: '17'
           cache: maven
 
       - name: Build bounded evaluation bundle
+        if: inputs.evaluation_scope != 'pt2-realistic-baseline'
         env:
           EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
         run: |
           set -euo pipefail
-          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
-            python3 scripts/evaluation/pt2-realistic-baseline.py verify
-          fi
           mvn -q -f backend/pom.xml -DskipTests package dependency:copy-dependencies             -DincludeScope=runtime
 
           bundle_root="${RUNNER_TEMP}/live-baseline-bundle"
@@ -218,9 +218,6 @@ jobs:
           cp -a evaluation/terraformers-eval-holdout-v1 "$bundle_root/evaluation/"
           cp evaluation/case-a-a3-fixed-facts-v1.json "$bundle_root/evaluation/"
           cp -a evaluation/adaptive-retrieval-v1 "$bundle_root/evaluation/"
-          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
-            cp -a evaluation/terraformers-realistic-v1 "$bundle_root/evaluation/"
-          fi
 
           (
             cd "$bundle_root"
@@ -297,6 +294,8 @@ jobs:
           location: asia-northeast3-a
 
       - name: Verify bounded Kubernetes permissions
+        env:
+          EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
         run: |
           set -euo pipefail
           for permission in             'create serviceaccounts'             'create pods'             'create pods/exec'             'get pods'             'delete pods'; do
@@ -307,6 +306,18 @@ jobs:
               exit 1
             }
           done
+
+          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
+            for permission in 'get deployments' 'patch deployments' 'get configmaps' 'create configmaps' \
+              'patch configmaps' 'get pods/log' 'create pods/portforward' 'get services' 'list pods'; do
+              verb="${permission%% *}"
+              resource="${permission#* }"
+              kubectl auth can-i "$verb" "$resource" -n "$TARGET_NAMESPACE" | grep -Fxq yes || {
+                echo "Existing apply identity lacks PT-2 observation permission: $verb $resource" >&2
+                exit 1
+              }
+            done
+          fi
 
       - name: Verify backend Workload Identity IAM bindings
         run: |
@@ -354,8 +365,7 @@ jobs:
           output_dir="${RUNNER_TEMP}/pt2-realistic-baseline"
           mkdir -p "$output_dir"
           git fetch --no-tags origin "$BACKEND_SOURCE_SHA"
-          git diff --quiet "$BACKEND_SOURCE_SHA" "$GITHUB_SHA" -- backend/src/main backend/pom.xml backend/Dockerfile \
-            ':(exclude)backend/src/main/java/com/terraformers/modernization/evaluation/**' || {
+          git diff --quiet "$BACKEND_SOURCE_SHA" "$GITHUB_SHA" -- backend/src/main backend/pom.xml backend/Dockerfile || {
             echo 'Retained backend production source differs from trusted dispatch source.' >&2
             exit 1
           }
@@ -378,7 +388,9 @@ jobs:
               EXPECTED_VECTOR_DIMENSION OPENSEARCH_TOP_K VERTEX_GENERATION_MODEL_ID \
               VERTEX_EMBEDDING_MODEL_ID VERTEX_EMBEDDING_DIMENSION VERTEX_MAX_OUTPUT_TOKENS \
               TERRAFORMERS_ANALYSIS_OPENSEARCH_MAX_EVIDENCE \
-              TERRAFORMERS_ANALYSIS_VERTEX_GENERATION_THINKING_LEVEL; do
+              TERRAFORMERS_ANALYSIS_VERTEX_GENERATION_THINKING_LEVEL \
+              JWT_ISSUER_URI JWT_JWK_SET_URI TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID \
+              OBJECT_READER_PROVIDER OBJECT_WRITER_PROVIDER UPLOAD_SOURCE_BUCKET ANALYSIS_RESULT_BUCKET_NAME; do
               value=$(printenv "$key" || true)
               printf "%s=%s\n" "$key" "$value"
             done
@@ -401,6 +413,11 @@ jobs:
           assert values["VERTEX_EMBEDDING_DIMENSION"] == "1536"
           assert values["TERRAFORMERS_ANALYSIS_OPENSEARCH_MAX_EVIDENCE"] in ("", "16")
           assert not values["TERRAFORMERS_ANALYSIS_VERTEX_GENERATION_THINKING_LEVEL"]
+          assert values["JWT_ISSUER_URI"] == "https://identity.example.test/case-c"
+          assert values["JWT_JWK_SET_URI"] == "http://terraformers-jwks:8080/jwks.json"
+          assert values["TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID"] == "case-c-runtime-client"
+          assert values["OBJECT_READER_PROVIDER"] == values["OBJECT_WRITER_PROVIDER"] == "gcs"
+          assert values["UPLOAD_SOURCE_BUCKET"] and values["ANALYSIS_RESULT_BUCKET_NAME"]
           assert "UNSUPPORTED_SPRING_APPLICATION_JSON" not in values
           pt2.write_json(output / "runtime-identity.json", {
               "dispatchSha": sys.argv[2], "backendSourceSha": sys.argv[3], "backendImage": sys.argv[4],
@@ -479,6 +496,7 @@ jobs:
           fi
 
       - name: Transfer evaluation bundle
+        if: inputs.evaluation_scope != 'pt2-realistic-baseline'
         run: |
           set -euo pipefail
           kubectl -n "$TARGET_NAMESPACE" exec -i "$BASELINE_POD" --             /bin/sh -c 'cat > /tmp/live-baseline.zip'             < "${RUNNER_TEMP}/live-baseline.zip"
@@ -1321,43 +1339,51 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Run frozen PT-2 realistic cases exactly once
+      - name: Prepare proven ephemeral authenticated JWT fixture for PT-2
+        if: inputs.evaluation_scope == 'pt2-realistic-baseline'
+        env:
+          NAMESPACE: terraformers-target
+          OPERATION: pt2-realistic-baseline
+          ISSUER_URI: https://identity.example.test/case-c
+          CLIENT_ID: case-c-runtime-client
+        run: bash scripts/smoke/ephemeral-jwks-fixture.sh prepare
+
+      - name: Observe one authenticated production AnalysisJob per frozen PT-2 input
         if: inputs.evaluation_scope == 'pt2-realistic-baseline'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- timeout --version >/dev/null
+          output_dir="${RUNNER_TEMP}/pt2-realistic-baseline"
+          mkdir -p "$output_dir/frontend-status-source"
+          cp frontend/src/pages/ProjectDetailPage.js frontend/src/pages/MyProjectsPage.js \
+            "$output_dir/frontend-status-source/"
+          cp docs/evaluation/product-trust-pt-2-measurement-protocol.md "$output_dir/"
+          cp -a evaluation/terraformers-realistic-v1 "$output_dir/frozen-benchmark"
+          kubectl -n "$TARGET_NAMESPACE" port-forward service/terraformers-backend 18080:80 \
+            > "$output_dir/port-forward.log" 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid" >/dev/null 2>&1 || true; wait "$pf_pid" >/dev/null 2>&1 || true' EXIT
+          ready=false
+          for _ in $(seq 1 30); do
+            if curl -fsS --connect-timeout 2 --max-time 3 http://127.0.0.1:18080/actuator/health \
+              | jq -e '.status == "UP"' >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          [[ "$ready" == true ]] || { echo 'Retained backend observation path is unavailable.' >&2; exit 1; }
           python3 scripts/evaluation/pt2-realistic-baseline.py run \
             --run-id="pt2-realistic-${GITHUB_RUN_ID}" \
-            --output="${RUNNER_TEMP}/pt2-realistic-baseline/cases"
+            --token-file="${RUNNER_TEMP}/case-c-access.token" \
+            --output="$output_dir/cases"
 
-      - name: Score captured PT-2 traces without further model calls
+      - name: Restore only the placeholder JWKS fixture after PT-2
         if: always() && inputs.evaluation_scope == 'pt2-realistic-baseline'
-        run: |
-          set -euo pipefail
-          output_dir="${RUNNER_TEMP}/pt2-realistic-baseline"
-          if [[ -s "$output_dir/cases/raw.json" ]]; then
-            kubectl -n "$TARGET_NAMESPACE" exec -i "$BASELINE_POD" -- \
-              sh -c 'cat > /tmp/pt2-captured-raw.json' < "$output_dir/cases/raw.json"
-            for mode in report calibrate; do
-              kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
-                -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
-                com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
-                --mode="$mode" --result=/tmp/pt2-captured-raw.json \
-                --dataset=/tmp/workspace/evaluation/terraformers-realistic-v1/dataset.json \
-                --output="/tmp/pt2-${mode}.json"
-              kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat "/tmp/pt2-${mode}.json" \
-                > "$output_dir/${mode}.json"
-            done
-          fi
-          {
-            echo '## PT-2 realistic baseline evidence'
-            echo '- Frozen revision 3; one invocation per case; natural failures are retained.'
-            echo '- Raw pipeline traces and unchanged deterministic reports are diagnostic evidence.'
-            echo '- Actual persisted/UI trust and accepted-to-terminal latency: NOT_MEASURED by this launcher.'
-            echo '- No phase completion or zero-false-trusted-success claim follows from CI success.'
-          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          NAMESPACE: terraformers-target
+        run: bash scripts/smoke/ephemeral-jwks-fixture.sh restore
 
       - name: Seal PT-2 evidence inventory including partial failures
         if: always() && inputs.evaluation_scope == 'pt2-realistic-baseline'
@@ -1369,13 +1395,39 @@ jobs:
           fi
 
       - name: Preserve PT-2 raw and partial evidence on every outcome
+        id: pt2-evidence
         if: always() && inputs.evaluation_scope == 'pt2-realistic-baseline'
         uses: actions/upload-artifact@v4
         with:
           name: pt2-realistic-baseline-${{ github.run_id }}
           path: ${{ runner.temp }}/pt2-realistic-baseline
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 90
+
+      - name: Bind immutable PT-2 run and artifact for independent review
+        if: always() && inputs.evaluation_scope == 'pt2-realistic-baseline'
+        env:
+          ARTIFACT_ID: ${{ steps.pt2-evidence.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.pt2-evidence.outputs.artifact-digest }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+        run: |
+          set -euo pipefail
+          {
+            echo '## PT-2 immutable evidence handoff (not phase acceptance)'
+            printf -- '- Run: `%s`, attempt: `%s`, dispatch: `%s`\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_SHA"
+            printf -- '- Artifact ID: `%s`, digest: `%s`\n' "$ARTIFACT_ID" "$ARTIFACT_DIGEST"
+            printf -- '- Retained image: `%s`, source: `%s`\n' "$BACKEND_IMAGE" "$BACKEND_SOURCE_SHA"
+            echo '- Execution base: `3caae454661d21d84c3e469a7d76aff5633d5b26`'
+            echo '- Dataset: revision 3 / `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`'
+            sha256sum docs/evaluation/product-trust-pt-2-measurement-protocol.md
+            if [[ -f "${RUNNER_TEMP}/pt2-realistic-baseline/artifact-sha256.json" ]]; then
+              sha256sum "${RUNNER_TEMP}/pt2-realistic-baseline/artifact-sha256.json"
+            fi
+            echo '- One upload/job per input; no standalone inference or failed-case replacement.'
+            echo '- Independent structured review must bind this run ID, artifact ID/digest, inventory SHA and derived findings.'
+            echo '- No post-run state-sync PR; accepted PT-2 evidence goes into the next substantive PT-3 or closure PR.'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run one Case A A3 fixed-facts retrieval comparison
         if: inputs.evaluation_scope == 'case-a-a3-retrieval-probe'

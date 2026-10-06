@@ -25,13 +25,14 @@
     "Structured PR review of candidate 2 passed visual fidelity but required two truth-contract corrections. Human-authorized iteration 2 submits candidate 3 with unchanged fixture bytes; autonomous repairs remain 1 and truth remains unapproved.",
     "Historical candidate notes above describe preparation before approval. Independent review 6015807394 accepted candidate 3; explicit USER approval 6015857324 subsequently froze its exact identity and authorized PT-1 completion after PR #241 merged. PT-2 remains unapproved and unstarted.",
     "Frozen dataset/identity/provenance bytes are immutable pre-approval snapshots. Current truth approval is recorded outside those pinned bytes in candidate/truthFreezeApproval and review evidence; their historical null approval or NOT_APPROVED markers do not replace the later explicit approval.",
-    "Current USER approval activates PT-2 on its own exact base without changing historical PT-1 freeze/repair evidence. Preparation has made zero model/GCP calls; one existing-workflow scope is prepared for merge review. Actual trust/accepted-to-terminal evidence remains an explicit blocker. No transient active PR/branch state is registered."
+    "Current USER approval activates PT-2 on its own exact base without changing historical PT-1 freeze/repair evidence. Preparation has made zero model/GCP calls; one existing-workflow scope is prepared for merge review. Actual trust/accepted-to-terminal evidence remains an explicit blocker. No transient active PR/branch state is registered.",
+    "PT-2 human-authorized review correction 1 replaces unexecuted standalone procedure with one authenticated production job per case and immutable Actions artifact handoff. Existing base, frozen bytes, PT-1 history and autonomous repair counters are preserved. No baseline or cloud action has occurred; independent review and explicit merge approval remain required."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
   "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "resultBeforeHumanGate": "PT_2_PROCEDURE_FROZEN_WORKFLOW_MERGE_REQUIRED",
+  "resultBeforeHumanGate": "PT_2_CORRECTED_PROCEDURE_PENDING_INDEPENDENT_REVIEW_AND_MERGE",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -51,8 +52,8 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "Existing protected workflow is main-only; bounded PT-2 scope requires a human merge checkpoint before dispatch.",
-    "Standalone production-equivalent launcher does not measure actual persisted/user-visible trust or accepted-to-terminal latency; original PT-2 acceptance remains unresolved."
+    "Corrected procedure requires independent review resolving review comment 6017268972 before merge or dispatch.",
+    "Existing workflow is main-only; explicit human merge approval required before authorized live batch."
   ],
   "evidenceDocument": "docs/evaluation/product-trust-pt-2-baseline-preparation.md",
   "validation": {
@@ -161,6 +162,23 @@
       "modelUnderTestRunCount": 0,
       "independentAcceptance": "PASS",
       "independentAcceptanceReviewCommentId": 6015807394
+    },
+    {
+      "phase": "PT-2",
+      "iteration": 1,
+      "authorizedOn": "2026-10-06",
+      "authorization": "USER standing review-feedback correction loop and immediate PR #244 correction instruction",
+      "reviewCommentId": 6017268972,
+      "reviewedHeadSha": "436bbcc6728d10adf05f2bcfa07550bb45ed8ca7",
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "blockers": [
+        "BLOCKER-1",
+        "BLOCKER-2"
+      ],
+      "autonomousRepairConsumed": false,
+      "fixtureBytesChanged": false,
+      "procedureVersion": "pt2-realistic-baseline-v2",
+      "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW"
     }
   ],
   "prReviewFeedbackPolicy": {
@@ -184,24 +202,21 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6015807394,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394",
-    "decision": "ACCEPTED",
-    "pullRequest": 241,
-    "reviewedHeadSha": "a5b890d565daa250e02e67e0eb5608c128eae637",
-    "observedPrHeadSha": "a5b890d565daa250e02e67e0eb5608c128eae637",
-    "workPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
-    "executionBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
-    "candidateRevision": 3,
-    "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
-    "independentAcceptance": "PASS",
-    "resolvedBlockers": [
+    "commentId": 6017268972,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6017268972",
+    "decision": "CHANGES_REQUIRED",
+    "pullRequest": 244,
+    "reviewedHeadSha": "436bbcc6728d10adf05f2bcfa07550bb45ed8ca7",
+    "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
+    "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+    "blockers": [
       "BLOCKER-1",
       "BLOCKER-2"
     ],
-    "humanTruthFreezeGrantedByReview": false,
+    "correctionDisposition": "IMPLEMENTED_PENDING_INDEPENDENT_REVIEW",
+    "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW",
     "mergeAuthorizedByReview": false,
-    "pt2Authorized": false
+    "baselineStarted": false
   },
   "lastCompletedWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
   "lastCompletedPullRequest": 241,
@@ -278,6 +293,26 @@
       "fixtureBytesPreserved": true,
       "liveOrModelActionAuthorized": false,
       "pt2Authorized": false
+    },
+    {
+      "commentId": 6015807394,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394",
+      "decision": "ACCEPTED",
+      "pullRequest": 241,
+      "reviewedHeadSha": "a5b890d565daa250e02e67e0eb5608c128eae637",
+      "observedPrHeadSha": "a5b890d565daa250e02e67e0eb5608c128eae637",
+      "workPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
+      "executionBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
+      "candidateRevision": 3,
+      "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+      "independentAcceptance": "PASS",
+      "resolvedBlockers": [
+        "BLOCKER-1",
+        "BLOCKER-2"
+      ],
+      "humanTruthFreezeGrantedByReview": false,
+      "mergeAuthorizedByReview": false,
+      "pt2Authorized": false
     }
   ],
   "repositoryStateUpdate": {
@@ -314,12 +349,12 @@
   },
   "phaseExecution": {
     "PT-2": {
-      "status": "PROCEDURE_FROZEN_AWAITING_WORKFLOW_MERGE_REVIEW",
+      "status": "CORRECTED_PROCEDURE_PENDING_INDEPENDENT_REVIEW_AND_MERGE",
       "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
       "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
       "activatedAt": "2026-10-06T12:45:08Z",
       "mainReadsAtActivation": 1,
-      "procedureVersion": "pt2-realistic-baseline-v1",
+      "procedureVersion": "pt2-realistic-baseline-v2",
       "procedurePath": "docs/evaluation/product-trust-pt-2-measurement-protocol.md",
       "datasetVersion": "terraformers-realistic-v1",
       "candidateRevision": 3,
@@ -329,19 +364,19 @@
       "modelUnderTestRunCount": 0,
       "liveCloudActions": 0,
       "autoRepairsUsed": 0,
-      "humanAuthorizedCorrectiveIterations": 0,
-      "persistedTrustMeasurement": "NOT_MEASURED",
-      "acceptedToTerminalMeasurement": "NOT_MEASURED",
+      "humanAuthorizedCorrectiveIterations": 1,
+      "persistedTrustMeasurement": "NOT_MEASURED_BASELINE_NOT_STARTED",
+      "acceptedToTerminalMeasurement": "NOT_MEASURED_BASELINE_NOT_STARTED",
       "originalAcceptanceObservabilityBlocker": true,
-      "independentAcceptance": "NOT_REVIEWED",
-      "procedureSha256": "a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae",
+      "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW",
+      "procedureSha256": "d8e615ef3fdc26de9be5e34b922da6c06055ca60e4b4e5b004775301d5479f90",
       "liveExecutionAuthorized": true,
       "workflowDispatchReady": false,
-      "initialEvidenceBudget": 16,
       "preparationValidation": {
         "evidencePath": "docs/evidence/product-trust-pt-2/preparation-validation.json",
-        "backendTests": 35,
-        "pythonTests": 8,
+        "status": "PASS_DETERMINISTIC_ONLY",
+        "backendTests": 27,
+        "pythonTests": 16,
         "failures": 0,
         "errors": 0,
         "skips": 0,
@@ -350,7 +385,40 @@
         "actionlint": "PASS",
         "scopeAudit": "PASS",
         "diffCheck": "PASS"
-      }
+      },
+      "measurementPath": "authenticated upload -> persisted AnalysisJob -> same-job readback",
+      "supersededProcedures": [
+        {
+          "procedureVersion": "pt2-realistic-baseline-v1",
+          "procedureSha256": "a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae",
+          "status": "SUPERSEDED_BEFORE_EXECUTION_BY_HUMAN_AUTHORIZED_REVIEW_CORRECTION",
+          "reviewCommentId": 6017268972,
+          "modelUnderTestCaseRuns": 0
+        }
+      ],
+      "evidenceHandoff": {
+        "authoritativeLiveEvidence": "GitHub Actions run plus immutable artifact",
+        "independentReviewBinding": [
+          "runId",
+          "runAttempt",
+          "dispatchSha",
+          "artifactId",
+          "artifactDigest",
+          "inventorySha256",
+          "derivedAnalysis"
+        ],
+        "durableCompletion": "next substantive PT-3 or closure PR after independent baseline acceptance",
+        "dedicatedPostRunStateSyncPrAuthorized": false
+      },
+      "observabilityCorrection": "IMPLEMENTED_PENDING_INDEPENDENT_REVIEW"
     }
+  },
+  "goalContinuation": {
+    "authority": "USER /goal Complete the approved product-trust-v1 program from current thread and authoritative repository state",
+    "autoContinueEligibleActionsAfterAcceptedAuthorizedMerge": true,
+    "selectionAuthority": "program DAG, durable evidence, active Work Package and GitHub history",
+    "transientPrLifecycleAuthority": "GitHub only",
+    "humanGatesPreserved": true,
+    "repetitiveContinuePromptsRequired": false
   }
 }

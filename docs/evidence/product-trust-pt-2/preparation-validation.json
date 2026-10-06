@@ -1,16 +1,20 @@
 {
-  "evidenceKind": "PT_2_PREPARATION_ONLY_NOT_LIVE_BASELINE",
+  "evidenceKind": "PT_2_PREPARATION_HUMAN_REVIEW_CORRECTION_ONLY_NOT_LIVE_BASELINE",
   "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "procedureVersion": "pt2-realistic-baseline-v1",
-  "procedureSha256": "a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae",
+  "reviewedHeadSha": "436bbcc6728d10adf05f2bcfa07550bb45ed8ca7",
+  "reviewCommentId": 6017268972,
+  "humanAuthorizedCorrectiveIteration": 1,
+  "autonomousRepairConsumed": false,
+  "procedureVersion": "pt2-realistic-baseline-v2",
+  "procedureSha256": "d8e615ef3fdc26de9be5e34b922da6c06055ca60e4b4e5b004775301d5479f90",
   "datasetVersion": "terraformers-realistic-v1",
   "candidateRevision": 3,
   "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
   "pinnedFilesVerified": 26,
   "fixtureChecksumsVerified": 10,
+  "fixtureBytesChanged": false,
   "backendTestCommands": [
-    "mvn -o -q -f backend/pom.xml -Dtest=EvaluationDatasetLoaderTest,LiveEvaluationLauncherTest,ProductionEquivalentClosureEvaluationTest test",
-    "mvn -o -q -f backend/pom.xml -Dtest=EvaluationRunnerTest test"
+    "mvn -o -q -f backend/pom.xml -Dtest=EvaluationDatasetLoaderTest,AnalysisUploadControllerTest,AnalysisJobControllerIntegrationTest,AnalysisJobResponseQualityTest,ProjectMetadataControllerTest,TerraformDraftControllerTest test"
   ],
   "backendTests": {
     "EvaluationDatasetLoaderTest": {
@@ -19,30 +23,47 @@
       "errors": 0,
       "skipped": 0
     },
-    "LiveEvaluationLauncherTest": {
-      "tests": 10,
+    "AnalysisUploadControllerTest": {
+      "tests": 6,
       "failures": 0,
       "errors": 0,
       "skipped": 0
     },
-    "ProductionEquivalentClosureEvaluationTest": {
-      "tests": 7,
+    "AnalysisJobControllerIntegrationTest": {
+      "tests": 1,
       "failures": 0,
       "errors": 0,
       "skipped": 0
     },
-    "EvaluationRunnerTest": {
-      "tests": 14,
+    "AnalysisJobResponseQualityTest": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ProjectMetadataControllerTest": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "TerraformDraftControllerTest": {
+      "tests": 4,
       "failures": 0,
       "errors": 0,
       "skipped": 0
     }
   },
-  "backendTestTotal": 35,
-  "pythonHarnessTests": 8,
+  "backendTestTotal": 27,
+  "pythonHarnessTests": 16,
   "pythonTestCommand": "python3 -m unittest discover -s scripts/evaluation -p 'test_pt2_realistic_baseline.py' -v",
   "workflowYaml": "PASS",
-  "embeddedBashScriptsChecked": 35,
+  "embeddedBashScriptsChecked": 85,
+  "embeddedBashScriptsByWorkflow": {
+    "gcp-target-evaluation-baseline.yml": 37,
+    "gcp-target-runtime-dependencies.yml": 48
+  },
+  "sharedBashHelperSyntax": "PASS",
   "actionlint": {
     "version": "1.7.12",
     "result": "PASS",
@@ -50,19 +71,92 @@
   },
   "durableStatePreservation": "PASS",
   "frozenDatasetIdentity": "PASS",
+  "backendAndAllEvaluationBytesAgainstExecutionBase": "UNCHANGED",
   "diffScope": "PASS",
   "gitDiffCheck": "PASS",
   "liveWorkflowDispatches": 0,
   "modelUnderTestCaseRuns": 0,
   "liveCloudActions": 0,
   "baselineComplete": false,
-  "independentAcceptance": "NOT_REVIEWED",
+  "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW",
   "humanGate": "MERGE_CHECKPOINT",
-  "remainingOriginalAcceptanceBlockers": [
-    "Standalone launcher does not measure actual persisted/user-visible trust or accepted-to-terminal latency.",
-    "A merged preparation PR cannot carry a later evidence diff; original one-PR handoff requires human resolution."
-  ],
+  "correctionDisposition": {
+    "BLOCKER-1": "Authenticated same-job capture implemented; independent review pending",
+    "BLOCKER-2": "Immutable run/artifact handoff frozen; independent review pending"
+  },
   "fullBackendSuiteOrPackageRun": false,
   "pt3Authorized": false,
-  "teardownAuthorized": false
+  "teardownAuthorized": false,
+  "supersededPreparationValidation": {
+    "reviewedHeadSha": "436bbcc6728d10adf05f2bcfa07550bb45ed8ca7",
+    "status": "SUPERSEDED_BEFORE_BASELINE_EXECUTION",
+    "evidence": {
+      "evidenceKind": "PT_2_PREPARATION_ONLY_NOT_LIVE_BASELINE",
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "procedureVersion": "pt2-realistic-baseline-v1",
+      "procedureSha256": "a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae",
+      "datasetVersion": "terraformers-realistic-v1",
+      "candidateRevision": 3,
+      "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+      "pinnedFilesVerified": 26,
+      "fixtureChecksumsVerified": 10,
+      "backendTestCommands": [
+        "mvn -o -q -f backend/pom.xml -Dtest=EvaluationDatasetLoaderTest,LiveEvaluationLauncherTest,ProductionEquivalentClosureEvaluationTest test",
+        "mvn -o -q -f backend/pom.xml -Dtest=EvaluationRunnerTest test"
+      ],
+      "backendTests": {
+        "EvaluationDatasetLoaderTest": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "LiveEvaluationLauncherTest": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "ProductionEquivalentClosureEvaluationTest": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "EvaluationRunnerTest": {
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      },
+      "backendTestTotal": 35,
+      "pythonHarnessTests": 8,
+      "pythonTestCommand": "python3 -m unittest discover -s scripts/evaluation -p 'test_pt2_realistic_baseline.py' -v",
+      "workflowYaml": "PASS",
+      "embeddedBashScriptsChecked": 35,
+      "actionlint": {
+        "version": "1.7.12",
+        "result": "PASS",
+        "externalShellCheck": false
+      },
+      "durableStatePreservation": "PASS",
+      "frozenDatasetIdentity": "PASS",
+      "diffScope": "PASS",
+      "gitDiffCheck": "PASS",
+      "liveWorkflowDispatches": 0,
+      "modelUnderTestCaseRuns": 0,
+      "liveCloudActions": 0,
+      "baselineComplete": false,
+      "independentAcceptance": "NOT_REVIEWED",
+      "humanGate": "MERGE_CHECKPOINT",
+      "remainingOriginalAcceptanceBlockers": [
+        "Standalone launcher does not measure actual persisted/user-visible trust or accepted-to-terminal latency.",
+        "A merged preparation PR cannot carry a later evidence diff; original one-PR handoff requires human resolution."
+      ],
+      "fullBackendSuiteOrPackageRun": false,
+      "pt3Authorized": false,
+      "teardownAuthorized": false
+    }
+  }
 }

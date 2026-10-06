@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
-"""Bounded orchestration of the existing launcher; no evaluator or model policy."""
+"""Observe one authenticated production AnalysisJob per frozen input; no model/scoring policy."""
 import argparse
 import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
+import tempfile
 import time
 from datetime import datetime, timezone
-from urllib.parse import quote
 
 IDENTITY = "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014"
+BASE = "3caae454661d21d84c3e469a7d76aff5633d5b26"
 DATASET = "terraformers-realistic-v1"
+PROCEDURE = "pt2-realistic-baseline-v2"
+PROTOCOL = "docs/evaluation/product-trust-pt-2-measurement-protocol.md"
 CASE_IDS = (
     "pt1-01-serverless-portal", "pt1-02-order-fanout", "pt1-03-parallel-lookup",
     "pt1-04-analytics-catalog", "pt1-05-private-web-fleet", "pt1-06-thumbnail-pipeline",
     "pt1-07-unresolved-design", "pt1-08-partial-export", "pt1-09-sprint-board",
     "pt1-10-workshop-table",
 )
-NAMESPACE = "terraformers-target"
-POD = "terraformers-evaluation-baseline"
-REMOTE = "/tmp/workspace/evaluation/terraformers-realistic-v1/dataset.json"
-CLASSPATH = "/tmp/workspace/classes:/tmp/workspace/dependency/*"
+# Read-only preflight expectations, never provider arguments or runtime overrides.
 PROFILE = {
     "GOOGLE_CLOUD_PROJECT": "terraformers-platform", "GOOGLE_CLOUD_LOCATION": "global",
     "ANALYSIS_PROVIDER": "vertex", "EMBEDDING_PROVIDER": "vertex", "RETRIEVAL_MODE": "REQUIRED",
@@ -38,12 +39,15 @@ def digest(path):
 
 
 def write_json(path, value):
-    # Exclusive creation makes accidental replacement/resume fail closed.
     with path.open("x") as handle:
         json.dump(value, handle, indent=2)
         handle.write("\n")
         handle.flush()
         os.fsync(handle.fileno())
+
+
+def stamp():
+    return datetime.now(timezone.utc).isoformat()
 
 
 def verify(root):
@@ -68,31 +72,19 @@ def verify(root):
         if not path.resolve().is_relative_to(directory.resolve()) or digest(path) != case["input"]["sha256"]:
             raise ValueError("fixture checksum mismatch: " + case["caseId"])
     state = json.loads((root / ".agents/state/product-trust-v1.json").read_text())
-    candidate = state["candidate"]
-    approval = state["liveBaselineApproval"]
-    phase = state["phaseExecution"]["PT-2"]
+    candidate, approval, phase = state["candidate"], state["liveBaselineApproval"], state["phaseExecution"]["PT-2"]
     if (candidate["status"] != "FROZEN" or candidate["truthApprovedBy"] != "USER"
-            or candidate["frozenIdentitySha256"] != IDENTITY
-            or candidate["candidateRevision"] != 3
+            or candidate["frozenIdentitySha256"] != IDENTITY or candidate["candidateRevision"] != 3
             or state["phaseCompletion"]["PT-1"]["status"] != "COMPLETE"
             or approval["decision"] != "APPROVED" or approval["approvedBy"] != "USER"
             or approval["gate"] != "LIVE_REALISTIC_BASELINE" or approval["candidateRevision"] != 3
             or approval["candidateIdentitySha256"] != IDENTITY):
         raise ValueError("external frozen truth/live approval mismatch")
     if (phase["modelUnderTestRunCount"] != 0 or phase["baselineExecutionStarted"]
-            or phase["executionBaseSha"] != "3caae454661d21d84c3e469a7d76aff5633d5b26"
-            or phase["procedureSha256"] != digest(root / "docs/evaluation/product-trust-pt-2-measurement-protocol.md")):
+            or phase["executionBaseSha"] != BASE or phase["procedureVersion"] != PROCEDURE
+            or phase["procedureSha256"] != digest(root / PROTOCOL)):
         raise ValueError("procedure changed or baseline already started; do not repeat")
     return dataset
-
-
-def exec_pod(arguments):
-    return subprocess.run(["kubectl", "-n", NAMESPACE, "exec", POD, "--", *arguments],
-                          capture_output=True, text=True, timeout=460, check=False)
-
-
-def stamp():
-    return datetime.now(timezone.utc).isoformat()
 
 
 def current_main():
@@ -102,133 +94,237 @@ def current_main():
     return result.stdout.strip()
 
 
-def valid_trace(raw, case, run_id):
-    traces = raw.get("traces", [])
-    if raw.get("datasetVersion") != DATASET or raw.get("runId") != run_id or len(traces) != 1:
-        raise ValueError("single-case raw identity mismatch")
-    trace = traces[0]
-    if (trace.get("caseId") != case["caseId"] or trace.get("runId") != run_id
-            or trace.get("input", {}).get("sha256") != case["input"]["sha256"]
-            or trace.get("configuration") != raw.get("configuration")):
-        raise ValueError("trace identity mismatch")
-    return trace
+class CurlClient:
+    def __init__(self, token_file):
+        token = token_file.read_text().strip()
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", token):
+            raise ValueError("invalid ephemeral token")
+        fd, name = tempfile.mkstemp(prefix="pt2-auth-", dir=token_file.parent)
+        self.header_file = Path(name)
+        with os.fdopen(fd, "w") as handle:
+            handle.write("Authorization: Bearer " + token + "\n")
 
+    def close(self):
+        self.header_file.unlink(missing_ok=True)
 
-def run(root, output, run_id, dispatch_sha, execute=exec_pod, read_main=current_main):
-    dataset = verify(root)
-    # One attempt directory per workflow run; never silently resume or overwrite it.
-    output.mkdir(parents=True, exist_ok=False)
-    protocol = root / "docs/evaluation/product-trust-pt-2-measurement-protocol.md"
-    write_json(output / "procedure.json", {
-        "procedureVersion": "pt2-realistic-baseline-v1", "protocolSha256": digest(protocol),
-        "datasetVersion": DATASET, "candidateRevision": 3, "candidateIdentitySha256": IDENTITY,
-        "runId": run_id, "profile": PROFILE, "caseOrder": CASE_IDS,
-        "dispatchSha": dispatch_sha,
-        "invocationsPerCase": 1, "outerRetries": 0, "timeoutSeconds": 420,
-        "initialEvidenceBudget": 16,
-        "persistedTrustStatus": "NOT_MEASURED", "acceptedToTerminalLatency": "NOT_MEASURED",
-    })
-    raws, attempts = [], []
-    for case in dataset["cases"]:
-        if read_main() != dispatch_sha:
-            raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT; stop before the next case")
-        case_id = case["caseId"]
-        case_dir = output / case_id
-        case_dir.mkdir()
-        remote_raw = f"/tmp/{run_id}-{case_id}.json"
-        started = time.monotonic()
-        write_json(case_dir / "started.json", {"caseId": case_id, "startedAt": stamp(), "attempt": 1})
-        env = {**PROFILE, "EVALUATION_DATASET": REMOTE, "EVALUATION_OUTPUT": remote_raw,
-               "EVALUATION_RUN_ID": run_id, "EVALUATION_MODE": "single", "EVALUATION_CASE_ID": case_id,
-               "EVALUATION_INITIAL_EVIDENCE_BUDGET": "16"}
-        command = ["env", *(f"{key}={value}" for key, value in env.items()),
-                   "timeout", "--kill-after=10s", "420s", "java", "-cp", CLASSPATH,
-                   "com.terraformers.modernization.evaluation.LiveEvaluationLauncher"]
-        # Exceptions (including lost transport) stop the batch: no ambiguous duplicate submission.
+    def request(self, method, path, directory, name, fixture=None, project_name=None):
+        body_file, headers_file = directory / (name + ".body"), directory / (name + ".headers")
+        command = ["curl", "-sS", "--connect-timeout", "10", "--max-time", "20", "-X", method,
+                   "--header", "@" + str(self.header_file), "-D", str(headers_file),
+                   "-o", str(body_file), "-w", "%{http_code}"]
+        if fixture:
+            command += ["-F", f"file=@{fixture};type=image/png", "-F", "projectName=" + project_name]
+        command += ["http://127.0.0.1:18080" + path]
         try:
-            completed = execute(command)
+            result = subprocess.run(command, capture_output=True, text=True, timeout=25, check=False)
+            exit_code = result.returncode
+            status = int(result.stdout) if result.stdout.isdigit() else 0
+            diagnostic = "" if exit_code == 0 else "curl transport failure"
         except (OSError, subprocess.TimeoutExpired) as error:
-            write_json(case_dir / "attempt.json", {
-                "caseId": case_id, "attempt": 1, "endedAt": stamp(),
-                "pipelineWallMs": round((time.monotonic() - started) * 1000),
-                "status": "INDETERMINATE_TRANSPORT", "errorClass": type(error).__name__,
-                "rawAvailable": False, "rerunPermitted": False,
+            exit_code, status, diagnostic = -1, 0, type(error).__name__
+        observed, monotonic = stamp(), time.monotonic()
+        body = body_file.read_text(errors="replace") if body_file.exists() else ""
+        headers = headers_file.read_text(errors="replace").splitlines() if headers_file.exists() else []
+        headers = [line for line in headers if not re.match(r"(?i)(authorization|set-cookie):", line)]
+        headers_file.unlink(missing_ok=True)
+        try:
+            parsed = json.loads(body)
+        except ValueError:
+            parsed = None
+        response = {"method": method, "path": path, "httpStatus": status, "transportExitCode": exit_code,
+                    "observedAt": observed, "headers": headers, "body": body, "json": parsed,
+                    "diagnostic": diagnostic}
+        write_json(directory / (name + ".json"), response)
+        return {**response, "monotonic": monotonic}
+
+
+def collect_logs(job_id, since):
+    result = subprocess.run(
+        ["kubectl", "-n", "terraformers-target", "logs", "deployment/terraformers-backend", "-c", "backend",
+         "--since-time=" + since, "--timestamps=true", "--tail=5000"],
+        capture_output=True, text=True, timeout=30, check=False)
+    lines = [line for line in result.stdout.splitlines() if re.search(r"analysisJobId=" + re.escape(job_id) + r"(?:\s|$)", line)]
+    stages = []
+    for line in lines:
+        match = re.search(r"analysis stage outcome=(\w+) stage=(\w+).*?elapsedMs=(\d+)", line)
+        if match:
+            stages.append({"outcome": match[1], "stage": match[2], "elapsedMs": int(match[3]), "line": line})
+    return {"jobId": job_id, "since": since, "exitCode": result.returncode, "lines": lines,
+            "stageTimings": stages, "internalFactRetrievalGenerationTimings": "NOT_OBSERVED",
+            "diagnostic": "" if result.returncode == 0 else "log collection failed"}
+
+
+def run(root, output, run_id, dispatch_sha, client, read_main=current_main,
+        logs=collect_logs, clock=time.monotonic, wait=time.sleep, deadline=420):
+    dataset = verify(root)
+    output.mkdir(parents=True, exist_ok=False)
+    write_json(output / "procedure.json", {
+        "procedureVersion": PROCEDURE, "protocolSha256": digest(root / PROTOCOL),
+        "executionBaseSha": BASE, "dispatchSha": dispatch_sha, "runId": run_id,
+        "datasetVersion": DATASET, "candidateRevision": 3, "candidateIdentitySha256": IDENTITY,
+        "caseOrder": CASE_IDS, "acceptedUploadsPerCase": 1, "outerRetries": 0,
+        "pollDeadlineSeconds": deadline, "pollIntervalSeconds": 5, "standaloneModelInvocations": 0,
+        "representativePath": "authenticated upload -> persisted AnalysisJob -> project/Terraform readback",
+    })
+    records = [{"caseId": case_id, "status": "NOT_RUN", "uploadAttempts": 0} for case_id in CASE_IDS]
+    checkpoint_number, seen_jobs, all_terminal = 0, set(), True
+
+    def checkpoint():
+        nonlocal checkpoint_number
+        write_json(output / f"ledger-{checkpoint_number:03}.json", records)
+        checkpoint_number += 1
+
+    checkpoint()
+    try:
+        for case, record in zip(dataset["cases"], records):
+            if read_main() != dispatch_sha:
+                raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT; stop before the next case")
+            fixture = root / "evaluation" / DATASET / case["input"]["path"]
+            if digest(fixture) != case["input"]["sha256"]:
+                raise ValueError("fixture changed before submission")
+            directory = output / case["caseId"]
+            directory.mkdir()
+            write_json(directory / "frozen-truth.json", case)
+            record.update(status="SUBMISSION_STARTED", uploadAttempts=1, requestStartedAt=stamp())
+            checkpoint()
+            client.request("GET", "/actuator/prometheus", directory, "metrics-before")
+            upload = client.request("POST", "/api/upload", directory, "upload", fixture=fixture,
+                                    project_name=run_id + "-" + case["caseId"])
+            if upload["transportExitCode"] != 0:
+                record["status"] = "INDETERMINATE_ACCEPTANCE"
+                all_terminal = False
+                break  # A lost POST response never authorizes resubmission.
+            if upload["httpStatus"] != 201:
+                record.update(status="UPLOAD_REJECTED", uploadHttpStatus=upload["httpStatus"])
+                all_terminal = False
+                if 200 <= upload["httpStatus"] < 300 or upload["httpStatus"] in (401, 403) or upload["httpStatus"] >= 500:
+                    break
+                checkpoint()
+                continue
+            accepted = upload["json"]
+            if (not isinstance(accepted, dict)
+                    or not isinstance(accepted.get("analysisJobId"), str)
+                    or not re.fullmatch(r"[A-Za-z0-9-]{1,128}", accepted["analysisJobId"])
+                    or type(accepted.get("projectId")) is not int or accepted["projectId"] <= 0):
+                record["status"] = "INDETERMINATE_ACCEPTANCE"
+                all_terminal = False
+                break
+            job_id, project_id = accepted["analysisJobId"], accepted["projectId"]
+            if job_id in seen_jobs:
+                raise ValueError("duplicate accepted job identity")
+            seen_jobs.add(job_id)
+            accepted_clock, last_nonterminal = upload["monotonic"], 0
+            record.update(status="ACCEPTED", analysisJobId=job_id, projectId=project_id,
+                          acceptedResponseObservedAt=upload["observedAt"], serverCreatedAt=accepted.get("createdAt"),
+                          sourceFileId=accepted.get("sourceFileId"))
+            checkpoint()
+            terminal, poll_number = None, 0
+            while clock() - accepted_clock < deadline:
+                observed = client.request("GET", "/api/analysis/jobs/" + job_id, directory, f"job-poll-{poll_number:03}")
+                poll_number += 1
+                if observed["transportExitCode"] == 0 and observed["httpStatus"] == 200:
+                    job = observed["json"]
+                    if not isinstance(job, dict) or job.get("id") != job_id or job.get("projectId") != project_id:
+                        raise ValueError("polled job identity mismatch")
+                    elapsed = max(0, round((observed["monotonic"] - accepted_clock) * 1000))
+                    if job.get("status") in ("SUCCEEDED", "FAILED"):
+                        terminal = job
+                        record.update(status=job["status"], terminalObservedAt=observed["observedAt"],
+                                      acceptedToTerminalObservedMs=elapsed, lastNonterminalAfterAcceptanceMs=last_nonterminal,
+                                      quality=job.get("quality"), failureReason=job.get("failureReason"))
+                        write_json(directory / "terminal-job.json", job)
+                        break
+                    if job.get("status") not in ("PENDING", "RUNNING"):
+                        raise ValueError("unexpected AnalysisJob status")
+                    last_nonterminal = elapsed
+                elif observed["httpStatus"] in (401, 403, 404):
+                    raise ValueError("accepted job inaccessible; do not resubmit")
+                wait(5)  # Read-only polling retries do not invoke another model/job.
+            if terminal is None:
+                record.update(status="TERMINAL_NOT_OBSERVED", censoredObservationMs=round((clock() - accepted_clock) * 1000))
+                all_terminal = False
+            project_response = client.request("GET", f"/api/projects/{project_id}", directory, "project")
+            draft_response = client.request("GET", f"/api/projects/{project_id}/terraform/main.tf", directory, "terraform")
+            project, draft = project_response["json"], draft_response["json"]
+            if project_response["httpStatus"] == 200:
+                if not isinstance(project, dict) or project.get("projectId") != project_id or project.get("latestAnalysisJobId") != job_id:
+                    raise ValueError("project readback job identity mismatch")
+            else:
+                project = None
+            if draft_response["httpStatus"] == 200:
+                if (not isinstance(draft, dict) or draft.get("projectId") != project_id
+                        or draft.get("latestAnalysisJobId") != job_id or not isinstance(draft.get("content"), str)
+                        or (terminal and draft.get("latestResultObjectKey") != terminal.get("resultObjectKey"))):
+                    raise ValueError("Terraform readback job identity mismatch")
+                (directory / "main.tf").write_text(draft["content"])
+            client.request("GET", "/actuator/prometheus", directory, "metrics-after")
+            try:
+                correlated = logs(job_id, record["requestStartedAt"])
+            except (OSError, subprocess.TimeoutExpired) as error:
+                correlated = {"jobId": job_id, "status": "NOT_OBSERVED", "diagnostic": type(error).__name__}
+            write_json(directory / "correlated-backend-logs.json", correlated)
+            quality = (terminal or {}).get("quality") or {}
+            write_json(directory / "observation.json", {
+                "caseId": case["caseId"], "analysisJobId": job_id, "projectId": project_id,
+                "terminal": terminal, "project": project, "terraformReadbackHttpStatus": draft_response["httpStatus"],
+                "backendEvidenceBackedClaim": bool(terminal and terminal["status"] == "SUCCEEDED"
+                    and quality.get("qualityStatus") == "EVIDENCE_BACKED" and quality.get("technicalStatus") == "PASS"),
+                "presentationSuccessClaim": bool(project and project.get("analysisStatus") == "SUCCEEDED"),
+                "browserExecuted": False, "semanticFidelity": "REVIEW_PENDING", "falseTrustedSuccess": "REVIEW_PENDING",
+                "rawExtractedFacts": "NOT_OBSERVED", "rankedRetrievalHits": "NOT_OBSERVED",
+                "initialDraftAndRepairTrace": "NOT_OBSERVED", "internalStageTimings": "NOT_OBSERVED",
+                "metricsAttribution": "CUMULATIVE_CONTEXT_ONLY", "latency": record,
             })
-            raise
-        (case_dir / "stdout.txt").write_text(completed.stdout)
-        (case_dir / "stderr.txt").write_text(completed.stderr)
-        attempt = {"caseId": case_id, "attempt": 1, "endedAt": stamp(),
-                   "pipelineWallMs": round((time.monotonic() - started) * 1000),
-                   "exitCode": completed.returncode, "rawAvailable": False,
-                   "timedOut": completed.returncode in (124, 137), "status": "NO_RAW_TRACE"}
-        fetched = execute(["cat", remote_raw])
-        if fetched.returncode == 0:
-            (case_dir / "raw.json").write_text(fetched.stdout)
-            raw = json.loads(fetched.stdout)
-            valid_trace(raw, case, run_id)
-            if raws and raw["configuration"] != raws[0]["configuration"]:
-                raise ValueError("runtime configuration changed within batch")
-            raws.append(raw)
-            attempt.update(rawAvailable=True, status="RAW_TRACE_CAPTURED")
-        else:
-            (case_dir / "raw-unavailable.txt").write_text(fetched.stderr)
-        write_json(case_dir / "attempt.json", attempt)
-        attempts.append(attempt)
-    write_json(output / "attempts.json", {"runId": run_id, "cases": attempts,
-                                           "allTenRawTraces": len(raws) == 10})
-    if raws:
-        combined = {**raws[0], "traces": [t for raw in raws for t in raw["traces"]]}
-        write_json(output / "raw.json", combined)
-        # No additional vector query/model call: fetch only the documents actually selected.
-        ids = set()
-        for trace in combined["traces"]:
-            retrieval = trace["retrieval"].get("evidence") or {}
-            closure = (trace["generation"].get("evidence") or {}).get("groundingClosure") or {}
-            hits = retrieval.get("hits", []) + closure.get("finalSelectedReferences", [])
-            hits += (closure.get("closureRetrieval") or {}).get("hits", [])
-            ids.update(hit["documentId"] for hit in hits)
-        documents = output / "reference-documents"
-        documents.mkdir()
-        for document_id in sorted(ids):
-            url = PROFILE["OPENSEARCH_ENDPOINT"] + "/terraformers-reference-v4/_doc/" + quote(document_id, safe="")
-            fetched = execute(["curl", "--max-time", "20", "-fsS", url])
-            write_json(documents / (hashlib.sha256(document_id.encode()).hexdigest() + ".json"), {
-                "documentId": document_id, "exitCode": fetched.returncode,
-                "response": fetched.stdout, "diagnostic": fetched.stderr,
-            })
-    return len(raws) == 10
+            checkpoint()
+            if terminal is None:
+                break  # Keep the accepted job; do not cancel it or queue cases behind it.
+    except Exception as error:
+        all_terminal = False
+        write_json(output / "observation-error.json", {"errorClass": type(error).__name__, "reason": str(error)})
+        raise
+    finally:
+        checkpoint()
+        complete = all_terminal and len(seen_jobs) == len(CASE_IDS)
+        write_json(output / "observations.json", {
+            "runId": run_id, "datasetVersion": DATASET, "cases": records,
+            "allTenTerminalObserved": complete, "phaseAcceptance": "INDEPENDENT_REVIEW_REQUIRED",
+        })
+    return complete
 
 
 def inventory(output):
-    write_json(output / "artifact-sha256.json", [
-        {"path": str(path.relative_to(output)), "sha256": digest(path)}
-        for path in sorted(output.rglob("*")) if path.is_file()
-    ])
+    entries = [{"path": str(path.relative_to(output)), "sha256": digest(path)}
+               for path in sorted(output.rglob("*")) if path.is_file() and path.name != "artifact-sha256.json"]
+    write_json(output / "artifact-sha256.json", {"files": entries})
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("verify", "run", "inventory"))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("action", choices=("verify", "run", "inventory"))
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--output", type=Path)
     parser.add_argument("--run-id")
+    parser.add_argument("--token-file", type=Path)
     parser.add_argument("--dispatch-sha", default=os.environ.get("GITHUB_SHA"))
     args = parser.parse_args()
-    if args.mode == "verify":
-        verify(args.root)
-        print("PASS: revision 3 identity, 26 pinned files, ten ordered fixture checksums")
-    elif args.mode == "inventory":
-        if args.output is None:
-            parser.error("output is required")
+    if args.action == "verify":
+        dataset = verify(args.root)
+        print(f"Verified {len(dataset['cases'])} frozen cases and 26 pinned files; no live calls.")
+    elif args.action == "inventory":
+        if not args.output:
+            parser.error("inventory requires --output")
         inventory(args.output)
     else:
-        if not args.run_id or not args.run_id.replace("-", "").isalnum():
-            parser.error("run-id must be alphanumeric/hyphen")
-        if args.output is None:
-            parser.error("output is required")
-        if not args.dispatch_sha or len(args.dispatch_sha) != 40 or any(c not in "0123456789abcdef" for c in args.dispatch_sha):
-            parser.error("dispatch-sha must be a full trusted main SHA")
-        raise SystemExit(0 if run(args.root, args.output, args.run_id, args.dispatch_sha) else 1)
+        if not all((args.output, args.run_id, args.token_file, args.dispatch_sha)):
+            parser.error("run requires --output, --run-id, --token-file and dispatch SHA")
+        verify(args.root)
+        client = CurlClient(args.token_file)
+        try:
+            complete = run(args.root, args.output, args.run_id, args.dispatch_sha, client)
+        finally:
+            client.close()
+        if not complete:
+            raise SystemExit("Partial baseline evidence retained; do not rerun.")
 
 
 if __name__ == "__main__":

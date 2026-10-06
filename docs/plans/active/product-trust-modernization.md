@@ -2,7 +2,7 @@
 
 ## Status
 
-**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 PROCEDURE FROZEN / HUMAN_REQUIRED: MERGE_CHECKPOINT**
+**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 CORRECTED PROCEDURE PENDING INDEPENDENT REVIEW / HUMAN_REQUIRED: MERGE_CHECKPOINT**
 
 PT-1 is complete after [independent acceptance](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394) of candidate revision 3 and
 [explicit USER truth-freeze approval](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324) at `2026-10-06T12:04:51Z`.
@@ -19,9 +19,17 @@ prepare one bounded scope in the existing protected evaluation workflow. The mai
 requires a human merge checkpoint before dispatch. No new workflow, credential path, production
 quality change or runtime rollout is authorized. PT-2 has made zero model/GCP calls.
 
-The standalone runner's actual persisted/UI trust and accepted-to-terminal observability gap is
-an original acceptance blocker. Pipeline success cannot stand in for those dimensions or establish
-zero false trusted successes. PT-2 remains incomplete and PT-3 remains unauthorized.
+[Independent feedback](https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6017268972)
+required correction before spending any baseline calls. Procedure v2 submits one authenticated
+production AnalysisJob per input, recording actual persisted quality, project/API status, Terraform,
+acceptance/terminal receipt latency and existing same-job logs. Unemitted internal stages remain
+NOT_OBSERVED without a second inference. The human-authorized iteration preserves autonomous
+repair counters; independent correction acceptance remains pending. PT-2 is unstarted/incomplete.
+
+Freeze the handoff as one preparation PR, then the immutable Actions run/artifact and structured
+independent result review. Fold accepted PT-2 completion/evidence into the next substantive PT-3 or
+closure PR, never a separate state-sync PR. After accepted and explicitly approved merges, USER's
+Goal instruction permits automatic DAG-eligible continuation, preserving all declared human gates.
 
 See [PT-1 review evidence](../../evaluation/product-trust-pt-1-realistic-input-freeze.md) and
 [the immutable candidate images/truth](../../../evaluation/terraformers-realistic-v1/README.md).

@@ -38,23 +38,26 @@ work_package:
     non_architecture_cases: 2
   measurement:
     protocol: docs/evaluation/product-trust-pt-2-measurement-protocol.md
-    procedure_version: pt2-realistic-baseline-v1
-    protocol_sha256: a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae
+    procedure_version: pt2-realistic-baseline-v2
+    protocol_sha256: d8e615ef3fdc26de9be5e34b922da6c06055ca60e4b4e5b004775301d5479f90
     frozen_before_baseline_outcomes: true
     workflow: .github/workflows/gcp-target-evaluation-baseline.yml
     scope: pt2-realistic-baseline
     confirmation: RUN_PT2_REALISTIC_BASELINE
-    representative_path: existing broad-v4 LiveEvaluationLauncher productionEquivalentRunner
-    repetition: one sequential invocation per case in frozen manifest order
+    representative_path: authenticated production upload -> persisted AnalysisJob -> same-job readback
+    repetition: one sequential upload attempt and at most one accepted job per case in frozen manifest order
     outer_retries: 0
     workflow_reruns_after_any_case_started: prohibited_without_new_explicit_human_authorization
     per_case_timeout_seconds: 420
     production_internal_retry_and_closure_behavior: unchanged
+    poll_interval_seconds: 5
+    standalone_model_invocations: 0
     truthful_observability: >
-      The existing standalone runner exposes rich pipeline trace, not an authenticated durable
-      AnalysisJob. Persisted/user-visible state and accepted-to-terminal latency are NOT_MEASURED
-      by this path. Source-based projections must be labeled and never substituted for actual
-      persistence. This gap remains an original acceptance blocker, not an approved waiver.
+      Capture actual persisted quality, project/API terminal semantics, full Terraform readback,
+      acceptance/terminal receipt times and same-job correlated backend stages. Browser execution
+      is NOT_RUN; source-bound client completion labels are presentation contract evidence.
+      Unemitted internal facts, ranked hits and generation timings are NOT_OBSERVED. No second
+      model invocation may recover traces. Censor missing terminal observations; never resubmit.
   allowed_paths:
     - .agents/work-packages/product-trust-pt-2-current-system-realistic-live-baseline-v1.yml
     - .agents/state/product-trust-v1.json
@@ -63,26 +66,47 @@ work_package:
     - docs/evaluation/product-trust-pt-2-*.md
     - docs/evidence/product-trust-pt-2/**
     - .github/workflows/gcp-target-evaluation-baseline.yml
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+    - scripts/smoke/ephemeral-jwks-fixture.sh
     - scripts/evaluation/pt2-realistic-baseline.py
     - scripts/evaluation/test_pt2_realistic_baseline.py
     - backend/src/main/java/com/terraformers/modernization/evaluation/LiveEvaluationLauncher.java
     - backend/src/main/java/com/terraformers/modernization/evaluation/EvaluationRunner.java
     - backend/src/test/java/com/terraformers/modernization/evaluation/LiveEvaluationLauncherTest.java
     - backend/src/test/java/com/terraformers/modernization/evaluation/ProductionEquivalentClosureEvaluationTest.java
-  evaluation_harness_exception: >
-    Only PT-2 may explicitly request initial evidence budget 16 to match unchanged production.
-    Existing scopes retain their historical limit 8. No scorer, threshold, provider, prompt,
-    evidence selection or production retrieval implementation may change.
+  correction_boundary: >
+    The four previously edited backend evaluator/test files may only be restored byte-for-byte to
+    execution_base_sha. The runtime-dependencies workflow change only extracts the existing A7-7
+    JWT/JWKS prepare/restore steps into the shared helper used by PT-2; unrelated operations remain
+    unchanged. No production, evaluator, scorer, threshold or retrieval change is permitted.
+  human_review_correction:
+    iteration: 1
+    feedback_url: https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6017268972
+    reviewed_head: 436bbcc6728d10adf05f2bcfa07550bb45ed8ca7
+    decision: CHANGES_REQUIRED
+    blockers: [BLOCKER-1, BLOCKER-2]
+    authorization: USER standing review-feedback correction loop; separate from autonomous repair
+    superseded_procedure_version: pt2-realistic-baseline-v1
+    superseded_procedure_sha256: a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae
+    baseline_started: false
+    independent_acceptance: PENDING_CORRECTED_HEAD_REVIEW
+  evidence_handoff:
+    preparation: same existing branch and PR; explicit independent review and merge checkpoint
+    live_evidence: after merge GitHub Actions run plus immutable artifact is authoritative
+    review_binding: exact run ID, attempt, dispatch SHA, artifact ID/digest, inventory SHA and derived analysis
+    artifact_retention_days: 90
+    durable_completion: fold accepted PT-2 result into next substantive PT-3 or closure PR
+    dedicated_post_run_state_sync_or_normalization_PR: prohibited
   allowed_actions:
     - read_authority_PR_feedback_and_existing_runtime_contracts
-    - create_one_task_branch_at_bound_base
+    - continue_same_task_branch_at_bound_base
     - freeze_measurement_procedure_before_baseline_outcomes
     - edit_only_allowed_paths_for_existing_workflow_scope_and_observational_harness
     - run_proportional_deterministic_tests_and_checks
     - commit_push_and_open_or_update_one_PT_2_PR
     - inspect_CI_without_treating_green_as_acceptance
     - execute_one_frozen_live_batch_only_after_required_workflow_merge_checkpoint
-    - preserve_raw_partial_and_failure_evidence_and_run_unchanged_deterministic_reports
+    - preserve_raw_partial_and_failure_evidence_and_derive_same_job_frozen_truth_analysis
     - update_durable_phase_and_evidence_state_without_transient_PR_lifecycle
     - one_bounded_mechanical_harness_repair_for_the_same_failure_class
   prohibited_actions:
@@ -92,7 +116,7 @@ work_package:
     - repeat_failed_case_or_rerun_until_green
     - tune_truth_prompt_model_retrieval_or_scorer_from_outcomes
     - start_PT_3
-    - rollout_reindex_IAM_expansion_or_retained_runtime_teardown
+    - backend_rollout_reindex_IAM_expansion_or_retained_runtime_teardown
   prohibited_changes:
     - frozen_dataset_or_truth
     - prompts_models_retrieval_RAG_or_quality_behavior
@@ -120,19 +144,19 @@ work_package:
       Before inference verify retained deployment image/source/configuration against exact dispatch
       source, evaluation toolchain and these existing broad-v4 values. Abort on mismatch; never
       roll out, mutate backend configuration, reindex or silently choose a different model.
-    permitted_cleanup: only the ephemeral evaluation pod created by this run
+    permitted_cleanup: restore owned placeholder JWKS fixture and delete only this run's ephemeral pod/secrets
   required_evidence:
-    - immutable_procedure_dataset_runtime_and_source_identities
-    - every_case_attempt_record_including_failure_timeout_and_unstarted_cases
-    - raw_fact_retrieval_generation_closure_validation_trace_when_available
-    - initial_and_final_Terraform_and_provider_reference_metadata
-    - unchanged_deterministic_exact_string_reports_plus_separate_semantic_truth_review
-    - classification_component_relationship_resource_intent_and_topology_fidelity
-    - retrieval_sufficiency_and_provider_schema_executable_result
-    - actual_persisted_and_user_visible_trust_or_explicit_unmeasured_blocker
-    - false_trusted_success_findings_with_backend_and_UI_claims_separated
-    - measured_stage_and_pipeline_latency_separate_from_unmeasured_accepted_to_terminal_latency
-    - aggregate_denominators_censored_times_and_concrete_failure_classes
+    - immutable_procedure_dataset_runtime_source_and_run_artifact_identities
+    - every_case_upload_attempt_acceptance_identity_poll_and_failure_or_censored_record
+    - same_job_persisted_quality_project_API_status_and_full_Terraform_readback
+    - correlated_existing_backend_stage_retrieval_validation_and_retry_logs_where_observable
+    - internal_unobserved_details_explicitly_UNKNOWN_or_NOT_OBSERVED_without_extra_inference
+    - classification_component_relationship_resource_intent_and_topology_fidelity_against_frozen_truth
+    - retrieval_sufficiency_and_actual_provider_schema_executable_result_with_evidence_limits
+    - backend_trust_and_source_bound_user_presentation_claims_separately
+    - actual_false_trusted_success_findings_bound_to_same_job_and_semantic_truth_violation
+    - accepted_response_to_terminal_observation_latency_with_polling_uncertainty_and_censoring
+    - aggregate_denominators_concrete_failure_classes_and_independent_result_review
   acceptance_criteria:
     - frozen_identity_and_all_pinned_bytes_preserved
     - procedure_and_repetition_frozen_before_new_baseline_outcomes
@@ -140,19 +164,19 @@ work_package:
     - all_ten_cases_accounted_for_without_rerun_until_green
     - failures_preserved_and_pipeline_failure_class_distinguishable_where_observable
     - per_case_and_aggregate_original_objective_dimensions_reported_without_fabrication
-    - persisted_user_visible_trust_and_accepted_to_terminal_observability_gap_resolved_or_independently_reviewed_as_incomplete
+    - actual_persisted_API_trust_and_accepted_to_terminal_observations_from_the_single_production_job
     - no_PT3_quality_improvement_or_teardown
-    - one_Work_Package_branch_and_PR_for_preparation_then_results
+    - one_preparation_PR_then_authoritative_immutable_run_artifact_review_and_next_substantive_PR_completion
     - independent_review_required_before_phase_completion
   validation:
-    - existing_EvaluationDatasetLoaderTest
+    - existing_dataset_loader_and_authenticated_upload_job_quality_project_Terraform_API_contract_tests
     - deterministic_harness_tests_without_model_or_GCP_calls
     - workflow_YAML_and_embedded_shell_syntax
     - pinned_dataset_and_procedure_SHA256
     - git_diff_scope_audit_and_git_diff_check
   auto_repair_limit: 1
   auto_repairs_used: 0
-  human_authorized_corrective_iterations: 0
+  human_authorized_corrective_iterations: 1
   stop_on:
     - unrelated_MAIN_DRIFT
     - MERGE_CHECKPOINT
@@ -163,7 +187,7 @@ work_package:
     - missing_original_acceptance_evidence
     - independent_review_checkpoint
   completion:
-    preparation_result: FROZEN_MEASUREMENT_READY_FOR_WORKFLOW_MERGE_REVIEW
+    preparation_result: CORRECTED_PROCEDURE_PENDING_INDEPENDENT_REVIEW_AND_MERGE
     current_human_gate: MERGE_CHECKPOINT
     baseline_complete: false
     model_under_test_case_runs: 0

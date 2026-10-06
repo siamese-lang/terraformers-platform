@@ -13,18 +13,19 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Product Trust Reassessment**
-- Status: **PT-1 COMPLETE / PT-2 PROCEDURE FROZEN / HUMAN_REQUIRED: MERGE_CHECKPOINT**
+- Status: **PT-1 COMPLETE / PT-2 CORRECTED PROCEDURE PENDING INDEPENDENT REVIEW / HUMAN_REQUIRED: MERGE_CHECKPOINT**
 - Active plan: [Product Trust Modernization](plans/active/product-trust-modernization.md).
 - Program contract: [.agents/programs/product-trust-v1.yml](../.agents/programs/product-trust-v1.yml).
 - Durable state: [.agents/state/product-trust-v1.json](../.agents/state/product-trust-v1.json).
 - Active Work Package: [PT-2 current-system realistic baseline](../.agents/work-packages/product-trust-pt-2-current-system-realistic-live-baseline-v1.yml), bound once to authoritative main `3caae454661d21d84c3e469a7d76aff5633d5b26`.
 - USER explicitly approved `LIVE_REALISTIC_BASELINE` and a bounded `pt2-realistic-baseline` scope in the existing protected evaluation workflow. The main-only guard, WIF/environment, retained GKE/OpenSearch and ephemeral pod are preserved. No credentials are added to the Codex environment.
-- [Frozen measurement procedure](evaluation/product-trust-pt-2-measurement-protocol.md) and [preparation evidence](evaluation/product-trust-pt-2-baseline-preparation.md) precede all PT-2 model outcomes. Ten sequential cases, one invocation per case, no outer retry, failure/timeout preservation.
+- [Frozen measurement procedure](evaluation/product-trust-pt-2-measurement-protocol.md) and [preparation evidence](evaluation/product-trust-pt-2-baseline-preparation.md) precede all PT-2 model outcomes. Procedure v2 uses ten sequential authenticated production uploads, at most one accepted AnalysisJob per case, zero resubmission/standalone inference, same-job readback and failure/censored-observation preservation.
 - Actual PT-2 model runs and GCP actions: **0**. Preparation requires a human merge checkpoint before main-only dispatch; no automatic merge authority. Preserve the existing PT-2 execution base and record an authorized dispatch SHA separately. Unrelated main drift requires a stop.
-- Original acceptance gap: the existing standalone launcher exposes rich pipeline trace but no actual persisted/UI trust or accepted-to-terminal latency. These remain **NOT_MEASURED**, not projected passes or zero false trusted successes. PT-2 is not complete.
+- [Independent review 6017268972](https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6017268972) required same-job trust/latency capture and a durable post-merge handoff. Human-authorized correction 1 submits the authenticated upload/job/API/Terraform path and immutable run/artifact review contract. v1 was superseded before execution; correction acceptance is pending. Measurements remain **NOT_MEASURED because the baseline is unstarted**; no false-trusted-success count or PT-2 completion is claimed.
 - PT-1 remains **COMPLETE**, revision **3**, frozen identity `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`, USER freeze at `2026-10-06T12:04:51Z`; [approval](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324), [independent acceptance](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394). All 26 pinned files and historical PT-1 base/repair history are preserved.
-- PR #242 state sync and PR #243 normalization are merged historical tasks. No transient active PR/branch lifecycle is registered in durable program state. This PT-2 Goal uses one branch/PR for preparation and later evidence, without a separate state-sync PR.
-- PT-3 and teardown remain unauthorized; A7-8 remains deferred and runtime retained. CI success is not acceptance. On every resume inspect the active Work Package PR history and latest `[PRODUCT_TRUST_REVIEW:v1]` feedback first.
+- PR #242 state sync and PR #243 normalization are merged historical tasks. No transient active PR/branch lifecycle is registered in durable program state. This PT-2 Goal uses one preparation PR, then the protected Actions run/immutable artifact plus structured independent review. Accepted PT-2 completion/evidence is folded into the next substantive PT-3 or closure PR; no separate state-sync PR.
+- USER approved ongoing Goal continuation through DAG-eligible actions after independent acceptance and explicitly authorized merge; repetitive continue prompts are unnecessary. Declared human gates, budget, architecture/product, live cost/security/IAM and destructive boundaries remain binding.
+- PT-3 implementation and teardown remain unauthorized; A7-8 remains deferred and runtime retained. CI success is not acceptance. On every resume inspect the active Work Package PR history and latest `[PRODUCT_TRUST_REVIEW:v1]` feedback first.
 
 ## Product Trust reassessment checkpoint
 

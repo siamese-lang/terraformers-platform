@@ -261,6 +261,7 @@ class VertexAnalysisProviderTest {
         verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
         verify(fixture.stage(), org.mockito.Mockito.never()).repair(any(), any(), any(), any());
         verify(fixture.inspector()).inspect(safeGeneration().terraformCode());
+        verify(fixture.orchestrator()).generate(any(), any(), any(), eq(List.of(official("vpc", "aws_vpc"))));
     }
 
     @Test
@@ -437,9 +438,12 @@ class VertexAnalysisProviderTest {
         });
         var inspector = org.mockito.Mockito.spy(new GeneratedTerraformContractInspector(catalog));
         var assessor = org.mockito.Mockito.spy(new EvidenceQualityAssessor(catalog, inspector));
-        var provider = new VertexAnalysisProvider(reader, retriever, requiredProperties(), facts,
-                new RetrievalQueryTextBuilder(), stage, catalog, inspector, assessor, availableCoverage());
-        return new ClosureFixture(provider, retriever, stage, inspector, assessor);
+        var properties = requiredProperties();
+        var orchestrator = org.mockito.Mockito.spy(new VertexGroundedGenerationOrchestrator(
+                stage, retriever, properties, catalog, inspector));
+        var provider = new VertexAnalysisProvider(reader, retriever, properties, facts,
+                new RetrievalQueryTextBuilder(), orchestrator, catalog, assessor, availableCoverage());
+        return new ClosureFixture(provider, retriever, stage, inspector, assessor, orchestrator);
     }
 
     private VertexGenerationStage respondingStage(GenerateContentResponse... responses) {
@@ -469,7 +473,8 @@ class VertexAnalysisProviderTest {
     }
 
     private record ClosureFixture(VertexAnalysisProvider provider, ReferenceRetriever retriever,
-            VertexGenerationStage stage, GeneratedTerraformContractInspector inspector, EvidenceQualityAssessor assessor) {}
+            VertexGenerationStage stage, GeneratedTerraformContractInspector inspector, EvidenceQualityAssessor assessor,
+            VertexGroundedGenerationOrchestrator orchestrator) {}
 
     private VertexAnalysisProvider provider(
             ReferenceRetriever retriever,

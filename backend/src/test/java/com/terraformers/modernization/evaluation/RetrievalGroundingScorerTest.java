@@ -105,4 +105,82 @@ class RetrievalGroundingScorerTest {
         assertThat(assessed.applicable()).isFalse(); assertThat(assessed.resourceTypeCoverage()).isNull();
         assertThat(assessed.groundingGap()).isFalse();
     }
+
+    @Test void closureImprovesOnlyGeneratedCoverageWithoutRetroactivelyRepairingInitialRetrieval() {
+        var definition = definition("x", EvaluationCase.InputClassification.ARCHITECTURE_DIAGRAM,
+                List.of("required-decision"), List.of("aws_vpc", "aws_instance"));
+        var initial = trace("r", "x", EvaluationStageStatus.PASS, List.of(hit(1, "vpc", "aws_vpc")),
+                List.of("aws_vpc", "aws_instance"), true);
+        var finalHits = List.of(hit(1, "vpc", "aws_vpc"), hit(2, "instance", "aws_instance"),
+                hit(3, "required-decision", "aws_instance"));
+        var updated = withClosure(initial, new EvaluationTrace.GroundingClosureEvidence("first draft", true,
+                new EvaluationTrace.ClosureRetrievalEvidence("generated resources", List.of("aws_instance"), 8,
+                        finalHits.subList(1, 3)), finalHits, true, List.of()));
+        var before = scorer.score(definition, initial);
+        var after = scorer.score(definition, updated);
+
+        assertThat(updated.retrieval()).isEqualTo(initial.retrieval());
+        assertThat(updated.generation().evidence().suppliedReferenceIds()).containsExactly("vpc");
+        assertThat(after.orderedHits()).isEqualTo(before.orderedHits());
+        assertThat(after.resourceTypeCoverage()).isEqualTo(before.resourceTypeCoverage());
+        assertThat(after.resourceTypeCoverage().missing()).containsExactly("aws_instance");
+        assertThat(after.projectDecisionCoverage()).isEqualTo(before.projectDecisionCoverage());
+        assertThat(after.projectDecisionCoverage().missing()).containsExactly("required-decision");
+        assertThat(after.factResourceOfficialEvidenceCoverage()).isEqualTo(before.factResourceOfficialEvidenceCoverage());
+        assertThat(after.retrievalToGenerationHandoffComplete()).isTrue();
+        assertThat(before.generatedResourceOfficialEvidenceCoverage().matched()).isEqualTo(1);
+        assertThat(after.generatedResourceOfficialEvidenceCoverage().matched()).isEqualTo(2);
+        assertThat(after.groundingGap()).isTrue();
+        assertThat(new CaseAQualityCalibrationScorer().score(definition, updated).labeledQualitySuccess()).isFalse();
+    }
+
+    @Test void explicitFinalSelectionDoesNotFallBackToInitialOfficialDocumentsOrCountProviderSchema() {
+        var definition = definition("x", EvaluationCase.InputClassification.ARCHITECTURE_DIAGRAM,
+                List.of(), List.of("aws_vpc"));
+        var initial = trace("r", "x", EvaluationStageStatus.PASS, List.of(hit(1, "vpc", "aws_vpc")),
+                List.of("aws_vpc"), true);
+        var schemaOnly = new EvaluationTrace.ReferenceHit(1, "schema", 1, "schema", "PROVIDER_DOCUMENTATION",
+                "AWS_PROVIDER_SCHEMA", "schema.json", List.of("aws_vpc"), "5.100.0", "v4", 1, List.of());
+        for (List<EvaluationTrace.ReferenceHit> finalHits : List.of(List.of(schemaOnly), List.<EvaluationTrace.ReferenceHit>of())) {
+            var updated = withClosure(initial, new EvaluationTrace.GroundingClosureEvidence("first", true,
+                    new EvaluationTrace.ClosureRetrievalEvidence("query", List.of("aws_vpc"), 8, finalHits),
+                    finalHits, true, List.of("aws_vpc")));
+            var score = scorer.score(definition, updated);
+            assertThat(score.factResourceOfficialEvidenceCoverage().matched()).isEqualTo(1);
+            assertThat(score.generatedResourceOfficialEvidenceCoverage().matched()).isZero();
+            assertThat(score.generatedResourceOfficialEvidenceCoverage().missing()).containsExactly("aws_vpc");
+        }
+    }
+
+    @Test void historicalJsonWithoutClosureFieldsRetainsDeterministicScoringAndDoesNotInventClosure() throws Exception {
+        var definition = definition("x", EvaluationCase.InputClassification.ARCHITECTURE_DIAGRAM,
+                List.of("decision"), List.of("aws_vpc"));
+        var historical = trace("historical-format", "x", EvaluationStageStatus.PASS,
+                List.of(hit(1, "decision"), hit(2, "vpc", "aws_vpc")), List.of("aws_vpc", "aws_instance"), true);
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+        String json = mapper.writeValueAsString(historical);
+        assertThat(json).doesNotContain("groundingClosure", "finalSelectedReferences", "closureAttempted");
+        var parsed = mapper.readValue(json, EvaluationTrace.class);
+
+        assertThat(parsed.generation().evidence().groundingClosure()).isNull();
+        assertThat(scorer.score(definition, parsed)).isEqualTo(scorer.score(definition, historical));
+        assertThat(scorer.score(definition, parsed).generatedResourceOfficialEvidenceCoverage().missing())
+                .containsExactly("aws_instance");
+        assertThat(new CaseAQualityCalibrationScorer().score(definition, parsed))
+                .isEqualTo(new CaseAQualityCalibrationScorer().score(definition, historical));
+        assertThat(mapper.readTree(mapper.writeValueAsString(parsed))).isEqualTo(mapper.readTree(json));
+    }
+
+    private EvaluationTrace withClosure(EvaluationTrace trace, EvaluationTrace.GroundingClosureEvidence closure) {
+        var original = trace.generation().evidence();
+        var generation = new EvaluationTrace.GenerationEvidence(original.suppliedReferenceIds(),
+                original.observedClassification(), original.classificationConfidence(), original.summary(),
+                original.components(), original.relationships(), original.warnings(), original.terraformCode(),
+                original.generatedResourceTypes(), original.generatedModuleSources(), original.stopReason(),
+                original.usage(), original.retryOccurred(), closure);
+        return new EvaluationTrace(trace.schemaVersion(), trace.datasetVersion(), trace.runId(), trace.caseId(),
+                trace.input(), trace.configuration(), trace.factExtraction(), trace.retrieval(),
+                EvaluationTrace.StageTrace.pass(EvaluationStage.GENERATION, trace.generation().latencyMs(), generation),
+                trace.validation(), trace.firstDivergence());
+    }
 }

@@ -238,7 +238,9 @@ public record EvaluationTrace(
             List<String> generatedModuleSources,
             String stopReason,
             UsageEvidence usage,
-            boolean retryOccurred
+            boolean retryOccurred,
+            @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+            GroundingClosureEvidence groundingClosure
     ) {
         public GenerationEvidence {
             suppliedReferenceIds = immutable(suppliedReferenceIds);
@@ -256,6 +258,41 @@ public record EvaluationTrace(
             generatedResourceTypes = immutable(generatedResourceTypes);
             generatedModuleSources = immutable(generatedModuleSources);
             stopReason = normalize(stopReason);
+        }
+
+        /** Historical traces have no closure evidence; preserve their original scoring inputs. */
+        public GenerationEvidence(List<String> suppliedReferenceIds,
+                EvaluationCase.InputClassification observedClassification, Double classificationConfidence,
+                String summary, List<String> components, List<String> relationships, List<String> warnings,
+                String terraformCode, List<String> generatedResourceTypes, List<String> generatedModuleSources,
+                String stopReason, UsageEvidence usage, boolean retryOccurred) {
+            this(suppliedReferenceIds, observedClassification, classificationConfidence, summary, components,
+                    relationships, warnings, terraformCode, generatedResourceTypes, generatedModuleSources,
+                    stopReason, usage, retryOccurred, null);
+        }
+    }
+
+    /** Initial retrieval remains in RetrievalEvidence; these ranks describe closure/final selection. */
+    public record GroundingClosureEvidence(String firstDraftTerraform, boolean closureAttempted,
+            ClosureRetrievalEvidence closureRetrieval, List<ReferenceHit> finalSelectedReferences,
+            boolean repairAttempted, List<String> finalGeneratedResourceEvidenceGaps) {
+        public GroundingClosureEvidence {
+            firstDraftTerraform = firstDraftTerraform == null ? "" : firstDraftTerraform;
+            finalSelectedReferences = finalSelectedReferences == null ? List.of() : List.copyOf(finalSelectedReferences);
+            finalGeneratedResourceEvidenceGaps = immutable(finalGeneratedResourceEvidenceGaps);
+            if (closureAttempted != (closureRetrieval != null) || (repairAttempted && !closureAttempted)) {
+                throw new IllegalArgumentException("closure/repair evidence must match the bounded orchestration");
+            }
+        }
+    }
+
+    public record ClosureRetrievalEvidence(String queryText, List<String> resourceTypeFilters,
+            int requestedEvidenceBudget, List<ReferenceHit> hits) {
+        public ClosureRetrievalEvidence {
+            queryText = requireText(queryText, "queryText");
+            resourceTypeFilters = immutable(resourceTypeFilters);
+            if (requestedEvidenceBudget <= 0) throw new IllegalArgumentException("evidence budget must be positive");
+            hits = hits == null ? List.of() : List.copyOf(hits);
         }
     }
 

@@ -8,6 +8,7 @@ import com.terraformers.modernization.analysis.GeneratedTerraformContractInspect
 import com.terraformers.modernization.analysis.TerraformCliValidator;
 import com.terraformers.modernization.analysis.TerraformDraftValidation;
 import com.terraformers.modernization.analysis.TerraformDraftValidator;
+import com.terraformers.modernization.analysis.vertex.VertexGroundedGenerationOrchestrator;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationDataset;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
@@ -73,7 +74,8 @@ class LiveEvaluationLauncherTest {
                 "provider/ref", "5.100.0", "terraformers-reference-v4",
                 "AWS_PROVIDER_DOC", 100, List.of());
 
-        assertThat(LiveEvaluationLauncher.schemaCandidates(facts, List.of(reference), catalog))
+        var orchestration = new VertexGroundedGenerationOrchestrator(null, null, null, catalog, null);
+        assertThat(orchestration.schemaCandidates(facts, List.of(reference)))
                 .containsExactlyInAnyOrder("aws_vpc", "aws_subnet", "aws_lambda_function");
     }
 

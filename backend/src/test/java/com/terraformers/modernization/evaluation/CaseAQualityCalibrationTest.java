@@ -79,6 +79,59 @@ class CaseAQualityCalibrationTest {
         assertThat(result.falseGreen()).isTrue();
     }
 
+    @Test void frozenComponentAndRelationshipLabelsAreStrictlyNormalizedAndCanFailQuality() {
+        var baseDefinition = positiveDefinition();
+        var definition = new EvaluationCase(
+                baseDefinition.schemaVersion(), baseDefinition.datasetVersion(), baseDefinition.caseId(),
+                baseDefinition.input(), baseDefinition.expectedClassification(),
+                new EvaluationCase.TextExpectation(
+                        List.of("Application Load Balancer"), List.of(), List.of("OpenSearch Serverless")),
+                new EvaluationCase.TextExpectation(
+                        List.of("Application Load Balancer -> RDS Database"), List.of(), List.of()),
+                baseDefinition.resourceTypes(), baseDefinition.retrieval(), baseDefinition.generation(),
+                baseDefinition.validation(), baseDefinition.notes());
+
+        var baseTrace = successfulPositiveTrace();
+        var matchingFacts = StageTrace.pass(
+                EvaluationStage.FACT_EXTRACTION,
+                10,
+                new EvaluationTrace.FactExtractionEvidence(
+                        InputClassification.ARCHITECTURE_DIAGRAM,
+                        "facts",
+                        List.of("application-load-balancer"),
+                        List.of("Application Load Balancer -> RDS Database"),
+                        List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
+        var matchingTrace = new EvaluationTrace(
+                baseTrace.schemaVersion(), baseTrace.datasetVersion(), baseTrace.runId(), baseTrace.caseId(),
+                baseTrace.input(), baseTrace.configuration(), matchingFacts, baseTrace.retrieval(),
+                baseTrace.generation(), baseTrace.validation(), null);
+
+        var matched = scorer.score(definition, matchingTrace);
+        assertThat(matched.componentCoverage().requiredMatched()).isOne();
+        assertThat(matched.relationshipCoverage().requiredMatched()).isOne();
+        assertThat(matched.labeledQualitySuccess()).isTrue();
+
+        var missingRelationshipFacts = StageTrace.pass(
+                EvaluationStage.FACT_EXTRACTION,
+                10,
+                new EvaluationTrace.FactExtractionEvidence(
+                        InputClassification.ARCHITECTURE_DIAGRAM,
+                        "facts",
+                        List.of("Application Load Balancer"),
+                        List.of(),
+                        List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
+        var missingTrace = new EvaluationTrace(
+                baseTrace.schemaVersion(), baseTrace.datasetVersion(), baseTrace.runId(), baseTrace.caseId(),
+                baseTrace.input(), baseTrace.configuration(), missingRelationshipFacts, baseTrace.retrieval(),
+                baseTrace.generation(), baseTrace.validation(), null);
+
+        var missed = scorer.score(definition, missingTrace);
+        assertThat(missed.relationshipCoverage().missingRequired())
+                .containsExactly("Application Load Balancer -> RDS Database");
+        assertThat(missed.labeledQualitySuccess()).isFalse();
+        assertThat(missed.falseGreen()).isTrue();
+    }
+
     @Test void missingRequiredGeneratedResourceFailsFrozenLabel() {
         var trace = trace("run", "positive", EvaluationStageStatus.PASS, completeHits(),
                 List.of("aws_vpc", "aws_lb", "aws_db_instance"), true);

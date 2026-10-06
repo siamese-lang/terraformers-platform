@@ -14,7 +14,7 @@ _spec.loader.exec_module(pt2)
 
 CONTINUATION_PROCEDURE = "pt2-realistic-continuation-v1"
 CONTINUATION_PROTOCOL = "docs/evaluation/product-trust-pt-2-continuation-protocol.md"
-CONTINUATION_PROTOCOL_SHA256 = "28d225feceb2240d127a9fe7b0f33d3bbca836ecc2913bd3b6ff2a9721be1b00"
+CONTINUATION_PROTOCOL_SHA256 = "d24bdec4065d647ac4ae5cf21afb76b4e98fd9d50faacd3f3e72783313ace482"
 
 PRIOR_RUN_ID = 37480519016
 PRIOR_RUN_ATTEMPT = 1

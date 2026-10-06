@@ -468,8 +468,12 @@ A program requires:
 
 Until that approval, the state is `AWAITING_PROGRAM_APPROVAL` and Codex must not start phase work.
 
-After approval, Codex Cloud may autonomously create/execute the next eligible repository Work
-Package, run bounded validation/repair, update evidence/state and open a PR. It may not infer a new
+After approval, an active Codex Cloud task/Goal may autonomously create/execute the next eligible
+repository Work Package, run bounded validation/repair, update evidence/state and open a PR. This is
+authorization, not an invisible scheduler: repository state alone does not launch a new Codex task.
+If the executor stops at a PR, human gate, platform task boundary or session end, the next executor
+invocation resumes from the durable program state; an explicitly configured event integration may
+provide that invocation, but this protocol does not assume one exists. Codex may not infer a new
 program phase from an interesting failure or technology. A failure requiring an undeclared product
 or architecture choice becomes `HUMAN_REQUIRED`.
 

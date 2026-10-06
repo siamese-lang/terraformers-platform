@@ -19,7 +19,12 @@ final class CaseATestFixtures {
     static EvaluationTrace trace(String run, String id, EvaluationStageStatus retrievalStatus, List<ReferenceHit> hits,
                                  List<String> generated, boolean valid) {
         var facts = StageTrace.pass(EvaluationStage.FACT_EXTRACTION, 10,
-                new FactExtractionEvidence(InputClassification.ARCHITECTURE_DIAGRAM, "facts", List.of(), List.of(), List.of()));
+                new FactExtractionEvidence(
+                        InputClassification.ARCHITECTURE_DIAGRAM,
+                        "facts",
+                        List.of(),
+                        List.of(),
+                        List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
         StageTrace<RetrievalEvidence> retrieval;
         FirstDivergence divergence = null;
         if (retrievalStatus == EvaluationStageStatus.PASS) retrieval = StageTrace.pass(EvaluationStage.RETRIEVAL, 20, new RetrievalEvidence("query", List.of(), 8, hits));
@@ -27,7 +32,8 @@ final class CaseATestFixtures {
         else { var failure = new EvaluationFailure(EvaluationStage.RETRIEVAL, EvaluationFailureCategory.RETRIEVAL_FAILURE, "failed"); retrieval = StageTrace.fail(EvaluationStage.RETRIEVAL, 20, null, failure); divergence = new FirstDivergence(failure.stage(), failure.category()); }
         StageTrace<GenerationEvidence> generation = retrievalStatus == EvaluationStageStatus.FAIL
                 ? StageTrace.notRun(EvaluationStage.GENERATION)
-                : StageTrace.pass(EvaluationStage.GENERATION, 30, new GenerationEvidence(List.of(),
+                : StageTrace.pass(EvaluationStage.GENERATION, 30, new GenerationEvidence(
+                    hits.stream().map(ReferenceHit::documentId).toList(),
                     InputClassification.ARCHITECTURE_DIAGRAM, 1.0, "generated", List.of(), List.of(), List.of(),
                     generated.isEmpty() ? "" : "resource", generated, List.of(), "STOP", null, false));
         StageTrace<ValidationEvidence> validation = generated.isEmpty() ? StageTrace.notRun(EvaluationStage.VALIDATION)

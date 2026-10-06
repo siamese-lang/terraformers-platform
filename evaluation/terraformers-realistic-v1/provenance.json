@@ -70,7 +70,7 @@
       "sourceIds": [
         "serverless-web"
       ],
-      "sourceBasis": "AWS architecture blog describes S3/CloudFront presentation, API Gateway/Lambda business logic and DynamoDB data. Authentication omitted because no identity service is specified here.",
+      "sourceBasis": "The selected AWS architecture blog describes S3/CloudFront presentation, API Gateway/Lambda business logic, DynamoDB data, and Amazon Cognito user-pool authentication. The PT-1 candidate intentionally scopes Cognito/authentication out. Its explicit HTTP API annotation and aws_apigatewayv2_api binding are PT-1 adaptations, not a claim that the source uniquely mandates HTTP API.",
       "assetOrigin": "Original repository-owned vector geometry, common mathematical/service symbols, factual short labels and UI/document layouts. No third-party artwork, logos or screenshots were copied.",
       "licenseOrRecreationBasis": "Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.",
       "editableRepresentation": {
@@ -100,7 +100,23 @@
         "hexagon / HTTP API -> Amazon API Gateway HTTP API",
         "\u03bb / business -> AWS Lambda business logic",
         "cylinder / DynamoDB -> Amazon DynamoDB application table"
-      ]
+      ],
+      "sourceArchitectureFacts": [
+        "The source includes S3/CloudFront presentation, API Gateway/Lambda business logic and DynamoDB data.",
+        "The source includes Amazon Cognito user pools for user authentication."
+      ],
+      "candidateAdaptations": [
+        "Cognito/authentication is intentionally outside this bounded candidate image and truth; its omission does not describe the source.",
+        "The candidate explicitly selects HTTP API / aws_apigatewayv2_api. A REST API swap does not match this candidate label, although the source does not uniquely mandate the v2 API choice."
+      ],
+      "truthCertaintyBasis": "Source authentication facts were rechecked against the recorded AWS source. The two scope/API choices are explicit candidate adaptations, not unresolved source guesses; remainingTruthUncertainties is empty for factual uncertainty. Human acceptance of those adaptations and all truth remains pending.",
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "CloudFront, S3, explicitly labeled HTTP API, Lambda and DynamoDB are visible architecture nodes. Their required resource types remain unchanged.",
+        "supportBasis": "API wiring, Lambda permission/IAM and origin access controls remain acceptable support; valid supplied references may provide them.",
+        "movedFromRequiredToAcceptable": [],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
     },
     {
       "caseId": "pt1-02-order-fanout",
@@ -117,10 +133,11 @@
       },
       "layoutConditions": "Actor, circular SNS topic, offset queue stacks, circular \u03bb workers, role labels and solid/dashed orthogonal connectors; asymmetric queue placement.",
       "requiredResourceIntent": [
-        "One SNS topic fans out to two distinct SQS queues. Each queue feeds its own Lambda consumer using an event-source mapping; queue policy allows SNS delivery."
+        "One SNS topic fans out to two distinct SQS queues through subscriptions. Each queue feeds its own Lambda consumer using an event-source mapping. Valid SNS delivery and consumer access are required, but creation of a new queue-policy or IAM resource is not."
       ],
       "acceptableSemanticVariants": [
-        "Relationship arrows denote event/data flow; Lambda polls SQS rather than SQS invoking Lambda directly."
+        "Relationship arrows denote event/data flow; Lambda polls SQS rather than SQS invoking Lambda directly.",
+        "SNS delivery authorization and Lambda queue access may use existing policies/roles or equivalent valid references; aws_sqs_queue_policy and IAM resource creation are acceptable support, not required image truth."
       ],
       "reasonTerraformShouldNotBeGenerated": null,
       "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
@@ -138,7 +155,16 @@
         "queue stack / audit SQS -> Amazon SQS audit queue",
         "\u03bb / billing -> AWS Lambda billing worker",
         "\u03bb / audit -> AWS Lambda audit worker"
-      ]
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "The visible SNS-to-two-SQS fanout and separate SQS-to-Lambda consumers require topic, queues, functions and the semantic subscription/event-source bindings.",
+        "supportBasis": "A queue policy authorizes delivery rather than defining the fanout topology; existing authorization is valid. The image does not require new queue-policy/IAM creation.",
+        "movedFromRequiredToAcceptable": [
+          "aws_sqs_queue_policy"
+        ],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
     },
     {
       "caseId": "pt1-03-parallel-lookup",
@@ -157,7 +183,8 @@
         "A Step Functions Parallel state invokes two distinct Lambda tasks and joins their outputs. Workflow states are not separately deployed cloud services."
       ],
       "acceptableSemanticVariants": [
-        "Parallel/join can be described in words rather than as separate components; terminal result array is logical output, not a database."
+        "Parallel/join can be described in words rather than as separate components; terminal result array is logical output, not a database.",
+        "Valid Step Functions/Lambda execution permissions may be supplied by existing role ARNs/policies; the image does not require creation of aws_iam_role."
       ],
       "reasonTerraformShouldNotBeGenerated": null,
       "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
@@ -174,7 +201,16 @@
         "\u03bb / AddressFinder -> AWS Lambda AddressFinder",
         "\u03bb / PhoneFinder -> AWS Lambda PhoneFinder",
         "join / End -> End / result array (logical output, not storage)"
-      ]
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "The depicted Step Functions Parallel workflow and two Lambda tasks require the state machine and functions; branch/join semantics remain required.",
+        "supportBasis": "An existing execution role ARN and policies can authorize these calls. New IAM-role creation is not visible or independently required.",
+        "movedFromRequiredToAcceptable": [
+          "aws_iam_role"
+        ],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
     },
     {
       "caseId": "pt1-04-analytics-catalog",
@@ -193,7 +229,8 @@
         "Separate source and query-output buckets; crawler populates the Glue database with schema; Athena workgroup queries source objects and writes query results."
       ],
       "acceptableSemanticVariants": [
-        "Metadata lookup may be described as Athena -> Glue; read-direction descriptions may reverse the data-flow arrow when the read semantics remain explicit. Crawler may create tables dynamically."
+        "Metadata lookup may be described as Athena -> Glue; read-direction descriptions may reverse the data-flow arrow when the read semantics remain explicit. Crawler may create tables dynamically.",
+        "Existing Glue execution roles/policies are valid support; the crawler may create catalog tables dynamically. No new IAM role or explicit table resource is required by the image."
       ],
       "reasonTerraformShouldNotBeGenerated": null,
       "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
@@ -211,7 +248,14 @@
         "query symbol / Athena analytics -> Amazon Athena analytics workgroup",
         "bucket / S3 results -> Amazon S3 query results",
         "browser / SQL client -> Analyst SQL client"
-      ]
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "Source/results S3 buckets, Glue crawler/database and a named Athena workgroup are explicitly selected visible architecture intent; required types remain unchanged.",
+        "supportBasis": "IAM resources remain acceptable; crawler-created tables are valid without an explicit aws_glue_catalog_table resource.",
+        "movedFromRequiredToAcceptable": [],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
     },
     {
       "caseId": "pt1-05-private-web-fleet",
@@ -227,10 +271,11 @@
       },
       "layoutConditions": "Colored VPC/AZ/public/private boundaries, small hub/route/chip symbols, shared web-alb/web-asg names, per-AZ NAT labels and bent egress/endpoint routes.",
       "requiredResourceIntent": [
-        "Two public and two private subnets across two AZs; one logical ALB and ASG; ASG instances are supplied by a launch template, not mandatory standalone aws_instance resources. One NAT per AZ, private egress routing and S3 gateway endpoint."
+        "Two public and two private subnets across two AZs; one logical ALB and ASG with ASG-managed EC2 instances in private subnets. One NAT per AZ, private egress routing and S3 gateway endpoint remain required. The fleet needs a valid launch specification, routing and access configuration, but not new launch-template, route-table or security-group resources; standalone aws_instance resources are not mandatory."
       ],
       "acceptableSemanticVariants": [
-        "Route entries may be inline or standalone; ALB/ASG node placement can be expressed as shared resources. No IPv6 or egress-only gateway required."
+        "Route entries may be inline or standalone; ALB/ASG node placement can be expressed as shared resources. No IPv6 or egress-only gateway required.",
+        "A valid existing launch-template/specification reference, security-group IDs and route-table IDs may supply support. Routes may be inline or standalone on valid supplied tables. These alternatives must retain private instance placement, ALB-to-fleet traffic, per-AZ NAT egress and S3 endpoint routing."
       ],
       "reasonTerraformShouldNotBeGenerated": null,
       "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
@@ -250,7 +295,18 @@
         "chips / EC2 web-01 / web-02 -> EC2 server A / B",
         "dashed web-asg boundary -> Auto Scaling group",
         "S3 gateway endpoint -> S3 gateway VPC endpoint"
-      ]
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "VPC, public/private subnet and AZ boundaries, IGW, logical ALB/ASG, per-AZ NAT and S3 gateway endpoint are visible architecture intent. Routing and private placement remain required semantics.",
+        "supportBasis": "No separate launch-template, security-group or route-table node requires creation. Existing launch specifications, security-group IDs and route-table references with valid routes may provide equivalent support.",
+        "movedFromRequiredToAcceptable": [
+          "aws_launch_template",
+          "aws_route_table",
+          "aws_security_group"
+        ],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
     },
     {
       "caseId": "pt1-06-thumbnail-pipeline",
@@ -266,10 +322,11 @@
       },
       "layoutConditions": "Camera, bucket and \u03bb symbols with terse role labels, ruled-paper background, oblique text and a bent source-read return edge.",
       "requiredResourceIntent": [
-        "Two distinct buckets; ObjectCreated notification on the source only; S3 invocation permission and Lambda execution-role access to read source/write output."
+        "Two distinct buckets; ObjectCreated notification on the source only invokes the thumbnail Lambda, which reads source objects and writes output. Valid S3 invocation authorization and Lambda read/write access are required, without requiring new permission or execution-role resource creation."
       ],
       "acceptableSemanticVariants": [
-        "Service synonyms and equivalent IAM support resources are acceptable; merging buckets is excluded by this explicitly chosen two-bucket diagram."
+        "Service synonyms and equivalent IAM support resources are acceptable; merging buckets is excluded by this explicitly chosen two-bucket diagram.",
+        "Existing execution-role ARNs, invocation permission and access policies may supply valid support; aws_lambda_permission and aws_iam_role creation are acceptable, not required. The source-only notification, read/write direction and two-bucket separation remain mandatory."
       ],
       "reasonTerraformShouldNotBeGenerated": null,
       "truthDerivation": "Existing source-derived PT-1 topology truth retained; visual aliases reviewed by deterministic drawing inspection. Terraformers/Vertex/Gemini was not called and did not author or validate truth.",
@@ -285,7 +342,17 @@
         "bucket / S3 originals -> Amazon S3 original images",
         "\u03bb / thumbnail -> AWS Lambda thumbnail processor",
         "bucket / S3 thumbs -> Amazon S3 thumbnail output"
-      ]
+      ],
+      "resourceRequirementAudit": {
+        "reviewCommentId": 6015448816,
+        "requiredBasis": "Two S3 buckets and the Lambda function are visible nodes; the source ObjectCreated-to-Lambda notification is the required event binding.",
+        "supportBasis": "Invocation permission and execution-role access must be valid but may already exist. The image does not require new aws_lambda_permission or aws_iam_role resources.",
+        "movedFromRequiredToAcceptable": [
+          "aws_lambda_permission",
+          "aws_iam_role"
+        ],
+        "componentsRelationshipsAndForbiddenInterpretationsPreserved": true
+      }
     },
     {
       "caseId": "pt1-07-unresolved-design",
@@ -398,7 +465,7 @@
     "No model results, quality metrics or latency claims exist.",
     "Unchanged exact-string/resource-type scoring does not automatically establish semantic alias, cardinality or boundary correctness; no scorer behavior or acceptance criteria were changed."
   ],
-  "candidateRevision": 2,
+  "candidateRevision": 3,
   "humanReviewCorrection": {
     "authorizedOn": "2026-10-06",
     "authorization": "User explicitly authorized PT-1 human-review corrective iteration; same Work Package and PR #241 branch, no execution-base rebind.",
@@ -412,5 +479,23 @@
       "Full service names overly dominated recognition",
       "Controls explained their own rejection"
     ]
+  },
+  "structuredPrReviewCorrection": {
+    "iteration": 2,
+    "authorizedOn": "2026-10-06",
+    "authorization": "User explicitly authorized continuation on PR #241 to correct unresolved structured-review blockers; separate from autonomous repair.",
+    "reviewCommentId": 6015448816,
+    "reviewUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015448816",
+    "decisionAtReviewedHead": "CHANGES_REQUIRED",
+    "reviewedHeadSha": "44b73b02840abbaf1da8349e124e73fe5ccb6e5e",
+    "supersededIdentitySha256": "c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852",
+    "fixtureBytesChanged": false,
+    "autonomousRepair": false,
+    "modelUnderTestRunCount": 0,
+    "findings": [
+      "BLOCKER-1 source facts versus candidate adaptations",
+      "BLOCKER-2 implementation-support resource requirements"
+    ],
+    "acceptanceStatus": "CORRECTION_SUBMITTED_PENDING_INDEPENDENT_REVIEW_AND_TRUTH_FREEZE"
   }
 }

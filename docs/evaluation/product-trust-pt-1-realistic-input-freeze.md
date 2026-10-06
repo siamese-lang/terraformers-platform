@@ -1,51 +1,52 @@
-# PT-1 revised realistic-input candidate: human truth-freeze review
+# PT-1 realistic-input candidate: corrected truth-freeze review
 
-**CANDIDATE REVISION 2 / HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE**
+**CANDIDATE REVISION 3 / HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE**
 
-The prior candidate was not approved. This explicitly human-authorized bounded corrective iteration removes answer leakage and varies visual presentation within the original PT-1 objective, path scope and acceptance. It is not a second autonomous repair. Topology/classification/resource expectation fields in `dataset.json` are unchanged; PNG/SVG inputs and review/provenance presentation are revised.
+The latest [structured independent review](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015448816) is `CHANGES_REQUIRED` for reviewed head `44b73b02840abbaf1da8349e124e73fe5ccb6e5e`. No commits existed after that head at recovery. Visual fidelity passed; two truth-contract blockers remain for independent re-review. This user-authorized metadata-only corrective iteration submits corrections to those blockers, preserves all fixture bytes and original acceptance, and does not approve truth.
 
 ## Execution and candidate history
 
-- Execution base remains `0bb244756c2a2e1d3d6d11d0342e98e155f8662c`; branch `codex/product-trust-pt-1-realistic-input-benchmark` and [PR #241](https://github.com/siamese-lang/terraformers-platform/pull/241) are reused.
-- Human review started from PR head `2cf8a73889c6f612f5594cc7620c503646642892`. Remote main matched the bound base at recovery. No new branch, activation/rebinding, refresh or rebase was performed.
-- Superseded candidate-1 identity: `8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8`. Its exact old identity is [archived](../../evaluation/terraformers-realistic-v1/superseded/candidate-01-identity.json); [history](../../evaluation/terraformers-realistic-v1/candidate-history.json) records human-review rejection. Old assets/truth are retrievable from the immutable reviewed head, not claimed to match current bytes.
-- New candidate-2 identity: `c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852`. [candidate-identity.json](../../evaluation/terraformers-realistic-v1/candidate-identity.json) pins 25 files including both history and the archived old identity. This is a new, unapproved identity.
-- The historical one autonomous mechanical repair remains recorded as one. This separate human-review corrective iteration is recorded as one, with no autonomous repair-limit increase.
-- `truthApprovedBy`/`truthFrozenAt` remain null; `modelUnderTestRunCount` remains 0. No Terraformers, Vertex, Gemini or other live/image-generation model call, live GCP action or output-driven fixture tuning occurred.
+- Execution base remains `0bb244756c2a2e1d3d6d11d0342e98e155f8662c`; branch `codex/product-trust-pt-1-realistic-input-benchmark` and [PR #241](https://github.com/siamese-lang/terraformers-platform/pull/241) are reused. Remote main matched the bound base at recovery; no activation/rebinding, refresh or rebase occurred.
+- Candidate 1 identity `8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8` was rejected for visual fidelity. Candidate 2 identity `c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852` passed visual review but is superseded for truth-contract correction. Exact identities are archived in [candidate history](../../evaluation/terraformers-realistic-v1/candidate-history.json); old metadata is available at each recorded immutable head.
+- New candidate-3 identity: `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`. [candidate-identity.json](../../evaluation/terraformers-realistic-v1/candidate-identity.json) pins 26 files, including both archived identities and all 20 unchanged PNG/SVG assets. This new metadata identity is unapproved.
+- Autonomous repairs remain **1**. Human-authorized corrective iterations are separately recorded as **2**; no autonomous counter reset or repair-limit increase.
+- `truthApprovedBy`/`truthFrozenAt` remain null; `modelUnderTestRunCount` remains **0**. No model, Vertex/Gemini, live GCP/OpenSearch, PT-2 or merge action occurred.
 
-## What changed and what is still unproven
+## Review blockers and submitted corrections
 
-All input-only benchmark/provenance footers and sentences teaching required/forbidden interpretations were removed. Titles are normal document/diagram titles. The six positives now use colored service symbols, a monochrome messaging sketch, an original workflow-editor screen, a dense graph-paper data sketch, a nested network export and a portrait notebook sketch. Controls are an ordinary unfinished sketch, a genuinely partial export, a work-item board and an agenda without self-classification text.
+| Review blocker | Submitted correction | Preserved boundary |
+| --- | --- | --- |
+| BLOCKER-1: inaccurate source/adaptation wording | The AWS source includes Cognito authentication. PT-1 intentionally omits it and explicitly selects HTTP API / `aws_apigatewayv2_api`; neither choice is claimed as uniquely source-mandated. Source facts, adaptations and certainty basis are recorded separately. | No Cognito node added; portal image and topology unchanged. |
+| BLOCKER-2: implementation support over-constrains image truth | All six positives were audited. Queue policy, execution roles, Lambda invocation permission, launch template, security group and route table creation move to ACCEPTABLE where valid existing references/equivalent configuration suffice. | Components, relationships, forbidden interpretations and required delivery/access/routing semantics remain unchanged; no scorer or acceptance change. |
 
-All drawings and symbols are repository-owned constructions: no official/public AWS artwork, icons, screenshots or unclear-license asset pack was copied. Existing source specifications and redistribution/recreation records are retained. These are still reference-based recreations, not collected real user diagrams. Each case below makes that limitation explicit. No fidelity/false-trusted-success/latency/live product result is claimed; CI and loader PASS cannot freeze truth.
+Resource intent requires valid architecture semantics, not newly creating every support resource. Semantic event bindings remain required where they define depicted topology (SNS subscriptions, SQS event-source mapping, source-only S3 notification). The detailed six-case audit below explains both retained required resources and acceptable support. No model output or future score was used to make these changes.
+
+## Standing PR feedback loop
+
+For the remainder of this `product-trust-v1` conversation, every start/resume with an open active Work Package PR first inspects PR conversation, reviews and inline history. The latest `[PRODUCT_TRUST_REVIEW:v1]` comment is authoritative feedback for its reviewed head. The complete user-specified rule is durably recorded in `prReviewFeedbackPolicy` in program state: compare heads before editing, resolve only unresolved blockers on the same branch/base, record human-authorized corrections separately, validate proportionally and return to the original gate. Acceptance feedback/CI cannot authorize merge or bypass any human gate.
 
 ## Validation for this revision
 
-- `mvn -o -f backend/pom.xml -Dtest=EvaluationDatasetLoaderTest test`: **4 tests, 0 failures, 0 errors, 0 skips; BUILD SUCCESS**, run once against the revised bytes. No test failure or rerun-until-green occurred. Production/test sources were already compiled and unchanged in this iteration.
-- One-off manifest audit: **PASS** for all ten changed PNG SHA-256 values, ten SVG hashes/XML, PNG decoding/absence of hidden metadata, all 25 new identity entries and the exact archived old identity SHA-256.
-- Semantic/source preservation: **PASS**. Every dataset field other than `input` is identical to reviewed head `2cf8a73889c6f612f5594cc7620c503646642892`; source records, each case source IDs/basis, all six positive resource intents and acceptable semantic variants are unchanged.
-- Input-only text audit and direct image inspection: **PASS**. All ten final inputs were viewed; SVG text was enumerated and checked for the cited answer/provenance/instruction phrases, and no SVG embeds third-party images. This finite scan supplements visual review; it does not prove absence of every possible semantic cue or human acceptance.
-- `git diff --check`, staged scope audit and protected-path audit: **PASS**. No production/test Java change in this corrective iteration; canonical/holdout images, corpus, infrastructure and workflows are unchanged.
-- Historical candidate-1 tests (10 focused then 4 after annotation correction) remain historical mechanism evidence only. Human review rejected that candidate despite those PASS results. They do not constitute acceptance of either candidate.
+- `mvn -o -f backend/pom.xml -Dtest=EvaluationDatasetLoaderTest test`: **4 tests, 0 failures, 0 errors, 0 skips; BUILD SUCCESS**. Run once offline against candidate 3; production/test Java was unchanged and already compiled.
+- Identity/preservation audit: **PASS**, all **26** identity entries, exact archived candidate-2 identity, all **20** PNG/SVG assets byte-for-byte identical to reviewed head, and all **10** review sections consistent with the manifest/provenance. Every source-document record, component/relationship list, material forbidden interpretation and all four controls are preserved. Only seven support-resource requirements across four cases were reclassified; all six positives have audit rationale.
+- The first one-off audit stopped on an incorrect helper enum spelling (`NON_ARCHITECTURE` instead of manifest value `NON_ARCHITECTURE_IMAGE`). That external, uncommitted helper was corrected and the audit passed. No candidate, acceptance or production/test code changed in response; no model run or Maven test rerun occurred.
+- Durable-state/scope audit: **PASS**, original base, Work Package scope/acceptance, historical correction, autonomous count **1**, human correction count **2**, null approval/freeze fields and run count **0** preserved. Only allowed PT-1 metadata/state/review paths changed; synthetic datasets, production, workflows and infrastructure remain unchanged.
+- `git diff --check`: **PASS**. Validation supplies deterministic consistency evidence; independent acceptance and truth freeze remain human decisions.
 
-The current rendering/provenance correction does not alter production code, prompts/models, RAG/retrieval, scorer/evaluator behavior, corpus, workflows or acceptance criteria.
+## Original pre-freeze acceptance criteria
 
-## Original acceptance review for the resubmitted candidate
-
-| Original Work Package obligation | Concrete evidence; human gate stays pending |
+| Original Work Package criterion | Candidate-3 evidence / remaining boundary |
 | --- | --- |
-| Small/diverse candidate, not repackaged synthetic inputs | Still 6 positive / 2 ambiguous / 2 non-architecture. Six positive visual grammars and distinct reference topologies; no historical input bytes/layout reused. Realism limitations are listed for each image, not declared solved by tests. |
-| Pinned bytes / reproducible repository-owned representation | Ten newly pinned PNG/SVG pairs and 25-file candidate-2 identity; candidate-1 identity preserved and marked superseded. |
-| Provenance / redistribution or recreation basis | Original source records and per-case source basis retained; all added symbols/UI/document geometry are original. No unlicensed artwork copied. |
-| Reviewable positive components, relationships and resource intent | Every case below embeds actual bytes and full unchanged truth plus visual symbol mapping, acceptable variants and material forbidden interpretations. |
-| Explicit control rejection truth | All four controls still forbid Terraform generation in the manifest; rejection reasons are in review/provenance, not explanatory input captions. |
-| No model-under-test execution / output-driven edits | Run count stays 0; edits respond only to the user's visual human-review findings. No live or image-generation model call. |
-| Existing synthetic datasets unchanged | Protected-path/base-to-branch audit passes; six reference topologies are retained rather than copying/restyling canonical/holdout assets. |
-| No production behavior or live cloud change | Only allowed dataset/assets, review/provenance and durable-state documents change. No prompt/model/RAG/retrieval/scorer/evaluator change. |
-| Case register and remaining uncertainties | All ten per-case sections include full truth, provenance, visual differences and realism limitations; human visual/truth confirmation remains pending. |
-| Program stops at truth-freeze gate | State/WP remain HUMAN_REQUIRED, no approver or freeze timestamp, PT-2 ineligible and merge unapproved. |
-
-Human-review deliverable findings are addressed by observable removal of the old teaching sentences and varied short-label/symbol/layout inputs. Realistic visual suitability and truth freeze are **resubmitted for human review**, not inferred from these checks.
+| Small/diverse candidate, not repackaged synthetic inputs | Same 6 positive / 2 ambiguous / 2 non-architecture inputs and six positive visual grammars. Independent review passed visual fidelity; reference-recreation limitations remain explicit. |
+| Pinned bytes / reproducible repository-owned representation | All ten PNG/SVG pairs remain unchanged; the new 26-file identity pins corrected metadata and both superseded identities. |
+| Provenance / redistribution or recreation basis | Original source URL/access/checksum and asset-license records remain intact. Portal source facts are corrected and distinguished from candidate adaptations. |
+| Reviewable positive components, relationships and resource intent | All ten images and full truth are presented below. Six resource audits separate required architecture/bindings from acceptable support without removing topology or material forbidden interpretations. |
+| Explicit control rejection truth | Four control labels, forbidden Terraform generation and provenance rejection reasons are unchanged. |
+| No model-under-test execution / output-driven edits | Run count stays 0; metadata corrections respond only to independent review, without model output. |
+| Existing synthetic datasets unchanged | This iteration touches only allowed PT-1 metadata/state/review paths; no synthetic fixture or production/test behavior change. |
+| No production behavior or live cloud change | Prompt/model/RAG/retrieval/scorer/evaluator, corpus, workflow and infrastructure remain unchanged. No live action occurred. |
+| Case register and remaining uncertainties | Each case still has full truth, provenance, visual differences and realism limitations. Portal factual uncertainty is explicitly distinguished from pending human approval of adaptations. |
+| Program stops at truth-freeze gate | HUMAN_REQUIRED; approver/freeze timestamp null, PT-1 incomplete, PT-2 ineligible, merge unapproved. Latest CHANGES_REQUIRED feedback awaits independent re-review. |
 
 ## Per-case human review
 
@@ -57,7 +58,7 @@ The images embedded below are the exact candidate PNG inputs, not thumbnails wit
 
 Input SHA-256: `ec58701f5a1c610208ef24e74d30cd5ae0f0b35c16d5aabf7b22163adae7e9b7`. Candidate classification: `ARCHITECTURE_DIAGRAM`.
 
-**Provenance and asset basis.** AWS architecture blog describes S3/CloudFront presentation, API Gateway/Lambda business logic and DynamoDB data. Authentication omitted because no identity service is specified here. Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.
+**Provenance and asset basis.** The selected AWS architecture blog describes S3/CloudFront presentation, API Gateway/Lambda business logic, DynamoDB data, and Amazon Cognito user-pool authentication. The PT-1 candidate intentionally scopes Cognito/authentication out. Its explicit HTTP API annotation and aws_apigatewayv2_api binding are PT-1 adaptations, not a claim that the source uniquely mandates HTTP API. Original PT-1 contribution. Source pages inform factual topology only; their images, icons, screenshots and prose are not redistributed. Public accessibility is not treated as an artwork license.
 
 - [Building a three-tier architecture on a budget | AWS Architecture Blog](https://aws.amazon.com/blogs/architecture/building-a-three-tier-architecture-on-a-budget/)
 
@@ -92,6 +93,10 @@ Acceptable semantic variants: Service-name synonyms are acceptable; support reso
 
 Allowed support types: `aws_apigatewayv2_integration`, `aws_apigatewayv2_route`, `aws_apigatewayv2_stage`, `aws_lambda_permission`, `aws_iam_role`, `aws_iam_policy`, `aws_cloudfront_origin_access_control`.
 
+**Required-versus-support resource audit.** CloudFront, S3, explicitly labeled HTTP API, Lambda and DynamoDB are visible architecture nodes. Their required resource types remain unchanged. API wiring, Lambda permission/IAM and origin access controls remain acceptable support; valid supplied references may provide them.
+
+**Source facts and candidate adaptations.** The source includes S3/CloudFront presentation, API Gateway/Lambda business logic and DynamoDB data. The source includes Amazon Cognito user pools for user authentication. Cognito/authentication is intentionally outside this bounded candidate image and truth; its omission does not describe the source. The candidate explicitly selects HTTP API / aws_apigatewayv2_api. A REST API swap does not match this candidate label, although the source does not uniquely mandate the v2 API choice.
+
 **Forbidden interpretations:**
 
 - Components: Application Load Balancer; RDS Database; EKS.
@@ -102,7 +107,7 @@ Allowed support types: `aws_apigatewayv2_integration`, `aws_apigatewayv2_route`,
 
 **Remaining realism limitation.** A deliberately composed vector export, not a collected portal diagram. S3/CloudFront/DynamoDB text still aids recognition; the original symbols do not test official AWS icon recognition.
 
-**Truth uncertainty / human decision.** No new factual guess or semantic-truth weakening is introduced. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
+**Truth uncertainty / human decision.** Source authentication facts were rechecked against the recorded AWS source. The two scope/API choices are explicit candidate adaptations, not unresolved source guesses; remainingTruthUncertainties is empty for factual uncertainty. Human acceptance of those adaptations and all truth remains pending. Human confirmation of this revised visual, symbol mapping, source fidelity and classification remains pending; neither this prose nor a passing test approves truth.
 
 ### pt1-02-order-fanout
 
@@ -138,13 +143,17 @@ Input SHA-256: `f78bb2a4f0e66df7cc1f613aa739997b433a6757ee7f2d15a213d4c4e772194c
 
 **Resource intent:**
 
-- One SNS topic fans out to two distinct SQS queues. Each queue feeds its own Lambda consumer using an event-source mapping; queue policy allows SNS delivery.
+- One SNS topic fans out to two distinct SQS queues through subscriptions. Each queue feeds its own Lambda consumer using an event-source mapping. Valid SNS delivery and consumer access are required, but creation of a new queue-policy or IAM resource is not.
 
-Required resource types: `aws_sns_topic`, `aws_sns_topic_subscription`, `aws_sqs_queue`, `aws_sqs_queue_policy`, `aws_lambda_function`, `aws_lambda_event_source_mapping`.
+Required resource types: `aws_sns_topic`, `aws_sns_topic_subscription`, `aws_sqs_queue`, `aws_lambda_function`, `aws_lambda_event_source_mapping`.
 
-Acceptable semantic variants: Relationship arrows denote event/data flow; Lambda polls SQS rather than SQS invoking Lambda directly.
+Acceptable semantic variants: Relationship arrows denote event/data flow; Lambda polls SQS rather than SQS invoking Lambda directly. SNS delivery authorization and Lambda queue access may use existing policies/roles or equivalent valid references; aws_sqs_queue_policy and IAM resource creation are acceptable support, not required image truth.
 
-Allowed support types: `aws_iam_role`, `aws_iam_policy`.
+Allowed support types: `aws_iam_role`, `aws_iam_policy`, `aws_sqs_queue_policy`.
+
+**Required-versus-support resource audit.** The visible SNS-to-two-SQS fanout and separate SQS-to-Lambda consumers require topic, queues, functions and the semantic subscription/event-source bindings. A queue policy authorizes delivery rather than defining the fanout topology; existing authorization is valid. The image does not require new queue-policy/IAM creation.
+
+Moved from REQUIRED to ACCEPTABLE: `aws_sqs_queue_policy`.
 
 **Forbidden interpretations:**
 
@@ -191,11 +200,15 @@ Input SHA-256: `b61251fada65971e1ba92557577861085a1c7df325b8c048bbb38b69f88a89a8
 
 - A Step Functions Parallel state invokes two distinct Lambda tasks and joins their outputs. Workflow states are not separately deployed cloud services.
 
-Required resource types: `aws_sfn_state_machine`, `aws_lambda_function`, `aws_iam_role`.
+Required resource types: `aws_sfn_state_machine`, `aws_lambda_function`.
 
-Acceptable semantic variants: Parallel/join can be described in words rather than as separate components; terminal result array is logical output, not a database.
+Acceptable semantic variants: Parallel/join can be described in words rather than as separate components; terminal result array is logical output, not a database. Valid Step Functions/Lambda execution permissions may be supplied by existing role ARNs/policies; the image does not require creation of aws_iam_role.
 
-Allowed support types: `aws_iam_policy`, `aws_iam_role_policy`.
+Allowed support types: `aws_iam_policy`, `aws_iam_role_policy`, `aws_iam_role`.
+
+**Required-versus-support resource audit.** The depicted Step Functions Parallel workflow and two Lambda tasks require the state machine and functions; branch/join semantics remain required. An existing execution role ARN and policies can authorize these calls. New IAM-role creation is not visible or independently required.
+
+Moved from REQUIRED to ACCEPTABLE: `aws_iam_role`.
 
 **Forbidden interpretations:**
 
@@ -247,9 +260,11 @@ Input SHA-256: `7b13925481c47f774ee211516144c37ea4a3dfb88f68abbe00baaa83428e7dca
 
 Required resource types: `aws_s3_bucket`, `aws_glue_crawler`, `aws_glue_catalog_database`, `aws_athena_workgroup`.
 
-Acceptable semantic variants: Metadata lookup may be described as Athena -> Glue; read-direction descriptions may reverse the data-flow arrow when the read semantics remain explicit. Crawler may create tables dynamically.
+Acceptable semantic variants: Metadata lookup may be described as Athena -> Glue; read-direction descriptions may reverse the data-flow arrow when the read semantics remain explicit. Crawler may create tables dynamically. Existing Glue execution roles/policies are valid support; the crawler may create catalog tables dynamically. No new IAM role or explicit table resource is required by the image.
 
 Allowed support types: `aws_glue_catalog_table`, `aws_iam_role`, `aws_iam_policy`.
+
+**Required-versus-support resource audit.** Source/results S3 buckets, Glue crawler/database and a named Athena workgroup are explicitly selected visible architecture intent; required types remain unchanged. IAM resources remain acceptable; crawler-created tables are valid without an explicit aws_glue_catalog_table resource.
 
 **Forbidden interpretations:**
 
@@ -299,13 +314,17 @@ Input SHA-256: `4de17a100ac94ea9cd4c61be505fad45cc99dd3cb066fb484b7cbc2f5b50be32
 
 **Resource intent:**
 
-- Two public and two private subnets across two AZs; one logical ALB and ASG; ASG instances are supplied by a launch template, not mandatory standalone aws_instance resources. One NAT per AZ, private egress routing and S3 gateway endpoint.
+- Two public and two private subnets across two AZs; one logical ALB and ASG with ASG-managed EC2 instances in private subnets. One NAT per AZ, private egress routing and S3 gateway endpoint remain required. The fleet needs a valid launch specification, routing and access configuration, but not new launch-template, route-table or security-group resources; standalone aws_instance resources are not mandatory.
 
-Required resource types: `aws_vpc`, `aws_subnet`, `aws_internet_gateway`, `aws_lb`, `aws_autoscaling_group`, `aws_launch_template`, `aws_nat_gateway`, `aws_route_table`, `aws_vpc_endpoint`, `aws_security_group`.
+Required resource types: `aws_vpc`, `aws_subnet`, `aws_internet_gateway`, `aws_lb`, `aws_autoscaling_group`, `aws_nat_gateway`, `aws_vpc_endpoint`.
 
-Acceptable semantic variants: Route entries may be inline or standalone; ALB/ASG node placement can be expressed as shared resources. No IPv6 or egress-only gateway required.
+Acceptable semantic variants: Route entries may be inline or standalone; ALB/ASG node placement can be expressed as shared resources. No IPv6 or egress-only gateway required. A valid existing launch-template/specification reference, security-group IDs and route-table IDs may supply support. Routes may be inline or standalone on valid supplied tables. These alternatives must retain private instance placement, ALB-to-fleet traffic, per-AZ NAT egress and S3 endpoint routing.
 
-Allowed support types: `aws_route`, `aws_route_table_association`, `aws_eip`, `aws_lb_listener`, `aws_lb_target_group`, `aws_vpc_endpoint_route_table_association`.
+Allowed support types: `aws_route`, `aws_route_table_association`, `aws_eip`, `aws_lb_listener`, `aws_lb_target_group`, `aws_vpc_endpoint_route_table_association`, `aws_launch_template`, `aws_route_table`, `aws_security_group`.
+
+**Required-versus-support resource audit.** VPC, public/private subnet and AZ boundaries, IGW, logical ALB/ASG, per-AZ NAT and S3 gateway endpoint are visible architecture intent. Routing and private placement remain required semantics. No separate launch-template, security-group or route-table node requires creation. Existing launch specifications, security-group IDs and route-table references with valid routes may provide equivalent support.
+
+Moved from REQUIRED to ACCEPTABLE: `aws_launch_template`, `aws_route_table`, `aws_security_group`.
 
 **Forbidden interpretations:**
 
@@ -349,13 +368,17 @@ Input SHA-256: `b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c
 
 **Resource intent:**
 
-- Two distinct buckets; ObjectCreated notification on the source only; S3 invocation permission and Lambda execution-role access to read source/write output.
+- Two distinct buckets; ObjectCreated notification on the source only invokes the thumbnail Lambda, which reads source objects and writes output. Valid S3 invocation authorization and Lambda read/write access are required, without requiring new permission or execution-role resource creation.
 
-Required resource types: `aws_s3_bucket`, `aws_s3_bucket_notification`, `aws_lambda_function`, `aws_lambda_permission`, `aws_iam_role`.
+Required resource types: `aws_s3_bucket`, `aws_s3_bucket_notification`, `aws_lambda_function`.
 
-Acceptable semantic variants: Service synonyms and equivalent IAM support resources are acceptable; merging buckets is excluded by this explicitly chosen two-bucket diagram.
+Acceptable semantic variants: Service synonyms and equivalent IAM support resources are acceptable; merging buckets is excluded by this explicitly chosen two-bucket diagram. Existing execution-role ARNs, invocation permission and access policies may supply valid support; aws_lambda_permission and aws_iam_role creation are acceptable, not required. The source-only notification, read/write direction and two-bucket separation remain mandatory.
 
-Allowed support types: `aws_iam_policy`, `aws_iam_role_policy`, `aws_s3_bucket_public_access_block`.
+Allowed support types: `aws_iam_policy`, `aws_iam_role_policy`, `aws_s3_bucket_public_access_block`, `aws_lambda_permission`, `aws_iam_role`.
+
+**Required-versus-support resource audit.** Two S3 buckets and the Lambda function are visible nodes; the source ObjectCreated-to-Lambda notification is the required event binding. Invocation permission and execution-role access must be valid but may already exist. The image does not require new aws_lambda_permission or aws_iam_role resources.
+
+Moved from REQUIRED to ACCEPTABLE: `aws_lambda_permission`, `aws_iam_role`.
 
 **Forbidden interpretations:**
 
@@ -507,6 +530,6 @@ Input SHA-256: `e6b9b281784f869526f3deb3096919a36b620ff4106c76d32434478b3d8fe672
 
 ## Human checkpoint
 
-Review all ten exact input images and their complete truth at the new candidate-2 identity. The old candidate was rejected; this revised candidate is resubmitted and remains unapproved. The original Work Package requires: **"Stop at the REALISTIC_DATASET_TRUTH_FREEZE human gate with a reviewable candidate."**
+Review all ten unchanged exact input images and the corrected full truth at the new candidate-3 identity. Submitted corrections require independent acceptance review; `CHANGES_REQUIRED` remains the latest review decision until a new review is posted. The original Work Package requires: **"Stop at the REALISTIC_DATASET_TRUTH_FREEZE human gate with a reviewable candidate."**
 
-State remains `HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE`. PT-1 is not complete, PT-2 is not started, and merge is not authorized. The immediate next single task is human review/explicit truth freeze of this revision; any later PT-2 live baseline still requires its separate checkpoint.
+State remains `HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE`. PT-1 is not complete, PT-2 is not eligible or started, and merge is not authorized. The immediate next single task is human review and explicit truth freeze of revision 3; any later PT-2 live baseline has its separate checkpoint.

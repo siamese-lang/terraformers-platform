@@ -1,6 +1,6 @@
 {
   "historyVersion": "pt1-candidate-history-v1",
-  "currentCandidateRevision": 2,
+  "currentCandidateRevision": 3,
   "supersededCandidates": [
     {
       "candidateRevision": 1,
@@ -11,6 +11,20 @@
       "originalIdentityPath": "evaluation/terraformers-realistic-v1/candidate-identity.json",
       "rejectedOn": "2026-10-06",
       "reason": "Useful provenance/topology but answer leakage and uniform full-label rectangle visuals prevented realistic benchmark freeze.",
+      "truthWasFrozen": false,
+      "modelUnderTestRunCount": 0
+    },
+    {
+      "candidateRevision": 2,
+      "status": "SUPERSEDED_TRUTH_CONTRACT_CHANGES_REQUIRED",
+      "identitySha256": "c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852",
+      "archivedIdentityPath": "superseded/candidate-02-identity.json",
+      "sourceHeadSha": "44b73b02840abbaf1da8349e124e73fe5ccb6e5e",
+      "originalIdentityPath": "evaluation/terraformers-realistic-v1/candidate-identity.json",
+      "reviewCommentId": 6015448816,
+      "reviewUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015448816",
+      "supersededOn": "2026-10-06",
+      "reason": "Visual fidelity passed independent review; source/adaptation wording and implementation-support resource truth still required correction. Revision 3 preserves every fixture byte.",
       "truthWasFrozen": false,
       "modelUnderTestRunCount": 0
     }

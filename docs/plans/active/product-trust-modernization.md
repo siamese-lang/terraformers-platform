@@ -6,8 +6,12 @@
 
 The user approved `product-trust-v1` on 2026-10-06. PT-1 activated on exact main
 `0bb244756c2a2e1d3d6d11d0342e98e155f8662c` and retains that execution base. The first candidate was rejected in human review; the explicitly
-authorized visual corrective iteration prepared candidate revision 2 with ten reference-based/control
-inputs. Original acceptance and topology truth are retained; this is not a second autonomous repair.
+authorized visual corrective iteration prepared candidate revision 2. The latest structured PR review
+passed its visual fidelity but required source/adaptation and support-resource truth corrections.
+Human-authorized iteration 2 submits candidate revision 3 with all ten input images byte-for-byte
+unchanged. Original acceptance, component/topology truth and forbidden interpretations are retained;
+autonomous repairs remain 1. Open-PR recovery first reads the latest structured acceptance feedback;
+full standing rules and the unresolved independent review checkpoint are recorded in durable state.
 See [PT-1 review evidence](../../evaluation/product-trust-pt-1-realistic-input-freeze.md) and
 [the candidate images/truth](../../../evaluation/terraformers-realistic-v1/README.md). Truth is not
 frozen; merge and any PT-2 live baseline remain separate human checkpoints.

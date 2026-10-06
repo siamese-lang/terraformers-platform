@@ -14,7 +14,7 @@
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
     "teardownAuthorized": false
   },
-  "nextEligiblePhaseAfterApproval": "PT-0",
+  "nextEligiblePhaseAfterApproval": "PT-1",
   "evidencePolicy": "REALISTIC_PRODUCT_EVIDENCE_OVERRIDES_BROADER_HISTORICAL_CLAIMS",
   "notes": [
     "A7-8 is deferred.",

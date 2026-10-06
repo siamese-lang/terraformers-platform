@@ -132,6 +132,35 @@ class CaseAQualityCalibrationTest {
         assertThat(missed.falseGreen()).isTrue();
     }
 
+    @Test void relationshipMatcherAllowsOneDescriptiveEntityTokenToBeOmitted() {
+        var baseDefinition = positiveDefinition();
+        var definition = new EvaluationCase(
+                baseDefinition.schemaVersion(), baseDefinition.datasetVersion(), baseDefinition.caseId(),
+                baseDefinition.input(), baseDefinition.expectedClassification(),
+                new EvaluationCase.TextExpectation(
+                        List.of("VPC Endpoint", "OpenSearch Serverless VECTORSEARCH"), List.of(), List.of()),
+                new EvaluationCase.TextExpectation(
+                        List.of("VPC Endpoint -> OpenSearch Serverless VECTORSEARCH"), List.of(), List.of()),
+                baseDefinition.resourceTypes(), baseDefinition.retrieval(), baseDefinition.generation(),
+                baseDefinition.validation(), baseDefinition.notes());
+        var base = successfulPositiveTrace();
+        var facts = StageTrace.pass(
+                EvaluationStage.FACT_EXTRACTION,
+                10,
+                new EvaluationTrace.FactExtractionEvidence(
+                        InputClassification.ARCHITECTURE_DIAGRAM,
+                        "facts",
+                        List.of("VPC Endpoint", "OpenSearch Serverless VECTORSEARCH Collection"),
+                        List.of("VPC Endpoint connects privately to OpenSearch Serverless"),
+                        List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
+        var trace = new EvaluationTrace(
+                base.schemaVersion(), base.datasetVersion(), base.runId(), base.caseId(),
+                base.input(), base.configuration(), facts, base.retrieval(),
+                base.generation(), base.validation(), null);
+
+        assertThat(scorer.score(definition, trace).relationshipCoverage().requiredMatched()).isOne();
+    }
+
     @Test void relationshipQualifierMustBePresentWhenFrozenLabelRequiresIt() {
         var baseDefinition = positiveDefinition();
         var definition = new EvaluationCase(
@@ -223,6 +252,26 @@ class CaseAQualityCalibrationTest {
         assertThat(result.technicalSuccess()).isFalse();
         assertThat(result.labeledQualitySuccess()).isTrue();
         assertThat(result.falseGreen()).isFalse();
+    }
+
+    @Test void generatedResourcesWithoutOfficialEvidenceFailFrozenLabel() {
+        var trace = trace(
+                "run",
+                "positive",
+                EvaluationStageStatus.PASS,
+                List.of(
+                        hit(1, "decision"),
+                        hit(2, "official", "aws_vpc", "aws_security_group")),
+                requiredResources(),
+                true);
+
+        var result = scorer.score(positiveDefinition(), trace);
+
+        assertThat(result.grounding().resourceTypeCoverage().missing()).isEmpty();
+        assertThat(result.grounding().generatedResourceOfficialEvidenceCoverage().missing())
+                .containsExactlyInAnyOrder("aws_lb", "aws_db_instance");
+        assertThat(result.labeledQualitySuccess()).isFalse();
+        assertThat(result.falseGreen()).isTrue();
     }
 
     @Test void incompleteProjectDecisionGroundingFailsFrozenLabel() {

@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "product-trust-deterministic-audit-v1",
+  "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
+  "authority": "USER-authorized audit and correction of untrusted PR #245 handoff",
+  "authoritativeMainAtAudit": "c3e9ed4e854778dfb2eefbc0182ae53a008025bf",
+  "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+  "suppliedHandoffHead": "a8cd0270ed89321cea20ed5a66e02f99cd3b5321",
+  "auditedRemoteHead": "f2afda0e2e5957b161749d752ba2400593212fb7",
+  "laterRemoteCommitsIndependentlyAudited": 5,
+  "structuredReviewOnPR245": "NONE_AT_AUDIT",
+  "correctionSeparateFromAutonomousRepair": true,
+  "autonomousRepairCounterChanged": false,
+  "priorEvidence": {
+    "runId": 37480519016,
+    "runAttempt": 1,
+    "dispatchSha": "c3e9ed4e854778dfb2eefbc0182ae53a008025bf",
+    "artifactId": 11422455892,
+    "archiveDigest": "sha256:499f31b4311737884a2b7d0fc0405d477be7e41a99e9969217570c91eb5ac561",
+    "inventorySha256": "107d31a942dcbc23bbfaf1f81e7c1b9c6a2fac4224d5689edb216a0bd4378f3d",
+    "inventoryEntriesVerified": 274,
+    "actualGitHubDownloadMetadataArchiveAndExtraction": "PASS",
+    "case01": "Original completed SUCCEEDED sample preserved; no live API read or submission",
+    "case02": "Original TERMINAL_NOT_OBSERVED / 424846 ms censor preserved; recovery not executed",
+    "cases03Through10": "Original NOT_RUN / zero attempts; continuation not executed"
+  },
+  "procedure": {
+    "version": "pt2-realistic-continuation-v2",
+    "protocolSha256": "1658b5c328fdfde9671542373309e68165d7aae6f4b973d0b781f03890b097ee",
+    "supersededUnexecutedDraftProtocolSha256s": [
+      "28d225feceb2240d127a9fe7b0f33d3bbca836ecc2913bd3b6ff2a9721be1b00",
+      "d24bdec4065d647ac4ae5cf21afb76b4e98fd9d50faacd3f3e72783313ace482"
+    ],
+    "measurementSeconds": 420,
+    "drainSecondsFromOriginalAcceptance": 1200,
+    "outerSubmissionRetries": 0,
+    "onlyFirstUploadCases": [
+      "pt1-03-parallel-lookup",
+      "pt1-04-analytics-catalog",
+      "pt1-05-private-web-fleet",
+      "pt1-06-thumbnail-pipeline",
+      "pt1-07-unresolved-design",
+      "pt1-08-partial-export",
+      "pt1-09-sprint-board",
+      "pt1-10-workshop-table"
+    ]
+  },
+  "correctedFindings": [
+    "Terminal receipt beyond the measurement boundary must remain censored; late drain receipt stops the batch.",
+    "Artifact metadata claims alone do not verify ZIP bytes; download exact ID and verify archive/inventory/exact file set.",
+    "New dispatch run ID can repeat uploads despite run_attempt=1; bind paginated history through original run and forbid prior continuation dispatch.",
+    "Generic numeric fixture-owner override weakens helper scope; allow only exact original owner for continuation operation.",
+    "Recovery/readback exceptions must preserve partial ledger and prevent subsequent submissions.",
+    "Direct submission rejects prior/attempted/disguised inputs; duplicate prior/new project identities also stop.",
+    "Failed JWT/JWKS restoration must clean private files and keep ownership marker to report un-restored fixture.",
+    "Admission rejection is preserved without asserting complete terminal measurement."
+  ],
+  "validation": {
+    "pythonCommand": "python3 -m unittest discover -s scripts/evaluation -p 'test_pt2_realistic*.py' -v",
+    "tests": 50,
+    "baselineAndSharedHelperTests": 20,
+    "continuationTests": 30,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "initialDevelopmentTestFailure": {
+      "tests": 47,
+      "errors": 1,
+      "cause": "New fake natural-failure mode incorrectly returned 404 for the already-SUCCEEDED prior recovery sample; test fixture corrected. No live call or rerun."
+    },
+    "workflowYaml": "PASS",
+    "workflowBashBlocks": {
+      "evaluationBaseline": 41,
+      "runtimeDependencies": 48
+    },
+    "bashSyntax": "PASS",
+    "actionlintVersion": "1.7.12",
+    "actionlint": "PASS",
+    "shellcheck": "NOT_RUN",
+    "artifactDownloadCommand": "gh api exact artifact ID /zip; actual digest verified",
+    "dispatchHistoryCommand": "gh api --paginate | jq --slurp; actual repository history captured; no continuation dispatch present",
+    "frozenIdentity": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+    "frozenPinnedFileCount": 26,
+    "frozenBytes": "PASS_UNCHANGED",
+    "scopeAudit": "PASS",
+    "gitDiffCheck": "PASS",
+    "backendTests": "NOT_RUN: no backend/product/API changes; proportional Python/workflow/auth-helper validation only"
+  },
+  "unchangedBoundaries": [
+    "backend/product code",
+    "frontend",
+    "frozen truth/dataset",
+    "prompt/model/RAG/retrieval/scorer",
+    "corpus",
+    "infrastructure/IAM",
+    "runtime configuration/rollout",
+    "program durable state and counters"
+  ],
+  "newLiveActions": {
+    "workflowDispatches": 0,
+    "GcpActions": 0,
+    "uploads": 0,
+    "modelInvocations": 0,
+    "case02RecoveryReads": 0
+  },
+  "independentAcceptance": "PENDING_REVIEW; this audit does not self-approve preparation or PT-2 result",
+  "stopAt": "HUMAN_REQUIRED: MERGE_CHECKPOINT",
+  "pt3": "BLOCKED until original plus continuation result evidence receives independent acceptance"
+}

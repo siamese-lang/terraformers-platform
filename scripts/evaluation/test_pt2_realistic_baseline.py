@@ -269,5 +269,41 @@ elif 'exec' in args: print((root/'case-c-jwks.json').read_text())
         self.assertEqual(len(restarts),2)
         self.assertTrue(all('deployment/terraformers-jwks' in line for line in restarts))
 
+    def test_identity_run_id_override_changes_subject_not_current_run_kid(self):
+        import base64
+        self.assertEqual(self.invoke('prepare',OPERATION='pt2-realistic-continuation',IDENTITY_RUN_ID='37480519016').returncode,0)
+        token=self.directory/'case-c-access.token'
+        header,payload,_=token.read_text().split('.')
+        claims=json.loads(base64.urlsafe_b64decode(payload+'='*(-len(payload)%4)))
+        jose=json.loads(base64.urlsafe_b64decode(header+'='*(-len(header)%4)))
+        self.assertEqual(claims['sub'],'case-c-37480519016')
+        self.assertEqual(claims['email'],'case-c-37480519016@example.test')
+        self.assertEqual(jose['kid'],'case-c-12345')
+        self.assertEqual(claims['exp']-claims['iat'],10800)
+        self.assertEqual(self.invoke('restore').returncode,0)
+
+    def test_invalid_identity_run_id_is_rejected_before_fixture_mutation(self):
+        result=self.invoke('prepare',IDENTITY_RUN_ID='not-a-run-id')
+        self.assertNotEqual(result.returncode,0)
+        self.assertFalse((self.directory/'ephemeral-jwks-owned.marker').exists())
+
+    def test_numeric_owner_override_is_restricted_to_the_exact_continuation(self):
+        for operation,owner in [('pt2-realistic-baseline','37480519016'),
+                                ('a7-7-broad-v4-live-proof','37480519016'),
+                                ('pt2-realistic-continuation','99999')]:
+            with self.subTest(operation=operation,owner=owner):
+                self.assertNotEqual(self.invoke('prepare',OPERATION=operation,IDENTITY_RUN_ID=owner).returncode,0)
+                self.assertFalse((self.directory/'calls').exists())
+
+    def test_failed_restore_removes_secrets_but_keeps_unrestored_ownership_marker(self):
+        self.assertEqual(self.invoke('prepare').returncode,0)
+        header=self.directory/'pt2-auth-example'
+        header.write_text('private authorization header')
+        self.assertNotEqual(self.invoke('restore',FAIL_APPLY='1').returncode,0)
+        self.assertTrue((self.directory/'ephemeral-jwks-owned.marker').exists())
+        for name in ['case-c-private.pem','case-c-access.token','case-c-unsigned.token',
+                     'case-c-signature.bin','case-c-modulus.bin','pt2-auth-example']:
+            self.assertFalse((self.directory/name).exists(),name)
+
 
 if __name__=='__main__': unittest.main()

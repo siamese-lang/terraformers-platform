@@ -1,0 +1,196 @@
+work_package:
+  id: product-trust-pt-2-current-system-realistic-live-baseline-v1
+  program: product-trust-v1
+  phase: PT-2
+  status: PROCEDURE_FROZEN
+  approved_base_sha: 3caae454661d21d84c3e469a7d76aff5633d5b26
+  execution_base_sha: 3caae454661d21d84c3e469a7d76aff5633d5b26
+  activated_at: "2026-10-06T12:45:08Z"
+  authorization:
+    authority: USER
+    live_realistic_baseline: APPROVED
+    existing_protected_workflow_extension: APPROVED
+    approval_source: Explicit instructions in the current product-trust-v1 conversation on 2026-10-06
+    merge_authorized: false
+    pt3_authorized: false
+  activation:
+    main_read_count_at_activation: 1
+    main_drift: HUMAN_REQUIRED
+    rule: >
+      Preserve this execution_base_sha and this Work Package across the required workflow merge
+      checkpoint. Do not rebase, refresh main or replace the PR. The explicitly approved merge of
+      this bounded workflow change is a checkpoint transition, not an implicit execution-base
+      rebind. Record its resulting trusted dispatch SHA separately on resume; unrelated main drift
+      requires HUMAN_REQUIRED before dispatch. Inspect structured PR review feedback first.
+  objective: >
+    Measure the unchanged current production-equivalent system against frozen realistic truth,
+    preserving natural failures and identifying the earliest independently supported divergence.
+    Preparation is not a completed baseline and CI success is not acceptance.
+  dataset:
+    directory: evaluation/terraformers-realistic-v1
+    revision: 3
+    identity_sha256: 04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014
+    truth_authority: .agents/state/product-trust-v1.json#truthFreezeApproval
+    immutable: true
+    cases: 10
+    architecture_cases: 6
+    ambiguous_cases: 2
+    non_architecture_cases: 2
+  measurement:
+    protocol: docs/evaluation/product-trust-pt-2-measurement-protocol.md
+    procedure_version: pt2-realistic-baseline-v2
+    protocol_sha256: d8e615ef3fdc26de9be5e34b922da6c06055ca60e4b4e5b004775301d5479f90
+    frozen_before_baseline_outcomes: true
+    workflow: .github/workflows/gcp-target-evaluation-baseline.yml
+    scope: pt2-realistic-baseline
+    confirmation: RUN_PT2_REALISTIC_BASELINE
+    representative_path: authenticated production upload -> persisted AnalysisJob -> same-job readback
+    repetition: one sequential upload attempt and at most one accepted job per case in frozen manifest order
+    outer_retries: 0
+    workflow_reruns_after_any_case_started: prohibited_without_new_explicit_human_authorization
+    per_case_timeout_seconds: 420
+    production_internal_retry_and_closure_behavior: unchanged
+    poll_interval_seconds: 5
+    standalone_model_invocations: 0
+    truthful_observability: >
+      Capture actual persisted quality, project/API terminal semantics, full Terraform readback,
+      acceptance/terminal receipt times and same-job correlated backend stages. Browser execution
+      is NOT_RUN; source-bound client completion labels are presentation contract evidence.
+      Unemitted internal facts, ranked hits and generation timings are NOT_OBSERVED. No second
+      model invocation may recover traces. Censor missing terminal observations; never resubmit.
+  allowed_paths:
+    - .agents/work-packages/product-trust-pt-2-current-system-realistic-live-baseline-v1.yml
+    - .agents/state/product-trust-v1.json
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-pt-2-*.md
+    - docs/evidence/product-trust-pt-2/**
+    - .github/workflows/gcp-target-evaluation-baseline.yml
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+    - scripts/smoke/ephemeral-jwks-fixture.sh
+    - scripts/evaluation/pt2-realistic-baseline.py
+    - scripts/evaluation/test_pt2_realistic_baseline.py
+    - backend/src/main/java/com/terraformers/modernization/evaluation/LiveEvaluationLauncher.java
+    - backend/src/main/java/com/terraformers/modernization/evaluation/EvaluationRunner.java
+    - backend/src/test/java/com/terraformers/modernization/evaluation/LiveEvaluationLauncherTest.java
+    - backend/src/test/java/com/terraformers/modernization/evaluation/ProductionEquivalentClosureEvaluationTest.java
+  correction_boundary: >
+    The four previously edited backend evaluator/test files may only be restored byte-for-byte to
+    execution_base_sha. The runtime-dependencies workflow change only extracts the existing A7-7
+    JWT/JWKS prepare/restore steps into the shared helper used by PT-2; unrelated operations remain
+    unchanged. No production, evaluator, scorer, threshold or retrieval change is permitted.
+  human_review_correction:
+    iteration: 1
+    feedback_url: https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6017268972
+    reviewed_head: 436bbcc6728d10adf05f2bcfa07550bb45ed8ca7
+    decision: CHANGES_REQUIRED
+    blockers: [BLOCKER-1, BLOCKER-2]
+    authorization: USER standing review-feedback correction loop; separate from autonomous repair
+    superseded_procedure_version: pt2-realistic-baseline-v1
+    superseded_procedure_sha256: a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae
+    baseline_started: false
+    independent_acceptance: PENDING_CORRECTED_HEAD_REVIEW
+  evidence_handoff:
+    preparation: same existing branch and PR; explicit independent review and merge checkpoint
+    live_evidence: after merge GitHub Actions run plus immutable artifact is authoritative
+    review_binding: exact run ID, attempt, dispatch SHA, artifact ID/digest, inventory SHA and derived analysis
+    artifact_retention_days: 90
+    durable_completion: fold accepted PT-2 result into next substantive PT-3 or closure PR
+    dedicated_post_run_state_sync_or_normalization_PR: prohibited
+  allowed_actions:
+    - read_authority_PR_feedback_and_existing_runtime_contracts
+    - continue_same_task_branch_at_bound_base
+    - freeze_measurement_procedure_before_baseline_outcomes
+    - edit_only_allowed_paths_for_existing_workflow_scope_and_observational_harness
+    - run_proportional_deterministic_tests_and_checks
+    - commit_push_and_open_or_update_one_PT_2_PR
+    - inspect_CI_without_treating_green_as_acceptance
+    - execute_one_frozen_live_batch_only_after_required_workflow_merge_checkpoint
+    - preserve_raw_partial_and_failure_evidence_and_derive_same_job_frozen_truth_analysis
+    - update_durable_phase_and_evidence_state_without_transient_PR_lifecycle
+    - one_bounded_mechanical_harness_repair_for_the_same_failure_class
+  prohibited_actions:
+    - merge_without_explicit_human_authority
+    - direct_main_write_rebase_or_execution_base_rebind
+    - add_GCP_credentials_to_Codex_environment
+    - repeat_failed_case_or_rerun_until_green
+    - tune_truth_prompt_model_retrieval_or_scorer_from_outcomes
+    - start_PT_3
+    - backend_rollout_reindex_IAM_expansion_or_retained_runtime_teardown
+  prohibited_changes:
+    - frozen_dataset_or_truth
+    - prompts_models_retrieval_RAG_or_quality_behavior
+    - scoring_thresholds_or_existing_evaluator_policy
+    - production_code
+    - new_workflow
+    - infrastructure_IAM_security_boundary_or_runtime_rollout
+    - retained_runtime_teardown
+    - transient_GitHub_PR_or_branch_lifecycle_in_durable_program_state
+  runtime_contract:
+    credential_path: existing protected gcp-target-apply GitHub Actions WIF only
+    cluster: terraformers-target
+    namespace: terraformers-target
+    corpus: terraformers-reference-v4
+    corpus_checksum: da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a
+    expected_documents: 5395
+    embedding_model: gemini-embedding-2
+    vector_dimension: 1536
+    generation_model: gemini-3.8-flash
+    provider_version: 5.100.0
+    terraform_version: 1.8.5
+    top_k: 8
+    max_output_tokens: 8192
+    pinning: >
+      Before inference verify retained deployment image/source/configuration against exact dispatch
+      source, evaluation toolchain and these existing broad-v4 values. Abort on mismatch; never
+      roll out, mutate backend configuration, reindex or silently choose a different model.
+    permitted_cleanup: restore owned placeholder JWKS fixture and delete only this run's ephemeral pod/secrets
+  required_evidence:
+    - immutable_procedure_dataset_runtime_source_and_run_artifact_identities
+    - every_case_upload_attempt_acceptance_identity_poll_and_failure_or_censored_record
+    - same_job_persisted_quality_project_API_status_and_full_Terraform_readback
+    - correlated_existing_backend_stage_retrieval_validation_and_retry_logs_where_observable
+    - internal_unobserved_details_explicitly_UNKNOWN_or_NOT_OBSERVED_without_extra_inference
+    - classification_component_relationship_resource_intent_and_topology_fidelity_against_frozen_truth
+    - retrieval_sufficiency_and_actual_provider_schema_executable_result_with_evidence_limits
+    - backend_trust_and_source_bound_user_presentation_claims_separately
+    - actual_false_trusted_success_findings_bound_to_same_job_and_semantic_truth_violation
+    - accepted_response_to_terminal_observation_latency_with_polling_uncertainty_and_censoring
+    - aggregate_denominators_concrete_failure_classes_and_independent_result_review
+  acceptance_criteria:
+    - frozen_identity_and_all_pinned_bytes_preserved
+    - procedure_and_repetition_frozen_before_new_baseline_outcomes
+    - unchanged_production_equivalent_configuration_proven_by_read_only_preflight
+    - all_ten_cases_accounted_for_without_rerun_until_green
+    - failures_preserved_and_pipeline_failure_class_distinguishable_where_observable
+    - per_case_and_aggregate_original_objective_dimensions_reported_without_fabrication
+    - actual_persisted_API_trust_and_accepted_to_terminal_observations_from_the_single_production_job
+    - no_PT3_quality_improvement_or_teardown
+    - one_preparation_PR_then_authoritative_immutable_run_artifact_review_and_next_substantive_PR_completion
+    - independent_review_required_before_phase_completion
+  validation:
+    - existing_dataset_loader_and_authenticated_upload_job_quality_project_Terraform_API_contract_tests
+    - deterministic_harness_tests_without_model_or_GCP_calls
+    - workflow_YAML_and_embedded_shell_syntax
+    - pinned_dataset_and_procedure_SHA256
+    - git_diff_scope_audit_and_git_diff_check
+  auto_repair_limit: 1
+  auto_repairs_used: 0
+  human_authorized_corrective_iterations: 1
+  stop_on:
+    - unrelated_MAIN_DRIFT
+    - MERGE_CHECKPOINT
+    - execution_configuration_or_dataset_identity_mismatch
+    - required_IAM_or_security_boundary_expansion
+    - second_autonomous_repair_or_changed_failure_class
+    - additional_model_run_or_failed_case_repeat_not_authorized
+    - missing_original_acceptance_evidence
+    - independent_review_checkpoint
+  completion:
+    preparation_result: CORRECTED_PROCEDURE_PENDING_INDEPENDENT_REVIEW_AND_MERGE
+    current_human_gate: MERGE_CHECKPOINT
+    baseline_complete: false
+    model_under_test_case_runs: 0
+    live_cloud_actions: 0
+    next_phase: PT-3
+    next_phase_authorized: false

@@ -76,9 +76,14 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
                 TerraformValidationFailureException.Category category = providerClosureFailure(init.output())
                         ? TerraformValidationFailureException.Category.PROVIDER_CLOSURE
                         : TerraformValidationFailureException.Category.INIT_CONFIGURATION;
-                outcome = failure(content, category, category == TerraformValidationFailureException.Category.PROVIDER_CLOSURE
-                        ? "offline provider closure could not be satisfied"
-                        : "Terraform initialization/configuration failed");
+                outcome = category == TerraformValidationFailureException.Category.PROVIDER_CLOSURE
+                        ? failure(content, category, "offline provider closure could not be satisfied")
+                        : failure(
+                                content,
+                                category,
+                                "Terraform initialization/configuration failed",
+                                reduceInitializationDiagnostics(init.output())
+                        );
             } else {
                 outcome = validateInitializedWorkspace(content, workspace);
             }
@@ -123,6 +128,41 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
                     "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation", summary);
         }
         return new TerraformDraftValidation(true, content, null);
+    }
+
+    private TerraformDiagnosticSummary reduceInitializationDiagnostics(String output) {
+        String normalized = output == null ? "" : output.toLowerCase(Locale.ROOT);
+        TerraformDiagnosticSummary.DiagnosticClass diagnosticClass = List.of(
+                        "invalid character",
+                        "invalid expression",
+                        "invalid escape sequence",
+                        "invalid multi-line string",
+                        "unclosed configuration block",
+                        "argument or block definition required",
+                        "missing newline after argument",
+                        "missing key/value separator",
+                        "invalid block definition")
+                .stream()
+                .anyMatch(normalized::contains)
+                ? TerraformDiagnosticSummary.DiagnosticClass.CONFIGURATION_SYNTAX
+                : TerraformDiagnosticSummary.DiagnosticClass.UNKNOWN;
+
+        int errorCount = boundedLineCount(normalized, "error:");
+        int warningCount = boundedLineCount(normalized, "warning:");
+        return new TerraformDiagnosticSummary(
+                List.of(diagnosticClass),
+                Math.max(1, errorCount),
+                warningCount
+        );
+    }
+
+    private int boundedLineCount(String output, String prefix) {
+        long count = output.lines()
+                .map(String::strip)
+                .filter(line -> line.startsWith(prefix))
+                .limit(TerraformDiagnosticSummary.MAX_COUNT)
+                .count();
+        return (int) count;
     }
 
     private TerraformDiagnosticSummary reduceDiagnostics(JsonNode envelope) {
@@ -200,6 +240,15 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
     private TerraformDraftValidation failure(String content, TerraformValidationFailureException.Category category,
                                              String message) {
         return invalid(content, category.name() + ": " + message);
+    }
+
+    private TerraformDraftValidation failure(
+            String content,
+            TerraformValidationFailureException.Category category,
+            String message,
+            TerraformDiagnosticSummary diagnosticSummary
+    ) {
+        return new TerraformDraftValidation(false, content, category.name() + ": " + message, diagnosticSummary);
     }
 
     private boolean providerClosureFailure(String output) {

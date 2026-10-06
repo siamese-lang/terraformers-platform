@@ -42,9 +42,11 @@ The signing-key `kid` remains unique to the continuation run. No prior private k
 and this identity continuity is permitted only for this bound recovery/continuation path.
 
 If the exact job is already terminal, preserve the terminal response, project readback, Terraform
-readback when present, and newly available correlated logs. If it is still PENDING/RUNNING, poll that
-same job only. If it cannot reach terminal within the bounded drain window, stop without uploading
-case 03. An inaccessible or identity-mismatched job also stops the continuation.
+readback when present, and newly available correlated logs. The drain bound remains anchored to the
+original acceptance time; it is never reset by this continuation. Because this correction is dispatched
+after the original 1200-second-from-acceptance drain bound has elapsed, a recovery read that still shows
+PENDING/RUNNING stops immediately without uploading case 03. An inaccessible or identity-mismatched
+job also stops the continuation.
 
 The recovery observation may complete semantic/trust review for case 02, but its latency sample remains
 `>420s` censored with the original 424846 ms observation. A later terminal timestamp must never replace

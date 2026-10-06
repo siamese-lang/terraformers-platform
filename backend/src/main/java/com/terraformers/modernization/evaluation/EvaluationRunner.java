@@ -12,12 +12,16 @@ import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
 import com.terraformers.modernization.analysis.TerraformDraftValidation;
 import com.terraformers.modernization.analysis.TerraformDraftValidator;
+import com.terraformers.modernization.analysis.vertex.VertexGroundedGenerationOrchestrator;
+import com.terraformers.modernization.analysis.vertex.VertexGroundedGenerationOrchestrator.Outcome;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationCase;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationDataset;
 import com.terraformers.modernization.evaluation.EvaluationTrace.ConfigurationIdentity;
 import com.terraformers.modernization.evaluation.EvaluationTrace.FactExtractionEvidence;
 import com.terraformers.modernization.evaluation.EvaluationTrace.FirstDivergence;
 import com.terraformers.modernization.evaluation.EvaluationTrace.GenerationEvidence;
+import com.terraformers.modernization.evaluation.EvaluationTrace.GroundingClosureEvidence;
+import com.terraformers.modernization.evaluation.EvaluationTrace.ClosureRetrievalEvidence;
 import com.terraformers.modernization.evaluation.EvaluationTrace.InputIdentity;
 import com.terraformers.modernization.evaluation.EvaluationTrace.ReferenceHit;
 import com.terraformers.modernization.evaluation.EvaluationTrace.RetrievalEvidence;
@@ -38,6 +42,7 @@ import com.terraformers.modernization.storage.ObjectMetadata;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,46 +57,49 @@ public class EvaluationRunner {
     private final RetrievalQueryTextBuilder queryTextBuilder;
     private final ReferenceRetriever referenceRetriever;
     private final EvaluationGenerationStage generationStage;
+    private final VertexGroundedGenerationOrchestrator groundedGeneration;
     private final EvaluationTerraformValidator terraformValidator;
     private final String terraformValidatorName;
     private final RetrievalMode retrievalMode;
     private final ConfigurationIdentity configuration;
 
-    public EvaluationRunner(
-            ArchitectureFactsExtractor factsExtractor,
-            RetrievalQueryTextBuilder queryTextBuilder,
-            ReferenceRetriever referenceRetriever,
-            AnalysisGenerationStage generationStage,
-            TerraformDraftValidator terraformDraftValidator,
-            RetrievalMode retrievalMode,
-            ConfigurationIdentity configuration
-    ) {
-        this(
-                factsExtractor,
-                queryTextBuilder,
-                referenceRetriever,
+    public EvaluationRunner(ArchitectureFactsExtractor factsExtractor, RetrievalQueryTextBuilder queryTextBuilder,
+            ReferenceRetriever referenceRetriever, AnalysisGenerationStage generationStage,
+            TerraformDraftValidator terraformDraftValidator, RetrievalMode retrievalMode,
+            ConfigurationIdentity configuration) {
+        this(factsExtractor, queryTextBuilder, referenceRetriever,
                 (context, source, facts, references) -> generationStage.generate(context, source, references),
-                terraformDraftValidator::validate,
-                TerraformDraftValidator.class.getSimpleName(),
-                retrievalMode,
-                configuration
-        );
+                terraformDraftValidator::validate, TerraformDraftValidator.class.getSimpleName(),
+                retrievalMode, configuration);
     }
 
-    public EvaluationRunner(
-            ArchitectureFactsExtractor factsExtractor,
-            RetrievalQueryTextBuilder queryTextBuilder,
-            ReferenceRetriever referenceRetriever,
-            EvaluationGenerationStage generationStage,
-            EvaluationTerraformValidator terraformValidator,
-            String terraformValidatorName,
-            RetrievalMode retrievalMode,
-            ConfigurationIdentity configuration
-    ) {
+    public EvaluationRunner(ArchitectureFactsExtractor factsExtractor, RetrievalQueryTextBuilder queryTextBuilder,
+            ReferenceRetriever referenceRetriever, EvaluationGenerationStage generationStage,
+            EvaluationTerraformValidator terraformValidator, String terraformValidatorName,
+            RetrievalMode retrievalMode, ConfigurationIdentity configuration) {
+        this(factsExtractor, queryTextBuilder, referenceRetriever, generationStage, null,
+                terraformValidator, terraformValidatorName, retrievalMode, configuration);
+    }
+
+    public EvaluationRunner(ArchitectureFactsExtractor factsExtractor, RetrievalQueryTextBuilder queryTextBuilder,
+            ReferenceRetriever referenceRetriever, VertexGroundedGenerationOrchestrator groundedGeneration,
+            EvaluationTerraformValidator terraformValidator, String terraformValidatorName,
+            RetrievalMode retrievalMode, ConfigurationIdentity configuration) {
+        this(factsExtractor, queryTextBuilder, referenceRetriever, null,
+                Objects.requireNonNull(groundedGeneration, "groundedGeneration"),
+                terraformValidator, terraformValidatorName, retrievalMode, configuration);
+    }
+
+    private EvaluationRunner(ArchitectureFactsExtractor factsExtractor, RetrievalQueryTextBuilder queryTextBuilder,
+            ReferenceRetriever referenceRetriever, EvaluationGenerationStage generationStage,
+            VertexGroundedGenerationOrchestrator groundedGeneration, EvaluationTerraformValidator terraformValidator,
+            String terraformValidatorName, RetrievalMode retrievalMode, ConfigurationIdentity configuration) {
         this.factsExtractor = Objects.requireNonNull(factsExtractor, "factsExtractor");
         this.queryTextBuilder = Objects.requireNonNull(queryTextBuilder, "queryTextBuilder");
         this.referenceRetriever = Objects.requireNonNull(referenceRetriever, "referenceRetriever");
-        this.generationStage = Objects.requireNonNull(generationStage, "generationStage");
+        this.generationStage = groundedGeneration == null
+                ? Objects.requireNonNull(generationStage, "generationStage") : null;
+        this.groundedGeneration = groundedGeneration;
         this.terraformValidator = Objects.requireNonNull(terraformValidator, "terraformValidator");
         this.terraformValidatorName = requireText(terraformValidatorName, "terraformValidatorName");
         this.retrievalMode = Objects.requireNonNull(retrievalMode, "retrievalMode");
@@ -302,10 +310,13 @@ public class EvaluationRunner {
     ) {
         long generationStartedAt = System.nanoTime();
         StageTrace<GenerationEvidence> generationTrace;
+        AtomicReference<Outcome> groundingOutcome = new AtomicReference<>();
         try {
-            AnalysisGenerationResult generated = generationStage.generate(context, source, facts, references);
+            AnalysisGenerationResult generated = groundedGeneration == null
+                    ? generationStage.generate(context, source, facts, references)
+                    : groundedGeneration.generate(context, source, facts, references, groundingOutcome::set).firstGeneration();
             EvaluationCase.InputClassification observed = classification(generated.inputClassification().name());
-            GenerationEvidence evidence = generationEvidence(generated, references, observed);
+            GenerationEvidence evidence = generationEvidence(generated, references, observed, groundingOutcome.get());
             if (observed != definition.expectedClassification()) {
                 generationTrace = StageTrace.fail(
                         EvaluationStage.GENERATION,
@@ -371,7 +382,8 @@ public class EvaluationRunner {
                     List.of(),
                     "",
                     null,
-                    exception.retryOccurred()
+                    exception.retryOccurred(),
+                    groundedGeneration == null ? null : groundingEvidence(null, references)
             );
             if (observed == definition.expectedClassification()) {
                 generationTrace = StageTrace.pass(
@@ -403,13 +415,20 @@ public class EvaluationRunner {
                     StageTrace.notRun(EvaluationStage.VALIDATION)
             );
         } catch (RuntimeException exception) {
+            Outcome outcome = groundingOutcome.get();
+            GenerationEvidence partialEvidence = outcome == null ? null : generationEvidence(
+                    outcome.firstGeneration(), references,
+                    classification(outcome.firstGeneration().inputClassification().name()), outcome);
+            EvaluationFailureCategory category = outcome != null && RequiredGroundingPolicy.isMissing(
+                    retrievalMode, outcome.firstGeneration().inputClassification(), references)
+                    ? EvaluationFailureCategory.RETRIEVAL_EMPTY : generationFailureCategory(exception);
             generationTrace = StageTrace.fail(
                     EvaluationStage.GENERATION,
                     elapsedMillis(generationStartedAt),
-                    null,
+                    partialEvidence,
                     failure(
                             EvaluationStage.GENERATION,
-                            generationFailureCategory(exception),
+                            category,
                             exception
                     )
             );
@@ -531,6 +550,10 @@ public class EvaluationRunner {
     }
 
     private RetrievalEvidence retrievalEvidence(ReferenceQuery query, List<ReferenceDocument> references) {
+        return new RetrievalEvidence(query.text(), query.resourceTypes(), query.limit(), referenceHits(references));
+    }
+
+    private List<ReferenceHit> referenceHits(List<ReferenceDocument> references) {
         List<ReferenceHit> hits = new ArrayList<>();
         for (int index = 0; index < references.size(); index++) {
             ReferenceDocument reference = references.get(index);
@@ -549,17 +572,19 @@ public class EvaluationRunner {
                     reference.riskTags()
             ));
         }
-        return new RetrievalEvidence(query.text(), query.resourceTypes(), query.limit(), hits);
+        return List.copyOf(hits);
     }
 
     private GenerationEvidence generationEvidence(
             AnalysisGenerationResult generated,
             List<ReferenceDocument> references,
-            EvaluationCase.InputClassification observed
+            EvaluationCase.InputClassification observed,
+            Outcome outcome
     ) {
         UsageEvidence usage = generated.outputTokens() == null
                 ? null
                 : new UsageEvidence(null, generated.outputTokens(), null, "");
+        String terraform = outcome == null ? generated.terraformCode() : outcome.finalTerraform();
         return new GenerationEvidence(
                 references.stream().map(ReferenceDocument::id).toList(),
                 observed,
@@ -568,13 +593,27 @@ public class EvaluationRunner {
                 generated.components(),
                 generated.relationships(),
                 generated.warnings(),
-                generated.terraformCode(),
-                matches(RESOURCE_TYPE, generated.terraformCode()),
-                matches(MODULE_SOURCE, generated.terraformCode()),
+                terraform,
+                matches(RESOURCE_TYPE, terraform),
+                matches(MODULE_SOURCE, terraform),
                 generated.stopReason(),
                 usage,
-                generated.retryOccurred()
+                generated.retryOccurred(),
+                outcome == null ? null : groundingEvidence(outcome, references)
         );
+    }
+
+    private GroundingClosureEvidence groundingEvidence(Outcome outcome, List<ReferenceDocument> initial) {
+        if (outcome == null) {
+            return new GroundingClosureEvidence("", false, null, referenceHits(initial), false, List.of());
+        }
+        var closure = outcome.closureRetrieval();
+        ClosureRetrievalEvidence closureEvidence = closure == null ? null : new ClosureRetrievalEvidence(
+                closure.query().text(), closure.query().resourceTypes(), closure.query().limit(),
+                referenceHits(closure.references()));
+        return new GroundingClosureEvidence(outcome.firstDraftTerraform(), outcome.closureAttempted(),
+                closureEvidence, referenceHits(outcome.finalReferences()), outcome.repairAttempted(),
+                outcome.finalGeneratedResourceEvidenceGaps());
     }
 
     private List<String> matches(Pattern pattern, String value) {

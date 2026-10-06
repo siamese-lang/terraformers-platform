@@ -36,7 +36,11 @@ public final class RetrievalGroundingScorer {
                 (required, hit) -> hit.resourceTypes().contains(required)) : null;
         GenerationEvidence generation = trace.generation().evidence();
         List<String> generated = generation == null ? List.of() : generation.generatedResourceTypes();
-        Coverage generatedOfficialEvidenceCoverage = applicable ? coverage(generated, officialHits,
+        // Absent fields identify historical traces, whose initial evidence remains authoritative.
+        List<ReferenceHit> finalHits = generation != null && generation.groundingClosure() != null
+                ? generation.groundingClosure().finalSelectedReferences() : hits;
+        List<ReferenceHit> finalOfficialHits = finalHits.stream().filter(this::isOfficialEvidence).toList();
+        Coverage generatedOfficialEvidenceCoverage = applicable ? coverage(generated, finalOfficialHits,
                 (required, hit) -> hit.resourceTypes().contains(required)) : null;
         List<String> retrievedIds = hits.stream().map(ReferenceHit::documentId).toList();
         List<String> suppliedIds = generation == null ? List.of() : generation.suppliedReferenceIds();

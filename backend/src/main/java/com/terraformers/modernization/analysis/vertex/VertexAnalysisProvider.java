@@ -1,7 +1,5 @@
 package com.terraformers.modernization.analysis.vertex;
 
-import com.terraformers.modernization.analysis.AnalysisGenerationResult;
-import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisProvider;
 import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
@@ -13,10 +11,8 @@ import com.terraformers.modernization.analysis.GeneratedTerraformContractInspect
 import com.terraformers.modernization.analysis.EvidenceQualityAssessment;
 import com.terraformers.modernization.analysis.EvidenceQualityAssessor;
 import com.terraformers.modernization.analysis.EvidenceQualityAssessor.ProjectDecisionApplicability;
-import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
-import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.ReferenceQuery;
 import com.terraformers.modernization.reference.ReferenceRetriever;
@@ -24,15 +20,10 @@ import com.terraformers.modernization.reference.OfficialKnowledgeCoverageCatalog
 import com.terraformers.modernization.reference.RetrievalMode;
 import com.terraformers.modernization.reference.RetrievalQueryTextBuilder;
 import com.terraformers.modernization.reference.VertexArchitectureFactsExtractor;
-import com.terraformers.modernization.reference.opensearch.ReferenceEvidenceSelector;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectReader;
 import com.terraformers.modernization.storage.ObjectReference;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -44,17 +35,13 @@ import org.springframework.stereotype.Component;
 public class VertexAnalysisProvider implements AnalysisProvider {
 
     private static final Logger log = LoggerFactory.getLogger(VertexAnalysisProvider.class);
-    private static final Pattern REFERENCE_AWS_RESOURCE = Pattern.compile(
-            "(?m)^\\s*resource\\s+\"(aws_[a-z0-9_]+)\"\\s+\"[^\"]+\"\\s*\\{");
-
     private final ObjectReader objectReader;
     private final ReferenceRetriever referenceRetriever;
     private final AnalysisRuntimeProperties properties;
     private final VertexArchitectureFactsExtractor factsExtractor;
     private final RetrievalQueryTextBuilder queryTextBuilder;
-    private final VertexGenerationStage generationStage;
+    private final VertexGroundedGenerationOrchestrator groundedGeneration;
     private final AwsProviderSchemaCatalog schemaCatalog;
-    private final GeneratedTerraformContractInspector contractInspector;
     private final EvidenceQualityAssessor qualityAssessor;
     private final OfficialKnowledgeCoverageCatalog knowledgeCoverage;
 
@@ -65,9 +52,8 @@ public class VertexAnalysisProvider implements AnalysisProvider {
             AnalysisRuntimeProperties properties,
             VertexArchitectureFactsExtractor factsExtractor,
             RetrievalQueryTextBuilder queryTextBuilder,
-            VertexGenerationStage generationStage,
+            VertexGroundedGenerationOrchestrator groundedGeneration,
             AwsProviderSchemaCatalog schemaCatalog,
-            GeneratedTerraformContractInspector contractInspector,
             EvidenceQualityAssessor qualityAssessor,
             OfficialKnowledgeCoverageCatalog knowledgeCoverage
     ) {
@@ -76,11 +62,20 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         this.properties = properties;
         this.factsExtractor = factsExtractor;
         this.queryTextBuilder = queryTextBuilder;
-        this.generationStage = generationStage;
+        this.groundedGeneration = groundedGeneration;
         this.schemaCatalog = schemaCatalog;
-        this.contractInspector = contractInspector;
         this.qualityAssessor = qualityAssessor;
         this.knowledgeCoverage = knowledgeCoverage;
+    }
+
+    public VertexAnalysisProvider(ObjectReader objectReader, ReferenceRetriever referenceRetriever,
+            AnalysisRuntimeProperties properties, VertexArchitectureFactsExtractor factsExtractor,
+            RetrievalQueryTextBuilder queryTextBuilder, VertexGenerationStage generationStage,
+            AwsProviderSchemaCatalog schemaCatalog, GeneratedTerraformContractInspector contractInspector,
+            EvidenceQualityAssessor qualityAssessor, OfficialKnowledgeCoverageCatalog knowledgeCoverage) {
+        this(objectReader, referenceRetriever, properties, factsExtractor, queryTextBuilder,
+                new VertexGroundedGenerationOrchestrator(generationStage, referenceRetriever, properties,
+                        schemaCatalog, contractInspector), schemaCatalog, qualityAssessor, knowledgeCoverage);
     }
 
     public VertexAnalysisProvider(ObjectReader objectReader, ReferenceRetriever referenceRetriever,
@@ -113,40 +108,10 @@ public class VertexAnalysisProvider implements AnalysisProvider {
                 context.sourceKey()
         ));
         RetrievalOutcome retrieval = retrieveReferences(source);
-        List<ReferenceDocument> references = retrieval.references();
-        AwsProviderSchemaEvidence schemaEvidence = schemaCatalog.resolve(
-                promptSchemaCandidates(retrieval.facts(), references));
-        AnalysisGenerationResult generated =
-                generationStage.generate(context, source, references, schemaEvidence);
-        if (generated.inputClassification() != AnalysisInputClassification.ARCHITECTURE_DIAGRAM) {
-            throw new AnalysisInputRejectedException(generated.inputClassification(),
-                    generated.classificationConfidence(), generated.retryOccurred(), null);
-        }
-        RequiredGroundingPolicy.requireForArchitecture(
-                properties.getRetrievalMode(), generated, references);
-        String terraform = generated.terraformCode();
-        List<String> generatedTypes = contractInspector.resourceTypes(terraform).stream()
-                .filter(schemaCatalog::contains).toList();
-        Set<String> officialTypes = new LinkedHashSet<>();
-        references.stream().filter(ReferenceDocument::isOfficialProviderDocumentation)
-                .forEach(reference -> officialTypes.addAll(reference.resourceTypes()));
-        List<String> missing = generatedTypes.stream().filter(type -> !officialTypes.contains(type)).toList();
-        if (properties.getRetrievalMode() != RetrievalMode.DISABLED && !missing.isEmpty()) {
-            ReferenceQuery closureQuery = new ReferenceQuery(
-                    "Official AWS provider documentation for generated Terraform resources: " + String.join(", ", missing),
-                    missing, properties.getOpensearchMaxEvidence(), true);
-            List<ReferenceDocument> closure = referenceRetriever.retrieve(closureQuery);
-            Set<String> requested = new LinkedHashSet<>(retrieval.facts().resourceTypes());
-            requested.addAll(generatedTypes);
-            references = new ReferenceEvidenceSelector().merge(references, closure,
-                    List.copyOf(requested), properties.getOpensearchMaxEvidence());
-            Set<String> schemaCandidates = new LinkedHashSet<>(schemaEvidence.resourceTypes());
-            schemaCandidates.addAll(generatedTypes);
-            terraform = generationStage.repair(retrieval.facts(), generated, references,
-                    schemaCatalog.resolve(schemaCandidates));
-        }
-        // The final draft is inspected/assessed once; remaining gaps never trigger another cycle.
-        contractInspector.inspect(terraform);
+        var outcome = groundedGeneration.generate(context, source, retrieval.facts(), retrieval.references());
+        var generated = outcome.firstGeneration();
+        List<ReferenceDocument> references = outcome.finalReferences();
+        String terraform = outcome.finalTerraform();
         EvidenceQualityAssessment quality = assess(retrieval, references, terraform);
         return new AnalysisResult(
                 generated.provider(),
@@ -169,31 +134,6 @@ public class VertexAnalysisProvider implements AnalysisProvider {
                 com.terraformers.modernization.analysis.AnalysisInputClassification.ARCHITECTURE_DIAGRAM,
                 resources, knowledgeCoverage.availableFor(resources, schemaCatalog), references,
                 terraform, ProjectDecisionApplicability.UNKNOWN, List.of()));
-    }
-
-    private Set<String> promptSchemaCandidates(
-            ArchitectureRetrievalFacts facts,
-            List<ReferenceDocument> references
-    ) {
-        Set<String> candidates = new LinkedHashSet<>();
-        if (facts != null) {
-            facts.resourceTypes().stream()
-                    .filter(schemaCatalog::contains)
-                    .forEach(candidates::add);
-        }
-        for (ReferenceDocument reference : references == null ? List.<ReferenceDocument>of() : references) {
-            reference.resourceTypes().stream()
-                    .filter(schemaCatalog::contains)
-                    .forEach(candidates::add);
-            Matcher matcher = REFERENCE_AWS_RESOURCE.matcher(reference.content() == null ? "" : reference.content());
-            while (matcher.find()) {
-                String resourceType = matcher.group(1);
-                if (schemaCatalog.contains(resourceType)) {
-                    candidates.add(resourceType);
-                }
-            }
-        }
-        return candidates;
     }
 
     private RetrievalOutcome retrieveReferences(ObjectContent source) {

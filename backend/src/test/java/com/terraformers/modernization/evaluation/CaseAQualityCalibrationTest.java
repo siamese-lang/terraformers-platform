@@ -47,8 +47,36 @@ class CaseAQualityCalibrationTest {
         var result = scorer.score(definition, successfulPositiveTrace());
 
         assertThat(result.technicalSuccess()).isTrue();
+        assertThat(result.requiredFactResourceMatched()).isEqualTo(4);
+        assertThat(result.requiredFactResourceTotal()).isEqualTo(4);
+        assertThat(result.forbiddenFactResourceCount()).isZero();
+        assertThat(result.grounding().retrievalToGenerationHandoffComplete()).isTrue();
         assertThat(result.labeledQualitySuccess()).isTrue();
         assertThat(result.falseGreen()).isFalse();
+    }
+
+    @Test void missingRequiredFactResourceFailsFrozenLabelEvenWhenLaterStagesPass() {
+        var base = successfulPositiveTrace();
+        var incompleteFacts = StageTrace.pass(
+                EvaluationStage.FACT_EXTRACTION,
+                10,
+                new EvaluationTrace.FactExtractionEvidence(
+                        InputClassification.ARCHITECTURE_DIAGRAM,
+                        "facts",
+                        List.of(),
+                        List.of(),
+                        List.of("aws_vpc", "aws_lb", "aws_db_instance")));
+        var trace = new EvaluationTrace(
+                base.schemaVersion(), base.datasetVersion(), base.runId(), base.caseId(),
+                base.input(), base.configuration(), incompleteFacts, base.retrieval(),
+                base.generation(), base.validation(), null);
+
+        var result = scorer.score(positiveDefinition(), trace);
+
+        assertThat(result.requiredFactResourceMatched()).isEqualTo(3);
+        assertThat(result.requiredFactResourceTotal()).isEqualTo(4);
+        assertThat(result.labeledQualitySuccess()).isFalse();
+        assertThat(result.falseGreen()).isTrue();
     }
 
     @Test void missingRequiredGeneratedResourceFailsFrozenLabel() {

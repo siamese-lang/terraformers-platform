@@ -15,6 +15,7 @@ PT-2 remains ineligible. The candidate PR also requires its separate merge check
   was read exactly once and bound to `execution_base_sha` and program `activationBaseSha`.
 - Branch: `codex/product-trust-pt-1-realistic-input-benchmark`, created directly from that SHA.
   No main refresh, rebase or second active Work Package was used.
+- Candidate PR: [#241](https://github.com/siamese-lang/terraformers-platform/pull/241), open for review; no merge authorized.
 - Dataset: [terraformers-realistic-v1](../../evaluation/terraformers-realistic-v1/README.md).
 - Candidate identity: [candidate-identity.json](../../evaluation/terraformers-realistic-v1/candidate-identity.json),
   SHA-256 `8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8`.

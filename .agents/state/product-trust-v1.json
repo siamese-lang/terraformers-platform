@@ -7,7 +7,7 @@
   "activePhase": "PT-1",
   "lastCompletedPhase": "P0_PROGRAM_PROTOCOL",
   "activeWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
-  "activePullRequest": null,
+  "activePullRequest": 241,
   "humanGate": "REALISTIC_DATASET_TRUTH_FREEZE",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
@@ -60,5 +60,7 @@
     "identityAudit": "PASS",
     "diffScopeAudit": "PASS",
     "diffCheck": "PASS"
-  }
+  },
+  "activePullRequestUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241",
+  "lastObservedMainSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c"
 }

@@ -2,6 +2,7 @@ package com.terraformers.modernization.evaluation;
 
 import com.terraformers.modernization.analysis.EvidenceQualityAssessment.QualityStatus;
 import com.terraformers.modernization.evaluation.CaseAQualityCalibrationReport.CaseResult;
+import com.terraformers.modernization.evaluation.CaseAQualityCalibrationReport.TextCoverage;
 import com.terraformers.modernization.evaluation.CaseAQualityCalibrationReport.RuntimeQualityComparison;
 import com.terraformers.modernization.evaluation.EvaluationCase.InputClassification;
 import com.terraformers.modernization.evaluation.EvaluationCase.ValidationExpectation;
@@ -21,6 +22,13 @@ public final class CaseAQualityCalibrationScorer {
         boolean technical = architecture ? architectureTechnicalSuccess(trace) : negativeTechnicalSuccess(trace);
         RetrievalGroundingAssessment grounding = groundingScorer.score(definition, trace);
         GenerationEvidence generation = trace.generation().evidence();
+        var factEvidence = trace.factExtraction().evidence();
+        TextCoverage componentCoverage = textCoverage(
+                definition.components(),
+                factEvidence == null ? java.util.List.of() : factEvidence.components());
+        TextCoverage relationshipCoverage = textCoverage(
+                definition.relationships(),
+                factEvidence == null ? java.util.List.of() : factEvidence.relationships());
         java.util.List<String> extractedResources = trace.factExtraction().evidence() == null
                 ? java.util.List.of()
                 : trace.factExtraction().evidence().resourceTypes();
@@ -32,12 +40,15 @@ public final class CaseAQualityCalibrationScorer {
                 .count();
         boolean factResourcesComplete = requiredFactMatched == definition.resourceTypes().required().size()
                 && forbiddenFactCount == 0;
+        boolean textFactsComplete = complete(componentCoverage) && complete(relationshipCoverage);
         boolean labeled = architecture
-                ? architectureLabelSuccess(definition, trace, generation, grounding, factResourcesComplete)
+                ? architectureLabelSuccess(
+                        definition, trace, generation, grounding, factResourcesComplete, textFactsComplete)
                 : negativeLabelSuccess(definition, generation);
         return new CaseResult(trace.caseId(), definition.expectedClassification(),
                 generation == null ? null : generation.observedClassification(), architecture, technical, labeled,
-                technical && !labeled, requiredFactMatched, definition.resourceTypes().required().size(),
+                technical && !labeled, componentCoverage, relationshipCoverage,
+                requiredFactMatched, definition.resourceTypes().required().size(),
                 forbiddenFactCount, grounding, runtimeQualityStatus, comparison(runtimeQualityStatus, labeled));
     }
 
@@ -62,7 +73,8 @@ public final class CaseAQualityCalibrationScorer {
     }
 
     private boolean architectureLabelSuccess(EvaluationCase definition, EvaluationTrace trace,
-            GenerationEvidence generation, RetrievalGroundingAssessment grounding, boolean factResourcesComplete) {
+            GenerationEvidence generation, RetrievalGroundingAssessment grounding,
+            boolean factResourcesComplete, boolean textFactsComplete) {
         if (generation == null || generation.observedClassification() != definition.expectedClassification()) return false;
         boolean groundingComplete = completeWhenRequired(definition.retrieval().requiredProjectDecisionIds(),
                         grounding.projectDecisionCoverage())
@@ -71,11 +83,47 @@ public final class CaseAQualityCalibrationScorer {
         boolean generatedComplete = grounding.requiredGeneratedResourceMatched()
                 == grounding.requiredGeneratedResourceTotal()
                 && grounding.forbiddenGeneratedResourceCount() == 0;
-        return factResourcesComplete
+        return textFactsComplete
+                && factResourcesComplete
                 && groundingComplete
                 && grounding.retrievalToGenerationHandoffComplete()
                 && generatedComplete
                 && validationMatches(definition.validation(), trace);
+    }
+
+    private TextCoverage textCoverage(
+            EvaluationCase.TextExpectation expectation,
+            java.util.List<String> observed
+    ) {
+        java.util.Set<String> normalized = observed == null
+                ? java.util.Set.of()
+                : observed.stream().map(this::normalizeText).collect(java.util.stream.Collectors.toSet());
+        java.util.List<String> missing = expectation.required().stream()
+                .filter(value -> !normalized.contains(normalizeText(value)))
+                .toList();
+        java.util.List<String> forbidden = expectation.forbidden().stream()
+                .filter(value -> normalized.contains(normalizeText(value)))
+                .toList();
+        return new TextCoverage(
+                expectation.required().size() - missing.size(),
+                expectation.required().size(),
+                forbidden.size(),
+                missing,
+                forbidden
+        );
+    }
+
+    private String normalizeText(String value) {
+        if (value == null) return "";
+        return value.strip().toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", " ")
+                .strip()
+                .replaceAll("\\s+", " ");
+    }
+
+    private boolean complete(TextCoverage coverage) {
+        return coverage.requiredMatched() == coverage.requiredTotal()
+                && coverage.forbiddenMatched() == 0;
     }
 
     private boolean complete(RetrievalGroundingAssessment.Coverage coverage) {

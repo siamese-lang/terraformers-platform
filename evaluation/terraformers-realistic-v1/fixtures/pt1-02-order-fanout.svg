@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820">
+<rect width="100%" height="100%" fill="white"/>
+<text x="35" y="48" font-family="DejaVu Sans" font-size="26" fill="#182b49">Order events - asynchronous fanout and isolated consumers</text>
+<rect x="40" y="105" width="1195" height="620" fill="#f8fafc" stroke="#8b9db4" stroke-width="2"/>
+<text x="50" y="128" font-family="DejaVu Sans" font-size="17" fill="#182b49">Regional messaging / worker lanes</text>
+<rect x="80" y="355" width="190" height="90" fill="#fff4d9" stroke="#3e5877" stroke-width="2"/>
+<text x="92" y="387" font-family="DejaVu Sans" font-size="20" fill="#182b49">Order publisher</text>
+<rect x="345" y="355" width="210" height="90" fill="#f4e7f3" stroke="#3e5877" stroke-width="2"/>
+<text x="357" y="387" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon SNS</text>
+<text x="357" y="413" font-family="DejaVu Sans" font-size="20" fill="#182b49">orders topic</text>
+<rect x="690" y="190" width="230" height="90" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="702" y="222" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon SQS</text>
+<text x="702" y="248" font-family="DejaVu Sans" font-size="20" fill="#182b49">billing queue</text>
+<rect x="690" y="525" width="230" height="90" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="702" y="557" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon SQS</text>
+<text x="702" y="583" font-family="DejaVu Sans" font-size="20" fill="#182b49">audit queue</text>
+<rect x="1000" y="190" width="200" height="90" fill="#fff0dd" stroke="#3e5877" stroke-width="2"/>
+<text x="1012" y="220" font-family="DejaVu Sans" font-size="18" fill="#182b49">AWS Lambda</text>
+<text x="1012" y="244" font-family="DejaVu Sans" font-size="18" fill="#182b49">billing worker</text>
+<rect x="1000" y="525" width="200" height="90" fill="#fff0dd" stroke="#3e5877" stroke-width="2"/>
+<text x="1012" y="555" font-family="DejaVu Sans" font-size="18" fill="#182b49">AWS Lambda</text>
+<text x="1012" y="579" font-family="DejaVu Sans" font-size="18" fill="#182b49">audit worker</text>
+<polyline points="270,400 345,400" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="345.00,400.00 333.29,405.65 333.29,394.35" fill="#526581"/>
+<text x="272" y="377" font-family="DejaVu Sans" font-size="17" fill="#526581">publish</text>
+<polyline points="555,390 615,390 615,235 690,235" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="690.00,235.00 678.29,240.65 678.29,229.35" fill="#526581"/>
+<text x="572" y="172" font-family="DejaVu Sans" font-size="17" fill="#526581">subscription</text>
+<polyline points="555,410 635,410 635,570 690,570" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="690.00,570.00 678.29,575.65 678.29,564.35" fill="#526581"/>
+<text x="555" y="652" font-family="DejaVu Sans" font-size="17" fill="#526581">subscription</text>
+<polyline points="920,235 1000,235" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="1000.00,235.00 988.29,240.65 988.29,229.35" fill="#526581"/>
+<text x="917" y="315" font-family="DejaVu Sans" font-size="15" fill="#526581">poll batch</text>
+<polyline points="920,570 1000,570" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="1000.00,570.00 988.29,575.65 988.29,564.35" fill="#526581"/>
+<text x="917" y="650" font-family="DejaVu Sans" font-size="15" fill="#526581">poll batch</text>
+<text x="80" y="777" font-family="DejaVu Sans" font-size="17" fill="#182b49">Two independent queues. Lambda event-source mappings consume batches. No direct SNS invocation.</text>
+<text x="35" y="796" font-family="DejaVu Sans" font-size="14" fill="#677489">Repository-owned PT-1 input | no third-party artwork or icons</text>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="860" viewBox="0 0 1080 860">
+<rect width="100%" height="100%" fill="white"/>
+<text x="35" y="48" font-family="DejaVu Sans" font-size="26" fill="#182b49">Community workshop - attendance and supplies</text>
+<rect x="65" y="130" width="945" height="70" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="77" y="162" font-family="DejaVu Sans" font-size="20" fill="#182b49">SESSION                     ROOM        PEOPLE        NOTES</text>
+<rect x="65" y="220" width="945" height="65" fill="#f8fafc" stroke="#3e5877" stroke-width="2"/>
+<text x="77" y="252" font-family="DejaVu Sans" font-size="20" fill="#182b49">09:00  Welcome            A1              24             coffee</text>
+<rect x="65" y="310" width="945" height="65" fill="#f8fafc" stroke="#3e5877" stroke-width="2"/>
+<text x="77" y="342" font-family="DejaVu Sans" font-size="20" fill="#182b49">10:00  Sketching            B2              18             markers</text>
+<rect x="65" y="400" width="945" height="65" fill="#f8fafc" stroke="#3e5877" stroke-width="2"/>
+<text x="77" y="432" font-family="DejaVu Sans" font-size="20" fill="#182b49">11:00  Group review       A1              24             paper</text>
+<rect x="65" y="490" width="945" height="65" fill="#f8fafc" stroke="#3e5877" stroke-width="2"/>
+<text x="77" y="522" font-family="DejaVu Sans" font-size="20" fill="#182b49">12:00  Lunch                  Cafe           30             sandwiches</text>
+<text x="80" y="672" font-family="DejaVu Sans" font-size="22" fill="#182b49">Supplies: paper 40 sheets, pens 30, name tags 30.</text>
+<text x="80" y="700" font-family="DejaVu Sans" font-size="22" fill="#182b49">Organizer: local community group. No cloud or deployment system.</text>
+<text x="35" y="836" font-family="DejaVu Sans" font-size="14" fill="#677489">Repository-owned PT-1 input | no third-party artwork or icons</text>
+</svg>

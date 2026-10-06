@@ -49,6 +49,44 @@ class EvaluationDatasetLoaderTest {
     }
 
     @Test
+    void loadsRealisticCandidateAndKeepsItsInputsSeparateFromSyntheticControls() {
+        LoadedEvaluationDataset candidate = loader.load(
+                Path.of("..", "evaluation", "terraformers-realistic-v1", "dataset.json"));
+        assertThat(candidate.dataset().schemaVersion()).isEqualTo("m3-evaluation-v1");
+        assertThat(candidate.dataset().datasetVersion()).isEqualTo("terraformers-realistic-v1");
+        assertThat(candidate.cases()).hasSize(10);
+        assertThat(candidate.cases()).filteredOn(c -> c.definition().expectedClassification()
+                == InputClassification.ARCHITECTURE_DIAGRAM).hasSize(6);
+        assertThat(candidate.cases()).filteredOn(c -> c.definition().expectedClassification()
+                == InputClassification.AMBIGUOUS).hasSize(2);
+        assertThat(candidate.cases()).filteredOn(c -> c.definition().expectedClassification()
+                == InputClassification.NON_ARCHITECTURE_IMAGE).hasSize(2);
+
+        Set<String> syntheticHashes = new HashSet<>();
+        for (String version : Set.of("terraformers-eval-v1", "terraformers-eval-holdout-v1")) {
+            loader.load(Path.of("..", "evaluation", version, "dataset.json")).cases()
+                    .forEach(c -> syntheticHashes.add(c.definition().input().sha256()));
+        }
+        for (LoadedEvaluationCase loadedCase : candidate.cases()) {
+            EvaluationCase definition = loadedCase.definition();
+            assertThat(definition.input().contentType()).isEqualTo("image/png");
+            assertThat(loadedCase.inputBytes()).startsWith(
+                    (byte) 0x89, (byte) 'P', (byte) 'N', (byte) 'G',
+                    (byte) 0x0d, (byte) 0x0a, (byte) 0x1a, (byte) 0x0a);
+            assertThat(syntheticHashes).doesNotContain(definition.input().sha256());
+            if (definition.expectedClassification() == InputClassification.ARCHITECTURE_DIAGRAM) {
+                assertThat(definition.components().required()).isNotEmpty();
+                assertThat(definition.relationships().required()).isNotEmpty();
+                assertThat(definition.generation().terraformResourceTypes().required()).isNotEmpty();
+                assertThat(definition.generation().terraformExpected()).isTrue();
+            } else {
+                assertThat(definition.generation().terraformExpected()).isFalse();
+                assertThat(definition.validation()).isEqualTo(ValidationExpectation.NOT_APPLICABLE);
+            }
+        }
+    }
+
+    @Test
     void positiveCasesContainStageLevelExpectationsAndNegativeCasesForbidTerraformGeneration() {
         LoadedEvaluationDataset loaded = loader.load(datasetPath());
 

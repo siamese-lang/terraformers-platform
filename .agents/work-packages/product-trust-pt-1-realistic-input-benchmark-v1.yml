@@ -2,9 +2,9 @@ work_package:
   id: product-trust-pt-1-realistic-input-benchmark-v1
   program: product-trust-v1
   phase: PT-1
-  status: APPROVED_AWAITING_ACTIVATION
-  approved_base_sha: BIND_AT_ACTIVATION
-  execution_base_sha: null
+  status: HUMAN_REQUIRED
+  approved_base_sha: 0bb244756c2a2e1d3d6d11d0342e98e155f8662c
+  execution_base_sha: 0bb244756c2a2e1d3d6d11d0342e98e155f8662c
 
   activation:
     rule: >
@@ -190,3 +190,14 @@ work_package:
     human_gate: REALISTIC_DATASET_TRUTH_FREEZE
     next_phase_after_human_freeze: PT-2
     PT_2_live_execution_requires_separate_user_approval: true
+
+  execution_evidence:
+    result: REALISTIC_DATASET_CANDIDATE_READY
+    human_gate: REALISTIC_DATASET_TRUTH_FREEZE
+    candidate_identity_sha256: 8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8
+    evidence_document: docs/evaluation/product-trust-pt-1-realistic-input-freeze.md
+    auto_repairs_used: 1
+    model_under_test_calls: 0
+    live_cloud_actions: 0
+    truth_frozen: false
+    phase_complete: false

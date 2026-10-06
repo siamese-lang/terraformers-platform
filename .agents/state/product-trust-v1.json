@@ -1,14 +1,14 @@
 {
   "program": "product-trust-v1",
   "schemaVersion": 1,
-  "status": "PROGRAM_APPROVED_AWAITING_PT1_ACTIVATION",
+  "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
-  "activationBaseSha": null,
-  "activePhase": null,
+  "activationBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
+  "activePhase": "PT-1",
   "lastCompletedPhase": "P0_PROGRAM_PROTOCOL",
-  "activeWorkPackage": null,
+  "activeWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
   "activePullRequest": null,
-  "humanGate": null,
+  "humanGate": "REALISTIC_DATASET_TRUTH_FREEZE",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
@@ -19,9 +19,46 @@
     "A7-8 is deferred.",
     "Do not teardown before the Product Trust program reaches its reviewed destructive checkpoint.",
     "Kubernetes/GKE platform reselection is explicitly outside this program.",
-    "PT-1 may activate only after this approval/state transition is merged; the executor then binds the exact post-merge main SHA once."
+    "PT-1 may activate only after this approval/state transition is merged; the executor then binds the exact post-merge main SHA once.",
+    "PT-1 candidate prepared without model/cloud actions; reference-based redraws are not user-upload generalization proof. Stop before human truth freeze and merge."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
-  "nextEligiblePhase": "PT-1"
+  "nextEligiblePhase": null,
+  "executionBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
+  "resultBeforeHumanGate": "REALISTIC_DATASET_CANDIDATE_READY",
+  "autoRepairsUsed": 1,
+  "acceptanceBeforeHumanFreeze": "SATISFIED_FOR_CANDIDATE_PREPARATION",
+  "activePullRequestBranch": "codex/product-trust-pt-1-realistic-input-benchmark",
+  "candidate": {
+    "directory": "evaluation/terraformers-realistic-v1",
+    "identityPath": "evaluation/terraformers-realistic-v1/candidate-identity.json",
+    "identitySha256": "8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8",
+    "truthApprovedBy": null,
+    "truthFrozenAt": null,
+    "modelUnderTestRunCount": 0
+  },
+  "blockers": [
+    "Human review and explicit REALISTIC_DATASET_TRUTH_FREEZE of the pinned candidate",
+    "Separate PR merge checkpoint; merge is not authorized",
+    "PT-2 live baseline remains unapproved and ineligible"
+  ],
+  "evidenceDocument": "docs/evaluation/product-trust-pt-1-realistic-input-freeze.md",
+  "validation": {
+    "initialFocused": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    "correctedFixtureLoader": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    "identityAudit": "PASS",
+    "diffScopeAudit": "PASS",
+    "diffCheck": "PASS"
+  }
 }

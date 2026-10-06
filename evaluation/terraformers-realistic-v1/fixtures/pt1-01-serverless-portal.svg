@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="860" viewBox="0 0 1280 860">
+<rect width="100%" height="100%" fill="white"/>
+<text x="35" y="48" font-family="DejaVu Sans" font-size="26" fill="#182b49">Customer portal - serverless three-tier reference</text>
+<rect x="225" y="100" width="980" height="630" fill="#f7f9fc" stroke="#8b9db4" stroke-width="2"/>
+<text x="235" y="123" font-family="DejaVu Sans" font-size="17" fill="#182b49">AWS managed services (CloudFront is global)</text>
+<rect x="40" y="355" width="150" height="95" fill="#fff4d9" stroke="#3e5877" stroke-width="2"/>
+<text x="52" y="387" font-family="DejaVu Sans" font-size="20" fill="#182b49">Browser</text>
+<text x="52" y="413" font-family="DejaVu Sans" font-size="20" fill="#182b49">users</text>
+<rect x="300" y="155" width="260" height="95" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="312" y="187" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon CloudFront</text>
+<text x="312" y="213" font-family="DejaVu Sans" font-size="20" fill="#182b49">static content</text>
+<rect x="755" y="155" width="275" height="95" fill="#e6f3e8" stroke="#3e5877" stroke-width="2"/>
+<text x="767" y="187" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon S3</text>
+<text x="767" y="213" font-family="DejaVu Sans" font-size="20" fill="#182b49">website assets</text>
+<rect x="300" y="390" width="260" height="95" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="312" y="422" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon API Gateway</text>
+<text x="312" y="448" font-family="DejaVu Sans" font-size="20" fill="#182b49">HTTP API</text>
+<rect x="755" y="390" width="275" height="95" fill="#fff0dd" stroke="#3e5877" stroke-width="2"/>
+<text x="767" y="422" font-family="DejaVu Sans" font-size="20" fill="#182b49">AWS Lambda</text>
+<text x="767" y="448" font-family="DejaVu Sans" font-size="20" fill="#182b49">business logic</text>
+<rect x="755" y="600" width="275" height="95" fill="#e8e8fb" stroke="#3e5877" stroke-width="2"/>
+<text x="767" y="632" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon DynamoDB</text>
+<text x="767" y="658" font-family="DejaVu Sans" font-size="20" fill="#182b49">application table</text>
+<polyline points="190,380 220,380 220,202 300,202" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="300.00,202.00 288.29,207.65 288.29,196.35" fill="#526581"/>
+<text x="55" y="297" font-family="DejaVu Sans" font-size="17" fill="#526581">static GET</text>
+<polyline points="560,202 755,202" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="755.00,202.00 743.29,207.65 743.29,196.35" fill="#526581"/>
+<text x="610" y="184" font-family="DejaVu Sans" font-size="17" fill="#526581">origin</text>
+<polyline points="190,420 300,437" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="300.00,437.00 287.57,440.80 289.30,429.62" fill="#526581"/>
+<text x="190" y="485" font-family="DejaVu Sans" font-size="17" fill="#526581">API calls</text>
+<polyline points="560,437 755,437" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="755.00,437.00 743.29,442.65 743.29,431.35" fill="#526581"/>
+<text x="615" y="414" font-family="DejaVu Sans" font-size="17" fill="#526581">invoke</text>
+<polyline points="890,485 890,600" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="890.00,600.00 884.35,588.29 895.65,588.29" fill="#526581"/>
+<text x="915" y="542" font-family="DejaVu Sans" font-size="17" fill="#526581">read / write</text>
+<text x="260" y="763" font-family="DejaVu Sans" font-size="18" fill="#182b49">Static assets and application records have different storage owners.</text>
+<text x="35" y="836" font-family="DejaVu Sans" font-size="14" fill="#677489">Repository-owned PT-1 input | no third-party artwork or icons</text>
+</svg>

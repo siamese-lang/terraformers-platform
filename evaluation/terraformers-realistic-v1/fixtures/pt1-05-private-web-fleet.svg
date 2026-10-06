@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="1080" viewBox="0 0 1480 1080">
+<rect width="100%" height="100%" fill="white"/>
+<text x="35" y="48" font-family="DejaVu Sans" font-size="26" fill="#182b49">Production web fleet - two AZs, private servers, NAT egress</text>
+<rect x="610" y="90" width="270" height="65" fill="#fff4d9" stroke="#3e5877" stroke-width="2"/>
+<text x="622" y="122" font-family="DejaVu Sans" font-size="20" fill="#182b49">Internet clients</text>
+<rect x="35" y="220" width="1410" height="755" fill="#f8fafc" stroke="#8b9db4" stroke-width="2"/>
+<text x="45" y="243" font-family="DejaVu Sans" font-size="17" fill="#182b49">VPC 10.0.0.0/16 (IPv4 only)</text>
+<rect x="620" y="265" width="260" height="70" fill="#f4e7f3" stroke="#3e5877" stroke-width="2"/>
+<text x="632" y="297" font-family="DejaVu Sans" font-size="20" fill="#182b49">Internet gateway</text>
+<rect x="70" y="365" width="640" height="515" fill="#f3f7fd" stroke="#8b9db4" stroke-width="2"/>
+<text x="80" y="388" font-family="DejaVu Sans" font-size="17" fill="#182b49">Availability Zone A</text>
+<rect x="770" y="365" width="640" height="515" fill="#f3f7fd" stroke="#8b9db4" stroke-width="2"/>
+<text x="780" y="388" font-family="DejaVu Sans" font-size="17" fill="#182b49">Availability Zone B</text>
+<rect x="95" y="410" width="590" height="170" fill="#e6f3e8" stroke="#8b9db4" stroke-width="2"/>
+<text x="105" y="433" font-family="DejaVu Sans" font-size="17" fill="#182b49">Public subnet A</text>
+<rect x="795" y="410" width="590" height="170" fill="#e6f3e8" stroke="#8b9db4" stroke-width="2"/>
+<text x="805" y="433" font-family="DejaVu Sans" font-size="17" fill="#182b49">Public subnet B</text>
+<rect x="95" y="655" width="590" height="180" fill="#fff6e9" stroke="#8b9db4" stroke-width="2"/>
+<text x="105" y="678" font-family="DejaVu Sans" font-size="17" fill="#182b49">Private subnet A</text>
+<rect x="795" y="655" width="590" height="180" fill="#fff6e9" stroke="#8b9db4" stroke-width="2"/>
+<text x="805" y="678" font-family="DejaVu Sans" font-size="17" fill="#182b49">Private subnet B</text>
+<rect x="120" y="465" width="250" height="85" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="132" y="495" font-family="DejaVu Sans" font-size="18" fill="#182b49">Application Load</text>
+<text x="132" y="519" font-family="DejaVu Sans" font-size="18" fill="#182b49">Balancer node A</text>
+<rect x="820" y="465" width="250" height="85" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="832" y="495" font-family="DejaVu Sans" font-size="18" fill="#182b49">Application Load</text>
+<text x="832" y="519" font-family="DejaVu Sans" font-size="18" fill="#182b49">Balancer node B</text>
+<rect x="410" y="465" width="245" height="85" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="422" y="495" font-family="DejaVu Sans" font-size="18" fill="#182b49">NAT gateway A</text>
+<rect x="1110" y="465" width="245" height="85" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="1122" y="495" font-family="DejaVu Sans" font-size="18" fill="#182b49">NAT gateway B</text>
+<rect x="120" y="705" width="245" height="85" fill="#fff0dd" stroke="#3e5877" stroke-width="2"/>
+<text x="132" y="735" font-family="DejaVu Sans" font-size="18" fill="#182b49">EC2 server A</text>
+<text x="132" y="759" font-family="DejaVu Sans" font-size="18" fill="#182b49">Auto Scaling group</text>
+<rect x="820" y="705" width="245" height="85" fill="#fff0dd" stroke="#3e5877" stroke-width="2"/>
+<text x="832" y="735" font-family="DejaVu Sans" font-size="18" fill="#182b49">EC2 server B</text>
+<text x="832" y="759" font-family="DejaVu Sans" font-size="18" fill="#182b49">Auto Scaling group</text>
+<rect x="520" y="895" width="470" height="55" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="532" y="925" font-family="DejaVu Sans" font-size="18" fill="#182b49">S3 gateway VPC endpoint (route)</text>
+<polyline points="745,155 745,265" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="745.00,265.00 739.35,253.29 750.65,253.29" fill="#526581"/>
+<polyline points="665,335 665,350 245,350 245,465" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="245.00,465.00 239.35,453.29 250.65,453.29" fill="#526581"/>
+<polyline points="835,335 835,350 945,350 945,465" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="945.00,465.00 939.35,453.29 950.65,453.29" fill="#526581"/>
+<polyline points="245,550 245,705" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="245.00,705.00 239.35,693.29 250.65,693.29" fill="#526581"/>
+<text x="120" y="620" font-family="DejaVu Sans" font-size="16" fill="#526581">requests</text>
+<polyline points="945,550 945,705" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="945.00,705.00 939.35,693.29 950.65,693.29" fill="#526581"/>
+<text x="820" y="620" font-family="DejaVu Sans" font-size="16" fill="#526581">requests</text>
+<polyline points="365,740 530,740 530,550" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="530.00,550.00 535.65,561.71 524.35,561.71" fill="#526581"/>
+<text x="390" y="805" font-family="DejaVu Sans" font-size="15" fill="#526581">IPv4 egress</text>
+<polyline points="1065,740 1230,740 1230,550" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="1230.00,550.00 1235.65,561.71 1224.35,561.71" fill="#526581"/>
+<text x="1090" y="805" font-family="DejaVu Sans" font-size="15" fill="#526581">IPv4 egress</text>
+<polyline points="365,775 440,775 440,922 520,922" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="520.00,922.00 508.29,927.65 508.29,916.35" fill="#526581"/>
+<polyline points="945,790 945,895" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="945.00,895.00 939.35,883.29 950.65,883.29" fill="#526581"/>
+<text x="70" y="1018" font-family="DejaVu Sans" font-size="18" fill="#182b49">One logical internet-facing ALB / one ASG spans both AZs. Private instances have no public IP.</text>
+<text x="35" y="1056" font-family="DejaVu Sans" font-size="14" fill="#677489">Repository-owned PT-1 input | no third-party artwork or icons</text>
+</svg>

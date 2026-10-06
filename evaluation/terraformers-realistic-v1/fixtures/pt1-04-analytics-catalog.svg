@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="920" viewBox="0 0 1380 920">
+<rect width="100%" height="100%" fill="white"/>
+<text x="35" y="48" font-family="DejaVu Sans" font-size="26" fill="#182b49">Analytics lake - S3 data, Glue metadata, Athena SQL</text>
+<rect x="40" y="105" width="1295" height="675" fill="#f7f9fc" stroke="#8b9db4" stroke-width="2"/>
+<text x="50" y="128" font-family="DejaVu Sans" font-size="17" fill="#182b49">Analytics account - metadata arrows are labeled</text>
+<rect x="80" y="180" width="310" height="105" fill="#e6f3e8" stroke="#3e5877" stroke-width="2"/>
+<text x="92" y="212" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon S3</text>
+<text x="92" y="238" font-family="DejaVu Sans" font-size="20" fill="#182b49">source CSV objects</text>
+<rect x="525" y="180" width="310" height="105" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="537" y="212" font-family="DejaVu Sans" font-size="20" fill="#182b49">AWS Glue crawler</text>
+<text x="537" y="238" font-family="DejaVu Sans" font-size="20" fill="#182b49">nightly schema scan</text>
+<rect x="960" y="180" width="320" height="105" fill="#e8e8fb" stroke="#3e5877" stroke-width="2"/>
+<text x="972" y="210" font-family="DejaVu Sans" font-size="18" fill="#182b49">AWS Glue Data Catalog</text>
+<text x="972" y="234" font-family="DejaVu Sans" font-size="18" fill="#182b49">lake database</text>
+<rect x="960" y="545" width="320" height="105" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
+<text x="972" y="577" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon Athena</text>
+<text x="972" y="603" font-family="DejaVu Sans" font-size="20" fill="#182b49">workgroup: analytics</text>
+<rect x="525" y="545" width="310" height="105" fill="#e6f3e8" stroke="#3e5877" stroke-width="2"/>
+<text x="537" y="577" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon S3</text>
+<text x="537" y="603" font-family="DejaVu Sans" font-size="20" fill="#182b49">query results</text>
+<rect x="80" y="545" width="310" height="105" fill="#fff4d9" stroke="#3e5877" stroke-width="2"/>
+<text x="92" y="577" font-family="DejaVu Sans" font-size="20" fill="#182b49">Analyst / SQL client</text>
+<polyline points="390,230 525,230" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="525.00,230.00 513.29,235.65 513.29,224.35" fill="#526581"/>
+<text x="395" y="201" font-family="DejaVu Sans" font-size="16" fill="#526581">scan objects</text>
+<polyline points="835,230 960,230" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="960.00,230.00 948.29,235.65 948.29,224.35" fill="#526581"/>
+<text x="840" y="201" font-family="DejaVu Sans" font-size="16" fill="#526581">schema only</text>
+<polyline points="1120,285 1120,545" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="1120.00,545.00 1114.35,533.29 1125.65,533.29" fill="#526581"/>
+<text x="1140" y="396" font-family="DejaVu Sans" font-size="16" fill="#526581">metadata lookup</text>
+<polyline points="235,285 235,420 1040,420 1040,545" fill="none" stroke="#287a53" stroke-width="3"/>
+<polygon points="1040.00,545.00 1034.35,533.29 1045.65,533.29" fill="#287a53"/>
+<text x="535" y="402" font-family="DejaVu Sans" font-size="17" fill="#287a53">read S3 data</text>
+<polyline points="960,595 835,595" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="835.00,595.00 846.71,589.35 846.71,600.65" fill="#526581"/>
+<text x="838" y="691" font-family="DejaVu Sans" font-size="16" fill="#526581">write output</text>
+<polyline points="390,600 435,600 435,740 1180,740 1180,650" fill="none" stroke="#526581" stroke-width="3"/>
+<polygon points="1180.00,650.00 1185.65,661.71 1174.35,661.71" fill="#526581"/>
+<text x="490" y="726" font-family="DejaVu Sans" font-size="16" fill="#526581">submit SQL</text>
+<text x="80" y="833" font-family="DejaVu Sans" font-size="18" fill="#182b49">The catalog stores schema, not object bytes. Athena queries S3; crawler does not move the data.</text>
+<text x="35" y="896" font-family="DejaVu Sans" font-size="14" fill="#677489">Repository-owned PT-1 input | no third-party artwork or icons</text>
+</svg>

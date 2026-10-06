@@ -105,6 +105,10 @@ jobs:
               ;;
             pt2-realistic-continuation)
               [[ "$CONFIRMATION" == RUN_PT2_REALISTIC_CONTINUATION ]]
+              [[ "$GITHUB_RUN_ID" != 37500000739 ]] || {
+                echo 'The exact zero-inference source run must never be rerun.' >&2
+                exit 1
+              }
               [[ "$GITHUB_RUN_ATTEMPT" == 1 ]] || {
                 echo 'PT-2 continuation forbids workflow reruns; preserve every accepted case attempt.' >&2
                 exit 1
@@ -1376,9 +1380,27 @@ jobs:
 
           # A new workflow_dispatch is also a repeat, even if run_attempt is 1.
           # The existing global GCP concurrency group keeps this check/submission lane serialized.
-          gh api --paginate \
-            "repos/${GITHUB_REPOSITORY}/actions/workflows/gcp-target-evaluation-baseline.yml/runs?event=workflow_dispatch&per_page=100" \
+          # Repository-wide history avoids the observed incomplete workflow-name response.
+          # The verifier requires every reported page/run plus exact prior/current/exception IDs.
+          gh api --paginate -H 'Cache-Control: no-cache' \
+            "repos/${GITHUB_REPOSITORY}/actions/runs?event=workflow_dispatch&per_page=100" \
             | jq --slurp '.' > "$output_dir/dispatch-history.json"
+
+          # This one pinned preflight failure is the only human-approved non-consuming dispatch.
+          # Keep its untouched archive/metadata as evidence; no generic ignore-failure switch.
+          recovery_archive="${RUNNER_TEMP}/pt2-zero-inference-artifact.zip"
+          recovery_dir="$output_dir/zero-inference-source-artifact"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/37500000739" > "$output_dir/recovery-run-metadata.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/37500000739/attempts/1/jobs?per_page=100" \
+            > "$output_dir/recovery-job-metadata.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/11429522041" > "$output_dir/recovery-artifact-metadata.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/11429522041/zip" > "$recovery_archive"
+          python3 scripts/evaluation/pt2-realistic-continuation.py extract-recovery \
+            --recovery-artifact="$recovery_dir" --recovery-archive="$recovery_archive" \
+            --recovery-run-metadata="$output_dir/recovery-run-metadata.json" \
+            --recovery-artifact-metadata="$output_dir/recovery-artifact-metadata.json" \
+            --recovery-job-metadata="$output_dir/recovery-job-metadata.json"
+          cp "$recovery_archive" "$output_dir/zero-inference-source-artifact.zip"
 
           gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PRIOR_RUN_ID}" > "$output_dir/prior-run-metadata.json"
           jq -e --arg sha "$PRIOR_DISPATCH_SHA" '
@@ -1401,13 +1423,12 @@ jobs:
             --prior-artifact="$prior_dir" --prior-archive="$prior_archive" \
             --prior-run-metadata="$output_dir/prior-run-metadata.json" \
             --prior-artifact-metadata="$output_dir/prior-artifact-metadata.json"
-          python3 - "$output_dir/dispatch-history.json" "$GITHUB_RUN_ID" "$GITHUB_SHA" <<'PY'
-          import importlib.util, pathlib, sys
-          spec = importlib.util.spec_from_file_location("continuation", "scripts/evaluation/pt2-realistic-continuation.py")
-          continuation = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(continuation)
-          continuation.verify_dispatch_history(pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3])
-          PY
+          python3 scripts/evaluation/pt2-realistic-continuation.py verify-dispatch \
+            --dispatch-history="$output_dir/dispatch-history.json" --run-id="$GITHUB_RUN_ID" --dispatch-sha="$GITHUB_SHA" \
+            --recovery-artifact="$recovery_dir" --recovery-archive="$recovery_archive" \
+            --recovery-run-metadata="$output_dir/recovery-run-metadata.json" \
+            --recovery-artifact-metadata="$output_dir/recovery-artifact-metadata.json" \
+            --recovery-job-metadata="$output_dir/recovery-job-metadata.json"
           jq -e --arg image "$BACKEND_IMAGE" --arg source "$BACKEND_SOURCE_SHA" '
             .backendImage == $image and .backendSourceSha == $source
             and .productionSourceEquivalent == true and .configurationVerified == true
@@ -1489,6 +1510,11 @@ jobs:
             --prior-run-metadata="$output_dir/prior-run-metadata.json" \
             --prior-artifact-metadata="$output_dir/prior-artifact-metadata.json" \
             --dispatch-history="$output_dir/dispatch-history.json" \
+            --recovery-artifact="$output_dir/zero-inference-source-artifact" \
+            --recovery-archive="${RUNNER_TEMP}/pt2-zero-inference-artifact.zip" \
+            --recovery-run-metadata="$output_dir/recovery-run-metadata.json" \
+            --recovery-artifact-metadata="$output_dir/recovery-artifact-metadata.json" \
+            --recovery-job-metadata="$output_dir/recovery-job-metadata.json" \
             --run-id="pt2-continuation-${GITHUB_RUN_ID}" \
             --token-file="${RUNNER_TEMP}/case-c-access.token" \
             --dispatch-sha="$GITHUB_SHA" \

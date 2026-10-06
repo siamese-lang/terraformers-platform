@@ -1,6 +1,6 @@
 # PT-2 bounded continuation procedure
 
-Procedure `pt2-realistic-continuation-v2` is a bounded correction to the already-executed
+Procedure `pt2-realistic-continuation-v3` is a bounded correction to the already-executed
 `pt2-realistic-baseline-v2`. It exists only because authoritative run `37480519016` produced
 valid partial evidence: case 01 reached terminal success, case 02 was accepted once and remained
 non-terminal beyond the frozen 420-second measurement window, and cases 03-10 were never submitted.
@@ -8,6 +8,15 @@ non-terminal beyond the frozen 420-second measurement window, and cases 03-10 we
 This procedure does not replace, reinterpret, or rerun those observations. It preserves the original
 420-second latency censoring for case 02 and permits only read-only recovery of that exact accepted
 job plus first submission of the previously NOT_RUN cases.
+
+The independently accepted v2 procedure (SHA-256
+`1658b5c328fdfde9671542373309e68165d7aae6f4b973d0b781f03890b097ee`) was dispatched exactly once,
+as run `37500000739`, and failed closed during history verification before JWT preparation or any
+product API observation/submission. It is preserved as a zero-inference mechanical preflight failure,
+not a consumed case attempt. [Independent recovery review 6021688827](https://github.com/siamese-lang/terraformers-platform/pull/245#issuecomment-6021688827)
+and explicit USER approval authorize only this v3 repository-only correction preparation and
+deterministic validation. No live dispatch is authorized before independent acceptance and explicit
+merge of the correction. This human-authorized iteration does not consume or reset autonomous repair.
 
 Draft continuation v1 (protocol SHA-256
 `28d225feceb2240d127a9fe7b0f33d3bbca836ecc2913bd3b6ff2a9721be1b00`)
@@ -43,11 +52,55 @@ or hand-built summary may substitute for the prior artifact. The runner repeats 
 any API observation or new inference. GitHub metadata also binds repository, workflow, event,
 completed failed run, attempt and dispatch source.
 
-The existing global GCP concurrency group is preserved. All workflow-dispatch history for the existing
-evaluation workflow is read before the auth fixture is prepared. The current run must be main-only,
+The existing global GCP concurrency group is preserved. Paginated **repository-wide** workflow-dispatch
+history is read before the auth fixture is prepared, with a no-cache request header. This avoids relying
+on the workflow-name history endpoint whose preserved response omitted both original/current runs;
+the underlying stale-response cause remains unknown. Every page must report the same total count,
+and the combined unique run count must equal that count. API pagination caps, truncated/mixed/stale
+pages, duplicates or missing exact expected runs fail closed; acquisition is not retried until green.
+Original/current/exception runs must also match repository, workflow ID/path, main, event, attempt
+and their exact source identities. The current run must be main-only,
 attempt 1, at the exact dispatch SHA and named `PT-2 continuation of 37480519016`. Any earlier
-continuation dispatch with that title stops the new run, including when it has a different run ID
-and `run_attempt=1`. There is no automatic second continuation batch after partial evidence.
+continuation dispatch with that title stops the new run, except for the single evidence-bound
+zero-inference source below. Every other continuation with that title (including a concurrent later
+dispatch) stops. No second recovery continuation is allowed after the one permitted by this v3
+exception, regardless of outcome, run ID or attempt. There is no general ignore-failed-run switch.
+
+## Exact zero-inference exception
+
+Only these identities can make the source dispatch non-consuming:
+
+- source run `37500000739`, attempt 1, completed failure, workflow-dispatch on main;
+- dispatch SHA `026adab4dec17fd3b57ee950f174f277ed7c6d80`;
+- workflow ID `368779787`, `.github/workflows/gcp-target-evaluation-baseline.yml`;
+- single failed `baseline` job `112394279733`, same run/attempt/dispatch;
+- artifact `11429522041`, `pt2-realistic-continuation-37500000739`, unexpired;
+- archive digest `sha256:49b017e98cb05a546a2c7900044ae6d742762df2c59fdd10a5abe2a4a64a179f`;
+- inventory SHA-256 `0875d2814b3e42f87eccd6f15cf7d309c2f6684cdd6e09b331ba24447f0d2888`.
+
+GitHub run/artifact metadata, the actual downloaded ZIP and exact attempt's job/steps must all agree.
+Job steps are bound by number, exact name, completed status and conclusion: 43 prior evidence/history
+verification FAILURE; 44 JWT preparation, 45 original observer, 46 recovery/continuation SKIPPED;
+47 fixture restore, 48 inventory seal, 51 artifact upload, 53 artifact handoff and 60 ephemeral-pod
+cleanup SUCCESS. Missing, changed, duplicate or extra jobs invalidate the exception.
+All 63 recorded job steps also have a pinned canonical SHA-256
+`45b6bb1cf24009a7cdf991988ab7f2155b2bb517ec2d4136f07d3889fb2fd305`: the ordered array
+of each step's `number`, `name`, `status`, `conclusion`, encoded as sorted-key, compact JSON UTF-8.
+Any changed/extra/missing step invalidates that identity; mutable runner labels are not acceptance proof.
+
+The sealed artifact must have exactly the eight original preflight/runtime/history files plus its
+inventory. Verify every file checksum and exact file/directory set; reject unsafe archive paths,
+duplicates, links, case directories, ledgers, recovery responses, accepted identities and model output.
+Its runtime/procedure binding must still describe the original v2 dispatch and original execution base.
+These checks run before authentication fixture preparation and again before any runner API observation.
+The untouched ZIP, extracted source evidence and GitHub metadata are included in future evidence
+inventory. The original failed run/artifact is never rewritten or rerun, even under its original ID
+with attempt 1. This correction cannot declare v2 green.
+
+Full history must include the exact exception run as well as the authoritative original baseline and
+the new current run. Ignoring an ID without all of the proof above is prohibited. Any other prior
+continuation blocks, including failed/cancelled/preflight-only runs; there are no inferred exceptions.
+Natural failures or partial new-case evidence in the next recovery remain consumed observations.
 
 ## Recovery before any new inference
 

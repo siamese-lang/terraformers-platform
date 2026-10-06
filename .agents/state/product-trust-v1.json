@@ -26,13 +26,14 @@
     "Historical candidate notes above describe preparation before approval. Independent review 6015807394 accepted candidate 3; explicit USER approval 6015857324 subsequently froze its exact identity and authorized PT-1 completion after PR #241 merged. PT-2 remains unapproved and unstarted.",
     "Frozen dataset/identity/provenance bytes are immutable pre-approval snapshots. Current truth approval is recorded outside those pinned bytes in candidate/truthFreezeApproval and review evidence; their historical null approval or NOT_APPROVED markers do not replace the later explicit approval.",
     "Current USER approval activates PT-2 on its own exact base without changing historical PT-1 freeze/repair evidence. Preparation has made zero model/GCP calls; one existing-workflow scope is prepared for merge review. Actual trust/accepted-to-terminal evidence remains an explicit blocker. No transient active PR/branch state is registered.",
-    "PT-2 human-authorized review correction 1 replaces unexecuted standalone procedure with one authenticated production job per case and immutable Actions artifact handoff. Existing base, frozen bytes, PT-1 history and autonomous repair counters are preserved. No baseline or cloud action has occurred; independent review and explicit merge approval remain required."
+    "PT-2 human-authorized review correction 1 replaces unexecuted standalone procedure with one authenticated production job per case and immutable Actions artifact handoff. Existing base, frozen bytes, PT-1 history and autonomous repair counters are preserved. No baseline or cloud action has occurred; independent review and explicit merge approval remain required.",
+    "Historical preparation notes above predate live execution. Original run 37480519016 accepted two cases once; continuation 37500000739 failed before product API observation/inference. USER authorizes only bounded repository-only recovery correction preparation. Exact zero-inference proof and complete history are required before its one future continuation; no live dispatch before independent acceptance and explicit merge. No transient correction PR/branch is registered."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
   "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "resultBeforeHumanGate": "PT_2_CORRECTED_PROCEDURE_PENDING_INDEPENDENT_REVIEW_AND_MERGE",
+  "resultBeforeHumanGate": "PT_2_BOUNDED_RECOVERY_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_MERGE",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -52,10 +53,10 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "Corrected procedure requires independent review resolving review comment 6017268972 before merge or dispatch.",
-    "Existing workflow is main-only; explicit human merge approval required before authorized live batch."
+    "Recovery correction requires independent acceptance and explicit merge before continuation dispatch.",
+    "PT-2 remains incomplete: case 02 original censor retained; cases 03-10 NOT_RUN; combined result review pending."
   ],
-  "evidenceDocument": "docs/evaluation/product-trust-pt-2-baseline-preparation.md",
+  "evidenceDocument": "docs/evaluation/product-trust-pt-2-continuation-protocol.md",
   "validation": {
     "initialFocused": {
       "tests": 10,
@@ -178,7 +179,37 @@
       "autonomousRepairConsumed": false,
       "fixtureBytesChanged": false,
       "procedureVersion": "pt2-realistic-baseline-v2",
-      "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW"
+      "independentAcceptance": "PASS",
+      "independentAcceptanceReviewCommentId": 6018265429
+    },
+    {
+      "phase": "PT-2",
+      "iteration": 2,
+      "authorization": "USER explicitly authorized audit/correction of the untrusted PR #245 continuation handoff",
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "reviewedHeadSha": "fbbced8a11b4c02bc0f64515700ac8f40c6aa1a7",
+      "procedureVersion": "pt2-realistic-continuation-v2",
+      "procedureSha256": "1658b5c328fdfde9671542373309e68165d7aae6f4b973d0b781f03890b097ee",
+      "autonomousRepairConsumed": false,
+      "fixtureBytesChanged": false,
+      "independentAcceptance": "PASS",
+      "independentAcceptanceReviewCommentId": 6021177161
+    },
+    {
+      "phase": "PT-2",
+      "iteration": 3,
+      "authorizedOn": "2026-10-07",
+      "authorization": "USER explicit repository-only recovery preparation approval and structured review 6021688827",
+      "reviewCommentId": 6021688827,
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "procedureVersion": "pt2-realistic-continuation-v3",
+      "procedureSha256": "218d9d48503a7a8e986081279fb8b77beb692a279e4393319867558c8ee88281",
+      "autonomousRepairConsumed": false,
+      "fixtureBytesChanged": false,
+      "correctionLiveActions": 0,
+      "correctionModelCalls": 0,
+      "independentAcceptance": "PENDING_CORRECTION_REVIEW",
+      "liveDispatchAuthorized": false
     }
   ],
   "prReviewFeedbackPolicy": {
@@ -202,21 +233,17 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6017268972,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6017268972",
-    "decision": "CHANGES_REQUIRED",
-    "pullRequest": 244,
-    "reviewedHeadSha": "436bbcc6728d10adf05f2bcfa07550bb45ed8ca7",
+    "commentId": 6021688827,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/245#issuecomment-6021688827",
+    "decision": "APPROVE_BOUNDED_RECOVERY_CORRECTION_PREPARATION",
     "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
     "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-    "blockers": [
-      "BLOCKER-1",
-      "BLOCKER-2"
-    ],
-    "correctionDisposition": "IMPLEMENTED_PENDING_INDEPENDENT_REVIEW",
-    "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW",
-    "mergeAuthorizedByReview": false,
-    "baselineStarted": false
+    "sourceRunId": 37500000739,
+    "sourceDispatchSha": "026adab4dec17fd3b57ee950f174f277ed7c6d80",
+    "repositoryOnlyCorrectionAuthorized": true,
+    "liveDispatchAuthorized": false,
+    "sourceRunRerunAuthorized": false,
+    "pt3Authorized": false
   },
   "lastCompletedWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
   "lastCompletedPullRequest": 241,
@@ -313,6 +340,52 @@
       "humanTruthFreezeGrantedByReview": false,
       "mergeAuthorizedByReview": false,
       "pt2Authorized": false
+    },
+    {
+      "commentId": 6017268972,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6017268972",
+      "decision": "CHANGES_REQUIRED",
+      "pullRequest": 244,
+      "reviewedHeadSha": "436bbcc6728d10adf05f2bcfa07550bb45ed8ca7",
+      "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "blockers": [
+        "BLOCKER-1",
+        "BLOCKER-2"
+      ],
+      "correctionDisposition": "IMPLEMENTED_PENDING_INDEPENDENT_REVIEW",
+      "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW",
+      "mergeAuthorizedByReview": false,
+      "baselineStarted": false
+    },
+    {
+      "commentId": 6018265429,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/244#issuecomment-6018265429",
+      "decision": "ACCEPTED",
+      "scope": "PT-2 baseline preparation",
+      "reviewedHeadSha": "f742b2c55be799e46d60f239856fccc99ab9f03f",
+      "pt2ResultAccepted": false
+    },
+    {
+      "commentId": 6021177161,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/245#issuecomment-6021177161",
+      "decision": "ACCEPTED",
+      "scope": "PT-2 continuation preparation",
+      "reviewedHeadSha": "fbbced8a11b4c02bc0f64515700ac8f40c6aa1a7",
+      "pt2ResultAccepted": false
+    },
+    {
+      "commentId": 6021688827,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/245#issuecomment-6021688827",
+      "decision": "APPROVE_BOUNDED_RECOVERY_CORRECTION_PREPARATION",
+      "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "sourceRunId": 37500000739,
+      "sourceDispatchSha": "026adab4dec17fd3b57ee950f174f277ed7c6d80",
+      "repositoryOnlyCorrectionAuthorized": true,
+      "liveDispatchAuthorized": false,
+      "sourceRunRerunAuthorized": false,
+      "pt3Authorized": false
     }
   ],
   "repositoryStateUpdate": {
@@ -349,7 +422,7 @@
   },
   "phaseExecution": {
     "PT-2": {
-      "status": "CORRECTED_PROCEDURE_PENDING_INDEPENDENT_REVIEW_AND_MERGE",
+      "status": "INCOMPLETE_RECOVERY_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_MERGE",
       "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
       "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
       "activatedAt": "2026-10-06T12:45:08Z",
@@ -359,16 +432,16 @@
       "datasetVersion": "terraformers-realistic-v1",
       "candidateRevision": 3,
       "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
-      "baselineExecutionStarted": false,
+      "baselineExecutionStarted": true,
       "baselineComplete": false,
-      "modelUnderTestRunCount": 0,
-      "liveCloudActions": 0,
+      "modelUnderTestRunCount": 2,
+      "liveCloudActions": null,
       "autoRepairsUsed": 0,
-      "humanAuthorizedCorrectiveIterations": 1,
-      "persistedTrustMeasurement": "NOT_MEASURED_BASELINE_NOT_STARTED",
-      "acceptedToTerminalMeasurement": "NOT_MEASURED_BASELINE_NOT_STARTED",
+      "humanAuthorizedCorrectiveIterations": 3,
+      "persistedTrustMeasurement": "PARTIAL_ORIGINAL_CASE_01_ONLY",
+      "acceptedToTerminalMeasurement": "ORIGINAL_CASE_01_TERMINAL_CASE_02_CENSORED",
       "originalAcceptanceObservabilityBlocker": true,
-      "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW",
+      "independentAcceptance": "BASELINE_RESULT_PENDING_INDEPENDENT_REVIEW",
       "procedureSha256": "d8e615ef3fdc26de9be5e34b922da6c06055ca60e4b4e5b004775301d5479f90",
       "liveExecutionAuthorized": true,
       "workflowDispatchReady": false,
@@ -410,7 +483,64 @@
         "durableCompletion": "next substantive PT-3 or closure PR after independent baseline acceptance",
         "dedicatedPostRunStateSyncPrAuthorized": false
       },
-      "observabilityCorrection": "IMPLEMENTED_PENDING_INDEPENDENT_REVIEW"
+      "observabilityCorrection": "PREPARATION_ACCEPTED_RESULT_INCOMPLETE",
+      "providerRpcCount": null,
+      "liveCloudActionsEvidence": "original live baseline and zero-inference substrate preflight; exact action count not measured",
+      "partialBaselineEvidence": {
+        "runId": 37480519016,
+        "runAttempt": 1,
+        "dispatchSha": "c3e9ed4e854778dfb2eefbc0182ae53a008025bf",
+        "artifactId": 11422455892,
+        "artifactDigest": "sha256:499f31b4311737884a2b7d0fc0405d477be7e41a99e9969217570c91eb5ac561",
+        "inventorySha256": "107d31a942dcbc23bbfaf1f81e7c1b9c6a2fac4224d5689edb216a0bd4378f3d",
+        "caseUploadAttempts": [
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "case01": {
+          "jobId": "2337e6bd-1f70-4382-a515-b4cdb9cba7d9",
+          "status": "SUCCEEDED"
+        },
+        "case02": {
+          "jobId": "578c05b9-2905-4d60-8432-ce7593c96133",
+          "status": "TERMINAL_NOT_OBSERVED",
+          "censoredObservationMs": 424846
+        },
+        "resultAccepted": false
+      },
+      "continuationRecovery": {
+        "reviewCommentId": 6021688827,
+        "repositoryOnlyPreparationAuthorized": true,
+        "liveDispatchAuthorized": false,
+        "protocolPath": "docs/evaluation/product-trust-pt-2-continuation-protocol.md",
+        "procedureVersion": "pt2-realistic-continuation-v3",
+        "protocolSha256": "218d9d48503a7a8e986081279fb8b77beb692a279e4393319867558c8ee88281",
+        "sourceRunId": 37500000739,
+        "sourceRunAttempt": 1,
+        "sourceDispatchSha": "026adab4dec17fd3b57ee950f174f277ed7c6d80",
+        "sourceJobId": 112394279733,
+        "sourceArtifactId": 11429522041,
+        "sourceArtifactDigest": "sha256:49b017e98cb05a546a2c7900044ae6d742762df2c59fdd10a5abe2a4a64a179f",
+        "sourceInventorySha256": "0875d2814b3e42f87eccd6f15cf7d309c2f6684cdd6e09b331ba24447f0d2888",
+        "sourceJobStepsSha256": "45b6bb1cf24009a7cdf991988ab7f2155b2bb517ec2d4136f07d3889fb2fd305",
+        "sourceProductApiObservations": 0,
+        "sourceUploads": 0,
+        "sourceModelCalls": 0,
+        "sourceRerunAuthorized": false,
+        "subsequentRecoveryDispatchLimitAfterAcceptanceAndMerge": 1,
+        "correctionAcceptance": "PENDING_INDEPENDENT_REVIEW",
+        "correctionModelCalls": 0,
+        "correctionLiveActions": 0,
+        "validationEvidence": "docs/evidence/product-trust-pt-2/recovery-correction-validation.json"
+      }
     }
   },
   "goalContinuation": {

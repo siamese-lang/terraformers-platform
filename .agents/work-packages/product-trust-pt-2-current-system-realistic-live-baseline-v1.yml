@@ -70,6 +70,8 @@ work_package:
     - scripts/smoke/ephemeral-jwks-fixture.sh
     - scripts/evaluation/pt2-realistic-baseline.py
     - scripts/evaluation/test_pt2_realistic_baseline.py
+    - scripts/evaluation/pt2-realistic-continuation.py
+    - scripts/evaluation/test_pt2_realistic_continuation.py
     - backend/src/main/java/com/terraformers/modernization/evaluation/LiveEvaluationLauncher.java
     - backend/src/main/java/com/terraformers/modernization/evaluation/EvaluationRunner.java
     - backend/src/test/java/com/terraformers/modernization/evaluation/LiveEvaluationLauncherTest.java
@@ -89,7 +91,41 @@ work_package:
     superseded_procedure_version: pt2-realistic-baseline-v1
     superseded_procedure_sha256: a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae
     baseline_started: false
-    independent_acceptance: PENDING_CORRECTED_HEAD_REVIEW
+    independent_acceptance: PASS
+    acceptance_review_comment_id: 6018265429
+  continuation_recovery:
+    iteration: 3
+    authority: USER explicit recovery preparation approval and independent review 6021688827
+    feedback_url: https://github.com/siamese-lang/terraformers-platform/pull/245#issuecomment-6021688827
+    authorized_at: "2026-10-06T17:24:22Z"
+    human_authorized: true
+    autonomous_repair_consumed: false
+    repository_only_preparation: true
+    live_dispatch_authorized: false
+    source_run_rerun_authorized: false
+    reviewed_source_main_sha: 026adab4dec17fd3b57ee950f174f277ed7c6d80
+    preserve_execution_base: true
+    procedure_version: pt2-realistic-continuation-v3
+    protocol: docs/evaluation/product-trust-pt-2-continuation-protocol.md
+    protocol_sha256: 218d9d48503a7a8e986081279fb8b77beb692a279e4393319867558c8ee88281
+    non_consuming_exception:
+      run_id: 37500000739
+      run_attempt: 1
+      dispatch_sha: 026adab4dec17fd3b57ee950f174f277ed7c6d80
+      job_id: 112394279733
+      artifact_id: 11429522041
+      archive_digest: sha256:49b017e98cb05a546a2c7900044ae6d742762df2c59fdd10a5abe2a4a64a179f
+      inventory_sha256: 0875d2814b3e42f87eccd6f15cf7d309c2f6684cdd6e09b331ba24447f0d2888
+      job_steps_sha256: 45b6bb1cf24009a7cdf991988ab7f2155b2bb517ec2d4136f07d3889fb2fd305
+      product_api_observations: 0
+      upload_attempts: 0
+      model_inference: 0
+    subsequent_recovery_dispatch_limit_after_review_and_merge: 1
+    original_case_upload_attempts: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+    original_case_02_censored_ms: 424846
+    baseline_result_acceptance: PENDING_INDEPENDENT_RESULT_REVIEW
+    correction_acceptance: PENDING_INDEPENDENT_REVIEW
+    gate: MERGE_CHECKPOINT
   evidence_handoff:
     preparation: same existing branch and PR; explicit independent review and merge checkpoint
     live_evidence: after merge GitHub Actions run plus immutable artifact is authoritative
@@ -176,7 +212,7 @@ work_package:
     - git_diff_scope_audit_and_git_diff_check
   auto_repair_limit: 1
   auto_repairs_used: 0
-  human_authorized_corrective_iterations: 1
+  human_authorized_corrective_iterations: 3
   stop_on:
     - unrelated_MAIN_DRIFT
     - MERGE_CHECKPOINT
@@ -187,10 +223,10 @@ work_package:
     - missing_original_acceptance_evidence
     - independent_review_checkpoint
   completion:
-    preparation_result: CORRECTED_PROCEDURE_PENDING_INDEPENDENT_REVIEW_AND_MERGE
+    preparation_result: BOUNDED_RECOVERY_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_MERGE
     current_human_gate: MERGE_CHECKPOINT
     baseline_complete: false
-    model_under_test_case_runs: 0
-    live_cloud_actions: 0
+    model_under_test_case_runs: 2
+    live_cloud_actions: ORIGINAL_BASELINE_AND_ZERO_INFERENCE_PREFLIGHT_ONLY
     next_phase: PT-3
     next_phase_authorized: false

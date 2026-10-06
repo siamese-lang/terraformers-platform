@@ -1,0 +1,131 @@
+{
+  "scope": "PT-2 bounded zero-inference continuation-history recovery preparation",
+  "authority": {
+    "reviewCommentId": 6021688827,
+    "reviewUrl": "https://github.com/siamese-lang/terraformers-platform/pull/245#issuecomment-6021688827",
+    "userRepositoryOnlyApproval": true,
+    "liveDispatchAuthorized": false,
+    "mergeAuthorized": false
+  },
+  "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+  "authoritativeSourceMainSha": "026adab4dec17fd3b57ee950f174f277ed7c6d80",
+  "startingBranchHeadSha": "fbbced8a11b4c02bc0f64515700ac8f40c6aa1a7",
+  "newBranchCreated": false,
+  "rebaseOrMainRefresh": false,
+  "procedure": {
+    "version": "pt2-realistic-continuation-v3",
+    "path": "docs/evaluation/product-trust-pt-2-continuation-protocol.md",
+    "sha256": "218d9d48503a7a8e986081279fb8b77beb692a279e4393319867558c8ee88281"
+  },
+  "exactNonConsumingSource": {
+    "runId": 37500000739,
+    "attempt": 1,
+    "jobId": 112394279733,
+    "artifactId": 11429522041,
+    "archiveDigest": "sha256:49b017e98cb05a546a2c7900044ae6d742762df2c59fdd10a5abe2a4a64a179f",
+    "inventorySha256": "0875d2814b3e42f87eccd6f15cf7d309c2f6684cdd6e09b331ba24447f0d2888",
+    "canonicalJobStepsSha256": "45b6bb1cf24009a7cdf991988ab7f2155b2bb517ec2d4136f07d3889fb2fd305",
+    "actualArchiveMetadataInventoryFileSetVerification": "PASS",
+    "actualJobStepsVerified": 63,
+    "sourceProductApiObservations": 0,
+    "sourceUploadAttempts": 0,
+    "sourceModelInference": 0,
+    "sourceRerunAuthorized": false
+  },
+  "deterministicTests": {
+    "command": "python3 -m unittest discover -s scripts/evaluation -p 'test_pt2_realistic*.py' -v",
+    "final": {
+      "tests": 64,
+      "baselineAndHelper": 21,
+      "continuation": 43,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    "developmentHistory": [
+      {
+        "tests": 63,
+        "failures": 0,
+        "errors": 0,
+        "description": "Initial new recovery guard against historical pre-start repository state"
+      },
+      {
+        "tests": 63,
+        "failures": 5,
+        "errors": 7,
+        "description": "After durable state recorded the real already-started baseline, old baseline tests incorrectly used that state as their unstarted test fixture; unchanged production guard correctly blocked them"
+      },
+      {
+        "tests": 64,
+        "failures": 0,
+        "errors": 0,
+        "description": "Isolated temporary pre-start unit fixtures and added already-started/consumed-case rejection; real state and guard remain unchanged"
+      }
+    ]
+  },
+  "workflowValidation": {
+    "yaml": "PASS",
+    "embeddedBashSyntax": "PASS",
+    "bashBlocks": 41,
+    "actualRequestGuardExecution": {
+      "sourceIdAttempt1": "REJECTED",
+      "sourceIdAttempt2": "REJECTED",
+      "otherRunAttempt2": "REJECTED",
+      "networkCalls": 0
+    },
+    "actionlintVersion": "1.7.12",
+    "actionlint": "PASS",
+    "externalShellcheckRun": false,
+    "releaseArchiveChecksumVerified": true
+  },
+  "actualReadOnlyRepositoryHistory": {
+    "pages": 2,
+    "reportedRuns": 153,
+    "uniqueRuns": 153,
+    "originalAndZeroInferenceRunsPresent": true,
+    "capturedResponseSha256": "1c075bfdc7f1d1c174837a82670bc604ddad68ac0242866e37196ad78a71b659",
+    "futureCurrentRunExists": false,
+    "futureDispatchVerifiedOrExecuted": false
+  },
+  "preservation": {
+    "originalArchiveRunBinding": "PASS",
+    "originalRunId": 37480519016,
+    "originalArtifactId": 11422455892,
+    "caseUploadAttempts": [
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "case02CensoredObservationMs": 424846,
+    "frozenIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+    "pinnedFilesVerified": 26,
+    "sameJobFunctionsByteEquivalent": [
+      "_poll_same_job",
+      "_readback",
+      "recover_prior_case2",
+      "observe_case"
+    ],
+    "protectedProductDatasetRuntimePathsUnchanged": true,
+    "baselineRunnerByteEquivalent": true,
+    "backendTestsRerun": false,
+    "backendValidationReusedFromAcceptedUnchangedSource": true,
+    "transientActivePrOrBranchRegistered": false,
+    "pt1AutonomousRepairsUsed": 1,
+    "pt2AutonomousRepairsUsed": 0
+  },
+  "correctionModelCalls": 0,
+  "correctionLiveCloudActions": 0,
+  "workflowDispatches": 0,
+  "independentCorrectionAcceptance": "PENDING",
+  "baselineComplete": false,
+  "pt3Authorized": false,
+  "currentGate": "MERGE_CHECKPOINT",
+  "diffCheck": "PASS"
+}

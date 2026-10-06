@@ -2,6 +2,7 @@
 """Bounded continuation for the already-started PT-2 realistic baseline."""
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import importlib.util
 import json
 import re
@@ -15,9 +16,9 @@ _spec = importlib.util.spec_from_file_location("pt2_baseline", BASELINE_FILE)
 pt2 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(pt2)
 
-CONTINUATION_PROCEDURE = "pt2-realistic-continuation-v2"
+CONTINUATION_PROCEDURE = "pt2-realistic-continuation-v3"
 CONTINUATION_PROTOCOL = "docs/evaluation/product-trust-pt-2-continuation-protocol.md"
-CONTINUATION_PROTOCOL_SHA256 = "1658b5c328fdfde9671542373309e68165d7aae6f4b973d0b781f03890b097ee"
+CONTINUATION_PROTOCOL_SHA256 = "218d9d48503a7a8e986081279fb8b77beb692a279e4393319867558c8ee88281"
 
 PRIOR_RUN_ID = 37480519016
 PRIOR_RUN_ATTEMPT = 1
@@ -38,6 +39,34 @@ MEASUREMENT_DEADLINE_SECONDS = 420
 DRAIN_DEADLINE_SECONDS = 1200
 POLL_INTERVAL_SECONDS = 5
 CONTINUATION_RUN_TITLE = "PT-2 continuation of 37480519016"
+WORKFLOW_PATH = ".github/workflows/gcp-target-evaluation-baseline.yml"
+WORKFLOW_ID = 368779787
+REPOSITORY = "siamese-lang/terraformers-platform"
+
+# Only this independently reviewed zero-inference preflight is non-consuming. No bypass flag.
+ZERO_RUN_ID = 37500000739
+ZERO_DISPATCH_SHA = "026adab4dec17fd3b57ee950f174f277ed7c6d80"
+ZERO_JOB_ID = 112394279733
+ZERO_ARTIFACT_ID = 11429522041
+ZERO_ARTIFACT_DIGEST = "sha256:49b017e98cb05a546a2c7900044ae6d742762df2c59fdd10a5abe2a4a64a179f"
+ZERO_INVENTORY_SHA256 = "0875d2814b3e42f87eccd6f15cf7d309c2f6684cdd6e09b331ba24447f0d2888"
+ZERO_JOB_STEPS_SHA256 = "45b6bb1cf24009a7cdf991988ab7f2155b2bb517ec2d4136f07d3889fb2fd305"
+ZERO_FILES = frozenset((
+    "dispatch-history.json", "opensearch-count.json", "opensearch-mapping.json",
+    "prior-artifact-metadata.json", "prior-run-metadata.json", "retained-configuration.txt",
+    "retained-deployment.json", "runtime-identity.json",
+))
+ZERO_STEPS = {
+    43: ("Download and verify authoritative partial PT-2 evidence for continuation", "failure"),
+    44: ("Prepare proven ephemeral authenticated JWT fixture for PT-2", "skipped"),
+    45: ("Observe one authenticated production AnalysisJob per frozen PT-2 input", "skipped"),
+    46: ("Continue PT-2 only for the exact prior censored job and previously NOT_RUN inputs", "skipped"),
+    47: ("Restore only the placeholder JWKS fixture after PT-2", "success"),
+    48: ("Seal PT-2 continuation evidence inventory including partial failures", "success"),
+    51: ("Preserve PT-2 continuation raw and partial evidence on every outcome", "success"),
+    53: ("Bind immutable PT-2 continuation run and artifact for independent review", "success"),
+    60: ("Delete ephemeral evaluation baseline pod", "success"),
+}
 
 
 def _read_json(path):
@@ -66,6 +95,11 @@ def verify_prior_binding(archive, run_metadata, artifact_metadata):
 
 def extract_prior_archive(archive, prior_artifact, run_metadata, artifact_metadata):
     verify_prior_binding(archive, run_metadata, artifact_metadata)
+    _extract_archive(archive, prior_artifact)
+    _verify_artifact_inventory(prior_artifact)
+
+
+def _extract_archive(archive, directory, allowed_files=None):
     # Validate every entry before creating files; never follow links or allow duplicate paths.
     with zipfile.ZipFile(archive) as bundle:
         names = set()
@@ -74,35 +108,130 @@ def extract_prior_archive(archive, prior_artifact, run_metadata, artifact_metada
             if (path.is_absolute() or ".." in path.parts or "\\" in entry.filename
                     or str(path) in names or stat.S_ISLNK(entry.external_attr >> 16)):
                 raise ValueError("unsafe prior artifact archive path")
+            if allowed_files is not None and entry.filename not in allowed_files:
+                raise ValueError("zero-inference artifact contains unexpected evidence")
             names.add(str(path))
-        prior_artifact.mkdir(parents=True, exist_ok=False)
-        bundle.extractall(prior_artifact)
-    _verify_artifact_inventory(prior_artifact)
+        directory.mkdir(parents=True, exist_ok=False)
+        bundle.extractall(directory)
 
 
-def verify_dispatch_history(history_path, run_id, dispatch_sha):
+def _verify_zero_binding(archive, run_metadata, artifact_metadata, job_metadata):
+    if not all((archive, run_metadata, artifact_metadata, job_metadata)):
+        raise ValueError("exact zero-inference archive/run/artifact/job evidence required")
+    run = _read_json(run_metadata)
+    if (run.get("id") != ZERO_RUN_ID or type(run.get("run_attempt")) is not int or run.get("run_attempt") != 1
+            or run.get("head_sha") != ZERO_DISPATCH_SHA or run.get("head_branch") != "main"
+            or run.get("status") != "completed" or run.get("conclusion") != "failure"
+            or run.get("event") != "workflow_dispatch" or run.get("path") != WORKFLOW_PATH
+            or run.get("workflow_id") != WORKFLOW_ID or run.get("display_title") != CONTINUATION_RUN_TITLE
+            or run.get("repository", {}).get("full_name") != REPOSITORY):
+        raise ValueError("zero-inference run identity mismatch")
+    artifact = _read_json(artifact_metadata)
+    if (artifact.get("id") != ZERO_ARTIFACT_ID
+            or artifact.get("name") != f"pt2-realistic-continuation-{ZERO_RUN_ID}"
+            or artifact.get("expired") is not False or artifact.get("digest") != ZERO_ARTIFACT_DIGEST
+            or artifact.get("workflow_run", {}).get("id") != ZERO_RUN_ID
+            or artifact.get("workflow_run", {}).get("head_sha") != ZERO_DISPATCH_SHA):
+        raise ValueError("zero-inference artifact identity mismatch")
+    if "sha256:" + pt2.digest(archive) != ZERO_ARTIFACT_DIGEST:
+        raise ValueError("zero-inference archive digest mismatch")
+    jobs = _read_json(job_metadata)
+    if type(jobs.get("total_count")) is not int or jobs.get("total_count") != 1 or len(jobs.get("jobs", [])) != 1:
+        raise ValueError("zero-inference job set mismatch")
+    job = jobs["jobs"][0]
+    if (job.get("id") != ZERO_JOB_ID or job.get("run_id") != ZERO_RUN_ID
+            or type(job.get("run_attempt")) is not int or job.get("run_attempt") != 1 or job.get("head_sha") != ZERO_DISPATCH_SHA
+            or job.get("name") != "baseline" or job.get("status") != "completed"
+            or job.get("conclusion") != "failure"):
+        raise ValueError("zero-inference job identity mismatch")
+    steps = job.get("steps", [])
+    if len({step.get("number") for step in steps}) != len(steps):
+        raise ValueError("zero-inference duplicate job step")
+    for number, (name, conclusion) in ZERO_STEPS.items():
+        matched = [step for step in steps if step.get("number") == number]
+        if (len(matched) != 1 or matched[0].get("name") != name
+                or matched[0].get("status") != "completed" or matched[0].get("conclusion") != conclusion):
+            raise ValueError("zero-inference job step mismatch: " + str(number))
+    canonical_steps = [{key: step.get(key) for key in ("number", "name", "status", "conclusion")}
+                       for step in steps]
+    if hashlib.sha256(json.dumps(canonical_steps, sort_keys=True, separators=(",", ":")).encode()).hexdigest() != \
+            ZERO_JOB_STEPS_SHA256:
+        raise ValueError("zero-inference full job-step identity mismatch")
+
+
+def verify_zero_inference_exception(recovery_artifact=None, recovery_archive=None, recovery_run_metadata=None,
+                                   recovery_artifact_metadata=None, recovery_job_metadata=None):
+    _verify_zero_binding(recovery_archive, recovery_run_metadata,
+                         recovery_artifact_metadata, recovery_job_metadata)
+    if recovery_artifact is None:
+        raise ValueError("zero-inference extracted artifact required")
+    _verify_inventory(recovery_artifact, ZERO_INVENTORY_SHA256)
+    if {str(path.relative_to(recovery_artifact)) for path in recovery_artifact.rglob("*")} != \
+            ZERO_FILES | {"artifact-sha256.json"}:
+        raise ValueError("zero-inference artifact contains unexpected evidence")
+    runtime = _read_json(recovery_artifact / "runtime-identity.json")
+    if (runtime.get("dispatchSha") != ZERO_DISPATCH_SHA or runtime.get("executionBaseSha") != pt2.BASE
+            or runtime.get("protocolSha256") != "1658b5c328fdfde9671542373309e68165d7aae6f4b973d0b781f03890b097ee"
+            or runtime.get("productionSourceEquivalent") is not True
+            or runtime.get("configurationVerified") is not True):
+        raise ValueError("zero-inference runtime/procedure identity mismatch")
+
+
+def extract_recovery_archive(archive, directory, run_metadata, artifact_metadata, job_metadata):
+    _verify_zero_binding(archive, run_metadata, artifact_metadata, job_metadata)
+    _extract_archive(archive, directory, ZERO_FILES | {"artifact-sha256.json"})
+    verify_zero_inference_exception(directory, archive, run_metadata, artifact_metadata, job_metadata)
+
+
+def verify_dispatch_history(history_path, run_id, dispatch_sha, **recovery_binding):
     if not re.fullmatch(r"[0-9]+", run_id):
         raise ValueError("invalid continuation run ID")
+    if int(run_id) <= ZERO_RUN_ID:
+        raise ValueError("zero-inference source run cannot be rerun or reused")
     history = _read_json(history_path)
+    if not isinstance(history, list) or not history or not isinstance(history[0], dict):
+        raise ValueError("incomplete repository dispatch history")
+    count = history[0].get("total_count")
+    if (type(count) is not int or count <= 0
+            or any(not isinstance(page, dict) or page.get("total_count") != count
+                   or not isinstance(page.get("workflow_runs"), list) for page in history)):
+        raise ValueError("incomplete repository dispatch history")
     runs = [run for page in history for run in page["workflow_runs"]]
+    if (any(not isinstance(run, dict) or type(run.get("id")) is not int for run in runs)
+            or len(runs) != count or len({run["id"] for run in runs}) != count):
+        raise ValueError("incomplete repository dispatch history")
+
+    def matches(run, sha):
+        return (run.get("head_sha") == sha and type(run.get("run_attempt")) is int and run.get("run_attempt") == 1
+                and run.get("head_branch") == "main" and run.get("event") == "workflow_dispatch"
+                and run.get("workflow_id") == WORKFLOW_ID and run.get("path") == WORKFLOW_PATH
+                and run.get("repository", {}).get("full_name") == REPOSITORY)
+
     prior = [run for run in runs if run.get("id") == PRIOR_RUN_ID]
-    if len(prior) != 1 or prior[0].get("head_sha") != PRIOR_DISPATCH_SHA:
+    if len(prior) != 1 or not matches(prior[0], PRIOR_DISPATCH_SHA):
         raise ValueError("dispatch history does not extend through the authoritative prior run")
     current = [run for run in runs if run.get("id") == int(run_id)]
-    if (len(current) != 1 or current[0].get("run_attempt") != 1
-            or current[0].get("head_sha") != dispatch_sha
-            or current[0].get("head_branch") != "main"
-            or current[0].get("event") != "workflow_dispatch"
+    if (len(current) != 1 or not matches(current[0], dispatch_sha)
             or current[0].get("display_title") != CONTINUATION_RUN_TITLE):
         raise ValueError("current continuation run identity mismatch")
-    if any(run.get("display_title") == CONTINUATION_RUN_TITLE and run["id"] < int(run_id)
+    exempt = [run for run in runs if run.get("id") == ZERO_RUN_ID]
+    if (len(exempt) != 1 or not matches(exempt[0], ZERO_DISPATCH_SHA)
+            or exempt[0].get("status") != "completed" or exempt[0].get("conclusion") != "failure"
+            or exempt[0].get("display_title") != CONTINUATION_RUN_TITLE):
+        raise ValueError("zero-inference source absent or mismatched in dispatch history")
+    if any(run.get("display_title") == CONTINUATION_RUN_TITLE and run["id"] not in (ZERO_RUN_ID, int(run_id))
            for run in runs):
         raise ValueError("prior continuation dispatch exists; human review required, never repeat uploads")
+    verify_zero_inference_exception(**recovery_binding)
 
 
 def _verify_artifact_inventory(prior_artifact):
+    _verify_inventory(prior_artifact, PRIOR_INVENTORY_SHA256)
+
+
+def _verify_inventory(prior_artifact, inventory_sha256):
     inventory_path = prior_artifact / "artifact-sha256.json"
-    if pt2.digest(inventory_path) != PRIOR_INVENTORY_SHA256:
+    if pt2.digest(inventory_path) != inventory_sha256:
         raise ValueError("prior artifact inventory identity mismatch")
     inventory = _read_json(inventory_path)
     if any(path.is_symlink() for path in prior_artifact.rglob("*")):
@@ -465,12 +594,13 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
         read_main=pt2.current_main, logs=pt2.collect_logs, clock=time.monotonic,
         wait=time.sleep, measurement_deadline=MEASUREMENT_DEADLINE_SECONDS,
         drain_deadline=DRAIN_DEADLINE_SECONDS, archive=None, run_metadata=None, artifact_metadata=None,
-        history_path=None):
+        history_path=None, **recovery_binding):
     dataset, prior_observations = verify(root, prior_artifact, archive, run_metadata, artifact_metadata)
     if not 0 < measurement_deadline <= MEASUREMENT_DEADLINE_SECONDS \
             or not measurement_deadline <= drain_deadline <= DRAIN_DEADLINE_SECONDS:
         raise ValueError("measurement/drain bounds exceed the frozen procedure")
-    verify_dispatch_history(history_path, run_id.removeprefix("pt2-continuation-"), dispatch_sha)
+    verify_dispatch_history(history_path, run_id.removeprefix("pt2-continuation-"), dispatch_sha,
+                            **recovery_binding)
     output.mkdir(parents=True, exist_ok=False)
     pt2.write_json(output / "procedure.json", {
         "procedureVersion": CONTINUATION_PROCEDURE,
@@ -484,6 +614,11 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
         "priorArtifactId": PRIOR_ARTIFACT_ID,
         "priorArtifactDigest": PRIOR_ARTIFACT_DIGEST,
         "priorInventorySha256": PRIOR_INVENTORY_SHA256,
+        "zeroInferenceExceptionRunId": ZERO_RUN_ID,
+        "zeroInferenceExceptionArtifactId": ZERO_ARTIFACT_ID,
+        "zeroInferenceExceptionArtifactDigest": ZERO_ARTIFACT_DIGEST,
+        "zeroInferenceExceptionInventorySha256": ZERO_INVENTORY_SHA256,
+        "historySource": "complete repository-wide workflow_dispatch history",
         "recoveryJobId": CASE2_JOB_ID,
         "authenticatedFixtureSubject": f"case-c-{PRIOR_RUN_ID}",
         "continuationCaseOrder": CONTINUATION_CASE_IDS,
@@ -548,7 +683,7 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("extract-prior", "verify", "run", "inventory"))
+    parser.add_argument("action", choices=("extract-prior", "extract-recovery", "verify-dispatch", "verify", "run", "inventory"))
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--prior-artifact", type=Path)
     parser.add_argument("--output", type=Path)
@@ -559,7 +694,11 @@ def main():
     parser.add_argument("--prior-run-metadata", type=Path)
     parser.add_argument("--prior-artifact-metadata", type=Path)
     parser.add_argument("--dispatch-history", type=Path)
+    for name in ("artifact", "archive", "run-metadata", "artifact-metadata", "job-metadata"):
+        parser.add_argument("--recovery-" + name, type=Path)
     args = parser.parse_args()
+    recovery_binding = {"recovery_" + name: getattr(args, "recovery_" + name)
+                        for name in ("artifact", "archive", "run_metadata", "artifact_metadata", "job_metadata")}
 
     if args.action in ("verify", "extract-prior"):
         if not all((args.prior_artifact, args.prior_archive, args.prior_run_metadata, args.prior_artifact_metadata)):
@@ -570,6 +709,18 @@ def main():
         dataset, _ = verify(args.root, args.prior_artifact, args.prior_archive,
                             args.prior_run_metadata, args.prior_artifact_metadata)
         print(f"Verified prior PT-2 run and {len(dataset['cases'])} frozen cases; no live calls.")
+    elif args.action in ("extract-recovery", "verify-dispatch"):
+        if not all(recovery_binding.values()):
+            parser.error("recovery verification requires exact archive/directory and run/artifact/job metadata")
+        if args.action == "extract-recovery":
+            extract_recovery_archive(args.recovery_archive, args.recovery_artifact, args.recovery_run_metadata,
+                                     args.recovery_artifact_metadata, args.recovery_job_metadata)
+        else:
+            if not all((args.dispatch_history, args.run_id, args.dispatch_sha)):
+                parser.error("dispatch verification requires history, run ID and dispatch SHA")
+            verify_dispatch_history(args.dispatch_history, args.run_id.removeprefix("pt2-continuation-"),
+                                    args.dispatch_sha, **recovery_binding)
+        print("Verified exact zero-inference recovery binding; no live calls.")
     elif args.action == "inventory":
         if not args.output:
             parser.error("inventory requires --output")
@@ -577,7 +728,7 @@ def main():
     else:
         if not all((args.prior_artifact, args.output, args.run_id, args.token_file, args.dispatch_sha,
                     args.prior_archive, args.prior_run_metadata, args.prior_artifact_metadata,
-                    args.dispatch_history)):
+                    args.dispatch_history, *recovery_binding.values())):
             parser.error("run requires prior binding/history files, output, run-id, token-file and dispatch SHA")
         client = pt2.CurlClient(args.token_file)
         try:
@@ -585,7 +736,7 @@ def main():
                 args.root, args.prior_artifact, args.output, args.run_id,
                 args.dispatch_sha, client, archive=args.prior_archive,
                 run_metadata=args.prior_run_metadata, artifact_metadata=args.prior_artifact_metadata,
-                history_path=args.dispatch_history
+                history_path=args.dispatch_history, **recovery_binding
             )
         finally:
             client.close()

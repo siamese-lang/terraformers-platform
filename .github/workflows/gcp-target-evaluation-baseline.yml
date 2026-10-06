@@ -21,6 +21,7 @@ on:
           - case-a-a3-retrieval-probe
           - adaptive-retrieval-probe
           - a7-7-v4-production-evaluation
+          - a7-7-v4-artifact-rescore
       backend_image:
         description: Exact immutable backend image used as the A7-7 v4 evaluation toolchain.
         required: false
@@ -35,6 +36,7 @@ on:
         type: string
 
 permissions:
+  actions: read
   contents: read
   id-token: write
 
@@ -58,6 +60,9 @@ jobs:
       BASELINE_POD: terraformers-evaluation-baseline
       OPENSEARCH_SERVICE: terraformers-opensearch
       A7_7_V4_CORPUS_CHECKSUM: da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a
+      A7_7_SOURCE_RUN_ID: '37401380524'
+      A7_7_SOURCE_ARTIFACT_ID: '11385926347'
+      A7_7_SOURCE_ARTIFACT_DIGEST: sha256:3df24aa8744c93b5d543b466d718f33ed6f54f089e214689137b82623acd43a0
 
     steps:
       - uses: actions/checkout@v5
@@ -145,6 +150,24 @@ jobs:
               echo "A7_7_BACKEND_IMAGE=$BACKEND_IMAGE" >> "$GITHUB_ENV"
               echo "A7_7_BACKEND_SOURCE_SHA=$BACKEND_SOURCE_SHA" >> "$GITHUB_ENV"
               ;;
+            a7-7-v4-artifact-rescore)
+              [[ "$CONFIRMATION" == RUN_A7_7_V4_ARTIFACT_RESCORE ]] || {
+                echo 'A7-7 artifact rescore requires confirmation RUN_A7_7_V4_ARTIFACT_RESCORE.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]] || {
+                echo 'A7-7 artifact rescore requires the exact immutable backend image digest.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+                echo 'A7-7 artifact rescore requires a full backend source SHA.' >&2
+                exit 1
+              }
+              echo 'A7_7_V4_EVALUATION=true' >> "$GITHUB_ENV"
+              echo 'A7_7_ARTIFACT_RESCORE=true' >> "$GITHUB_ENV"
+              echo "A7_7_BACKEND_IMAGE=$BACKEND_IMAGE" >> "$GITHUB_ENV"
+              echo "A7_7_BACKEND_SOURCE_SHA=$BACKEND_SOURCE_SHA" >> "$GITHUB_ENV"
+              ;;
             *)
               echo "Unsupported evaluation scope: $EVALUATION_SCOPE" >&2
               exit 1
@@ -184,6 +207,46 @@ jobs:
             cd "$bundle_root"
             zip -qr "${RUNNER_TEMP}/live-baseline.zip" classes dependency evaluation
           )
+
+      - name: Download frozen A7-7 source evaluation artifact
+        if: inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
+        uses: actions/download-artifact@v5
+        with:
+          artifact-ids: 11385926347
+          path: ${{ runner.temp }}/a7-7-source-evaluation
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 37401380524
+
+      - name: Verify frozen A7-7 source artifact identity
+        if: inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
+        run: |
+          set -euo pipefail
+          source_dir="${RUNNER_TEMP}/a7-7-source-evaluation"
+
+          for attempt in 1 2 3; do
+            raw="$source_dir/a7-7-v4-canonical-${attempt}.json"
+            [[ -s "$raw" ]]
+            jq -e --arg run_id "a7-7-v4-canonical-37401380524-1-${attempt}" '
+              .runId == $run_id
+              and .datasetVersion == "terraformers-eval-v1"
+              and .configuration.corpusVersion == "terraformers-reference-v4"
+              and .configuration.embeddingModelId == "gemini-embedding-2"
+              and .configuration.configurationFingerprint == "sha256:e28f2516cfbc6ed42802f0d983d9207148541eb938545b0301af19884f40e08a"
+              and (.traces | length == 6)
+            ' "$raw" >/dev/null
+          done
+
+          holdout="$source_dir/a7-7-v4-holdout.json"
+          [[ -s "$holdout" ]]
+          jq -e '
+            .runId == "a7-7-v4-holdout-37401380524-1"
+            and .datasetVersion == "terraformers-eval-holdout-v1"
+            and .configuration.corpusVersion == "terraformers-reference-v4"
+            and .configuration.embeddingModelId == "gemini-embedding-2"
+            and .configuration.configurationFingerprint == "sha256:e28f2516cfbc6ed42802f0d983d9207148541eb938545b0301af19884f40e08a"
+            and (.traces | length == 4)
+          ' "$holdout" >/dev/null
 
       - uses: google-github-actions/auth@v3
         with:

@@ -206,6 +206,43 @@ class CaseAQualityCalibrationTest {
         assertThat(scorer.score(definition, bad).relationshipCoverage().requiredMatched()).isZero();
     }
 
+    @Test void relationshipMatcherFailsClosedOnReverseAndNegatedStatements() {
+        var baseDefinition = positiveDefinition();
+        var definition = new EvaluationCase(
+                baseDefinition.schemaVersion(), baseDefinition.datasetVersion(), baseDefinition.caseId(),
+                baseDefinition.input(), baseDefinition.expectedClassification(),
+                new EvaluationCase.TextExpectation(
+                        List.of("Application Load Balancer", "RDS Database"), List.of(), List.of()),
+                new EvaluationCase.TextExpectation(
+                        List.of("Application Load Balancer -> RDS Database"), List.of(), List.of()),
+                baseDefinition.resourceTypes(), baseDefinition.retrieval(), baseDefinition.generation(),
+                baseDefinition.validation(), baseDefinition.notes());
+        var base = successfulPositiveTrace();
+
+        for (String relationship : List.of(
+                "Application Load Balancer receives SQL traffic from RDS Database",
+                "Application Load Balancer does not connect to RDS Database",
+                "RDS Database sends SQL traffic to Application Load Balancer")) {
+            var facts = StageTrace.pass(
+                    EvaluationStage.FACT_EXTRACTION,
+                    10,
+                    new EvaluationTrace.FactExtractionEvidence(
+                            InputClassification.ARCHITECTURE_DIAGRAM,
+                            "facts",
+                            List.of("Application Load Balancer", "RDS Database"),
+                            List.of(relationship),
+                            List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
+            var trace = new EvaluationTrace(
+                    base.schemaVersion(), base.datasetVersion(), base.runId(), base.caseId(),
+                    base.input(), base.configuration(), facts, base.retrieval(),
+                    base.generation(), base.validation(), null);
+
+            assertThat(scorer.score(definition, trace).relationshipCoverage().requiredMatched())
+                    .as(relationship)
+                    .isZero();
+        }
+    }
+
     @Test void missingRequiredGeneratedResourceFailsFrozenLabel() {
         var trace = trace("run", "positive", EvaluationStageStatus.PASS, completeHits(),
                 List.of("aws_vpc", "aws_lb", "aws_db_instance"), true);

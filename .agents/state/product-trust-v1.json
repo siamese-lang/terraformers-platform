@@ -1,0 +1,25 @@
+{
+  "program": "product-trust-v1",
+  "schemaVersion": 1,
+  "status": "AWAITING_PROGRAM_APPROVAL",
+  "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
+  "activationBaseSha": null,
+  "activePhase": null,
+  "lastCompletedPhase": "P0_PROGRAM_PROTOCOL",
+  "activeWorkPackage": null,
+  "activePullRequest": null,
+  "humanGate": "PROGRAM_APPROVAL",
+  "liveRuntime": {
+    "status": "ACTIVE_RETAINED",
+    "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
+    "teardownAuthorized": false
+  },
+  "nextEligiblePhaseAfterApproval": "PT-0",
+  "evidencePolicy": "REALISTIC_PRODUCT_EVIDENCE_OVERRIDES_BROADER_HISTORICAL_CLAIMS",
+  "notes": [
+    "A7-8 is deferred.",
+    "Do not teardown before the Product Trust program reaches its reviewed destructive checkpoint.",
+    "Kubernetes/GKE platform reselection is explicitly outside this program.",
+    "No Product Trust phase is authorized until the user explicitly approves product-trust-v1."
+  ]
+}

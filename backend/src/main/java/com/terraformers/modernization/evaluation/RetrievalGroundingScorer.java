@@ -24,6 +24,9 @@ public final class RetrievalGroundingScorer {
                 (required, hit) -> hit.resourceTypes().contains(required)) : null;
         GenerationEvidence generation = trace.generation().evidence();
         List<String> generated = generation == null ? List.of() : generation.generatedResourceTypes();
+        List<String> retrievedIds = hits.stream().map(ReferenceHit::documentId).toList();
+        List<String> suppliedIds = generation == null ? List.of() : generation.suppliedReferenceIds();
+        boolean handoffComplete = retrievedIds.equals(suppliedIds);
         List<String> requiredGenerated = definition.generation().terraformResourceTypes().required();
         int generatedMatched = (int) requiredGenerated.stream().filter(generated::contains).count();
         int forbiddenGenerated = (int) definition.generation().terraformResourceTypes().forbidden().stream()
@@ -31,7 +34,8 @@ public final class RetrievalGroundingScorer {
         Boolean validationPassed = trace.validation().evidence() == null ? null
                 : trace.validation().evidence().applicationValidator().valid();
         boolean incomplete = applicable && (decisionCoverage.matched() < decisionCoverage.total()
-                || resourceCoverage.matched() < resourceCoverage.total());
+                || resourceCoverage.matched() < resourceCoverage.total()
+                || !handoffComplete);
         boolean generationSucceeded = trace.generation().status() == EvaluationStageStatus.PASS;
         boolean gap = incomplete && trace.retrieval().status() == EvaluationStageStatus.PASS && generationSucceeded;
         long sum = java.util.stream.Stream.of(trace.factExtraction().latencyMs(), trace.retrieval().latencyMs(),
@@ -40,7 +44,7 @@ public final class RetrievalGroundingScorer {
         return new RetrievalGroundingAssessment(trace.caseId(), applicable, trace.retrieval().status(),
                 retrieval == null ? null : retrieval.queryText(), retrieval == null ? List.of() : retrieval.resourceTypeFilters(),
                 retrieval == null ? null : retrieval.requestedTopK(), hits, decisionCoverage, resourceCoverage,
-                trace.generation().status(), generatedMatched, requiredGenerated.size(), forbiddenGenerated,
+                trace.generation().status(), handoffComplete, generatedMatched, requiredGenerated.size(), forbiddenGenerated,
                 trace.validation().status(), validationPassed, trace.firstDivergence(), gap,
                 gap && Boolean.TRUE.equals(validationPassed), trace.factExtraction().latencyMs(),
                 trace.retrieval().latencyMs(), trace.generation().latencyMs(), sum);

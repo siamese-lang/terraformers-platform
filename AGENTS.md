@@ -362,7 +362,10 @@ Autonomous Program은 다음 파일을 durable source로 사용한다.
 
 ### Codex autonomy inside an approved Program
 
-승인된 program 안에서 Codex Cloud는 별도의 "다음 작업" 사용자 입력 없이 다음을 수행할 수 있다.
+승인된 program 안에서 **이미 실행 중인 Codex Cloud task/Goal**은 별도의 "다음 작업" 사용자 입력 없이
+다음 eligible repository 작업을 이어갈 수 있다. 이는 실행 권한이지 scheduler가 아니다. 저장소 state만으로
+새 Codex task가 자동 생성된다고 가정하지 않는다. executor가 종료되면 다음 invocation은 durable state에서
+재개하며, 별도 event integration이 실제 구성된 경우에만 그 invocation을 자동화할 수 있다.
 
 1. program/state/current main을 읽어 next eligible phase를 결정한다;
 2. declared phase objective와 acceptance 안에서 bounded Work Package를 생성/활성화한다;

@@ -2,10 +2,12 @@
 
 ## Status
 
-**PROGRAM APPROVED — PT-1 CANDIDATE READY / HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE**
+**PROGRAM APPROVED — PT-1 REVISED CANDIDATE READY / HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE**
 
 The user approved `product-trust-v1` on 2026-10-06. PT-1 activated on exact main
-`0bb244756c2a2e1d3d6d11d0342e98e155f8662c` and prepared a ten-case reference-based candidate.
+`0bb244756c2a2e1d3d6d11d0342e98e155f8662c` and retains that execution base. The first candidate was rejected in human review; the explicitly
+authorized visual corrective iteration prepared candidate revision 2 with ten reference-based/control
+inputs. Original acceptance and topology truth are retained; this is not a second autonomous repair.
 See [PT-1 review evidence](../../evaluation/product-trust-pt-1-realistic-input-freeze.md) and
 [the candidate images/truth](../../../evaluation/terraformers-realistic-v1/README.md). Truth is not
 frozen; merge and any PT-2 live baseline remain separate human checkpoints.

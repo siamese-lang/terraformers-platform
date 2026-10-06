@@ -1,19 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
-<rect width="100%" height="100%" fill="white"/>
-<text x="35" y="48" font-family="DejaVu Sans" font-size="26" fill="#182b49">Design notes - cache choice still open</text>
-<rect x="80" y="155" width="355" height="95" fill="#fff8df" stroke="#3e5877" stroke-width="2"/>
-<text x="92" y="187" font-family="DejaVu Sans" font-size="20" fill="#182b49">HTTP entry ?</text>
-<text x="92" y="213" font-family="DejaVu Sans" font-size="20" fill="#182b49">API service TBD</text>
-<rect x="755" y="155" width="340" height="95" fill="#fff8df" stroke="#3e5877" stroke-width="2"/>
-<text x="767" y="187" font-family="DejaVu Sans" font-size="20" fill="#182b49">cache OR database ?</text>
-<text x="767" y="213" font-family="DejaVu Sans" font-size="20" fill="#182b49">provider TBD</text>
-<polyline points="435,202 755,202" fill="none" stroke="#526581" stroke-width="3"/>
-<polygon points="755.00,202.00 743.29,207.65 743.29,196.35" fill="#526581"/>
-<text x="435" y="297" font-family="DejaVu Sans" font-size="17" fill="#526581">protocol / direction TBD</text>
-<rect x="80" y="440" width="1015" height="190" fill="#f7f9fc" stroke="#3e5877" stroke-width="2"/>
-<text x="92" y="474" font-family="DejaVu Sans" font-size="22" fill="#182b49">Unresolved decisions:</text>
-<text x="92" y="502" font-family="DejaVu Sans" font-size="22" fill="#182b49">- AWS or another provider?</text>
-<text x="92" y="530" font-family="DejaVu Sans" font-size="22" fill="#182b49">- cache persistence, service types and trust boundary not chosen</text>
-<text x="92" y="558" font-family="DejaVu Sans" font-size="22" fill="#182b49">- arrows are notes, not an approved topology</text>
-<text x="35" y="776" font-family="DejaVu Sans" font-size="14" fill="#677489">Repository-owned PT-1 input | no third-party artwork or icons</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="730" viewBox="0 0 1180 730">
+<rect width="1180" height="730" fill="#f8f7f2"/>
+<text x="51.00" y="61" fill="#334155" font-family="DejaVu Sans" font-size="29" font-style="oblique">Request flow</text>
+<text x="940.00" y="62" fill="#334155" font-family="DejaVu Sans" font-size="18" font-style="oblique">v0.2</text>
+<polyline points="70.00,204.00 242.00,198.00 246.00,326.00 64.00,319.00 70.00,204.00" fill="none" stroke="#52635b" stroke-width="3"/>
+<text x="115.00" y="271" fill="#334155" font-family="DejaVu Sans" font-size="24" font-style="oblique">client</text>
+<polyline points="424.00,192.00 636.00,198.00 630.00,328.00 419.00,322.00 424.00,192.00" fill="none" stroke="#52635b" stroke-width="3"/>
+<text x="485.00" y="267" fill="#334155" font-family="DejaVu Sans" font-size="27" font-style="oblique">API</text>
+<rect x="886" y="217" width="114" height="90" rx="0" fill="#f8f7f2" stroke="#52635b" stroke-width="2"/>
+<ellipse cx="943.0" cy="306.5" rx="57.0" ry="12.5" fill="#f8f7f2" stroke="#52635b" stroke-width="2"/>
+<ellipse cx="943.0" cy="216.5" rx="57.0" ry="12.5" fill="#f8f7f2" stroke="#52635b" stroke-width="2"/>
+<polyline points="886.00,239.00 886.00,305.00" fill="none" stroke="#52635b" stroke-width="2"/>
+<polyline points="1000.00,239.00 1000.00,305.00" fill="none" stroke="#52635b" stroke-width="2"/>
+<text x="912.66" y="360" fill="#334155" font-family="DejaVu Sans" font-size="23" font-style="oblique">store</text>
+<polyline points="246.00,262.00 419.00,260.00" fill="none" stroke="#52635b" stroke-width="3"/>
+<polygon points="419.00,260.00 408.10,265.02 407.99,255.23" fill="#52635b" stroke="#52635b" stroke-width="1"/>
+<polyline points="636.00,263.00 886.00,263.00" fill="none" stroke="#52635b" stroke-width="3"/>
+<polygon points="886.00,263.00 875.04,267.89 875.04,258.11" fill="#52635b" stroke="#52635b" stroke-width="1"/>
+<ellipse cx="540.5" cy="534.0" rx="67.5" ry="44.0" fill="none" stroke="#64726b" stroke-width="2"/>
+<text x="495.00" y="537" fill="#334155" font-family="DejaVu Sans" font-size="22" font-style="oblique">cache?</text>
+<polyline points="530.00,328.00 529.00,490.00" fill="none" stroke="#64726b" stroke-width="2" stroke-dasharray="8 6"/>
 </svg>

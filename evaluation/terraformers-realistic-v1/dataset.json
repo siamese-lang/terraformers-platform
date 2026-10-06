@@ -9,7 +9,7 @@
       "caseId": "pt1-01-serverless-portal",
       "input": {
         "path": "fixtures/pt1-01-serverless-portal.png",
-        "sha256": "f83c90406c82e81fb990c78061460348760de5dbfd2d3da8daf5b7af9cbc4ec2",
+        "sha256": "ec58701f5a1c610208ef24e74d30cd5ae0f0b35c16d5aabf7b22163adae7e9b7",
         "contentType": "image/png"
       },
       "expectedClassification": "ARCHITECTURE_DIAGRAM",
@@ -118,7 +118,7 @@
       "caseId": "pt1-02-order-fanout",
       "input": {
         "path": "fixtures/pt1-02-order-fanout.png",
-        "sha256": "be4e6677cfb4ccff2af9be94db5dc0500c4c530cec3862a9e5da1287f18c1978",
+        "sha256": "f78bb2a4f0e66df7cc1f613aa739997b433a6757ee7f2d15a213d4c4e772194c",
         "contentType": "image/png"
       },
       "expectedClassification": "ARCHITECTURE_DIAGRAM",
@@ -216,7 +216,7 @@
       "caseId": "pt1-03-parallel-lookup",
       "input": {
         "path": "fixtures/pt1-03-parallel-lookup.png",
-        "sha256": "93dd247348471ad0eb9a20bf265940be4ae7ce48bb892f3a9d639b60968f37c6",
+        "sha256": "b61251fada65971e1ba92557577861085a1c7df325b8c048bbb38b69f88a89a8",
         "contentType": "image/png"
       },
       "expectedClassification": "ARCHITECTURE_DIAGRAM",
@@ -306,7 +306,7 @@
       "caseId": "pt1-04-analytics-catalog",
       "input": {
         "path": "fixtures/pt1-04-analytics-catalog.png",
-        "sha256": "8b61234eb9ec250200f98784bb0c353cd6e78323508203080ad5fb675c36fdc7",
+        "sha256": "7b13925481c47f774ee211516144c37ea4a3dfb88f68abbe00baaa83428e7dca",
         "contentType": "image/png"
       },
       "expectedClassification": "ARCHITECTURE_DIAGRAM",
@@ -402,7 +402,7 @@
       "caseId": "pt1-05-private-web-fleet",
       "input": {
         "path": "fixtures/pt1-05-private-web-fleet.png",
-        "sha256": "983b758ba311f21c4ef77eb031a0a69c9cad15daa1480ce2d119936a64d03a4e",
+        "sha256": "4de17a100ac94ea9cd4c61be505fad45cc99dd3cb066fb484b7cbc2f5b50be32",
         "contentType": "image/png"
       },
       "expectedClassification": "ARCHITECTURE_DIAGRAM",
@@ -533,7 +533,7 @@
       "caseId": "pt1-06-thumbnail-pipeline",
       "input": {
         "path": "fixtures/pt1-06-thumbnail-pipeline.png",
-        "sha256": "842b420fd7dca5339e450fd9ddddb9a289c8740768724031748f229573b3314a",
+        "sha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
         "contentType": "image/png"
       },
       "expectedClassification": "ARCHITECTURE_DIAGRAM",
@@ -628,7 +628,7 @@
       "caseId": "pt1-07-unresolved-design",
       "input": {
         "path": "fixtures/pt1-07-unresolved-design.png",
-        "sha256": "6f497bb2f9716c1c25d811bf8b730846a9ad04d6b6be590072f3191a351de3c4",
+        "sha256": "3fe4fbd6b7dcf95185eea8f112cf27231f45f7bbb2ceac6e5172a44c51903835",
         "contentType": "image/png"
       },
       "expectedClassification": "AMBIGUOUS",
@@ -673,7 +673,7 @@
       "caseId": "pt1-08-partial-export",
       "input": {
         "path": "fixtures/pt1-08-partial-export.png",
-        "sha256": "1f271824dc58f4e07f38627eae64564a989bc163c410c87367c2d6e0fd53ccd5",
+        "sha256": "387153c1823fdf84ca19309459ff29a4ebf7205c72e7b38cfc2f8a1c5074e32d",
         "contentType": "image/png"
       },
       "expectedClassification": "AMBIGUOUS",
@@ -718,7 +718,7 @@
       "caseId": "pt1-09-sprint-board",
       "input": {
         "path": "fixtures/pt1-09-sprint-board.png",
-        "sha256": "fa40000b36f01772c80456f5e869b3ce4908b21899babf9a2bb91101b4e5a5de",
+        "sha256": "080461617408a5346fad0e1660bd067e3e035d5b21a95547bee1e9cb84f3097d",
         "contentType": "image/png"
       },
       "expectedClassification": "NON_ARCHITECTURE_IMAGE",
@@ -763,7 +763,7 @@
       "caseId": "pt1-10-workshop-table",
       "input": {
         "path": "fixtures/pt1-10-workshop-table.png",
-        "sha256": "b9e6c9d90c9f824132ae60bca42732875b3c2fecf3dd6cc8b1cfb1e47a741e30",
+        "sha256": "e6b9b281784f869526f3deb3096919a36b620ff4106c76d32434478b3d8fe672",
         "contentType": "image/png"
       },
       "expectedClassification": "NON_ARCHITECTURE_IMAGE",

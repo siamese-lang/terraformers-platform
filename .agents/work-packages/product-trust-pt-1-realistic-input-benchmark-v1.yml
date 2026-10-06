@@ -194,10 +194,22 @@ work_package:
   execution_evidence:
     result: REALISTIC_DATASET_CANDIDATE_READY
     human_gate: REALISTIC_DATASET_TRUTH_FREEZE
-    candidate_identity_sha256: 8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8
+    candidate_identity_sha256: c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852
     evidence_document: docs/evaluation/product-trust-pt-1-realistic-input-freeze.md
     auto_repairs_used: 1
     model_under_test_calls: 0
     live_cloud_actions: 0
     truth_frozen: false
     phase_complete: false
+
+  human_review_corrective_iteration:
+    iteration: 1
+    authorized_on: "2026-10-06"
+    authorization: User explicitly authorized a bounded PT-1 human-review corrective iteration, not a second autonomous repair.
+    reviewed_head_sha: 2cf8a73889c6f612f5594cc7620c503646642892
+    superseded_candidate_identity_sha256: 8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8
+    candidate_revision: 2
+    autonomous_repair: false
+    execution_base_rebound: false
+    result: REVISED_CANDIDATE_READY_FOR_HUMAN_REVIEW
+    human_gate: REALISTIC_DATASET_TRUTH_FREEZE

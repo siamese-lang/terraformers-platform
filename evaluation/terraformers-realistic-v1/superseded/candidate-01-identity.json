@@ -1,0 +1,99 @@
+{
+  "identityVersion": "pt1-candidate-identity-v1",
+  "datasetVersion": "terraformers-realistic-v1",
+  "approvalStatus": "NOT_APPROVED",
+  "files": [
+    {
+      "path": "dataset.json",
+      "sha256": "9f761121943f86be1e92024162dfe48661a1fd1f506a8421ffcdaa24c9e7bb8c"
+    },
+    {
+      "path": "provenance.json",
+      "sha256": "ad6c4e5afb26685e21073fa82d96a623d13c8f79ec1e792b5cc0e486f0db73c7"
+    },
+    {
+      "path": "README.md",
+      "sha256": "a612dbed2b77b9ac7e9f3bbd9582032d477269af5d822d787232bfa0947b7ea4"
+    },
+    {
+      "path": "fixtures/pt1-01-serverless-portal.png",
+      "sha256": "f83c90406c82e81fb990c78061460348760de5dbfd2d3da8daf5b7af9cbc4ec2"
+    },
+    {
+      "path": "fixtures/pt1-01-serverless-portal.svg",
+      "sha256": "554f3598149c268f0aba2169f759bb2b7041a3ddafa8e4b353d77307ae2b36cd"
+    },
+    {
+      "path": "fixtures/pt1-02-order-fanout.png",
+      "sha256": "be4e6677cfb4ccff2af9be94db5dc0500c4c530cec3862a9e5da1287f18c1978"
+    },
+    {
+      "path": "fixtures/pt1-02-order-fanout.svg",
+      "sha256": "388cf7987e477c1746abf443a2ded8b1d240e10e6281b2ab2e127894cc59d3a7"
+    },
+    {
+      "path": "fixtures/pt1-03-parallel-lookup.png",
+      "sha256": "93dd247348471ad0eb9a20bf265940be4ae7ce48bb892f3a9d639b60968f37c6"
+    },
+    {
+      "path": "fixtures/pt1-03-parallel-lookup.svg",
+      "sha256": "cb97d1bdd84632fb38cb30603a1a27dff0a3e794a5e987c68de2e499885f1d22"
+    },
+    {
+      "path": "fixtures/pt1-04-analytics-catalog.png",
+      "sha256": "8b61234eb9ec250200f98784bb0c353cd6e78323508203080ad5fb675c36fdc7"
+    },
+    {
+      "path": "fixtures/pt1-04-analytics-catalog.svg",
+      "sha256": "8f3885c180799ab6be14c9300509f81072b2e72e94d188c04bd9e5217135d061"
+    },
+    {
+      "path": "fixtures/pt1-05-private-web-fleet.png",
+      "sha256": "983b758ba311f21c4ef77eb031a0a69c9cad15daa1480ce2d119936a64d03a4e"
+    },
+    {
+      "path": "fixtures/pt1-05-private-web-fleet.svg",
+      "sha256": "ad05593d2659ac150ea285d41ae587640f79d1b5b7ee917910c3b4ab5b3ad488"
+    },
+    {
+      "path": "fixtures/pt1-06-thumbnail-pipeline.png",
+      "sha256": "842b420fd7dca5339e450fd9ddddb9a289c8740768724031748f229573b3314a"
+    },
+    {
+      "path": "fixtures/pt1-06-thumbnail-pipeline.svg",
+      "sha256": "0894b12935629298a506988fdbb0a8a1e7431c3bb0a6d28ba051fd7a0c59dc7a"
+    },
+    {
+      "path": "fixtures/pt1-07-unresolved-design.png",
+      "sha256": "6f497bb2f9716c1c25d811bf8b730846a9ad04d6b6be590072f3191a351de3c4"
+    },
+    {
+      "path": "fixtures/pt1-07-unresolved-design.svg",
+      "sha256": "35a25e9110cce1503a7c4306ed8b44d40e5b67b95fdb5143ae92929a7cb2178a"
+    },
+    {
+      "path": "fixtures/pt1-08-partial-export.png",
+      "sha256": "1f271824dc58f4e07f38627eae64564a989bc163c410c87367c2d6e0fd53ccd5"
+    },
+    {
+      "path": "fixtures/pt1-08-partial-export.svg",
+      "sha256": "27d0b691d72b5c0f11e08689dd0b7e87229bc9cac4ebc9deecf3aade3823d186"
+    },
+    {
+      "path": "fixtures/pt1-09-sprint-board.png",
+      "sha256": "fa40000b36f01772c80456f5e869b3ce4908b21899babf9a2bb91101b4e5a5de"
+    },
+    {
+      "path": "fixtures/pt1-09-sprint-board.svg",
+      "sha256": "f6b7e7f3c497dd16ff78de7b83e44c31929db5b136e66766233cae259f546fd6"
+    },
+    {
+      "path": "fixtures/pt1-10-workshop-table.png",
+      "sha256": "b9e6c9d90c9f824132ae60bca42732875b3c2fecf3dd6cc8b1cfb1e47a741e30"
+    },
+    {
+      "path": "fixtures/pt1-10-workshop-table.svg",
+      "sha256": "1c35d7b663c577ef80bb867ed33c05d0f6979a19c52d3696e61f277b0af43462"
+    }
+  ]
+}

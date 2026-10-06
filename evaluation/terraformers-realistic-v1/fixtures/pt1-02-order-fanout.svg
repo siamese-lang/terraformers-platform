@@ -1,40 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820">
-<rect width="100%" height="100%" fill="white"/>
-<text x="35" y="48" font-family="DejaVu Sans" font-size="26" fill="#182b49">Order events - asynchronous fanout and isolated consumers</text>
-<rect x="40" y="105" width="1195" height="620" fill="#f8fafc" stroke="#8b9db4" stroke-width="2"/>
-<text x="50" y="128" font-family="DejaVu Sans" font-size="17" fill="#182b49">Regional messaging / worker lanes</text>
-<rect x="80" y="355" width="190" height="90" fill="#fff4d9" stroke="#3e5877" stroke-width="2"/>
-<text x="92" y="387" font-family="DejaVu Sans" font-size="20" fill="#182b49">Order publisher</text>
-<rect x="345" y="355" width="210" height="90" fill="#f4e7f3" stroke="#3e5877" stroke-width="2"/>
-<text x="357" y="387" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon SNS</text>
-<text x="357" y="413" font-family="DejaVu Sans" font-size="20" fill="#182b49">orders topic</text>
-<rect x="690" y="190" width="230" height="90" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
-<text x="702" y="222" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon SQS</text>
-<text x="702" y="248" font-family="DejaVu Sans" font-size="20" fill="#182b49">billing queue</text>
-<rect x="690" y="525" width="230" height="90" fill="#edf3fa" stroke="#3e5877" stroke-width="2"/>
-<text x="702" y="557" font-family="DejaVu Sans" font-size="20" fill="#182b49">Amazon SQS</text>
-<text x="702" y="583" font-family="DejaVu Sans" font-size="20" fill="#182b49">audit queue</text>
-<rect x="1000" y="190" width="200" height="90" fill="#fff0dd" stroke="#3e5877" stroke-width="2"/>
-<text x="1012" y="220" font-family="DejaVu Sans" font-size="18" fill="#182b49">AWS Lambda</text>
-<text x="1012" y="244" font-family="DejaVu Sans" font-size="18" fill="#182b49">billing worker</text>
-<rect x="1000" y="525" width="200" height="90" fill="#fff0dd" stroke="#3e5877" stroke-width="2"/>
-<text x="1012" y="555" font-family="DejaVu Sans" font-size="18" fill="#182b49">AWS Lambda</text>
-<text x="1012" y="579" font-family="DejaVu Sans" font-size="18" fill="#182b49">audit worker</text>
-<polyline points="270,400 345,400" fill="none" stroke="#526581" stroke-width="3"/>
-<polygon points="345.00,400.00 333.29,405.65 333.29,394.35" fill="#526581"/>
-<text x="272" y="377" font-family="DejaVu Sans" font-size="17" fill="#526581">publish</text>
-<polyline points="555,390 615,390 615,235 690,235" fill="none" stroke="#526581" stroke-width="3"/>
-<polygon points="690.00,235.00 678.29,240.65 678.29,229.35" fill="#526581"/>
-<text x="572" y="172" font-family="DejaVu Sans" font-size="17" fill="#526581">subscription</text>
-<polyline points="555,410 635,410 635,570 690,570" fill="none" stroke="#526581" stroke-width="3"/>
-<polygon points="690.00,570.00 678.29,575.65 678.29,564.35" fill="#526581"/>
-<text x="555" y="652" font-family="DejaVu Sans" font-size="17" fill="#526581">subscription</text>
-<polyline points="920,235 1000,235" fill="none" stroke="#526581" stroke-width="3"/>
-<polygon points="1000.00,235.00 988.29,240.65 988.29,229.35" fill="#526581"/>
-<text x="917" y="315" font-family="DejaVu Sans" font-size="15" fill="#526581">poll batch</text>
-<polyline points="920,570 1000,570" fill="none" stroke="#526581" stroke-width="3"/>
-<polygon points="1000.00,570.00 988.29,575.65 988.29,564.35" fill="#526581"/>
-<text x="917" y="650" font-family="DejaVu Sans" font-size="15" fill="#526581">poll batch</text>
-<text x="80" y="777" font-family="DejaVu Sans" font-size="17" fill="#182b49">Two independent queues. Lambda event-source mappings consume batches. No direct SNS invocation.</text>
-<text x="35" y="796" font-family="DejaVu Sans" font-size="14" fill="#677489">Repository-owned PT-1 input | no third-party artwork or icons</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="800" viewBox="0 0 1260 800">
+<rect width="1260" height="800" fill="#fffefa"/>
+<text x="40.00" y="58" fill="#334155" font-family="DejaVu Sans Mono" font-size="28">Order processing</text>
+<polyline points="40.00,84.00 1220.00,84.00" fill="none" stroke="#334155" stroke-width="1"/>
+<text x="440.00" y="127" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">Messaging</text>
+<text x="1020.00" y="127" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">Workers</text>
+<ellipse cx="98.0" cy="352.0" rx="21.0" ry="21.0" fill="white" stroke="#334155" stroke-width="2"/>
+<polyline points="98.00,373.00 98.00,415.00 61.00,445.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polyline points="98.00,415.00 135.00,445.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polyline points="60.00,390.00 136.00,390.00" fill="none" stroke="#334155" stroke-width="2"/>
+<text x="51.95" y="492" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">publisher</text>
+<ellipse cx="387.5" cy="372.5" rx="57.5" ry="57.5" fill="white" stroke="#334155" stroke-width="3"/>
+<text x="368.12" y="367" fill="#334155" font-family="DejaVu Sans Mono" font-size="22">SNS</text>
+<text x="355.47" y="467" fill="#334155" font-family="DejaVu Sans Mono" font-size="18">orders</text>
+<rect x="662" y="166" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="656" y="172" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="650" y="178" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="672" y="203" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<rect x="698" y="203" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<rect x="724" y="203" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="643.48" y="297" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">billing / SQS</text>
+<rect x="747" y="506" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="741" y="512" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="735" y="518" width="110" height="80" rx="0" fill="white" stroke="#334155" stroke-width="2"/>
+<rect x="757" y="543" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<rect x="783" y="543" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<rect x="809" y="543" width="14" height="24" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="738.71" y="643" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">audit / SQS</text>
+<ellipse cx="1068.0" cy="195.0" rx="48.0" ry="48.0" fill="white" stroke="#334155" stroke-width="2"/>
+<text x="1054.39" y="214.0" fill="#334155" font-family="DejaVu Sans" font-size="46">λ</text>
+<text x="1032.18" y="283" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">billing</text>
+<ellipse cx="1068.0" cy="558.0" rx="48.0" ry="48.0" fill="white" stroke="#334155" stroke-width="2"/>
+<text x="1054.39" y="577.0" fill="#334155" font-family="DejaVu Sans" font-size="46">λ</text>
+<text x="1042.41" y="642" fill="#334155" font-family="DejaVu Sans Mono" font-size="17">audit</text>
+<polyline points="139.00,372.00 330.00,372.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="330.00,372.00 319.04,376.89 319.04,367.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<text x="216.00" y="359" fill="#334155" font-family="DejaVu Sans Mono" font-size="16">event</text>
+<polyline points="445.00,351.00 542.00,351.00 542.00,218.00 650.00,218.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="650.00,218.00 639.04,222.89 639.04,213.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="445.00,394.00 597.00,394.00 597.00,558.00 735.00,558.00" fill="none" stroke="#334155" stroke-width="2"/>
+<polygon points="735.00,558.00 724.04,562.89 724.04,553.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="772.00,218.00 943.00,218.00 943.00,195.00 1020.00,195.00" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="1020.00,195.00 1009.04,199.89 1009.04,190.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="857.00,558.00 1020.00,558.00" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="1020.00,558.00 1009.04,562.89 1009.04,553.11" fill="#334155" stroke="#334155" stroke-width="1"/>
+<polyline points="969.00,136.00 969.00,692.00" fill="none" stroke="#a1a1aa" stroke-width="1" stroke-dasharray="8 6"/>
 </svg>

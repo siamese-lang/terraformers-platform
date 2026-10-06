@@ -1,27 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820">
-<rect width="100%" height="100%" fill="white"/>
-<text x="35" y="48" font-family="DejaVu Sans" font-size="26" fill="#182b49">Delivery planning - sprint board</text>
-<rect x="50" y="120" width="370" height="605" fill="#edf3fa" stroke="#8b9db4" stroke-width="2"/>
-<text x="60" y="143" font-family="DejaVu Sans" font-size="17" fill="#182b49">TO DO</text>
-<rect x="455" y="120" width="370" height="605" fill="#fff4d9" stroke="#8b9db4" stroke-width="2"/>
-<text x="465" y="143" font-family="DejaVu Sans" font-size="17" fill="#182b49">IN PROGRESS</text>
-<rect x="860" y="120" width="370" height="605" fill="#e6f3e8" stroke="#8b9db4" stroke-width="2"/>
-<text x="870" y="143" font-family="DejaVu Sans" font-size="17" fill="#182b49">DONE</text>
-<rect x="75" y="195" width="320" height="140" fill="#ffffff" stroke="#3e5877" stroke-width="2"/>
-<text x="87" y="227" font-family="DejaVu Sans" font-size="20" fill="#182b49">Document S3 retention</text>
-<text x="87" y="253" font-family="DejaVu Sans" font-size="20" fill="#182b49">Owner: platform</text>
-<text x="87" y="279" font-family="DejaVu Sans" font-size="20" fill="#182b49">Due: Friday</text>
-<rect x="480" y="195" width="320" height="140" fill="#ffffff" stroke="#3e5877" stroke-width="2"/>
-<text x="492" y="227" font-family="DejaVu Sans" font-size="20" fill="#182b49">Review Lambda timeout</text>
-<text x="492" y="253" font-family="DejaVu Sans" font-size="20" fill="#182b49">Owner: backend</text>
-<text x="492" y="279" font-family="DejaVu Sans" font-size="20" fill="#182b49">Ticket: APP-124</text>
-<rect x="885" y="195" width="320" height="140" fill="#ffffff" stroke="#3e5877" stroke-width="2"/>
-<text x="897" y="227" font-family="DejaVu Sans" font-size="20" fill="#182b49">Update API guide</text>
-<text x="897" y="253" font-family="DejaVu Sans" font-size="20" fill="#182b49">Owner: docs</text>
-<text x="897" y="279" font-family="DejaVu Sans" font-size="20" fill="#182b49">Approved yesterday</text>
-<rect x="75" y="395" width="320" height="125" fill="#ffffff" stroke="#3e5877" stroke-width="2"/>
-<text x="87" y="427" font-family="DejaVu Sans" font-size="20" fill="#182b49">Schedule team review</text>
-<text x="87" y="453" font-family="DejaVu Sans" font-size="20" fill="#182b49">Room: 3B</text>
-<text x="60" y="768" font-family="DejaVu Sans" font-size="18" fill="#182b49">Tasks and service-name mentions are not deployment relationships.</text>
-<text x="35" y="796" font-family="DejaVu Sans" font-size="14" fill="#677489">Repository-owned PT-1 input | no third-party artwork or icons</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
+<rect width="1280" height="800" fill="#f2f4f8"/>
+<rect x="0" y="0" width="1280" height="69" rx="0" fill="#26344b" stroke="none" stroke-width="2"/>
+<text x="29.00" y="44" fill="white" font-family="DejaVu Sans" font-size="24">Platform / Team board</text>
+<text x="996.00" y="44" fill="#ccd5e4" font-family="DejaVu Sans" font-size="18">Sprint 18</text>
+<text x="45.00" y="128" fill="#334155" font-family="DejaVu Sans" font-size="26">Current sprint</text>
+<rect x="42" y="164" width="370" height="568" rx="10" fill="#e7ebf2" stroke="none" stroke-width="2"/>
+<text x="60.00" y="204" fill="#334155" font-family="DejaVu Sans" font-size="20">Backlog</text>
+<ellipse cx="367.5" cy="199.0" rx="17.5" ry="15.0" fill="#d2dae6" stroke="none" stroke-width="2"/>
+<text x="361.91" y="206" fill="#334155" font-family="DejaVu Sans" font-size="16">2</text>
+<rect x="454" y="164" width="370" height="568" rx="10" fill="#e7ebf2" stroke="none" stroke-width="2"/>
+<text x="472.00" y="204" fill="#334155" font-family="DejaVu Sans" font-size="20">In progress</text>
+<ellipse cx="779.5" cy="199.0" rx="17.5" ry="15.0" fill="#d2dae6" stroke="none" stroke-width="2"/>
+<text x="773.91" y="206" fill="#334155" font-family="DejaVu Sans" font-size="16">1</text>
+<rect x="866" y="164" width="370" height="568" rx="10" fill="#e7ebf2" stroke="none" stroke-width="2"/>
+<text x="884.00" y="204" fill="#334155" font-family="DejaVu Sans" font-size="20">Done</text>
+<ellipse cx="1191.5" cy="199.0" rx="17.5" ry="15.0" fill="#d2dae6" stroke="none" stroke-width="2"/>
+<text x="1185.91" y="206" fill="#334155" font-family="DejaVu Sans" font-size="16">1</text>
+<rect x="58" y="249" width="338" height="170" rx="7" fill="white" stroke="#d8dfe9" stroke-width="1"/>
+<text x="74.00" y="280" fill="#64748b" font-family="DejaVu Sans" font-size="15">APP-123</text>
+<text x="74.00" y="319" fill="#334155" font-family="DejaVu Sans" font-size="19">Document S3 retention</text>
+<polyline points="74.00,357.00 379.00,357.00" fill="none" stroke="#e5eaf1" stroke-width="1"/>
+<text x="74.00" y="391" fill="#64748b" font-family="DejaVu Sans" font-size="16">platform</text>
+<ellipse cx="358.0" cy="386.0" rx="12.0" ry="12.0" fill="#d2e7de" stroke="none" stroke-width="2"/>
+<rect x="58" y="463" width="338" height="170" rx="7" fill="white" stroke="#d8dfe9" stroke-width="1"/>
+<text x="74.00" y="494" fill="#64748b" font-family="DejaVu Sans" font-size="15">APP-126</text>
+<text x="74.00" y="533" fill="#334155" font-family="DejaVu Sans" font-size="19">Schedule team review</text>
+<polyline points="74.00,571.00 379.00,571.00" fill="none" stroke="#e5eaf1" stroke-width="1"/>
+<text x="74.00" y="605" fill="#64748b" font-family="DejaVu Sans" font-size="16">team</text>
+<ellipse cx="358.0" cy="600.0" rx="12.0" ry="12.0" fill="#d2e7de" stroke="none" stroke-width="2"/>
+<rect x="470" y="249" width="338" height="170" rx="7" fill="white" stroke="#d8dfe9" stroke-width="1"/>
+<text x="486.00" y="280" fill="#64748b" font-family="DejaVu Sans" font-size="15">APP-124</text>
+<text x="486.00" y="319" fill="#334155" font-family="DejaVu Sans" font-size="19">Review Lambda timeout</text>
+<polyline points="486.00,357.00 791.00,357.00" fill="none" stroke="#e5eaf1" stroke-width="1"/>
+<text x="486.00" y="391" fill="#64748b" font-family="DejaVu Sans" font-size="16">backend</text>
+<ellipse cx="770.0" cy="386.0" rx="12.0" ry="12.0" fill="#d2e7de" stroke="none" stroke-width="2"/>
+<rect x="882" y="249" width="338" height="170" rx="7" fill="white" stroke="#d8dfe9" stroke-width="1"/>
+<text x="898.00" y="280" fill="#64748b" font-family="DejaVu Sans" font-size="15">APP-122</text>
+<text x="898.00" y="319" fill="#334155" font-family="DejaVu Sans" font-size="19">Update API guide</text>
+<polyline points="898.00,357.00 1203.00,357.00" fill="none" stroke="#e5eaf1" stroke-width="1"/>
+<text x="898.00" y="391" fill="#64748b" font-family="DejaVu Sans" font-size="16">docs</text>
+<ellipse cx="1182.0" cy="386.0" rx="12.0" ry="12.0" fill="#d2e7de" stroke="none" stroke-width="2"/>
 </svg>

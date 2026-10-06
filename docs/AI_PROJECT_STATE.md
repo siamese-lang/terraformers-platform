@@ -13,18 +13,19 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Product Trust Reassessment**
-- Status: **PRODUCT TRUST PROGRAM APPROVED — PT-1 CANDIDATE READY / HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE**
+- Status: **PRODUCT TRUST PROGRAM APPROVED — PT-1 REVISED CANDIDATE READY / HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE**
 - Active plan:
   [Product Trust Modernization](plans/active/product-trust-modernization.md)
 - Program contract:
   [.agents/programs/product-trust-v1.yml](../.agents/programs/product-trust-v1.yml)
 - Durable program state:
   [.agents/state/product-trust-v1.json](../.agents/state/product-trust-v1.json)
-- Current single task: **PT-1 prepared a ten-case candidate on exact execution base `0bb244756c2a2e1d3d6d11d0342e98e155f8662c` and stopped at `HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE`. Human review must confirm the images, full truth and candidate identity before freeze; PR merge requires its separate checkpoint. PT-1 is not complete and PT-2 is not eligible. No model/cloud call was performed. A7-8 and teardown remain deferred; the recreated GCP runtime is intentionally retained.**
+- Current single task: **PT-1 candidate revision 2 was prepared under the explicitly authorized human-review corrective iteration on unchanged execution base `0bb244756c2a2e1d3d6d11d0342e98e155f8662c` and stopped at `HUMAN_REQUIRED: REALISTIC_DATASET_TRUTH_FREEZE`. Human review must confirm the images, full truth and candidate identity before freeze; PR merge requires its separate checkpoint. PT-1 is not complete and PT-2 is not eligible. No model/cloud call was performed. A7-8 and teardown remain deferred; the recreated GCP runtime is intentionally retained.**
 - Active Work Package: [PT-1 realistic-input benchmark](../.agents/work-packages/product-trust-pt-1-realistic-input-benchmark-v1.yml).
-- Active PR: [#241](https://github.com/siamese-lang/terraformers-platform/pull/241), awaiting human review/merge; current candidate remains unfrozen.
+- Active PR: [#241](https://github.com/siamese-lang/terraformers-platform/pull/241), awaiting human review/merge; revised candidate remains unfrozen.
 - Candidate/review evidence: [PT-1 human freeze checkpoint](evaluation/product-trust-pt-1-realistic-input-freeze.md).
-- Candidate identity SHA-256: `8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8`; truth approver and freeze timestamp remain null.
+- Candidate revision 2 identity SHA-256: `c34a9b4b3b307d09dd2688e0feac3f91c4648e71166df4005b23e7b40eb9b852`; truth approver and freeze timestamp remain null.
+- Superseded candidate revision 1 identity: `8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8`, rejected in human review for answer leakage and insufficient visual realism. Autonomous repairs remain 1; human-authorized corrective iterations: 1.
 
 
 ## Product Trust reassessment checkpoint

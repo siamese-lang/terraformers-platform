@@ -1,0 +1,18 @@
+{
+  "historyVersion": "pt1-candidate-history-v1",
+  "currentCandidateRevision": 2,
+  "supersededCandidates": [
+    {
+      "candidateRevision": 1,
+      "status": "SUPERSEDED_HUMAN_REVIEW_REJECTED",
+      "identitySha256": "8bc6daebde25045fcbb0a0bdad6deaedf2e9edeb29a28b39290fc107b6e952d8",
+      "archivedIdentityPath": "superseded/candidate-01-identity.json",
+      "sourceHeadSha": "2cf8a73889c6f612f5594cc7620c503646642892",
+      "originalIdentityPath": "evaluation/terraformers-realistic-v1/candidate-identity.json",
+      "rejectedOn": "2026-10-06",
+      "reason": "Useful provenance/topology but answer leakage and uniform full-label rectangle visuals prevented realistic benchmark freeze.",
+      "truthWasFrozen": false,
+      "modelUnderTestRunCount": 0
+    }
+  ]
+}

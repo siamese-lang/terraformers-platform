@@ -13,14 +13,14 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 ## Current execution mode
 
 - Mode: **Product Trust Reassessment**
-- Status: **AUTONOMOUS PRODUCT TRUST PROGRAM DEFINED — AWAITING EXPLICIT PROGRAM APPROVAL**
+- Status: **PRODUCT TRUST PROGRAM APPROVED — PT-1 CONTRACT READY / AWAITING POST-MERGE ACTIVATION**
 - Active plan:
   [Product Trust Modernization](plans/active/product-trust-modernization.md)
 - Program contract:
   [.agents/programs/product-trust-v1.yml](../.agents/programs/product-trust-v1.yml)
 - Durable program state:
   [.agents/state/product-trust-v1.json](../.agents/state/product-trust-v1.json)
-- Current single task: **P0 defines the autonomous Product Trust execution protocol and revised PT plan. On merge, no PT phase starts until the user explicitly approves `product-trust-v1`; the first eligible phase is PT-1 realistic-input benchmark design. A7-8 and teardown are deferred. The currently recreated GCP representative runtime is intentionally retained because rebuilding it is expensive and PT-2 requires a frozen realistic-input baseline before final teardown.**
+- Current single task: **The user explicitly approved `product-trust-v1` on 2026-10-06. PT-1 realistic-input benchmark design is the first eligible phase. Its Work Package must merge before a Codex executor binds the exact post-merge main SHA and starts repository-only PT-1 work. PT-1 may prepare a candidate but must stop at the `REALISTIC_DATASET_TRUTH_FREEZE` human gate before any live PT-2 run. A7-8 and teardown remain deferred; the recreated GCP runtime is intentionally retained.**
 
 
 ## Product Trust reassessment checkpoint

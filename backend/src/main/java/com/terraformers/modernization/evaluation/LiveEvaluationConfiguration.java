@@ -39,12 +39,18 @@ public record LiveEvaluationConfiguration(
     static final String TARGET_ANALYSIS_PROVIDER = "vertex";
     static final String TARGET_EMBEDDING_PROVIDER = "vertex";
     static final String TARGET_GENERATION_MODEL = "gemini-3.8-flash";
-    static final String TARGET_EMBEDDING_MODEL = "gemini-embedding-001";
-    static final String TARGET_INDEX = "terraformers-reference-v3";
-    static final String TARGET_CORPUS = "terraformers-reference-v3";
     static final String TARGET_PROVIDER_VERSION = "5.100.0";
-    static final int TARGET_VECTOR_DIMENSION = 1024;
     static final int TARGET_TOP_K = 8;
+
+    static final String HISTORICAL_V3_EMBEDDING_MODEL = "gemini-embedding-001";
+    static final String HISTORICAL_V3_INDEX = "terraformers-reference-v3";
+    static final String HISTORICAL_V3_CORPUS = "terraformers-reference-v3";
+    static final int HISTORICAL_V3_VECTOR_DIMENSION = 1024;
+
+    static final String BROAD_V4_EMBEDDING_MODEL = "gemini-embedding-2";
+    static final String BROAD_V4_INDEX = "terraformers-reference-v4";
+    static final String BROAD_V4_CORPUS = "terraformers-reference-v4";
+    static final int BROAD_V4_VECTOR_DIMENSION = 1536;
 
     public LiveEvaluationConfiguration {
         datasetFile = Objects.requireNonNull(datasetFile, "datasetFile").toAbsolutePath().normalize();
@@ -59,15 +65,15 @@ public record LiveEvaluationConfiguration(
         retrievalMode = Objects.requireNonNull(retrievalMode, "retrievalMode");
         requireTarget(retrievalMode.name(), RetrievalMode.REQUIRED.name(), "retrievalMode");
         generationModelId = requireTarget(generationModelId, TARGET_GENERATION_MODEL, "generationModelId");
-        embeddingModelId = requireTarget(embeddingModelId, TARGET_EMBEDDING_MODEL, "embeddingModelId");
+        embeddingModelId = requireText(embeddingModelId, "embeddingModelId");
         openSearchEndpoint = requireText(openSearchEndpoint, "openSearchEndpoint");
-        indexName = requireTarget(indexName, TARGET_INDEX, "indexName");
+        indexName = requireText(indexName, "indexName");
         vectorFieldName = requireText(vectorFieldName, "vectorFieldName");
         contentFieldName = requireText(contentFieldName, "contentFieldName");
-        corpusVersion = requireTarget(corpusVersion, TARGET_CORPUS, "corpusVersion");
+        corpusVersion = requireText(corpusVersion, "corpusVersion");
         providerVersion = requireTarget(providerVersion, TARGET_PROVIDER_VERSION, "providerVersion");
-        requireTarget(vectorDimension, TARGET_VECTOR_DIMENSION, "vectorDimension");
         requireTarget(topK, TARGET_TOP_K, "topK");
+        requireSupportedProfile(embeddingModelId, indexName, corpusVersion, vectorDimension);
         if (maxOutputTokens <= 0) throw new IllegalArgumentException("maxOutputTokens must be positive");
         if (mode == Mode.SINGLE && caseId.isBlank()) {
             throw new IllegalArgumentException("caseId is required in single mode");
@@ -75,6 +81,10 @@ public record LiveEvaluationConfiguration(
         if (mode == Mode.FULL && !caseId.isBlank()) {
             throw new IllegalArgumentException("caseId must be omitted in full mode");
         }
+    }
+
+    public boolean isBroadV4() {
+        return BROAD_V4_CORPUS.equals(corpusVersion);
     }
 
     public ConfigurationIdentity identity() {
@@ -116,6 +126,26 @@ public record LiveEvaluationConfiguration(
     }
 
     public enum Mode { SINGLE, FULL }
+
+    private static void requireSupportedProfile(
+            String embeddingModelId,
+            String indexName,
+            String corpusVersion,
+            int vectorDimension
+    ) {
+        boolean historicalV3 = HISTORICAL_V3_EMBEDDING_MODEL.equals(embeddingModelId)
+                && HISTORICAL_V3_INDEX.equals(indexName)
+                && HISTORICAL_V3_CORPUS.equals(corpusVersion)
+                && vectorDimension == HISTORICAL_V3_VECTOR_DIMENSION;
+        boolean broadV4 = BROAD_V4_EMBEDDING_MODEL.equals(embeddingModelId)
+                && BROAD_V4_INDEX.equals(indexName)
+                && BROAD_V4_CORPUS.equals(corpusVersion)
+                && vectorDimension == BROAD_V4_VECTOR_DIMENSION;
+        if (!historicalV3 && !broadV4) {
+            throw new IllegalArgumentException(
+                    "embedding/index/corpus/vectorDimension must match historical v3 or broad v4 profile");
+        }
+    }
 
     private static String requireTarget(String actual, String expected, String field) {
         String value = requireText(actual, field);

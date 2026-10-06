@@ -21,12 +21,24 @@ public final class CaseAQualityCalibrationScorer {
         boolean technical = architecture ? architectureTechnicalSuccess(trace) : negativeTechnicalSuccess(trace);
         RetrievalGroundingAssessment grounding = groundingScorer.score(definition, trace);
         GenerationEvidence generation = trace.generation().evidence();
+        java.util.List<String> extractedResources = trace.factExtraction().evidence() == null
+                ? java.util.List.of()
+                : trace.factExtraction().evidence().resourceTypes();
+        int requiredFactMatched = (int) definition.resourceTypes().required().stream()
+                .filter(extractedResources::contains)
+                .count();
+        int forbiddenFactCount = (int) definition.resourceTypes().forbidden().stream()
+                .filter(extractedResources::contains)
+                .count();
+        boolean factResourcesComplete = requiredFactMatched == definition.resourceTypes().required().size()
+                && forbiddenFactCount == 0;
         boolean labeled = architecture
-                ? architectureLabelSuccess(definition, trace, generation, grounding)
+                ? architectureLabelSuccess(definition, trace, generation, grounding, factResourcesComplete)
                 : negativeLabelSuccess(definition, generation);
         return new CaseResult(trace.caseId(), definition.expectedClassification(),
                 generation == null ? null : generation.observedClassification(), architecture, technical, labeled,
-                technical && !labeled, grounding, runtimeQualityStatus, comparison(runtimeQualityStatus, labeled));
+                technical && !labeled, requiredFactMatched, definition.resourceTypes().required().size(),
+                forbiddenFactCount, grounding, runtimeQualityStatus, comparison(runtimeQualityStatus, labeled));
     }
 
     private boolean architectureTechnicalSuccess(EvaluationTrace trace) {
@@ -50,7 +62,7 @@ public final class CaseAQualityCalibrationScorer {
     }
 
     private boolean architectureLabelSuccess(EvaluationCase definition, EvaluationTrace trace,
-            GenerationEvidence generation, RetrievalGroundingAssessment grounding) {
+            GenerationEvidence generation, RetrievalGroundingAssessment grounding, boolean factResourcesComplete) {
         if (generation == null || generation.observedClassification() != definition.expectedClassification()) return false;
         boolean groundingComplete = completeWhenRequired(definition.retrieval().requiredProjectDecisionIds(),
                         grounding.projectDecisionCoverage())
@@ -59,7 +71,11 @@ public final class CaseAQualityCalibrationScorer {
         boolean generatedComplete = grounding.requiredGeneratedResourceMatched()
                 == grounding.requiredGeneratedResourceTotal()
                 && grounding.forbiddenGeneratedResourceCount() == 0;
-        return groundingComplete && generatedComplete && validationMatches(definition.validation(), trace);
+        return factResourcesComplete
+                && groundingComplete
+                && grounding.retrievalToGenerationHandoffComplete()
+                && generatedComplete
+                && validationMatches(definition.validation(), trace);
     }
 
     private boolean complete(RetrievalGroundingAssessment.Coverage coverage) {

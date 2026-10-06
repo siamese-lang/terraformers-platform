@@ -1396,6 +1396,7 @@ jobs:
         env:
           NAMESPACE: terraformers-target
           OPERATION: pt2-realistic-baseline
+          IDENTITY_RUN_ID: ${{ inputs.evaluation_scope == 'pt2-realistic-continuation' && '37480519016' || github.run_id }}
           ISSUER_URI: https://identity.example.test/case-c
           CLIENT_ID: case-c-runtime-client
         run: bash scripts/smoke/ephemeral-jwks-fixture.sh prepare

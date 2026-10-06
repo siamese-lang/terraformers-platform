@@ -7,7 +7,7 @@
   "activePhase": null,
   "lastCompletedPhase": "PT-1",
   "activeWorkPackage": null,
-  "activePullRequest": 242,
+  "activePullRequest": null,
   "humanGate": "LIVE_REALISTIC_BASELINE",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
@@ -33,7 +33,7 @@
   "resultBeforeHumanGate": "PT_1_COMPLETE_PT_2_BLOCKED",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
-  "activePullRequestBranch": "codex/product-trust-pt-1-freeze-state-sync",
+  "activePullRequestBranch": null,
   "candidate": {
     "directory": "evaluation/terraformers-realistic-v1",
     "identityPath": "evaluation/terraformers-realistic-v1/candidate-identity.json",
@@ -50,8 +50,7 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "PT-2 remains blocked at LIVE_REALISTIC_BASELINE pending separate explicit user approval; no execution or Work Package activation",
-    "Repository-only state/document PR remains subject to its separate merge checkpoint; no merge authority granted"
+    "PT-2 remains blocked at LIVE_REALISTIC_BASELINE pending separate explicit user approval; no execution or Work Package activation"
   ],
   "evidenceDocument": "docs/evaluation/product-trust-pt-1-realistic-input-freeze.md",
   "validation": {
@@ -121,7 +120,7 @@
       "liveCloudActions": 0
     }
   },
-  "activePullRequestUrl": "https://github.com/siamese-lang/terraformers-platform/pull/242",
+  "activePullRequestUrl": null,
   "lastObservedMainSha": "d98d03367c5b63a5321311763e9852c53fe65eae",
   "humanReviewCorrectiveIterations": [
     {
@@ -287,9 +286,12 @@
     "executionBaseSha": "d98d03367c5b63a5321311763e9852c53fe65eae",
     "branch": "codex/product-trust-pt-1-freeze-state-sync",
     "pullRequest": 242,
-    "status": "PR_OPEN",
+    "status": "COMPLETED",
     "mergeAuthorized": false,
     "pt2Activated": false,
-    "pullRequestUrl": "https://github.com/siamese-lang/terraformers-platform/pull/242"
+    "pullRequestUrl": "https://github.com/siamese-lang/terraformers-platform/pull/242",
+    "merged": true,
+    "mergedMainSha": "3598d93363536659d0d42215356f13a15d8555ad",
+    "mergedAt": "2026-10-06T12:20:15Z"
   }
 }

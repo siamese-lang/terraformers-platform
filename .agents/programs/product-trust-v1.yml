@@ -1,7 +1,9 @@
 program:
   id: product-trust-v1
   version: 1
-  status: DRAFTED_AWAITING_PROGRAM_APPROVAL
+  status: APPROVED_AWAITING_ACTIVATION
+  approved_on: "2026-10-06"
+  approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
   activation_base_sha: BIND_AT_ACTIVATION
   plan: docs/plans/active/product-trust-modernization.md
   state: .agents/state/product-trust-v1.json

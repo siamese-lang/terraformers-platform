@@ -232,7 +232,7 @@ def recover_prior_case2(client, output, prior_observations, logs=pt2.collect_log
 def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_jobs,
                  read_main=pt2.current_main, logs=pt2.collect_logs, clock=time.monotonic,
                  wait=time.sleep, measurement_deadline=MEASUREMENT_DEADLINE_SECONDS,
-                 drain_deadline=DRAIN_DEADLINE_SECONDS):
+                 drain_deadline=DRAIN_DEADLINE_SECONDS, checkpoint=lambda: None):
     if read_main() != dispatch_sha:
         raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT; stop before the next case")
     fixture = root / "evaluation" / pt2.DATASET / case["input"]["path"]
@@ -244,14 +244,17 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
     pt2.write_json(directory / "frozen-truth.json", case)
     record.update(status="SUBMISSION_STARTED", uploadAttempts=1, requestStartedAt=pt2.stamp())
     pt2.write_json(directory / "submission-started.json", dict(record))
+    checkpoint()
     client.request("GET", "/actuator/prometheus", directory, "metrics-before")
     upload = client.request("POST", "/api/upload", directory, "upload", fixture=fixture,
                                project_name=run_id + "-" + case["caseId"])
     if upload["transportExitCode"] != 0:
         record["status"] = "INDETERMINATE_ACCEPTANCE"
+        checkpoint()
         return False
     if upload["httpStatus"] != 201:
         record.update(status="UPLOAD_REJECTED", uploadHttpStatus=upload["httpStatus"])
+        checkpoint()
         return upload["httpStatus"] == 400
 
     accepted = upload["json"]
@@ -259,6 +262,7 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
             or not re.fullmatch(r"[A-Za-z0-9-]{1,128}", accepted["analysisJobId"]) \
             or type(accepted.get("projectId")) is not int or accepted["projectId"] <= 0:
         record["status"] = "INDETERMINATE_ACCEPTANCE"
+        checkpoint()
         return False
     job_id, project_id = accepted["analysisJobId"], accepted["projectId"]
     if job_id in seen_jobs or job_id in (CASE1_JOB_ID, CASE2_JOB_ID):
@@ -271,6 +275,7 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
         acceptedResponseObservedAt=upload["observedAt"], serverCreatedAt=accepted.get("createdAt"),
         sourceFileId=accepted.get("sourceFileId"),
     )
+    checkpoint()
 
     terminal, observed, last_nonterminal = _poll_same_job(
         client, directory, job_id, project_id, "job-poll", accepted_clock,
@@ -283,6 +288,7 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
             censoredObservationMs=max(0, round((clock() - accepted_clock) * 1000)),
             lastNonterminalAfterAcceptanceMs=last_nonterminal,
         )
+        checkpoint()
         terminal, observed, drain_last = _poll_same_job(
             client, directory, job_id, project_id, "drain-job-poll",
             accepted_clock, drain_deadline, clock=clock, wait=wait
@@ -290,6 +296,7 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
         record["lastDrainNonterminalAfterAcceptanceMs"] = drain_last
         if terminal is None:
             record["drainStatus"] = "TERMINAL_NOT_OBSERVED"
+            checkpoint()
             client.request("GET", "/actuator/prometheus", directory, "metrics-after")
             _readback(client, directory, job_id, project_id, None, logs, record["requestStartedAt"])
             return False
@@ -301,6 +308,7 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
             quality=terminal.get("quality"),
             failureReason=terminal.get("failureReason"),
         )
+        checkpoint()
     else:
         record.update(
             status=terminal["status"],
@@ -310,6 +318,7 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
             quality=terminal.get("quality"),
             failureReason=terminal.get("failureReason"),
         )
+        checkpoint()
 
     pt2.write_json(directory / "terminal-job.json", terminal)
     project, draft_response = _readback(
@@ -371,7 +380,14 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
     records = [{"caseId": case_id, "status": "NOT_RUN", "uploadAttempts": 0}
                for case_id in CONTINUATION_CASE_IDS]
     seen_jobs = set()
+    checkpoint_number = 0
 
+    def checkpoint():
+        nonlocal checkpoint_number
+        pt2.write_json(output / f"ledger-{checkpoint_number:03}.json", records)
+        checkpoint_number += 1
+
+    checkpoint()
     if not recover_prior_case2(
         client, output, prior_observations, logs=logs, clock=clock, wait=wait,
         drain_deadline=drain_deadline
@@ -392,7 +408,8 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
             if not observe_case(
                 root, case, record, client, run_id, dispatch_sha, output, seen_jobs,
                 read_main=read_main, logs=logs, clock=clock, wait=wait,
-                measurement_deadline=measurement_deadline, drain_deadline=drain_deadline
+                measurement_deadline=measurement_deadline, drain_deadline=drain_deadline,
+                checkpoint=checkpoint
             ):
                 break
     except Exception as error:
@@ -402,6 +419,7 @@ def run(root, prior_artifact, output, run_id, dispatch_sha, client,
         })
         raise
     finally:
+        checkpoint()
         complete = all(row["status"] not in ("NOT_RUN", "SUBMISSION_STARTED", "ACCEPTED", "INDETERMINATE_ACCEPTANCE")
                         and row.get("drainStatus") != "TERMINAL_NOT_OBSERVED"
                         for row in records)

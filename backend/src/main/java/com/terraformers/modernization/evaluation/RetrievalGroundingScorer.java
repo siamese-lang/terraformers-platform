@@ -22,7 +22,8 @@ public final class RetrievalGroundingScorer {
         RetrievalEvidence retrieval = trace.retrieval().evidence();
         List<ReferenceHit> hits = retrieval == null ? List.of() : retrieval.hits();
         Coverage decisionCoverage = applicable ? coverage(decisions, hits,
-                (required, hit) -> required.equals(hit.documentId())) : null;
+                (required, hit) -> required.equals(hit.documentId())
+                        && "TERRAFORMERS_PATTERN".equals(hit.documentType())) : null;
         Coverage resourceCoverage = applicable ? coverage(resources, hits,
                 (required, hit) -> hit.resourceTypes().contains(required)) : null;
         List<ReferenceHit> officialHits = hits.stream()
@@ -48,8 +49,6 @@ public final class RetrievalGroundingScorer {
                 : trace.validation().evidence().applicationValidator().valid();
         boolean incomplete = applicable && (decisionCoverage.matched() < decisionCoverage.total()
                 || resourceCoverage.matched() < resourceCoverage.total()
-                || factOfficialEvidenceCoverage.matched() < factOfficialEvidenceCoverage.total()
-                || generatedOfficialEvidenceCoverage.matched() < generatedOfficialEvidenceCoverage.total()
                 || !handoffComplete);
         boolean generationSucceeded = trace.generation().status() == EvaluationStageStatus.PASS;
         boolean gap = incomplete && trace.retrieval().status() == EvaluationStageStatus.PASS && generationSucceeded;

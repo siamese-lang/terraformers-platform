@@ -22,15 +22,46 @@ class RetrievalGroundingScorerTest {
         var definition = definition("x", EvaluationCase.InputClassification.ARCHITECTURE_DIAGRAM,
                 List.of("decision"), List.of("aws_db_instance", "aws_security_group"));
         var result = scorer.score(definition, trace("r", "x", EvaluationStageStatus.PASS,
-                List.of(hit(1, "decision-extra", "aws_db_subnet_group"), hit(2, "decision", "aws_db_instance", "aws_security_group")),
+                List.of(
+                        hit(1, "decision-extra", "aws_db_subnet_group"),
+                        hit(2, "decision", "aws_db_instance", "aws_security_group"),
+                        hit(3, "official", "aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")),
                 List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group"), true));
         assertThat(result.projectDecisionCoverage().firstMatchedRank()).containsEntry("decision", 2);
         assertThat(result.resourceTypeCoverage().matched()).isEqualTo(2);
         assertThat(result.projectDecisionCoverage().missing()).isEmpty();
         assertThat(result.resourceTypeCoverage().missing()).isEmpty();
         assertThat(result.retrievalToGenerationHandoffComplete()).isTrue();
+        assertThat(result.factResourceOfficialEvidenceCoverage().matched()).isEqualTo(4);
+        assertThat(result.generatedResourceOfficialEvidenceCoverage().matched()).isEqualTo(4);
         assertThat(result.groundingGap()).isFalse();
     }
+    @Test void exposesGeneratedResourcesWithoutSelectedOfficialEvidence() {
+        var definition = definition(
+                "x",
+                EvaluationCase.InputClassification.ARCHITECTURE_DIAGRAM,
+                List.of("decision"),
+                List.of("aws_vpc"));
+        var result = scorer.score(
+                definition,
+                trace(
+                        "r",
+                        "x",
+                        EvaluationStageStatus.PASS,
+                        List.of(
+                                hit(1, "decision"),
+                                hit(2, "official", "aws_vpc")),
+                        List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group"),
+                        true));
+
+        assertThat(result.resourceTypeCoverage().missing()).isEmpty();
+        assertThat(result.factResourceOfficialEvidenceCoverage().missing())
+                .containsExactlyInAnyOrder("aws_lb", "aws_db_instance", "aws_security_group");
+        assertThat(result.generatedResourceOfficialEvidenceCoverage().missing())
+                .containsExactlyInAnyOrder("aws_lb", "aws_db_instance", "aws_security_group");
+        assertThat(result.groundingGap()).isTrue();
+    }
+
     @Test void handlesCompleteFailureAndNonApplicable() {
         var positive = definition("x", EvaluationCase.InputClassification.ARCHITECTURE_DIAGRAM, List.of("decision"), List.of("aws_vpc"));
         assertThat(scorer.score(positive, trace("r", "x", EvaluationStageStatus.FAIL, List.of(), List.of(), false)).groundingGap()).isFalse();

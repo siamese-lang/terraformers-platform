@@ -23,6 +23,7 @@ on:
           - a7-7-v4-production-evaluation
           - a7-7-v4-artifact-rescore
           - pt2-realistic-baseline
+          - pt2-realistic-continuation
       backend_image:
         description: Exact immutable retained backend image for broad-v4/PT-2 evaluation.
         required: false
@@ -50,7 +51,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: gcp-target-apply
-    timeout-minutes: 90
+    timeout-minutes: ${{ inputs.evaluation_scope == 'pt2-realistic-continuation' && 180 || 90 }}
     env:
       CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
       TARGET_PROJECT: terraformers-platform
@@ -99,6 +100,16 @@ jobs:
               [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]]
               [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
               python3 scripts/evaluation/pt2-realistic-baseline.py verify
+              echo 'A7_7_V4_EVALUATION=true' >> "$GITHUB_ENV"
+              ;;
+            pt2-realistic-continuation)
+              [[ "$CONFIRMATION" == RUN_PT2_REALISTIC_CONTINUATION ]]
+              [[ "$GITHUB_RUN_ATTEMPT" == 1 ]] || {
+                echo 'PT-2 continuation forbids workflow reruns; preserve every accepted case attempt.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]]
+              [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
               echo 'A7_7_V4_EVALUATION=true' >> "$GITHUB_ENV"
               ;;
             m3-full-baseline)
@@ -195,14 +206,14 @@ jobs:
           }
 
       - uses: actions/setup-java@v5
-        if: inputs.evaluation_scope != 'pt2-realistic-baseline'
+        if: inputs.evaluation_scope != 'pt2-realistic-baseline' && inputs.evaluation_scope != 'pt2-realistic-continuation'
         with:
           distribution: temurin
           java-version: '17'
           cache: maven
 
       - name: Build bounded evaluation bundle
-        if: inputs.evaluation_scope != 'pt2-realistic-baseline'
+        if: inputs.evaluation_scope != 'pt2-realistic-baseline' && inputs.evaluation_scope != 'pt2-realistic-continuation'
         env:
           EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
         run: |
@@ -307,7 +318,7 @@ jobs:
             }
           done
 
-          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
+          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline || "$EVALUATION_SCOPE" == pt2-realistic-continuation ]]; then
             for permission in 'get deployments' 'patch deployments' 'get configmaps' 'create configmaps' \
               'patch configmaps' 'get pods/log' 'create pods/portforward' 'get services' 'list pods'; do
               verb="${permission%% *}"
@@ -341,7 +352,7 @@ jobs:
           done
 
       - name: Apply only the backend Kubernetes ServiceAccount
-        if: inputs.evaluation_scope != 'pt2-realistic-baseline'
+        if: inputs.evaluation_scope != 'pt2-realistic-baseline' && inputs.evaluation_scope != 'pt2-realistic-continuation'
         run: |
           set -euo pipefail
           kubectl -n "$TARGET_NAMESPACE" apply             -f infra/kubernetes/base/backend-serviceaccount.yaml
@@ -356,13 +367,14 @@ jobs:
           [[ "$service_type" == ClusterIP ]]
 
       - name: Verify retained PT-2 backend identity and configuration without mutation
-        if: inputs.evaluation_scope == 'pt2-realistic-baseline'
+        if: inputs.evaluation_scope == 'pt2-realistic-baseline' || inputs.evaluation_scope == 'pt2-realistic-continuation'
         env:
           BACKEND_IMAGE: ${{ inputs.backend_image }}
           BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
         run: |
           set -euo pipefail
-          output_dir="${RUNNER_TEMP}/pt2-realistic-baseline"
+          output_dir="${RUNNER_TEMP}/${EVALUATION_SCOPE}"
           mkdir -p "$output_dir"
           git fetch --no-tags origin "$BACKEND_SOURCE_SHA"
           git diff --quiet "$BACKEND_SOURCE_SHA" "$GITHUB_SHA" -- backend/src/main backend/pom.xml backend/Dockerfile || {
@@ -435,7 +447,7 @@ jobs:
           EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
         run: |
           set -euo pipefail
-          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
+          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline || "$EVALUATION_SCOPE" == pt2-realistic-continuation ]]; then
             [[ -z "$(kubectl -n "$TARGET_NAMESPACE" get pod "$BASELINE_POD" --ignore-not-found -o name)" ]] || {
               echo 'PT-2 will not replace a pre-existing evaluation pod.' >&2
               exit 1
@@ -496,7 +508,7 @@ jobs:
           fi
 
       - name: Transfer evaluation bundle
-        if: inputs.evaluation_scope != 'pt2-realistic-baseline'
+        if: inputs.evaluation_scope != 'pt2-realistic-baseline' && inputs.evaluation_scope != 'pt2-realistic-continuation'
         run: |
           set -euo pipefail
           kubectl -n "$TARGET_NAMESPACE" exec -i "$BASELINE_POD" --             /bin/sh -c 'cat > /tmp/live-baseline.zip'             < "${RUNNER_TEMP}/live-baseline.zip"
@@ -532,7 +544,7 @@ jobs:
           '
 
       - name: Verify A7-7 v4 production-equivalent substrate
-        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation' || inputs.evaluation_scope == 'a7-7-v4-artifact-rescore' || inputs.evaluation_scope == 'pt2-realistic-baseline'
+        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation' || inputs.evaluation_scope == 'a7-7-v4-artifact-rescore' || inputs.evaluation_scope == 'pt2-realistic-baseline' || inputs.evaluation_scope == 'pt2-realistic-continuation'
         env:
           BACKEND_IMAGE: ${{ inputs.backend_image }}
           BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
@@ -556,9 +568,9 @@ jobs:
             and .["terraformers-reference-v4"].mappings._meta.terraformers_corpus.corpus_version == "terraformers-reference-v4"
             and .["terraformers-reference-v4"].mappings._meta.terraformers_corpus.checksum == $checksum
           ' <<< "$mapping_json" >/dev/null
-          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
-            printf '%s\n' "$count_json" > "${RUNNER_TEMP}/pt2-realistic-baseline/opensearch-count.json"
-            printf '%s\n' "$mapping_json" > "${RUNNER_TEMP}/pt2-realistic-baseline/opensearch-mapping.json"
+          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline || "$EVALUATION_SCOPE" == pt2-realistic-continuation ]]; then
+            printf '%s\n' "$count_json" > "${RUNNER_TEMP}/${EVALUATION_SCOPE}/opensearch-count.json"
+            printf '%s\n' "$mapping_json" > "${RUNNER_TEMP}/${EVALUATION_SCOPE}/opensearch-mapping.json"
           fi
 
       - name: Rescore frozen A7-7 artifact without AI calls
@@ -1339,8 +1351,48 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+      - name: Download and verify authoritative partial PT-2 evidence for continuation
+        if: inputs.evaluation_scope == 'pt2-realistic-continuation'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          PRIOR_RUN_ID: '37480519016'
+          PRIOR_ARTIFACT_ID: '11422455892'
+          PRIOR_ARTIFACT_DIGEST: 'sha256:499f31b4311737884a2b7d0fc0405d477be7e41a99e9969217570c91eb5ac561'
+          PRIOR_DISPATCH_SHA: 'c3e9ed4e854778dfb2eefbc0182ae53a008025bf'
+        run: |
+          set -euo pipefail
+          output_dir="${RUNNER_TEMP}/pt2-realistic-continuation"
+          prior_dir="${RUNNER_TEMP}/pt2-prior-artifact"
+          mkdir -p "$output_dir" "$prior_dir"
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PRIOR_RUN_ID}" > "$output_dir/prior-run-metadata.json"
+          jq -e --arg sha "$PRIOR_DISPATCH_SHA" '
+            .id == 37480519016 and .run_attempt == 1 and .head_sha == $sha and .conclusion == "failure"
+          ' "$output_dir/prior-run-metadata.json" >/dev/null
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${PRIOR_ARTIFACT_ID}" > "$output_dir/prior-artifact-metadata.json"
+          jq -e --arg digest "$PRIOR_ARTIFACT_DIGEST" --arg sha "$PRIOR_DISPATCH_SHA" '
+            .id == 11422455892
+            and .name == "pt2-realistic-baseline-37480519016"
+            and .expired == false
+            and .digest == $digest
+            and .workflow_run.id == 37480519016
+            and .workflow_run.head_sha == $sha
+          ' "$output_dir/prior-artifact-metadata.json" >/dev/null
+
+          gh run download "$PRIOR_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name "pt2-realistic-baseline-${PRIOR_RUN_ID}" --dir "$prior_dir"
+
+          python3 scripts/evaluation/pt2-realistic-continuation.py verify --prior-artifact="$prior_dir"
+          jq -e --arg image "$BACKEND_IMAGE" --arg source "$BACKEND_SOURCE_SHA" '
+            .backendImage == $image and .backendSourceSha == $source
+            and .productionSourceEquivalent == true and .configurationVerified == true
+          ' "$prior_dir/runtime-identity.json" >/dev/null
+
       - name: Prepare proven ephemeral authenticated JWT fixture for PT-2
-        if: inputs.evaluation_scope == 'pt2-realistic-baseline'
+        if: inputs.evaluation_scope == 'pt2-realistic-baseline' || inputs.evaluation_scope == 'pt2-realistic-continuation'
         env:
           NAMESPACE: terraformers-target
           OPERATION: pt2-realistic-baseline
@@ -1379,11 +1431,56 @@ jobs:
             --token-file="${RUNNER_TEMP}/case-c-access.token" \
             --output="$output_dir/cases"
 
+      - name: Continue PT-2 only for the exact prior censored job and previously NOT_RUN inputs
+        if: inputs.evaluation_scope == 'pt2-realistic-continuation'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          output_dir="${RUNNER_TEMP}/pt2-realistic-continuation"
+          prior_dir="${RUNNER_TEMP}/pt2-prior-artifact"
+          mkdir -p "$output_dir/frontend-status-source"
+          cp frontend/src/pages/ProjectDetailPage.js frontend/src/pages/MyProjectsPage.js \
+            "$output_dir/frontend-status-source/"
+          cp docs/evaluation/product-trust-pt-2-continuation-protocol.md "$output_dir/"
+          cp -a evaluation/terraformers-realistic-v1 "$output_dir/frozen-benchmark"
+
+          kubectl -n "$TARGET_NAMESPACE" port-forward service/terraformers-backend 18080:80 \
+            > "$output_dir/port-forward.log" 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid" >/dev/null 2>&1 || true; wait "$pf_pid" >/dev/null 2>&1 || true' EXIT
+          ready=false
+          for _ in $(seq 1 30); do
+            if curl -fsS --connect-timeout 2 --max-time 3 http://127.0.0.1:18080/actuator/health \
+              | jq -e '.status == "UP"' >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          [[ "$ready" == true ]] || { echo 'Retained backend observation path is unavailable.' >&2; exit 1; }
+
+          python3 scripts/evaluation/pt2-realistic-continuation.py run \
+            --prior-artifact="$prior_dir" \
+            --run-id="pt2-continuation-${GITHUB_RUN_ID}" \
+            --token-file="${RUNNER_TEMP}/case-c-access.token" \
+            --dispatch-sha="$GITHUB_SHA" \
+            --output="$output_dir/cases"
+
       - name: Restore only the placeholder JWKS fixture after PT-2
-        if: always() && inputs.evaluation_scope == 'pt2-realistic-baseline'
+        if: always() && (inputs.evaluation_scope == 'pt2-realistic-baseline' || inputs.evaluation_scope == 'pt2-realistic-continuation')
         env:
           NAMESPACE: terraformers-target
         run: bash scripts/smoke/ephemeral-jwks-fixture.sh restore
+
+      - name: Seal PT-2 continuation evidence inventory including partial failures
+        if: always() && inputs.evaluation_scope == 'pt2-realistic-continuation'
+        run: |
+          set -euo pipefail
+          output_dir="${RUNNER_TEMP}/pt2-realistic-continuation"
+          if [[ -d "$output_dir" ]]; then
+            python3 scripts/evaluation/pt2-realistic-continuation.py inventory --output="$output_dir"
+          fi
 
       - name: Seal PT-2 evidence inventory including partial failures
         if: always() && inputs.evaluation_scope == 'pt2-realistic-baseline'
@@ -1401,6 +1498,16 @@ jobs:
         with:
           name: pt2-realistic-baseline-${{ github.run_id }}
           path: ${{ runner.temp }}/pt2-realistic-baseline
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Preserve PT-2 continuation raw and partial evidence on every outcome
+        id: pt2-continuation-evidence
+        if: always() && inputs.evaluation_scope == 'pt2-realistic-continuation'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pt2-realistic-continuation-${{ github.run_id }}
+          path: ${{ runner.temp }}/pt2-realistic-continuation
           if-no-files-found: warn
           retention-days: 90
 
@@ -1427,6 +1534,30 @@ jobs:
             echo '- One upload/job per input; no standalone inference or failed-case replacement.'
             echo '- Independent structured review must bind this run ID, artifact ID/digest, inventory SHA and derived findings.'
             echo '- No post-run state-sync PR; accepted PT-2 evidence goes into the next substantive PT-3 or closure PR.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Bind immutable PT-2 continuation run and artifact for independent review
+        if: always() && inputs.evaluation_scope == 'pt2-realistic-continuation'
+        env:
+          ARTIFACT_ID: ${{ steps.pt2-continuation-evidence.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.pt2-continuation-evidence.outputs.artifact-digest }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+        run: |
+          set -euo pipefail
+          {
+            echo '## PT-2 bounded continuation evidence handoff (not phase acceptance)'
+            printf -- '- Continuation run: `%s`, attempt: `%s`, dispatch: `%s`\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_SHA"
+            printf -- '- Artifact ID: `%s`, digest: `%s`\n' "$ARTIFACT_ID" "$ARTIFACT_DIGEST"
+            printf -- '- Retained image: `%s`, source: `%s`\n' "$BACKEND_IMAGE" "$BACKEND_SOURCE_SHA"
+            echo '- Prior authoritative run: `37480519016`, artifact: `11422455892`; original case-02 latency remains censored.'
+            echo '- Dataset: revision 3 / `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`'
+            sha256sum docs/evaluation/product-trust-pt-2-continuation-protocol.md
+            if [[ -f "${RUNNER_TEMP}/pt2-realistic-continuation/artifact-sha256.json" ]]; then
+              sha256sum "${RUNNER_TEMP}/pt2-realistic-continuation/artifact-sha256.json"
+            fi
+            echo '- Cases 01/02 are never resubmitted; only prior case-02 read-only recovery and first submission of cases 03-10 are allowed.'
+            echo '- Independent review must bind both the original and continuation artifacts before PT-2 completion.'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run one Case A A3 fixed-facts retrieval comparison
@@ -1542,6 +1673,6 @@ jobs:
           retention-days: 90
 
       - name: Delete ephemeral evaluation baseline pod
-        if: always() && (inputs.evaluation_scope != 'pt2-realistic-baseline' || steps.start-baseline.outputs.created == 'true')
+        if: always() && ((inputs.evaluation_scope != 'pt2-realistic-baseline' && inputs.evaluation_scope != 'pt2-realistic-continuation') || steps.start-baseline.outputs.created == 'true')
         run: |
           kubectl -n "$TARGET_NAMESPACE" delete pod "$BASELINE_POD"             --ignore-not-found=true --wait=false || true

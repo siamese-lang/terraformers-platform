@@ -872,15 +872,15 @@ jobs:
               echo '|---|---|---|---|---|---|---|---|---|---|---|'
               jq -r '
                 .cases[] |
-                "| (.caseId) | (.technicalSuccess) | (.labeledQualitySuccess) | " +
-                "(.requiredFactResourceMatched)/(.requiredFactResourceTotal) | " +
-                (if .grounding.resourceTypeCoverage == null then "N/A" else "(.grounding.resourceTypeCoverage.matched)/(.grounding.resourceTypeCoverage.total)" end) + " | " +
-                (if .grounding.projectDecisionCoverage == null then "N/A" else "(.grounding.projectDecisionCoverage.matched)/(.grounding.projectDecisionCoverage.total)" end) + " | " +
-                "(.grounding.retrievalToGenerationHandoffComplete) | " +
-                "(.grounding.requiredGeneratedResourceMatched)/(.grounding.requiredGeneratedResourceTotal) | " +
-                "(.grounding.forbiddenGeneratedResourceCount) | " +
-                (if .grounding.terraformValidationPassed == null then "N/A" else "(.grounding.terraformValidationPassed)" end) + " | " +
-                (if .grounding.firstDivergence == null then "none" else "(.grounding.firstDivergence.stage):(.grounding.firstDivergence.category)" end) +
+                "| \(.caseId) | \(.technicalSuccess) | \(.labeledQualitySuccess) | " +
+                "\(.requiredFactResourceMatched)/\(.requiredFactResourceTotal) | " +
+                (if .grounding.resourceTypeCoverage == null then "N/A" else "\(.grounding.resourceTypeCoverage.matched)/\(.grounding.resourceTypeCoverage.total)" end) + " | " +
+                (if .grounding.projectDecisionCoverage == null then "N/A" else "\(.grounding.projectDecisionCoverage.matched)/\(.grounding.projectDecisionCoverage.total)" end) + " | " +
+                "\(.grounding.retrievalToGenerationHandoffComplete) | " +
+                "\(.grounding.requiredGeneratedResourceMatched)/\(.grounding.requiredGeneratedResourceTotal) | " +
+                "\(.grounding.forbiddenGeneratedResourceCount) | " +
+                (if .grounding.terraformValidationPassed == null then "N/A" else "\(.grounding.terraformValidationPassed)" end) + " | " +
+                (if .grounding.firstDivergence == null then "none" else "\(.grounding.firstDivergence.stage):\(.grounding.firstDivergence.category)" end) +
                 " |"
               ' "$calibration"
               echo
@@ -890,11 +890,11 @@ jobs:
             echo '### Canonical stability aggregate'
             echo
             jq -r '
-              "- Grounding-gap frequency: (.groundingGap.failureCount)/(.groundingGap.sampleCount) ((.groundingGap.frequency))",
-              "- Grounding-gap-with-valid-output frequency: (.groundingGapWithValidOutput.failureCount)/(.groundingGapWithValidOutput.sampleCount) ((.groundingGapWithValidOutput.frequency))",
-              "- Fact extraction latency ms min/median/max: (.factExtractionLatencyMs.min)/(.factExtractionLatencyMs.median)/(.factExtractionLatencyMs.max)",
-              "- Retrieval latency ms min/median/max: (.retrievalLatencyMs.min)/(.retrievalLatencyMs.median)/(.retrievalLatencyMs.max)",
-              "- Generation latency ms min/median/max: (.generationLatencyMs.min)/(.generationLatencyMs.median)/(.generationLatencyMs.max)"
+              "- Grounding-gap frequency: \(.groundingGap.failureCount)/\(.groundingGap.sampleCount) (\(.groundingGap.frequency))",
+              "- Grounding-gap-with-valid-output frequency: \(.groundingGapWithValidOutput.failureCount)/\(.groundingGapWithValidOutput.sampleCount) (\(.groundingGapWithValidOutput.frequency))",
+              "- Fact extraction latency ms min/median/max: \(.factExtractionLatencyMs.min)/\(.factExtractionLatencyMs.median)/\(.factExtractionLatencyMs.max)",
+              "- Retrieval latency ms min/median/max: \(.retrievalLatencyMs.min)/\(.retrievalLatencyMs.median)/\(.retrievalLatencyMs.max)",
+              "- Generation latency ms min/median/max: \(.generationLatencyMs.min)/\(.generationLatencyMs.median)/\(.generationLatencyMs.max)"
             ' "$aggregate"
             echo
 
@@ -904,15 +904,15 @@ jobs:
             echo '|---|---|---|---|---|---|---|---|---|---|---|'
             jq -r '
               .cases[] |
-              "| (.caseId) | (.technicalSuccess) | (.labeledQualitySuccess) | " +
-              "(.requiredFactResourceMatched)/(.requiredFactResourceTotal) | " +
-              (if .grounding.resourceTypeCoverage == null then "N/A" else "(.grounding.resourceTypeCoverage.matched)/(.grounding.resourceTypeCoverage.total)" end) + " | " +
-              (if .grounding.projectDecisionCoverage == null then "N/A" else "(.grounding.projectDecisionCoverage.matched)/(.grounding.projectDecisionCoverage.total)" end) + " | " +
-              "(.grounding.retrievalToGenerationHandoffComplete) | " +
-              "(.grounding.requiredGeneratedResourceMatched)/(.grounding.requiredGeneratedResourceTotal) | " +
-              "(.grounding.forbiddenGeneratedResourceCount) | " +
-              (if .grounding.terraformValidationPassed == null then "N/A" else "(.grounding.terraformValidationPassed)" end) + " | " +
-              (if .grounding.firstDivergence == null then "none" else "(.grounding.firstDivergence.stage):(.grounding.firstDivergence.category)" end) +
+              "| \(.caseId) | \(.technicalSuccess) | \(.labeledQualitySuccess) | " +
+              "\(.requiredFactResourceMatched)/\(.requiredFactResourceTotal) | " +
+              (if .grounding.resourceTypeCoverage == null then "N/A" else "\(.grounding.resourceTypeCoverage.matched)/\(.grounding.resourceTypeCoverage.total)" end) + " | " +
+              (if .grounding.projectDecisionCoverage == null then "N/A" else "\(.grounding.projectDecisionCoverage.matched)/\(.grounding.projectDecisionCoverage.total)" end) + " | " +
+              "\(.grounding.retrievalToGenerationHandoffComplete) | " +
+              "\(.grounding.requiredGeneratedResourceMatched)/\(.grounding.requiredGeneratedResourceTotal) | " +
+              "\(.grounding.forbiddenGeneratedResourceCount) | " +
+              (if .grounding.terraformValidationPassed == null then "N/A" else "\(.grounding.terraformValidationPassed)" end) + " | " +
+              (if .grounding.firstDivergence == null then "none" else "\(.grounding.firstDivergence.stage):\(.grounding.firstDivergence.category)" end) +
               " |"
             ' "$output_dir/a7-7-v4-holdout-calibration.json"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -162,6 +162,9 @@ public final class CaseAQualityCalibrationScorer {
         if (sourceIndex < 0 || targetIndex < 0 || sourceIndex >= targetIndex) {
             return false;
         }
+        if (!hasForwardRelationSignal(normalizedActual, sourceIndex, targetIndex)) {
+            return false;
+        }
 
         java.util.Set<String> stopWords = java.util.Set.of(
                 "through", "via", "to", "the", "a", "an", "as", "by", "on", "in", "with");
@@ -170,6 +173,29 @@ public final class CaseAQualityCalibrationScorer {
                 .filter(token -> !token.isBlank() && !stopWords.contains(token))
                 .toList();
         return qualifierTokens.stream().allMatch(normalizedActual::contains);
+    }
+
+    private boolean hasForwardRelationSignal(String normalizedActual, int sourceIndex, int targetIndex) {
+        java.util.Set<String> negations = java.util.Set.of("no", "not", "never", "cannot", "without");
+        java.util.List<String> allTokens = java.util.Arrays.stream(normalizedActual.split("\\s+"))
+                .filter(token -> !token.isBlank())
+                .toList();
+        if (allTokens.stream().anyMatch(negations::contains)
+                || (" " + normalizedActual + " ").contains(" can t ")) {
+            return false;
+        }
+
+        String between = " " + normalizedActual.substring(sourceIndex, targetIndex) + " ";
+        if (between.contains(" from ") || between.contains(" by ")) {
+            return false;
+        }
+
+        java.util.List<String> forwardVerbStems = java.util.List.of(
+                "send", "sent", "forward", "route", "connect", "quer", "write", "read",
+                "host", "associate", "protect", "assume", "access", "invoke", "call",
+                "direct", "deliver", "pass", "reach", "link", "attach", "use");
+        return java.util.Arrays.stream(between.strip().split("\\s+"))
+                .anyMatch(token -> forwardVerbStems.stream().anyMatch(token::startsWith));
     }
 
     private int entityIndex(String normalizedExpected, String normalizedActual) {

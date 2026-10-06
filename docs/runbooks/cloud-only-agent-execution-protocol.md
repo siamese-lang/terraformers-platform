@@ -139,7 +139,7 @@ Each task receives:
 - explicit stop conditions;
 - required completion evidence.
 
-Codex does not choose the next Work Package.
+Codex does not choose the next Work Package in the default human-gated lane. In an explicitly approved Autonomous Program, Codex may choose only the next eligible Work Package already constrained by the durable program DAG.
 
 ### GitHub
 
@@ -268,7 +268,7 @@ The user decides whether to merge.
 
 After merge, repository state is authoritative.
 
-The next Work Package remains unapproved until the user explicitly authorizes it.
+The next Work Package remains unapproved until the user explicitly authorizes it, except inside an explicitly approved Autonomous Program whose durable DAG pre-authorizes that repository-only transition.
 
 ## 6. Event-driven continuation
 
@@ -449,7 +449,38 @@ Do not add now:
 - another project-state database;
 - a new workflow solely to track agent lifecycle;
 - automatic merge;
-- automatic next-Work-Package chaining.
+- automatic next-Work-Package chaining outside an explicitly approved Autonomous Program.
+
+
+## 12A. Autonomous Program mode
+
+The default execution unit remains one Approved Work Package. Autonomous Program mode is a narrow
+extension for a user-approved multi-phase objective whose decisions and stop conditions can be
+declared before execution.
+
+A program requires:
+
+- `.agents/programs/<id>.yml` with goal, success criteria, phase DAG, human gates, prohibited
+  directions and stop conditions;
+- `.agents/state/<id>.json` with current durable execution state;
+- a human-readable active plan;
+- explicit user approval of the program after those files are reviewable.
+
+Until that approval, the state is `AWAITING_PROGRAM_APPROVAL` and Codex must not start phase work.
+
+After approval, Codex Cloud may autonomously create/execute the next eligible repository Work
+Package, run bounded validation/repair, update evidence/state and open a PR. It may not infer a new
+program phase from an interesting failure or technology. A failure requiring an undeclared product
+or architecture choice becomes `HUMAN_REQUIRED`.
+
+Program autonomy does not imply automatic merge. Unless the program has a separately approved
+merge policy, production/source PRs still wait for the ordinary merge checkpoint. Live inference,
+GCP mutation, IAM/security expansion, cost increase and destructive operations always obey the
+program's explicit human gates.
+
+The first program using this mode is `product-trust-v1`. It intentionally excludes Kubernetes/GKE
+platform reselection and unrelated production-hardening work; the retained representative runtime is
+used only as needed to measure and prove user-facing product trust.
 
 ## 13. Acceptance criteria for this protocol
 
@@ -460,7 +491,7 @@ The protocol is adopted when repository instructions make all of the following e
 - Work Package activation binds one exact remote-main SHA;
 - Codex Cloud is the preferred implementation executor;
 - interactive polling is replaced by event-driven continuation where supported;
-- Work PR-event automation cannot merge, redesign, or start the next Work Package;
+- Work PR-event automation cannot merge or redesign; it may start/continue a next Work Package only when an explicitly approved Autonomous Program DAG already authorizes that transition;
 - bounded repair and stop semantics remain authoritative;
 - live/cost/security actions retain human checkpoints;
 - MCP/n8n remain optional and evidence-driven;

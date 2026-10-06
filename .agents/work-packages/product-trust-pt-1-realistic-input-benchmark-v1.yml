@@ -1,0 +1,192 @@
+work_package:
+  id: product-trust-pt-1-realistic-input-benchmark-v1
+  program: product-trust-v1
+  phase: PT-1
+  status: APPROVED_AWAITING_ACTIVATION
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: null
+
+  activation:
+    rule: >
+      This Work Package contract must be on main before implementation. At the first PT-1 executor
+      write, read authoritative remote main exactly once, bind that SHA to execution_base_sha,
+      update .agents/state/product-trust-v1.json to ACTIVE/PT-1, create the implementation branch
+      from that exact SHA, and never auto-refresh/rebase to a newer main. If main changes after
+      activation, stop with HUMAN_REQUIRED: MAIN_DRIFT.
+    max_active_work_packages: 1
+
+  user_goal:
+    approved_program_on: "2026-10-06"
+    statement: >
+      Terraformers should be evaluated as a real user-facing AI service, not only by preserving
+      synthetic benchmark scores. Realistic inputs and human-reviewable truth must be frozen before
+      any further AI correction or realistic live measurement.
+
+  observed_problem:
+    - all canonical positive fixtures in terraformers-eval-v1 are repository-owned synthetic images
+    - all positive holdout fixtures in terraformers-eval-holdout-v1 are repository-owned synthetic images
+    - existing synthetic evidence supports controlled regression claims but not realistic-image generalization
+    - the repository currently contains no additional realistic architecture image assets outside those frozen fixtures
+
+  goal: >
+    Prepare a small, diverse, legally/reproducibly usable realistic-input benchmark candidate with
+    explicit provenance and human-reviewable truth. Do not run the model-under-test or live GCP
+    evaluation. Stop at the REALISTIC_DATASET_TRUTH_FREEZE human gate with a reviewable candidate.
+
+  non_goals:
+    - live_model_inference
+    - live_GCP_mutation
+    - prompt_or_model_tuning
+    - retrieval_or_RAG_change
+    - scoring_threshold_change
+    - production_behavior_change
+    - browser_E2E
+    - Kubernetes_or_GKE_reselection
+    - large_benchmark_creation
+    - automatically_freezing_truth_without_human_review
+
+  dataset_contract:
+    target_directory: evaluation/terraformers-realistic-v1
+    target_scale:
+      total_cases: approximately_10
+      positive_architecture_cases: approximately_6
+      ambiguous_controls: approximately_2
+      non_architecture_controls: approximately_2
+    diversity:
+      - multiple_layout_styles
+      - realistic_AWS_architecture_icons_or_equivalent_service_labels
+      - small_text_or_dense_grouping
+      - subnet_VPC_or_security_boundaries_where_relevant
+      - crossing_or_nontrivial_relationship_lines
+      - more_than_one_resource_family
+      - at_least_one_case_not_structurally_similar_to_existing_canonical_positives
+    provenance_priority:
+      - existing_user_or_project_created_real_diagrams_if_discoverable
+      - independently_recreated_diagrams_from_public_reference_architecture_specifications
+      - public_reference_assets_only_when_redistribution_and_reproducibility_are_explicitly_acceptable
+    prohibited_fixture_sources:
+      - output_generated_by_the_model_under_test
+      - fixtures_optimized_after_observing_Terraformers_results
+      - unlabeled_random_icon_collages
+      - copied_third_party_images_with_unclear_redistribution_rights
+
+  truth_contract:
+    rule: >
+      Candidate labels may be drafted from source architecture specifications and deterministic
+      inspection, but the model-under-test must not author or validate its own truth. Before freeze,
+      present each positive image and its components, relationships, resource intent, forbidden
+      interpretations, provenance, and any uncertainty for human review.
+    required_positive_fields:
+      - expected_classification
+      - required_components
+      - required_relationships
+      - required_resource_intent
+      - acceptable_variants_where_semantically_equivalent
+      - forbidden_interpretations_where_material
+      - provenance
+      - license_or_recreation_basis
+    required_negative_fields:
+      - expected_classification
+      - reason_Terraform_should_not_be_generated
+      - provenance
+    ambiguity_rule: >
+      If the truth for a candidate image cannot be stated confidently without guessing, remove or
+      replace the case rather than weakening the label.
+
+  repository_reuse:
+    preferred_schema: m3-evaluation-v1_when_semantically_sufficient
+    preferred_loader: existing_EvaluationDatasetLoader
+    rule: >
+      Reuse existing dataset schema/loader/checksum validation where it can represent realistic
+      truth. Do not create a parallel evaluator or workflow merely for PT-1. If a provenance field
+      cannot fit the frozen schema, keep provenance in the dataset README/manifest rather than
+      changing production or evaluation semantics unnecessarily.
+
+  allowed_paths:
+    - .agents/work-packages/product-trust-pt-1-realistic-input-benchmark-v1.yml
+    - .agents/state/product-trust-v1.json
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-pt-1-realistic-input-freeze.md
+    - evaluation/terraformers-realistic-v1/**
+    - backend/src/test/java/com/terraformers/modernization/evaluation/**
+  conditionally_allowed_paths:
+    - backend/src/main/java/com/terraformers/modernization/evaluation/**
+  conditional_rule: >
+    Production evaluation Java may change only if the existing loader cannot load the frozen
+    repository-owned dataset format and the change is a reusable dataset-loading compatibility
+    correction with no scoring/model/retrieval behavior change. Otherwise STOP.
+
+  prohibited_paths:
+    - backend/src/main/java/com/terraformers/modernization/analysis/**
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - frontend/**
+    - infra/**
+    - corpus/**
+    - .github/workflows/**
+    - backend/src/main/resources/db/migration/**
+
+  allowed_actions:
+    - inspect_repository_and_history
+    - inspect_public_reference_architecture_sources_for_provenance
+    - create_or_import_legally_reproducible_fixture_assets
+    - create_dataset_manifest_and_README
+    - draft_human_reviewable_truth_labels
+    - reuse_or_extend_existing_dataset_loader_tests_when_required
+    - update_program_state
+    - run_repository_tests_relevant_to_dataset_loading
+    - create_or_update_one_PT_1_pull_request
+    - apply_one_bounded_mechanical_repair_for_same_failure_class
+
+  prohibited_actions:
+    - live_GCP_action
+    - live_Vertex_or_other_model_call
+    - run_Terraformers_model_under_test_on_candidate_fixtures
+    - tune_fixture_after_model_result
+    - change_prompt_model_embedding_retrieval_or_quality_threshold
+    - merge
+    - start_PT_2
+    - declare_truth_frozen_without_human_approval
+    - add_new_GitHub_workflow
+    - add_second_judge_model_or_model_voting
+
+  acceptance_criteria_before_human_freeze:
+    - candidate_dataset_is_small_and_diverse_not_a_repackaging_of_existing_synthetic_cases
+    - each_case_has_pinned_bytes_or_an_equally_reproducible_repository_owned_representation
+    - each_case_has_provenance_and_redistribution_or_recreation_basis
+    - positive_truth_is_reviewable_at_component_relationship_and_resource_intent_levels
+    - ambiguous_and_non_architecture_controls_have_explicit_rejection_truth
+    - model_under_test_has_not_been_run_on_candidate_dataset
+    - no_candidate_was_changed_in_response_to_Terraformers_output
+    - existing_synthetic_datasets_are_unchanged
+    - no_production_behavior_or_live_cloud_change
+    - review_document_lists_each_case_and_all_remaining_truth_uncertainties
+    - program_state_stops_at_REALISTIC_DATASET_TRUTH_FREEZE
+
+  validation:
+    - exact_remote_main_binding_at_activation
+    - dataset_manifest_or_loader_validation
+    - SHA256_identity_check_for_fixture_bytes
+    - existing_relevant_EvaluationDatasetLoader_tests
+    - git_diff_scope_audit
+    - no_live_or_model_call_evidence
+
+  auto_repair_limit: 1
+
+  stop_on:
+    - MAIN_DRIFT
+    - candidate_truth_is_ambiguous
+    - redistribution_or_reproducibility_basis_is_unclear
+    - source_architecture_specification_conflicts_with_draft_truth
+    - existing_schema_change_would_alter_scoring_semantics
+    - production_code_change_beyond_dataset_loading_compatibility_is_required
+    - second_repair_is_required
+    - failure_class_changes
+    - live_model_or_cloud_action_would_be_required
+    - human_truth_freeze_gate_is_reached
+
+  completion:
+    result_before_human_gate: REALISTIC_DATASET_CANDIDATE_READY
+    human_gate: REALISTIC_DATASET_TRUTH_FREEZE
+    next_phase_after_human_freeze: PT-2
+    PT_2_live_execution_requires_separate_user_approval: true

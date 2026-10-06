@@ -13,6 +13,7 @@ token_file="${RUNNER_TEMP}/case-c-access.token"
 unsigned="${RUNNER_TEMP}/case-c-unsigned.token"
 signature="${RUNNER_TEMP}/case-c-signature.bin"
 kid="case-c-${GITHUB_RUN_ID}"
+identity_run_id="${IDENTITY_RUN_ID:-${GITHUB_RUN_ID}}"
 
 kubectl -n "$NAMESPACE" get configmap terraformers-jwks             -o jsonpath='{.data.jwks\.json}' > "$previous_jwks"
 test -s "$previous_jwks"
@@ -83,7 +84,7 @@ if [[ "$OPERATION" == backend-live-validation-c2-stability || "$OPERATION" == a7
   token_ttl=10800
 fi
 payload="$(
-  printf '{"iss":"%s","sub":"%s","email":"%s","token_use":"access","client_id":"%s","iat":%s,"exp":%s}'               "$ISSUER_URI"               "case-c-${GITHUB_RUN_ID}"               "case-c-${GITHUB_RUN_ID}@example.test"               "$CLIENT_ID"               "$now"               "$((now + token_ttl))"               | openssl base64 -A | tr '+/' '-_' | tr -d '='
+  printf '{"iss":"%s","sub":"%s","email":"%s","token_use":"access","client_id":"%s","iat":%s,"exp":%s}'               "$ISSUER_URI"               "case-c-${identity_run_id}"               "case-c-${identity_run_id}@example.test"               "$CLIENT_ID"               "$now"               "$((now + token_ttl))"               | openssl base64 -A | tr '+/' '-_' | tr -d '='
 )"
 printf '%s.%s' "$header" "$payload" > "$unsigned"
 openssl dgst -sha256 -sign "$private_key" -out "$signature" "$unsigned"

@@ -26,7 +26,7 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 - Next phase: **PT-2 BLOCKED / HUMAN_REQUIRED: LIVE_REALISTIC_BASELINE**. No active implementation phase/Work Package, no bound PT-2 execution base and no live/model/GCP authorization. The immediate next program decision is separate explicit live-baseline approval; this task does not prepare or run that baseline.
 - Model-under-test runs remain **0**; autonomous repairs remain **1**, human-authorized corrective iterations **2**. A7-8 and teardown remain deferred; the recreated GCP runtime is retained.
 - Standing recovery instruction for this conversation: inspect an open active Work Package PR conversation/reviews first and apply the latest `[PRODUCT_TRUST_REVIEW:v1]` feedback for its reviewed head. Full rules remain in durable `prReviewFeedbackPolicy`; human gate approval is recorded separately.
-- State/document update branch: `codex/product-trust-pt-1-freeze-state-sync`; pull request will be linked after creation.
+- Active repository-only state/document PR: [#242](https://github.com/siamese-lang/terraformers-platform/pull/242), branch `codex/product-trust-pt-1-freeze-state-sync`, awaiting review/merge. No implementation Work Package is active; PT-2 remains blocked.
 
 ## Product Trust reassessment checkpoint
 

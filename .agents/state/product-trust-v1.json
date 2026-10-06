@@ -7,7 +7,7 @@
   "activePhase": null,
   "lastCompletedPhase": "PT-1",
   "activeWorkPackage": null,
-  "activePullRequest": null,
+  "activePullRequest": 242,
   "humanGate": "LIVE_REALISTIC_BASELINE",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
@@ -121,7 +121,7 @@
       "liveCloudActions": 0
     }
   },
-  "activePullRequestUrl": null,
+  "activePullRequestUrl": "https://github.com/siamese-lang/terraformers-platform/pull/242",
   "lastObservedMainSha": "d98d03367c5b63a5321311763e9852c53fe65eae",
   "humanReviewCorrectiveIterations": [
     {
@@ -286,9 +286,10 @@
     "authorization": "User explicitly requested only a repository state/document PR on merged main d98d03367c5b63a5321311763e9852c53fe65eae; stop before PT-2.",
     "executionBaseSha": "d98d03367c5b63a5321311763e9852c53fe65eae",
     "branch": "codex/product-trust-pt-1-freeze-state-sync",
-    "pullRequest": null,
-    "status": "PR_PENDING",
+    "pullRequest": 242,
+    "status": "PR_OPEN",
     "mergeAuthorized": false,
-    "pt2Activated": false
+    "pt2Activated": false,
+    "pullRequestUrl": "https://github.com/siamese-lang/terraformers-platform/pull/242"
   }
 }

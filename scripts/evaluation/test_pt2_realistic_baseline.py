@@ -269,5 +269,17 @@ elif 'exec' in args: print((root/'case-c-jwks.json').read_text())
         self.assertEqual(len(restarts),2)
         self.assertTrue(all('deployment/terraformers-jwks' in line for line in restarts))
 
+    def test_identity_run_id_override_changes_subject_not_current_run_kid(self):
+        import base64
+        self.assertEqual(self.invoke('prepare',IDENTITY_RUN_ID='37480519016').returncode,0)
+        token=self.directory/'case-c-access.token'
+        header,payload,_=token.read_text().split('.')
+        claims=json.loads(base64.urlsafe_b64decode(payload+'='*(-len(payload)%4)))
+        jose=json.loads(base64.urlsafe_b64decode(header+'='*(-len(header)%4)))
+        self.assertEqual(claims['sub'],'case-c-37480519016')
+        self.assertEqual(claims['email'],'case-c-37480519016@example.test')
+        self.assertEqual(jose['kid'],'case-c-12345')
+        self.assertEqual(self.invoke('restore').returncode,0)
+
 
 if __name__=='__main__': unittest.main()

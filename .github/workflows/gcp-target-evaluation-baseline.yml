@@ -650,6 +650,282 @@ jobs:
           if-no-files-found: warn
           retention-days: 90
 
+      - name: Run A7-7 broad-v4 canonical N=3 and frozen holdout N=1
+        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation'
+        run: |
+          set -euo pipefail
+
+          run_evaluation() {
+            dataset_path="$1"
+            dataset_id="$2"
+            run_id="$3"
+            raw_path="$4"
+            report_path="$5"
+            calibration_path="$6"
+
+            kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- env \
+              EVALUATION_DATASET="$dataset_path" \
+              EVALUATION_OUTPUT="$raw_path" \
+              EVALUATION_RUN_ID="$run_id" \
+              EVALUATION_MODE=full \
+              GOOGLE_CLOUD_PROJECT=terraformers-platform \
+              GOOGLE_CLOUD_LOCATION=global \
+              ANALYSIS_PROVIDER=vertex \
+              EMBEDDING_PROVIDER=vertex \
+              RETRIEVAL_MODE=REQUIRED \
+              VERTEX_GENERATION_MODEL_ID=gemini-3.8-flash \
+              VERTEX_EMBEDDING_MODEL_ID=gemini-embedding-2 \
+              OPENSEARCH_ENDPOINT="http://${OPENSEARCH_SERVICE}:9200" \
+              INDEX_NAME=terraformers-reference-v4 \
+              VECTOR_FIELD_NAME=embedding \
+              CONTENT_FIELD_NAME=content \
+              CORPUS_VERSION=terraformers-reference-v4 \
+              PROVIDER_VERSION=5.100.0 \
+              EXPECTED_VECTOR_DIMENSION=1536 \
+              OPENSEARCH_TOP_K=8 \
+              VERTEX_MAX_OUTPUT_TOKENS=8192 \
+              java -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+                com.terraformers.modernization.evaluation.LiveEvaluationLauncher
+
+            kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+              -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+              com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+              --mode=report \
+              --result="$raw_path" \
+              --dataset="$dataset_path" \
+              --output="$report_path"
+
+            kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+              -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+              com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+              --mode=calibrate \
+              --result="$raw_path" \
+              --dataset="$dataset_path" \
+              --output="$calibration_path"
+          }
+
+          canonical_dataset=/tmp/workspace/evaluation/terraformers-eval-v1/dataset.json
+          holdout_dataset=/tmp/workspace/evaluation/terraformers-eval-holdout-v1/dataset.json
+
+          for attempt in 1 2 3; do
+            run_evaluation \
+              "$canonical_dataset" \
+              terraformers-eval-v1 \
+              "a7-7-v4-canonical-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}" \
+              "/tmp/a7-7-v4-canonical-${attempt}.json" \
+              "/tmp/a7-7-v4-canonical-report-${attempt}.json" \
+              "/tmp/a7-7-v4-canonical-calibration-${attempt}.json"
+          done
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+            -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+            com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+            --mode=aggregate \
+            --reports=/tmp/a7-7-v4-canonical-report-1.json,/tmp/a7-7-v4-canonical-report-2.json,/tmp/a7-7-v4-canonical-report-3.json \
+            --output=/tmp/a7-7-v4-canonical-aggregate.json
+
+          run_evaluation \
+            "$holdout_dataset" \
+            terraformers-eval-holdout-v1 \
+            "a7-7-v4-holdout-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            /tmp/a7-7-v4-holdout.json \
+            /tmp/a7-7-v4-holdout-report.json \
+            /tmp/a7-7-v4-holdout-calibration.json
+
+          output_dir="${RUNNER_TEMP}/a7-7-v4-evaluation"
+          mkdir -p "$output_dir"
+
+          for attempt in 1 2 3; do
+            for kind in "" "-report" "-calibration"; do
+              src="/tmp/a7-7-v4-canonical${kind}-${attempt}.json"
+              dst="$output_dir/a7-7-v4-canonical${kind}-${attempt}.json"
+              kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat "$src" > "$dst"
+            done
+          done
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat /tmp/a7-7-v4-canonical-aggregate.json \
+            > "$output_dir/a7-7-v4-canonical-aggregate.json"
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat /tmp/a7-7-v4-holdout.json \
+            > "$output_dir/a7-7-v4-holdout.json"
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat /tmp/a7-7-v4-holdout-report.json \
+            > "$output_dir/a7-7-v4-holdout-report.json"
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat /tmp/a7-7-v4-holdout-calibration.json \
+            > "$output_dir/a7-7-v4-holdout-calibration.json"
+
+      - name: Verify A7-7 v4 evaluation identity and evidence shape
+        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation'
+        run: |
+          set -euo pipefail
+          output_dir="${RUNNER_TEMP}/a7-7-v4-evaluation"
+
+          for attempt in 1 2 3; do
+            raw="$output_dir/a7-7-v4-canonical-${attempt}.json"
+            report="$output_dir/a7-7-v4-canonical-report-${attempt}.json"
+            calibration="$output_dir/a7-7-v4-canonical-calibration-${attempt}.json"
+
+            jq -e '
+              . as $root
+              | .datasetVersion == "terraformers-eval-v1"
+              and (.traces | length == 6)
+              and .configuration.corpusVersion == "terraformers-reference-v4"
+              and .configuration.providerVersion == "5.100.0"
+              and .configuration.analysisProvider == "vertex"
+              and .configuration.embeddingProvider == "vertex"
+              and .configuration.retrievalMode == "REQUIRED"
+              and .configuration.topK == 8
+              and .configuration.generationModelId == "gemini-3.8-flash"
+              and .configuration.embeddingModelId == "gemini-embedding-2"
+              and .configuration.factExtractionThinkingLevel == "LOW"
+              and .configuration.factExtractionMaxOutputTokens == 800
+              and .configuration.generationMaxOutputTokens == 8192
+              and all(.traces[]; .configuration == $root.configuration)
+              and all(.traces[];
+                (.validation.evidence == null)
+                or .validation.evidence.applicationValidator.name == "ProductionEquivalentTerraformValidator")
+            ' "$raw" >/dev/null
+
+            jq -e --arg run_id "$(jq -r .runId "$raw")" '
+              .reportSchemaVersion == "case-a-retrieval-grounding-report-v1"
+              and .sourceRunId == $run_id
+              and .datasetVersion == "terraformers-eval-v1"
+              and .caseCount == 6
+              and (.cases | length == 6)
+            ' "$report" >/dev/null
+
+            jq -e --arg run_id "$(jq -r .runId "$raw")" '
+              .reportSchemaVersion == "case-a-quality-calibration-v1"
+              and .sourceRunId == $run_id
+              and .datasetVersion == "terraformers-eval-v1"
+              and .counts.caseCount == 6
+              and (.cases | length == 6)
+            ' "$calibration" >/dev/null
+          done
+
+          aggregate="$output_dir/a7-7-v4-canonical-aggregate.json"
+          jq -e '
+            .reportSchemaVersion == "case-a-retrieval-grounding-multi-run-v1"
+            and .runCount == 3
+            and .datasetVersion == "terraformers-eval-v1"
+            and .configuration.corpusVersion == "terraformers-reference-v4"
+            and .configuration.embeddingModelId == "gemini-embedding-2"
+            and (.sourceRunIds | length == 3)
+          ' "$aggregate" >/dev/null
+
+          holdout="$output_dir/a7-7-v4-holdout.json"
+          holdout_report="$output_dir/a7-7-v4-holdout-report.json"
+          holdout_calibration="$output_dir/a7-7-v4-holdout-calibration.json"
+          jq -e '
+            . as $root
+            | .datasetVersion == "terraformers-eval-holdout-v1"
+            and (.traces | length == 4)
+            and ([.traces[].caseId] == [
+              "holdout-eks-irsa",
+              "holdout-workload-rds-sg",
+              "holdout-ambiguous-obscured-flow",
+              "holdout-non-architecture-status-board"
+            ])
+            and .configuration.corpusVersion == "terraformers-reference-v4"
+            and .configuration.embeddingModelId == "gemini-embedding-2"
+            and .configuration.topK == 8
+            and all(.traces[]; .configuration == $root.configuration)
+            and all(.traces[];
+              (.validation.evidence == null)
+              or .validation.evidence.applicationValidator.name == "ProductionEquivalentTerraformValidator")
+          ' "$holdout" >/dev/null
+
+          jq -e --arg run_id "$(jq -r .runId "$holdout")" '
+            .reportSchemaVersion == "case-a-retrieval-grounding-report-v1"
+            and .sourceRunId == $run_id
+            and .datasetVersion == "terraformers-eval-holdout-v1"
+            and .caseCount == 4
+          ' "$holdout_report" >/dev/null
+          jq -e --arg run_id "$(jq -r .runId "$holdout")" '
+            .reportSchemaVersion == "case-a-quality-calibration-v1"
+            and .sourceRunId == $run_id
+            and .datasetVersion == "terraformers-eval-holdout-v1"
+            and .counts.caseCount == 4
+          ' "$holdout_calibration" >/dev/null
+
+      - name: Summarize A7-7 v4 stage-by-stage evidence
+        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation'
+        run: |
+          set -euo pipefail
+          output_dir="${RUNNER_TEMP}/a7-7-v4-evaluation"
+
+          {
+            echo '## A7-7 broad-v4 production-equivalent evaluation'
+            echo
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Backend toolchain image: `%s`\n' '${{ inputs.backend_image }}'
+            printf -- '- Backend toolchain source: `%s`\n' '${{ inputs.backend_source_sha }}'
+            printf -- '- Corpus checksum: `%s`\n' "$A7_7_V4_CORPUS_CHECKSUM"
+            echo '- Canonical observations: `6 cases x 3 fixed runs = 18`'
+            echo '- Frozen holdout observations: `4 cases x 1 run = 4`'
+            echo '- Quality failures are retained as measurements; this workflow does not rerun until green.'
+            echo
+
+            for attempt in 1 2 3; do
+              calibration="$output_dir/a7-7-v4-canonical-calibration-${attempt}.json"
+              echo "### Canonical run ${attempt}"
+              echo
+              echo '| Case | Technical | Label | Fact resources | Retrieval resources | Project decisions | Handoff | Generated required | Forbidden generated | CLI validation | First divergence |'
+              echo '|---|---|---|---|---|---|---|---|---|---|---|'
+              jq -r '
+                .cases[] |
+                "| (.caseId) | (.technicalSuccess) | (.labeledQualitySuccess) | " +
+                "(.requiredFactResourceMatched)/(.requiredFactResourceTotal) | " +
+                (if .grounding.resourceTypeCoverage == null then "N/A" else "(.grounding.resourceTypeCoverage.matched)/(.grounding.resourceTypeCoverage.total)" end) + " | " +
+                (if .grounding.projectDecisionCoverage == null then "N/A" else "(.grounding.projectDecisionCoverage.matched)/(.grounding.projectDecisionCoverage.total)" end) + " | " +
+                "(.grounding.retrievalToGenerationHandoffComplete) | " +
+                "(.grounding.requiredGeneratedResourceMatched)/(.grounding.requiredGeneratedResourceTotal) | " +
+                "(.grounding.forbiddenGeneratedResourceCount) | " +
+                (if .grounding.terraformValidationPassed == null then "N/A" else "(.grounding.terraformValidationPassed)" end) + " | " +
+                (if .grounding.firstDivergence == null then "none" else "(.grounding.firstDivergence.stage):(.grounding.firstDivergence.category)" end) +
+                " |"
+              ' "$calibration"
+              echo
+            done
+
+            aggregate="$output_dir/a7-7-v4-canonical-aggregate.json"
+            echo '### Canonical stability aggregate'
+            echo
+            jq -r '
+              "- Grounding-gap frequency: (.groundingGap.failureCount)/(.groundingGap.sampleCount) ((.groundingGap.frequency))",
+              "- Grounding-gap-with-valid-output frequency: (.groundingGapWithValidOutput.failureCount)/(.groundingGapWithValidOutput.sampleCount) ((.groundingGapWithValidOutput.frequency))",
+              "- Fact extraction latency ms min/median/max: (.factExtractionLatencyMs.min)/(.factExtractionLatencyMs.median)/(.factExtractionLatencyMs.max)",
+              "- Retrieval latency ms min/median/max: (.retrievalLatencyMs.min)/(.retrievalLatencyMs.median)/(.retrievalLatencyMs.max)",
+              "- Generation latency ms min/median/max: (.generationLatencyMs.min)/(.generationLatencyMs.median)/(.generationLatencyMs.max)"
+            ' "$aggregate"
+            echo
+
+            echo '### Frozen holdout'
+            echo
+            echo '| Case | Technical | Label | Fact resources | Retrieval resources | Project decisions | Handoff | Generated required | Forbidden generated | CLI validation | First divergence |'
+            echo '|---|---|---|---|---|---|---|---|---|---|---|'
+            jq -r '
+              .cases[] |
+              "| (.caseId) | (.technicalSuccess) | (.labeledQualitySuccess) | " +
+              "(.requiredFactResourceMatched)/(.requiredFactResourceTotal) | " +
+              (if .grounding.resourceTypeCoverage == null then "N/A" else "(.grounding.resourceTypeCoverage.matched)/(.grounding.resourceTypeCoverage.total)" end) + " | " +
+              (if .grounding.projectDecisionCoverage == null then "N/A" else "(.grounding.projectDecisionCoverage.matched)/(.grounding.projectDecisionCoverage.total)" end) + " | " +
+              "(.grounding.retrievalToGenerationHandoffComplete) | " +
+              "(.grounding.requiredGeneratedResourceMatched)/(.grounding.requiredGeneratedResourceTotal) | " +
+              "(.grounding.forbiddenGeneratedResourceCount) | " +
+              (if .grounding.terraformValidationPassed == null then "N/A" else "(.grounding.terraformValidationPassed)" end) + " | " +
+              (if .grounding.firstDivergence == null then "none" else "(.grounding.firstDivergence.stage):(.grounding.firstDivergence.category)" end) +
+              " |"
+            ' "$output_dir/a7-7-v4-holdout-calibration.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload A7-7 v4 production-equivalent evaluation evidence
+        if: always() && inputs.evaluation_scope == 'a7-7-v4-production-evaluation'
+        uses: actions/upload-artifact@v4
+        with:
+          name: a7-7-v4-production-evaluation-${{ github.run_id }}
+          path: ${{ runner.temp }}/a7-7-v4-evaluation
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Run one Case A A3 fixed-facts retrieval comparison
         if: inputs.evaluation_scope == 'case-a-a3-retrieval-probe'
         run: |

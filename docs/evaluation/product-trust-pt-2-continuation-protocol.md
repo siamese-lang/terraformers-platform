@@ -35,6 +35,12 @@ Before a new upload, read only the exact case-02 AnalysisJob through the existin
 production API path. Do not resubmit case 02 and do not change its original latency measurement.
 Record recovery timestamps separately.
 
+Production ownership is keyed by the authenticated external identity subject. The continuation therefore
+uses a newly generated run-specific signing key/JWK but authenticates as the original fixture subject
+`case-c-37480519016` (and matching fixture email) so the exact prior job/project remains owner-readable.
+The signing-key `kid` remains unique to the continuation run. No prior private key or token is reused,
+and this identity continuity is permitted only for this bound recovery/continuation path.
+
 If the exact job is already terminal, preserve the terminal response, project readback, Terraform
 readback when present, and newly available correlated logs. If it is still PENDING/RUNNING, poll that
 same job only. If it cannot reach terminal within the bounded drain window, stop without uploading

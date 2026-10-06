@@ -281,5 +281,10 @@ elif 'exec' in args: print((root/'case-c-jwks.json').read_text())
         self.assertEqual(jose['kid'],'case-c-12345')
         self.assertEqual(self.invoke('restore').returncode,0)
 
+    def test_invalid_identity_run_id_is_rejected_before_fixture_mutation(self):
+        result=self.invoke('prepare',IDENTITY_RUN_ID='not-a-run-id')
+        self.assertNotEqual(result.returncode,0)
+        self.assertFalse((self.directory/'ephemeral-jwks-owned.marker').exists())
+
 
 if __name__=='__main__': unittest.main()

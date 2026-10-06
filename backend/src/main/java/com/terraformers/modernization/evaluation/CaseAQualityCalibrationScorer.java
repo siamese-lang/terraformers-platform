@@ -157,8 +157,8 @@ public final class CaseAQualityCalibrationScorer {
                 .filter(right::contains)
                 .findFirst()
                 .orElse(right);
-        int sourceIndex = normalizedActual.indexOf(source);
-        int targetIndex = normalizedActual.indexOf(target);
+        int sourceIndex = entityIndex(source, normalizedActual);
+        int targetIndex = entityIndex(target, normalizedActual);
         if (sourceIndex < 0 || targetIndex < 0 || sourceIndex >= targetIndex) {
             return false;
         }
@@ -170,6 +170,25 @@ public final class CaseAQualityCalibrationScorer {
                 .filter(token -> !token.isBlank() && !stopWords.contains(token))
                 .toList();
         return qualifierTokens.stream().allMatch(normalizedActual::contains);
+    }
+
+    private int entityIndex(String normalizedExpected, String normalizedActual) {
+        int exact = normalizedActual.indexOf(normalizedExpected);
+        if (exact >= 0) return exact;
+
+        java.util.List<String> tokens = java.util.Arrays.stream(normalizedExpected.split("\\s+"))
+                .filter(token -> !token.isBlank())
+                .toList();
+        if (tokens.size() < 3) return -1;
+
+        java.util.List<Integer> positions = tokens.stream()
+                .map(normalizedActual::indexOf)
+                .filter(position -> position >= 0)
+                .sorted()
+                .toList();
+        return positions.size() >= tokens.size() - 1 && positions.size() >= 2
+                ? positions.get(0)
+                : -1;
     }
 
     private String normalizeText(String value) {

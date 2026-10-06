@@ -25,6 +25,9 @@ public final class CaseAMeasurementLauncher {
             EvaluationDataset dataset = new EvaluationDatasetLoader(mapper)
                     .load(Path.of(required(options, "dataset"))).dataset();
             value = new CaseAMeasurementReporter().create(run, dataset);
+        } else if (mode.equals("rescore")) {
+            EvaluationRunResult run = mapper.readValue(Path.of(required(options, "result")).toFile(), EvaluationRunResult.class);
+            value = new CaseAArtifactRescorer(mapper).rescore(run);
         } else if (mode.equals("calibrate")) {
             EvaluationRunResult run = mapper.readValue(Path.of(required(options, "result")).toFile(), EvaluationRunResult.class);
             EvaluationDataset dataset = new EvaluationDatasetLoader(mapper)
@@ -34,7 +37,7 @@ public final class CaseAMeasurementLauncher {
             List<CaseAMeasurementReport> reports = Arrays.stream(required(options, "reports").split(","))
                     .map(Path::of).map(path -> read(mapper, path)).toList();
             value = new CaseAMultiRunAggregator().aggregate(reports);
-        } else throw new IllegalArgumentException("mode must be report, calibrate, or aggregate");
+        } else throw new IllegalArgumentException("mode must be report, rescore, calibrate, or aggregate");
         mapper.writerWithDefaultPrettyPrinter().writeValue(output.toFile(), value);
     }
 

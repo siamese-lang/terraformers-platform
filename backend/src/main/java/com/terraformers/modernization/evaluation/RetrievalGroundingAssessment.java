@@ -15,6 +15,8 @@ public record RetrievalGroundingAssessment(
         List<ReferenceHit> orderedHits,
         Coverage projectDecisionCoverage,
         Coverage resourceTypeCoverage,
+        Coverage factResourceOfficialEvidenceCoverage,
+        Coverage generatedResourceOfficialEvidenceCoverage,
         EvaluationStageStatus generationStatus,
         boolean retrievalToGenerationHandoffComplete,
         int requiredGeneratedResourceMatched,

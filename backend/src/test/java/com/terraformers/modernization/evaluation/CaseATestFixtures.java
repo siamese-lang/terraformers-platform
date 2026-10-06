@@ -46,6 +46,22 @@ final class CaseATestFixtures {
         return new EvaluationTrace("m3-evaluation-v1", "dataset", run, id,
                 new InputIdentity("fixtures/x.webp", "abc", "image/webp"), identity(), facts, retrieval, generation, validation, divergence);
     }
-    static ReferenceHit hit(int rank, String id, String... resources) { return new ReferenceHit(rank, id, .9, id, "PROJECT_DECISION", "TYPE", "source", List.of(resources), "5.100.0", "terraformers-reference-v3", 100, List.of()); }
+    static ReferenceHit hit(int rank, String id, String... resources) {
+        boolean decision = id.contains("decision") || id.startsWith("tfref-");
+        return new ReferenceHit(
+                rank,
+                id,
+                .9,
+                id,
+                decision ? "PROJECT_DECISION" : "PROVIDER_DOCUMENTATION",
+                decision ? "TERRAFORMERS_PATTERN" : "AWS_PROVIDER_DOC",
+                "source",
+                List.of(resources),
+                "5.100.0",
+                "terraformers-reference-v3",
+                100,
+                List.of()
+        );
+    }
     private CaseATestFixtures() {}
 }

@@ -25,9 +25,10 @@ public final class CaseAQualityCalibrationScorer {
         var factEvidence = trace.factExtraction().evidence();
         TextCoverage componentCoverage = textCoverage(
                 definition.components(),
-                factEvidence == null ? java.util.List.of() : factEvidence.components());
-        TextCoverage relationshipCoverage = textCoverage(
-                definition.relationships(),
+                factEvidence == null ? java.util.List.of() : factEvidence.components(),
+                this::matchesComponent);
+        TextCoverage relationshipCoverage = relationshipCoverage(
+                definition,
                 factEvidence == null ? java.util.List.of() : factEvidence.relationships());
         java.util.List<String> extractedResources = trace.factExtraction().evidence() == null
                 ? java.util.List.of()
@@ -79,7 +80,9 @@ public final class CaseAQualityCalibrationScorer {
         boolean groundingComplete = completeWhenRequired(definition.retrieval().requiredProjectDecisionIds(),
                         grounding.projectDecisionCoverage())
                 && completeWhenRequired(definition.retrieval().requiredResourceTypes(),
-                        grounding.resourceTypeCoverage());
+                        grounding.resourceTypeCoverage())
+                && complete(grounding.factResourceOfficialEvidenceCoverage())
+                && complete(grounding.generatedResourceOfficialEvidenceCoverage());
         boolean generatedComplete = grounding.requiredGeneratedResourceMatched()
                 == grounding.requiredGeneratedResourceTotal()
                 && grounding.forbiddenGeneratedResourceCount() == 0;
@@ -93,16 +96,15 @@ public final class CaseAQualityCalibrationScorer {
 
     private TextCoverage textCoverage(
             EvaluationCase.TextExpectation expectation,
-            java.util.List<String> observed
+            java.util.List<String> observed,
+            java.util.function.BiPredicate<String, String> matcher
     ) {
-        java.util.Set<String> normalized = observed == null
-                ? java.util.Set.of()
-                : observed.stream().map(this::normalizeText).collect(java.util.stream.Collectors.toSet());
+        java.util.List<String> safeObserved = observed == null ? java.util.List.of() : observed;
         java.util.List<String> missing = expectation.required().stream()
-                .filter(value -> !normalized.contains(normalizeText(value)))
+                .filter(expected -> safeObserved.stream().noneMatch(actual -> matcher.test(expected, actual)))
                 .toList();
         java.util.List<String> forbidden = expectation.forbidden().stream()
-                .filter(value -> normalized.contains(normalizeText(value)))
+                .filter(expected -> safeObserved.stream().anyMatch(actual -> matcher.test(expected, actual)))
                 .toList();
         return new TextCoverage(
                 expectation.required().size() - missing.size(),
@@ -111,6 +113,113 @@ public final class CaseAQualityCalibrationScorer {
                 missing,
                 forbidden
         );
+    }
+
+    private TextCoverage relationshipCoverage(
+            EvaluationCase definition,
+            java.util.List<String> observed
+    ) {
+        return textCoverage(
+                definition.relationships(),
+                observed,
+                (expected, actual) -> matchesRelationship(definition, expected, actual)
+        );
+    }
+
+    private boolean matchesComponent(String expected, String actual) {
+        String normalizedExpected = normalizeText(expected);
+        String normalizedActual = normalizeText(actual);
+        return !normalizedExpected.isBlank() && normalizedActual.contains(normalizedExpected);
+    }
+
+    private boolean matchesRelationship(EvaluationCase definition, String expected, String actual) {
+        String normalizedActual = normalizeText(actual);
+        String[] direction = expected.split("\\s*->\\s*", 2);
+        if (direction.length != 2) {
+            return normalizedActual.contains(normalizeText(expected));
+        }
+
+        String source = normalizeText(direction[0]);
+        String right = normalizeText(direction[1]);
+        if (source.isBlank()) return false;
+
+        java.util.List<String> componentLabels = java.util.stream.Stream.of(
+                        definition.components().required(),
+                        definition.components().acceptable(),
+                        definition.components().forbidden())
+                .flatMap(java.util.Collection::stream)
+                .map(this::normalizeText)
+                .filter(value -> !value.isBlank())
+                .sorted(java.util.Comparator.comparingInt(String::length).reversed())
+                .toList();
+
+        String target = componentLabels.stream()
+                .filter(right::contains)
+                .findFirst()
+                .orElse(right);
+        int sourceIndex = entityIndex(source, normalizedActual);
+        int targetIndex = entityIndex(target, normalizedActual);
+        if (sourceIndex < 0 || targetIndex < 0 || sourceIndex >= targetIndex) {
+            return false;
+        }
+        if (!hasForwardRelationSignal(normalizedActual, source, sourceIndex, targetIndex)) {
+            return false;
+        }
+
+        java.util.Set<String> stopWords = java.util.Set.of(
+                "through", "via", "to", "the", "a", "an", "as", "by", "on", "in", "with");
+        java.util.List<String> qualifierTokens = java.util.Arrays.stream(
+                        right.replace(target, "").split("\\s+"))
+                .filter(token -> !token.isBlank() && !stopWords.contains(token))
+                .toList();
+        return qualifierTokens.stream().allMatch(normalizedActual::contains);
+    }
+
+    private boolean hasForwardRelationSignal(
+            String normalizedActual,
+            String source,
+            int sourceIndex,
+            int targetIndex
+    ) {
+        int relationStart = Math.min(targetIndex, sourceIndex + source.length());
+        String between = " " + normalizedActual.substring(relationStart, targetIndex).strip() + " ";
+        java.util.List<String> relationTokens = java.util.Arrays.stream(between.strip().split("\\s+"))
+                .filter(token -> !token.isBlank())
+                .toList();
+
+        java.util.Set<String> negations = java.util.Set.of("no", "not", "never", "cannot", "without");
+        if (relationTokens.stream().anyMatch(negations::contains) || between.contains(" can t ")) {
+            return false;
+        }
+        if (between.contains(" from ") || between.contains(" by ")) {
+            return false;
+        }
+
+        java.util.List<String> forwardVerbStems = java.util.List.of(
+                "send", "sent", "forward", "route", "connect", "quer", "write", "read",
+                "host", "associate", "protect", "assume", "access", "invoke", "call",
+                "direct", "deliver", "pass", "reach", "link", "attach", "use");
+        return relationTokens.stream()
+                .anyMatch(token -> forwardVerbStems.stream().anyMatch(token::startsWith));
+    }
+
+    private int entityIndex(String normalizedExpected, String normalizedActual) {
+        int exact = normalizedActual.indexOf(normalizedExpected);
+        if (exact >= 0) return exact;
+
+        java.util.List<String> tokens = java.util.Arrays.stream(normalizedExpected.split("\\s+"))
+                .filter(token -> !token.isBlank())
+                .toList();
+        if (tokens.size() < 3) return -1;
+
+        java.util.List<Integer> positions = tokens.stream()
+                .map(normalizedActual::indexOf)
+                .filter(position -> position >= 0)
+                .sorted()
+                .toList();
+        return positions.size() >= tokens.size() - 1 && positions.size() >= 2
+                ? positions.get(0)
+                : -1;
     }
 
     private String normalizeText(String value) {
@@ -127,7 +236,7 @@ public final class CaseAQualityCalibrationScorer {
     }
 
     private boolean complete(RetrievalGroundingAssessment.Coverage coverage) {
-        return coverage.matched() == coverage.total();
+        return coverage != null && coverage.matched() == coverage.total();
     }
 
     private boolean completeWhenRequired(java.util.List<String> required,

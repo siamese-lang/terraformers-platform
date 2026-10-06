@@ -29,6 +29,7 @@ public record TerraformDiagnosticSummary(
     }
 
     public enum DiagnosticClass {
+        CONFIGURATION_SYNTAX,
         MISSING_REQUIRED_ARGUMENT,
         UNDECLARED_REFERENCE,
         UNKNOWN,

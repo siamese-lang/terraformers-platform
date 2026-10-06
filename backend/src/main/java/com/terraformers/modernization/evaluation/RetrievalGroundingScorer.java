@@ -7,9 +7,12 @@ import com.terraformers.modernization.evaluation.RetrievalGroundingAssessment.Co
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiPredicate;
 
 public final class RetrievalGroundingScorer {
+    private static final Set<String> OFFICIAL_EVIDENCE_DOCUMENT_TYPES =
+            Set.of("AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE");
     public RetrievalGroundingAssessment score(EvaluationCase definition, EvaluationTrace trace) {
         if (!definition.caseId().equals(trace.caseId())) throw new IllegalArgumentException("caseId mismatch");
         List<String> decisions = definition.retrieval().requiredProjectDecisionIds();
@@ -19,11 +22,22 @@ public final class RetrievalGroundingScorer {
         RetrievalEvidence retrieval = trace.retrieval().evidence();
         List<ReferenceHit> hits = retrieval == null ? List.of() : retrieval.hits();
         Coverage decisionCoverage = applicable ? coverage(decisions, hits,
-                (required, hit) -> required.equals(hit.documentId())) : null;
+                (required, hit) -> required.equals(hit.documentId())
+                        && "TERRAFORMERS_PATTERN".equals(hit.documentType())) : null;
         Coverage resourceCoverage = applicable ? coverage(resources, hits,
+                (required, hit) -> hit.resourceTypes().contains(required)) : null;
+        List<ReferenceHit> officialHits = hits.stream()
+                .filter(this::isOfficialEvidence)
+                .toList();
+        List<String> extracted = trace.factExtraction().evidence() == null
+                ? List.of()
+                : trace.factExtraction().evidence().resourceTypes();
+        Coverage factOfficialEvidenceCoverage = applicable ? coverage(extracted, officialHits,
                 (required, hit) -> hit.resourceTypes().contains(required)) : null;
         GenerationEvidence generation = trace.generation().evidence();
         List<String> generated = generation == null ? List.of() : generation.generatedResourceTypes();
+        Coverage generatedOfficialEvidenceCoverage = applicable ? coverage(generated, officialHits,
+                (required, hit) -> hit.resourceTypes().contains(required)) : null;
         List<String> retrievedIds = hits.stream().map(ReferenceHit::documentId).toList();
         List<String> suppliedIds = generation == null ? List.of() : generation.suppliedReferenceIds();
         boolean handoffComplete = retrievedIds.equals(suppliedIds);
@@ -44,10 +58,16 @@ public final class RetrievalGroundingScorer {
         return new RetrievalGroundingAssessment(trace.caseId(), applicable, trace.retrieval().status(),
                 retrieval == null ? null : retrieval.queryText(), retrieval == null ? List.of() : retrieval.resourceTypeFilters(),
                 retrieval == null ? null : retrieval.requestedTopK(), hits, decisionCoverage, resourceCoverage,
+                factOfficialEvidenceCoverage, generatedOfficialEvidenceCoverage,
                 trace.generation().status(), handoffComplete, generatedMatched, requiredGenerated.size(), forbiddenGenerated,
                 trace.validation().status(), validationPassed, trace.firstDivergence(), gap,
                 gap && Boolean.TRUE.equals(validationPassed), trace.factExtraction().latencyMs(),
                 trace.retrieval().latencyMs(), trace.generation().latencyMs(), sum);
+    }
+
+    private boolean isOfficialEvidence(ReferenceHit hit) {
+        return "PROVIDER_DOCUMENTATION".equals(hit.authority())
+                && OFFICIAL_EVIDENCE_DOCUMENT_TYPES.contains(hit.documentType());
     }
 
     private Coverage coverage(List<String> required, List<ReferenceHit> hits, BiPredicate<String, ReferenceHit> match) {

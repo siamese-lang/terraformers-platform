@@ -79,7 +79,7 @@ class CaseAQualityCalibrationTest {
         assertThat(result.falseGreen()).isTrue();
     }
 
-    @Test void frozenComponentAndRelationshipLabelsAreStrictlyNormalizedAndCanFailQuality() {
+    @Test void frozenComponentAndRelationshipLabelsUseDeterministicTopologyMatching() {
         var baseDefinition = positiveDefinition();
         var definition = new EvaluationCase(
                 baseDefinition.schemaVersion(), baseDefinition.datasetVersion(), baseDefinition.caseId(),
@@ -98,8 +98,8 @@ class CaseAQualityCalibrationTest {
                 new EvaluationTrace.FactExtractionEvidence(
                         InputClassification.ARCHITECTURE_DIAGRAM,
                         "facts",
-                        List.of("application-load-balancer"),
-                        List.of("Application Load Balancer -> RDS Database"),
+                        List.of("Application Load Balancer in public subnets"),
+                        List.of("Application Load Balancer sends SQL traffic to RDS Database"),
                         List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
         var matchingTrace = new EvaluationTrace(
                 baseTrace.schemaVersion(), baseTrace.datasetVersion(), baseTrace.runId(), baseTrace.caseId(),
@@ -130,6 +130,117 @@ class CaseAQualityCalibrationTest {
                 .containsExactly("Application Load Balancer -> RDS Database");
         assertThat(missed.labeledQualitySuccess()).isFalse();
         assertThat(missed.falseGreen()).isTrue();
+    }
+
+    @Test void relationshipMatcherAllowsOneDescriptiveEntityTokenToBeOmitted() {
+        var baseDefinition = positiveDefinition();
+        var definition = new EvaluationCase(
+                baseDefinition.schemaVersion(), baseDefinition.datasetVersion(), baseDefinition.caseId(),
+                baseDefinition.input(), baseDefinition.expectedClassification(),
+                new EvaluationCase.TextExpectation(
+                        List.of("VPC Endpoint", "OpenSearch Serverless VECTORSEARCH"), List.of(), List.of()),
+                new EvaluationCase.TextExpectation(
+                        List.of("VPC Endpoint -> OpenSearch Serverless VECTORSEARCH"), List.of(), List.of()),
+                baseDefinition.resourceTypes(), baseDefinition.retrieval(), baseDefinition.generation(),
+                baseDefinition.validation(), baseDefinition.notes());
+        var base = successfulPositiveTrace();
+        var facts = StageTrace.pass(
+                EvaluationStage.FACT_EXTRACTION,
+                10,
+                new EvaluationTrace.FactExtractionEvidence(
+                        InputClassification.ARCHITECTURE_DIAGRAM,
+                        "facts",
+                        List.of("VPC Endpoint", "OpenSearch Serverless VECTORSEARCH Collection"),
+                        List.of("VPC Endpoint connects privately to OpenSearch Serverless"),
+                        List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
+        var trace = new EvaluationTrace(
+                base.schemaVersion(), base.datasetVersion(), base.runId(), base.caseId(),
+                base.input(), base.configuration(), facts, base.retrieval(),
+                base.generation(), base.validation(), null);
+
+        assertThat(scorer.score(definition, trace).relationshipCoverage().requiredMatched()).isOne();
+    }
+
+    @Test void relationshipQualifierMustBePresentWhenFrozenLabelRequiresIt() {
+        var baseDefinition = positiveDefinition();
+        var definition = new EvaluationCase(
+                baseDefinition.schemaVersion(), baseDefinition.datasetVersion(), baseDefinition.caseId(),
+                baseDefinition.input(), baseDefinition.expectedClassification(),
+                new EvaluationCase.TextExpectation(
+                        List.of("Application Pod", "IAM Role"), List.of(), List.of()),
+                new EvaluationCase.TextExpectation(
+                        List.of("Application Pod -> IAM Role through IRSA"), List.of(), List.of()),
+                baseDefinition.resourceTypes(), baseDefinition.retrieval(), baseDefinition.generation(),
+                baseDefinition.validation(), baseDefinition.notes());
+        var base = successfulPositiveTrace();
+
+        var goodFacts = StageTrace.pass(
+                EvaluationStage.FACT_EXTRACTION,
+                10,
+                new EvaluationTrace.FactExtractionEvidence(
+                        InputClassification.ARCHITECTURE_DIAGRAM,
+                        "facts",
+                        List.of("Application Pod", "IAM Role"),
+                        List.of("Application Pod assumes IAM Role via OIDC / IRSA"),
+                        List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
+        var good = new EvaluationTrace(
+                base.schemaVersion(), base.datasetVersion(), base.runId(), base.caseId(),
+                base.input(), base.configuration(), goodFacts, base.retrieval(),
+                base.generation(), base.validation(), null);
+        assertThat(scorer.score(definition, good).relationshipCoverage().requiredMatched()).isOne();
+
+        var badFacts = StageTrace.pass(
+                EvaluationStage.FACT_EXTRACTION,
+                10,
+                new EvaluationTrace.FactExtractionEvidence(
+                        InputClassification.ARCHITECTURE_DIAGRAM,
+                        "facts",
+                        List.of("Application Pod", "IAM Role"),
+                        List.of("Application Pod can reach IAM Role"),
+                        List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
+        var bad = new EvaluationTrace(
+                base.schemaVersion(), base.datasetVersion(), base.runId(), base.caseId(),
+                base.input(), base.configuration(), badFacts, base.retrieval(),
+                base.generation(), base.validation(), null);
+
+        assertThat(scorer.score(definition, bad).relationshipCoverage().requiredMatched()).isZero();
+    }
+
+    @Test void relationshipMatcherFailsClosedOnReverseAndNegatedStatements() {
+        var baseDefinition = positiveDefinition();
+        var definition = new EvaluationCase(
+                baseDefinition.schemaVersion(), baseDefinition.datasetVersion(), baseDefinition.caseId(),
+                baseDefinition.input(), baseDefinition.expectedClassification(),
+                new EvaluationCase.TextExpectation(
+                        List.of("Application Load Balancer", "RDS Database"), List.of(), List.of()),
+                new EvaluationCase.TextExpectation(
+                        List.of("Application Load Balancer -> RDS Database"), List.of(), List.of()),
+                baseDefinition.resourceTypes(), baseDefinition.retrieval(), baseDefinition.generation(),
+                baseDefinition.validation(), baseDefinition.notes());
+        var base = successfulPositiveTrace();
+
+        for (String relationship : List.of(
+                "Application Load Balancer receives SQL traffic from RDS Database",
+                "Application Load Balancer does not connect to RDS Database",
+                "RDS Database sends SQL traffic to Application Load Balancer")) {
+            var facts = StageTrace.pass(
+                    EvaluationStage.FACT_EXTRACTION,
+                    10,
+                    new EvaluationTrace.FactExtractionEvidence(
+                            InputClassification.ARCHITECTURE_DIAGRAM,
+                            "facts",
+                            List.of("Application Load Balancer", "RDS Database"),
+                            List.of(relationship),
+                            List.of("aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")));
+            var trace = new EvaluationTrace(
+                    base.schemaVersion(), base.datasetVersion(), base.runId(), base.caseId(),
+                    base.input(), base.configuration(), facts, base.retrieval(),
+                    base.generation(), base.validation(), null);
+
+            assertThat(scorer.score(definition, trace).relationshipCoverage().requiredMatched())
+                    .as(relationship)
+                    .isZero();
+        }
     }
 
     @Test void missingRequiredGeneratedResourceFailsFrozenLabel() {
@@ -178,6 +289,26 @@ class CaseAQualityCalibrationTest {
         assertThat(result.technicalSuccess()).isFalse();
         assertThat(result.labeledQualitySuccess()).isTrue();
         assertThat(result.falseGreen()).isFalse();
+    }
+
+    @Test void generatedResourcesWithoutOfficialEvidenceFailFrozenLabel() {
+        var trace = trace(
+                "run",
+                "positive",
+                EvaluationStageStatus.PASS,
+                List.of(
+                        hit(1, "decision"),
+                        hit(2, "official", "aws_vpc", "aws_security_group")),
+                requiredResources(),
+                true);
+
+        var result = scorer.score(positiveDefinition(), trace);
+
+        assertThat(result.grounding().resourceTypeCoverage().missing()).isEmpty();
+        assertThat(result.grounding().generatedResourceOfficialEvidenceCoverage().missing())
+                .containsExactlyInAnyOrder("aws_lb", "aws_db_instance");
+        assertThat(result.labeledQualitySuccess()).isFalse();
+        assertThat(result.falseGreen()).isTrue();
     }
 
     @Test void incompleteProjectDecisionGroundingFailsFrozenLabel() {
@@ -251,7 +382,10 @@ class CaseAQualityCalibrationTest {
     }
 
     private List<EvaluationTrace.ReferenceHit> completeHits() {
-        return List.of(hit(1, "decision", "aws_vpc", "aws_security_group"));
+        return List.of(
+                hit(1, "decision"),
+                hit(2, "official", "aws_vpc", "aws_lb", "aws_db_instance", "aws_security_group")
+        );
     }
 
     private List<String> requiredResources() {

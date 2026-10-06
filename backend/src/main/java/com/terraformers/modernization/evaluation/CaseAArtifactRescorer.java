@@ -42,7 +42,9 @@ public final class CaseAArtifactRescorer {
 
     private EvaluationTrace rescoreTrace(EvaluationTrace trace) {
         GenerationEvidence generation = trace.generation().evidence();
-        if (generation == null || generation.terraformCode().isBlank()) {
+        if (trace.generation().status() != EvaluationStageStatus.PASS
+                || generation == null
+                || generation.terraformCode().isBlank()) {
             return trace;
         }
 

@@ -14,6 +14,10 @@ unsigned="${RUNNER_TEMP}/case-c-unsigned.token"
 signature="${RUNNER_TEMP}/case-c-signature.bin"
 kid="case-c-${GITHUB_RUN_ID}"
 identity_run_id="${IDENTITY_RUN_ID:-${GITHUB_RUN_ID}}"
+[[ "$identity_run_id" =~ ^[0-9]+$ ]] || {
+  echo 'IDENTITY_RUN_ID must be a numeric GitHub run ID.' >&2
+  exit 1
+}
 
 kubectl -n "$NAMESPACE" get configmap terraformers-jwks             -o jsonpath='{.data.jwks\.json}' > "$previous_jwks"
 test -s "$previous_jwks"

@@ -183,10 +183,16 @@ def recover_prior_case2(client, output, prior_observations, logs=pt2.collect_log
     directory.mkdir()
     start_stamp = pt2.stamp()
     start = clock()
-    terminal, observed, last_nonterminal = _poll_same_job(
-        client, directory, CASE2_JOB_ID, CASE2_PROJECT_ID, "recovery-job-poll",
-        start, drain_deadline, clock=clock, wait=wait
+    observed = client.request(
+        "GET", "/api/analysis/jobs/" + CASE2_JOB_ID, directory, "recovery-job-poll-000"
     )
+    if observed["transportExitCode"] != 0 or observed["httpStatus"] != 200:
+        raise ValueError("prior accepted case 02 job inaccessible; do not resubmit")
+    terminal = observed["json"]
+    if not isinstance(terminal, dict) or terminal.get("id") != CASE2_JOB_ID \
+            or terminal.get("projectId") != CASE2_PROJECT_ID:
+        raise ValueError("prior case 02 recovery identity mismatch")
+    status = terminal.get("status")
     record = {
         "caseId": CASE2_ID,
         "analysisJobId": CASE2_JOB_ID,
@@ -195,16 +201,18 @@ def recover_prior_case2(client, output, prior_observations, logs=pt2.collect_log
         "originalMeasurementStatus": "TERMINAL_NOT_OBSERVED",
         "originalCensoredObservationMs": CASE2_CENSORED_MS,
         "recoveryStartedAt": start_stamp,
-        "lastRecoveryNonterminalObservedMs": last_nonterminal,
-        "recoveryTerminalObserved": terminal is not None,
+        "recoveryTerminalObserved": status in ("SUCCEEDED", "FAILED"),
     }
-    if terminal is None:
+    if status in ("PENDING", "RUNNING"):
         record["status"] = "RECOVERY_TERMINAL_NOT_OBSERVED"
+        record["reason"] = "original job is already beyond the 1200-second-from-acceptance drain bound"
         pt2.write_json(directory / "recovery.json", record)
         return False
+    if status not in ("SUCCEEDED", "FAILED"):
+        raise ValueError("unexpected prior case 02 AnalysisJob status")
 
     record.update(
-        status="RECOVERED_" + terminal["status"],
+        status="RECOVERED_" + status,
         recoveryTerminalObservedAt=observed["observedAt"],
         recoveryElapsedMs=max(0, round((observed["monotonic"] - start) * 1000)),
         quality=terminal.get("quality"),
@@ -235,6 +243,7 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
     directory.mkdir()
     pt2.write_json(directory / "frozen-truth.json", case)
     record.update(status="SUBMISSION_STARTED", uploadAttempts=1, requestStartedAt=pt2.stamp())
+    pt2.write_json(directory / "submission-started.json", dict(record))
     client.request("GET", "/actuator/prometheus", directory, "metrics-before")
     upload = client.request("POST", "/api/upload", directory, "upload", fixture=fixture,
                                project_name=run_id + "-" + case["caseId"])
@@ -247,7 +256,7 @@ def observe_case(root, case, record, client, run_id, dispatch_sha, output, seen_
 
     accepted = upload["json"]
     if not isinstance(accepted, dict) or not isinstance(accepted.get("analysisJobId"), str) \
-            or not re.fullmatch(r"[A-Za-z0-9_.-]{1,128}", accepted["analysisJobId"]) \
+            or not re.fullmatch(r"[A-Za-z0-9-]{1,128}", accepted["analysisJobId"]) \
             or type(accepted.get("projectId")) is not int or accepted["projectId"] <= 0:
         record["status"] = "INDETERMINATE_ACCEPTANCE"
         return False

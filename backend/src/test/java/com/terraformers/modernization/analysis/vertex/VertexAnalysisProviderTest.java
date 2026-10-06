@@ -5,11 +5,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.genai.types.Candidate;
+import com.google.genai.types.Content;
+import com.google.genai.types.FinishReason;
+import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.Part;
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
@@ -242,6 +250,226 @@ class VertexAnalysisProviderTest {
         assertThat(result.qualityAssessment().technicalStatus())
                 .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.TechnicalStatus.PASS);
     }
+
+    @Test
+    void alreadyOfficiallyEvidencedDraftPreservesOneRetrievalAndOneGeneration() {
+        ClosureFixture fixture = closureFixture(List.of(official("vpc", "aws_vpc")), List.of(),
+                safeGeneration().terraformCode(), null);
+        var result = fixture.provider().analyze(context());
+        assertThat(result.references()).containsExactly("vpc");
+        verify(fixture.retriever(), times(1)).retrieve(any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), org.mockito.Mockito.never()).repair(any(), any(), any(), any());
+        verify(fixture.inspector()).inspect(safeGeneration().terraformCode());
+    }
+
+    @Test
+    void supportResourceClosureMergesReferencesExpandsSchemaAndRepairsOnlyTerraform() {
+        ReferenceDocument vpc = official("vpc", "aws_vpc");
+        ReferenceDocument decision = new ReferenceDocument("decision", "project", "project intent", 1,
+                "TERRAFORMERS_PATTERN", List.of("aws_vpc"), "project.md", "5.100.0", "any-corpus",
+                "PROJECT_DECISION", 1, List.of());
+        String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_instance\" \"app\" { instance_class = \"wrong\" }";
+        String repaired = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_instance\" \"app\" { ami = var.ami_id instance_type = var.instance_type }";
+        ClosureFixture fixture = closureFixture(List.of(vpc, decision),
+                List.of(vpc, official("instance", "aws_instance")), first, repaired);
+        var result = fixture.provider().analyze(context());
+        assertThat(result.terraformCode()).isEqualTo(repaired);
+        assertThat(result.explanation()).isEqualTo("VPC");
+        assertThat(result.components()).containsExactly("VPC");
+        assertThat(result.references()).containsExactly("vpc", "decision", "instance");
+        assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence()).isEmpty();
+        ArgumentCaptor<ReferenceQuery> queries = ArgumentCaptor.forClass(ReferenceQuery.class);
+        verify(fixture.retriever(), times(2)).retrieve(queries.capture());
+        assertThat(queries.getAllValues().get(0).resourceOnly()).isFalse();
+        assertThat(queries.getAllValues().get(1).resourceOnly()).isTrue();
+        assertThat(queries.getAllValues().get(1).resourceTypes()).containsExactly("aws_instance");
+        assertThat(queries.getAllValues().get(1).text()).doesNotContain("aws_vpc");
+        ArgumentCaptor<AwsProviderSchemaEvidence> schemas = ArgumentCaptor.forClass(AwsProviderSchemaEvidence.class);
+        verify(fixture.stage(), times(1)).repair(any(), eq(generation(first)), any(), schemas.capture());
+        assertThat(schemas.getValue().resourceTypes()).containsExactlyInAnyOrder("aws_vpc", "aws_instance");
+        assertThat(schemas.getValue().promptText()).contains("ami", "required", "instance_type", "block");
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.inspector()).inspect(repaired);
+        ArgumentCaptor<EvidenceQualityAssessor.Input> quality = ArgumentCaptor.forClass(EvidenceQualityAssessor.Input.class);
+        verify(fixture.assessor()).assess(quality.capture());
+        assertThat(quality.getValue().generatedTerraform()).isEqualTo(repaired);
+        assertThat(quality.getValue().selectedReferences()).extracting(ReferenceDocument::id)
+                .containsExactly("vpc", "decision", "instance");
+    }
+
+    @Test
+    void newUnevidencedResourceAfterRepairRemainsDegradedWithoutThirdGeneration() {
+        String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
+        String repaired = first + "\nresource \"aws_security_group\" \"new\" {}";
+        ClosureFixture fixture = closureFixture(List.of(official("vpc", "aws_vpc")),
+                List.of(official("subnet", "aws_subnet")), first, repaired);
+        var result = fixture.provider().analyze(context());
+        assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence())
+                .containsExactly("aws_security_group");
+        assertThat(result.qualityAssessment().reasons()).contains(
+                com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.GENERATED_RESOURCE_UNSUPPORTED_BY_EVIDENCE);
+        verify(fixture.retriever(), times(2)).retrieve(any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
+        verify(fixture.inspector()).inspect(repaired);
+    }
+
+    @Test
+    void successfulCompactFallbackStillAllowsOneClosureAndRepairWithoutAnotherCycle() throws Exception {
+        String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
+        String repaired = first + "\nresource \"aws_security_group\" \"new\" {}";
+        VertexGenerationStage stage = respondingStage(
+                response(FinishReason.Known.MAX_TOKENS, ""),
+                architectureResponse(first),
+                response(FinishReason.Known.STOP, new ObjectMapper().writeValueAsString(Map.of("terraformCode", repaired))));
+        ClosureFixture fixture = closureFixture(List.of(official("vpc", "aws_vpc")),
+                List.of(official("subnet", "aws_subnet")), stage);
+
+        var result = fixture.provider().analyze(context());
+
+        assertThat(result.terraformCode()).isEqualTo(repaired);
+        assertThat(result.explanation()).isEqualTo("VPC");
+        assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence())
+                .containsExactly("aws_security_group");
+        assertThat(result.qualityAssessment().reasons()).contains(
+                com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.GENERATED_RESOURCE_UNSUPPORTED_BY_EVIDENCE);
+        ArgumentCaptor<Content> requests = ArgumentCaptor.forClass(Content.class);
+        verify(stage, times(3)).request(requests.capture(), any());
+        assertThat(requests.getAllValues().get(0).parts().orElseThrow().get(1).text()).get()
+                .asString().contains("Standard mode:");
+        assertThat(requests.getAllValues().get(1).parts().orElseThrow().get(1).text()).get()
+                .asString().contains("Compact mode:");
+        assertThat(requests.getAllValues().get(2).parts().orElseThrow()).hasSize(1);
+        assertThat(requests.getAllValues().get(2).parts().orElseThrow().get(0).inlineData()).isEmpty();
+        ArgumentCaptor<AnalysisGenerationResult> draft = ArgumentCaptor.forClass(AnalysisGenerationResult.class);
+        verify(stage, times(1)).generate(any(), any(), any(), any());
+        verify(stage, times(1)).repair(any(), draft.capture(), any(), any());
+        assertThat(draft.getValue().retryOccurred()).isTrue();
+        assertThat(draft.getValue().terraformCode()).isEqualTo(first);
+        verify(fixture.retriever(), times(2)).retrieve(any());
+        verify(fixture.inspector()).inspect(repaired);
+    }
+
+    @Test
+    void repairTruncationAfterCompactFallbackNeverRetriesOrStartsAnotherClosure() throws Exception {
+        String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
+        VertexGenerationStage stage = respondingStage(
+                response(FinishReason.Known.MAX_TOKENS, ""),
+                architectureResponse(first),
+                response(FinishReason.Known.MAX_TOKENS, ""));
+        ClosureFixture fixture = closureFixture(List.of(official("vpc", "aws_vpc")),
+                List.of(official("subnet", "aws_subnet")), stage);
+
+        assertThatThrownBy(() -> fixture.provider().analyze(context()))
+                .isInstanceOfSatisfying(AnalysisProviderFailureException.class,
+                        failure -> assertThat(failure.reason()).isEqualTo(AnalysisProviderFailureReason.OUTPUT_TRUNCATED))
+                .hasCauseInstanceOf(VertexOutputTruncatedException.class);
+
+        verify(stage, times(3)).request(any(), any());
+        verify(stage, times(1)).generate(any(), any(), any(), any());
+        verify(stage, times(1)).repair(any(), any(), any(), any());
+        verify(fixture.retriever(), times(2)).retrieve(any());
+    }
+
+    @Test
+    void unavailableClosureDocumentsStillLeaveGapVisibleAfterOneRepair() {
+        ClosureFixture fixture = closureFixture(List.of(reference()), List.of(),
+                safeGeneration().terraformCode(), safeGeneration().terraformCode());
+        var result = fixture.provider().analyze(context());
+        assertThat(result.qualityAssessment().missingSelectedEvidenceResourceTypes()).containsExactly("aws_vpc");
+        assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence()).containsExactly("aws_vpc");
+        verify(fixture.retriever(), times(2)).retrieve(any());
+        verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
+    }
+
+    @Test
+    void finalContractInspectionRejectsModuleIntroducedByRepair() {
+        ClosureFixture fixture = closureFixture(List.of(reference()), List.of(official("vpc", "aws_vpc")),
+                safeGeneration().terraformCode(), "module \"unrelated\" { source = \"remote\" }");
+        assertThatThrownBy(() -> fixture.provider().analyze(context()))
+                .isInstanceOf(com.terraformers.modernization.analysis.GeneratedTerraformContractViolation.class);
+        verify(fixture.inspector()).inspect("module \"unrelated\" { source = \"remote\" }");
+        verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
+    }
+
+    @Test
+    void nonArchitectureAndAmbiguousResultsNeverEnterClosureOrRepair() {
+        for (var classification : List.of(AnalysisInputClassification.NON_ARCHITECTURE_IMAGE,
+                AnalysisInputClassification.AMBIGUOUS)) {
+            ClosureFixture fixture = closureFixture(List.of(reference()), List.of(), "", null);
+            when(fixture.stage().generate(any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult(
+                    "vertex:test", classification, 0.9, "", "", List.of(), List.of(), List.of(), "STOP", 1, false));
+            assertThatThrownBy(() -> fixture.provider().analyze(context())).isInstanceOf(AnalysisProviderFailureException.class);
+            verify(fixture.retriever(), times(1)).retrieve(any());
+            verify(fixture.stage(), org.mockito.Mockito.never()).repair(any(), any(), any(), any());
+        }
+    }
+
+    private ClosureFixture closureFixture(List<ReferenceDocument> initial, List<ReferenceDocument> closure,
+            String first, String repaired) {
+        var stage = mock(VertexGenerationStage.class);
+        when(stage.generate(any(), any(), any(), any())).thenReturn(generation(first));
+        when(stage.repair(any(), any(), any(), any())).thenReturn(repaired);
+        return closureFixture(initial, closure, stage);
+    }
+
+    private ClosureFixture closureFixture(List<ReferenceDocument> initial, List<ReferenceDocument> closure,
+            VertexGenerationStage stage) {
+        ObjectReader reader = mock(ObjectReader.class);
+        when(reader.readContent(any())).thenReturn(source());
+        var facts = mock(VertexArchitectureFactsExtractor.class);
+        when(facts.extract(any())).thenReturn(new ArchitectureRetrievalFacts("VPC", List.of("VPC"),
+                List.of("VPC -> app"), List.of("aws_vpc")));
+        ReferenceRetriever retriever = mock(ReferenceRetriever.class);
+        when(retriever.retrieve(any())).thenReturn(initial, closure);
+        var catalog = mock(AwsProviderSchemaCatalog.class);
+        for (String type : List.of("aws_vpc", "aws_instance", "aws_subnet", "aws_security_group")) {
+            when(catalog.contains(type)).thenReturn(true);
+        }
+        when(catalog.resolve(any())).thenAnswer(invocation -> {
+            Collection<String> types = invocation.getArgument(0);
+            Map<String, String> summaries = new java.util.LinkedHashMap<>();
+            types.forEach(type -> summaries.put(type, type.equals("aws_instance")
+                    ? "ami: string (required), instance_type: string (optional), root_block_device block(optional)"
+                    : "arguments"));
+            return new AwsProviderSchemaEvidence(summaries);
+        });
+        var inspector = org.mockito.Mockito.spy(new GeneratedTerraformContractInspector(catalog));
+        var assessor = org.mockito.Mockito.spy(new EvidenceQualityAssessor(catalog, inspector));
+        var provider = new VertexAnalysisProvider(reader, retriever, requiredProperties(), facts,
+                new RetrievalQueryTextBuilder(), stage, catalog, inspector, assessor, availableCoverage());
+        return new ClosureFixture(provider, retriever, stage, inspector, assessor);
+    }
+
+    private VertexGenerationStage respondingStage(GenerateContentResponse... responses) {
+        var stage = spy(new VertexGenerationStage(null, new VertexRuntimeProperties(),
+                new VertexPromptBuilder(), new VertexResponseParser(new ObjectMapper())));
+        var sequence = List.of(responses).iterator();
+        doAnswer(invocation -> sequence.next()).when(stage).request(any(), any());
+        return stage;
+    }
+
+    private GenerateContentResponse architectureResponse(String terraform) throws Exception {
+        return response(FinishReason.Known.STOP, new ObjectMapper().writeValueAsString(Map.of(
+                "inputType", "ARCHITECTURE_DIAGRAM", "classificationConfidence", 1.0,
+                "classificationReason", "connected system", "summary", "VPC",
+                "components", List.of("VPC"), "relationships", List.of("VPC -> app"),
+                "warnings", List.of(), "terraformCode", terraform)));
+    }
+
+    private GenerateContentResponse response(FinishReason.Known reason, String text) {
+        return GenerateContentResponse.builder().candidates(Candidate.builder().finishReason(reason)
+                .content(Content.fromParts(Part.fromText(text)))).build();
+    }
+
+    private ReferenceDocument official(String id, String resource) {
+        return new ReferenceDocument(id, id, "official evidence", 1, "AWS_PROVIDER_DOC", List.of(resource),
+                "official.md", "5.100.0", "any-corpus", "PROVIDER_DOCUMENTATION", 1, List.of());
+    }
+
+    private record ClosureFixture(VertexAnalysisProvider provider, ReferenceRetriever retriever,
+            VertexGenerationStage stage, GeneratedTerraformContractInspector inspector, EvidenceQualityAssessor assessor) {}
 
     private VertexAnalysisProvider provider(
             ReferenceRetriever retriever,

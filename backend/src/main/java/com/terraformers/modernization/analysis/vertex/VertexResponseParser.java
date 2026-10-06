@@ -18,6 +18,20 @@ public class VertexResponseParser {
         this.objectMapper = objectMapper;
     }
 
+    public String parseTerraformRepair(String responseText) {
+        try {
+            JsonNode root = objectMapper.readTree(responseText);
+            if (root == null || !root.isObject() || root.size() != 1) {
+                throw new VertexResponseFormatException("Terraform repair must contain only terraformCode");
+            }
+            return requireText(root, "terraformCode");
+        } catch (VertexResponseFormatException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new VertexResponseFormatException("Terraform repair response format is invalid", exception);
+        }
+    }
+
     public AnalysisGenerationResult parse(
             String provider,
             String responseText,

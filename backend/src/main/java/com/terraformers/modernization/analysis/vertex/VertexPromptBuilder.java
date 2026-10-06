@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis.vertex;
 
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
+import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
+import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.util.List;
@@ -81,6 +83,46 @@ public class VertexPromptBuilder {
                 ),
                 "additionalProperties", false
         );
+    }
+
+    public String buildRepair(ArchitectureRetrievalFacts facts, AnalysisGenerationResult original,
+            List<ReferenceDocument> references, AwsProviderSchemaEvidence schemaEvidence) {
+        String evidence = references.stream().map(this::formatReference).collect(Collectors.joining("\n"));
+        return """
+                Correct only the prior Terraform draft. Return one JSON object containing terraformCode.
+                This is a Terraform grounding repair, not a new image analysis or classification.
+                - Preserve the original architecture intent, components, and relationships.
+                - Correct HCL using supplied official provider documentation and exact AWS Provider 5.100.0 schema.
+                - Do not introduce unrelated architecture components or new AWS resource types beyond those
+                  supported by the supplied closure evidence and provider schema.
+                - Module blocks are forbidden. Do not invent structurally invalid arguments or nested blocks.
+                - Satisfy required provider arguments and preserve argument/nested-block compatibility.
+                - For deployment-specific required values absent from the diagram/evidence, use editable
+                  Terraform variable/reference placeholders rather than arbitrary concrete identifiers.
+                - Preserve applicable PROJECT_DECISION constraints. Examples demonstrate syntax only;
+                  adapt settings marked by riskTags to project constraints.
+                - Return a corrected Terraform draft, not a fresh unrelated architecture interpretation.
+
+                Original architecture facts: %s
+                Original summary: %s
+                Original components: %s
+                Original relationships: %s
+
+                Prior Terraform draft:
+                %s
+
+                Merged official and project reference evidence:
+                %s
+
+                Expanded exact AWS Provider 5.100.0 schema evidence:
+                %s
+                """.formatted(facts, original.summary(), original.components(), original.relationships(),
+                original.terraformCode(), evidence.isBlank() ? "- none" : evidence, schemaEvidence.promptText());
+    }
+
+    public Map<String, Object> repairResponseJsonSchema() {
+        return Map.of("type", "object", "properties", Map.of("terraformCode", Map.of("type", "string")),
+                "required", List.of("terraformCode"), "additionalProperties", false);
     }
 
     private String formatReference(ReferenceDocument reference) {

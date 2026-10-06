@@ -44,6 +44,15 @@ public class OpenSearchKnnQueryBuilder {
             List<String> resourceTypes,
             List<String> authorities
     ) {
+        return build(vectorFieldName, contentFieldName, vector, topK, corpusVersion, providerVersion,
+                resourceTypes, authorities, List.of());
+    }
+
+    public String build(
+            String vectorFieldName, String contentFieldName, List<Float> vector, int topK,
+            String corpusVersion, String providerVersion, List<String> resourceTypes,
+            List<String> authorities, List<String> documentTypes
+    ) {
         if (vectorFieldName == null || vectorFieldName.isBlank()) {
             throw new IllegalArgumentException("vector field name must be set");
         }
@@ -73,6 +82,10 @@ public class OpenSearchKnnQueryBuilder {
         List<String> normalizedAuthorities = normalize(authorities);
         if (!normalizedAuthorities.isEmpty()) {
             filters.add(Map.of("terms", Map.of("authority", normalizedAuthorities)));
+        }
+        List<String> normalizedDocumentTypes = normalize(documentTypes);
+        if (!normalizedDocumentTypes.isEmpty()) {
+            filters.add(Map.of("terms", Map.of("documentType", normalizedDocumentTypes)));
         }
 
         Map<String, Object> knnParameters = new LinkedHashMap<>();

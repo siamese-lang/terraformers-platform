@@ -16,6 +16,7 @@ import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
 import com.terraformers.modernization.analysis.ProviderFailureClassifier;
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
+import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.util.List;
@@ -64,13 +65,26 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
     }
 
     GenerateContentConfig generationConfig() {
+        return generationConfig(promptBuilder.responseJsonSchema());
+    }
+
+    private GenerateContentConfig generationConfig(Map<String, Object> responseSchema) {
         var builder = GenerateContentConfig.builder()
                 .maxOutputTokens(properties.requireMaxOutputTokens())
                 .responseMimeType("application/json")
-                .responseJsonSchema(promptBuilder.responseJsonSchema());
+                .responseJsonSchema(responseSchema);
         properties.resolvedGenerationThinkingLevel().ifPresent(level ->
                 builder.thinkingConfig(ThinkingConfig.builder().thinkingLevel(level)));
         return builder.build();
+    }
+
+    public String repair(ArchitectureRetrievalFacts facts, AnalysisGenerationResult original,
+            List<ReferenceDocument> references, AwsProviderSchemaEvidence schemaEvidence) {
+        Content content = Content.fromParts(Part.fromText(
+                promptBuilder.buildRepair(facts, original, references, schemaEvidence)));
+        GenerateContentResponse response = completedResponse(content,
+                generationConfig(promptBuilder.repairResponseJsonSchema()));
+        return responseParser.parseTerraformRepair(requireResponseText(response.text()));
     }
 
     AnalysisGenerationResult invoke(
@@ -88,9 +102,27 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                 Part.fromText(promptBuilder.build(source, references, schemaEvidence, compact))
         );
 
+        GenerateContentResponse response = completedResponse(content, config);
+        Integer outputTokens = response.usageMetadata()
+                .flatMap(metadata -> metadata.candidatesTokenCount()).orElse(null);
+        FinishReason finishReason = response.finishReason();
+        String text = requireResponseText(response.text());
+
+        try {
+            return responseParser.parse(
+                    "vertex:" + modelId, text,
+                    finishReason == null ? "" : finishReason.toString(), outputTokens, retryOccurred);
+        } catch (AnalysisInputRejectedException exception) {
+            if (exception.retryOccurred() == retryOccurred) throw exception;
+            throw new AnalysisInputRejectedException(exception.classification(),
+                    exception.classificationConfidence(), retryOccurred, exception.getCause());
+        }
+    }
+
+    private GenerateContentResponse completedResponse(Content content, GenerateContentConfig config) {
         GenerateContentResponse response;
         try {
-            response = client.models.generateContent(modelId, content, config);
+            response = request(content, config);
         } catch (RuntimeException exception) {
             throw providerCallFailure(exception);
         }
@@ -103,28 +135,11 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                 : finishReason.knownEnum();
 
         requireNormalCompletion(known, finishReason, outputTokens);
+        return response;
+    }
 
-        String text = requireResponseText(response.text());
-
-        try {
-            return responseParser.parse(
-                    "vertex:" + modelId,
-                    text,
-                    finishReason == null ? "" : finishReason.toString(),
-                    outputTokens,
-                    retryOccurred
-            );
-        } catch (AnalysisInputRejectedException exception) {
-            if (exception.retryOccurred() == retryOccurred) {
-                throw exception;
-            }
-            throw new AnalysisInputRejectedException(
-                    exception.classification(),
-                    exception.classificationConfidence(),
-                    retryOccurred,
-                    exception.getCause()
-            );
-        }
+    GenerateContentResponse request(Content content, GenerateContentConfig config) {
+        return client.models.generateContent(properties.requireGenerationModelId(), content, config);
     }
 
     RuntimeException providerCallFailure(RuntimeException exception) {

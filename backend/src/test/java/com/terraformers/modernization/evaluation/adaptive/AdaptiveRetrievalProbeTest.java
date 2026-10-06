@@ -76,8 +76,8 @@ class AdaptiveRetrievalProbeTest {
 
         assertThat(embeddingCalls).hasValue(1);
         assertThat(report.embeddingDelegateCalls()).isEqualTo(1);
-        assertThat(report.control().latencyMs()).isEqualTo(140L);
-        assertThat(report.adaptive().latencyMs()).isEqualTo(140L);
+        assertThat(report.control().latencyMs()).isEqualTo(260L);
+        assertThat(report.adaptive().latencyMs()).isEqualTo(260L);
     }
 
     @Test
@@ -123,7 +123,7 @@ class AdaptiveRetrievalProbeTest {
         assertThat(new LinkedHashSet<>(report.adaptive().selectedDocumentIds()))
                 .hasSize(report.adaptive().evidenceCount());
 
-        assertThat(requests).hasSize(28);
+        assertThat(requests).hasSize(52);
         assertThat(requests.stream().map(this::readTree)
                 .allMatch(request -> request.path("size").asInt() == AdaptiveRetrievalProbeRunner.BASE_TOP_K))
                 .isTrue();
@@ -158,6 +158,11 @@ class AdaptiveRetrievalProbeTest {
                 responses.add(response(List.of(document("target-" + (index + 1), resources.get(index)))));
             }
             responses.add(response(List.of()));
+            // This historical fixture has schema-only evidence: each requested resource now
+            // also receives one bounded official-document lookup, returning no hits.
+            for (String resource : resources) {
+                responses.add(response(List.of()));
+            }
         }
         return List.copyOf(responses);
     }

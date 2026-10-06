@@ -41,6 +41,29 @@ class VertexPromptBuilderTest {
         assertThat(prompt).doesNotContain("aws_subnet");
     }
 
+    @Test
+    void repairPromptContainsPriorDraftFactsOfficialEvidenceAndExactSchemaConstraints() {
+        var builder = new VertexPromptBuilder();
+        var original = new com.terraformers.modernization.analysis.AnalysisGenerationResult(
+                "vertex:test", com.terraformers.modernization.analysis.AnalysisInputClassification.ARCHITECTURE_DIAGRAM,
+                1.0, "resource \"aws_instance\" \"app\" { instance_class = \"bad\" }", "API inside VPC",
+                List.of("API", "VPC"), List.of("VPC -> API"), List.of(), "STOP", 10, false);
+        var facts = new com.terraformers.modernization.reference.ArchitectureRetrievalFacts(
+                "API architecture", List.of("API"), List.of("VPC -> API"), List.of("aws_instance"));
+        var reference = new com.terraformers.modernization.reference.ReferenceDocument("instance-doc",
+                "EC2 official", "EC2 documentation content", 1, "AWS_PROVIDER_DOC", List.of("aws_instance"),
+                "instance.md", "5.100.0", "any-corpus", "PROVIDER_DOCUMENTATION", 1, List.of());
+        var schema = new AwsProviderSchemaEvidence(Map.of("aws_instance",
+                "ami: string (required), instance_type: string (optional), root_block_device block(optional)"));
+        String prompt = builder.buildRepair(facts, original, List.of(reference), schema);
+        assertThat(prompt).contains(original.terraformCode(), "API architecture", "VPC -> API",
+                "PROVIDER_DOCUMENTATION", "AWS_PROVIDER_DOC", "EC2 documentation content", schema.promptText(),
+                "new AWS resource types", "closure evidence and provider schema", "Module blocks are forbidden",
+                "required provider arguments", "nested-block compatibility", "variable/reference placeholders",
+                "not a new image analysis", "PROJECT_DECISION");
+        assertThat(builder.repairResponseJsonSchema().get("required")).isEqualTo(List.of("terraformCode"));
+    }
+
     private ObjectContent source() {
         return new ObjectContent(
                 new ObjectMetadata("bucket", "key.png", "image/png", 3, "etag"),

@@ -1,6 +1,7 @@
 package com.terraformers.modernization.analysis.vertex;
 
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
+import com.terraformers.modernization.analysis.AnalysisInputClassification;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
 import com.terraformers.modernization.analysis.AnalysisProvider;
 import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
@@ -23,6 +24,7 @@ import com.terraformers.modernization.reference.OfficialKnowledgeCoverageCatalog
 import com.terraformers.modernization.reference.RetrievalMode;
 import com.terraformers.modernization.reference.RetrievalQueryTextBuilder;
 import com.terraformers.modernization.reference.VertexArchitectureFactsExtractor;
+import com.terraformers.modernization.reference.opensearch.ReferenceEvidenceSelector;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectReader;
 import com.terraformers.modernization.storage.ObjectReference;
@@ -116,13 +118,39 @@ public class VertexAnalysisProvider implements AnalysisProvider {
                 promptSchemaCandidates(retrieval.facts(), references));
         AnalysisGenerationResult generated =
                 generationStage.generate(context, source, references, schemaEvidence);
+        if (generated.inputClassification() != AnalysisInputClassification.ARCHITECTURE_DIAGRAM) {
+            throw new AnalysisInputRejectedException(generated.inputClassification(),
+                    generated.classificationConfidence(), generated.retryOccurred(), null);
+        }
         RequiredGroundingPolicy.requireForArchitecture(
                 properties.getRetrievalMode(), generated, references);
-        contractInspector.inspect(generated.terraformCode());
-        EvidenceQualityAssessment quality = assess(retrieval, generated.terraformCode());
+        String terraform = generated.terraformCode();
+        List<String> generatedTypes = contractInspector.resourceTypes(terraform).stream()
+                .filter(schemaCatalog::contains).toList();
+        Set<String> officialTypes = new LinkedHashSet<>();
+        references.stream().filter(ReferenceDocument::isOfficialProviderDocumentation)
+                .forEach(reference -> officialTypes.addAll(reference.resourceTypes()));
+        List<String> missing = generatedTypes.stream().filter(type -> !officialTypes.contains(type)).toList();
+        if (properties.getRetrievalMode() != RetrievalMode.DISABLED && !missing.isEmpty()) {
+            ReferenceQuery closureQuery = new ReferenceQuery(
+                    "Official AWS provider documentation for generated Terraform resources: " + String.join(", ", missing),
+                    missing, properties.getOpensearchMaxEvidence(), true);
+            List<ReferenceDocument> closure = referenceRetriever.retrieve(closureQuery);
+            Set<String> requested = new LinkedHashSet<>(retrieval.facts().resourceTypes());
+            requested.addAll(generatedTypes);
+            references = new ReferenceEvidenceSelector().merge(references, closure,
+                    List.copyOf(requested), properties.getOpensearchMaxEvidence());
+            Set<String> schemaCandidates = new LinkedHashSet<>(schemaEvidence.resourceTypes());
+            schemaCandidates.addAll(generatedTypes);
+            terraform = generationStage.repair(retrieval.facts(), generated, references,
+                    schemaCatalog.resolve(schemaCandidates));
+        }
+        // The final draft is inspected/assessed once; remaining gaps never trigger another cycle.
+        contractInspector.inspect(terraform);
+        EvidenceQualityAssessment quality = assess(retrieval, references, terraform);
         return new AnalysisResult(
                 generated.provider(),
-                generated.terraformCode(),
+                terraform,
                 generated.summary(),
                 generated.components(),
                 generated.relationships(),
@@ -132,13 +160,14 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         );
     }
 
-    private EvidenceQualityAssessment assess(RetrievalOutcome retrieval, String terraform) {
+    private EvidenceQualityAssessment assess(RetrievalOutcome retrieval,
+            List<ReferenceDocument> references, String terraform) {
         if (qualityAssessor == null || knowledgeCoverage == null) return null;
         List<String> resources = retrieval.facts().resourceTypes();
         return qualityAssessor.assess(new EvidenceQualityAssessor.Input(
                 EvidenceQualityAssessment.TechnicalStatus.PASS,
                 com.terraformers.modernization.analysis.AnalysisInputClassification.ARCHITECTURE_DIAGRAM,
-                resources, knowledgeCoverage.availableFor(resources, schemaCatalog), retrieval.references(),
+                resources, knowledgeCoverage.availableFor(resources, schemaCatalog), references,
                 terraform, ProjectDecisionApplicability.UNKNOWN, List.of()));
     }
 

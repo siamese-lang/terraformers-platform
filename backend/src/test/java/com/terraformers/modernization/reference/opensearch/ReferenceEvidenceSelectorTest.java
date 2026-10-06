@@ -256,6 +256,64 @@ class ReferenceEvidenceSelectorTest {
         assertThat(result).extracting(ReferenceDocument::id).containsExactly("alpha", "beta");
     }
 
+    @Test
+    void officialDocumentReplacesSchemaOnlyCoverageWithoutIncreasingBudget() {
+        var schema = document("schema", "PROVIDER_SCHEMA", 1, 100, "aws_alpha");
+        var official = official("official", "aws_alpha");
+        var selected = selector.select(List.of(candidate(schema, true, true, 0),
+                candidate(official, true, false, 1)), List.of(schema), List.of("aws_alpha"), 1, 1);
+        assertThat(selected).containsExactly(official);
+    }
+
+    @Test
+    void unsupportedDocumentTypeCannotBlockSupportedOfficialSelection() {
+        var invalidType = document("generic", "PROVIDER_DOCUMENTATION", 1, 100, "aws_alpha");
+        var example = new ReferenceDocument("example", "example", "content", 1,
+                "AWS_PROVIDER_EXAMPLE", List.of("aws_alpha"), "", "", "",
+                "PROVIDER_DOCUMENTATION", 1, List.of());
+        var selected = selector.select(List.of(candidate(invalidType, true, true, 0),
+                candidate(example, true, false, 1)), List.of(invalidType), List.of("aws_alpha"), 1, 1);
+        assertThat(selected).containsExactly(example);
+    }
+
+    @Test
+    void decisionPromotionCannotEvictSoleOfficialDocumentation() {
+        var official = official("official", "aws_alpha");
+        var schema = document("schema", "PROVIDER_SCHEMA", 1, 100, "aws_alpha");
+        var decision = document("decision", "PROJECT_DECISION", 1, 100, "aws_alpha");
+        var selected = selector.select(List.of(candidate(official, true, true, 0),
+                candidate(schema, true, true, 1), candidate(decision, false, false, 2)),
+                List.of(official, schema), List.of("aws_alpha"), 2, 2);
+        assertThat(selected).containsExactly(official, decision);
+    }
+
+    @Test
+    void closureMergePreservesDecisionsAndIdentityWhileGrowingOnlyToHardLimit() {
+        var alpha = official("alpha", "aws_alpha");
+        var beta = official("beta", "aws_beta");
+        var decision = document("decision", "PROJECT_DECISION", 1, 1, "aws_alpha");
+        var initial = List.of(alpha, decision, alpha);
+        var result = selector.merge(initial, List.of(alpha, beta), List.of("aws_alpha", "aws_beta"), 3);
+        assertThat(result).containsExactly(alpha, decision, beta);
+        assertThat(selector.merge(initial, List.of(alpha, beta), List.of("aws_alpha", "aws_beta"), 3))
+                .isEqualTo(result);
+        assertThat(selector.merge(List.of(alpha, decision), List.of(beta), List.of("aws_alpha", "aws_beta"), 2))
+                .containsExactly(alpha, decision);
+    }
+
+    @Test
+    void retainsInitialGenericReferencesWhenClosureFitsBudget() {
+        var schema = document("schema", "PROVIDER_SCHEMA", 1, 1, "aws_alpha");
+        var documentation = official("official", "aws_alpha");
+        assertThat(selector.merge(List.of(schema), List.of(documentation), List.of("aws_alpha"), 2))
+                .containsExactly(schema, documentation);
+    }
+
+    private ReferenceDocument official(String id, String resource) {
+        return new ReferenceDocument(id, id, "official content", 1, "AWS_PROVIDER_DOC", List.of(resource),
+                "", "5.100.0", "any-corpus", "PROVIDER_DOCUMENTATION", 1, List.of());
+    }
+
     private List<ReferenceDocument> select(
             List<ReferenceEvidenceSelector.Candidate> candidates,
             List<ReferenceDocument> global,

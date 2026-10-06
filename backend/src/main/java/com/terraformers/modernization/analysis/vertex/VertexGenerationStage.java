@@ -51,20 +51,17 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
             ObjectContent source,
             List<ReferenceDocument> references
     ) {
-        List<ReferenceDocument> safeReferences = references == null ? List.of() : List.copyOf(references);
-        AwsProviderSchemaEvidence schemaEvidence = new AwsProviderSchemaEvidence(Map.of());
-        try {
-            return invoke(source, safeReferences, schemaEvidence, false, false);
-        } catch (VertexOutputTruncatedException exception) {
-            return invoke(source, safeReferences, schemaEvidence, true, true);
-        }
+        return generate(context, source, references, new AwsProviderSchemaEvidence(Map.of()));
     }
 
     public AnalysisGenerationResult generate(AnalysisRequestContext context, ObjectContent source,
             List<ReferenceDocument> references, AwsProviderSchemaEvidence schemaEvidence) {
         List<ReferenceDocument> safeReferences = references == null ? List.of() : List.copyOf(references);
-        // This production path reserves the second call for one grounding repair.
-        return invoke(source, safeReferences, schemaEvidence, false, false);
+        try {
+            return invoke(source, safeReferences, schemaEvidence, false, false);
+        } catch (VertexOutputTruncatedException exception) {
+            return invoke(source, safeReferences, schemaEvidence, true, true);
+        }
     }
 
     GenerateContentConfig generationConfig() {

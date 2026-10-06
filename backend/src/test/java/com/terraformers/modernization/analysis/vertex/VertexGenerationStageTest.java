@@ -152,12 +152,44 @@ class VertexGenerationStageTest {
     }
 
     @Test
-    void groundedGenerationTruncationDoesNotSpendReservedRepairCall() {
+    void groundedGenerationRetriesExactlyOnceInCompactModeAfterTruncation() {
         RecordingStage stage = new RecordingStage(1);
+
+        AnalysisGenerationResult result = stage.generate(context(), source(), List.of(reference()),
+                new AwsProviderSchemaEvidence(java.util.Map.of("aws_vpc", "cidr_block: string (optional)")));
+
+        assertThat(stage.invocations).containsExactly(
+                new Invocation(false, false),
+                new Invocation(true, true));
+        assertThat(result.retryOccurred()).isTrue();
+    }
+
+    @Test
+    void repeatedGroundedGenerationTruncationStopsAfterTwoCalls() {
+        RecordingStage stage = new RecordingStage(2);
+
         assertThatThrownBy(() -> stage.generate(context(), source(), List.of(reference()),
                 new AwsProviderSchemaEvidence(java.util.Map.of())))
                 .isInstanceOf(VertexOutputTruncatedException.class);
-        assertThat(stage.invocations).containsExactly(new Invocation(false, false));
+
+        assertThat(stage.invocations).containsExactly(
+                new Invocation(false, false),
+                new Invocation(true, true));
+    }
+
+    @Test
+    void groundedGenerationDoesNotRetryNonTruncationFailures() {
+        for (FinishReason.Known reason : List.of(FinishReason.Known.SAFETY,
+                FinishReason.Known.OTHER, FinishReason.Known.STOP)) {
+            RepairStage stage = new RepairStage("not-json", reason);
+
+            assertThatThrownBy(() -> stage.generate(context(), source(), List.of(reference()),
+                    new AwsProviderSchemaEvidence(java.util.Map.of())))
+                    .isInstanceOf(reason == FinishReason.Known.SAFETY
+                            ? AnalysisProviderFailureException.class : VertexResponseFormatException.class);
+
+            assertThat(stage.calls).isEqualTo(1);
+        }
     }
 
     @Test

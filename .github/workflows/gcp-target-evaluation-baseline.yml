@@ -20,6 +20,15 @@ on:
           - case-a-holdout
           - case-a-a3-retrieval-probe
           - adaptive-retrieval-probe
+          - a7-7-v4-production-evaluation
+      backend_image:
+        description: Exact immutable backend image used as the A7-7 v4 evaluation toolchain.
+        required: false
+        type: string
+      backend_source_sha:
+        description: Source SHA embedded in the immutable backend image for A7-7 v4 evaluation.
+        required: false
+        type: string
       confirmation:
         description: Use the scope-specific explicit confirmation token.
         required: true
@@ -38,7 +47,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: gcp-target-apply
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
       TARGET_PROJECT: terraformers-platform
@@ -48,6 +57,7 @@ jobs:
       TARGET_KSA: terraformers-backend
       BASELINE_POD: terraformers-evaluation-baseline
       OPENSEARCH_SERVICE: terraformers-opensearch
+      A7_7_V4_CORPUS_CHECKSUM: da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a
 
     steps:
       - uses: actions/checkout@v5
@@ -59,6 +69,8 @@ jobs:
           EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
           WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
           APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
         run: |
           set -euo pipefail
           [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
@@ -115,6 +127,23 @@ jobs:
                 echo 'Adaptive retrieval probe requires confirmation RUN_ADAPTIVE_RETRIEVAL_PROBE.' >&2
                 exit 1
               }
+              ;;
+            a7-7-v4-production-evaluation)
+              [[ "$CONFIRMATION" == RUN_A7_7_V4_PRODUCTION_EVALUATION ]] || {
+                echo 'A7-7 v4 evaluation requires confirmation RUN_A7_7_V4_PRODUCTION_EVALUATION.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]] || {
+                echo 'A7-7 v4 evaluation requires the exact immutable backend image digest.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+                echo 'A7-7 v4 evaluation requires a full backend source SHA.' >&2
+                exit 1
+              }
+              echo 'A7_7_V4_EVALUATION=true' >> "$GITHUB_ENV"
+              echo "A7_7_BACKEND_IMAGE=$BACKEND_IMAGE" >> "$GITHUB_ENV"
+              echo "A7_7_BACKEND_SOURCE_SHA=$BACKEND_SOURCE_SHA" >> "$GITHUB_ENV"
               ;;
             *)
               echo "Unsupported evaluation scope: $EVALUATION_SCOPE" >&2

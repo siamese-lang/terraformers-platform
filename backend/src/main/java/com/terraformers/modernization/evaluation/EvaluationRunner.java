@@ -445,7 +445,8 @@ public class EvaluationRunner {
                 new ValidationCheck(
                         terraformValidatorName,
                         validation.valid(),
-                        validation.reason()
+                        validation.reason(),
+                        validation.diagnosticSummary()
                 ),
                 List.of()
         );
@@ -463,7 +464,7 @@ public class EvaluationRunner {
                     evidence,
                     new EvaluationFailure(
                             EvaluationStage.VALIDATION,
-                            EvaluationFailureCategory.TERRAFORM_STRUCTURAL_VALIDATION,
+                            validationFailureCategory(validation),
                             validation.reason()
                     )
             );
@@ -478,6 +479,20 @@ public class EvaluationRunner {
                 generationTrace,
                 validationTrace
         );
+    }
+
+    static EvaluationFailureCategory validationFailureCategory(TerraformDraftValidation validation) {
+        String reason = validation == null || validation.reason() == null ? "" : validation.reason();
+        if (reason.startsWith("AWS_PROVIDER_CONTRACT:")) {
+            return EvaluationFailureCategory.TERRAFORM_PROVIDER_CONTRACT;
+        }
+        if (reason.startsWith("INIT_") || reason.startsWith("PROVIDER_CLOSURE:")) {
+            return EvaluationFailureCategory.TERRAFORM_INIT_CONFIGURATION;
+        }
+        if (reason.startsWith("VALIDATE_")) {
+            return EvaluationFailureCategory.TERRAFORM_EXECUTABLE_VALIDATION;
+        }
+        return EvaluationFailureCategory.TERRAFORM_STRUCTURAL_VALIDATION;
     }
 
     private EvaluationTrace trace(

@@ -1,0 +1,172 @@
+work_package:
+  id: product-trust-pt-2-current-system-realistic-live-baseline-v1
+  program: product-trust-v1
+  phase: PT-2
+  status: PROCEDURE_FROZEN
+  approved_base_sha: 3caae454661d21d84c3e469a7d76aff5633d5b26
+  execution_base_sha: 3caae454661d21d84c3e469a7d76aff5633d5b26
+  activated_at: "2026-10-06T12:45:08Z"
+  authorization:
+    authority: USER
+    live_realistic_baseline: APPROVED
+    existing_protected_workflow_extension: APPROVED
+    approval_source: Explicit instructions in the current product-trust-v1 conversation on 2026-10-06
+    merge_authorized: false
+    pt3_authorized: false
+  activation:
+    main_read_count_at_activation: 1
+    main_drift: HUMAN_REQUIRED
+    rule: >
+      Preserve this execution_base_sha and this Work Package across the required workflow merge
+      checkpoint. Do not rebase, refresh main or replace the PR. The explicitly approved merge of
+      this bounded workflow change is a checkpoint transition, not an implicit execution-base
+      rebind. Record its resulting trusted dispatch SHA separately on resume; unrelated main drift
+      requires HUMAN_REQUIRED before dispatch. Inspect structured PR review feedback first.
+  objective: >
+    Measure the unchanged current production-equivalent system against frozen realistic truth,
+    preserving natural failures and identifying the earliest independently supported divergence.
+    Preparation is not a completed baseline and CI success is not acceptance.
+  dataset:
+    directory: evaluation/terraformers-realistic-v1
+    revision: 3
+    identity_sha256: 04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014
+    truth_authority: .agents/state/product-trust-v1.json#truthFreezeApproval
+    immutable: true
+    cases: 10
+    architecture_cases: 6
+    ambiguous_cases: 2
+    non_architecture_cases: 2
+  measurement:
+    protocol: docs/evaluation/product-trust-pt-2-measurement-protocol.md
+    procedure_version: pt2-realistic-baseline-v1
+    protocol_sha256: a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae
+    frozen_before_baseline_outcomes: true
+    workflow: .github/workflows/gcp-target-evaluation-baseline.yml
+    scope: pt2-realistic-baseline
+    confirmation: RUN_PT2_REALISTIC_BASELINE
+    representative_path: existing broad-v4 LiveEvaluationLauncher productionEquivalentRunner
+    repetition: one sequential invocation per case in frozen manifest order
+    outer_retries: 0
+    workflow_reruns_after_any_case_started: prohibited_without_new_explicit_human_authorization
+    per_case_timeout_seconds: 420
+    production_internal_retry_and_closure_behavior: unchanged
+    truthful_observability: >
+      The existing standalone runner exposes rich pipeline trace, not an authenticated durable
+      AnalysisJob. Persisted/user-visible state and accepted-to-terminal latency are NOT_MEASURED
+      by this path. Source-based projections must be labeled and never substituted for actual
+      persistence. This gap remains an original acceptance blocker, not an approved waiver.
+  allowed_paths:
+    - .agents/work-packages/product-trust-pt-2-current-system-realistic-live-baseline-v1.yml
+    - .agents/state/product-trust-v1.json
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-pt-2-*.md
+    - docs/evidence/product-trust-pt-2/**
+    - .github/workflows/gcp-target-evaluation-baseline.yml
+    - scripts/evaluation/pt2-realistic-baseline.py
+    - scripts/evaluation/test_pt2_realistic_baseline.py
+    - backend/src/main/java/com/terraformers/modernization/evaluation/LiveEvaluationLauncher.java
+    - backend/src/main/java/com/terraformers/modernization/evaluation/EvaluationRunner.java
+    - backend/src/test/java/com/terraformers/modernization/evaluation/LiveEvaluationLauncherTest.java
+    - backend/src/test/java/com/terraformers/modernization/evaluation/ProductionEquivalentClosureEvaluationTest.java
+  evaluation_harness_exception: >
+    Only PT-2 may explicitly request initial evidence budget 16 to match unchanged production.
+    Existing scopes retain their historical limit 8. No scorer, threshold, provider, prompt,
+    evidence selection or production retrieval implementation may change.
+  allowed_actions:
+    - read_authority_PR_feedback_and_existing_runtime_contracts
+    - create_one_task_branch_at_bound_base
+    - freeze_measurement_procedure_before_baseline_outcomes
+    - edit_only_allowed_paths_for_existing_workflow_scope_and_observational_harness
+    - run_proportional_deterministic_tests_and_checks
+    - commit_push_and_open_or_update_one_PT_2_PR
+    - inspect_CI_without_treating_green_as_acceptance
+    - execute_one_frozen_live_batch_only_after_required_workflow_merge_checkpoint
+    - preserve_raw_partial_and_failure_evidence_and_run_unchanged_deterministic_reports
+    - update_durable_phase_and_evidence_state_without_transient_PR_lifecycle
+    - one_bounded_mechanical_harness_repair_for_the_same_failure_class
+  prohibited_actions:
+    - merge_without_explicit_human_authority
+    - direct_main_write_rebase_or_execution_base_rebind
+    - add_GCP_credentials_to_Codex_environment
+    - repeat_failed_case_or_rerun_until_green
+    - tune_truth_prompt_model_retrieval_or_scorer_from_outcomes
+    - start_PT_3
+    - rollout_reindex_IAM_expansion_or_retained_runtime_teardown
+  prohibited_changes:
+    - frozen_dataset_or_truth
+    - prompts_models_retrieval_RAG_or_quality_behavior
+    - scoring_thresholds_or_existing_evaluator_policy
+    - production_code
+    - new_workflow
+    - infrastructure_IAM_security_boundary_or_runtime_rollout
+    - retained_runtime_teardown
+    - transient_GitHub_PR_or_branch_lifecycle_in_durable_program_state
+  runtime_contract:
+    credential_path: existing protected gcp-target-apply GitHub Actions WIF only
+    cluster: terraformers-target
+    namespace: terraformers-target
+    corpus: terraformers-reference-v4
+    corpus_checksum: da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a
+    expected_documents: 5395
+    embedding_model: gemini-embedding-2
+    vector_dimension: 1536
+    generation_model: gemini-3.8-flash
+    provider_version: 5.100.0
+    terraform_version: 1.8.5
+    top_k: 8
+    max_output_tokens: 8192
+    pinning: >
+      Before inference verify retained deployment image/source/configuration against exact dispatch
+      source, evaluation toolchain and these existing broad-v4 values. Abort on mismatch; never
+      roll out, mutate backend configuration, reindex or silently choose a different model.
+    permitted_cleanup: only the ephemeral evaluation pod created by this run
+  required_evidence:
+    - immutable_procedure_dataset_runtime_and_source_identities
+    - every_case_attempt_record_including_failure_timeout_and_unstarted_cases
+    - raw_fact_retrieval_generation_closure_validation_trace_when_available
+    - initial_and_final_Terraform_and_provider_reference_metadata
+    - unchanged_deterministic_exact_string_reports_plus_separate_semantic_truth_review
+    - classification_component_relationship_resource_intent_and_topology_fidelity
+    - retrieval_sufficiency_and_provider_schema_executable_result
+    - actual_persisted_and_user_visible_trust_or_explicit_unmeasured_blocker
+    - false_trusted_success_findings_with_backend_and_UI_claims_separated
+    - measured_stage_and_pipeline_latency_separate_from_unmeasured_accepted_to_terminal_latency
+    - aggregate_denominators_censored_times_and_concrete_failure_classes
+  acceptance_criteria:
+    - frozen_identity_and_all_pinned_bytes_preserved
+    - procedure_and_repetition_frozen_before_new_baseline_outcomes
+    - unchanged_production_equivalent_configuration_proven_by_read_only_preflight
+    - all_ten_cases_accounted_for_without_rerun_until_green
+    - failures_preserved_and_pipeline_failure_class_distinguishable_where_observable
+    - per_case_and_aggregate_original_objective_dimensions_reported_without_fabrication
+    - persisted_user_visible_trust_and_accepted_to_terminal_observability_gap_resolved_or_independently_reviewed_as_incomplete
+    - no_PT3_quality_improvement_or_teardown
+    - one_Work_Package_branch_and_PR_for_preparation_then_results
+    - independent_review_required_before_phase_completion
+  validation:
+    - existing_EvaluationDatasetLoaderTest
+    - deterministic_harness_tests_without_model_or_GCP_calls
+    - workflow_YAML_and_embedded_shell_syntax
+    - pinned_dataset_and_procedure_SHA256
+    - git_diff_scope_audit_and_git_diff_check
+  auto_repair_limit: 1
+  auto_repairs_used: 0
+  human_authorized_corrective_iterations: 0
+  stop_on:
+    - unrelated_MAIN_DRIFT
+    - MERGE_CHECKPOINT
+    - execution_configuration_or_dataset_identity_mismatch
+    - required_IAM_or_security_boundary_expansion
+    - second_autonomous_repair_or_changed_failure_class
+    - additional_model_run_or_failed_case_repeat_not_authorized
+    - missing_original_acceptance_evidence
+    - independent_review_checkpoint
+  completion:
+    preparation_result: FROZEN_MEASUREMENT_READY_FOR_WORKFLOW_MERGE_REVIEW
+    current_human_gate: MERGE_CHECKPOINT
+    baseline_complete: false
+    model_under_test_case_runs: 0
+    live_cloud_actions: 0
+    next_phase: PT-3
+    next_phase_authorized: false

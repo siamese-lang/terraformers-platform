@@ -43,6 +43,7 @@ public final class LiveEvaluationLauncher {
         ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
         LoadedEvaluationDataset loaded = select(
                 new EvaluationDatasetLoader(objectMapper).load(configuration.datasetFile()), configuration);
+        int initialEvidenceBudget = initialEvidenceBudget(configuration, loaded, System.getenv());
 
         VertexRuntimeProperties vertex = vertexProperties(configuration);
         AnalysisRuntimeProperties analysis = analysisProperties(configuration);
@@ -71,7 +72,7 @@ public final class LiveEvaluationLauncher {
                     vertexGenerationStage, referenceRetriever, analysis, schemaCatalog, contractInspector);
             runner = productionEquivalentRunner(factsExtractor, queryTextBuilder, referenceRetriever,
                     groundedGeneration, draftValidator, contractInspector, cliValidator,
-                    configuration.retrievalMode(), configuration.identity());
+                    configuration.retrievalMode(), configuration.identity(), initialEvidenceBudget);
         } else {
             runner = new EvaluationRunner(
                     factsExtractor,
@@ -96,9 +97,31 @@ public final class LiveEvaluationLauncher {
             VertexGroundedGenerationOrchestrator groundedGeneration, TerraformDraftValidator draftValidator,
             GeneratedTerraformContractInspector contractInspector, TerraformCliValidator cliValidator,
             RetrievalMode retrievalMode, EvaluationTrace.ConfigurationIdentity identity) {
+        return productionEquivalentRunner(factsExtractor, queryTextBuilder, referenceRetriever,
+                groundedGeneration, draftValidator, contractInspector, cliValidator, retrievalMode,
+                identity, identity.topK());
+    }
+
+    static EvaluationRunner productionEquivalentRunner(ArchitectureFactsExtractor factsExtractor,
+            RetrievalQueryTextBuilder queryTextBuilder, ReferenceRetriever referenceRetriever,
+            VertexGroundedGenerationOrchestrator groundedGeneration, TerraformDraftValidator draftValidator,
+            GeneratedTerraformContractInspector contractInspector, TerraformCliValidator cliValidator,
+            RetrievalMode retrievalMode, EvaluationTrace.ConfigurationIdentity identity, int initialEvidenceBudget) {
         return new EvaluationRunner(factsExtractor, queryTextBuilder, referenceRetriever, groundedGeneration,
                 candidate -> productionEquivalentValidation(candidate, draftValidator, contractInspector, cliValidator),
-                "ProductionEquivalentTerraformValidator", retrievalMode, identity);
+                "ProductionEquivalentTerraformValidator", retrievalMode, identity, initialEvidenceBudget);
+    }
+
+    static int initialEvidenceBudget(LiveEvaluationConfiguration configuration,
+            LoadedEvaluationDataset loaded, Map<String, String> environment) {
+        String explicit = environment.get("EVALUATION_INITIAL_EVIDENCE_BUDGET");
+        if (explicit == null) return configuration.topK();
+        if (!configuration.isBroadV4()
+                || !loaded.dataset().datasetVersion().equals("terraformers-realistic-v1")
+                || !explicit.equals("16")) {
+            throw new IllegalArgumentException("explicit initial evidence budget is limited to PT-2 broad-v4 / 16");
+        }
+        return 16;
     }
 
     static TerraformDraftValidation productionEquivalentValidation(

@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       evaluation_scope:
-        description: Run M3, one M4-2 reproduction, one Case A baseline/holdout, the A3 probe, or the adaptive retrieval probe.
+        description: Run a bounded baseline/probe, including the frozen PT-2 realistic baseline.
         required: true
         type: choice
         default: m3-full-baseline
@@ -22,12 +22,13 @@ on:
           - adaptive-retrieval-probe
           - a7-7-v4-production-evaluation
           - a7-7-v4-artifact-rescore
+          - pt2-realistic-baseline
       backend_image:
-        description: Exact immutable backend image used as the A7-7 v4 evaluation toolchain.
+        description: Exact immutable retained backend image for broad-v4/PT-2 evaluation.
         required: false
         type: string
       backend_source_sha:
-        description: Source SHA embedded in the immutable backend image for A7-7 v4 evaluation.
+        description: Source SHA embedded in the immutable backend image for broad-v4/PT-2 evaluation.
         required: false
         type: string
       confirmation:
@@ -89,6 +90,16 @@ jobs:
             exit 1
           }
           case "$EVALUATION_SCOPE" in
+            pt2-realistic-baseline)
+              [[ "$CONFIRMATION" == RUN_PT2_REALISTIC_BASELINE ]]
+              [[ "$GITHUB_RUN_ATTEMPT" == 1 ]] || {
+                echo 'PT-2 forbids workflow reruns; preserve the original case attempts.' >&2
+                exit 1
+              }
+              [[ "$BACKEND_IMAGE" =~ ^asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}$ ]]
+              [[ "$BACKEND_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+              echo 'A7_7_V4_EVALUATION=true' >> "$GITHUB_ENV"
+              ;;
             m3-full-baseline)
               [[ "$CONFIRMATION" == RUN_M3_4_BASELINE ]] || {
                 echo 'M3-4 baseline requires confirmation RUN_M3_4_BASELINE.' >&2
@@ -189,8 +200,13 @@ jobs:
           cache: maven
 
       - name: Build bounded evaluation bundle
+        env:
+          EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
         run: |
           set -euo pipefail
+          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
+            python3 scripts/evaluation/pt2-realistic-baseline.py verify
+          fi
           mvn -q -f backend/pom.xml -DskipTests package dependency:copy-dependencies             -DincludeScope=runtime
 
           bundle_root="${RUNNER_TEMP}/live-baseline-bundle"
@@ -202,6 +218,9 @@ jobs:
           cp -a evaluation/terraformers-eval-holdout-v1 "$bundle_root/evaluation/"
           cp evaluation/case-a-a3-fixed-facts-v1.json "$bundle_root/evaluation/"
           cp -a evaluation/adaptive-retrieval-v1 "$bundle_root/evaluation/"
+          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
+            cp -a evaluation/terraformers-realistic-v1 "$bundle_root/evaluation/"
+          fi
 
           (
             cd "$bundle_root"
@@ -311,6 +330,7 @@ jobs:
           done
 
       - name: Apply only the backend Kubernetes ServiceAccount
+        if: inputs.evaluation_scope != 'pt2-realistic-baseline'
         run: |
           set -euo pipefail
           kubectl -n "$TARGET_NAMESPACE" apply             -f infra/kubernetes/base/backend-serviceaccount.yaml
@@ -324,12 +344,88 @@ jobs:
           )"
           [[ "$service_type" == ClusterIP ]]
 
-      - name: Start ephemeral Java baseline pod
+      - name: Verify retained PT-2 backend identity and configuration without mutation
+        if: inputs.evaluation_scope == 'pt2-realistic-baseline'
         env:
           BACKEND_IMAGE: ${{ inputs.backend_image }}
+          BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
         run: |
           set -euo pipefail
-          kubectl -n "$TARGET_NAMESPACE" delete pod "$BASELINE_POD"             --ignore-not-found=true --wait=true
+          output_dir="${RUNNER_TEMP}/pt2-realistic-baseline"
+          mkdir -p "$output_dir"
+          git fetch --no-tags origin "$BACKEND_SOURCE_SHA"
+          git diff --quiet "$BACKEND_SOURCE_SHA" "$GITHUB_SHA" -- backend/src/main backend/pom.xml backend/Dockerfile \
+            ':(exclude)backend/src/main/java/com/terraformers/modernization/evaluation/**' || {
+            echo 'Retained backend production source differs from trusted dispatch source.' >&2
+            exit 1
+          }
+          kubectl -n "$TARGET_NAMESPACE" get deployment terraformers-backend -o json \
+            | jq '{generation:.metadata.generation, observedGeneration:.status.observedGeneration,
+                   replicas:.spec.replicas, readyReplicas:.status.readyReplicas,
+                   availableReplicas:.status.availableReplicas,
+                   images:[.spec.template.spec.containers[] | {name,image}]}' \
+            > "$output_dir/retained-deployment.json"
+          jq -e --arg image "$BACKEND_IMAGE" '
+            .generation == .observedGeneration and .replicas == 1 and .readyReplicas == 1
+            and .availableReplicas == 1 and any(.images[]; .name == "backend" and .image == $image)
+          ' "$output_dir/retained-deployment.json" >/dev/null
+          source_sha="$(kubectl -n "$TARGET_NAMESPACE" exec deployment/terraformers-backend -c backend -- printenv BUILD_SOURCE_REVISION)"
+          [[ "$source_sha" == "$BACKEND_SOURCE_SHA" ]]
+          kubectl -n "$TARGET_NAMESPACE" exec deployment/terraformers-backend -c backend -- sh -c '
+            for key in SPRING_PROFILES_ACTIVE GOOGLE_CLOUD_PROJECT GOOGLE_CLOUD_LOCATION \
+              ANALYSIS_PROVIDER EMBEDDING_PROVIDER RETRIEVAL_MODE OPENSEARCH_ENDPOINT \
+              INDEX_NAME VECTOR_FIELD_NAME CONTENT_FIELD_NAME CORPUS_VERSION PROVIDER_VERSION \
+              EXPECTED_VECTOR_DIMENSION OPENSEARCH_TOP_K VERTEX_GENERATION_MODEL_ID \
+              VERTEX_EMBEDDING_MODEL_ID VERTEX_EMBEDDING_DIMENSION VERTEX_MAX_OUTPUT_TOKENS \
+              TERRAFORMERS_ANALYSIS_OPENSEARCH_MAX_EVIDENCE \
+              TERRAFORMERS_ANALYSIS_VERTEX_GENERATION_THINKING_LEVEL; do
+              value=$(printenv "$key" || true)
+              printf "%s=%s\n" "$key" "$value"
+            done
+            if [ -n "${SPRING_APPLICATION_JSON:-}" ]; then
+              printf "UNSUPPORTED_SPRING_APPLICATION_JSON=true\n"
+            fi
+          ' > "$output_dir/retained-configuration.txt"
+          python3 - "$output_dir" "$GITHUB_SHA" "$BACKEND_SOURCE_SHA" "$BACKEND_IMAGE" <<'PY'
+          import importlib.util, json, pathlib, sys
+          spec = importlib.util.spec_from_file_location("pt2", "scripts/evaluation/pt2-realistic-baseline.py")
+          pt2 = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(pt2)
+          output = pathlib.Path(sys.argv[1])
+          values = dict(line.split("=", 1) for line in (output / "retained-configuration.txt").read_text().splitlines())
+          assert values["SPRING_PROFILES_ACTIVE"].split(",")[-1] == "gcp-target"
+          configured = {"GOOGLE_CLOUD_PROJECT", "VERTEX_EMBEDDING_MODEL_ID", "INDEX_NAME", "CORPUS_VERSION", "EXPECTED_VECTOR_DIMENSION"}
+          for key, expected in pt2.PROFILE.items():
+              observed = values.get(key) or (None if key in configured else expected)
+              assert observed == expected, f"Retained configuration mismatch: {key}"
+          assert values["VERTEX_EMBEDDING_DIMENSION"] == "1536"
+          assert values["TERRAFORMERS_ANALYSIS_OPENSEARCH_MAX_EVIDENCE"] in ("", "16")
+          assert not values["TERRAFORMERS_ANALYSIS_VERTEX_GENERATION_THINKING_LEVEL"]
+          assert "UNSUPPORTED_SPRING_APPLICATION_JSON" not in values
+          pt2.write_json(output / "runtime-identity.json", {
+              "dispatchSha": sys.argv[2], "backendSourceSha": sys.argv[3], "backendImage": sys.argv[4],
+              "productionSourceEquivalent": True, "configurationVerified": True,
+              "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+              "initialEvidenceBudget": 16,
+              "protocolSha256": pt2.digest(pathlib.Path("docs/evaluation/product-trust-pt-2-measurement-protocol.md")),
+          })
+          PY
+
+      - name: Start ephemeral Java baseline pod
+        id: start-baseline
+        env:
+          BACKEND_IMAGE: ${{ inputs.backend_image }}
+          EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
+            [[ -z "$(kubectl -n "$TARGET_NAMESPACE" get pod "$BASELINE_POD" --ignore-not-found -o name)" ]] || {
+              echo 'PT-2 will not replace a pre-existing evaluation pod.' >&2
+              exit 1
+            }
+          else
+            kubectl -n "$TARGET_NAMESPACE" delete pod "$BASELINE_POD" --ignore-not-found=true --wait=true
+          fi
 
           evaluation_image='eclipse-temurin:17-jdk-jammy'
           if [[ "${A7_7_V4_EVALUATION:-false}" == true ]]; then
@@ -371,6 +467,7 @@ jobs:
           EOF
 
           kubectl -n "$TARGET_NAMESPACE" apply -f "${RUNNER_TEMP}/baseline-pod.yaml"
+          echo 'created=true' >> "$GITHUB_OUTPUT"
 
           if ! kubectl -n "$TARGET_NAMESPACE" wait             --for=condition=Ready "pod/${BASELINE_POD}"             --timeout=5m; then
             echo 'Evaluation baseline pod did not become Ready; capturing bounded diagnostics.' >&2
@@ -417,10 +514,11 @@ jobs:
           '
 
       - name: Verify A7-7 v4 production-equivalent substrate
-        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation' || inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
+        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation' || inputs.evaluation_scope == 'a7-7-v4-artifact-rescore' || inputs.evaluation_scope == 'pt2-realistic-baseline'
         env:
           BACKEND_IMAGE: ${{ inputs.backend_image }}
           BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+          EVALUATION_SCOPE: ${{ inputs.evaluation_scope }}
         run: |
           set -euo pipefail
           [[ "$(kubectl -n "$TARGET_NAMESPACE" get pod "$BASELINE_POD" -o jsonpath='{.spec.containers[0].image}')" == "$BACKEND_IMAGE" ]]
@@ -440,6 +538,10 @@ jobs:
             and .["terraformers-reference-v4"].mappings._meta.terraformers_corpus.corpus_version == "terraformers-reference-v4"
             and .["terraformers-reference-v4"].mappings._meta.terraformers_corpus.checksum == $checksum
           ' <<< "$mapping_json" >/dev/null
+          if [[ "$EVALUATION_SCOPE" == pt2-realistic-baseline ]]; then
+            printf '%s\n' "$count_json" > "${RUNNER_TEMP}/pt2-realistic-baseline/opensearch-count.json"
+            printf '%s\n' "$mapping_json" > "${RUNNER_TEMP}/pt2-realistic-baseline/opensearch-mapping.json"
+          fi
 
       - name: Rescore frozen A7-7 artifact without AI calls
         if: inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
@@ -1219,6 +1321,62 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+      - name: Run frozen PT-2 realistic cases exactly once
+        if: inputs.evaluation_scope == 'pt2-realistic-baseline'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- timeout --version >/dev/null
+          python3 scripts/evaluation/pt2-realistic-baseline.py run \
+            --run-id="pt2-realistic-${GITHUB_RUN_ID}" \
+            --output="${RUNNER_TEMP}/pt2-realistic-baseline/cases"
+
+      - name: Score captured PT-2 traces without further model calls
+        if: always() && inputs.evaluation_scope == 'pt2-realistic-baseline'
+        run: |
+          set -euo pipefail
+          output_dir="${RUNNER_TEMP}/pt2-realistic-baseline"
+          if [[ -s "$output_dir/cases/raw.json" ]]; then
+            kubectl -n "$TARGET_NAMESPACE" exec -i "$BASELINE_POD" -- \
+              sh -c 'cat > /tmp/pt2-captured-raw.json' < "$output_dir/cases/raw.json"
+            for mode in report calibrate; do
+              kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+                -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+                com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+                --mode="$mode" --result=/tmp/pt2-captured-raw.json \
+                --dataset=/tmp/workspace/evaluation/terraformers-realistic-v1/dataset.json \
+                --output="/tmp/pt2-${mode}.json"
+              kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat "/tmp/pt2-${mode}.json" \
+                > "$output_dir/${mode}.json"
+            done
+          fi
+          {
+            echo '## PT-2 realistic baseline evidence'
+            echo '- Frozen revision 3; one invocation per case; natural failures are retained.'
+            echo '- Raw pipeline traces and unchanged deterministic reports are diagnostic evidence.'
+            echo '- Actual persisted/UI trust and accepted-to-terminal latency: NOT_MEASURED by this launcher.'
+            echo '- No phase completion or zero-false-trusted-success claim follows from CI success.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Seal PT-2 evidence inventory including partial failures
+        if: always() && inputs.evaluation_scope == 'pt2-realistic-baseline'
+        run: |
+          set -euo pipefail
+          output_dir="${RUNNER_TEMP}/pt2-realistic-baseline"
+          if [[ -d "$output_dir" ]]; then
+            python3 scripts/evaluation/pt2-realistic-baseline.py inventory --output="$output_dir"
+          fi
+
+      - name: Preserve PT-2 raw and partial evidence on every outcome
+        if: always() && inputs.evaluation_scope == 'pt2-realistic-baseline'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pt2-realistic-baseline-${{ github.run_id }}
+          path: ${{ runner.temp }}/pt2-realistic-baseline
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Run one Case A A3 fixed-facts retrieval comparison
         if: inputs.evaluation_scope == 'case-a-a3-retrieval-probe'
         run: |
@@ -1332,6 +1490,6 @@ jobs:
           retention-days: 90
 
       - name: Delete ephemeral evaluation baseline pod
-        if: always()
+        if: always() && (inputs.evaluation_scope != 'pt2-realistic-baseline' || steps.start-baseline.outputs.created == 'true')
         run: |
           kubectl -n "$TARGET_NAMESPACE" delete pod "$BASELINE_POD"             --ignore-not-found=true --wait=false || true

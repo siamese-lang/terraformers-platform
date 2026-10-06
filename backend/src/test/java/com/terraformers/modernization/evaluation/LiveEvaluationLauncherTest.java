@@ -166,6 +166,30 @@ class LiveEvaluationLauncherTest {
         assertThat(LiveEvaluationLauncher.class.getAnnotations()).isEmpty();
     }
 
+    @Test
+    void explicitProductionEvidenceBudgetIsBoundedToPt2AndLegacyScopesKeepEight() {
+        var realistic = new EvaluationDatasetLoader(objectMapper)
+                .load(Path.of("..", "evaluation", "terraformers-realistic-v1", "dataset.json"));
+        var broad = new LiveEvaluationConfiguration(
+                datasetPath(), Path.of("target/pt2.json"), "pt2", LiveEvaluationConfiguration.Mode.FULL, null,
+                "terraformers-platform", "global", "vertex", "vertex", RetrievalMode.REQUIRED,
+                "gemini-3.8-flash", "gemini-embedding-2", "http://terraformers-opensearch:9200",
+                "terraformers-reference-v4", "embedding", "content", "terraformers-reference-v4",
+                "5.100.0", 1536, 8, 8192);
+        var explicit = Map.of("EVALUATION_INITIAL_EVIDENCE_BUDGET", "16");
+
+        assertThat(LiveEvaluationLauncher.initialEvidenceBudget(broad, realistic, explicit)).isEqualTo(16);
+        assertThat(LiveEvaluationLauncher.initialEvidenceBudget(broad, loadDataset(), Map.of())).isEqualTo(8);
+        assertThatThrownBy(() -> LiveEvaluationLauncher.initialEvidenceBudget(broad, loadDataset(), explicit))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> LiveEvaluationLauncher.initialEvidenceBudget(
+                configuration("legacy", datasetPath(), Path.of("target/legacy.json")), realistic, explicit))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> LiveEvaluationLauncher.initialEvidenceBudget(
+                broad, realistic, Map.of("EVALUATION_INITIAL_EVIDENCE_BUDGET", "32")))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     private void assertInvalid(String key, String value) {
         Map<String, String> environment = new java.util.HashMap<>(environment());
         environment.put(key, value);

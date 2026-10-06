@@ -60,6 +60,7 @@ class ProductionEquivalentClosureEvaluationTest {
         EvaluationTrace trace = fixture.runner().run(dataset(positive()), "supported").traces().get(0);
 
         assertThat(trace.generation().status()).isEqualTo(EvaluationStageStatus.PASS);
+        assertThat(trace.retrieval().evidence().requestedTopK()).isEqualTo(8);
         assertThat(trace.generation().evidence().groundingClosure().closureAttempted()).isFalse();
         assertThat(trace.generation().evidence().groundingClosure().repairAttempted()).isFalse();
         assertThat(trace.generation().evidence().groundingClosure().finalSelectedReferences())
@@ -69,6 +70,22 @@ class ProductionEquivalentClosureEvaluationTest {
         verify(fixture.stage(), never()).repair(any(), any(), any(), any());
         verify(fixture.orchestrator(), times(1)).generate(any(), any(), any(), eq(List.of(bucket, decision)), any());
         verify(fixture.cli()).validate(BUCKET);
+    }
+
+    @Test
+    void pt2UsesProductionInitialBudgetWithoutChangingSearchTopKOrRepairBound() {
+        Fixture fixture = fixture(List.of(bucket, decision), List.of(bucket, instance), FIRST, REPAIRED, 16);
+        EvaluationTrace trace = fixture.runner().run(dataset(positive()), "pt2-budget").traces().get(0);
+
+        assertThat(trace.configuration().topK()).isEqualTo(8);
+        assertThat(trace.retrieval().evidence().requestedTopK()).isEqualTo(16);
+        ArgumentCaptor<ReferenceQuery> queries = ArgumentCaptor.forClass(ReferenceQuery.class);
+        verify(fixture.retriever(), times(2)).retrieve(queries.capture());
+        assertThat(queries.getAllValues().get(0).limit()).isEqualTo(16);
+        assertThat(queries.getAllValues().get(1).limit()).isEqualTo(16);
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
+        verify(fixture.cli(), times(1)).validate(REPAIRED);
     }
 
     @Test
@@ -185,6 +202,11 @@ class ProductionEquivalentClosureEvaluationTest {
 
     private Fixture fixture(List<ReferenceDocument> initial, List<ReferenceDocument> closure,
             String first, String repaired) {
+        return fixture(initial, closure, first, repaired, 8);
+    }
+
+    private Fixture fixture(List<ReferenceDocument> initial, List<ReferenceDocument> closure,
+            String first, String repaired, int initialEvidenceBudget) {
         ReferenceRetriever retriever = mock(ReferenceRetriever.class);
         when(retriever.retrieve(any())).thenReturn(initial, closure);
         VertexGenerationStage stage = mock(VertexGenerationStage.class);
@@ -216,7 +238,7 @@ class ProductionEquivalentClosureEvaluationTest {
                 source -> new ArchitectureRetrievalFacts("Bucket", List.of("Bucket"), List.of("Bucket -> app"),
                         List.of("aws_s3_bucket")),
                 new RetrievalQueryTextBuilder(), retriever, orchestrator, new TerraformDraftValidator(),
-                inspector, cli, RetrievalMode.REQUIRED, identity);
+                inspector, cli, RetrievalMode.REQUIRED, identity, initialEvidenceBudget);
         return new Fixture(runner, retriever, stage, orchestrator, cli);
     }
 

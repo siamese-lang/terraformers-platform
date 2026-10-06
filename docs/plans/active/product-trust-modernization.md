@@ -2,7 +2,7 @@
 
 ## Status
 
-**PROGRAM APPROVED — PT-1 COMPLETE / HUMAN_REQUIRED: LIVE_REALISTIC_BASELINE**
+**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 PROCEDURE FROZEN / HUMAN_REQUIRED: MERGE_CHECKPOINT**
 
 PT-1 is complete after [independent acceptance](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015807394) of candidate revision 3 and
 [explicit USER truth-freeze approval](https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324) at `2026-10-06T12:04:51Z`.
@@ -11,15 +11,23 @@ PR #241 merged at `d98d03367c5b63a5321311763e9852c53fe65eae`. The merge preceded
 The original PT-1 execution base `0bb244756c2a2e1d3d6d11d0342e98e155f8662c`, frozen candidate bytes, source/topology truth,
 original acceptance and repair history are retained.
 
-This repository-only state/document sync uses exact merged main `d98d03367c5b63a5321311763e9852c53fe65eae` as its separate base.
+PT-2 is explicitly approved by USER and activated on authoritative main
+`3caae454661d21d84c3e469a7d76aff5633d5b26`, bound once as its execution base.
+The [PT-2 Work Package](../../../.agents/work-packages/product-trust-pt-2-current-system-realistic-live-baseline-v1.yml)
+and [frozen measurement procedure](../../evaluation/product-trust-pt-2-measurement-protocol.md)
+prepare one bounded scope in the existing protected evaluation workflow. The main-only guard
+requires a human merge checkpoint before dispatch. No new workflow, credential path, production
+quality change or runtime rollout is authorized. PT-2 has made zero model/GCP calls.
+
+The standalone runner's actual persisted/UI trust and accepted-to-terminal observability gap is
+an original acceptance blocker. Pipeline success cannot stand in for those dimensions or establish
+zero false trusted successes. PT-2 remains incomplete and PT-3 remains unauthorized.
+
 See [PT-1 review evidence](../../evaluation/product-trust-pt-1-realistic-input-freeze.md) and
 [the immutable candidate images/truth](../../../evaluation/terraformers-realistic-v1/README.md).
-Current freeze authority is recorded outside the pinned candidate snapshot in durable state and
-review evidence; its historical NOT_APPROVED/null markers are not edited into a new identity.
-
-PT-2 is the next declared phase but remains blocked at **LIVE_REALISTIC_BASELINE**. No PT-2 Work
-Package, execution base, model run or live action is activated by this transition. Separate explicit
-user approval is still required. This state/document PR also has no automatic merge authority.
+Current freeze authority is recorded outside the pinned candidate snapshot; its historical
+NOT_APPROVED/null markers remain unchanged. No transient PR/branch lifecycle is registered as
+program state, and no separate state-sync/normalization PR is created for PT-2.
 
 This plan supersedes automatic progression to A7-8 and teardown. It does not invalidate repository
 evidence merely because it is old; it reclassifies each claim according to whether it proves an
@@ -124,7 +132,7 @@ repository-owned faithful test diagram rather than copying copyrighted artwork.
 
 ### PT-2 — Current-system realistic live baseline
 
-**Status: HUMAN_REQUIRED / LIVE_REALISTIC_BASELINE; not activated or executed.**
+**Status: LIVE_REALISTIC_BASELINE approved; PROCEDURE FROZEN / HUMAN_REQUIRED: MERGE_CHECKPOINT.**
 
 Use the frozen PT-1 dataset against the current production-equivalent path exactly once under a
 reviewed live checkpoint.

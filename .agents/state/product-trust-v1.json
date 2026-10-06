@@ -3,12 +3,12 @@
   "schemaVersion": 1,
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
-  "activationBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
-  "activePhase": null,
+  "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+  "activePhase": "PT-2",
   "lastCompletedPhase": "PT-1",
-  "activeWorkPackage": null,
+  "activeWorkPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
   "activePullRequest": null,
-  "humanGate": "LIVE_REALISTIC_BASELINE",
+  "humanGate": "MERGE_CHECKPOINT",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
@@ -24,13 +24,14 @@
     "Candidate revision 1 was rejected in human truth review. Explicitly authorized corrective iteration 1 prepared revision 2; original execution base and autonomous-repair count remain unchanged. Truth remains unapproved.",
     "Structured PR review of candidate 2 passed visual fidelity but required two truth-contract corrections. Human-authorized iteration 2 submits candidate 3 with unchanged fixture bytes; autonomous repairs remain 1 and truth remains unapproved.",
     "Historical candidate notes above describe preparation before approval. Independent review 6015807394 accepted candidate 3; explicit USER approval 6015857324 subsequently froze its exact identity and authorized PT-1 completion after PR #241 merged. PT-2 remains unapproved and unstarted.",
-    "Frozen dataset/identity/provenance bytes are immutable pre-approval snapshots. Current truth approval is recorded outside those pinned bytes in candidate/truthFreezeApproval and review evidence; their historical null approval or NOT_APPROVED markers do not replace the later explicit approval."
+    "Frozen dataset/identity/provenance bytes are immutable pre-approval snapshots. Current truth approval is recorded outside those pinned bytes in candidate/truthFreezeApproval and review evidence; their historical null approval or NOT_APPROVED markers do not replace the later explicit approval.",
+    "Current USER approval activates PT-2 on its own exact base without changing historical PT-1 freeze/repair evidence. Preparation has made zero model/GCP calls; one existing-workflow scope is prepared for merge review. Actual trust/accepted-to-terminal evidence remains an explicit blocker. No transient active PR/branch state is registered."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
-  "executionBaseSha": "0bb244756c2a2e1d3d6d11d0342e98e155f8662c",
-  "resultBeforeHumanGate": "PT_1_COMPLETE_PT_2_BLOCKED",
+  "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+  "resultBeforeHumanGate": "PT_2_PROCEDURE_FROZEN_WORKFLOW_MERGE_REQUIRED",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -50,9 +51,10 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "PT-2 remains blocked at LIVE_REALISTIC_BASELINE pending separate explicit user approval; no execution or Work Package activation"
+    "Existing protected workflow is main-only; bounded PT-2 scope requires a human merge checkpoint before dispatch.",
+    "Standalone production-equivalent launcher does not measure actual persisted/user-visible trust or accepted-to-terminal latency; original PT-2 acceptance remains unresolved."
   ],
-  "evidenceDocument": "docs/evaluation/product-trust-pt-1-realistic-input-freeze.md",
+  "evidenceDocument": "docs/evaluation/product-trust-pt-2-baseline-preparation.md",
   "validation": {
     "initialFocused": {
       "tests": 10,
@@ -121,7 +123,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "d98d03367c5b63a5321311763e9852c53fe65eae",
+  "lastObservedMainSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -203,8 +205,8 @@
   },
   "lastCompletedWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
   "lastCompletedPullRequest": 241,
-  "nextPhase": "PT-2",
-  "executionBaseWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
+  "nextPhase": "PT-3",
+  "executionBaseWorkPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
   "truthFreezeApproval": {
     "marker": "[HUMAN_GATE_APPROVAL:v1]",
     "commentId": 6015857324,
@@ -240,9 +242,8 @@
     }
   },
   "blockedNextPhase": {
-    "phase": "PT-2",
-    "status": "AWAITING_HUMAN_APPROVAL",
-    "humanGate": "LIVE_REALISTIC_BASELINE",
+    "phase": "PT-3",
+    "status": "AWAITING_PT_2_BASELINE_AND_INDEPENDENT_REVIEW",
     "executionAuthorized": false,
     "executionStarted": false,
     "workPackage": null,
@@ -293,5 +294,63 @@
     "merged": true,
     "mergedMainSha": "3598d93363536659d0d42215356f13a15d8555ad",
     "mergedAt": "2026-10-06T12:20:15Z"
+  },
+  "liveBaselineApproval": {
+    "gate": "LIVE_REALISTIC_BASELINE",
+    "decision": "APPROVED",
+    "approvedBy": "USER",
+    "approvedOn": "2026-10-06",
+    "source": "Explicit current conversation instruction: The USER has approved LIVE_REALISTIC_BASELINE.",
+    "datasetVersion": "terraformers-realistic-v1",
+    "candidateRevision": 3,
+    "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+    "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+    "executionPath": "Existing protected gcp-target-evaluation-baseline.yml / gcp-target-apply / WIF / ephemeral pod",
+    "boundedExistingWorkflowExtensionAuthorized": true,
+    "codexEnvironmentGcpCredentialsAuthorized": false,
+    "mergeAuthorized": false,
+    "pt3Authorized": false,
+    "teardownAuthorized": false
+  },
+  "phaseExecution": {
+    "PT-2": {
+      "status": "PROCEDURE_FROZEN_AWAITING_WORKFLOW_MERGE_REVIEW",
+      "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "activatedAt": "2026-10-06T12:45:08Z",
+      "mainReadsAtActivation": 1,
+      "procedureVersion": "pt2-realistic-baseline-v1",
+      "procedurePath": "docs/evaluation/product-trust-pt-2-measurement-protocol.md",
+      "datasetVersion": "terraformers-realistic-v1",
+      "candidateRevision": 3,
+      "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+      "baselineExecutionStarted": false,
+      "baselineComplete": false,
+      "modelUnderTestRunCount": 0,
+      "liveCloudActions": 0,
+      "autoRepairsUsed": 0,
+      "humanAuthorizedCorrectiveIterations": 0,
+      "persistedTrustMeasurement": "NOT_MEASURED",
+      "acceptedToTerminalMeasurement": "NOT_MEASURED",
+      "originalAcceptanceObservabilityBlocker": true,
+      "independentAcceptance": "NOT_REVIEWED",
+      "procedureSha256": "a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae",
+      "liveExecutionAuthorized": true,
+      "workflowDispatchReady": false,
+      "initialEvidenceBudget": 16,
+      "preparationValidation": {
+        "evidencePath": "docs/evidence/product-trust-pt-2/preparation-validation.json",
+        "backendTests": 35,
+        "pythonTests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "frozenIdentityAudit": "PASS",
+        "workflowSyntax": "PASS",
+        "actionlint": "PASS",
+        "scopeAudit": "PASS",
+        "diffCheck": "PASS"
+      }
+    }
   }
 }

@@ -62,6 +62,7 @@ public class EvaluationRunner {
     private final String terraformValidatorName;
     private final RetrievalMode retrievalMode;
     private final ConfigurationIdentity configuration;
+    private int initialEvidenceBudget;
 
     public EvaluationRunner(ArchitectureFactsExtractor factsExtractor, RetrievalQueryTextBuilder queryTextBuilder,
             ReferenceRetriever referenceRetriever, AnalysisGenerationStage generationStage,
@@ -90,6 +91,16 @@ public class EvaluationRunner {
                 terraformValidator, terraformValidatorName, retrievalMode, configuration);
     }
 
+    public EvaluationRunner(ArchitectureFactsExtractor factsExtractor, RetrievalQueryTextBuilder queryTextBuilder,
+            ReferenceRetriever referenceRetriever, VertexGroundedGenerationOrchestrator groundedGeneration,
+            EvaluationTerraformValidator terraformValidator, String terraformValidatorName,
+            RetrievalMode retrievalMode, ConfigurationIdentity configuration, int initialEvidenceBudget) {
+        this(factsExtractor, queryTextBuilder, referenceRetriever, groundedGeneration, terraformValidator,
+                terraformValidatorName, retrievalMode, configuration);
+        if (initialEvidenceBudget <= 0) throw new IllegalArgumentException("initial evidence budget must be positive");
+        this.initialEvidenceBudget = initialEvidenceBudget;
+    }
+
     private EvaluationRunner(ArchitectureFactsExtractor factsExtractor, RetrievalQueryTextBuilder queryTextBuilder,
             ReferenceRetriever referenceRetriever, EvaluationGenerationStage generationStage,
             VertexGroundedGenerationOrchestrator groundedGeneration, EvaluationTerraformValidator terraformValidator,
@@ -104,6 +115,7 @@ public class EvaluationRunner {
         this.terraformValidatorName = requireText(terraformValidatorName, "terraformValidatorName");
         this.retrievalMode = Objects.requireNonNull(retrievalMode, "retrievalMode");
         this.configuration = Objects.requireNonNull(configuration, "configuration");
+        this.initialEvidenceBudget = configuration.topK() == null ? 0 : configuration.topK();
         if (!retrievalMode.name().equals(configuration.retrievalMode())) {
             throw new IllegalArgumentException("configuration retrievalMode must match runner retrievalMode");
         }
@@ -211,7 +223,7 @@ public class EvaluationRunner {
                 query = new ReferenceQuery(
                         queryTextBuilder.build(facts),
                         facts.resourceTypes(),
-                        configuration.topK()
+                        initialEvidenceBudget
                 );
             } catch (RuntimeException exception) {
                 retrievalTrace = StageTrace.fail(

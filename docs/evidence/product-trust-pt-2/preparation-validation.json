@@ -1,0 +1,68 @@
+{
+  "evidenceKind": "PT_2_PREPARATION_ONLY_NOT_LIVE_BASELINE",
+  "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+  "procedureVersion": "pt2-realistic-baseline-v1",
+  "procedureSha256": "a16d255b58c128427b6c84465046695788553baf3a0125cbe572c74b384c2aae",
+  "datasetVersion": "terraformers-realistic-v1",
+  "candidateRevision": 3,
+  "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+  "pinnedFilesVerified": 26,
+  "fixtureChecksumsVerified": 10,
+  "backendTestCommands": [
+    "mvn -o -q -f backend/pom.xml -Dtest=EvaluationDatasetLoaderTest,LiveEvaluationLauncherTest,ProductionEquivalentClosureEvaluationTest test",
+    "mvn -o -q -f backend/pom.xml -Dtest=EvaluationRunnerTest test"
+  ],
+  "backendTests": {
+    "EvaluationDatasetLoaderTest": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "LiveEvaluationLauncherTest": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ProductionEquivalentClosureEvaluationTest": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "EvaluationRunnerTest": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "backendTestTotal": 35,
+  "pythonHarnessTests": 8,
+  "pythonTestCommand": "python3 -m unittest discover -s scripts/evaluation -p 'test_pt2_realistic_baseline.py' -v",
+  "workflowYaml": "PASS",
+  "embeddedBashScriptsChecked": 35,
+  "actionlint": {
+    "version": "1.7.12",
+    "result": "PASS",
+    "externalShellCheck": false
+  },
+  "durableStatePreservation": "PASS",
+  "frozenDatasetIdentity": "PASS",
+  "diffScope": "PASS",
+  "gitDiffCheck": "PASS",
+  "liveWorkflowDispatches": 0,
+  "modelUnderTestCaseRuns": 0,
+  "liveCloudActions": 0,
+  "baselineComplete": false,
+  "independentAcceptance": "NOT_REVIEWED",
+  "humanGate": "MERGE_CHECKPOINT",
+  "remainingOriginalAcceptanceBlockers": [
+    "Standalone launcher does not measure actual persisted/user-visible trust or accepted-to-terminal latency.",
+    "A merged preparation PR cannot carry a later evidence diff; original one-PR handoff requires human resolution."
+  ],
+  "fullBackendSuiteOrPackageRun": false,
+  "pt3Authorized": false,
+  "teardownAuthorized": false
+}

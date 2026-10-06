@@ -411,7 +411,7 @@ jobs:
             fi
           ' > "$output_dir/retained-configuration.txt"
           python3 - "$output_dir" "$GITHUB_SHA" "$BACKEND_SOURCE_SHA" "$BACKEND_IMAGE" <<'PY'
-          import importlib.util, json, pathlib, sys
+          import importlib.util, json, os, pathlib, sys
           spec = importlib.util.spec_from_file_location("pt2", "scripts/evaluation/pt2-realistic-baseline.py")
           pt2 = importlib.util.module_from_spec(spec)
           spec.loader.exec_module(pt2)
@@ -431,12 +431,17 @@ jobs:
           assert values["OBJECT_READER_PROVIDER"] == values["OBJECT_WRITER_PROVIDER"] == "gcs"
           assert values["UPLOAD_SOURCE_BUCKET"] and values["ANALYSIS_RESULT_BUCKET_NAME"]
           assert "UNSUPPORTED_SPRING_APPLICATION_JSON" not in values
+          protocol_path = pathlib.Path(
+              "docs/evaluation/product-trust-pt-2-continuation-protocol.md"
+              if os.environ["EVALUATION_SCOPE"] == "pt2-realistic-continuation"
+              else "docs/evaluation/product-trust-pt-2-measurement-protocol.md"
+          )
           pt2.write_json(output / "runtime-identity.json", {
               "dispatchSha": sys.argv[2], "backendSourceSha": sys.argv[3], "backendImage": sys.argv[4],
               "productionSourceEquivalent": True, "configurationVerified": True,
               "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
               "initialEvidenceBudget": 16,
-              "protocolSha256": pt2.digest(pathlib.Path("docs/evaluation/product-trust-pt-2-measurement-protocol.md")),
+              "protocolSha256": pt2.digest(protocol_path),
           })
           PY
 

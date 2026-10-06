@@ -24,6 +24,9 @@ public record CaseAQualityCalibrationReport(
             boolean technicalSuccess,
             boolean labeledQualitySuccess,
             boolean falseGreen,
+            int requiredFactResourceMatched,
+            int requiredFactResourceTotal,
+            int forbiddenFactResourceCount,
             RetrievalGroundingAssessment grounding,
             QualityStatus runtimeEvidenceQualityStatus,
             RuntimeQualityComparison runtimeQualityComparison

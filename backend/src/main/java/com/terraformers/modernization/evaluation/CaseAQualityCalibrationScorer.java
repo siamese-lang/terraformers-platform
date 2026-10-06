@@ -205,7 +205,7 @@ public final class CaseAQualityCalibrationScorer {
     }
 
     private boolean complete(RetrievalGroundingAssessment.Coverage coverage) {
-        return coverage.matched() == coverage.total();
+        return coverage != null && coverage.matched() == coverage.total();
     }
 
     private boolean completeWhenRequired(java.util.List<String> required,

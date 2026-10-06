@@ -60,7 +60,7 @@ class OpenSearchReferenceRetrieverTest {
 
         verify(fixture.embedding(), times(1)).embed("architecture summary");
         ArgumentCaptor<String> bodies = ArgumentCaptor.forClass(String.class);
-        verify(fixture.transport(), times(4)).post(any(URI.class), bodies.capture());
+        verify(fixture.transport(), times(6)).post(any(URI.class), bodies.capture());
         List<JsonNode> requests = bodies.getAllValues().stream().map(this::readTree).toList();
         assertThat(requests).allSatisfy(request -> {
             assertThat(request.path("size").asInt()).isEqualTo(2);
@@ -103,7 +103,7 @@ class OpenSearchReferenceRetrieverTest {
                 );
         verify(fixture.embedding(), times(1)).embed("large architecture");
         ArgumentCaptor<String> bodies = ArgumentCaptor.forClass(String.class);
-        verify(fixture.transport(), times(14)).post(any(URI.class), bodies.capture());
+        verify(fixture.transport(), times(26)).post(any(URI.class), bodies.capture());
         assertThat(bodies.getAllValues().stream().map(this::readTree).toList())
                 .allSatisfy(request -> assertThat(request.path("size").asInt()).isEqualTo(8));
     }
@@ -276,6 +276,57 @@ class OpenSearchReferenceRetrieverTest {
         verify(transport, never()).post(any(), any());
     }
 
+    @Test
+    void supplementsOfficialDocumentationEvenWhenGlobalSchemaCoversRequestedResource() {
+        Fixture fixture = fixture(1, response(document("schema", 100, "aws_alpha")),
+                response(document("schema", 100, "aws_alpha")), response(),
+                response(officialDocument("official", "aws_alpha")));
+        var selected = fixture.retriever().retrieve(new ReferenceQuery("facts", List.of("aws_alpha"), 1));
+        assertThat(selected).extracting(ReferenceDocument::id).containsExactly("official");
+        assertThat(selected).allMatch(ReferenceDocument::isOfficialProviderDocumentation);
+        ArgumentCaptor<String> bodies = ArgumentCaptor.forClass(String.class);
+        verify(fixture.transport(), times(4)).post(any(), bodies.capture());
+        assertThat(bodies.getAllValues().get(3)).contains("PROVIDER_DOCUMENTATION", "AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE", "documentType", "aws_alpha");
+        verify(fixture.embedding(), times(1)).embed("facts");
+    }
+
+    @Test
+    void availableGlobalOfficialDocumentationNeedsNoAdditionalOfficialSearch() {
+        Fixture fixture = fixture(1, response(officialDocument("official", "aws_alpha")), response(), response());
+        var selected = fixture.retriever().retrieve(new ReferenceQuery("facts", List.of("aws_alpha"), 1));
+        assertThat(selected).extracting(ReferenceDocument::id).containsExactly("official");
+        verify(fixture.transport(), times(3)).post(any(), any());
+    }
+
+    @Test
+    void historicalCorpusWithoutOfficialHitsRetainsBoundedGenericFallback() {
+        Fixture fixture = fixture(1, response(document("generic", 1, "aws_alpha")), response(), response(), response());
+        var selected = fixture.retriever().retrieve(new ReferenceQuery("facts", List.of("aws_alpha"), 1));
+        assertThat(selected).extracting(ReferenceDocument::id).containsExactly("generic");
+        assertThat(selected).noneMatch(ReferenceDocument::isOfficialProviderDocumentation);
+        verify(fixture.transport(), times(4)).post(any(), any());
+    }
+
+    @Test
+    void resourceClosureUsesOnlyTargetedOfficialSearchesAndOneEmbedding() {
+        Fixture fixture = fixture(2, response(officialDocument("alpha", "aws_alpha")),
+                response(officialDocument("beta", "aws_beta")));
+        var selected = fixture.retriever().retrieve(
+                new ReferenceQuery("missing generated types", List.of("aws_alpha", "aws_beta"), 2, true));
+        assertThat(selected).extracting(ReferenceDocument::id).containsExactly("alpha", "beta");
+        ArgumentCaptor<String> bodies = ArgumentCaptor.forClass(String.class);
+        verify(fixture.transport(), times(2)).post(any(), bodies.capture());
+        assertThat(bodies.getAllValues()).allSatisfy(body ->
+                assertThat(body).contains("PROVIDER_DOCUMENTATION", "AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE", "documentType").doesNotContain("PROJECT_DECISION"));
+        assertThat(resourceFilter(readTree(bodies.getAllValues().get(0)))).containsExactly("aws_alpha");
+        assertThat(resourceFilter(readTree(bodies.getAllValues().get(1)))).containsExactly("aws_beta");
+        verify(fixture.embedding(), times(1)).embed("missing generated types");
+    }
+
+    private String officialDocument(String id, String resource) {
+        return document(id, 1, resource).replace("\"priority\":1", "\"authority\":\"PROVIDER_DOCUMENTATION\",\"documentType\":\"AWS_PROVIDER_DOC\",\"priority\":1");
+    }
+
     private Fixture fixture(int limit, String... responses) {
         return fixture(limit, 16, responses);
     }
@@ -285,7 +336,7 @@ class OpenSearchReferenceRetrieverTest {
         when(embedding.embed(any())).thenReturn(List.of(0.1f, 0.2f));
         OpenSearchTransport transport = mock(OpenSearchTransport.class);
         Queue<String> queuedResponses = new ArrayDeque<>(List.of(responses));
-        when(transport.post(any(), any())).thenAnswer(invocation -> queuedResponses.remove());
+        when(transport.post(any(), any())).thenAnswer(invocation -> queuedResponses.isEmpty() ? response() : queuedResponses.remove());
         OpenSearchReferenceRetriever retriever = new OpenSearchReferenceRetriever(
                 embedding,
                 new OpenSearchKnnQueryBuilder(objectMapper),

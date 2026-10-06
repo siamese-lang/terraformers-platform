@@ -5,10 +5,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-final class ReferenceEvidenceSelector {
+public final class ReferenceEvidenceSelector {
 
     private static final Set<String> PROVIDER_AUTHORITIES = Set.of(
             "PROVIDER_SCHEMA", "PROVIDER_DOCUMENTATION");
@@ -34,10 +35,28 @@ final class ReferenceEvidenceSelector {
             throw new IllegalArgumentException("evidence limits must be positive and max must be >= base");
         }
         List<ReferenceDocument> selected = new ArrayList<>(global.stream().limit(baseLimit).toList());
-        supplementResourceCoverage(candidates, selected, resourceTypes, baseLimit, maxLimit);
+        supplementResourceCoverage(candidates, selected, resourceTypes, baseLimit, maxLimit, true);
+        supplementResourceCoverage(candidates, selected, resourceTypes, baseLimit, maxLimit, false);
         int decisionLimit = Math.min(maxLimit, Math.max(baseLimit, selected.size()));
         promoteDecisions(candidates, selected, resourceTypes, decisionLimit);
         return List.copyOf(selected);
+    }
+
+    /** Reuse the bounded selector while retaining initial document identity and project decisions. */
+    public List<ReferenceDocument> merge(List<ReferenceDocument> initial, List<ReferenceDocument> closure,
+            List<String> resourceTypes, int maxLimit) {
+        var candidates = new LinkedHashMap<String, Candidate>();
+        initial.forEach(document -> candidates.putIfAbsent(document.id(),
+                new Candidate(document, true, true, candidates.size())));
+        List<ReferenceDocument> retained = candidates.values().stream().map(Candidate::document).toList();
+        closure.forEach(document -> candidates.putIfAbsent(document.id(),
+                new Candidate(document, true, false, candidates.size())));
+        if (maxLimit <= 0) throw new IllegalArgumentException("evidence limit must be positive");
+        if (candidates.size() <= maxLimit) {
+            return candidates.values().stream().map(Candidate::document).toList();
+        }
+        int baseLimit = Math.min(maxLimit, Math.max(1, retained.size()));
+        return select(candidates.values(), retained, resourceTypes, baseLimit, maxLimit);
     }
 
     private void supplementResourceCoverage(
@@ -45,14 +64,17 @@ final class ReferenceEvidenceSelector {
             List<ReferenceDocument> selected,
             List<String> resourceTypes,
             int baseLimit,
-            int maxLimit
+            int maxLimit,
+            boolean officialOnly
     ) {
         Set<String> missing = new LinkedHashSet<>(resourceTypes);
-        selected.forEach(document -> missing.removeAll(document.resourceTypes()));
+        selected.stream().filter(document -> !officialOnly || document.isOfficialProviderDocumentation())
+                .forEach(document -> missing.removeAll(document.resourceTypes()));
         Set<String> selectedIds = ids(selected);
         List<Candidate> targeted = candidates.stream()
                 .filter(Candidate::normalSemantic)
-                .filter(candidate -> !candidate.globalSemantic())
+                .filter(candidate -> officialOnly
+                        ? candidate.document().isOfficialProviderDocumentation() : !candidate.globalSemantic())
                 .toList();
         while (!missing.isEmpty()) {
             Set<String> currentMissing = Set.copyOf(missing);
@@ -138,9 +160,12 @@ final class ReferenceEvidenceSelector {
             List<String> resourceTypes
     ) {
         Set<String> existingCoverage = coveredResourceTypes(selected, resourceTypes);
+        Set<String> existingOfficial = officialCoverage(selected, resourceTypes);
         for (int index = selected.size() - 1; index >= 0; index--) {
+            if (PROJECT_DECISION.equals(selected.get(index).authority())) continue;
             List<ReferenceDocument> proposed = replacing(selected, index, replacement);
-            if (coveredResourceTypes(proposed, resourceTypes).containsAll(existingCoverage)) {
+            if (coveredResourceTypes(proposed, resourceTypes).containsAll(existingCoverage)
+                    && officialCoverage(proposed, resourceTypes).containsAll(existingOfficial)) {
                 return index;
             }
         }
@@ -207,7 +232,13 @@ final class ReferenceEvidenceSelector {
     ) {
         List<ReferenceDocument> proposed = replacing(selected, index, replacement);
         return coveredResourceTypes(proposed, resourceTypes).containsAll(existingResources)
-                && providerCoverage(proposed, resourceTypes).containsAll(existingProviders);
+                && providerCoverage(proposed, resourceTypes).containsAll(existingProviders)
+                && officialCoverage(proposed, resourceTypes).containsAll(officialCoverage(selected, resourceTypes));
+    }
+
+    private Set<String> officialCoverage(List<ReferenceDocument> documents, List<String> resourceTypes) {
+        return coveredResourceTypes(documents.stream()
+                .filter(ReferenceDocument::isOfficialProviderDocumentation).toList(), resourceTypes);
     }
 
     private List<ReferenceDocument> replacing(

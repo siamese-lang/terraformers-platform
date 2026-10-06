@@ -40,6 +40,14 @@ public class OpenSearchReferenceRetriever {
         List<Float> vector = embeddingProvider.embed(query.text());
         int baseTopK = Math.min(query.limit(), properties.getOpensearchTopK());
         int maxEvidence = Math.min(query.limit(), properties.getOpensearchMaxEvidence());
+        if (query.resourceOnly()) {
+            Map<String, ReferenceEvidenceSelector.Candidate> closure = new LinkedHashMap<>();
+            for (String resourceType : query.resourceTypes()) {
+                addCandidates(closure, search(vector, baseTopK, List.of(resourceType),
+                        List.of("PROVIDER_DOCUMENTATION")), true, false);
+            }
+            return selector.select(closure.values(), List.of(), query.resourceTypes(), baseTopK, maxEvidence);
+        }
         List<ReferenceDocument> global = search(vector, baseTopK, query.resourceTypes());
         if (query.resourceTypes().isEmpty()) {
             return global;
@@ -56,6 +64,16 @@ public class OpenSearchReferenceRetriever {
                 false,
                 false
         );
+        for (String resourceType : query.resourceTypes()) {
+            boolean officiallyCovered = candidates.values().stream()
+                    .map(ReferenceEvidenceSelector.Candidate::document)
+                    .anyMatch(document -> document.isOfficialProviderDocumentation()
+                            && document.resourceTypes().contains(resourceType));
+            if (!officiallyCovered) {
+                addCandidates(candidates, search(vector, baseTopK, List.of(resourceType),
+                        List.of("PROVIDER_DOCUMENTATION")), true, false);
+            }
+        }
         return selector.select(candidates.values(), global, query.resourceTypes(), baseTopK, maxEvidence);
     }
 
@@ -73,7 +91,9 @@ public class OpenSearchReferenceRetriever {
                 properties.getCorpusVersion(),
                 properties.getProviderVersion(),
                 resourceTypes,
-                authorities
+                authorities,
+                authorities.contains("PROVIDER_DOCUMENTATION")
+                        ? List.of("AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE") : List.of()
         );
         URI uri = OpenSearchEndpoint.searchUri(properties.getOpensearchEndpoint(), properties.getIndexName());
         String response = transport.post(uri, body);

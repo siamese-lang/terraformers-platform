@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Corpus-independent retrieval request derived solely from architecture facts. */
-public record ReferenceQuery(String text, List<String> resourceTypes, int limit) {
+/** Corpus-independent, bounded retrieval request for facts or generated resources. */
+public record ReferenceQuery(String text, List<String> resourceTypes, int limit, boolean resourceOnly) {
 
     public static final int MAX_RESOURCE_TYPES = 16;
     private static final Pattern RESOURCE_TYPE = Pattern.compile("\\baws_[a-z0-9_]+\\b");
@@ -31,6 +31,10 @@ public record ReferenceQuery(String text, List<String> resourceTypes, int limit)
 
     public ReferenceQuery(String text, int limit) {
         this(text, extractResourceTypes(text), limit);
+    }
+
+    public ReferenceQuery(String text, List<String> resourceTypes, int limit) {
+        this(text, resourceTypes, limit, false);
     }
 
     private static List<String> extractResourceTypes(String text) {

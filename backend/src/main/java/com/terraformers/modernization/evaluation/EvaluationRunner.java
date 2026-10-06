@@ -66,9 +66,6 @@ public class EvaluationRunner {
             RetrievalMode retrievalMode,
             ConfigurationIdentity configuration
     ) {
-        this.factsExtractor = Objects.requireNonNull(factsExtractor, "factsExtractor");
-        this.queryTextBuilder = Objects.requireNonNull(queryTextBuilder, "queryTextBuilder");
-        this.referenceRetriever = Objects.requireNonNull(referenceRetriever, "referenceRetriever");
         this(
                 factsExtractor,
                 queryTextBuilder,

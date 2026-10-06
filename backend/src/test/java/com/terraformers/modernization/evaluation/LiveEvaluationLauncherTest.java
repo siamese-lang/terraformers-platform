@@ -4,10 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
+import com.terraformers.modernization.analysis.TerraformCliValidator;
+import com.terraformers.modernization.analysis.TerraformDraftValidation;
+import com.terraformers.modernization.analysis.TerraformDraftValidator;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationDataset;
+import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
+import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
+import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.RetrievalMode;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 class LiveEvaluationLauncherTest {
@@ -27,6 +36,67 @@ class LiveEvaluationLauncherTest {
         assertThat(first.identity().factExtractionMaxOutputTokens()).isEqualTo(800);
         assertThat(first.identity().generationMaxOutputTokens()).isEqualTo(8192);
         assertThat(first.fingerprint()).isEqualTo("sha256:d10c56e4f124ee67d1cbc69457249ad0cf1243bf682305f32e65817e32b6ae66");
+    }
+
+    @Test
+    void acceptsOnlyExactBroadV4IdentityTuple() {
+        LiveEvaluationConfiguration v4 = new LiveEvaluationConfiguration(
+                datasetPath(), Path.of("target/v4.json"), "v4", LiveEvaluationConfiguration.Mode.FULL, null,
+                "terraformers-platform", "global", "vertex", "vertex", RetrievalMode.REQUIRED,
+                "gemini-3.8-flash", "gemini-embedding-2", "http://terraformers-opensearch:9200",
+                "terraformers-reference-v4", "embedding", "content", "terraformers-reference-v4",
+                "5.100.0", 1536, 8, 8192);
+
+        assertThat(v4.isBroadV4()).isTrue();
+        assertThat(v4.identity().embeddingModelId()).isEqualTo("gemini-embedding-2");
+        assertThat(v4.identity().corpusVersion()).isEqualTo("terraformers-reference-v4");
+
+        assertThatThrownBy(() -> new LiveEvaluationConfiguration(
+                datasetPath(), Path.of("target/mixed.json"), "mixed", LiveEvaluationConfiguration.Mode.FULL, null,
+                "terraformers-platform", "global", "vertex", "vertex", RetrievalMode.REQUIRED,
+                "gemini-3.8-flash", "gemini-embedding-2", "http://terraformers-opensearch:9200",
+                "terraformers-reference-v3", "embedding", "content", "terraformers-reference-v3",
+                "5.100.0", 1536, 8, 8192))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("historical v3 or broad v4");
+    }
+
+    @Test
+    void broadV4SchemaCandidatesMirrorProductionFactReferenceAndInlineHclSources() {
+        AwsProviderSchemaCatalog catalog = new AwsProviderSchemaCatalog(
+                new ObjectMapper(), Path.of("src/test/resources/terraform/aws-provider-schema-catalog-fixture.json"));
+        ArchitectureRetrievalFacts facts = new ArchitectureRetrievalFacts(
+                "facts", List.of(), List.of(), List.of("aws_vpc"));
+        ReferenceDocument reference = new ReferenceDocument(
+                "ref", "reference", "resource \"aws_lambda_function\" \"example\" {}",
+                0.9, "PROVIDER_DOCUMENTATION", List.of("aws_subnet"),
+                "provider/ref", "5.100.0", "terraformers-reference-v4",
+                "AWS_PROVIDER_DOC", 100, List.of());
+
+        assertThat(LiveEvaluationLauncher.schemaCandidates(facts, List.of(reference), catalog))
+                .containsExactlyInAnyOrder("aws_vpc", "aws_subnet", "aws_lambda_function");
+    }
+
+    @Test
+    void broadV4ValidationReachesTerraformCliAfterDraftAndAwsContractChecks() {
+        AwsProviderSchemaCatalog catalog = new AwsProviderSchemaCatalog(
+                new ObjectMapper(), Path.of("src/test/resources/terraform/aws-provider-schema-catalog-fixture.json"));
+        GeneratedTerraformContractInspector inspector = new GeneratedTerraformContractInspector(catalog);
+        AtomicBoolean cliCalled = new AtomicBoolean();
+        TerraformCliValidator cli = new TerraformCliValidator(new ObjectMapper()) {
+            @Override
+            public TerraformDraftValidation validate(String candidate) {
+                cliCalled.set(true);
+                return new TerraformDraftValidation(true, candidate, null);
+            }
+        };
+
+        TerraformDraftValidation result = LiveEvaluationLauncher.productionEquivalentValidation(
+                "resource \"aws_vpc\" \"main\" { cidr_block = \"10.0.0.0/16\" }",
+                new TerraformDraftValidator(), inspector, cli);
+
+        assertThat(result.valid()).isTrue();
+        assertThat(cliCalled).isTrue();
     }
 
     @Test

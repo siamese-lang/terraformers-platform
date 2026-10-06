@@ -397,8 +397,27 @@ jobs:
             fi
           '
 
+      - name: Transfer frozen A7-7 source artifact
+        if: inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
+        run: |
+          set -euo pipefail
+          source_dir="${RUNNER_TEMP}/a7-7-source-evaluation"
+          (
+            cd "$source_dir"
+            zip -qr "${RUNNER_TEMP}/a7-7-source-evaluation.zip" .
+          )
+          kubectl -n "$TARGET_NAMESPACE" exec -i "$BASELINE_POD" -- \
+            /bin/sh -c 'cat > /tmp/a7-7-source-evaluation.zip' \
+            < "${RUNNER_TEMP}/a7-7-source-evaluation.zip"
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- /bin/sh -c '
+            rm -rf /tmp/source-evaluation &&
+            mkdir -p /tmp/source-evaluation &&
+            cd /tmp/source-evaluation &&
+            unzip -q /tmp/a7-7-source-evaluation.zip
+          '
+
       - name: Verify A7-7 v4 production-equivalent substrate
-        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation'
+        if: inputs.evaluation_scope == 'a7-7-v4-production-evaluation' || inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
         env:
           BACKEND_IMAGE: ${{ inputs.backend_image }}
           BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
@@ -421,6 +440,213 @@ jobs:
             and .["terraformers-reference-v4"].mappings._meta.terraformers_corpus.corpus_version == "terraformers-reference-v4"
             and .["terraformers-reference-v4"].mappings._meta.terraformers_corpus.checksum == $checksum
           ' <<< "$mapping_json" >/dev/null
+
+      - name: Rescore frozen A7-7 artifact without AI calls
+        if: inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
+        run: |
+          set -euo pipefail
+
+          rescore_one() {
+            source_raw="$1"
+            dataset="$2"
+            output_raw="$3"
+            output_report="$4"
+            output_calibration="$5"
+
+            kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+              -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+              com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+              --mode=rescore \
+              --result="$source_raw" \
+              --output="$output_raw"
+
+            kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+              -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+              com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+              --mode=report \
+              --result="$output_raw" \
+              --dataset="$dataset" \
+              --output="$output_report"
+
+            kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+              -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+              com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+              --mode=calibrate \
+              --result="$output_raw" \
+              --dataset="$dataset" \
+              --output="$output_calibration"
+          }
+
+          canonical_dataset=/tmp/workspace/evaluation/terraformers-eval-v1/dataset.json
+          holdout_dataset=/tmp/workspace/evaluation/terraformers-eval-holdout-v1/dataset.json
+
+          for attempt in 1 2 3; do
+            rescore_one \
+              "/tmp/source-evaluation/a7-7-v4-canonical-${attempt}.json" \
+              "$canonical_dataset" \
+              "/tmp/a7-7-rescored-canonical-${attempt}.json" \
+              "/tmp/a7-7-rescored-canonical-report-${attempt}.json" \
+              "/tmp/a7-7-rescored-canonical-calibration-${attempt}.json"
+          done
+
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- java \
+            -cp '/tmp/workspace/classes:/tmp/workspace/dependency/*' \
+            com.terraformers.modernization.evaluation.CaseAMeasurementLauncher \
+            --mode=aggregate \
+            --reports=/tmp/a7-7-rescored-canonical-report-1.json,/tmp/a7-7-rescored-canonical-report-2.json,/tmp/a7-7-rescored-canonical-report-3.json \
+            --output=/tmp/a7-7-rescored-canonical-aggregate.json
+
+          rescore_one \
+            /tmp/source-evaluation/a7-7-v4-holdout.json \
+            "$holdout_dataset" \
+            /tmp/a7-7-rescored-holdout.json \
+            /tmp/a7-7-rescored-holdout-report.json \
+            /tmp/a7-7-rescored-holdout-calibration.json
+
+          output_dir="${RUNNER_TEMP}/a7-7-v4-artifact-rescore"
+          mkdir -p "$output_dir"
+          for attempt in 1 2 3; do
+            for kind in "" "-report" "-calibration"; do
+              src="/tmp/a7-7-rescored-canonical${kind}-${attempt}.json"
+              kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat "$src" \
+                > "$output_dir/a7-7-rescored-canonical${kind}-${attempt}.json"
+            done
+          done
+          kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat /tmp/a7-7-rescored-canonical-aggregate.json \
+            > "$output_dir/a7-7-rescored-canonical-aggregate.json"
+          for kind in "" "-report" "-calibration"; do
+            src="/tmp/a7-7-rescored-holdout${kind}.json"
+            kubectl -n "$TARGET_NAMESPACE" exec "$BASELINE_POD" -- cat "$src" \
+              > "$output_dir/a7-7-rescored-holdout${kind}.json"
+          done
+
+      - name: Verify A7-7 artifact rescore evidence
+        if: inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
+        run: |
+          set -euo pipefail
+          output_dir="${RUNNER_TEMP}/a7-7-v4-artifact-rescore"
+
+          for attempt in 1 2 3; do
+            raw="$output_dir/a7-7-rescored-canonical-${attempt}.json"
+            calibration="$output_dir/a7-7-rescored-canonical-calibration-${attempt}.json"
+            jq -e --arg run_id "a7-7-v4-canonical-37401380524-1-${attempt}" '
+              .runId == $run_id
+              and .datasetVersion == "terraformers-eval-v1"
+              and (.traces | length == 6)
+              and all(.traces[];
+                (.generation.evidence.terraformCode == "")
+                or .validation.evidence.applicationValidator.name == "ProductionEquivalentTerraformValidatorReplay")
+            ' "$raw" >/dev/null
+            jq -e '
+              .datasetVersion == "terraformers-eval-v1"
+              and .counts.caseCount == 6
+              and all(.cases[];
+                (.componentCoverage.requiredMatched | type) == "number"
+                and (.relationshipCoverage.requiredMatched | type) == "number"
+                and (
+                  (.grounding.applicable == false)
+                  or (
+                    .grounding.factResourceOfficialEvidenceCoverage != null
+                    and .grounding.generatedResourceOfficialEvidenceCoverage != null
+                  )
+                )
+              )
+            ' "$calibration" >/dev/null
+          done
+
+          holdout="$output_dir/a7-7-rescored-holdout.json"
+          holdout_calibration="$output_dir/a7-7-rescored-holdout-calibration.json"
+          jq -e '
+            .runId == "a7-7-v4-holdout-37401380524-1"
+            and .datasetVersion == "terraformers-eval-holdout-v1"
+            and (.traces | length == 4)
+            and all(.traces[];
+              (.generation.evidence.terraformCode == "")
+              or .validation.evidence.applicationValidator.name == "ProductionEquivalentTerraformValidatorReplay")
+          ' "$holdout" >/dev/null
+          jq -e '
+            .datasetVersion == "terraformers-eval-holdout-v1"
+            and .counts.caseCount == 4
+          ' "$holdout_calibration" >/dev/null
+
+      - name: Summarize frozen A7-7 artifact rescore
+        if: inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
+        run: |
+          set -euo pipefail
+          output_dir="${RUNNER_TEMP}/a7-7-v4-artifact-rescore"
+          {
+            echo '## A7-7 frozen artifact deterministic rescore'
+            echo
+            echo '- Source run: `37401380524`'
+            echo '- Source artifact: `11385926347`'
+            echo '- No Gemini, embedding, or OpenSearch retrieval calls are rerun.'
+            echo '- Generated Terraform is replayed only through draft/provider-contract/Terraform CLI validation.'
+            echo
+
+            for attempt in 1 2 3; do
+              calibration="$output_dir/a7-7-rescored-canonical-calibration-${attempt}.json"
+              echo "### Canonical run ${attempt}"
+              echo
+              echo '| Case | Technical | Label | Components | Relationships | Fact resources | Required retrieval | Decisions | Fact official | Generated official | Handoff | CLI | Divergence |'
+              echo '|---|---|---|---|---|---|---|---|---|---|---|---|---|'
+              jq -r '
+                .cases[] |
+                "| \(.caseId) | \(.technicalSuccess) | \(.labeledQualitySuccess) | " +
+                "\(.componentCoverage.requiredMatched)/\(.componentCoverage.requiredTotal) | " +
+                "\(.relationshipCoverage.requiredMatched)/\(.relationshipCoverage.requiredTotal) | " +
+                "\(.requiredFactResourceMatched)/\(.requiredFactResourceTotal) | " +
+                (if .grounding.resourceTypeCoverage == null then "N/A" else "\(.grounding.resourceTypeCoverage.matched)/\(.grounding.resourceTypeCoverage.total)" end) + " | " +
+                (if .grounding.projectDecisionCoverage == null then "N/A" else "\(.grounding.projectDecisionCoverage.matched)/\(.grounding.projectDecisionCoverage.total)" end) + " | " +
+                (if .grounding.factResourceOfficialEvidenceCoverage == null then "N/A" else "\(.grounding.factResourceOfficialEvidenceCoverage.matched)/\(.grounding.factResourceOfficialEvidenceCoverage.total)" end) + " | " +
+                (if .grounding.generatedResourceOfficialEvidenceCoverage == null then "N/A" else "\(.grounding.generatedResourceOfficialEvidenceCoverage.matched)/\(.grounding.generatedResourceOfficialEvidenceCoverage.total)" end) + " | " +
+                "\(.grounding.retrievalToGenerationHandoffComplete) | " +
+                (if .grounding.terraformValidationPassed == null then "N/A" else "\(.grounding.terraformValidationPassed)" end) + " | " +
+                (if .grounding.firstDivergence == null then "none" else "\(.grounding.firstDivergence.stage):\(.grounding.firstDivergence.category)" end) +
+                " |"
+              ' "$calibration"
+              echo
+
+              raw="$output_dir/a7-7-rescored-canonical-${attempt}.json"
+              jq -r '
+                .traces[]
+                | select(.validation.status == "FAIL")
+                | "- \(.caseId): \(.validation.failures[0].category); diagnostics=" +
+                  ((.validation.evidence.applicationValidator.diagnosticSummary.diagnosticClasses // []) | join(",")) +
+                  "; errors=" + ((.validation.evidence.applicationValidator.diagnosticSummary.errorCount // 0) | tostring)
+              ' "$raw"
+              echo
+            done
+
+            echo '### Frozen holdout'
+            echo
+            calibration="$output_dir/a7-7-rescored-holdout-calibration.json"
+            jq -r '
+              .cases[] |
+              "- \(.caseId): technical=\(.technicalSuccess), label=\(.labeledQualitySuccess), " +
+              "components=\(.componentCoverage.requiredMatched)/\(.componentCoverage.requiredTotal), " +
+              "relationships=\(.relationshipCoverage.requiredMatched)/\(.relationshipCoverage.requiredTotal), " +
+              "generatedOfficial=" +
+              (if .grounding.generatedResourceOfficialEvidenceCoverage == null then "N/A" else "\(.grounding.generatedResourceOfficialEvidenceCoverage.matched)/\(.grounding.generatedResourceOfficialEvidenceCoverage.total)" end) +
+              ", cli=" + (if .grounding.terraformValidationPassed == null then "N/A" else "\(.grounding.terraformValidationPassed)" end)
+            ' "$calibration"
+            raw="$output_dir/a7-7-rescored-holdout.json"
+            jq -r '
+              .traces[]
+              | select(.validation.status == "FAIL")
+              | "- \(.caseId): \(.validation.failures[0].category); diagnostics=" +
+                ((.validation.evidence.applicationValidator.diagnosticSummary.diagnosticClasses // []) | join(",")) +
+                "; errors=" + ((.validation.evidence.applicationValidator.diagnosticSummary.errorCount // 0) | tostring)
+            ' "$raw"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload A7-7 frozen artifact rescore evidence
+        if: always() && inputs.evaluation_scope == 'a7-7-v4-artifact-rescore'
+        uses: actions/upload-artifact@v4
+        with:
+          name: a7-7-v4-artifact-rescore-${{ github.run_id }}
+          path: ${{ runner.temp }}/a7-7-v4-artifact-rescore
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Run unchanged six-case M3 baseline
         if: inputs.evaluation_scope == 'm3-full-baseline'

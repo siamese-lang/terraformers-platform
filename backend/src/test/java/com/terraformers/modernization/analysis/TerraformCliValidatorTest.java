@@ -199,13 +199,19 @@ class TerraformCliValidatorTest {
     }
 
     @Test
-    void distinguishesOtherInitializationFailureWithoutLeakingCapturedOutput() {
+    void classifiesInitializationSyntaxFailureWithoutLeakingCapturedOutput() {
         String sensitive = "SECRET-FIXTURE-VALUE";
         TerraformDraftValidation validation = validator(new RecordingExecutor(
-                result(1, false, "configuration syntax failed " + sensitive))).validate("resource \"aws_vpc\" \"x\" {}");
+                result(1, false, "Error: Invalid character\n" + sensitive)))
+                .validate("resource \"aws_vpc\" \"x\" {}");
 
         assertThat(validation.reason()).isEqualTo("INIT_CONFIGURATION: Terraform initialization/configuration failed");
+        assertThat(validation.diagnosticSummary().diagnosticClasses())
+                .containsExactly(TerraformDiagnosticSummary.DiagnosticClass.CONFIGURATION_SYNTAX);
+        assertThat(validation.diagnosticSummary().errorCount()).isOne();
+        assertThat(validation.diagnosticSummary().warningCount()).isZero();
         assertThat(validation.reason()).doesNotContain(sensitive);
+        assertThat(validation.diagnosticSummary().toString()).doesNotContain(sensitive);
     }
 
     @Test

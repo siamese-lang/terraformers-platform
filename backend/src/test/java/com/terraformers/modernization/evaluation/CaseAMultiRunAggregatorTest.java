@@ -29,7 +29,7 @@ class CaseAMultiRunAggregatorTest {
         var coverageDecision = new RetrievalGroundingAssessment.Coverage(decisions, 1, (double) decisions, java.util.Map.of(), List.of());
         var coverageResources = new RetrievalGroundingAssessment.Coverage(resources, 4, resources / 4.0, java.util.Map.of(), List.of());
         var assessment = new RetrievalGroundingAssessment("vpc", true, EvaluationStageStatus.PASS, "q", List.of(), 8, List.of(),
-                coverageDecision, coverageResources, EvaluationStageStatus.PASS, 4, 4, 0, EvaluationStageStatus.PASS,
+                coverageDecision, coverageResources, EvaluationStageStatus.PASS, true, 4, 4, 0, EvaluationStageStatus.PASS,
                 true, null, gap, gap, latency, 20L, 30L, latency + 55);
         return new CaseAMeasurementReport(CaseAMeasurementReport.SCHEMA_VERSION, run, "dataset", identity(), 1,
                 List.of(assessment), new CaseAMeasurementReport.Counts(1,0,1,0,0,gap?1:0,gap?1:0,0,0,1,0));

@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import com.google.genai.types.HttpOptions;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
+import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
+import com.terraformers.modernization.analysis.GeneratedTerraformContractViolation;
+import com.terraformers.modernization.analysis.TerraformCliValidator;
+import com.terraformers.modernization.analysis.TerraformDraftValidation;
 import com.terraformers.modernization.analysis.TerraformDraftValidator;
 import com.terraformers.modernization.analysis.vertex.VertexGenerationStage;
 import com.terraformers.modernization.analysis.vertex.VertexPromptBuilder;
@@ -11,6 +15,9 @@ import com.terraformers.modernization.analysis.vertex.VertexResponseParser;
 import com.terraformers.modernization.analysis.vertex.VertexRuntimeProperties;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationCase;
 import com.terraformers.modernization.evaluation.EvaluationDatasetLoader.LoadedEvaluationDataset;
+import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
+import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
+import com.terraformers.modernization.reference.ReferenceDocument;
 import com.terraformers.modernization.reference.RetrievalModeReferenceRetriever;
 import com.terraformers.modernization.reference.RetrievalQueryTextBuilder;
 import com.terraformers.modernization.reference.VertexArchitectureFactsExtractor;
@@ -22,11 +29,18 @@ import com.terraformers.modernization.reference.opensearch.OpenSearchResponsePar
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** Standalone entry point: it deliberately creates no Spring application context. */
 public final class LiveEvaluationLauncher {
+    private static final Pattern REFERENCE_AWS_RESOURCE = Pattern.compile(
+            "(?m)^\\s*resource\\s+\\\"(aws_[a-z0-9_]+)\\\"\\s+\\\"[^\\\"]+\\\"\\s*\\{");
+
     private LiveEvaluationLauncher() {}
 
     public static void main(String[] args) {
@@ -43,17 +57,99 @@ public final class LiveEvaluationLauncher {
         OpenSearchReferenceRetriever vectorRetriever = new OpenSearchReferenceRetriever(
                 new VertexEmbeddingProvider(client, vertex), new OpenSearchKnnQueryBuilder(objectMapper),
                 new OpenSearchResponseParser(objectMapper), new HttpOpenSearchTransport(), analysis);
-        EvaluationRunner runner = new EvaluationRunner(
-                new VertexArchitectureFactsExtractor(client, objectMapper, vertex),
-                new RetrievalQueryTextBuilder(), new RetrievalModeReferenceRetriever(vectorRetriever, analysis),
-                new VertexGenerationStage(client, vertex, new VertexPromptBuilder(), new VertexResponseParser(objectMapper)),
-                new TerraformDraftValidator(), configuration.retrievalMode(), configuration.identity());
+        VertexArchitectureFactsExtractor factsExtractor =
+                new VertexArchitectureFactsExtractor(client, objectMapper, vertex);
+        RetrievalQueryTextBuilder queryTextBuilder = new RetrievalQueryTextBuilder();
+        RetrievalModeReferenceRetriever referenceRetriever =
+                new RetrievalModeReferenceRetriever(vectorRetriever, analysis);
+        VertexGenerationStage vertexGenerationStage =
+                new VertexGenerationStage(client, vertex, new VertexPromptBuilder(), new VertexResponseParser(objectMapper));
+
+        EvaluationRunner runner;
+        if (configuration.isBroadV4()) {
+            AwsProviderSchemaCatalog schemaCatalog = new AwsProviderSchemaCatalog(objectMapper);
+            GeneratedTerraformContractInspector contractInspector =
+                    new GeneratedTerraformContractInspector(schemaCatalog);
+            TerraformDraftValidator draftValidator = new TerraformDraftValidator();
+            TerraformCliValidator cliValidator = new TerraformCliValidator(objectMapper);
+            runner = new EvaluationRunner(
+                    factsExtractor,
+                    queryTextBuilder,
+                    referenceRetriever,
+                    (context, source, facts, references) -> vertexGenerationStage.generate(
+                            context, source, references, schemaCatalog.resolve(schemaCandidates(facts, references, schemaCatalog))),
+                    candidate -> productionEquivalentValidation(
+                            candidate, draftValidator, contractInspector, cliValidator),
+                    "ProductionEquivalentTerraformValidator",
+                    configuration.retrievalMode(),
+                    configuration.identity()
+            );
+        } else {
+            runner = new EvaluationRunner(
+                    factsExtractor,
+                    queryTextBuilder,
+                    referenceRetriever,
+                    vertexGenerationStage,
+                    new TerraformDraftValidator(),
+                    configuration.retrievalMode(),
+                    configuration.identity()
+            );
+        }
 
         EvaluationRunResult result = runner.run(loaded, configuration.runId());
         Path output = new EvaluationResultWriter(objectMapper).write(configuration.outputFile(), result);
         System.out.printf("live evaluation completed runId=%s mode=%s caseCount=%d output=%s fingerprint=%s%n",
                 configuration.runId(), configuration.mode(), result.traces().size(), output,
                 configuration.identity().configurationFingerprint());
+    }
+
+    static Set<String> schemaCandidates(
+            ArchitectureRetrievalFacts facts,
+            List<ReferenceDocument> references,
+            AwsProviderSchemaCatalog schemaCatalog
+    ) {
+        Set<String> candidates = new LinkedHashSet<>();
+        if (facts != null) {
+            facts.resourceTypes().stream()
+                    .filter(schemaCatalog::contains)
+                    .forEach(candidates::add);
+        }
+        for (ReferenceDocument reference : references == null ? List.<ReferenceDocument>of() : references) {
+            reference.resourceTypes().stream()
+                    .filter(schemaCatalog::contains)
+                    .forEach(candidates::add);
+            Matcher matcher = REFERENCE_AWS_RESOURCE.matcher(
+                    reference.content() == null ? "" : reference.content());
+            while (matcher.find()) {
+                String resourceType = matcher.group(1);
+                if (schemaCatalog.contains(resourceType)) {
+                    candidates.add(resourceType);
+                }
+            }
+        }
+        return Set.copyOf(candidates);
+    }
+
+    static TerraformDraftValidation productionEquivalentValidation(
+            String candidate,
+            TerraformDraftValidator draftValidator,
+            GeneratedTerraformContractInspector contractInspector,
+            TerraformCliValidator cliValidator
+    ) {
+        TerraformDraftValidation draft = draftValidator.validate(candidate);
+        if (!draft.valid()) {
+            return draft;
+        }
+        try {
+            contractInspector.inspect(draft.sanitizedContent());
+        } catch (GeneratedTerraformContractViolation violation) {
+            return new TerraformDraftValidation(
+                    false,
+                    draft.sanitizedContent(),
+                    "AWS_PROVIDER_CONTRACT: " + violation.reason().name()
+            );
+        }
+        return cliValidator.validate(draft.sanitizedContent());
     }
 
     static LoadedEvaluationDataset select(LoadedEvaluationDataset loaded, LiveEvaluationConfiguration configuration) {

@@ -51,8 +51,9 @@ public class EvaluationRunner {
     private final ArchitectureFactsExtractor factsExtractor;
     private final RetrievalQueryTextBuilder queryTextBuilder;
     private final ReferenceRetriever referenceRetriever;
-    private final AnalysisGenerationStage generationStage;
-    private final TerraformDraftValidator terraformDraftValidator;
+    private final EvaluationGenerationStage generationStage;
+    private final EvaluationTerraformValidator terraformValidator;
+    private final String terraformValidatorName;
     private final RetrievalMode retrievalMode;
     private final ConfigurationIdentity configuration;
 
@@ -65,11 +66,34 @@ public class EvaluationRunner {
             RetrievalMode retrievalMode,
             ConfigurationIdentity configuration
     ) {
+        this(
+                factsExtractor,
+                queryTextBuilder,
+                referenceRetriever,
+                (context, source, facts, references) -> generationStage.generate(context, source, references),
+                terraformDraftValidator::validate,
+                TerraformDraftValidator.class.getSimpleName(),
+                retrievalMode,
+                configuration
+        );
+    }
+
+    public EvaluationRunner(
+            ArchitectureFactsExtractor factsExtractor,
+            RetrievalQueryTextBuilder queryTextBuilder,
+            ReferenceRetriever referenceRetriever,
+            EvaluationGenerationStage generationStage,
+            EvaluationTerraformValidator terraformValidator,
+            String terraformValidatorName,
+            RetrievalMode retrievalMode,
+            ConfigurationIdentity configuration
+    ) {
         this.factsExtractor = Objects.requireNonNull(factsExtractor, "factsExtractor");
         this.queryTextBuilder = Objects.requireNonNull(queryTextBuilder, "queryTextBuilder");
         this.referenceRetriever = Objects.requireNonNull(referenceRetriever, "referenceRetriever");
         this.generationStage = Objects.requireNonNull(generationStage, "generationStage");
-        this.terraformDraftValidator = Objects.requireNonNull(terraformDraftValidator, "terraformDraftValidator");
+        this.terraformValidator = Objects.requireNonNull(terraformValidator, "terraformValidator");
+        this.terraformValidatorName = requireText(terraformValidatorName, "terraformValidatorName");
         this.retrievalMode = Objects.requireNonNull(retrievalMode, "retrievalMode");
         this.configuration = Objects.requireNonNull(configuration, "configuration");
         if (!retrievalMode.name().equals(configuration.retrievalMode())) {
@@ -127,11 +151,11 @@ public class EvaluationRunner {
 
         StageTrace<FactExtractionEvidence> factTrace = StageTrace.notRun(EvaluationStage.FACT_EXTRACTION);
         StageTrace<RetrievalEvidence> retrievalTrace = StageTrace.notRun(EvaluationStage.RETRIEVAL);
+        ArchitectureRetrievalFacts facts = new ArchitectureRetrievalFacts("", List.of(), List.of(), List.of());
         List<ReferenceDocument> references = List.of();
 
         if (retrievalMode != RetrievalMode.DISABLED) {
             long factsStartedAt = System.nanoTime();
-            ArchitectureRetrievalFacts facts;
             try {
                 facts = factsExtractor.extract(source);
                 factTrace = StageTrace.pass(
@@ -169,7 +193,7 @@ public class EvaluationRunner {
                     );
                 }
                 return continueGeneration(
-                        loadedDataset, definition, runId, input, source, context,
+                        loadedDataset, definition, runId, input, source, context, facts,
                         factTrace, StageTrace.notRun(EvaluationStage.RETRIEVAL), List.of()
                 );
             }
@@ -205,7 +229,7 @@ public class EvaluationRunner {
                     );
                 }
                 return continueGeneration(
-                        loadedDataset, definition, runId, input, source, context,
+                        loadedDataset, definition, runId, input, source, context, facts,
                         factTrace, retrievalTrace, List.of()
                 );
             }
@@ -257,6 +281,7 @@ public class EvaluationRunner {
                 input,
                 source,
                 context,
+                facts,
                 factTrace,
                 retrievalTrace,
                 references
@@ -270,6 +295,7 @@ public class EvaluationRunner {
             InputIdentity input,
             ObjectContent source,
             AnalysisRequestContext context,
+            ArchitectureRetrievalFacts facts,
             StageTrace<FactExtractionEvidence> factTrace,
             StageTrace<RetrievalEvidence> retrievalTrace,
             List<ReferenceDocument> references
@@ -277,7 +303,7 @@ public class EvaluationRunner {
         long generationStartedAt = System.nanoTime();
         StageTrace<GenerationEvidence> generationTrace;
         try {
-            AnalysisGenerationResult generated = generationStage.generate(context, source, references);
+            AnalysisGenerationResult generated = generationStage.generate(context, source, facts, references);
             EvaluationCase.InputClassification observed = classification(generated.inputClassification().name());
             GenerationEvidence evidence = generationEvidence(generated, references, observed);
             if (observed != definition.expectedClassification()) {
@@ -413,11 +439,11 @@ public class EvaluationRunner {
         }
 
         long validationStartedAt = System.nanoTime();
-        TerraformDraftValidation validation = terraformDraftValidator.validate(
+        TerraformDraftValidation validation = terraformValidator.validate(
                 generationTrace.evidence().terraformCode());
         ValidationEvidence evidence = new ValidationEvidence(
                 new ValidationCheck(
-                        "TerraformDraftValidator",
+                        terraformValidatorName,
                         validation.valid(),
                         validation.reason()
                 ),
@@ -604,6 +630,28 @@ public class EvaluationRunner {
             };
         }
         return EvaluationFailureCategory.PROVIDER_RUNTIME;
+    }
+
+    @FunctionalInterface
+    public interface EvaluationGenerationStage {
+        AnalysisGenerationResult generate(
+                AnalysisRequestContext context,
+                ObjectContent source,
+                ArchitectureRetrievalFacts facts,
+                List<ReferenceDocument> references
+        );
+    }
+
+    @FunctionalInterface
+    public interface EvaluationTerraformValidator {
+        TerraformDraftValidation validate(String candidate);
+    }
+
+    private String requireText(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(field + " must not be blank");
+        }
+        return value.strip();
     }
 
     private long elapsedMillis(long startedAt) {

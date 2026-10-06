@@ -16,6 +16,7 @@ public record RetrievalGroundingAssessment(
         Coverage projectDecisionCoverage,
         Coverage resourceTypeCoverage,
         EvaluationStageStatus generationStatus,
+        boolean retrievalToGenerationHandoffComplete,
         int requiredGeneratedResourceMatched,
         int requiredGeneratedResourceTotal,
         int forbiddenGeneratedResourceCount,

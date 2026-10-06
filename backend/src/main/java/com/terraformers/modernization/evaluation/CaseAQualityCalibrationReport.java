@@ -24,9 +24,22 @@ public record CaseAQualityCalibrationReport(
             boolean technicalSuccess,
             boolean labeledQualitySuccess,
             boolean falseGreen,
+            TextCoverage componentCoverage,
+            TextCoverage relationshipCoverage,
+            int requiredFactResourceMatched,
+            int requiredFactResourceTotal,
+            int forbiddenFactResourceCount,
             RetrievalGroundingAssessment grounding,
             QualityStatus runtimeEvidenceQualityStatus,
             RuntimeQualityComparison runtimeQualityComparison
+    ) {}
+
+    public record TextCoverage(
+            int requiredMatched,
+            int requiredTotal,
+            int forbiddenMatched,
+            List<String> missingRequired,
+            List<String> matchedForbidden
     ) {}
 
     public enum RuntimeQualityComparison {

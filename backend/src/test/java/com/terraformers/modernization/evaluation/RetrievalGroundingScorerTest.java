@@ -28,6 +28,7 @@ class RetrievalGroundingScorerTest {
         assertThat(result.resourceTypeCoverage().matched()).isEqualTo(2);
         assertThat(result.projectDecisionCoverage().missing()).isEmpty();
         assertThat(result.resourceTypeCoverage().missing()).isEmpty();
+        assertThat(result.retrievalToGenerationHandoffComplete()).isTrue();
         assertThat(result.groundingGap()).isFalse();
     }
     @Test void handlesCompleteFailureAndNonApplicable() {

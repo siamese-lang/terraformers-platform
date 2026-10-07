@@ -1,7 +1,10 @@
 # PT-4 — distinguish processing, output trust and elapsed time
 
-Status: repository correction / deterministic validation; independent review and explicit merge
-pending. No live/model/GCP action or rollout is performed. Execution base is
+Status: COMPLETE within the deterministic trust/status/timing correction.
+[Independent review 6029174275](https://github.com/siamese-lang/terraformers-platform/pull/248#issuecomment-6029174275)
+accepted exact head `68110fc0429d88b3211c5811b1c470770bc4c3f7`; USER merged PR #248 as
+`0c4fa0e9616881e281aa027a18a9d741ff614699` on `2026-10-07T01:52:07Z`.
+No live/model/GCP action or rollout is performed. The original execution base remains
 `5f623d820f5bf379636f933f5773f46177b5caf3`, read and bound once in the
 [Work Package](../../.agents/work-packages/product-trust-pt-4-trust-status-waiting-v1.yml).
 
@@ -103,6 +106,7 @@ case-02 censor unchanged, recovery runs zero product observations, no further di
 Frozen truth/corpus, generation/prompt/model/retrieval/scoring, runtime/IAM/infra and auth policies
 are unchanged. No teardown. GitHub holds transient PR lifecycle; state retains no active PR/branch.
 
-Stop at `HUMAN_REQUIRED: INDEPENDENT_REVIEW_AND_MERGE_CHECKPOINT`. Original PT-4 criteria require
-independent review; CI green does not grant acceptance or merge. PT-5 remains blocked until accepted
-USER merge, and any new security/identity/live/product decision requires its own human gate.
+The original independent-review and explicit-merge checkpoint was fulfilled by review 6029174275
+and USER's PR #248 merge. CI supported that review; it did not grant acceptance or merge authority.
+The approved Goal / Program DAG selects repository-only PT-5 next; any new security/identity/live/
+product decision retains its own human gate. Historical PT-4 validation remains unchanged.

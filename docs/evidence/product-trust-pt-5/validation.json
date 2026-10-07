@@ -1,0 +1,284 @@
+{
+  "workPackage": "product-trust-pt-5-access-safety-v1",
+  "executionBaseSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+  "status": "PASS_DETERMINISTIC_VALIDATION_ONLY",
+  "independentAcceptance": "PENDING",
+  "humanGate": "INDEPENDENT_REVIEW_AND_MERGE_CHECKPOINT",
+  "predecessor": {
+    "status": "COMPLETE",
+    "workPackage": "product-trust-pt-4-trust-status-waiting-v1",
+    "executionBaseSha": "5f623d820f5bf379636f933f5773f46177b5caf3",
+    "sourceHeadSha": "68110fc0429d88b3211c5811b1c470770bc4c3f7",
+    "independentAcceptance": "PASS",
+    "independentReviewCommentId": 6029174275,
+    "mergedPullRequest": 248,
+    "mergedMainSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+    "mergedAt": "2026-10-07T01:52:07Z",
+    "completionBoundary": "DETERMINISTIC_TRUST_PRESENTATION_AND_TIMING_ONLY_NO_LIVE_PROOF",
+    "modelCalls": 0,
+    "liveCloudActions": 0
+  },
+  "toolchain": {
+    "java": "Temurin 17.0.18+8",
+    "maven": "3.9.9",
+    "node": "24.19.0",
+    "npm": "11.9.0",
+    "activation": "source /workspace/.cloud-setup/activate.sh",
+    "mavenOffline": true
+  },
+  "controlledBeforeRegression": {
+    "command": "mvn -o -Dtest=JwtResourceServerSecurityConfigTest#anUnlistedHandlerRequiresAuthentication test",
+    "workingDirectory": "backend",
+    "exitCode": 1,
+    "outcome": "EXPECTED_FAILURE_DEFAULT_OPEN_ROUTE_MECHANISM",
+    "productionSourceAtRun": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+    "testSource": "backend/src/test/java/com/terraformers/modernization/security/JwtResourceServerSecurityConfigTest.java",
+    "tests": 6,
+    "failures": 6,
+    "errors": 0,
+    "skipped": 0,
+    "failuresObserved": [
+      {
+        "case": "anUnlistedHandlerRequiresAuthentication(String, String)[1]",
+        "message": "Status expected:<401> but was:<200>"
+      },
+      {
+        "case": "anUnlistedHandlerRequiresAuthentication(String, String)[2]",
+        "message": "Status expected:<401> but was:<200>"
+      },
+      {
+        "case": "anUnlistedHandlerRequiresAuthentication(String, String)[3]",
+        "message": "Status expected:<401> but was:<200>"
+      },
+      {
+        "case": "anUnlistedHandlerRequiresAuthentication(String, String)[4]",
+        "message": "Status expected:<401> but was:<200>"
+      },
+      {
+        "case": "anUnlistedHandlerRequiresAuthentication(String, String)[5]",
+        "message": "Status expected:<401> but was:<200>"
+      },
+      {
+        "case": "anUnlistedHandlerRequiresAuthentication(String, String)[6]",
+        "message": "Status expected:<401> but was:<200>"
+      }
+    ]
+  },
+  "focusedBackend": {
+    "command": "mvn -o -Dtest=JwtResourceServerSecurityConfigTest,ProjectMetadataControllerTest,ProjectArtifactServiceTest,CognitoAccessTokenValidatorTest,CognitoJwtExternalIdentityMapperTest,AuthenticatedUserServiceTest,ExternalIdentityMigrationTest,AnalysisUploadControllerTest,AnalysisUploadServiceTest,AnalysisJobControllerIntegrationTest,AnalysisJobServiceTest,ProjectTreeControllerTest,TerraformDraftControllerTest,ProjectCommentControllerTest,SourceObjectReaderServiceTest,UploadObjectStorageServiceTest,ProjectDomainServiceTest test",
+    "workingDirectory": "backend",
+    "exitCode": 0,
+    "suites": [
+      {
+        "class": "com.terraformers.modernization.security.JwtResourceServerSecurityConfigTest",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.project.ProjectMetadataControllerTest",
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.projectcore.ProjectArtifactServiceTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.security.CognitoAccessTokenValidatorTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.identity.CognitoJwtExternalIdentityMapperTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.identity.AuthenticatedUserServiceTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.identity.ExternalIdentityMigrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisUploadControllerTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisUploadServiceTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobControllerIntegrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobServiceTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.projecttree.ProjectTreeControllerTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.project.TerraformDraftControllerTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.projectcomment.ProjectCommentControllerTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.storage.SourceObjectReaderServiceTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.storage.UploadObjectStorageServiceTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.terraformers.modernization.projectcore.ProjectDomainServiceTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "tests": 101,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "fullBackend": {
+    "command": "mvn -o clean package",
+    "workingDirectory": "backend",
+    "exitCode": 0,
+    "package": "PASS",
+    "summary": {
+      "tests": 552,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "suites": 103,
+      "skippedCases": [
+        {
+          "class": "com.terraformers.modernization.verification.MariaDbRepositorySmokeTest",
+          "name": "durableEligibilityDiscoveryExecutesAgainstMariaDb",
+          "reason": "Environment variable [SPRING_DATASOURCE_URL] does not exist"
+        },
+        {
+          "class": "com.terraformers.modernization.verification.MariaDbRepositorySmokeTest",
+          "name": "canonicalRepositoryQueriesAndConcurrentClaimExecuteAgainstMariaDb",
+          "reason": "Environment variable [SPRING_DATASOURCE_URL] does not exist"
+        }
+      ]
+    },
+    "passed": 550,
+    "testOnlyHandlerExcludedFromPackagedApplication": true
+  },
+  "frontendAuth": {
+    "command": "CI=true npm test -- --runInBand --runTestsByPath src/utils/api.test.js src/auth/AuthSessionContext.test.js src/auth/providers/cognitoAmplifyAuthClient.test.js",
+    "workingDirectory": "frontend",
+    "exitCode": 0,
+    "tests": 21,
+    "suites": 3,
+    "failures": 0,
+    "skipped": 0,
+    "mockedAuthNotLiveIdentityProof": true,
+    "initialCommandFailure": {
+      "command": "CI=true npm test -- --runInBand --runTestsByPath src/utils/api.test.js src/auth/authClient.test.js",
+      "exitCode": 1,
+      "error": "ENOENT: src/auth/authClient.test.js does not exist",
+      "apiTestsPassed": 7,
+      "resolution": "Select actual existing auth suites after rg --files; no implementation or acceptance change",
+      "autonomousRepairConsumed": false
+    }
+  },
+  "sourceSha256": {
+    "backend/src/main/java/com/terraformers/modernization/security/JwtResourceServerSecurityConfig.java": "c5d6df2d7c70d0344808d4b7de8f3d60c76083e66e2ec7558cf8bb50a182a8df",
+    "backend/src/test/java/com/terraformers/modernization/project/ProjectMetadataControllerTest.java": "e048d4227503298ad228355adb4405676b9f34f9efa78faaebdaf1d458111136",
+    "backend/src/test/java/com/terraformers/modernization/projectcore/ProjectArtifactServiceTest.java": "728f32b74933f50b35fc034c700b1567713cdaf7a9b746ecdbae36ac377a78ac",
+    "backend/src/test/java/com/terraformers/modernization/security/JwtResourceServerSecurityConfigTest.java": "a804352fee3f6eaa23120f4eb437e328f039edddb61b46f500317798072ff109"
+  },
+  "logSha256": {
+    "pt5-before-route.log": "740ef1e846988c0dff0d3b535a5c750462e4539a607de3f781d0a2728489500a",
+    "pt5-focused-backend.log": "693108b3f8559abbee4b976ac12040001e45f37d9d8af55f3cf6d49005c0b38a",
+    "pt5-full-backend.log": "c0aadf2d7af9b9789e1123838a5fcee8feeb4c2d7aafa6629d9de20e4df40e20",
+    "pt5-frontend-auth.log": "957a26f125e4b388f804387e303f8582a87b0b7446fde5a80434a50f71940adf",
+    "pt5-frontend-auth-corrected.log": "e425206540fd418083f3187c11924fcb0c7cf10f1fb69613c9bb12d58baa19cb"
+  },
+  "audits": {
+    "scope": "PASS_CLOSED_WORK_PACKAGE_ALLOWLIST",
+    "onlyProductionChange": "backend/src/main/java/com/terraformers/modernization/security/JwtResourceServerSecurityConfig.java",
+    "stateAndWorkPackage": "PASS",
+    "programManifestVersion2AndAmendmentUnchanged": true,
+    "pt2ExecutionAndCompletionExactlyPreserved": true,
+    "priorPt1Pt3CompletionAndPt3ExecutionExactlyPreserved": true,
+    "pt4OriginalExecutionBaseAndRepairCountersPreserved": true,
+    "globalRepairCountAndHumanCorrectionHistoryPreserved": true,
+    "activePrBranchUrlAllNull": true,
+    "frozenIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+    "frozenPinnedFilesVerified": 26,
+    "frozenBytesAndTruthUnchanged": true,
+    "mainDriftCheck": "PASS_MAIN_REMAINS_EXECUTION_BASE_AFTER_VALIDATION",
+    "diffCheck": "PASS"
+  },
+  "bounds": {
+    "autoRepairsUsed": 0,
+    "humanAuthorizedCorrectiveIterations": 0,
+    "modelCalls": 0,
+    "liveCloudActions": 0,
+    "newIdpIamCorsOriginRuntimeOrInfrastructure": false,
+    "productionIdentityEstablished": false,
+    "browserOrLiveBinaryStorageProof": false,
+    "perUserRequestOrModelCostQuotaEstablished": false,
+    "pt6AuthorizedBeforeReviewAndUserMerge": false,
+    "selfMergeAuthorized": false,
+    "transientPullRequestLifecycleAuthority": "GitHub only"
+  }
+}

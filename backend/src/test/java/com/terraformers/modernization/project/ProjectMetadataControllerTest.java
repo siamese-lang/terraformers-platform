@@ -1,12 +1,15 @@
 package com.terraformers.modernization.project;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -19,10 +22,13 @@ import com.terraformers.modernization.analysis.EvidenceQualityAssessment;
 import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import com.terraformers.modernization.analysis.SynchronousAnalysisExecutorTestConfig;
 import com.terraformers.modernization.collaboration.BoardRepository;
 import com.terraformers.modernization.collaboration.CommentRepository;
 import com.terraformers.modernization.identity.UserRepository;
+import com.terraformers.modernization.identity.UserEntity;
 import com.terraformers.modernization.projectcore.OwnedProjectRepository;
 import com.terraformers.modernization.projectcore.ProjectFileRepository;
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
@@ -290,6 +296,150 @@ class ProjectMetadataControllerTest {
         mockMvc.perform(get("/api/projects/" + projectId).with(testUserJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.projectId").value(projectId));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "/api/projects/{id}, 200",
+            "/api/project-tree/{id}, 200",
+            "/api/projects/{id}/terraform/main.tf, 200",
+            "/api/projects/{id}/source-object, 409",
+            "/api/projects/{id}/source-image, 409"
+    })
+    void privatePublicReadMatrixAndRevocationFollowProjectOwnership(String route, int allowedStatus) throws Exception {
+        Long projectId = upload("Access Matrix.png");
+        String path = route.replace("{id}", projectId.toString()) + "?audit=true";
+        mockMvc.perform(get(path).with(testUserJwt())).andExpect(status().is(allowedStatus));
+        mockMvc.perform(get(path).with(otherUserJwt())).andExpect(status().isForbidden());
+        mockMvc.perform(get(path)).andExpect(status().isForbidden());
+
+        publishProject(projectId);
+        mockMvc.perform(get(path)).andExpect(status().is(allowedStatus));
+        mockMvc.perform(get(path).with(otherUserJwt())).andExpect(status().is(allowedStatus));
+        mockMvc.perform(patch("/api/projects/" + projectId + "/visibility").with(testUserJwt())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"visibility\":\"PRIVATE\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get(path)).andExpect(status().isForbidden());
+        mockMvc.perform(get(path).with(otherUserJwt())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void jobReadRequiresAuthenticationAndFollowsItsProjectVisibility() throws Exception {
+        Long projectId = upload("Job Access.png");
+        AnalysisJobEntity job = analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(projectId).orElseThrow();
+        String path = "/api/analysis/jobs/" + job.getId();
+        mockMvc.perform(get(path).with(testUserJwt())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectId").value(projectId))
+                .andExpect(jsonPath("$.sourceFileId").value(job.getSourceFileId()))
+                .andExpect(jsonPath("$.resultFileId").value(job.getResultFileId()));
+        mockMvc.perform(get(path).with(otherUserJwt())).andExpect(status().isForbidden());
+        mockMvc.perform(get(path)).andExpect(status().isUnauthorized());
+        publishProject(projectId);
+        mockMvc.perform(get(path).with(otherUserJwt())).andExpect(status().isOk());
+        mockMvc.perform(get(path)).andExpect(status().isUnauthorized());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void deniedPrivateOrPublicMutationsDoNotChangeDataOrAcceptJobs(boolean publicProject) throws Exception {
+        Long projectId = upload("Mutation Access.png");
+        if (publicProject) {
+            publishProject(projectId);
+        }
+        AnalysisJobEntity job = analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(projectId).orElseThrow();
+        String originalDraft = projectFileRepository.findById(job.getResultFileId()).orElseThrow().getInlineContent();
+        long jobCount = analysisJobRepository.count();
+        long fileCount = projectFileRepository.count();
+        String jobRequest = "{\"projectId\":" + projectId + ",\"sourceFileId\":" + job.getSourceFileId() + "}";
+        String newVisibility = publicProject ? "PRIVATE" : "PUBLIC";
+
+        for (boolean anonymous : new boolean[] {true, false}) {
+            RequestPostProcessor identity = anonymous ? request -> request : otherUserJwt();
+            int deniedStatus = anonymous ? 401 : 403;
+            mockMvc.perform(patch("/api/projects/" + projectId + "/visibility").with(identity)
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"visibility\":\"" + newVisibility + "\"}"))
+                    .andExpect(status().is(deniedStatus));
+            mockMvc.perform(put("/api/projects/" + projectId + "/terraform/main.tf").with(identity)
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"unauthorized edit\"}"))
+                    .andExpect(status().is(deniedStatus));
+            mockMvc.perform(delete("/api/projects/" + projectId).with(identity))
+                    .andExpect(status().is(deniedStatus));
+            mockMvc.perform(post("/api/analysis/jobs").with(identity)
+                            .contentType(MediaType.APPLICATION_JSON).content(jobRequest))
+                    .andExpect(status().is(deniedStatus));
+        }
+        assertThat(analysisJobRepository.count()).isEqualTo(jobCount);
+        assertThat(projectFileRepository.count()).isEqualTo(fileCount);
+        assertThat(projectFileRepository.findById(job.getResultFileId()).orElseThrow().getInlineContent()).isEqualTo(originalDraft);
+        var project = projectRepository.findById(projectId).orElseThrow();
+        assertThat(project.getDeletedAt()).isNull();
+        assertThat(project.getVisibility()).isEqualTo(publicProject ? ProjectVisibility.PUBLIC : ProjectVisibility.PRIVATE);
+
+        mockMvc.perform(put("/api/projects/" + projectId + "/terraform/main.tf").with(testUserJwt())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"# owner draft\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content").value("# owner draft"));
+        mockMvc.perform(patch("/api/projects/" + projectId + "/visibility").with(testUserJwt())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"visibility\":\"" + newVisibility + "\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/analysis/jobs").with(testUserJwt())
+                        .contentType(MediaType.APPLICATION_JSON).content(jobRequest)).andExpect(status().isCreated());
+        assertThat(analysisJobRepository.count()).isEqualTo(jobCount + 1);
+        mockMvc.perform(delete("/api/projects/" + projectId).with(testUserJwt())).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void jobCreationRejectsForeignOrDeletedSourceBeforeAcceptingAJob() throws Exception {
+        Long ownedProject = upload("Own Source.png");
+        Long foreignProject = upload("Foreign Source.png");
+        var foreign = projectRepository.findById(foreignProject).orElseThrow();
+        UserEntity other = userRepository.save(otherUser());
+        foreign.setOwner(other);
+        projectRepository.saveAndFlush(foreign);
+        AnalysisJobEntity ownJob = analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(ownedProject).orElseThrow();
+        AnalysisJobEntity foreignJob = analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(foreignProject).orElseThrow();
+        long count = analysisJobRepository.count();
+        mockMvc.perform(post("/api/analysis/jobs").with(testUserJwt()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":" + ownedProject + ",\"sourceFileId\":" + foreignJob.getSourceFileId() + "}"))
+                .andExpect(status().isBadRequest());
+        ProjectFileEntity source = projectFileRepository.findById(ownJob.getSourceFileId()).orElseThrow();
+        source.setDeletedAt(java.time.Instant.now());
+        projectFileRepository.saveAndFlush(source);
+        mockMvc.perform(post("/api/analysis/jobs").with(testUserJwt()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":" + ownedProject + ",\"sourceFileId\":" + source.getFileId() + "}"))
+                .andExpect(status().isNotFound());
+        assertThat(analysisJobRepository.count()).isEqualTo(count);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"/api/projects/{id}/comments", "/api/getProjectComments/{id}"})
+    void commentsReadOnlyPublicAndAuthenticatedNonOwnerMayDiscussButNotMutateProject(String route) throws Exception {
+        Long projectId = upload("Discussion Access.png");
+        String path = route.replace("{id}", projectId.toString());
+        mockMvc.perform(get(path)).andExpect(status().isForbidden());
+        mockMvc.perform(get(path).with(testUserJwt())).andExpect(status().isForbidden());
+        mockMvc.perform(get(path).with(otherUserJwt())).andExpect(status().isForbidden());
+        publishProject(projectId);
+        mockMvc.perform(post("/api/projects/" + projectId + "/comments")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"discussion\"}"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/projects/" + projectId + "/comments").with(otherUserJwt())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"discussion\"}"))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.authorDisplayName").value("Other Metadata User"));
+        mockMvc.perform(post("/api/addProjectComment").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":" + projectId + ",\"content\":\"discussion\"}"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/addProjectComment").with(otherUserJwt()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":" + projectId + ",\"content\":\"compatibility discussion\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.authorDisplayName").value("Other Metadata User"));
+        mockMvc.perform(get(path)).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    private UserEntity otherUser() {
+        UserEntity user = new UserEntity();
+        user.setExternalIdentity("cognito", "metadata-other-user");
+        user.setEmail("other-metadata@example.com");
+        user.setDisplayName("Other Metadata User");
+        return user;
     }
 
     private Long upload(String filename) throws Exception {

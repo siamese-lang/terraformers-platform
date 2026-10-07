@@ -1,0 +1,112 @@
+work_package:
+  id: product-trust-pt-5-access-safety-v1
+  program: product-trust-v1
+  phase: PT-5
+  status: AUDITED_IMPLEMENTED_PENDING_INDEPENDENT_REVIEW
+  approved_base_sha: 0c4fa0e9616881e281aa027a18a9d741ff614699
+  execution_base_sha: 0c4fa0e9616881e281aa027a18a9d741ff614699
+  activated_at: "2026-10-07T01:57:33Z"
+  activation:
+    main_reads_at_activation: 1
+    refresh_rebase_or_rebind: prohibited
+    main_drift: HUMAN_REQUIRED
+  authority:
+    source: USER approved Goal / Program repository-only PT-5 DAG
+    predecessor_review: https://github.com/siamese-lang/terraformers-platform/pull/248#issuecomment-6029174275
+    predecessor_reviewed_head: 68110fc0429d88b3211c5811b1c470770bc4c3f7
+    predecessor_merge_sha: 0c4fa0e9616881e281aa027a18a9d741ff614699
+    predecessor_merge_at: "2026-10-07T01:52:07Z"
+    review_itself_authorizes_PT5: false
+    live_model_cloud_security_expansion_or_merge_authorized: false
+  objective: >
+    Audit the existing supported API flow for owner/non-owner/anonymous project and artifact
+    access, analysis job/source linkage, public discussion and compatibility routes. Correct
+    only the demonstrated default-open routing gap, without changing sharing or identity policy.
+  mechanism:
+    observed_gap: JWT-enabled filter uses anyRequest().permitAll outside enumerated protected routes
+    selected_correction: >
+      Preserve existing public GET routes with numeric project identifiers, monitoring/readiness
+      GET probes and OPTIONS; require authentication for all other requests in the JWT-enabled
+      chain. Existing service ownership checks remain authoritative for data and mutations.
+    alternatives: >
+      Retaining default-open routing leaves future unlisted handlers anonymous by default.
+      Denying all unmatched requests would require a second complete list of protected handlers.
+      An explicit public list with authenticated fallback closes the supported gap with one
+      existing filter-chain change; a new IdP, IAM grant or authorization framework is unnecessary.
+    bounds: >
+      This tightens route authentication and preserves existing owner/admin private access,
+      owner/admin mutations, public reads and authenticated public comments. It does not select
+      a production IdP, grant new access, secure direct object-store/IAM access, add cost quotas,
+      change CORS origins or deploy anything. Local JWT-disabled mode remains stub development.
+  allowed_paths:
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-pt-4-trust-status-waiting-v1.yml
+    - .agents/work-packages/product-trust-pt-5-access-safety-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-pt-4-trust-status-waiting.md
+    - docs/evaluation/product-trust-pt-5-access-safety.md
+    - docs/evidence/product-trust-pt-5/**
+    - backend/src/main/java/com/terraformers/modernization/security/JwtResourceServerSecurityConfig.java
+    - backend/src/test/java/com/terraformers/modernization/security/JwtResourceServerSecurityConfigTest.java
+    - backend/src/test/java/com/terraformers/modernization/project/ProjectMetadataControllerTest.java
+    - backend/src/test/java/com/terraformers/modernization/projectcore/ProjectArtifactServiceTest.java
+  allowed_actions:
+    - read_repository_contracts_GitHub_reviews_and_existing_access_evidence
+    - replace_default_open_JWT_route_policy_preserving_selected_public_contracts
+    - extend_existing_behavior_tests_for_default_route_and_access_linkage_regressions
+    - offline_backend_tests_package_and_existing_frontend_auth_tests
+    - record_PT4_accepted_merge_and_PT5_audit_in_one_substantive_PR
+    - commit_push_open_update_one_PT5_PR_and_inspect_CI_and_independent_feedback
+  prohibited_actions:
+    - any_PT2_dispatch_rerun_exception_continuation_or_harness_recovery
+    - live_model_GCP_runtime_rollout_infrastructure_IAM_or_teardown
+    - production_IdP_selection_or_security_boundary_expansion
+    - changes_to_project_sharing_role_assignment_CORS_origins_or_runtime_configuration
+    - prompt_model_generation_retrieval_quality_scorer_corpus_or_frozen_truth_changes
+    - new_workflow_or_verification_or_orchestration_framework
+    - transient_active_PR_branch_lifecycle_in_durable_state
+    - self_acceptance_self_merge_or_PT6_before_PT5_acceptance_and_USER_merge
+  acceptance_criteria:
+    - supported_private_project_reads_and_mutations_are_owner_scoped_with_existing_admin_exception
+    - public_GET_routes_are_explicit_and_default_unlisted_routes_require_authentication
+    - owner_non_owner_anonymous_private_public_matrix_preserves_existing_selected_policy
+    - analysis_job_lookup_and_source_result_artifact_access_follow_project_ownership_and_linkage
+    - rejected_mutations_do_not_modify_projects_artifacts_or_accept_jobs
+    - public_comments_require_authentication_and_private_comments_remain_unavailable
+    - deterministic_JWKS_fixture_is_not_claimed_as_permanent_production_identity
+    - CORS_token_upload_and_cost_abuse_bounds_are_audited_without_invented_production_guarantees
+    - new_IdP_IAM_or_security_expansion_requires_human_decision
+    - PT2_final_INCOMPLETE_frozen_identity_censor_NOT_RUN_and_repair_history_are_preserved
+    - independent_review_and_explicit_merge_are_required
+  validation:
+    - before_correction_default_unlisted_handler_regression_expected_failure
+    - focused_existing_security_identity_project_job_storage_and_comment_tests_offline
+    - full_backend_offline_clean_package_after_focused_pass
+    - existing_frontend_auth_API_tests_without_frontend_behavior_changes
+    - one_off_scope_state_frozen_identity_audit_and_git_diff_check
+  auto_repair_limit: 1
+  auto_repairs_used: 0
+  stop_on:
+    - MAIN_DRIFT
+    - acceptance_scope_or_failure_class_change
+    - new_product_architecture_IdP_IAM_security_expansion_or_live_decision
+    - more_than_one_autonomous_repair
+    - independent_review_and_explicit_merge_checkpoint
+  next_phase: PT-6
+  next_phase_authorized_before_PT5_acceptance_and_merge: false
+  completion:
+    implementation: EXISTING_ACCESS_AUDIT_AND_BOUNDED_DEFAULT_ROUTE_CORRECTION
+    independent_acceptance: PENDING
+    current_human_gate: INDEPENDENT_REVIEW_AND_MERGE_CHECKPOINT
+    validation_evidence: docs/evidence/product-trust-pt-5/validation.json
+    focused_backend_tests: 101
+    full_backend_tests: 552
+    backend_failures: 0
+    backend_errors: 0
+    backend_external_MariaDB_skips: 2
+    frontend_auth_tests: 21
+    before_route_regression_expected_failures: 6
+    model_calls: 0
+    live_cloud_actions: 0
+    auto_repairs_used: 0

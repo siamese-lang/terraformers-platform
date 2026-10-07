@@ -1,0 +1,98 @@
+work_package:
+  id: product-trust-v3-residual-closure-amendment-v1
+  program: product-trust-v1
+  kind: repository_only_program_amendment
+  lane: D_DECISION_USER_APPROVED
+  phase: null
+  status: HUMAN_REQUIRED
+  approved_base_sha: f344552fe58db26438a4f0b2c9abb1806e6a99d9
+  execution_base_sha: f344552fe58db26438a4f0b2c9abb1806e6a99d9
+  activation:
+    main_reads_at_binding: 1
+    refresh_rebase_or_rebind: prohibited
+    main_drift: HUMAN_REQUIRED
+  authority:
+    source: Explicit USER approval in uploaded request
+    approval_text: "APPROVE product-trust-v1 v3 residual-closure amendment as audited above."
+    approved_at: "2026-10-07T04:15:00Z"
+    approval_evidence: docs/evidence/product-trust-v3-amendment/approved-request.md
+    predecessor_review: https://github.com/siamese-lang/terraformers-platform/pull/250#issuecomment-6030408825
+    predecessor_reviewed_head: 0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a
+    predecessor_USER_merged_main_sha: f344552fe58db26438a4f0b2c9abb1806e6a99d9
+    merge_or_later_phase_execution_authorized_in_this_task: false
+  objective: >
+    Amend product-trust-v1 version 2 to version 3 in exactly one repository-only PR. Reconcile
+    independently accepted and USER-merged PT-6 completion, preserve all historical evidence and
+    permanently final INCOMPLETE PT-2, and make the approved residual-closure order and gates durable.
+    This is the substantive governance reconciliation, not a state-sync/activation-only PR.
+  remaining_mandatory_order: [PT-6R1, PT-6R2, PT-7, PT-8A, PT-8B, PT-9]
+  integrity_audit: docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md
+  allowed_paths:
+    - .agents/programs/product-trust-v1.yml
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-v3-residual-closure-amendment-v1.yml
+    - .agents/work-packages/product-trust-pt-6-browser-journey-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md
+    - docs/evidence/product-trust-v3-amendment/approved-request.md
+    - docs/evidence/product-trust-v3-amendment/review-6030408825.json
+    - docs/evidence/product-trust-v3-amendment/validation.json
+  allowed_actions:
+    - read_authoritative_GitHub_main_PR_review_history_and_existing_repository_contracts
+    - create_one_amendment_branch_from_the_exact_bound_main
+    - edit_only_declared_governance_state_plan_and_evidence_paths
+    - structural_YAML_JSON_parse_cross_reference_state_consistency_scope_and_diff_checks
+    - preserve_all_preexisting_evidence_and_frozen_truth_bytes
+    - commit_push_open_update_exactly_one_amendment_PR_and_read_CI_review_status
+  prohibited_actions:
+    - implement_or_activate_PT6R1_or_any_later_production_change
+    - backend_frontend_workflow_IaC_or_script_changes
+    - model_browser_live_GCP_IAM_workflow_dispatch_or_destructive_actions
+    - any_PT2_recovery_reopening_rerun_resubmission_or_artifact_reinterpretation
+    - change_frozen_truth_corpus_prompts_models_retrieval_scoring_or_runtime
+    - preselect_identity_atomicity_fix_numeric_timeout_or_retry_policy_tradeoff
+    - predict_or_hardcode_future_phase_merge_or_execution_base_SHA
+    - separate_state_sync_activation_or_normalization_PR
+    - persist_transient_active_PR_branch_lifecycle_as_program_state
+    - self_acceptance_or_self_merge
+  acceptance_criteria:
+    - version_3_manifest_state_plan_and_current_project_state_agree
+    - remaining_DAG_is_exactly_PT6R1_PT6R2_PT7_PT8A_PT8B_PT9_without_a_bypass
+    - PT6_COMPLETE_binds_PR250_accepted_head_review6030408825_and_actual_merge_with_bounded_claim
+    - all_historical_evidence_PT2_final_INCOMPLETE_NOT_RUN_null_rates_censor_and_zero_observation_failures_preserved
+    - cross_phase_audit_separates_production_improvements_measurement_unresolved_defects_and_portfolio_residuals
+    - identity_and_provider_mechanism_audits_precede_fix_selection_and_required_product_choices_stop
+    - PT7_audits_real_Dockerfile_build_and_actual_required_checks_without_new_workflow_breadth
+    - PT8A_is_new_once_only_ten_case_final_acceptance_with_immediate_separate_live_model_cost_gate
+    - PT8A_false_trusted_success_zero_each_positive_no_defect_and_all_accepted_jobs_bounded_terminal
+    - PT8B_requires_independent_PT8A_acceptance_and_exact_source_image_digest_runtime_corpus_equivalence
+    - PT9_requires_independent_PT8B_acceptance_and_explicit_USER_destructive_checkpoint
+    - non_blocking_portfolio_residuals_bound_claims_and_are_never_promoted_to_PASS
+    - no_future_phase_activation_or_code_runtime_change_occurred
+    - independent_review_and_USER_merge_are_required_before_PT6R1_substantive_activation
+  validation:
+    - structural_YAML_JSON_parsing_with_duplicate_key_rejection
+    - cross_reference_state_DAG_acceptance_and_authority_consistency
+    - allowed_scope_and_byte_preservation_against_bound_base
+    - git_diff_check
+  auto_repair_limit: 1
+  auto_repairs_used: 0
+  stop_on:
+    - main_drift
+    - approval_cannot_be_faithfully_encoded_without_a_new_decision
+    - production_or_live_action_or_future_phase_activation_required
+    - independent_review_and_USER_merge_checkpoint
+  result:
+    status: PREPARED_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE
+    independent_acceptance: PENDING
+    human_gate: MERGE_CHECKPOINT
+    next_phase: PT-6R1
+    next_phase_execution_base_sha: null
+    next_phase_activation: Bind remote main once after accepted USER merge in substantive PT-6R1 PR
+    production_changes: 0
+    browser_executions: 0
+    model_calls: 0
+    live_cloud_actions: 0
+    workflow_dispatches: 0
+    destructive_actions: 0

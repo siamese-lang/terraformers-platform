@@ -2,7 +2,7 @@ work_package:
   id: product-trust-pt-6-browser-journey-v1
   program: product-trust-v1
   phase: PT-6
-  status: HUMAN_REQUIRED
+  status: COMPLETE
   approved_base_sha: 37e006be4d5995019704ea8a4009e1a59da039b2
   execution_base_sha: 37e006be4d5995019704ea8a4009e1a59da039b2
   activated_at: "2026-10-07T02:26:08Z"
@@ -116,7 +116,7 @@ work_package:
     reviewed_head: 4ac4c3b339276cd181e07cf78f339692038aaf89
     execution_base_sha: 37e006be4d5995019704ea8a4009e1a59da039b2
     procedure: docs/evidence/product-trust-pt-6/correction-1/procedure.md
-    status: PASS_PENDING_INDEPENDENT_REVIEW
+    status: PASS_INDEPENDENTLY_ACCEPTED
     maximum_browser_executions: 1
     browser_executions_used: 1
     automatic_retries: 0
@@ -137,7 +137,9 @@ work_package:
     focused_tests_passed: 19
     original_criteria_browser_steps_passed: 5
     remaining_browser_executions_authorized: 0
-    independent_acceptance: PENDING_CORRECTED_HEAD_REVIEW
+    independent_acceptance: PASS
+    independent_review_comment: 6030408825
+    accepted_reviewed_head: 0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a
     merge_authorized: false
   stop_on:
     - MAIN_DRIFT
@@ -145,12 +147,24 @@ work_package:
     - acceptance_scope_expansion
     - new_IdP_IAM_security_CORS_live_GCP_product_or_architecture_decision
     - independent_review_and_explicit_merge_checkpoint
-  next_phase: PT-7
-  next_phase_authorized_before_PT6_acceptance_and_merge: false
+  next_phase: PT-6R1
+  next_phase_activation_requires: V3_amendment_independent_acceptance_and_USER_merge
+  next_phase_activated_here: false
+  completion:
+    merged_pull_request: 250
+    independent_review: https://github.com/siamese-lang/terraformers-platform/pull/250#issuecomment-6030408825
+    reviewed_head: 0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a
+    merged_main_sha: f344552fe58db26438a4f0b2c9abb1806e6a99d9
+    merged_at: "2026-10-07T03:53:53Z"
+    boundary: DETERMINISTIC_BROWSER_INTEGRATION_ONLY_NO_PRODUCTION_IDP_MODEL_QUALITY_OR_GENERALIZATION
+    original_execution_base_rebound: false
+    original_failed_evidence_and_counters_preserved: true
+    first_user_concurrency_closed: false
   result:
-    status: BROWSER_JOURNEY_VERIFIED_PENDING_INDEPENDENT_REVIEW
-    independent_acceptance: PENDING_CORRECTED_HEAD_REVIEW
-    human_gate: INDEPENDENT_REVIEW_AND_MERGE_CHECKPOINT
+    status: COMPLETE
+    independent_acceptance: PASS
+    original_independent_review_and_USER_merge_checkpoint: FULFILLED
+    independent_review_comment: 6030408825
     evidence: docs/evaluation/product-trust-pt-6-browser-journey.md
     failed_evidence_replaced: false
     auto_repairs_used: 1

@@ -177,7 +177,7 @@ class AnalysisJobRepositoryTest {
     }
 
     @Test
-    void durableClaimHonorsEligibilityAndReclaimsOnlyExpiredLeases() {
+    void durableClaimCannotConsumeSecondAttemptOnExpiredLease() {
         String jobId = savePending("durable-claim").getId();
 
         assertThat(repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
@@ -201,11 +201,11 @@ class AnalysisJobRepositoryTest {
         assertThat(repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
                 NOW.plusSeconds(1), LEASE.plusSeconds(1))).isZero();
         assertThat(repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
-                LEASE, LEASE.plusSeconds(300))).isEqualTo(1);
+                LEASE, LEASE.plusSeconds(300))).isZero();
         AnalysisJobEntity reclaimed = repository.findById(jobId).orElseThrow();
-        assertThat(reclaimed.getAttemptCount()).isEqualTo(2);
-        assertThat(reclaimed.getClaimGeneration()).isEqualTo(2);
-        assertThat(reclaimed.getLeaseExpiresAt()).isEqualTo(LEASE.plusSeconds(300));
+        assertThat(reclaimed.getAttemptCount()).isEqualTo(1);
+        assertThat(reclaimed.getClaimGeneration()).isEqualTo(1);
+        assertThat(reclaimed.getLeaseExpiresAt()).isEqualTo(LEASE);
     }
 
     @Test
@@ -230,8 +230,8 @@ class AnalysisJobRepositoryTest {
         var discovered = repository.findEligibleJobIds(AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
                 NOW, PageRequest.of(0, 4));
 
-        assertThat(discovered).containsExactlyInAnyOrder(due.getId(), expired.getId(), legacy.getId());
-        assertThat(discovered).doesNotContain(future.getId(), active.getId(), terminal.getId());
+        assertThat(discovered).containsExactlyInAnyOrder(due.getId(), legacy.getId());
+        assertThat(discovered).doesNotContain(future.getId(), active.getId(), terminal.getId(), expired.getId());
         assertThat(repository.claimEligible(legacy.getId(), AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
                 NOW, LEASE)).isEqualTo(1);
         AnalysisJobEntity reclaimedLegacy = repository.findById(legacy.getId()).orElseThrow();
@@ -259,8 +259,10 @@ class AnalysisJobRepositoryTest {
     void staleGenerationIsFencedAfterExpiredLeaseReclaim() {
         String jobId = savePending("stale-fence").getId();
         repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, NOW, LEASE);
-        repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
-                LEASE, LEASE.plusSeconds(300));
+        // Seed an already-existing older generation to retain stale-owner regression coverage.
+        AnalysisJobEntity seeded = repository.findById(jobId).orElseThrow();
+        seeded.setAttemptCount(2); seeded.setClaimGeneration(2); seeded.setLeaseExpiresAt(LEASE.plusSeconds(300));
+        repository.saveAndFlush(seeded);
 
         assertThat(repository.lockOwned(jobId, AnalysisJobStatus.RUNNING, 1, LEASE.plusSeconds(1))).isEmpty();
         assertThat(repository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING, 1,
@@ -297,11 +299,11 @@ class AnalysisJobRepositoryTest {
         assertThat(beforeRetry.getClaimGeneration()).isEqualTo(1);
         assertThat(beforeRetry.getNextAttemptAt()).isNull();
         assertThat(repository.scheduleRetryOwned(retryId, AnalysisJobStatus.RUNNING, AnalysisJobStatus.PENDING,
-                1, NOW, retryAt)).isEqualTo(1);
+                1, NOW, retryAt)).isZero();
         AnalysisJobEntity retry = repository.findById(retryId).orElseThrow();
-        assertThat(retry.getStatus()).isEqualTo(AnalysisJobStatus.PENDING);
-        assertThat(retry.getNextAttemptAt()).isEqualTo(retryAt);
-        assertThat(retry.getLeaseExpiresAt()).isNull();
+        assertThat(retry.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
+        assertThat(retry.getNextAttemptAt()).isNull();
+        assertThat(retry.getLeaseExpiresAt()).isEqualTo(LEASE);
         assertThat(retry.getAttemptCount()).isEqualTo(1);
 
         String failedId = savePending("failure").getId();

@@ -1,59 +1,120 @@
-# PT-6R2 — approved provider budgets and terminal-enforcement scope
+# PT-6R2 — Option D implementation draft and failed deterministic validation
 
-**HUMAN_REQUIRED: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION.** USER approved **Option D**;
-its production implementation is paused at the expressly declared finalization-lock gate.
-PT-6R2 is not complete or independently accepted. Bound execution base remains
-`406981a8c629a02503f5660453dcc7921b8d5177`; one branch / PR #254, no restart/rebind/rebase.
-This advances backend reliability: Case A's provider boundary and Case B's durable job terminality.
+**HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED.** USER released the finalization scope
+gate after [review 6036430154](https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6036430154).
+The narrow implementation is present on the same branch / draft PR #254, but its deterministic
+validation is **not complete** and it is **not merge-ready**. Execution base remains
+`406981a8c629a02503f5660453dcc7921b8d5177`; no refresh/rebase/rebind. Backend reliability advances
+Case A's provider boundary and Case B's durable accepted-job terminality; independent acceptance,
+USER merge, PT-7 and live/model/cloud/OpenSearch activity remain unauthorized.
 
-## Approved decision and scope blocker
+## Current authority and correction
 
-[USER resume request](../evidence/product-trust-pt-6r2/approved-policy-d-resume.md) and
-[policy D decision](../evidence/product-trust-pt-6r2/policy-d-decision.json) resolve the prior numeric
-budget gate: facts **370 s**; generation, compact MAX_TOKENS fallback and repair **220 s**;
-initial/closure embedding **10 s**; SDK attempts **1**, retryable HTTP statuses **[]**; durable
-attempts **1**; cutoff **480000 ms from original persisted createdAt** including queue/reclaim.
-MAX_TOKENS compact fallback and one closure/single-attempt repair remain required. This is an
-accepted-age cutoff plus bounded transition delay **Δ**, not an eight-minute SLO or worker hard kill.
-The values are approved policy, **not applied production defaults**. No production files changed.
+[Exact bounded authority](../evidence/product-trust-pt-6r2/approved-finalization-correction.md)
+permits external result write outside the job row lock, short post-write DB finalization, ownership /
+deadline fencing, post-commit success progress, existing cleanup accountability, lightweight accepted-age
+sweep and one durable attempt. [Implementation plan](../evidence/product-trust-pt-6r2/implementation-plan.json)
+was frozen before implementation/test outcomes. Original phase completion criteria are unchanged.
 
-The existing finalization prevents establishing a finite Δ without a scope decision.
-`AnalysisJobStateService.markSucceededOwned` (96–138) starts REQUIRES_NEW, acquires
-`AnalysisJobRepository.lockOwned`'s PESSIMISTIC_WRITE row lock (87–99), then performs object write,
-relational registration, progress publication and possible object cleanup inside that transaction.
-A deadline update on the same row must wait for it. Even an independent scheduler or an age predicate
-on that update cannot release a lock already held across delayed external I/O. The current single-thread
-fixed-delay dispatch/cleanup loop also provides no independent maximum inspection delay.
-GenAI request budgets do not bound result-finalization storage/transaction duration.
+[Policy D](../evidence/product-trust-pt-6r2/policy-d-decision.json): facts **370000 ms**;
+generation/compact/repair **220000 ms**; initial/closure embedding **10000 ms**; pinned SDK 1.72.0
+attempts **1**, retryable HTTP statuses **[]**; durable attempts **1**; original persisted `createdAt`
+cutoff **480000 ms** including queue/restart. These are candidate code defaults, **not deployed
+runtime settings**. MAX_TOKENS compact fallback remains exactly once after initial truncation;
+generated-resource closure and repair remain single-cycle, with no repair retry.
 
-[Scope evidence](../evidence/product-trust-pt-6r2/terminal-scope-assessment.json) records one offline
-`AnalysisJobStateServiceTest` invocation: **6 tests, 0 failures/errors/skips, BUILD SUCCESS**.
-Five are unchanged existing tests; one temporary method reused real H2 transactions and the existing
-mocked orchestrator. A latch holds object write, while H2 `INFORMATION_SCHEMA.SESSIONS` confirms a
-real blocked terminal UPDATE (`blocker_id`), rather than inferring it from a short Future timeout.
-After releasing write, finalization succeeds and the competing failure transition returns false.
-The diagnostic controls the final status mutation and logical accepted+481-s timestamp; it is **not**
-a measured production latency, real GCS/provider observation, new PT-6R1 measurement, implemented
-cutoff or after-state proof. [Archived method](../evidence/product-trust-pt-6r2/finalization-lock-probe.java.txt)
-is reproducible in the existing test seam; the test source was restored to its original exact SHA-256.
-No new test framework, workflow or permanent behavioral test is introduced.
+- Runner records matching durable result intent, performs external write without a job transaction,
+  then calls short `markSucceededOwned` with the completed write reference.
+- Finalization rechecks RUNNING, generation, live lease, matching intent/write and original age after
+  lock acquisition and after relational registration; the before-commit age fence rolls back a
+  deadline crossing. Success metadata and job state commit atomically. No external write/delete or
+  progress publisher runs inside that finalization transaction.
+- SUCCEEDED progress publishes only after commit. Publisher failure retains the already committed
+  state. A rejected/failed late write re-arms the matching existing cleanup intent, including an
+  earlier completed cleanup, and compensation is outside finalization. Cleanup failure retains
+  PENDING intent for existing recovery. No second storage/queue framework is added.
+- The existing lightweight fixed-delay tick sweeps before dispatch, even when new dispatch is
+  disabled. It fails over-age PENDING/RUNNING and consumed attempts whose lease is lost; claim SQL
+  requires attemptCount=0. Renew/intent cannot extend original accepted age. Queued deadline failure
+  is technical FAIL / knowledge UNKNOWN / quality UNKNOWN, without fabricated PROVIDER_TIMEOUT.
+- The real SDK `GenAiIOException -> InterruptedIOException("timeout")` chain is classified as timeout;
+  ordinary non-timeout interruption is preserved. No SDK, prompt, model, retrieval or scorer change.
 
-Section 7 of the USER request explicitly says: **“If a DB transaction or existing result-finalization
-lock makes the claimed bounded Δ impossible to establish without a materially broader architecture
-change, do not silently redesign finalization. STOP … PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION.”**
-That condition is reached. Δ is **not established**, and the approved cutoff is not weakened.
-Completing it requires a narrowly reviewed scope decision for external-write/finalization ownership,
-post-I/O age/generation fencing, cleanup accountability and truthful progress sequencing (or an
-independently defensible finite bound for the existing lock). No such design is selected/implemented
-here. This is the identified transaction boundary, not broad GCS/OpenSearch/MariaDB hardening.
+## Conditional terminal-transition Δ and limits
 
-Request-budget adapters, actual SDK timeout translation, real one-attempt claim/reclaim enforcement,
-PENDING/blocked-RUNNING cutoff, late-result fencing and their focused/full backend implementation
-regressions remain **NOT_RUN / NOT_IMPLEMENTED** at this gate. Partial request timeouts would not
-justify a terminal guarantee, so production correction has not started. All audit JSON, latency,
-original failed evidence/counters, PT-4 semantics, PT-2's 424846-ms censor and exact frozen AWS
-candidate bytes remain unchanged. Model/cloud/OpenSearch/MariaDB/browser actions and dispatches: **0**.
-One local H2 diagnostic is recorded separately. PT-7, acceptance and merge remain unauthorized.
+For the operating fixed-delay scheduler and DB, **Δ ≤ P + B + S + T**:
+
+| Term | Required operating bound |
+| --- | --- |
+| P | Configured poll interval, validated at most 2 s |
+| B | Remaining preceding lightweight tick DB work after its deadline inspection |
+| S | Ready-task scheduling delay while service/JVM is operating |
+| T | Short terminal sweep transaction/commit, including DB lock wait |
+
+The predeclared deterministic example uses **P≤2s, B≤1s, S≤1s, T≤1s**, hence **Δ≤5s** and
+`createdAt + 480s + 5s`. The actual registered callback test injects these clock bounds and passed
+in the first focused run. Real H2 tests independently sweep a latch-blocked provider with healthy
+heartbeats, a latch-blocked external write, and reject late success/commit-time deadline crossing.
+
+The 1s B/S/T values are explicit operating assumptions, **not measured or enforced production SLOs**.
+Overall acceptance is pending failed regression validation. An unavailable DB/JVM or unbounded
+scheduler/DB delay supplies no finite bound. Existing cleanup on FAILED jobs retains its serialized
+delete/row-lock path; any resulting DB wait is part of T. No general storage/network/DB timeout
+redesign occurred. A timed-out accepted job can leave a worker occupied by external work; neither
+hard thread cancellation nor upstream Google work/cost cessation is claimed. Original cutoff was
+not weakened to cover those residuals. Final live/runtime evidence still belongs to later gated phases.
+
+## Exact deterministic validation and stop
+
+[Validation evidence](../evidence/product-trust-pt-6r2/implementation-validation.json) preserves
+separate commands, log/report SHA-256 bindings and changed-source hashes.
+
+| Validation | Result |
+| --- | --- |
+| Offline backend compile | BUILD SUCCESS |
+| Offline backend test-compile | BUILD SUCCESS |
+| First focused, 16 existing classes | 130 tests; 1 failure; 6 errors; 0 skipped; BUILD FAILURE |
+| One bounded test-only repair, 2 affected classes | 11 tests; 2 failures; 0 errors; 0 skipped; BUILD FAILURE |
+| Full backend tests/package | NOT_RUN — repair-limit stop |
+
+First run: 14 classes passed, including 13 H2 state-service tests, stage budget/timeout tests,
+MAX_TOKENS fallback / single closure-repair, one-attempt SQL and conditional scheduling model.
+Partial-success baseline failed its previous log order; restart baseline had six setup errors because
+the mock scheduler returned no Clock. The single test-only repair bound that Clock, but missed the
+intended legacy assertion changes. The second run preserves two failures:
+
+1. `AnalysisJobPartialSuccessBaselineTest.successfulObjectWriteIsCompensatedWhenRelationalFinalizationFails`:
+   unchanged assertion expects compensation before finalization failure. Actual order is execution
+   success → finalization failure → compensation success, after the transaction exits. Earlier
+   durable-failure, object compensation and relational-rollback assertions completed.
+2. `AnalysisJobRestartBaselineTest.claimedRunningJobIsNotStolenAndLeaseExpiryFailsWithoutASecondAttempt`:
+   line 158 still expects a new queued task after consumed lease expiry (actual 0); subsequent
+   unchanged expectations are SUCCEEDED / attempts=2 / generation=2. Those later checks were not
+   reached and contradict approved attempts=1. The test name was updated but this body was missed.
+
+Autonomous repair count is **1/1**; human corrective iterations remain **0**. No second repair or
+rerun-until-green is performed. The Work Package stop condition
+`second_bounded_repair_or_failure_class_change` requires HUMAN_REQUIRED before correcting these
+assertions and completing focused/full validation. Acceptance criteria are not weakened, failures
+are not replaced by a successful attempt, and CI cannot override this validation blocker.
+
+Historical audit / scope probe / PT-2 and PT-6R1 evidence/counters and official candidate bytes are
+unchanged. Model-under-test calls, live GCP/OpenSearch/MariaDB/browser operations, workflow dispatch,
+official input execution and PT-7 execution: **0**. Embedded H2 deterministic tests are recorded
+separately; they are not new PT-6R1 before/after measurements. Same PR remains draft for independent
+review and a specific USER bounded-correction decision; no acceptance or merge authority is inferred.
+
+## Historical finalization scope gate
+
+At `c51628853eef8fd22e5fa1549cbe33ddf775995f`, the original success transaction held the job
+pessimistic row lock across external write/compensation. [Scope assessment](../evidence/product-trust-pt-6r2/terminal-scope-assessment.json)
+and [archived temporary H2 method](../evidence/product-trust-pt-6r2/finalization-lock-probe.java.txt)
+preserve that before-change observation: one offline run, 6 tests, 0 failures/errors/skips;
+5 existing + 1 temporary diagnostic, original test bytes restored before later authorized edits.
+The competing terminal UPDATE waited at the real H2 lock, then lost to committed success.
+Review 6036430154 independently validated this scope blocker and recommended the narrow correction.
+The subsequent explicit USER authority releases that scope gate only; it does not accept the new
+implementation or grant broader redesign/live/merge authority. All original evidence bytes remain.
 
 ## Preserved pre-decision audit snapshot
 
@@ -63,7 +124,7 @@ Their “proposed”, “unselected”, “future” and “no backend tests” 
 historical audit step. [Audit JSON](../evidence/product-trust-pt-6r2/audit.json),
 [latency JSON](../evidence/product-trust-pt-6r2/latency.json) and
 [audit validation](../evidence/product-trust-pt-6r2/validation.json) retain their exact bytes;
-current authority/result are the approved-decision and scope evidence above.
+current authority/result are the subsequent implementation and failed-validation evidence above.
 
 ## Decision brief
 
@@ -336,7 +397,7 @@ timing/trust and PT-2 final INCOMPLETE: 03–10 NOT_RUN, four realistic aggregat
 PT-6R1 code/MariaDB evidence and counters, PT-6 browser history, candidate/truth/corpus, prompt,
 model/retrieval/scoring, workflows/IAM/infra/runtime are unchanged. No new CI gate/framework.
 
-## Validation and continuation
+## Preserved audit-step validation and proposed continuation
 
 [Validation record](../evidence/product-trust-pt-6r2/validation.json): exact SDK/source/tag/artifact
 binding, YAML/JSON parsing, Program/state/WP/gate/plan consistency, immutable truth approval,
@@ -345,7 +406,7 @@ staged `git diff --check`. No backend/MariaDB/browser/model/cloud/OpenSearch tes
 Normal automatic PR CI may execute; it is not PT-6R2 hang/timeout acceptance. No workflow dispatch,
 SDK upgrade, image publication/deployment, official case submission, PT-2 or PT-7 execution.
 
-Next action requires **USER decision at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION**. Continue the
+At that historical audit step, the next action required **USER decision at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION**. Continue the
 same branch/PR only after that decision; independent review and USER merge remain required after
 bounded implementation/evidence. CI green, audit PR creation, v4 freeze or a recommendation grants
 neither acceptance nor merge authority.

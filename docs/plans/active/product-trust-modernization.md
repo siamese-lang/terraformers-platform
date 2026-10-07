@@ -3,7 +3,7 @@
 ## Status
 
 **Approved Product Trust v4 / PT-6R1 COMPLETE / PT-6R2 policy D approved /
-HUMAN_REQUIRED: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION**
+HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED**
 
 PR #253 [review 6032563396](https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032563396)
 accepted revision 2 at `690b436d69c4b1671e86b8aeb2b2249623291276`. USER merged as
@@ -15,18 +15,22 @@ unauthorized. Image-only semantic authority, documentation disambiguation and co
 closure remain independently accepted; no freeze grants model/cloud/OpenSearch authority.
 
 The [PT-6R2 Work Package](../../../.agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml)
-read remote main once and bound **`406981a8c629a02503f5660453dcc7921b8d5177`**. The [audit/decision brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md)
-confirms SDK 1.72.0 has no default finite transport timeout, five default SDK attempts, six maximum
-logical GenAI calls per job attempt and no accepted-age terminal cutoff despite ongoing heartbeat.
-USER subsequently approved D: facts 370s, generation/compact/repair 220s, embeddings 10s,
-SDK attempts 1 / retryable statuses [], durable attempts 1 and original accepted-age cutoff 8 minutes.
-[Policy authority](../../evidence/product-trust-pt-6r2/policy-d-decision.json) is durable; defaults are
-not yet applied. [Scope evidence](../../evidence/product-trust-pt-6r2/terminal-scope-assessment.json)
-records 6 passing local H2 tests, including one temporary real-transaction lock diagnostic. Existing
-result-finalization holds the job write lock across object write, preventing a competing deadline
-transition from establishing finite Δ. The USER's section-7 scope gate stops correction before
-silently redesigning finalization or weakening cutoff. Same branch/PR; implementation not started.
-No SDK upgrade, prompt/model/retrieval/scorer/runtime/security change or later-phase execution here.
+remains bound to once-read main **`406981a8c629a02503f5660453dcc7921b8d5177`**, on the same branch/PR.
+USER approved policy D and the [narrow finalization-fencing correction](../../evidence/product-trust-pt-6r2/approved-finalization-correction.md)
+following scope review 6036430154. Candidate defaults implement facts 370s, generation/compact/repair
+220s, embedding 10s, SDK attempts 1 / statuses [], durable attempts 1 and original accepted-age
+cutoff 8 minutes. External result write is outside short DB finalization, late success is fenced,
+success progress is post-commit, cleanup intent remains accountable and the existing lightweight
+tick sweeps over-age/exhausted jobs before dispatch. Runtime is not deployed or reconfigured.
+
+[Failed deterministic validation](../../evidence/product-trust-pt-6r2/implementation-validation.json):
+compile/test-compile pass; first focused 130 tests, 1 failure / 6 errors; one test-only bounded repair
+rerun 11 tests, 2 failures / 0 errors. Two legacy assertions were missed. Stop at **1/1 repairs**;
+no second autonomous repair or full backend tests/package. Conditional Δ model is P+B+S+T, with
+5s only under predeclared P≤2s and B/S/T≤1s assumptions, not a production SLO or outage bound.
+Overall validation, independent phase acceptance and USER merge are pending. The [current brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md)
+preserves historical audit/probe evidence and the exact implementation/failure boundary.
+No SDK/prompt/model/retrieval/scorer/security/cloud change, new framework or later-phase execution.
 
 PT-6R1 accepted production/evidence/base/counters remain exact; no database/browser remeasurement.
 Historical PT-1 identity `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`
@@ -232,23 +236,18 @@ retry-until-green. This amendment records completion only; no production change 
 
 ### PT-6R2 — Provider terminality / latency-budget closure
 
-**Policy D approved; HUMAN_REQUIRED: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION.** V4 activation
-and exact immutable external freeze are reconciled; audit head 888255c remains historical evidence.
+**Policy D / narrow correction approved; HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED.**
+V4 activation, immutable official freeze, original audit and finalization-lock probe remain durable.
+The candidate implements request budgets, SDK timeout classification, one durable attempt,
+accepted-age sweep and post-write/commit success fencing. See the [current brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md)
+for deterministic H2/timeout evidence and the conditional Δ formula/operating assumptions.
 
-USER-approved request budgets: facts 370s, generation/compact/repair 220s, embeddings 10s; SDK
-attempts 1 / statuses []; durable attempts 1; cutoff from original accepted time 480000ms plus
-bounded transition Δ. Current result-finalization transaction holds the job row lock across object
-write and cleanup. One existing H2 suite invocation (5 existing + 1 temporary diagnostic, all pass)
-observes a competing terminal UPDATE blocked at that lock. Temporary test bytes restored; no live
-I/O or PT-6R1 measurement. Δ is not established and production correction has not started.
-
-[Decision/scope brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md) records why the
-USER explicitly requires stopping before silently redesigning finalization. Resolve that narrow
-scope gate on the same Work Package/PR without weakening D, then finish request budgets, timeout
-classification, real one-attempt claim/reclaim, durable cutoff/fencing and deterministic regressions.
-Original completion criteria, independent review and USER merge remain required. No PT-7 or live
-model/cloud/OpenSearch/MariaDB/browser activity. Preserve PT-4 and original PT-2 424846-ms censor;
-no claim Gemini is inherently fast, eight-minute SLO or hard worker-thread cancellation.
+First focused 130 tests failed (1 failure / 6 errors). One test-only repair rerun 11 tests failed
+(2 failures / 0 errors); two old assertion bodies still require correction. Auto repair 1/1 and
+human corrective 0; full backend NOT_RUN. Independent review and explicit bounded test-only USER
+authority are required before further correction; original completion criteria and USER merge
+remain mandatory. No PT-7/live/model/GCP/OpenSearch/MariaDB/browser action or PT-6R1 remeasurement.
+Preserve PT-4 and original PT-2 424846-ms censor; no unconditional terminal SLO or hard cancellation.
 
 ### PT-7 — CI/CD trust gates and operational handoff
 
@@ -357,12 +356,13 @@ not imply that Kubernetes is required for every version of this product.
 
 ## Autonomous execution boundary
 
-Automatic Goal progression is paused at `PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION`.
-The v4 amendment and exact truth freeze are accepted/USER-approved/USER-merged; this releases only
-PT-6R2 audit activation. USER selected policy D; the declared finalization scope decision resumes the same substantive PT-6R2 PR;
-implementation/timeout-hang acceptance/USER merge must precede PT-7. Every next eligible Work Package
-binds actual remote main once at activation and stops on drift; no separate state-sync/decision-only
-final PR or predicted future base. CI is supporting evidence, never independent acceptance.
+Automatic Goal progression is paused at `PT6R2_BOUNDED_REPAIR_LIMIT_REACHED`.
+The approved narrow correction is a draft, with failed deterministic validation after its one
+autonomous test-only repair. Continue only after independent review and explicit bounded USER
+correction authority on the same substantive PT-6R2 PR; no second autonomous repair. Full validation,
+independent acceptance and USER merge must precede PT-7. Every next eligible Work Package binds
+actual remote main once and stops on drift; no separate state-sync PR or predicted future base.
+CI remains supporting evidence and cannot erase failures or create acceptance.
 
 This autonomy does not include:
 

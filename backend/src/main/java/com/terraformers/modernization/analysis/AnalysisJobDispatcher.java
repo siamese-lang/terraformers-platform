@@ -45,10 +45,10 @@ public class AnalysisJobDispatcher {
     }
 
     public void dispatchEligible() {
-        if (!properties.isDispatchEnabled()) {
-            return;
-        }
         Instant now = clock.instant();
+        // Accepted-age safety remains active even if normal discovery is disabled.
+        stateService.terminalizeIneligible(now);
+        if (!properties.isDispatchEnabled()) return;
         var candidates = stateService.findEligibleJobIds(now, properties.getDispatchBatchSize());
         observability.dispatchScanCandidates(candidates.size());
         candidates.forEach(this::submit);

@@ -4,8 +4,6 @@ import com.terraformers.modernization.projectcore.ProjectArtifactService;
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
 import com.terraformers.modernization.storage.ObjectWriteResult;
 import com.terraformers.modernization.storage.ObjectReference;
-import java.net.SocketTimeoutException;
-import java.net.http.HttpTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +47,7 @@ public class AnalysisJobOrchestrator {
         } catch (AnalysisProviderFailureException exception) {
             throw exception;
         } catch (RuntimeException exception) {
-            if (hasStandardNetworkTimeout(exception)) {
+            if (ProviderFailureClassifier.isTimeout(exception)) {
                 throw new AnalysisProviderTimeoutException(exception);
             }
             throw exception;
@@ -72,15 +70,6 @@ public class AnalysisJobOrchestrator {
         }
         log.info("Terraform executable validation passed");
         return result.withTerraformCode(executableValidation.sanitizedContent());
-    }
-
-    private boolean hasStandardNetworkTimeout(Throwable exception) {
-        Throwable current = exception;
-        while (current != null) {
-            if (current instanceof SocketTimeoutException || current instanceof HttpTimeoutException) return true;
-            current = current.getCause();
-        }
-        return false;
     }
 
     public ObjectReference resolveResultObjectReference(AnalysisJobEntity entity) {
@@ -125,6 +114,9 @@ public class AnalysisJobOrchestrator {
         entity.setDetectedRelationships(String.join("\n", result.relationships() == null ? java.util.List.of() : result.relationships()));
         entity.setAnalysisWarnings(String.join("\n", result.warnings() == null ? java.util.List.of() : result.warnings()));
         entity.setTerminalAt(java.time.Instant.now());
+    }
+
+    public void publishSucceededProgress(AnalysisJobEntity entity) {
         progressPublisher.publish(ProgressEvent.of(entity, AnalysisJobStatus.SUCCEEDED, "analysis job completed"));
     }
 

@@ -8,6 +8,23 @@ import org.junit.jupiter.api.Test;
 
 class ProviderFailureClassifierTest {
     @Test
+    void recognizesExactSdkWholeCallTimeoutAndPreservesStandardTimeouts() {
+        var timeout = new com.google.genai.errors.GenAiIOException("SDK I/O",
+                new java.io.InterruptedIOException("timeout"));
+        assertTrue(ProviderFailureClassifier.isTimeout(new RuntimeException(timeout)));
+        assertTrue(ProviderFailureClassifier.isTimeout(new java.net.SocketTimeoutException("read")));
+        assertTrue(ProviderFailureClassifier.isTimeout(new java.net.http.HttpTimeoutException("request")));
+    }
+
+    @Test
+    void ordinaryInterruptedIoAndMessageOnlyFailuresAreNotTimeout() {
+        assertFalse(ProviderFailureClassifier.isTimeout(new com.google.genai.errors.GenAiIOException(
+                new java.io.InterruptedIOException("interrupted"))));
+        assertFalse(ProviderFailureClassifier.isTimeout(new java.io.InterruptedIOException("timeout")));
+        assertFalse(ProviderFailureClassifier.isTimeout(new RuntimeException("timeout")));
+    }
+
+    @Test
     void exceptionWithoutStatusAccessorDoesNotThrowAndIsNotRateLimited() {
         boolean rateLimited = assertDoesNotThrow(
                 () -> ProviderFailureClassifier.isRateLimited(new RuntimeException("provider failed")));

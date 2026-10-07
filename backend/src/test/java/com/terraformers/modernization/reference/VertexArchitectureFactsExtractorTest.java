@@ -21,6 +21,7 @@ class VertexArchitectureFactsExtractorTest {
     void usesLowThinkingWithinTheExistingFactTokenBound() {
         VertexArchitectureFactsExtractor extractor = extractor((modelId, content, config) -> {
             assertThat(config.maxOutputTokens()).contains(800);
+            assertThat(config.httpOptions().orElseThrow().timeout()).contains(370000);
             assertThat(config.thinkingConfig()).isPresent();
             assertThat(config.thinkingConfig().orElseThrow().thinkingLevel()).isPresent();
             assertThat(config.thinkingConfig().orElseThrow().thinkingLevel().orElseThrow().knownEnum())
@@ -82,6 +83,18 @@ class VertexArchitectureFactsExtractorTest {
         assertThat(facts.components()).containsExactly("ALB", "API");
         assertThat(facts.relationships()).containsExactly("ALB -> API");
         assertThat(facts.resourceTypes()).containsExactly("aws_lb");
+    }
+
+    @Test
+    void sdkWholeCallTimeoutUsesFactsTimeoutReasonAndOneInvocation() {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        var extractor = extractor((model, content, config) -> {
+            calls.incrementAndGet();
+            assertThat(config.httpOptions().orElseThrow().timeout()).contains(370000);
+            throw new com.google.genai.errors.GenAiIOException(new java.io.InterruptedIOException("timeout"));
+        });
+        assertThat(failure(extractor).reason()).isEqualTo(ArchitectureFactsExtractionException.Reason.PROVIDER_TIMEOUT);
+        assertThat(calls).hasValue(1);
     }
 
     @Test

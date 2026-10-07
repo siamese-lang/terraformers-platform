@@ -7,7 +7,7 @@ program:
   active_work_package: .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
   amendment_preparation_authority: USER_explicit_repository_only_v4_request
   exact_candidate_truth_approved: true
-  current_human_gate: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+  current_human_gate: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED
   status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
@@ -213,6 +213,7 @@ program:
     - LIVE_REALISTIC_BASELINE
     - PRODUCT_OR_ARCHITECTURE_DECISION
     - PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+    - PT6R2_BOUNDED_REPAIR_LIMIT_REACHED
     - IAM_OR_SECURITY_BOUNDARY_EXPANSION
     - NEW_PAID_OR_COST_INCREASING_CLOUD_ACTION
     - FINAL_PRODUCT_LIVE_PROOF
@@ -395,15 +396,21 @@ program:
         - evidence_validity_amendment_independently_accepted
         - evidence_validity_amendment_USER_merged
       execution_base_sha: BIND_AT_ACTIVATION
-      human_gate_when: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+      human_gate_when: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED
       resolved_numeric_decision_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
-      current_step: POLICY_D_APPROVED_TERMINAL_SCOPE_BLOCKED
+      current_step: IMPLEMENTATION_VALIDATION_BLOCKED_AT_REPAIR_LIMIT
       active_work_package: .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
       activation_authority_evidence: docs/evidence/product-trust-pt-6r2/authority.json
       audit_and_decision_brief: docs/evaluation/product-trust-pt-6r2-provider-terminality.md
       production_implementation_authorized: true
       broader_finalization_correction_authorized: false
-      production_implementation_blocked_by: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+      production_implementation_blocked_by: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED
+      narrow_finalization_fencing_correction_authorized: true
+      finalization_correction_authority: docs/evidence/product-trust-pt-6r2/approved-finalization-correction.md
+      scope_review: 6036430154
+      implementation_validation: docs/evidence/product-trust-pt-6r2/implementation-validation.json
+      autonomous_repairs_used: 1
+      implementation_acceptance: PENDING_FAILED_DETERMINISTIC_VALIDATION
       objective: >
         Ensure one accepted AnalysisJob cannot remain provider-bound indefinitely. Audit the actual
         Google GenAI client request/deadline capability and provider/retry/job boundaries first.
@@ -420,8 +427,12 @@ program:
         approved_durable_attempts: 1
         approved_original_accepted_age_cutoff_ms: 480000
         applied_to_production: false
+        implemented_in_candidate: true
         terminal_delta_bound_ms: null
+        conditional_delta_model_ms: 5000
+        conditional_delta_is_production_measurement: false
         terminal_scope_gate: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+        terminal_scope_gate_released_by_USER: true
         terminal_scope_evidence: docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json
         decision_options: docs/evidence/product-trust-pt-6r2/audit.json
         decision_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION

@@ -31,7 +31,7 @@ work_package:
     immutable AWS candidate approval here. Prepare grounded budget/retry options without selecting
     them. After explicit USER decision, continue this same Work Package/PR with its bounded
     implementation and deterministic hang/timeout evidence, preserving all Program criteria.
-  current_step: POLICY_D_APPROVED_TERMINAL_SCOPE_BLOCKED
+  current_step: IMPLEMENTATION_VALIDATION_BLOCKED_AT_REPAIR_LIMIT
   allowed_paths_before_decision:
     - .agents/programs/product-trust-v1.yml
     - .agents/state/product-trust-v1.json
@@ -152,8 +152,16 @@ work_package:
     - separate_state_sync_or_decision_only_final_PR
     - self_acceptance_self_merge_IAM_security_or_destructive_action
     - transient_GitHub_PR_branch_lifecycle_as_durable_program_state
+  finalization_correction_authority:
+    USER_request: docs/evidence/product-trust-pt-6r2/approved-finalization-correction.md
+    validated_scope_review: 6036430154
+    reviewed_head: c51628853eef8fd22e5fa1549cbe33ddf775995f
+    scope_gate_released: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+    implementation_plan_frozen_before_tests: docs/evidence/product-trust-pt-6r2/implementation-plan.json
+    allowed: external_write_outside_lock_short_DB_recheck_after_commit_progress_existing_cleanup_deadline_sweep_one_attempt
+    new_live_or_general_network_redesign_authority: false
   auto_repair_limit: 1
-  auto_repairs_used: 0
+  auto_repairs_used: 1
   human_authorized_corrective_iterations: 0
   provider_calls: 0
   live_cloud_actions: 0
@@ -170,15 +178,26 @@ work_package:
   result:
     audit: PREPARED_FOR_INDEPENDENT_REVIEW
     phase_complete: false
-    human_gate: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+    human_gate: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED
     selected_policy: D
     policy_decision_evidence: docs/evidence/product-trust-pt-6r2/policy-d-decision.json
     terminal_scope_evidence: docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json
     terminal_delta_bound_ms: null
     production_configuration_applied: false
     broader_finalization_correction_authorized: false
+    narrow_finalization_fencing_correction_authorized: true
     local_H2_diagnostic_executions: 1
-    implementation_started: false
+    implementation_started: true
+    production_defaults_implemented_in_candidate: true
+    implementation_validation: BUILD_FAILURE
+    implementation_validation_evidence: docs/evidence/product-trust-pt-6r2/implementation-validation.json
+    first_focused: {tests: 130, failures: 1, errors: 6, skipped: 0}
+    bounded_repair_focused: {tests: 11, failures: 2, errors: 0, skipped: 0}
+    full_backend: NOT_RUN_STOPPED_AT_REPAIR_LIMIT
+    conditional_delta_model_ms: 5000
+    conditional_delta_model_is_production_measurement: false
+    deterministic_test_invocations: 2
+    embedded_H2_included: true
     independent_phase_acceptance: PENDING
     merge_authorized: false
     next_phase_execution_authorized: false

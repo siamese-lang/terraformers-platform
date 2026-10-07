@@ -37,6 +37,17 @@ class AnalysisJobOrchestratorTest {
     }
 
     @Test
+    void normalizesExactSdkTimeoutChainOnlyAtProviderBoundary() {
+        var failure = new com.google.genai.errors.GenAiIOException(new java.io.InterruptedIOException("timeout"));
+        var orchestrator = orchestrator(context -> { throw failure; }, mock(AnalysisResultStorage.class));
+        assertThatThrownBy(() -> orchestrator.executeProviderAndValidate(sampleEntity(100L)))
+                .isInstanceOf(AnalysisProviderTimeoutException.class).hasCause(failure);
+        var ordinary = new com.google.genai.errors.GenAiIOException(new java.io.InterruptedIOException("interrupted"));
+        var interrupted = orchestrator(context -> { throw ordinary; }, mock(AnalysisResultStorage.class));
+        assertThatThrownBy(() -> interrupted.executeProviderAndValidate(sampleEntity(100L))).isSameAs(ordinary);
+    }
+
+    @Test
     void storageRemainsOutsideProviderBoundary() {
         AnalysisProvider provider = context -> validResult();
         AnalysisResultStorage storage = mock(AnalysisResultStorage.class);
@@ -104,6 +115,8 @@ class AnalysisJobOrchestratorTest {
         ObjectWriteResult writeResult = orchestrator.storeTerraformDraft(reference, result);
         ProjectFileEntity registered = orchestrator.registerGeneratedTerraform(job.getProjectId(), result, writeResult);
         orchestrator.markSucceeded(job, result, writeResult, registered);
+        assertThat(progressPublisher.statuses()).containsExactly(AnalysisJobStatus.RUNNING);
+        orchestrator.publishSucceededProgress(job); // durable owner invokes this only after commit
 
         assertThat(job.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
         assertThat(job.getTerminalAt()).isNotNull();

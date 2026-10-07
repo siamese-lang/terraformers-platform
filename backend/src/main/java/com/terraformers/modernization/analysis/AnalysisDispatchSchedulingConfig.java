@@ -34,12 +34,11 @@ public class AnalysisDispatchSchedulingConfig implements SchedulingConfigurer {
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         taskRegistrar.setTaskScheduler(taskScheduler);
-        if (properties.isDispatchEnabled()) {
-            taskRegistrar.addFixedDelayTask(() -> {
-                dispatcher.dispatchEligible();
-                cleanupDispatcher.dispatchPending();
-            }, properties.getDispatchPollInterval());
-        }
+        // Always retain the deadline sweep; dispatch-enabled controls only new work discovery.
+        taskRegistrar.addFixedDelayTask(() -> {
+            dispatcher.dispatchEligible();
+            cleanupDispatcher.dispatchPending();
+        }, properties.getDispatchPollInterval());
     }
 
     @Bean(name = "analysisDispatchTaskScheduler")

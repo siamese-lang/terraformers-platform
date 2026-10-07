@@ -1,0 +1,48 @@
+{
+  "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+  "preImplementationHead": "c51628853eef8fd22e5fa1549cbe33ddf775995f",
+  "scopeReviewComment": 6036430154,
+  "USERAuthority": "docs/evidence/product-trust-pt-6r2/approved-finalization-correction.md",
+  "status": "FROZEN_BEFORE_IMPLEMENTATION_TEST_OUTCOMES",
+  "policy": "D",
+  "originalCutoffMs": 480000,
+  "architecture": [
+    "durable matching intent before external write",
+    "runner performs object write/compensation without analysis-job transaction",
+    "short success transaction rechecks deadline/lease/generation/intent after lock and before commit; relational effects roll back on crossing",
+    "success progress after durable commit only, publisher failures cannot reverse committed success",
+    "existing cleanup recovery serializes with rearming intent after a late write, including cleanup that ran before write completion",
+    "deadline sweep executes before dispatch on existing lightweight scheduler; terminalizes all over-age PENDING/RUNNING and expired/exhausted attempts independently of provider workers",
+    "claim SQL permits attemptCount=0 only; heartbeat and intent cannot extend accepted-age budget"
+  ],
+  "deltaContract": {
+    "formula": "P + B + S + T",
+    "P": "bound fixed-delay poll interval, default/max 2 seconds",
+    "B": "upper bound remaining lightweight prior tick DB work after deadline inspection",
+    "S": "scheduler ready-task delay under operating service",
+    "T": "short sweep DB transaction/commit including any DB lock wait under operating DB",
+    "conditionalExampleMs": 5000,
+    "conditionalExampleAssumptionsMs": {
+      "B": 1000,
+      "S": 1000,
+      "T": 1000
+    },
+    "claim": "deterministic scheduling/DB model proves cutoff + delta when these bounds hold; no measured SLO, outage-time bound or arbitrary thread kill",
+    "noExternalIOInSuccessTransactionOrDeadlineSweep": true
+  },
+  "validationCases": [
+    "exact typed 370000/220000/10000 request configurations and SDK attempts=1/statuses=[]",
+    "actual GenAiIOException InterruptedIOException timeout shape; non-timeout interruption and existing Socket/HttpTimeout cases",
+    "facts/generation/embedding timeouts and non-timeout failures; MAX_TOKENS compact fallback and single closure/repair",
+    "over-age PENDING never invokes provider; just-inside age does not fail",
+    "real H2 running job with latch-held provider and healthy heartbeat, sweep terminalizes while worker remains blocked, late release cannot succeed",
+    "latch-held external write cannot prevent sweep; late object cleanup rearmed after earlier cleanup; current valid write/DB commit succeeds",
+    "no success progress before commit; rollback publishes no success and commit-time deadline rejects relational effects",
+    "one actual durable attempt, lease-expiry/restart exhausted state reaches FAILED",
+    "conditional fixed-delay delta model with injected clock and no hundreds-second waits",
+    "focused relevant tests followed by full offline backend tests/package and diff/scope/frozen checks"
+  ],
+  "autonomousRepairsUsedBeforeImplementation": 0,
+  "humanCorrectiveIterationsBeforeImplementation": 0,
+  "liveActionsAuthorized": false
+}

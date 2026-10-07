@@ -71,6 +71,7 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
     @Override
     public ArchitectureRetrievalFacts extract(ObjectContent source) {
         GenerateContentConfig config = GenerateContentConfig.builder()
+                .httpOptions(properties.factsHttpOptions())
                 .temperature(0.0f)
                 .maxOutputTokens(MAX_FACT_TOKENS)
                 .thinkingConfig(ThinkingConfig.builder().thinkingLevel(FACT_EXTRACTION_THINKING_LEVEL))

@@ -1,0 +1,464 @@
+{
+  "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+  "preImplementationHead": "c51628853eef8fd22e5fa1549cbe33ddf775995f",
+  "firstFocusedCommand": "mvn -o -f backend/pom.xml -Dtest=ProviderFailureClassifierTest,VertexGenerationStageTest,VertexArchitectureFactsExtractorTest,VertexEmbeddingProviderTest,VertexAnalysisProviderTest,AnalysisRuntimePropertiesTest,AnalysisJobRepositoryTest,AnalysisJobStateServiceTest,AnalysisJobRunnerTest,AnalysisJobOrchestratorTest,AnalysisJobDispatcherTest,AnalysisDispatchSchedulingConfigTest,AnalysisJobPartialSuccessBaselineTest,AnalysisJobDuplicateExecutionBaselineTest,AnalysisJobRestartBaselineTest,TerminalQualityAssessmentMapperTest test",
+  "result": "BUILD_FAILURE",
+  "tests": 130,
+  "failures": 1,
+  "errors": 6,
+  "skipped": 0,
+  "logSha256": "81e8fed96fd6e93e33cf3e27b0ff69659a5e3470c4c30a6c3bc53f316c4ea2d2",
+  "reports": [
+    {
+      "class": "com.terraformers.modernization.reference.VertexArchitectureFactsExtractorTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "8edc4fb9ba27e4aea9a0d62304a30c6b326e60f2b2126fd41d347a30e29a3fc6",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobRunnerTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "9c192ba64aeffcd34fc23e4358d536489f5196f5a0a719f1bb0fceb6bb986277",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobDuplicateExecutionBaselineTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "5ca5a84ad27f47449723faa8d290f14680bfee4231fc04c55862b299d887ef16",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.TerminalQualityAssessmentMapperTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "965a70a18641562365a0f4618ac4eee507b7b69843b95739c8701148464b04c2",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisRuntimePropertiesTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "b3f523908e5ffa0c24a5f6adab205822cc4b4ec0f7c1a3a1fef04be6cb9e770a",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobStateServiceTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "f5a5106103a8a6e5c4e0cc7b1e59c2a84f074679b6d92b605df7adad45bd0b8a",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobDispatcherTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "7719d78895436d0886143e5963badf5f5484ec2a687cfe86f4d9dfb83af39398",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.ProviderFailureClassifierTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "2fa60bc5638b86b2185c444661669773ee7638af6ca5e598a5d03645d2a2b5fb",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobOrchestratorTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "5778dfc0b5859a89701874a94cf1d4593326996bc892eeb4e92b0d630905e495",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.vertex.VertexAnalysisProviderTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "3db2383813a92132f0994b0931d1d670702bf2ee0950550725bb1d6a63e7e206",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisDispatchSchedulingConfigTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "82331098c7206ff03e6fc673667c2cf156c5d4ff146dab0d7e2ad3b24da6fddd",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.reference.VertexEmbeddingProviderTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "536ef835a956ff09185bce0165692c5dff44810a41a040f1410804e0130593b2",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobRestartBaselineTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 6,
+      "skipped": 0,
+      "reportSha256": "ddfbfdeec0c00618448a07b7c04d114c09f1095e7a7c7427b2699a26d51d1b59",
+      "failedCases": [
+        {
+          "name": "providerTimeoutConsumesOneAttemptAndNeverResubmitsAfterRestartScan",
+          "type": "java.lang.NullPointerException",
+          "diagnosis": "TaskScheduler mock getClock() returned null before any test scenario"
+        },
+        {
+          "name": "applicationStartsWithTwoSecondDispatchDuration",
+          "type": "java.lang.NullPointerException",
+          "diagnosis": "TaskScheduler mock getClock() returned null before any test scenario"
+        },
+        {
+          "name": "claimedRunningJobIsNotStolenAndLeaseExpiryFailsWithoutASecondAttempt",
+          "type": "java.lang.NullPointerException",
+          "diagnosis": "TaskScheduler mock getClock() returned null before any test scenario"
+        },
+        {
+          "name": "acceptedButNotStartedJobIsRecoveredByDurableScanAfterRestart",
+          "type": "java.lang.NullPointerException",
+          "diagnosis": "TaskScheduler mock getClock() returned null before any test scenario"
+        },
+        {
+          "name": "applicationStartupDoesNotFailRecoverableOrChangeTerminalJobs",
+          "type": "java.lang.NullPointerException",
+          "diagnosis": "TaskScheduler mock getClock() returned null before any test scenario"
+        },
+        {
+          "name": "legacyRunningWithoutLeaseIsRecoveredThroughDispatcherAndRunner",
+          "type": "java.lang.NullPointerException",
+          "diagnosis": "TaskScheduler mock getClock() returned null before any test scenario"
+        }
+      ]
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobPartialSuccessBaselineTest",
+      "tests": 5,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "032d71cf1fcea63c4a04c6f61b1abb616751226e9e586f4c32cc7940c7a9b141",
+      "failedCases": [
+        {
+          "name": "successfulObjectWriteIsCompensatedWhenRelationalFinalizationFails(CapturedOutput)",
+          "type": "java.lang.AssertionError",
+          "diagnosis": "Old telemetry order expected compensation inside finalization; authorized compensation now follows rollback/failed finalization outside transaction"
+        }
+      ]
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobRepositoryTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "ea12b6ee1854473152c39533c19f700dc06dcbce0f5bee4a75cbccbf843e9577",
+      "failedCases": []
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.vertex.VertexGenerationStageTest",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "cd6cedf7d9ba74f11a69d7321a7566ec959445ef08933f742c2c9203734f777e",
+      "failedCases": []
+    }
+  ],
+  "boundedRepair": {
+    "iteration": 1,
+    "scope": "TEST_ONLY mock scheduler Clock binding; intended legacy assertion adaptations were not actually applied",
+    "productionCorrectionChangedForGreen": false,
+    "acceptanceCriteriaWeakened": false,
+    "rerunTargets": [
+      "AnalysisJobRestartBaselineTest",
+      "AnalysisJobPartialSuccessBaselineTest"
+    ],
+    "counterReset": false,
+    "implementationOversight": "Two unchanged legacy assertions were missed; no second autonomous repair or rerun is performed"
+  },
+  "repairResult": "BUILD_FAILURE",
+  "fullBackendResult": "NOT_RUN_STOPPED_AT_REPAIR_LIMIT",
+  "repairCommand": "mvn -o -f backend/pom.xml -Dtest=AnalysisJobRestartBaselineTest,AnalysisJobPartialSuccessBaselineTest test",
+  "repairLogSha256": "1232d38adc7f730c2366ce564c8f9ea9dba7df647c857c1751f667971dd46841",
+  "repairTests": 11,
+  "repairFailures": 2,
+  "repairErrors": 0,
+  "repairSkipped": 0,
+  "repairReports": [
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobRestartBaselineTest",
+      "tests": 6,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "50927223b3ef2e66f0573719282a3875c3b150fced9799ae5ff53c001433f4f1",
+      "failedCase": "claimedRunningJobIsNotStolenAndLeaseExpiryFailsWithoutASecondAttempt",
+      "type": "java.lang.AssertionError",
+      "diagnosis": "Expected executor task count 1, observed 0 at line 158. The unchanged remainder still expects SUCCEEDED / attemptCount=2 / generation=2 after lease expiry, contrary to approved durable-attempt=1. That later expectation was not reached."
+    },
+    {
+      "class": "com.terraformers.modernization.analysis.AnalysisJobPartialSuccessBaselineTest",
+      "tests": 5,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "reportSha256": "882c222383ff2fc01055010d2feca600d3ca8040c3dabe1b50a0209401f2f46b",
+      "failedCase": "successfulObjectWriteIsCompensatedWhenRelationalFinalizationFails(CapturedOutput)",
+      "type": "java.lang.AssertionError",
+      "diagnosis": "Unchanged line-146 telemetry assertion expects execution success -> compensation success -> finalization failure; actual order is execution success -> finalization failure -> compensation success. Earlier durable FAILED, compensated object and metadata-rollback assertions completed before this failure."
+    }
+  ],
+  "compile": {
+    "command": "mvn -o -f backend/pom.xml -DskipTests compile",
+    "result": "BUILD_SUCCESS",
+    "logSha256": "5150138cd4f2774e1ca595d0854228eaacc2d57ff74f7bd75d18bb201720c9e9"
+  },
+  "testCompile": {
+    "command": "mvn -o -f backend/pom.xml -DskipTests test-compile",
+    "result": "BUILD_SUCCESS",
+    "logSha256": "a5efbdd593678ac5ee69cbf2c72f8ccc34f451a5797d9b3ab78220f40e4bd98d"
+  },
+  "phaseAcceptance": "NOT_ESTABLISHED",
+  "humanGate": "PT6R2_BOUNDED_REPAIR_LIMIT_REACHED",
+  "terminalDelta": {
+    "formula": "P+B+S+T",
+    "conditionalModelMs": 5000,
+    "PMaxMs": 2000,
+    "assumptionsMs": {
+      "B": 1000,
+      "S": 1000,
+      "T": 1000
+    },
+    "modelTestResult": "PASS_IN_FIRST_FOCUSED_RUN",
+    "measuredProductionBound": false,
+    "independentlyAccepted": false,
+    "overallImplementationValidation": "BLOCKED"
+  },
+  "sourceBindings": [
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisDispatchSchedulingConfig.java",
+      "sha256": "de3489b4b83c18a7bef6e03afdcc09039659c526c025e5eb747780b18e1db311"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobBudgetExceededException.java",
+      "sha256": "467fdce910ca2a2a92aa7c8c646095eedd0a94b0d4cfce0290ef0731def8c7b8"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobDispatcher.java",
+      "sha256": "097c133e71550149b7cdef7c6da9d944d996bb296d91c29fb2214302ce1ade18"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobOrchestrator.java",
+      "sha256": "ad5002386db9a90ec272bc36a54b20f5ee052fa424206cf10237bd0f72b84bd6"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRepository.java",
+      "sha256": "c7c84adb801c53983b0e40baaf5befd33baa5575df803d5061d27763dc2fad65"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRunner.java",
+      "sha256": "0c18ce333d570793b5fa69cd0ddda2afb4bf82afcc29dbb45d107cbe7f57494b"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobStateService.java",
+      "sha256": "440ef2c38a6dd0eb41167896759700e7f423edaa3cefb35bb4133cae903ed3c7"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java",
+      "sha256": "4b386470bcf2b073e6deb97743110b1aac7e1c92675e3bd784c2363c22c662a8"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisRuntimeProperties.java",
+      "sha256": "486328eb46734e6ed5af158fc6cff2eb81571744de6218b27d96cc0dd7023202"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/ProviderFailureClassifier.java",
+      "sha256": "e0787f3f15345dc766eaab7ea974531e09db1e4c81237f3b2779dee657514c7d"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java",
+      "sha256": "859703ebc6009ddf3b488e2cccfe28f0663213f8a3486c4f3df2cdd023e01a38"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeConfiguration.java",
+      "sha256": "df105f110a6b923f401452264b6f77245e2f22ab7f416b2418c40546bebd7861"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeProperties.java",
+      "sha256": "e1c6b593e78dec138d1d00fada085ebfec65f62ddbf7e7e44ff408505eb6d1b5"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java",
+      "sha256": "010b4531d37e895dcf269832012cd6694c466a11c0d4b360c6bf0c057441601b"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/reference/VertexEmbeddingProvider.java",
+      "sha256": "daf4a01356caac16d9360d875804cedbc021a5d74923a1e0db3cfc9026d930b1"
+    },
+    {
+      "path": "backend/src/main/resources/application-prod.yml",
+      "sha256": "f31021f6c6662166b941c0cd460796eb7e407e6c150a030848ae95d598631694"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisDispatchSchedulingConfigTest.java",
+      "sha256": "201d181e68652836000414d0638c51db6335f285d32bad1af5071b002568c2df"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobOrchestratorTest.java",
+      "sha256": "5785cc20dd6aa8a52d4579efa480578369031586056def35128fe9901bdf6a5e"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRepositoryTest.java",
+      "sha256": "981de41a59c74a9b5ae89a6ccf28caa381fa0bb9b3a3d73890f790434e9f6725"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRestartBaselineTest.java",
+      "sha256": "f1859d93a164572a042c199728c123e9f2ab032a89b6899167bb72031a3f50cf"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRunnerTest.java",
+      "sha256": "732b965528a9a2e4bf27ab1d06cd18870c106a397318e3a40afbfbc15b4d0c1e"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobStateServiceTest.java",
+      "sha256": "e973143fdd8684d8578d9a944e2e2503ae68a71619a5406c7a8ad3320b21bfc5"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisRuntimePropertiesTest.java",
+      "sha256": "f731b450ae4dc3bdf5127fdc495f73103d7aa865383b5fb7b29d9cd0b48c967c"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/ProviderFailureClassifierTest.java",
+      "sha256": "10be530a75c0f8410fd881417dbf766d53966a64eca885f619356ac483579b03"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java",
+      "sha256": "74b16897367ed11c482445c63f7de5ebd49afe68712488339687cb9bc79c4ac0"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractorTest.java",
+      "sha256": "2770710bbb0e13d5b8530e69616ad40fadb53cf7e3ad80d783ecf635c4838a95"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/reference/VertexEmbeddingProviderTest.java",
+      "sha256": "67b382ace6102c14c0299ddfc54ed4d506c8321b6877a7458072520c7d9f890f"
+    }
+  ],
+  "repositoryValidation": {
+    "result": "PASS",
+    "checks": [
+      "branch_and_original_bound_base",
+      "Program_state_WP_plan_current_document_gate_consistency",
+      "one_autonomous_repair_no_counter_reset_no_second_rerun",
+      "no_acceptance_merge_or_PT7_authority",
+      "transient_PR_fields_null",
+      "original_completion_criteria_preserved",
+      "earlier_phase_state_completion_candidates_and_root_counters_preserved",
+      "Option_D_exact_policy_preserved",
+      "no_live_model_cloud_OpenSearch_MariaDB_browser_dispatch",
+      "honest_delta_and_failed_validation",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/AnalysisDispatchSchedulingConfig.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobBudgetExceededException.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobDispatcher.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobOrchestrator.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRepository.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRunner.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobStateService.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/AnalysisRuntimeProperties.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/ProviderFailureClassifier.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeConfiguration.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeProperties.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java",
+      "source_sha256:backend/src/main/java/com/terraformers/modernization/reference/VertexEmbeddingProvider.java",
+      "source_sha256:backend/src/main/resources/application-prod.yml",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/analysis/AnalysisDispatchSchedulingConfigTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobOrchestratorTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRepositoryTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRestartBaselineTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRunnerTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobStateServiceTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/analysis/AnalysisRuntimePropertiesTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/analysis/ProviderFailureClassifierTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractorTest.java",
+      "source_sha256:backend/src/test/java/com/terraformers/modernization/reference/VertexEmbeddingProviderTest.java",
+      "allowed_scope_all_files",
+      "all_existing_dataset_evidence_corpus_workflow_infra_frontend_bytes_unchanged",
+      "all_changed_JSON_YAML_parse",
+      "approved_base_not_refreshed_or_rebased",
+      "cached_authoritative_main_no_drift",
+      "git_diff_check"
+    ],
+    "immutableExistingFilesChecked": 386,
+    "changedFiles": [
+      ".agents/programs/product-trust-v1.yml",
+      ".agents/state/product-trust-v1.json",
+      ".agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisDispatchSchedulingConfig.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobBudgetExceededException.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobDispatcher.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobOrchestrator.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRepository.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRunner.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobStateService.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisObservability.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisRuntimeProperties.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/ProviderFailureClassifier.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeConfiguration.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeProperties.java",
+      "backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java",
+      "backend/src/main/java/com/terraformers/modernization/reference/VertexEmbeddingProvider.java",
+      "backend/src/main/resources/application-prod.yml",
+      "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisDispatchSchedulingConfigTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobOrchestratorTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRepositoryTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRestartBaselineTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRunnerTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobStateServiceTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisRuntimePropertiesTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/ProviderFailureClassifierTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java",
+      "backend/src/test/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractorTest.java",
+      "backend/src/test/java/com/terraformers/modernization/reference/VertexEmbeddingProviderTest.java",
+      "docs/AI_PROJECT_STATE.md",
+      "docs/evaluation/product-trust-pt-6r2-provider-terminality.md",
+      "docs/evidence/product-trust-pt-6r2/approved-finalization-correction.md",
+      "docs/evidence/product-trust-pt-6r2/implementation-plan.json",
+      "docs/evidence/product-trust-pt-6r2/implementation-validation.json",
+      "docs/plans/active/product-trust-modernization.md"
+    ],
+    "existingWorkflowPolicy": "PASS: python3 scripts/checks/ci_changed_scope.py --verify-workflow-policy",
+    "fullBackendStillNotRun": true,
+    "phaseAcceptanceStillBlocked": true
+  }
+}

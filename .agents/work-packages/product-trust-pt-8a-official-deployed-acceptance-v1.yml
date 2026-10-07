@@ -121,7 +121,22 @@ work_package:
   auto_repair_limit: 1
   auto_repairs_used: 1
   bounded_repair: validation_module_selection_only_failed_log_preserved_no_production_change
-  human_corrective_iterations: 1
+  human_corrective_iterations: 2
+  preauth_workflow_syntax_correction:
+    authority: APPROVE_PT8A_CLEAN_V4_PREAUTH_WORKFLOW_SYNTAX_CORRECTION_ONLY
+    authority_evidence: docs/evidence/product-trust-pt-8a/corrections/preauth-workflow-syntax-1/approved-correction.md
+    correction_execution_base_sha: dff2995aa1047d76f3917e4c7015aebb0faf2212
+    main_reads_at_correction_activation: 1
+    historical_preparation_base_preserved: true
+    failed_run: 37662854852
+    failed_run_attempt: 1
+    failure_disposition: docs/evidence/product-trust-pt-8a/corrections/preauth-workflow-syntax-1/failure-disposition.json
+    validation_evidence: docs/evidence/product-trust-pt-8a/corrections/preauth-workflow-syntax-1/validation.json
+    autonomous_repair_consumed: false
+    autonomous_repair_counter_reset: false
+    new_live_execution_authorized: false
+    clean_v4_complete: false
+    clean_v4_lineage: MODEL_PROVENANCE_UNPROVEN
   stop_on:
     - FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
     - MAIN_DRIFT

@@ -92,11 +92,11 @@ jobs:
               --reviewed-source-sha "$GITHUB_SHA" --live-approval-comment-id "$LIVE_APPROVAL_COMMENT_ID" \
               --project terraformers-platform --opensearch-endpoint http://terraformers-opensearch:9200
             python3 - <<'PY'
-            import importlib.util, os
-            spec = importlib.util.spec_from_file_location('pt8a', 'scripts/evaluation/pt8a-official-acceptance.py')
-            pt8a = importlib.util.module_from_spec(spec); spec.loader.exec_module(pt8a)
-            pt8a.ensure_latest_dispatch({'mode': 'readiness'}, os.environ['GITHUB_SHA'], int(os.environ['GITHUB_RUN_ID']))
-            PY
+          import importlib.util, os
+          spec = importlib.util.spec_from_file_location('pt8a', 'scripts/evaluation/pt8a-official-acceptance.py')
+          pt8a = importlib.util.module_from_spec(spec); spec.loader.exec_module(pt8a)
+          pt8a.ensure_latest_dispatch({'mode': 'readiness'}, os.environ['GITHUB_SHA'], int(os.environ['GITHUB_RUN_ID']))
+          PY
           elif [[ "$INGESTION_MODE" == ordinary ]]; then
           case "$CORPUS_VERSION" in
             terraformers-reference-v3)
@@ -517,15 +517,15 @@ jobs:
           fi
           if [[ "$INGESTION_MODE" == pt8a-clean-v4 ]]; then
             python3 - "$evidence_dir" <<'PY'
-            import hashlib, json, os, pathlib, sys
-            root = pathlib.Path(sys.argv[1])
-            (root / 'clean-run-binding.json').write_text(json.dumps({
-                'sourceSha': os.environ['GITHUB_SHA'], 'runId': os.environ['GITHUB_RUN_ID'],
-                'runAttempt': os.environ['GITHUB_RUN_ATTEMPT'], 'mode': os.environ['INGESTION_MODE'],
-                'liveApprovalCommentId': os.environ['LIVE_APPROVAL_COMMENT_ID'], 'status': os.environ['RUN_STATUS'],
-                'procedureSha256': hashlib.sha256(pathlib.Path('docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md').read_bytes()).hexdigest(),
-                'receiptAvailable': (root / 'receipt.json').exists()}, indent=2) + '\n')
-            PY
+          import hashlib, json, os, pathlib, sys
+          root = pathlib.Path(sys.argv[1])
+          (root / 'clean-run-binding.json').write_text(json.dumps({
+              'sourceSha': os.environ['GITHUB_SHA'], 'runId': os.environ['GITHUB_RUN_ID'],
+              'runAttempt': os.environ['GITHUB_RUN_ATTEMPT'], 'mode': os.environ['INGESTION_MODE'],
+              'liveApprovalCommentId': os.environ['LIVE_APPROVAL_COMMENT_ID'], 'status': os.environ['RUN_STATUS'],
+              'procedureSha256': hashlib.sha256(pathlib.Path('docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md').read_bytes()).hexdigest(),
+              'receiptAvailable': (root / 'receipt.json').exists()}, indent=2) + '\n')
+          PY
           fi
 
       - name: Upload bounded ingestion evidence

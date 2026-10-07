@@ -1,0 +1,7 @@
+ingest	Validate trusted ingestion request	2026-10-07T17:59:35.0227158Z /home/runner/work/_temp/f1cc7152-6e34-4834-b3d2-0fe1ab6b43d9.sh: line 57: warning: here-document at line 21 delimited by end-of-file (wanted `PY')
+ingest	Validate trusted ingestion request	2026-10-07T17:59:35.0227710Z /home/runner/work/_temp/f1cc7152-6e34-4834-b3d2-0fe1ab6b43d9.sh: line 58: syntax error: unexpected end of file
+ingest	Validate trusted ingestion request	2026-10-07T17:59:35.0236879Z ##[error]Process completed with exit code 2.
+ingest	Prepare bounded ingestion evidence	2026-10-07T17:59:35.0451292Z /home/runner/work/_temp/16d63ae6-e7be-4ec7-935d-127553e1e43d.sh: line 20: warning: here-document at line 10 delimited by end-of-file (wanted `PY')
+ingest	Prepare bounded ingestion evidence	2026-10-07T17:59:35.0451979Z /home/runner/work/_temp/16d63ae6-e7be-4ec7-935d-127553e1e43d.sh: line 21: syntax error: unexpected end of file
+ingest	Prepare bounded ingestion evidence	2026-10-07T17:59:35.0453978Z ##[error]Process completed with exit code 2.
+ingest	Upload bounded ingestion evidence	2026-10-07T17:59:35.1629677Z ##[error]No files were found with the provided path: /home/runner/work/_temp/ingestion-evidence. No artifacts will be uploaded.

@@ -11,6 +11,7 @@ import http.client
 import json
 import mimetypes
 import os
+import re
 from pathlib import Path
 import shutil
 import socket
@@ -18,6 +19,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 from urllib.request import urlopen
@@ -33,6 +35,10 @@ ISSUER = 'https://identity.example.test/portable-authenticated'
 CLIENT = 'portable-runtime-client'
 COGNITO = 'https://cognito-idp.ap-northeast-2.amazonaws.com/'
 STEPS = ['authentication', 'one_upload', 'pending_navigation_reload', 'terminal_draft', 'other_identity_denial']
+TOOL_PINS = {'TERRAFORM_VERSION': '1.8.5',
+             'TERRAFORM_SHA256': 'bb1ee3e8314da76658002e2e584f2d8854b6def50b7f124e27b957a42ddacfea',
+             'AWS_PROVIDER_VERSION': '5.100.0',
+             'AWS_PROVIDER_SHA256': '1589a2266af699cbd5d80737a0fe02e54ec9cf2ca54e7e00ac51c7359056f274'}
 
 
 def sha(data):
@@ -54,9 +60,42 @@ def free_port():
         return sock.getsockname()[1]
 
 
-def journey(out):
+def verified_local_tools(cache):
+    check(cache.is_relative_to('/workspace') or cache.is_relative_to('/tmp'), 'Tools must be in a writable local cache')
+    dockerfile = (ROOT / 'backend/Dockerfile').read_text()
+    for key, value in TOOL_PINS.items():
+        check(re.search(r'^ARG ' + key + '=' + re.escape(value) + r'$', dockerfile, re.M), 'Dockerfile pin mismatch: ' + key)
+    binary = cache / 'bin/terraform'
+    plugin_dir = cache / 'terraform-plugins'
+    provider = plugin_dir / 'registry.terraform.io/hashicorp/aws/5.100.0/linux_amd64/terraform-provider-aws_v5.100.0_x5'
+    bindings = {}
+    for name, executable, member, pin in [('terraform', binary, 'terraform', 'TERRAFORM_SHA256'),
+                                         ('aws-provider', provider, provider.name, 'AWS_PROVIDER_SHA256')]:
+        archive = cache / 'downloads' / (name + '.zip')
+        with archive.open('rb') as stream:
+            archive_sha = hashlib.file_digest(stream, 'sha256').hexdigest()
+        check(archive_sha == TOOL_PINS[pin], 'Pinned archive checksum mismatch: ' + name)
+        check(executable.resolve().is_relative_to(cache) and os.access(executable, os.X_OK), 'Local executable missing: ' + name)
+        with zipfile.ZipFile(archive) as zipped, zipped.open(member) as stream:
+            member_sha = hashlib.file_digest(stream, 'sha256').hexdigest()
+        with executable.open('rb') as stream:
+            executable_sha = hashlib.file_digest(stream, 'sha256').hexdigest()
+        check(executable_sha == member_sha, 'Extracted executable differs from verified archive: ' + name)
+        bindings[name] = {'archiveSha256': archive_sha, 'executableSha256': executable_sha, 'path': str(executable)}
+    version = subprocess.run([str(binary), 'version', '-json'], env={'CHECKPOINT_DISABLE': '1'},
+                             check=True, capture_output=True, text=True, timeout=10)
+    check(json.loads(version.stdout)['terraform_version'] == '1.8.5', 'Terraform version mismatch')
+    bindings.update({'terraformVersion': '1.8.5', 'awsProviderVersion': '5.100.0',
+                     'providerVersionBinding': 'Exact Dockerfile archive checksum and extracted executable bytes',
+                     'implementation': 'TerraformCliValidator', 'executor': 'ProcessCommandExecutor'})
+    return binary, plugin_dir, bindings
+
+
+def journey(out, cache):
     out.mkdir(parents=True, exist_ok=False)  # Never overwrite an earlier outcome.
     result = {'procedure': 'docs/evaluation/product-trust-pt-6-browser-protocol.md',
+              'correctiveProcedure': 'docs/evidence/product-trust-pt-6/correction-1/procedure.md',
+              'humanAuthorizedCorrectiveIteration': 1,
               'executionBaseSha': '37e006be4d5995019704ea8a4009e1a59da039b2',
               'datasetIdentity': IDENTITY, 'input': str(INPUT.relative_to(ROOT)), 'inputSha256': INPUT_SHA,
               'modelUnderTestRunCount': 0, 'liveCloudActionCount': 0, 'automaticRetries': 0,
@@ -71,12 +110,8 @@ def journey(out):
         for item in json.loads((DATASET / 'candidate-identity.json').read_text())['files']:
             check(sha((DATASET / item['path']).read_bytes()) == item['sha256'], 'Frozen file mismatch: ' + item['path'])
         check(sha(INPUT.read_bytes()) == INPUT_SHA, 'Input bytes mismatch')
-        # The unchanged production validator uses these absolute locations. Missing runtime
-        # prerequisites must fail before another real upload, not become a repeated failed job.
-        check(os.access('/usr/local/bin/terraform', os.X_OK)
-              and any(Path('/opt/terraform-plugins/registry.terraform.io/hashicorp/aws/5.100.0/linux_amd64')
-                      .glob('terraform-provider-aws*')),
-              'Missing pinned local Terraform CLI/provider prerequisites; no upload is authorized')
+        binary, plugin_dir, tool_bindings = verified_local_tools(cache)
+        result['localValidatorTools'] = tool_bindings
         jar = ROOT / 'backend/target/terraformers-backend-modernization-0.1.0-SNAPSHOT.jar'
         build = ROOT / 'frontend/build'
         classes = ROOT / 'backend/target/test-classes/com/terraformers/modernization/analysis'
@@ -88,7 +123,8 @@ def journey(out):
                                   'scripts/checks/product-trust-browser-journey.py',
                                   'scripts/smoke/ephemeral-jwks-fixture.sh',
                                   'backend/src/test/java/com/terraformers/modernization/analysis/BrowserJourneyFixture.java',
-                                  'docs/evaluation/product-trust-pt-6-browser-protocol.md']}}
+                                  'docs/evaluation/product-trust-pt-6-browser-protocol.md',
+                                  'docs/evidence/product-trust-pt-6/correction-1/procedure.md']}}
         # Retain local logs on failure until process cleanup and sanitized evidence capture.
         with nullcontext(tempfile.mkdtemp(prefix='pt6-private-')) as private:
             temp = Path(private)
@@ -103,6 +139,7 @@ def journey(out):
             check(bool(compiled), 'Isolated test fixture must be compiled')
             for source in compiled:
                 shutil.copyfile(source, isolated / source.name)
+            result['bindings']['fixtureClasses'] = {source.name: sha(source.read_bytes()) for source in compiled}
             port = free_port()
 
             class Handler(BaseHTTPRequestHandler):
@@ -156,6 +193,8 @@ def journey(out):
                     '--terraformers.security.jwt.cognito.client-id=' + CLIENT,
                     '--terraformers.storage.reader-provider=filesystem', '--terraformers.storage.writer-provider=filesystem',
                     '--terraformers.storage.filesystem.root-path=' + str(temp / 'objects'),
+                    '--browser-journey.terraform-binary=' + str(binary),
+                    '--browser-journey.plugin-dir=' + str(plugin_dir),
                     '--terraformers.analysis.dispatch-enabled=false', '--browser-journey.release-marker=' + str(temp / 'release')]
             with (temp / 'backend.log').open('w') as log:
                 backend = subprocess.Popen(args, stdout=log, stderr=subprocess.STDOUT)
@@ -312,6 +351,8 @@ def journey(out):
                     check(final_project['analysisTiming'] == terminal['timing'], 'Project/job terminal timing mismatch')
                     check(terminal['quality'] is None and final_project['quality'] is None, 'Stub fabricated quality')
                     terraform = read(owner, project_path + '/terraform/main.tf')
+                    check(terraform['latestAnalysisJobId'] == jid and terraform['fileId'] == terminal['resultFileId']
+                          == final_project['resultFileId'], 'Terraform artifact is not bound to the original job')
                     source = api(owner, project_path + '/source-image')
                     check(source['status'] == 200 and source['sha256'] == INPUT_SHA, 'Source image differs from accepted bytes')
                     expect(owner.get_by_text('분석 작업의 처리가 완료되었습니다.', exact=False)).to_be_visible(timeout=10000)
@@ -319,6 +360,7 @@ def journey(out):
                     expect(owner.get_by_text('Terraform은 검토하고 수정할 수 있는 초안입니다.', exact=False)).to_be_visible()
                     expect(owner.get_by_text('실제 권한 유효성 또는 배포 성공이 보장되지 않습니다.', exact=False)).to_be_visible()
                     expect(owner.locator('.terraform-code code')).to_have_text(terraform['content'])
+                    check(owner.locator('.terraform-code code').text_content() == terraform['content'], 'Displayed HCL bytes differ')
                     check(owner.locator('time').last.get_attribute('datetime') == terminal['timing']['terminalAt'], 'Terminal UI timestamp differs')
                     result.update({'terminalJob': terminal, 'terminalProject': final_project, 'terraform': terraform,
                                    'visibleTerminalText': owner.locator('.analysis-status').inner_text()})
@@ -385,6 +427,9 @@ def journey(out):
             server.server_close()
         if temp is not None:
             log_path = temp / 'backend.log'
+            if log_path.is_file():
+                result['fixtureValidatorConfiguration'] = [line for line in log_path.read_text().splitlines()
+                                                           if 'Browser fixture real validator=' in line]
             if log_path.is_file() and 'serverStages' not in result:
                 result['serverStages'] = [line for line in log_path.read_text().splitlines()
                                          if 'ERROR' in line or 'APPLICATION FAILED' in line]
@@ -402,4 +447,6 @@ def journey(out):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
-    raise SystemExit(journey(parser.parse_args().output.resolve()))
+    parser.add_argument('--terraform-cache', type=Path, required=True)
+    arguments = parser.parse_args()
+    raise SystemExit(journey(arguments.output.resolve(), arguments.terraform_cache.resolve()))

@@ -2,7 +2,7 @@
 
 ## Status
 
-**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 FINAL INCOMPLETE EVIDENCE ACCEPTED / PT-3 COMPLETE / PT-4 COMPLETE / PT-5 COMPLETE / PT-6 INCOMPLETE BROWSER EVIDENCE / HUMAN_REQUIRED: BOUNDED_REPAIR_LIMIT_AND_BROWSER_MEASUREMENT_BLOCKER**
+**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 FINAL INCOMPLETE EVIDENCE ACCEPTED / PT-3 COMPLETE / PT-4 COMPLETE / PT-5 COMPLETE / PT-6 BROWSER JOURNEY VERIFIED PENDING INDEPENDENT REVIEW / HUMAN_REQUIRED: MERGE_CHECKPOINT**
 
 PT-1 revision 3 remains USER-frozen at
 `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`.
@@ -36,18 +36,19 @@ accepted head `bc13af0cb889b803a8d83352ef869896c97348f8` and USER merged PR #249
 `2026-10-07T02:16:09Z` as `37e006be4d5995019704ea8a4009e1a59da039b2`.
 Its original base and owner/admin/public policy, evidence and residuals remain preserved.
 
-The approved Goal/DAG and explicit USER bounded local browser instruction activate
-[PT-6](../../../.agents/work-packages/product-trust-pt-6-browser-journey-v1.yml) on that exact main.
-[Partial evidence](../../evaluation/product-trust-pt-6-browser-journey.md) proves real browser/JWT
-login, one realistic binary upload and persisted PENDING across navigation/reload. The original
-local stub job then FAILED because the real Terraform validator CLI/provider prerequisites are
-absent. Terminal draft/trust/HCL and second-identity browser journey remain incomplete.
-Earlier unsuccessful observations are preserved; no product code or live dependency changed.
+USER authorized one additional bounded corrective iteration under
+[review 6029913071](https://github.com/siamese-lang/terraformers-platform/pull/250#issuecomment-6029913071)
+on the same [PT-6 Work Package](../../../.agents/work-packages/product-trust-pt-6-browser-journey-v1.yml),
+branch and bound base. [Current evidence](../../evaluation/product-trust-pt-6-browser-journey.md)
+passes all five real-browser steps after local cache preparation for the exact pinned real Terraform
+validator. One distinct new job SUCCEEDED; the original FAILED job and all 21 old evidence files
+remain unchanged. No product/frontend/auth/model/truth/IAM/CORS/workflow/cloud change.
 
-GitHub owns transient PR lifecycle. This substantive PR records PT-5 accepted completion and
-partial PT-6 without another state/activation/normalization PR. The one bounded measurement-driver
-correction is spent; stop for independent review and explicit additional bounded correction
-before another journey. PT-7 remains blocked until complete PT-6 acceptance and USER merge;
+Autonomous repair count remains 1; human-authorized corrective iteration count is separately 1.
+Exactly one post-change journey was consumed; no further run is authorized. Local stub/CLI timings,
+fixture identities and absent-quality display do not establish realistic AI quality, hosted IdP or
+production latency. GitHub owns transient PR lifecycle; durable active PR/branch fields stay null.
+Stop for new independent review and explicit merge. PT-6 is not COMPLETE and PT-7 stays blocked;
 CI success alone is not acceptance. Live/model/GCP, architecture/security expansion, cost and
 teardown remain gated. Runtime is retained and A7-8 remains deferred.
 

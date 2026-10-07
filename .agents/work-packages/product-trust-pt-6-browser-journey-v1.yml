@@ -110,6 +110,35 @@ work_package:
     - one_off_scope_state_frozen_identity_audit_and_git_diff_check
   auto_repair_limit: 1
   auto_repairs_used: 1
+  human_authorized_corrective_iterations: 1
+  corrective_iteration_1:
+    authority: USER_EXPLICIT_APPROVAL_UNDER_REVIEW_6029913071
+    reviewed_head: 4ac4c3b339276cd181e07cf78f339692038aaf89
+    execution_base_sha: 37e006be4d5995019704ea8a4009e1a59da039b2
+    procedure: docs/evidence/product-trust-pt-6/correction-1/procedure.md
+    status: PASS_PENDING_INDEPENDENT_REVIEW
+    maximum_browser_executions: 1
+    browser_executions_used: 1
+    automatic_retries: 0
+    autonomous_repair_counter_reset: false
+    existing_failed_evidence_byte_changes: prohibited
+    production_system_paths_or_Docker_changes: prohibited
+    production_validator_or_pass_through_validation_changes: prohibited
+    next_failure_or_prerequisite: HUMAN_REQUIRED_WITHOUT_SECOND_JOURNEY
+    evidence: docs/evidence/product-trust-pt-6/correction-1/browser/result.json
+    validation: docs/evidence/product-trust-pt-6/correction-1/validation.json
+    accepted_jobs: 1
+    accepted_job_id: 345d4807-bf84-4b81-9a8e-4144339abc50
+    terminal_status: SUCCEEDED
+    accepted_to_terminal_ms_including_fixture_hold: 6642
+    real_validator: TerraformCliValidator
+    real_executor: ProcessCommandExecutor
+    version_and_checksum_verified: Terraform_1.8.5_AWS_provider_5.100.0
+    focused_tests_passed: 19
+    original_criteria_browser_steps_passed: 5
+    remaining_browser_executions_authorized: 0
+    independent_acceptance: PENDING_CORRECTED_HEAD_REVIEW
+    merge_authorized: false
   stop_on:
     - MAIN_DRIFT
     - changed_failure_class_or_more_than_one_autonomous_repair
@@ -119,6 +148,17 @@ work_package:
   next_phase: PT-7
   next_phase_authorized_before_PT6_acceptance_and_merge: false
   result:
+    status: BROWSER_JOURNEY_VERIFIED_PENDING_INDEPENDENT_REVIEW
+    independent_acceptance: PENDING_CORRECTED_HEAD_REVIEW
+    human_gate: INDEPENDENT_REVIEW_AND_MERGE_CHECKPOINT
+    evidence: docs/evaluation/product-trust-pt-6-browser-journey.md
+    failed_evidence_replaced: false
+    auto_repairs_used: 1
+    human_authorized_corrective_iterations: 1
+    additional_journey_authorized: false
+    model_calls: 0
+    live_cloud_actions: 0
+  initial_result:
     status: INCOMPLETE_BROWSER_EVIDENCE_MEASUREMENT_PREREQUISITE_BLOCKED
     independent_acceptance: PENDING
     human_gate: BOUNDED_REPAIR_LIMIT_AND_BROWSER_MEASUREMENT_BLOCKER

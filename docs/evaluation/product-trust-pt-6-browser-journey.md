@@ -1,3 +1,100 @@
+# PT-6 — one USER-authorized corrective browser journey
+
+**HUMAN_REQUIRED: independent review and explicit merge. Current browser criteria PASS;
+PT-6 is not independently accepted or COMPLETE.**
+
+USER approved additional bounded corrective iteration **1** under
+[review 6029913071](https://github.com/siamese-lang/terraformers-platform/pull/250#issuecomment-6029913071).
+That review covered head `4ac4c3b339276cd181e07cf78f339692038aaf89` and did not itself grant
+execution or merge authority. Same PR #250/branch and original base
+`37e006be4d5995019704ea8a4009e1a59da039b2`; no rebase/rebind. Autonomous repairs remain **1**,
+human-authorized corrective iterations **1**. This one execution is consumed; no second journey
+is authorized. No PT-7, PT-2, live model/GCP, new IdP/IAM/CORS/security, retained teardown or merge.
+
+## Narrow correction and tool integrity
+
+The [corrective procedure](../evidence/product-trust-pt-6/correction-1/procedure.md) was frozen
+before this outcome. Exact Dockerfile-pinned Terraform **1.8.5** and AWS provider **5.100.0** were
+verified against existing archive SHA-256 values and extracted executable bytes under
+`/workspace/.cloud-setup/pt6-terraform`. No system paths or Docker changed. [Prerequisite evidence](../evidence/product-trust-pt-6/correction-1/prerequisites.json)
+records actual CLI/provider version selection, offline mirror init, valid schema acceptance and
+invalid provider argument rejection. No plan/apply or cloud credentials.
+
+Only the isolated test fixture constructs a primary **same real `TerraformCliValidator`** with
+its existing **`ProcessCommandExecutor`**, default timeouts/cleanup and local binary/plugin paths.
+Production validator/configuration, runner/provider, frontend, auth, prompts/model/RAG/truth and
+workflows are unchanged. The driver verifies archive/executable checksums and CLI version before
+startup/upload, passes fixture-local paths, binds the compiled fixture bytes and checks exact
+HCL/job/file linkage. No pass-through/stub executable validator or application API mock.
+
+The existing production JAR and fixture-configured frontend build bytes were reused unchanged,
+verified against the initial recorded hashes. Updated test fixture was compiled by the focused
+existing tests. Actual Chromium 151.0.7922.173 frontend still uses its original Cognito adapter;
+only external Cognito transport is fulfilled with short-lived signed fixture tokens. All application
+requests traverse real HTTP, backend JWT/ownership services, H2 and filesystem storage.
+
+## One distinct post-change journey
+
+[Raw result, 66 application responses and same-job stage logs](../evidence/product-trust-pt-6/correction-1/browser/result.json)
+record **one** accepted upload/job `345d4807-bf84-4b81-9a8e-4144339abc50`. It is a fresh local
+H2/filesystem session, not recovery or resubmission of failed job
+`604890dc-c272-485c-b9d5-95fdede77504`. Numeric project/source IDs restart at 1 in the separate
+local database; the job UUID and execution evidence identify the distinct submission.
+
+| Original criterion | Observed result |
+| --- | --- |
+| Actual frontend login / real backend JWT | PASS; UI profile 204, owner list 200, backend JWKS fetch 1 |
+| Anonymous / forged-signature controls | PASS; protected list 401 for each |
+| Realistic binary upload once | PASS; 201, source ETag/roundtrip SHA matches the frozen input |
+| Navigation/reload durable progress | PASS; same PENDING job/source/acceptedAt and elapsed anchor, no new submission |
+| Original new job terminal | SUCCEEDED; real Terraform executable validation passed; provider stub-integrated-java |
+| Trust/draft/timing UI | PASS; processing complete, quality **평가 기록 없음**, explicit editable draft/conditional limits, matching server timestamps |
+| Same-job Terraform artifact | PASS; API latest job/file IDs match terminal result; displayed HCL text exactly equals artifact |
+| Other identity private reads | PASS; actual frontend detail 403 and no image/HCL, plus metadata/tree/image/HCL/job probes 403 |
+| Other identity mutations | PASS; visibility/Terraform/new-job/delete all 403, owner job/project/HCL/source/inventory unchanged |
+| Anonymous private controls | PASS; metadata 403, job 401 |
+
+AcceptedAt `2026-10-07T03:01:02.897549Z`; terminalAt `2026-10-07T03:01:09.540236Z`;
+accepted-to-terminal **6642 ms**, including the controlled pre-claim hold. Actual stage telemetry:
+analysis execution **4984 ms**, result finalize **36 ms**. These are local stub/CLI fixture timings,
+not production/model latency. The stub returns no quality snapshot; absent quality is explicitly
+shown instead of technical/semantic trust. No AI image interpretation, retrieval fidelity,
+realistic generalization, effective deployed IAM or hosted IdP/password guarantee is established.
+
+![Real terminal draft and trust state](../evidence/product-trust-pt-6/correction-1/browser/03-terminal-draft.png)
+![Second identity denied by real backend](../evidence/product-trust-pt-6/correction-1/browser/04-other-identity-denied.png)
+
+## Validation, preservation and gate
+
+- Existing `TerraformCliValidatorTest` + `AnalysisJobOrchestratorTest`: **19 PASS**, 0 failures,
+  errors or skips; offline test compile included the isolated fixture.
+- Real pinned-tool offline preflight: CLI/provider versions and checksums PASS; valid HCL PASS;
+  intentionally unsupported provider argument rejected. It is separate prerequisite validation.
+- Browser runner exit **0**, all **5** declared steps PASS, one new upload only, no automatic
+  retry/resubmission. Signing material/browser processes/local objects/database cleaned up.
+- Python syntax, scope/durable-state/frozen identity/evidence audit and diff checks: recorded in
+  [new validation evidence](../evidence/product-trust-pt-6/correction-1/validation.json).
+  Existing frontend build/JAR and shared JWKS helper were unchanged; no unrelated suite repeat.
+- All **21** preexisting evidence files and original frozen protocol remain byte-identical to the
+  reviewed head, checked by [preservation inventory](../evidence/product-trust-pt-6/correction-1/preserved-evidence-inventory.json).
+  The old failed job and its **1582 ms** fixture time remain FAILED evidence. No earlier outcome
+  is replaced or reclassified. Original first-user concurrency/evidence-loss limitations remain.
+- Reusable environment install/start instructions gained only a tested optional local pinned-tool
+  block and bounded runner reference. Default minimal backend setup stays intact; the consumed
+  authority does not permit a further browser execution. Saved configuration is not publication.
+
+PT-2 final INCOMPLETE, NOT_RUN cases 03–10, 424846 ms original case-02 censor, zero-product
+continuation/recovery failures, frozen truth/identity and earlier phase state remain unchanged.
+Model calls/live cloud actions are **0**. GitHub owns transient PR lifecycle; durable active PR,
+branch and URL fields stay null. Independent review of the corrected head and explicit merge
+remain required; CI green alone is not acceptance. No PT-7 execution.
+
+---
+
+The following initial-head checkpoint is retained verbatim as historical failed evidence context.
+It was independently reviewed by comment 6029913071 and superseded only by the distinct authorized
+correction above; its original evidence directories are unchanged.
+
 # PT-6 — partial real-browser journey; blocked
 
 **HUMAN_REQUIRED: BOUNDED_REPAIR_LIMIT_AND_BROWSER_MEASUREMENT_BLOCKER. PT-6 is INCOMPLETE.**

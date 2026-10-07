@@ -1,0 +1,26 @@
+{
+  "sourceHeadSha": "4ac4c3b339276cd181e07cf78f339692038aaf89",
+  "files": {
+    "docs/evidence/product-trust-pt-6/00-startup-portability-failure/manifest.json": "9de8ae243a6e8fa6b4ea6bd0a83804be8708c100d08ea5e3efd0a02a55128c3f",
+    "docs/evidence/product-trust-pt-6/00-startup-portability-failure/result.json": "ff5a77e0b569bdf2a317e0d86987a94e7ae975ea5c98ab0b597ecf297f1cb60e",
+    "docs/evidence/product-trust-pt-6/01-login-probe-failure/backend-failure.log.gz": "841e6e4cd9366b3a99decb4457881657fed0d3f769c62559bf21b9912a2748bd",
+    "docs/evidence/product-trust-pt-6/01-login-probe-failure/manifest.json": "39da412f2a22ac40b6d79ff17bf619423866ae7c36c2934b000f311236944d7e",
+    "docs/evidence/product-trust-pt-6/01-login-probe-failure/result.json": "f409107cf089e376eb6e9c943e6012a52a1b64c5c113224cd5cbf08ae8993f50",
+    "docs/evidence/product-trust-pt-6/02-profile-contract-failure/manifest.json": "f126bbbc7e75432fbde0eb5ad0e11890df02678655d25890f7a1bf58e658d14f",
+    "docs/evidence/product-trust-pt-6/02-profile-contract-failure/result.json": "f694cd26d9feac3fdebe5a1969b0a3e0d18d74ba496cc8e741b1aa2f1a404472",
+    "docs/evidence/product-trust-pt-6/03-browser-partial/01-pending.png": "4defb7344f21bfb042e4466aba2a2cc425ed77db56cc2e0a9ce6a29a1cf57366",
+    "docs/evidence/product-trust-pt-6/03-browser-partial/02-pending-after-reload.png": "360b6bbb867627212773375cd22f3ef4b958f66298561f8643af43e86c8acc19",
+    "docs/evidence/product-trust-pt-6/03-browser-partial/manifest.json": "aead00a151eaaf0dd68e0c8aa60094da7cff9839d46aede13a052084285107f3",
+    "docs/evidence/product-trust-pt-6/03-browser-partial/result.json": "2d7ed57f609df225f1d5bafcfd671ff885b5ac087f892e55f55b8b1e9e9b2076",
+    "docs/evidence/product-trust-pt-6/04-known-prerequisite-refusal/manifest.json": "9f4f904a16f23e29489575797b2975b7587bb14c8dbd14f1ebace8fe7c609380",
+    "docs/evidence/product-trust-pt-6/04-known-prerequisite-refusal/result.json": "9b798449c3f090b4ca9786136aa30e8e09e4f4c37bf769c8e033901fa90fa4c4",
+    "docs/evidence/product-trust-pt-6/backend-package.log.gz": "5f8abce9df349ee68aa4aca91fdd83928b71ba53da19cd63a77360e260144fe7",
+    "docs/evidence/product-trust-pt-6/frontend-build.log.gz": "81a27ef07fc0eb02e25e1b5f049f051e28dd2cef22dcd47cc0926bbce039808b",
+    "docs/evidence/product-trust-pt-6/jwks-helper-tests.log.gz": "719d95d71ca2f33da1cfb0e5cbf88ffad8cc61dbe72bfe1a6012960a67f897aa",
+    "docs/evidence/product-trust-pt-6/manifest.json": "16d1c6b75212415c8b257a750da408fd30115d30d580f77125b188243bcc8d48",
+    "docs/evidence/product-trust-pt-6/predecessor-review-6029459989.json": "a3b813cc87c10c3360a80b159671939f0c25827a34723e618143282997285333",
+    "docs/evidence/product-trust-pt-6/raw-log-bindings.json": "d083247bdae4810eed14ab5149adccf6106fc0abb0217ead9f6f8d9cb487d7ab",
+    "docs/evidence/product-trust-pt-6/runner-at-observation.txt": "7e11bc64d2133a011d0a9dcc62524976bf58a17cfb05d9efb1d400197edae8fd",
+    "docs/evidence/product-trust-pt-6/validation.json": "5da79a93cf1dbca396dd514b7b73d4ddef761d016a0c2c990d182dff0b1cc527"
+  }
+}

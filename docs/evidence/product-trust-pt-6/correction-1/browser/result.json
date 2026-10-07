@@ -1,0 +1,1151 @@
+{
+  "procedure": "docs/evaluation/product-trust-pt-6-browser-protocol.md",
+  "correctiveProcedure": "docs/evidence/product-trust-pt-6/correction-1/procedure.md",
+  "humanAuthorizedCorrectiveIteration": 1,
+  "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+  "datasetIdentity": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+  "input": "evaluation/terraformers-realistic-v1/fixtures/pt1-06-thumbnail-pipeline.png",
+  "inputSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+  "modelUnderTestRunCount": 0,
+  "liveCloudActionCount": 0,
+  "automaticRetries": 0,
+  "steps": {
+    "authentication": "PASS",
+    "one_upload": "PASS",
+    "pending_navigation_reload": "PASS",
+    "terminal_draft": "PASS",
+    "other_identity_denial": "PASS"
+  },
+  "outcome": "PASS_PENDING_INDEPENDENT_REVIEW",
+  "timingScope": "LOCAL_STUB_INCLUDING_CONTROLLED_EXECUTOR_HOLD_NOT_PRODUCTION_LATENCY",
+  "localValidatorTools": {
+    "terraform": {
+      "archiveSha256": "bb1ee3e8314da76658002e2e584f2d8854b6def50b7f124e27b957a42ddacfea",
+      "executableSha256": "026da7f222d6c7506e882173cb48611d50638dcbe98e87639e047797bee69817",
+      "path": "/workspace/.cloud-setup/pt6-terraform/bin/terraform"
+    },
+    "aws-provider": {
+      "archiveSha256": "1589a2266af699cbd5d80737a0fe02e54ec9cf2ca54e7e00ac51c7359056f274",
+      "executableSha256": "8cb98768bcea942df561a918d65a8751f787ab348f7498bdfe6667dffcebd528",
+      "path": "/workspace/.cloud-setup/pt6-terraform/terraform-plugins/registry.terraform.io/hashicorp/aws/5.100.0/linux_amd64/terraform-provider-aws_v5.100.0_x5"
+    },
+    "terraformVersion": "1.8.5",
+    "awsProviderVersion": "5.100.0",
+    "providerVersionBinding": "Exact Dockerfile archive checksum and extracted executable bytes",
+    "implementation": "TerraformCliValidator",
+    "executor": "ProcessCommandExecutor"
+  },
+  "bindings": {
+    "jarSha256": "867f95e61c696b44ed14ae97c745119fb56f00bc68abfee9b1dffa88f6d2b8bb",
+    "frontendFiles": {
+      "asset-manifest.json": "669d07e5f0007880cf2d4ebfb95a95e84593d12906879d93762a855847c1bfba",
+      "index.html": "f8d07bd7b48c49889c5d118b1ce0ac10a1376db05dcd6d75ceb41c299ad7bc8a",
+      "static/css/main.28f1fa56.css": "1f5d399d0389647548acd0363f0cae0865be6df6e0cb0ba41212dcdca19c73cd",
+      "static/css/main.28f1fa56.css.map": "347d3c192a14f00511f3110fa54dde254277bb5bad3b6f31bad4544734515337",
+      "static/js/main.eb29c0e6.js": "6a5b27fa022b6a1721ac09bd2077579bc14bf7c298afad254e8b4b4fa4479322",
+      "static/js/main.eb29c0e6.js.LICENSE.txt": "3c163c043b470ed4ccb149e4b0e2d45fcc8bfd688a18f9aab11a464b2d88b481",
+      "static/js/main.eb29c0e6.js.map": "3666b24e7ea710c8b73345595a1e396900dc1c6bb02878382d80a739e8ca4299"
+    },
+    "sources": {
+      "scripts/checks/product-trust-browser-journey.py": "471cb32591ad46375b7abf9d316c6478b956059db171274f517840cb0318dbfb",
+      "scripts/smoke/ephemeral-jwks-fixture.sh": "22370156d38ad12ea314b9a03843d740f4751686366fa8dd367adbb28bc133b6",
+      "backend/src/test/java/com/terraformers/modernization/analysis/BrowserJourneyFixture.java": "21a51e536ca431ef7f721df1971326e58e595b82ec61ade0098b04bf4c76ce5d",
+      "docs/evaluation/product-trust-pt-6-browser-protocol.md": "ba7c024602fb27ac6e10f88d91ec02779ba52252b47ec2618819fd3c3e3ba0f5",
+      "docs/evidence/product-trust-pt-6/correction-1/procedure.md": "03810a8cd67aafd2fafb857ec94918ca83cf7085c3a7db859f9a4d47f27e8255"
+    },
+    "fixtureClasses": {
+      "BrowserJourneyFixture.class": "f68675e2b832b0e7af13ecaa7b1905e691351b1087891a0784e161059605e1bb"
+    }
+  },
+  "browserVersion": "151.0.7922.173",
+  "upload": {
+    "uploadMode": "owned-project-analysis",
+    "storageProvider": "filesystem",
+    "binaryPersisted": true,
+    "storageETag": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+    "analysisJobId": "345d4807-bf84-4b81-9a8e-4144339abc50",
+    "projectId": 1,
+    "sourceFileId": 1,
+    "resultFileId": null,
+    "sourceBucket": "example-bucket",
+    "sourceKey": "browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png",
+    "originalFilename": "pt1-06-thumbnail-pipeline.png",
+    "contentType": "image/png",
+    "size": 30073,
+    "status": "PENDING",
+    "analysisMode": "INTEGRATED_JAVA",
+    "provider": null,
+    "resultObjectKey": null,
+    "resultPreview": null,
+    "analysisSummary": null,
+    "detectedComponents": [],
+    "detectedRelationships": [],
+    "warnings": [],
+    "failureReason": null,
+    "createdAt": "2026-10-07T03:01:02.897548555Z",
+    "updatedAt": "2026-10-07T03:01:02.897548555Z"
+  },
+  "pendingJob": {
+    "id": "345d4807-bf84-4b81-9a8e-4144339abc50",
+    "projectId": 1,
+    "sourceFileId": 1,
+    "resultFileId": null,
+    "sourceBucket": "example-bucket",
+    "sourceKey": "browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png",
+    "correlationId": "upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a",
+    "status": "PENDING",
+    "analysisMode": "INTEGRATED_JAVA",
+    "provider": null,
+    "resultObjectKey": null,
+    "resultPreview": null,
+    "analysisSummary": null,
+    "detectedComponents": [],
+    "detectedRelationships": [],
+    "warnings": [],
+    "failureReason": null,
+    "quality": null,
+    "timing": {
+      "acceptedAt": "2026-10-07T03:01:02.897549Z",
+      "terminalAt": null,
+      "acceptedToTerminalMs": null
+    },
+    "createdAt": "2026-10-07T03:01:02.897549Z",
+    "updatedAt": "2026-10-07T03:01:02.897549Z"
+  },
+  "releaseAtEpochSeconds": 1791342064.460256,
+  "terminalJob": {
+    "id": "345d4807-bf84-4b81-9a8e-4144339abc50",
+    "projectId": 1,
+    "sourceFileId": 1,
+    "resultFileId": 2,
+    "sourceBucket": "example-bucket",
+    "sourceKey": "browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png",
+    "correlationId": "upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a",
+    "status": "SUCCEEDED",
+    "analysisMode": "INTEGRATED_JAVA",
+    "provider": "stub-integrated-java",
+    "resultObjectKey": "analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf",
+    "resultPreview": "terraform {\n  required_providers {\n    aws = {\n      source  = \"hashicorp/aws\"\n      version = \"~> 5.0\"\n    }\n  }\n}\n\nprovider \"aws\" {\n  region = var.aws_region\n}\n\nvariable \"aws_region\" {\n  type        = string\n  description = \"AWS region for local verification drafts.\"\n  default     = \"us-east-1\"\n}\n\nresource \"aws_s3_bucket\" \"architecture_artifacts\" {\n  bucket_prefix = \"terraformers-artifacts-\"\n}\n\nresource \"aws_sqs_queue\" \"analysis_events\" {\n  name = \"terraformers-analysis-events\"\n}",
+    "analysisSummary": "Integrated Java analysis provider boundary is ready. source=s3://example-bucket/browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png, contentType=image/png, contentLength=30073, references=0. Replace this stub with Bedrock/OpenSearch adapters.",
+    "detectedComponents": [
+      "S3 artifact bucket",
+      "SQS analysis event queue"
+    ],
+    "detectedRelationships": [
+      "analysis events are published to the queue after artifacts are persisted"
+    ],
+    "warnings": [
+      "Stub output is for local verification only; enable Bedrock for real image analysis."
+    ],
+    "failureReason": null,
+    "quality": null,
+    "timing": {
+      "acceptedAt": "2026-10-07T03:01:02.897549Z",
+      "terminalAt": "2026-10-07T03:01:09.540236Z",
+      "acceptedToTerminalMs": 6642
+    },
+    "createdAt": "2026-10-07T03:01:02.897549Z",
+    "updatedAt": "2026-10-07T03:01:09.542927Z"
+  },
+  "terminalProject": {
+    "projectId": 1,
+    "displayName": "PT6 bounded browser journey",
+    "description": null,
+    "visibility": "PRIVATE",
+    "latestAnalysisJobId": "345d4807-bf84-4b81-9a8e-4144339abc50",
+    "provider": "stub-integrated-java",
+    "failureReason": null,
+    "resultFileId": 2,
+    "latestResultFileId": 2,
+    "latestResultObjectKey": "analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf",
+    "analysisStatus": "SUCCEEDED",
+    "quality": null,
+    "analysisTiming": {
+      "acceptedAt": "2026-10-07T03:01:02.897549Z",
+      "terminalAt": "2026-10-07T03:01:09.540236Z",
+      "acceptedToTerminalMs": 6642
+    },
+    "analysisSummary": "Integrated Java analysis provider boundary is ready. source=s3://example-bucket/browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png, contentType=image/png, contentLength=30073, references=0. Replace this stub with Bedrock/OpenSearch adapters.",
+    "detectedComponents": [
+      "S3 artifact bucket",
+      "SQS analysis event queue"
+    ],
+    "detectedRelationships": [
+      "analysis events are published to the queue after artifacts are persisted"
+    ],
+    "warnings": [
+      "Stub output is for local verification only; enable Bedrock for real image analysis."
+    ],
+    "terraformDraftUpdatedAt": "2026-10-07T03:01:09.536009Z",
+    "sourceFileId": 1,
+    "sourceBucket": "example-bucket",
+    "sourceKey": "browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png",
+    "sourceStorageProvider": "filesystem",
+    "sourceBinaryPersisted": true,
+    "sourceETag": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+    "originalFilename": "pt1-06-thumbnail-pipeline.png",
+    "contentType": "image/png",
+    "uploadSizeBytes": 30073,
+    "createdAt": "2026-10-07T03:01:02.808384Z",
+    "updatedAt": "2026-10-07T03:01:02.808384Z"
+  },
+  "terraform": {
+    "projectId": 1,
+    "fileId": 2,
+    "fileName": "main.tf",
+    "contentType": "text/plain; charset=utf-8",
+    "content": "terraform {\n  required_providers {\n    aws = {\n      source  = \"hashicorp/aws\"\n      version = \"~> 5.0\"\n    }\n  }\n}\n\nprovider \"aws\" {\n  region = var.aws_region\n}\n\nvariable \"aws_region\" {\n  type        = string\n  description = \"AWS region for local verification drafts.\"\n  default     = \"us-east-1\"\n}\n\nresource \"aws_s3_bucket\" \"architecture_artifacts\" {\n  bucket_prefix = \"terraformers-artifacts-\"\n}\n\nresource \"aws_sqs_queue\" \"analysis_events\" {\n  name = \"terraformers-analysis-events\"\n}",
+    "latestAnalysisJobId": "345d4807-bf84-4b81-9a8e-4144339abc50",
+    "latestResultObjectKey": "analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf",
+    "draftUpdatedAt": "2026-10-07T03:01:09.536009Z",
+    "projectUpdatedAt": "2026-10-07T03:01:02.808384Z"
+  },
+  "visibleTerminalText": "처리 상태 (서버 기록): SUCCEEDED 분석 작업의 처리가 완료되었습니다.\n\n결과 품질: 평가 기록 없음\n\n처리 완료와 결과의 신뢰도는 별개입니다. Terraform은 검토하고 수정할 수 있는 초안입니다.\n\n품질 평가는 이미지에서 추출한 해석과 선택된 근거에 한정됩니다. 기술 검사 통과나 권한 선언의 존재만으로 실제 권한 유효성 또는 배포 성공이 보장되지 않습니다.\n\n요청 접수: 10/7/2026, 3:01:02 AM\n\n접수부터 처리 종료까지: 0분 6초\n\n처리 종료: 10/7/2026, 3:01:09 AM",
+  "serverStages": [
+    "2026-10-07T03:01:04.521Z INFO  [analysis-job-1] c.t.m.a.LoggingProgressPublisher trace_id= span_id= analysisJobId=345d4807-bf84-4b81-9a8e-4144339abc50 source_revision=unknown - analysis progress jobId=345d4807-bf84-4b81-9a8e-4144339abc50 projectId=1 status=RUNNING message=analysis job started",
+    "2026-10-07T03:01:04.521Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisJobRunner trace_id= span_id= analysisJobId=345d4807-bf84-4b81-9a8e-4144339abc50 source_revision=unknown - Analysis job claimed outcome=initial_claim generation=1 attempt=1",
+    "2026-10-07T03:01:04.523Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisJobRunner trace_id= span_id= analysisJobId=345d4807-bf84-4b81-9a8e-4144339abc50 source_revision=unknown - Analysis job execution started",
+    "2026-10-07T03:01:04.526Z INFO  [analysis-job-1] c.t.m.a.AnalysisJobOrchestrator trace_id= span_id= analysisJobId=345d4807-bf84-4b81-9a8e-4144339abc50 source_revision=unknown - Analysis provider completed provider=stub-integrated-java",
+    "2026-10-07T03:01:04.527Z INFO  [analysis-job-1] c.t.m.a.AnalysisJobOrchestrator trace_id= span_id= analysisJobId=345d4807-bf84-4b81-9a8e-4144339abc50 source_revision=unknown - Terraform draft validation passed",
+    "2026-10-07T03:01:09.507Z INFO  [analysis-job-1] c.t.m.a.AnalysisJobOrchestrator trace_id= span_id= analysisJobId=345d4807-bf84-4b81-9a8e-4144339abc50 source_revision=unknown - Terraform executable validation passed",
+    "2026-10-07T03:01:09.508Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisObservability trace_id= span_id= analysisJobId=345d4807-bf84-4b81-9a8e-4144339abc50 source_revision=unknown - analysis stage outcome=success stage=analysis_execution elapsedMs=4984",
+    "2026-10-07T03:01:09.540Z INFO  [analysis-job-1] c.t.m.a.LoggingProgressPublisher trace_id= span_id= analysisJobId=345d4807-bf84-4b81-9a8e-4144339abc50 source_revision=unknown - analysis progress jobId=345d4807-bf84-4b81-9a8e-4144339abc50 projectId=1 status=SUCCEEDED message=analysis job completed",
+    "2026-10-07T03:01:09.551Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisObservability trace_id= span_id= analysisJobId=345d4807-bf84-4b81-9a8e-4144339abc50 source_revision=unknown - analysis stage outcome=success stage=result_finalize elapsedMs=36"
+  ],
+  "jwksFetchCount": 1,
+  "fixtureValidatorConfiguration": [
+    "2026-10-07T03:00:56.780Z INFO  [main] c.t.m.analysis.BrowserJourneyFixture trace_id= span_id= analysisJobId= source_revision=unknown - Browser fixture real validator=TerraformCliValidator executor=ProcessCommandExecutor binary=/workspace/.cloud-setup/pt6-terraform/bin/terraform pluginDir=/workspace/.cloud-setup/pt6-terraform/terraform-plugins"
+  ],
+  "temporaryMaterialRemoved": true,
+  "httpEvents": [
+    {
+      "method": "PATCH",
+      "path": "/api/users/me/display-name",
+      "status": 204,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200,
+      "responseBytes": 2,
+      "responseSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 401,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 401,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "POST",
+      "path": "/api/upload",
+      "status": 201,
+      "responseBytes": 800,
+      "responseSha256": "761a3ec3f465939840dfcdbbb428dfa806cd6e2adc074665f939d3d850d5c0e1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "2d71255b9faeb27ca37675012edf8bb2687cdec3588ac1417a9618ed9d634426"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "1a2bab0a106c194da273bef8b0c468c9d29bcab596b50f13a9dce3cd5c594857"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "2d71255b9faeb27ca37675012edf8bb2687cdec3588ac1417a9618ed9d634426"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200,
+      "responseBytes": 1012,
+      "responseSha256": "bc66b011f80961041373c027a1695a9964dc5902bb8c4860d5918e422d0466db"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "2d71255b9faeb27ca37675012edf8bb2687cdec3588ac1417a9618ed9d634426"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "2d71255b9faeb27ca37675012edf8bb2687cdec3588ac1417a9618ed9d634426"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/users/me/display-name",
+      "status": 204,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "1a2bab0a106c194da273bef8b0c468c9d29bcab596b50f13a9dce3cd5c594857"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "2d71255b9faeb27ca37675012edf8bb2687cdec3588ac1417a9618ed9d634426"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "1a2bab0a106c194da273bef8b0c468c9d29bcab596b50f13a9dce3cd5c594857"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "1571d8071d3979fa3c6a2abda97c6d269b1f0dabdab502b57ba9b985a39e095d"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "1571d8071d3979fa3c6a2abda97c6d269b1f0dabdab502b57ba9b985a39e095d"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 1800,
+      "responseSha256": "7634e57e71e5a60642dfae7f0d673d53232d36404dc39b502b6dec03730e015e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1602,
+      "responseSha256": "92c6ab0a5d440b10b3e4bf496a4c66f0b28db4ddaa7f5f16069a43bda8f1254e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/terraform/main.tf",
+      "status": 200,
+      "responseBytes": 884,
+      "responseSha256": "9a08f1bfb0614acac6ecb96158349cefca1e19cf7dc327910cfd128759185a7e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1602,
+      "responseSha256": "92c6ab0a5d440b10b3e4bf496a4c66f0b28db4ddaa7f5f16069a43bda8f1254e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/terraform/main.tf",
+      "status": 200,
+      "responseBytes": 884,
+      "responseSha256": "9a08f1bfb0614acac6ecb96158349cefca1e19cf7dc327910cfd128759185a7e"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/users/me/display-name",
+      "status": 204,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/users/me/display-name",
+      "status": 204,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 403,
+      "responseBytes": 24,
+      "responseSha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 403,
+      "responseBytes": 24,
+      "responseSha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae"
+    },
+    {
+      "method": "GET",
+      "path": "/api/project-tree/1",
+      "status": 403,
+      "responseBytes": 24,
+      "responseSha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 403,
+      "responseBytes": 24,
+      "responseSha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/terraform/main.tf",
+      "status": 403,
+      "responseBytes": 24,
+      "responseSha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 403,
+      "responseBytes": 24,
+      "responseSha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/projects/1/visibility",
+      "status": 403,
+      "responseBytes": 30,
+      "responseSha256": "584dedc663c4214c615a1871ce430ebea292cea15f5235909aeb8116a96e1220"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/projects/1/terraform/main.tf",
+      "status": 403,
+      "responseBytes": 30,
+      "responseSha256": "584dedc663c4214c615a1871ce430ebea292cea15f5235909aeb8116a96e1220"
+    },
+    {
+      "method": "POST",
+      "path": "/api/analysis/jobs",
+      "status": 403,
+      "responseBytes": 30,
+      "responseSha256": "584dedc663c4214c615a1871ce430ebea292cea15f5235909aeb8116a96e1220"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/projects/1",
+      "status": 403,
+      "responseBytes": 30,
+      "responseSha256": "584dedc663c4214c615a1871ce430ebea292cea15f5235909aeb8116a96e1220"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 403,
+      "responseBytes": 24,
+      "responseSha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 401,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "status": 200,
+      "responseBytes": 1800,
+      "responseSha256": "7634e57e71e5a60642dfae7f0d673d53232d36404dc39b502b6dec03730e015e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1602,
+      "responseSha256": "92c6ab0a5d440b10b3e4bf496a4c66f0b28db4ddaa7f5f16069a43bda8f1254e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/terraform/main.tf",
+      "status": 200,
+      "responseBytes": 884,
+      "responseSha256": "9a08f1bfb0614acac6ecb96158349cefca1e19cf7dc327910cfd128759185a7e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200,
+      "responseBytes": 1604,
+      "responseSha256": "381edda878d50ac3e7c2a9aed68f8b9a3b1481c7562289fc129852c6a9a53bae"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200,
+      "responseBytes": 2,
+      "responseSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    }
+  ],
+  "browserApiObservations": [
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "auth": "session",
+      "status": 200,
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "text": "[]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "auth": "anonymous",
+      "status": 401,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "auth": "forged",
+      "status": 401,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "1a2bab0a106c194da273bef8b0c468c9d29bcab596b50f13a9dce3cd5c594857",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"PENDING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:02.897549Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1010,
+      "sha256": "2d71255b9faeb27ca37675012edf8bb2687cdec3588ac1417a9618ed9d634426",
+      "text": "{\"projectId\":1,\"displayName\":\"PT6 bounded browser journey\",\"description\":null,\"visibility\":\"PRIVATE\",\"latestAnalysisJobId\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"provider\":null,\"failureReason\":null,\"resultFileId\":null,\"latestResultFileId\":null,\"latestResultObjectKey\":null,\"analysisStatus\":\"PENDING\",\"quality\":null,\"analysisTiming\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"terraformDraftUpdatedAt\":null,\"sourceFileId\":1,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"sourceStorageProvider\":\"filesystem\",\"sourceBinaryPersisted\":true,\"sourceETag\":\"b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c\",\"originalFilename\":\"pt1-06-thumbnail-pipeline.png\",\"contentType\":\"image/png\",\"uploadSizeBytes\":30073,\"createdAt\":\"2026-10-07T03:01:02.808384Z\",\"updatedAt\":\"2026-10-07T03:01:02.808384Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "1a2bab0a106c194da273bef8b0c468c9d29bcab596b50f13a9dce3cd5c594857",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"PENDING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:02.897549Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1010,
+      "sha256": "2d71255b9faeb27ca37675012edf8bb2687cdec3588ac1417a9618ed9d634426",
+      "text": "{\"projectId\":1,\"displayName\":\"PT6 bounded browser journey\",\"description\":null,\"visibility\":\"PRIVATE\",\"latestAnalysisJobId\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"provider\":null,\"failureReason\":null,\"resultFileId\":null,\"latestResultFileId\":null,\"latestResultObjectKey\":null,\"analysisStatus\":\"PENDING\",\"quality\":null,\"analysisTiming\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"terraformDraftUpdatedAt\":null,\"sourceFileId\":1,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"sourceStorageProvider\":\"filesystem\",\"sourceBinaryPersisted\":true,\"sourceETag\":\"b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c\",\"originalFilename\":\"pt1-06-thumbnail-pipeline.png\",\"contentType\":\"image/png\",\"uploadSizeBytes\":30073,\"createdAt\":\"2026-10-07T03:01:02.808384Z\",\"updatedAt\":\"2026-10-07T03:01:02.808384Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "1a2bab0a106c194da273bef8b0c468c9d29bcab596b50f13a9dce3cd5c594857",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"PENDING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:02.897549Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "ada25eb92f968a16207ef6d6f089d77f9f362a0f119629c804b4e30d2c0a8330",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"RUNNING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:04.473506Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1800,
+      "sha256": "7634e57e71e5a60642dfae7f0d673d53232d36404dc39b502b6dec03730e015e",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":2,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"SUCCEEDED\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":\"stub-integrated-java\",\"resultObjectKey\":\"analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf\",\"resultPreview\":\"terraform {\\n  required_providers {\\n    aws = {\\n      source  = \\\"hashicorp/aws\\\"\\n      version = \\\"~> 5.0\\\"\\n    }\\n  }\\n}\\n\\nprovider \\\"aws\\\" {\\n  region = var.aws_region\\n}\\n\\nvariable \\\"aws_region\\\" {\\n  type        = string\\n  description = \\\"AWS region for local verification drafts.\\\"\\n  default     = \\\"us-east-1\\\"\\n}\\n\\nresource \\\"aws_s3_bucket\\\" \\\"architecture_artifacts\\\" {\\n  bucket_prefix = \\\"terraformers-artifacts-\\\"\\n}\\n\\nresource \\\"aws_sqs_queue\\\" \\\"analysis_events\\\" {\\n  name = \\\"terraformers-analysis-events\\\"\\n}\",\"analysisSummary\":\"Integrated Java analysis provider boundary is ready. source=s3://example-bucket/browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png, contentType=image/png, contentLength=30073, references=0. Replace this stub with Bedrock/OpenSearch adapters.\",\"detectedComponents\":[\"S3 artifact bucket\",\"SQS analysis event queue\"],\"detectedRelationships\":[\"analysis events are published to the queue after artifacts are persisted\"],\"warnings\":[\"Stub output is for local verification only; enable Bedrock for real image analysis.\"],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":\"2026-10-07T03:01:09.540236Z\",\"acceptedToTerminalMs\":6642},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:09.542927Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1602,
+      "sha256": "92c6ab0a5d440b10b3e4bf496a4c66f0b28db4ddaa7f5f16069a43bda8f1254e",
+      "text": "{\"projectId\":1,\"displayName\":\"PT6 bounded browser journey\",\"description\":null,\"visibility\":\"PRIVATE\",\"latestAnalysisJobId\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"provider\":\"stub-integrated-java\",\"failureReason\":null,\"resultFileId\":2,\"latestResultFileId\":2,\"latestResultObjectKey\":\"analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf\",\"analysisStatus\":\"SUCCEEDED\",\"quality\":null,\"analysisTiming\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":\"2026-10-07T03:01:09.540236Z\",\"acceptedToTerminalMs\":6642},\"analysisSummary\":\"Integrated Java analysis provider boundary is ready. source=s3://example-bucket/browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png, contentType=image/png, contentLength=30073, references=0. Replace this stub with Bedrock/OpenSearch adapters.\",\"detectedComponents\":[\"S3 artifact bucket\",\"SQS analysis event queue\"],\"detectedRelationships\":[\"analysis events are published to the queue after artifacts are persisted\"],\"warnings\":[\"Stub output is for local verification only; enable Bedrock for real image analysis.\"],\"terraformDraftUpdatedAt\":\"2026-10-07T03:01:09.536009Z\",\"sourceFileId\":1,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"sourceStorageProvider\":\"filesystem\",\"sourceBinaryPersisted\":true,\"sourceETag\":\"b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c\",\"originalFilename\":\"pt1-06-thumbnail-pipeline.png\",\"contentType\":\"image/png\",\"uploadSizeBytes\":30073,\"createdAt\":\"2026-10-07T03:01:02.808384Z\",\"updatedAt\":\"2026-10-07T03:01:02.808384Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/terraform/main.tf",
+      "auth": "session",
+      "status": 200,
+      "bytes": 884,
+      "sha256": "9a08f1bfb0614acac6ecb96158349cefca1e19cf7dc327910cfd128759185a7e",
+      "text": "{\"projectId\":1,\"fileId\":2,\"fileName\":\"main.tf\",\"contentType\":\"text/plain; charset=utf-8\",\"content\":\"terraform {\\n  required_providers {\\n    aws = {\\n      source  = \\\"hashicorp/aws\\\"\\n      version = \\\"~> 5.0\\\"\\n    }\\n  }\\n}\\n\\nprovider \\\"aws\\\" {\\n  region = var.aws_region\\n}\\n\\nvariable \\\"aws_region\\\" {\\n  type        = string\\n  description = \\\"AWS region for local verification drafts.\\\"\\n  default     = \\\"us-east-1\\\"\\n}\\n\\nresource \\\"aws_s3_bucket\\\" \\\"architecture_artifacts\\\" {\\n  bucket_prefix = \\\"terraformers-artifacts-\\\"\\n}\\n\\nresource \\\"aws_sqs_queue\\\" \\\"analysis_events\\\" {\\n  name = \\\"terraformers-analysis-events\\\"\\n}\",\"latestAnalysisJobId\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"latestResultObjectKey\":\"analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf\",\"draftUpdatedAt\":\"2026-10-07T03:01:09.536009Z\",\"projectUpdatedAt\":\"2026-10-07T03:01:02.808384Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "auth": "session",
+      "status": 200,
+      "bytes": 30073,
+      "sha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+      "text": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "auth": "session",
+      "status": 403,
+      "bytes": 24,
+      "sha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae",
+      "text": "project access denied: 1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/project-tree/1",
+      "auth": "session",
+      "status": 403,
+      "bytes": 24,
+      "sha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae",
+      "text": "project access denied: 1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "auth": "session",
+      "status": 403,
+      "bytes": 24,
+      "sha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae",
+      "text": "project access denied: 1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/terraform/main.tf",
+      "auth": "session",
+      "status": 403,
+      "bytes": 24,
+      "sha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae",
+      "text": "project access denied: 1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 403,
+      "bytes": 24,
+      "sha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae",
+      "text": "project access denied: 1"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/projects/1/visibility",
+      "auth": "session",
+      "status": 403,
+      "bytes": 30,
+      "sha256": "584dedc663c4214c615a1871ce430ebea292cea15f5235909aeb8116a96e1220",
+      "text": "project modification denied: 1"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/projects/1/terraform/main.tf",
+      "auth": "session",
+      "status": 403,
+      "bytes": 30,
+      "sha256": "584dedc663c4214c615a1871ce430ebea292cea15f5235909aeb8116a96e1220",
+      "text": "project modification denied: 1"
+    },
+    {
+      "method": "POST",
+      "path": "/api/analysis/jobs",
+      "auth": "session",
+      "status": 403,
+      "bytes": 30,
+      "sha256": "584dedc663c4214c615a1871ce430ebea292cea15f5235909aeb8116a96e1220",
+      "text": "project modification denied: 1"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/projects/1",
+      "auth": "session",
+      "status": 403,
+      "bytes": 30,
+      "sha256": "584dedc663c4214c615a1871ce430ebea292cea15f5235909aeb8116a96e1220",
+      "text": "project modification denied: 1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "auth": "anonymous",
+      "status": 403,
+      "bytes": 24,
+      "sha256": "611b5b64abbdc9eb81fa65d9575f21700d22f3d24b22b6a5e0f5dcfba0b740ae",
+      "text": "project access denied: 1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "anonymous",
+      "status": 401,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/345d4807-bf84-4b81-9a8e-4144339abc50",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1800,
+      "sha256": "7634e57e71e5a60642dfae7f0d673d53232d36404dc39b502b6dec03730e015e",
+      "text": "{\"id\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":2,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-bb861a1e-843e-44f1-b0e7-e1c4b7eaed2a\",\"status\":\"SUCCEEDED\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":\"stub-integrated-java\",\"resultObjectKey\":\"analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf\",\"resultPreview\":\"terraform {\\n  required_providers {\\n    aws = {\\n      source  = \\\"hashicorp/aws\\\"\\n      version = \\\"~> 5.0\\\"\\n    }\\n  }\\n}\\n\\nprovider \\\"aws\\\" {\\n  region = var.aws_region\\n}\\n\\nvariable \\\"aws_region\\\" {\\n  type        = string\\n  description = \\\"AWS region for local verification drafts.\\\"\\n  default     = \\\"us-east-1\\\"\\n}\\n\\nresource \\\"aws_s3_bucket\\\" \\\"architecture_artifacts\\\" {\\n  bucket_prefix = \\\"terraformers-artifacts-\\\"\\n}\\n\\nresource \\\"aws_sqs_queue\\\" \\\"analysis_events\\\" {\\n  name = \\\"terraformers-analysis-events\\\"\\n}\",\"analysisSummary\":\"Integrated Java analysis provider boundary is ready. source=s3://example-bucket/browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png, contentType=image/png, contentLength=30073, references=0. Replace this stub with Bedrock/OpenSearch adapters.\",\"detectedComponents\":[\"S3 artifact bucket\",\"SQS analysis event queue\"],\"detectedRelationships\":[\"analysis events are published to the queue after artifacts are persisted\"],\"warnings\":[\"Stub output is for local verification only; enable Bedrock for real image analysis.\"],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":\"2026-10-07T03:01:09.540236Z\",\"acceptedToTerminalMs\":6642},\"createdAt\":\"2026-10-07T03:01:02.897549Z\",\"updatedAt\":\"2026-10-07T03:01:09.542927Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1602,
+      "sha256": "92c6ab0a5d440b10b3e4bf496a4c66f0b28db4ddaa7f5f16069a43bda8f1254e",
+      "text": "{\"projectId\":1,\"displayName\":\"PT6 bounded browser journey\",\"description\":null,\"visibility\":\"PRIVATE\",\"latestAnalysisJobId\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"provider\":\"stub-integrated-java\",\"failureReason\":null,\"resultFileId\":2,\"latestResultFileId\":2,\"latestResultObjectKey\":\"analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf\",\"analysisStatus\":\"SUCCEEDED\",\"quality\":null,\"analysisTiming\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":\"2026-10-07T03:01:09.540236Z\",\"acceptedToTerminalMs\":6642},\"analysisSummary\":\"Integrated Java analysis provider boundary is ready. source=s3://example-bucket/browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png, contentType=image/png, contentLength=30073, references=0. Replace this stub with Bedrock/OpenSearch adapters.\",\"detectedComponents\":[\"S3 artifact bucket\",\"SQS analysis event queue\"],\"detectedRelationships\":[\"analysis events are published to the queue after artifacts are persisted\"],\"warnings\":[\"Stub output is for local verification only; enable Bedrock for real image analysis.\"],\"terraformDraftUpdatedAt\":\"2026-10-07T03:01:09.536009Z\",\"sourceFileId\":1,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"sourceStorageProvider\":\"filesystem\",\"sourceBinaryPersisted\":true,\"sourceETag\":\"b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c\",\"originalFilename\":\"pt1-06-thumbnail-pipeline.png\",\"contentType\":\"image/png\",\"uploadSizeBytes\":30073,\"createdAt\":\"2026-10-07T03:01:02.808384Z\",\"updatedAt\":\"2026-10-07T03:01:02.808384Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/terraform/main.tf",
+      "auth": "session",
+      "status": 200,
+      "bytes": 884,
+      "sha256": "9a08f1bfb0614acac6ecb96158349cefca1e19cf7dc327910cfd128759185a7e",
+      "text": "{\"projectId\":1,\"fileId\":2,\"fileName\":\"main.tf\",\"contentType\":\"text/plain; charset=utf-8\",\"content\":\"terraform {\\n  required_providers {\\n    aws = {\\n      source  = \\\"hashicorp/aws\\\"\\n      version = \\\"~> 5.0\\\"\\n    }\\n  }\\n}\\n\\nprovider \\\"aws\\\" {\\n  region = var.aws_region\\n}\\n\\nvariable \\\"aws_region\\\" {\\n  type        = string\\n  description = \\\"AWS region for local verification drafts.\\\"\\n  default     = \\\"us-east-1\\\"\\n}\\n\\nresource \\\"aws_s3_bucket\\\" \\\"architecture_artifacts\\\" {\\n  bucket_prefix = \\\"terraformers-artifacts-\\\"\\n}\\n\\nresource \\\"aws_sqs_queue\\\" \\\"analysis_events\\\" {\\n  name = \\\"terraformers-analysis-events\\\"\\n}\",\"latestAnalysisJobId\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"latestResultObjectKey\":\"analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf\",\"draftUpdatedAt\":\"2026-10-07T03:01:09.536009Z\",\"projectUpdatedAt\":\"2026-10-07T03:01:02.808384Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1604,
+      "sha256": "381edda878d50ac3e7c2a9aed68f8b9a3b1481c7562289fc129852c6a9a53bae",
+      "text": "[{\"projectId\":1,\"displayName\":\"PT6 bounded browser journey\",\"description\":null,\"visibility\":\"PRIVATE\",\"latestAnalysisJobId\":\"345d4807-bf84-4b81-9a8e-4144339abc50\",\"provider\":\"stub-integrated-java\",\"failureReason\":null,\"resultFileId\":2,\"latestResultFileId\":2,\"latestResultObjectKey\":\"analysis-results/1/345d4807-bf84-4b81-9a8e-4144339abc50/main.tf\",\"analysisStatus\":\"SUCCEEDED\",\"quality\":null,\"analysisTiming\":{\"acceptedAt\":\"2026-10-07T03:01:02.897549Z\",\"terminalAt\":\"2026-10-07T03:01:09.540236Z\",\"acceptedToTerminalMs\":6642},\"analysisSummary\":\"Integrated Java analysis provider boundary is ready. source=s3://example-bucket/browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png, contentType=image/png, contentLength=30073, references=0. Replace this stub with Bedrock/OpenSearch adapters.\",\"detectedComponents\":[\"S3 artifact bucket\",\"SQS analysis event queue\"],\"detectedRelationships\":[\"analysis events are published to the queue after artifacts are persisted\"],\"warnings\":[\"Stub output is for local verification only; enable Bedrock for real image analysis.\"],\"terraformDraftUpdatedAt\":\"2026-10-07T03:01:09.536009Z\",\"sourceFileId\":1,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791342062811-pt1-06-thumbnail-pipeline.png\",\"sourceStorageProvider\":\"filesystem\",\"sourceBinaryPersisted\":true,\"sourceETag\":\"b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c\",\"originalFilename\":\"pt1-06-thumbnail-pipeline.png\",\"contentType\":\"image/png\",\"uploadSizeBytes\":30073,\"createdAt\":\"2026-10-07T03:01:02.808384Z\",\"updatedAt\":\"2026-10-07T03:01:02.808384Z\"}]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "auth": "session",
+      "status": 200,
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "text": "[]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "auth": "session",
+      "status": 200,
+      "bytes": 30073,
+      "sha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+      "text": null
+    }
+  ],
+  "identityTransportEvents": [
+    {
+      "identity": "owner",
+      "operation": "InitiateAuth",
+      "supported": true
+    },
+    {
+      "identity": "owner",
+      "operation": "GetUser",
+      "supported": true
+    },
+    {
+      "identity": "owner",
+      "operation": "GetUser",
+      "supported": true
+    },
+    {
+      "identity": "other",
+      "operation": "InitiateAuth",
+      "supported": true
+    },
+    {
+      "identity": "other",
+      "operation": "GetUser",
+      "supported": true
+    },
+    {
+      "identity": "other",
+      "operation": "GetUser",
+      "supported": true
+    }
+  ],
+  "blockedExternalHosts": []
+}

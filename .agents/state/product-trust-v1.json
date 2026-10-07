@@ -4,11 +4,11 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": "PT-7",
-  "lastCompletedPhase": "PT-6R2",
-  "activeWorkPackage": "product-trust-pt-7-ci-delivery-trust-v1",
+  "activePhase": "PT-8A",
+  "lastCompletedPhase": "PT-7",
+  "activeWorkPackage": "product-trust-pt-8a-official-deployed-acceptance-v1",
   "activePullRequest": null,
-  "humanGate": "PT7_REQUIRED_CHECK_RULESET_CHANGE",
+  "humanGate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
@@ -41,13 +41,14 @@
     "Explicit USER policy D approval selects facts 370s, generation/compact/repair 220s, embeddings 10s, SDK attempts 1 / no retryable statuses, durable attempts 1 and original accepted-age cutoff 8 minutes. One existing H2 state-service run (5 existing tests plus 1 temporary lock diagnostic) confirms terminal SQL waits on the external-I/O finalization row lock. Stop at the USER-declared PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION before redesigning finalization or weakening cutoff; no production configuration/implementation or live action occurred. Temporary test bytes restored. Historical audit/evidence/counters remain unchanged; diagnostic is not a PT-6R1 measurement or PT-6R2 acceptance.",
     "USER explicitly authorizes narrow PT6R2 finalization fencing following independent scope review 6036430154 at c516288. Candidate code implements policy D, external write outside finalization transaction, post-write/post-commit fencing, accepted-age sweep and one durable claim. Compile/test-compile pass. First focused 130 tests: 1 failure / 6 errors; one test-only repair rerun 11 tests: 2 failures / 0 errors. Two legacy assertions were missed; no second repair or full suite is run. Stop HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED on the same Work Package/PR. No acceptance, deployment, live/model/database remeasurement, PT7 or counter reset; immutable historical evidence and frozen bytes stay exact.",
     "USER explicitly authorizes one test-contract-only human correction following review 6037186101 at 2ac19e2. Exactly three legacy regression files align with existing finalization order / attempts=1; production bytes and PT6R1 identity scenario/counters remain unchanged. One local focused invocation passes 11/0/0/0; one offline clean package passes 576/0/0/4 (MariaDB skipped locally). Prior failed validation evidence is immutable. Autonomous repairs stay 1; human corrective iterations become 1. Return to PT6R2 implementation complete / independent acceptance pending. Exact corrective-head automatic Backend Local Verification is GitHub-authoritative regression only, not a PT6R1 before/after measurement. No manual DB/model/cloud/OpenSearch/browser/dispatch, PT7, self-acceptance or merge authority.",
-    "PR #254 independent review 6037528315 accepted head 987ec944; USER merged as 6228d69b. PT6R2 COMPLETE is reconciled inside this substantive PT7 PR with original base/evidence/auto repair 1/human correction 1 and conditional \u0394 limits preserved. Explicit USER PT7 request binds that main once. Existing backend workflow gets separate backend/image scope and one always-present backend-required-verification; actual ruleset is read-only and still Terraform-only. Stop after exact-head normal CI at PT7_REQUIRED_CHECK_RULESET_CHANGE, then require explicit ruleset authority, independent phase acceptance and USER merge. No live/model/cloud/OpenSearch/runtime operation, PT8A execution, new workflow or transient PR lifecycle state."
+    "PR #254 independent review 6037528315 accepted head 987ec944; USER merged as 6228d69b. PT6R2 COMPLETE is reconciled inside this substantive PT7 PR with original base/evidence/auto repair 1/human correction 1 and conditional \u0394 limits preserved. Explicit USER PT7 request binds that main once. Existing backend workflow gets separate backend/image scope and one always-present backend-required-verification; actual ruleset is read-only and still Terraform-only. Stop after exact-head normal CI at PT7_REQUIRED_CHECK_RULESET_CHANGE, then require explicit ruleset authority, independent phase acceptance and USER merge. No live/model/cloud/OpenSearch/runtime operation, PT8A execution, new workflow or transient PR lifecycle state.",
+    "PR #255 review 6038261202 accepted head b8645e56; USER merged as 2bdb73d2. Authorized administrator added only backend-required-verification/15368, preserving Terraform/15368 and other ruleset settings. PT7 COMPLETE reconciles in this substantive PT8A preparation PR. Explicit USER preparation binds main once and freezes one-case-per-dispatch/independent review plus exact v4 IDs/non-vector source and clean model-lineage readiness. Historical corrected ingestion 37344219922/artifact 11359644809 lacks retained UUID/fresh-vs-skipped lineage: MODEL_PROVENANCE_UNPROVEN, not live current-index proof. All frozen bytes and historical evidence/counters stay exact. Model/input/live counts remain zero; live source/digest null. Stop FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE; no automatic ingestion, dispatch, acceptance, merge, PT8B or teardown; GitHub owns transient lifecycle."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
-  "executionBaseSha": "6228d69b1da604e816b3e0a826563d79b8bcd844",
-  "resultBeforeHumanGate": "PT7_REPOSITORY_IMPLEMENTATION_PREPARED_EXACT_HEAD_CI_AND_RULESET_AUTHORITY_PENDING",
+  "executionBaseSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+  "resultBeforeHumanGate": "PT8A_REPOSITORY_PREPARATION_ONLY_FINAL_LIVE_ACCEPTANCE_NOT_EXECUTED",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -67,9 +68,9 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "Normal exact-head PR CI must succeed before PT7_REQUIRED_CHECK_RULESET_CHANGE. Existing ruleset still requires only terraform-static-verification; explicit USER ruleset-write authority is absent.",
-    "PT7 independent acceptance and USER merge are pending; CI green alone is not acceptance.",
-    "PT8A source/image/deployment/exact-v4/retrieval readiness and separate live/model/cost gate remain unmet; no frozen official input consumption or live action authorized."
+    "PT8A repository preparation requires independent review and USER merge; CI green is not acceptance.",
+    "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE is not approved for this prepared procedure/source/image. No live source or image is predicted.",
+    "Historical corrected v4 ingestion receipt cannot prove all retained vectors share the required model lineage: MODEL_PROVENANCE_UNPROVEN. Exact current live readiness remains unmeasured; no automatic reembedding."
   ],
   "evidenceDocument": "docs/evaluation/product-trust-pt-7-ci-delivery-handoff.md",
   "validation": {
@@ -426,21 +427,42 @@
       "rawEvidenceAndCountersPreserved": true,
       "productionRuntimeRolledOut": false,
       "CIIsPT6R1Measurement": false
+    },
+    "PT-7": {
+      "status": "COMPLETE",
+      "workPackage": "product-trust-pt-7-ci-delivery-trust-v1",
+      "executionBaseSha": "6228d69b1da604e816b3e0a826563d79b8bcd844",
+      "reviewedHeadSha": "b8645e564d4476c9ad8aad798d63d2a84b487787",
+      "sourceHeadSha": "b8645e564d4476c9ad8aad798d63d2a84b487787",
+      "independentAcceptance": "PASS",
+      "independentReviewCommentId": 6038261202,
+      "mergedPullRequest": 255,
+      "mergedMainSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+      "mergedAt": "2026-10-07T12:49:59Z",
+      "completionBoundary": "REPOSITORY_CI_AND_AUTHORIZED_REQUIRED_CHECK_HANDOFF_ONLY_NO_LIVE_ACCEPTANCE",
+      "requiredChecks": [
+        "terraform-static-verification",
+        "backend-required-verification"
+      ],
+      "requiredCheckIntegrationId": 15368,
+      "otherRulesetSettingsPreserved": true,
+      "liveCloudActions": 0,
+      "modelUnderTestRunCount": 0
     }
   },
   "blockedNextPhase": {
     "phase": "PT-8A",
-    "status": "BLOCKED_BY_PT7_AND_LIVE_READINESS_GATES",
+    "status": "HUMAN_REQUIRED_FINAL_LIVE_MODEL_COST_ACCEPTANCE",
     "executionAuthorized": false,
     "executionStarted": false,
-    "workPackage": null,
-    "executionBaseSha": null,
+    "workPackage": "product-trust-pt-8a-official-deployed-acceptance-v1",
+    "executionBaseSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
     "activationRequires": [
-      "PT7_required_check_ruleset_change_explicitly_USER_approved_and_applied",
-      "PT7_independent_acceptance_and_USER_merge",
-      "later_exact_source_image_deployed_runtime_v4_retrieval_readiness",
-      "separate_FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE"
-    ]
+      "PT8A_preparation_independently_accepted_and_USER_merged",
+      "separate_FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
+      "later_exact_source_image_deployed_runtime_v4_content_model_lineage_and_correlated_retrieval_readiness"
+    ],
+    "liveExecutionBaseSha": null
   },
   "prReviewFeedbackHistory": [
     {
@@ -1338,32 +1360,123 @@
       "mainReadsAtActivation": 1,
       "authority": "Explicit USER PT7 repository-only request; review alone does not grant execution authority",
       "authorityEvidence": "docs/evidence/product-trust-pt-7/authority.json",
-      "status": "HUMAN_REQUIRED",
-      "humanGate": "PT7_REQUIRED_CHECK_RULESET_CHANGE",
-      "currentStep": "REPOSITORY_IMPLEMENTATION_PREPARED_EXACT_HEAD_NORMAL_CI_PENDING",
-      "phaseComplete": false,
-      "independentAcceptance": "PENDING",
+      "status": "COMPLETE",
+      "humanGate": null,
+      "currentStep": "INDEPENDENTLY_ACCEPTED_USER_MERGED_RECONCILED_IN_SUBSTANTIVE_PT8A",
+      "phaseComplete": true,
+      "independentAcceptance": "PASS",
       "autoRepairLimit": 1,
       "autoRepairsUsed": 0,
       "humanAuthorizedCorrectiveIterations": 0,
-      "rulesetMutationAuthorized": false,
-      "rulesetMutationPerformed": false,
+      "rulesetMutationAuthorized": true,
+      "rulesetMutationPerformed": true,
       "proposedRequiredCheckAddition": "backend-required-verification",
       "currentRequiredChecks": [
-        "terraform-static-verification"
+        "terraform-static-verification",
+        "backend-required-verification"
       ],
       "thisPRScope": {
         "backendVerification": true,
         "productionImageBuild": false
       },
       "validationEvidence": "docs/evidence/product-trust-pt-7/validation.json",
-      "normalAutomaticCI": "GitHub_exact_PR_head_normal_pull_request_event_authoritative_after_push",
+      "normalAutomaticCI": "Exact accepted head required PR checks PASS per independent review 6038261202; GitHub owns run lifecycle",
       "modelUnderTestRunCount": 0,
       "liveCloudActions": 0,
       "OpenSearchOperations": 0,
       "browserExecutions": 0,
       "manualDatabaseExecutions": 0,
-      "workflowDispatches": 0
+      "workflowDispatches": 0,
+      "rulesetMutationPerformer": "USER_GITHUB_ADMINISTRATOR_NOT_CODEX_API",
+      "independentReviewCommentId": 6038261202,
+      "reviewedHeadSha": "b8645e564d4476c9ad8aad798d63d2a84b487787",
+      "mergedMainSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0"
+    },
+    "PT-8A": {
+      "workPackage": "product-trust-pt-8a-official-deployed-acceptance-v1",
+      "executionBaseSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+      "mainReadsAtActivation": 1,
+      "status": "HUMAN_REQUIRED",
+      "humanGate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
+      "currentStep": "REPOSITORY_PROCEDURE_READINESS_PREPARATION_ONLY",
+      "preparationAuthorized": true,
+      "executionAuthorized": false,
+      "executionStarted": false,
+      "phaseComplete": false,
+      "independentAcceptance": "PENDING",
+      "liveReviewedSourceSha": null,
+      "liveImageDigest": null,
+      "procedureVersion": "pt8a-official-acceptance-v1",
+      "procedurePath": "docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md",
+      "procedureFrozenBeforeOutcomes": true,
+      "authorityEvidence": "docs/evidence/product-trust-pt-8a/authority.json",
+      "historicalProvenanceAudit": "docs/evidence/product-trust-pt-8a/historical-provenance-audit.json",
+      "historicalModelLineageDisposition": "MODEL_PROVENANCE_UNPROVEN",
+      "currentLiveReadinessEstablished": false,
+      "readinessClasses": [
+        "EXACT_REUSABLE_COMPLETED_V4",
+        "PARTIAL_INDEX",
+        "STALE_OR_MIXED_MODEL_SPACE",
+        "WRONG_MODEL_OR_DIMENSION",
+        "MISSING_INDEX",
+        "MODEL_PROVENANCE_UNPROVEN"
+      ],
+      "onlyReusableClass": "EXACT_REUSABLE_COMPLETED_V4",
+      "autoRepairLimit": 1,
+      "autoRepairsUsed": 1,
+      "humanAuthorizedCorrectiveIterations": 0,
+      "modelUnderTestRunCount": 0,
+      "officialInputFetches": 0,
+      "officialInputUploads": 0,
+      "liveCloudActions": 0,
+      "OpenSearchOperations": 0,
+      "embeddingRequests": 0,
+      "publishRolloutOperations": 0,
+      "workflowDispatches": 0,
+      "manualDatabaseExecutions": 0,
+      "browserExecutions": 0,
+      "normalAutomaticCI": "GitHub exact PR head normal pull_request checks authoritative; not product acceptance",
+      "cases": [
+        {
+          "caseId": "aws-official-a",
+          "status": "NOT_RUN",
+          "consumed": false,
+          "uploadAttempts": 0
+        },
+        {
+          "caseId": "aws-official-b",
+          "status": "NOT_RUN",
+          "consumed": false,
+          "uploadAttempts": 0
+        },
+        {
+          "caseId": "aws-official-c",
+          "status": "NOT_RUN",
+          "consumed": false,
+          "uploadAttempts": 0
+        },
+        {
+          "caseId": "aws-official-d",
+          "status": "NOT_RUN",
+          "consumed": false,
+          "uploadAttempts": 0
+        },
+        {
+          "caseId": "aws-official-e",
+          "status": "NOT_RUN",
+          "consumed": false,
+          "uploadAttempts": 0
+        }
+      ],
+      "boundedRepair": {
+        "failureClass": "VALIDATION_MODULE_SELECTION_ERROR",
+        "failureEvidence": "docs/evidence/product-trust-pt-8a/failed-validation/nonexistent-test-module.log",
+        "productionDefect": false,
+        "correction": "Remove nonexistent v4 unittest module; run existing corpus/CI tests once, and compile the actual v4 builder. No application/code change or live action."
+      },
+      "procedureSha256": "5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5",
+      "validationEvidence": "docs/evidence/product-trust-pt-8a/validation.json",
+      "localDeterministicValidation": "PASS_25_RAG_17_OBSERVER_40_EXISTING_CORPUS_CI_STATIC_METADATA_WITH_ONE_PRESERVED_INVOCATION_ERROR_AND_ONE_BOUNDED_CORRECTION"
     }
   },
   "goalContinuation": {
@@ -1373,11 +1486,11 @@
     "transientPrLifecycleAuthority": "GitHub only",
     "humanGatesPreserved": true,
     "repetitiveContinuePromptsRequired": false,
-    "pausedAtHumanGate": "PT7_REQUIRED_CHECK_RULESET_CHANGE",
+    "pausedAtHumanGate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
     "resumeRequires": [
-      "exact_head_normal_PR_CI_success_then_explicit_USER_required_check_ruleset_change_approval",
-      "PT7_independent_acceptance_and_explicit_USER_merge",
-      "later_phase_human_readiness_live_model_cost_authority"
+      "PT8A_preparation_independent_acceptance_and_USER_merge",
+      "separate_explicit_FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
+      "later_exact_source_image_deployed_v4_content_model_provenance_correlated_retrieval_readiness"
     ]
   },
   "programAmendments": [
@@ -1577,7 +1690,6 @@
   "lastDisposedPhase": "PT-2",
   "programVersion": 4,
   "remainingMandatoryOrder": [
-    "PT-7",
     "PT-8A",
     "PT-8B",
     "PT-9"

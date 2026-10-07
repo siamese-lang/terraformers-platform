@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import subprocess
@@ -285,6 +286,129 @@ def stored_checksum(mapping: dict[str, object]) -> str | None:
     return metadata.get("checksum") if isinstance(metadata, dict) else None
 
 
+def content_identity(documents: list[dict[str, object]], vector_field: str = "embedding") -> str:
+    """Identity of every persisted non-vector field, not merely the declared mapping checksum."""
+    sources = [{key: value for key, value in doc.items() if key != vector_field} for doc in documents]
+    ids = [doc.get("documentId") for doc in sources]
+    if any(not isinstance(value, str) or not value for value in ids) or len(set(ids)) != len(ids):
+        fail("documentId must be unique and nonempty")
+    canonical = json.dumps(sorted(sources, key=lambda doc: doc["documentId"]),
+                           sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def index_uuid(client: JsonHttpClient, index: str) -> str | None:
+    _, settings = client.request("GET", f"/{index}/_settings")
+    return settings.get(index, {}).get("settings", {}).get("index", {}).get("uuid")
+
+
+def verify_exact_v4(client: JsonHttpClient, manifest: dict[str, object], schema: dict[str, object],
+                    documents: list[dict[str, object]], checksum: str,
+                    provenance: dict[str, object] | None = None) -> dict[str, object]:
+    """Read-only snapshot: full ID universe/source equality plus independently bound model lineage.
+
+    `provenance` must come from the authenticated GitHub artifact binding at the caller. This
+    function never instantiates an embedder, writes mapping metadata, or returns document bodies.
+    """
+    validate_supported_manifest(manifest)
+    if manifest["corpusVersion"] != "terraformers-reference-v4" or len(documents) != 5395:
+        fail("exact-v4 verification requires the complete rebuilt 5395-document corpus")
+    index, vector = str(manifest["indexName"]), str(manifest["vectorField"])
+    expected_hash = content_identity(documents, vector)
+    summary: dict[str, object] = {"indexName": index, "expectedCount": len(documents),
+        "expectedContentIdentity": expected_hash, "expectedChecksum": checksum,
+        "snapshotOnly": True, "embeddingRequests": 0}
+
+    def result(classification: str, reason: str, **details: object) -> dict[str, object]:
+        return {**summary, **details, "classification": classification, "reason": reason}
+
+    status, _ = client.request("HEAD", f"/{index}", accepted=(200, 404))
+    if status == 404:
+        return result("MISSING_INDEX", "index_absent")
+    _, response = client.request("GET", f"/{index}/_mapping")
+    if set(response) != {index}:
+        return result("STALE_OR_MIXED_MODEL_SPACE", "mapping_index_identity_mismatch")
+    mapping = response[index]
+    actual_vector = properties(mapping).get(vector, {})
+    if actual_vector.get("type") != "knn_vector" or actual_vector.get("dimension") != 1536:
+        return result("WRONG_MODEL_OR_DIMENSION", "vector_contract_mismatch")
+    try:
+        ensure_mapping(mapping, schema)
+    except RuntimeError:
+        return result("STALE_OR_MIXED_MODEL_SPACE", "mapping_fields_or_method_mismatch")
+    if set(properties(mapping)) != set(properties(schema)):
+        return result("STALE_OR_MIXED_MODEL_SPACE", "mapping_field_universe_mismatch")
+    _, settings = client.request("GET", f"/{index}/_settings")
+    if settings.get(index, {}).get("settings", {}).get("index", {}).get("knn") not in (True, "true"):
+        return result("STALE_OR_MIXED_MODEL_SPACE", "knn_index_setting_missing_or_disabled")
+    meta = mapping.get("mappings", {}).get("_meta", {}).get(CHECKSUM_META_KEY, {})
+    if meta.get("checksum") != checksum or meta.get("corpus_version") != manifest["corpusVersion"]:
+        return result("STALE_OR_MIXED_MODEL_SPACE", "missing_or_wrong_corpus_metadata")
+    uuid_before = index_uuid(client, index)
+    summary["indexUuid"] = uuid_before
+    _, count = client.request("POST", f"/{index}/_count", {"query": {"match_all": {}}})
+    summary["totalLiveCount"] = count.get("count")
+    if count.get("count") != 5395:
+        return result("PARTIAL_INDEX", "total_document_count_mismatch")
+    live: dict[str, dict[str, object]] = {}
+    scroll_id = None
+    try:
+        _, page = client.request("POST", f"/{index}/_search?scroll=1m", {
+            "size": 500, "sort": ["_doc"], "track_total_hits": True,
+            "query": {"match_all": {}}, "_source": {"excludes": [vector]}})
+        scroll_id = page.get("_scroll_id")
+        if page.get("hits", {}).get("total") != {"value": count.get("count"), "relation": "eq"}:
+            return result("PARTIAL_INDEX", "snapshot_total_not_exact")
+        while True:
+            scroll_id = page.get("_scroll_id", scroll_id)
+            hits = page.get("hits", {}).get("hits")
+            if page.get("timed_out") or page.get("_shards", {}).get("failed", 0) or not isinstance(hits, list):
+                return result("PARTIAL_INDEX", "incomplete_search_snapshot")
+            if not hits:
+                break
+            for hit in hits:
+                source = hit.get("_source")
+                doc_id = hit.get("_id")
+                if (not isinstance(doc_id, str) or not doc_id or not isinstance(source, dict) or source.get("documentId") != doc_id
+                        or doc_id in live or vector in source):
+                    return result("STALE_OR_MIXED_MODEL_SPACE", "duplicate_id_or_source_identity_mismatch")
+                live[doc_id] = source
+            # Bound malformed/non-terminating snapshots; no unbounded corpus-body collection.
+            if len(live) > max(5395, int(count.get("count", 0))) or not scroll_id:
+                return result("PARTIAL_INDEX", "invalid_scroll_snapshot")
+            _, page = client.request("POST", "/_search/scroll", {"scroll": "1m", "scroll_id": scroll_id})
+    finally:
+        if scroll_id:
+            client.request("DELETE", "/_search/scroll", {"scroll_id": [scroll_id]}, accepted=(200, 404))
+    expected = {str(doc["documentId"]): doc for doc in documents}
+    missing, unexpected = sorted(expected.keys() - live.keys()), sorted(live.keys() - expected.keys())
+    summary.update(liveContentIdentity=content_identity(list(live.values()), vector),
+                   missingCount=len(missing), unexpectedCount=len(unexpected),
+                   missingIds=missing[:20], unexpectedIds=unexpected[:20])
+    if missing or unexpected or len(live) != 5395 or count.get("count") != 5395:
+        return result("PARTIAL_INDEX", "document_universe_mismatch")
+    changed = [key for key in sorted(expected) if expected[key] != live[key]]
+    if changed or summary["liveContentIdentity"] != expected_hash:
+        return result("STALE_OR_MIXED_MODEL_SPACE", "non_vector_source_mismatch",
+                      changedCount=len(changed), changedIds=changed[:20])
+    _, count_after = client.request("POST", f"/{index}/_count", {"query": {"match_all": {}}})
+    if index_uuid(client, index) != uuid_before or count_after.get("count") != 5395:
+        return result("STALE_OR_MIXED_MODEL_SPACE", "index_changed_during_snapshot")
+    if not provenance or not provenance.get("githubArtifactBindingVerified"):
+        return result("MODEL_PROVENANCE_UNPROVEN", "no_authenticated_completed_ingestion_receipt")
+    receipt = provenance.get("receipt", {})
+    if receipt.get("embedding_model_id") != "gemini-embedding-2" or receipt.get("vector_dimension") != 1536:
+        return result("WRONG_MODEL_OR_DIMENSION", "receipt_model_or_dimension_mismatch")
+    required = {"corpus_version": manifest["corpusVersion"], "index_name": index,
+        "checksum": checksum, "document_count": 5395, "index_uuid": uuid_before,
+        "non_vector_content_identity": expected_hash, "indexed_this_run": 5395,
+        "skipped_existing": 0, "outcome": "ingested"}
+    if not uuid_before or any(receipt.get(key) != value for key, value in required.items()):
+        return result("MODEL_PROVENANCE_UNPROVEN", "clean_ingestion_or_retained_uuid_binding_unproven")
+    return result("EXACT_REUSABLE_COMPLETED_V4", "exact_snapshot_and_completed_clean_model_lineage",
+                  provenanceRunId=provenance.get("runId"), provenanceArtifactId=provenance.get("artifactId"))
+
+
 def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: dict[str, object],
            schema: dict[str, object], documents: list[dict[str, object]], checksum: str) -> dict[str, object]:
     started = time.monotonic()
@@ -304,6 +428,7 @@ def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: d
             fail("corpus version checksum changed; bump corpus version")
 
     metadata = {CHECKSUM_META_KEY: {"corpus_version": manifest["corpusVersion"], "checksum": checksum}}
+    v4_uuid_before = index_uuid(client, index) if manifest["corpusVersion"] == "terraformers-reference-v4" else None
     client.request("PUT", f"/{index}/_mapping", {"_meta": metadata})
     indexed = 0
     representative: list[float] | None = None
@@ -363,7 +488,7 @@ def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: d
     if not hits:
         fail("representative 1024-dimensional k-NN query returned no hits")
     hit_ids = [str(hit.get("_source", {}).get("documentId", hit.get("_id", ""))) for hit in hits]
-    return {
+    receipt = {
         "corpus_version": manifest["corpusVersion"], "checksum": checksum,
         "document_count": count, "index_name": index,
         "embedding_model_id": manifest["embeddingModelId"],
@@ -371,6 +496,15 @@ def ingest(client: JsonHttpClient, embedder: VertexDocumentEmbedder, manifest: d
         "outcome": "ingested" if indexed else "already-ingested",
         "elapsed_seconds": round(time.monotonic() - started, 3),
     }
+    if manifest["corpusVersion"] == "terraformers-reference-v4":
+        # A skipped ID cannot acquire model lineage by relabeling mapping metadata.
+        uuid_after = index_uuid(client, index)
+        if not v4_uuid_before or uuid_after != v4_uuid_before:
+            fail("v4 index UUID changed during ingestion; no completed lineage receipt")
+        receipt.update(index_uuid=uuid_after, indexed_this_run=indexed,
+                       skipped_existing=len(documents) - indexed,
+                       non_vector_content_identity=content_identity(documents, str(manifest["vectorField"])))
+    return receipt
 
 
 def parse_args() -> argparse.Namespace:

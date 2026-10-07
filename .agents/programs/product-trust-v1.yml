@@ -3,11 +3,11 @@ program:
   version: 4
   contract_status: APPROVED_V4_INDEPENDENTLY_ACCEPTED_AND_USER_MERGED
   active_amendment: null
-  active_phase: PT-7
-  active_work_package: .agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml
+  active_phase: PT-8A
+  active_work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
   amendment_preparation_authority: USER_explicit_repository_only_v4_request
   exact_candidate_truth_approved: true
-  current_human_gate: PT7_REQUIRED_CHECK_RULESET_CHANGE
+  current_human_gate: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
   status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
@@ -16,7 +16,7 @@ program:
   state: .agents/state/product-trust-v1.json
   integrity_audit: docs/evaluation/product-trust-v4-evidence-validity-audit.md
   historical_v3_audit: docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md
-  remaining_mandatory_order: [PT-7, PT-8A, PT-8B, PT-9]
+  remaining_mandatory_order: [PT-8A, PT-8B, PT-9]
 
   approved_amendments:
     - id: PT2_FINAL_INCOMPLETE_TO_BOUNDED_PT3
@@ -465,16 +465,21 @@ program:
       auto_start_after_dependencies: true
       active_work_package: .agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml
       execution_base_sha: 6228d69b1da604e816b3e0a826563d79b8bcd844
-      status: HUMAN_REQUIRED
-      current_step: REPOSITORY_IMPLEMENTATION_PREPARED_EXACT_HEAD_NORMAL_CI_PENDING
-      human_gate_when: PT7_REQUIRED_CHECK_RULESET_CHANGE
+      status: COMPLETE
+      current_step: INDEPENDENTLY_ACCEPTED_USER_MERGED
+      independent_review: 6038261202
+      reviewed_head: b8645e564d4476c9ad8aad798d63d2a84b487787
+      USER_merge: 2bdb73d20486262856bfa6b680b7bf221fa23ca0
+      human_gate_when: null
       evidence: docs/evaluation/product-trust-pt-7-ci-delivery-handoff.md
       ruleset_change:
         target: protect-main-for-delivery
-        observed_required_checks: [terraform-static-verification]
+        observed_required_checks: [terraform-static-verification, backend-required-verification]
         proposed_addition_only: backend-required-verification
-        mutation_authorized: false
-        mutation_performed: false
+        mutation_authorized: true
+        mutation_performed: true
+        performer: USER_GITHUB_ADMINISTRATOR_NOT_CODEX_API
+        integration_id: 15368
         retain_all_other_settings: true
       objective: >
         Correct demonstrated protected-main and pre-publication validation gaps and document the
@@ -507,6 +512,14 @@ program:
     - id: PT-8A
       title: Final external official AI RAG deployed acceptance
       kind: live_acceptance
+      status: HUMAN_REQUIRED_PREPARATION_ONLY
+      active_work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
+      preparation_execution_base_sha: 2bdb73d20486262856bfa6b680b7bf221fa23ca0
+      preparation_authorized: true
+      live_execution_authorized: false
+      live_reviewed_source_sha: null
+      frozen_procedure: docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md
+      execution_unit: one_official_case_per_dispatch_then_independent_post_inference_review
       depends_on: [PT-7]
       auto_start_after_dependencies: false
       human_gate_before_start: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
@@ -560,7 +573,10 @@ program:
           - live_mapping_checksum_model_dimension_and_exact_document_content_ID_equivalence
           - deployed_backend_actual_environment_not_only_repository_ConfigMap
           - correlated_live_retrieval_index_and_official_reference_provenance
-        readiness_classes: [EXACT_REUSABLE_COMPLETED_V4, PARTIAL_INDEX, STALE_OR_MIXED_MODEL_SPACE, WRONG_MODEL_OR_DIMENSION, MISSING_INDEX]
+        readiness_classes: [EXACT_REUSABLE_COMPLETED_V4, PARTIAL_INDEX, STALE_OR_MIXED_MODEL_SPACE, WRONG_MODEL_OR_DIMENSION, MISSING_INDEX, MODEL_PROVENANCE_UNPROVEN]
+        historical_model_lineage_audit: MODEL_PROVENANCE_UNPROVEN
+        historical_audit: docs/evidence/product-trust-pt-8a/historical-provenance-audit.json
+        exact_content_test: all_IDs_and_every_non_vector_source_field_plus_bound_clean_model_receipt
         only_pass_class: EXACT_REUSABLE_COMPLETED_V4
         exact_retained_index: reuse_no_ceremonial_5395_document_reembedding_or_ingestion
         name_count_and_vector_dimension_alone_prove_equivalence: false

@@ -1,0 +1,99 @@
+{
+  "kind": "REPOSITORY_ONLY_DETERMINISTIC_PREPARATION_NOT_PRODUCT_ACCEPTANCE",
+  "executionBaseSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+  "procedureVersion": "pt8a-official-acceptance-v1",
+  "procedureSha256": "5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5",
+  "frozenBeforeAnyNewProductOutcome": true,
+  "focusedRag": {
+    "command": "python3 -m unittest tests/rag/test_ingest_gcp_target_corpus.py",
+    "tests": 25,
+    "failures": 0,
+    "errors": 0,
+    "result": "PASS"
+  },
+  "focusedObserver": {
+    "command": "python3 -m unittest discover -s scripts/evaluation -p test_pt8a_official_acceptance.py",
+    "tests": 17,
+    "failures": 0,
+    "errors": 0,
+    "result": "PASS",
+    "finalContractTightening": "Only correlated PROVIDER_DOCUMENTATION at the exact provider commit counts as an official hit; FAILED project presentation also captured."
+  },
+  "corpusCiRegression": {
+    "command": "python3 -m unittest tests/rag/test_build_corpus_v2.py tests/rag/test_curate_corpus_v2.py tests/rag/test_derive_corpus_v3.py tests/rag/test_ingest_corpus.py tests/ci/test_ci_changed_scope.py",
+    "tests": 40,
+    "failures": 0,
+    "errors": 0,
+    "result": "PASS"
+  },
+  "failedInvocationPreserved": {
+    "path": "failed-validation/nonexistent-test-module.log",
+    "testsReported": 41,
+    "passedActualTests": 40,
+    "errors": 1,
+    "cause": "Requested nonexistent test_build_corpus_v4 module; no such repository test exists.",
+    "boundedRepairUsed": 1,
+    "correction": "One corrected command invoking only existing test modules; actual v4 builder compiled, not a fabricated test."
+  },
+  "staticChecks": {
+    "py_compile": "PASS",
+    "actionlintVersion": "1.7.7",
+    "actionlint": "PASS for both changed workflows; -shellcheck= -pyflakes=",
+    "frozenIdentityOrderVerifier": "PASS no input acquisition",
+    "automaticPrWorkflowAllowlist": "PASS unchanged three automatic workflows",
+    "gitDiffCheck": "PASS",
+    "metadata": {
+      "result": "PASS",
+      "checks": [
+        "YAML/JSON parse",
+        "Program/state/plan/base/gate consistency",
+        "six fail-closed readiness classes",
+        "PT7 independently accepted and USER merged",
+        "no transient PR state",
+        "historical phases/counters and frozen candidate bytes unchanged",
+        "allowed-path scope",
+        "all live/input/model counts zero"
+      ],
+      "changedFileCount": 21,
+      "immutableFiles": [
+        {
+          "path": "evaluation/terraformers-aws-official-v1/candidate-identity.json",
+          "sha256": "6ce1bdb73da3d19a6a578d990924cbf0a95975c2d498be3a38e48700bd4a7dfe"
+        },
+        {
+          "path": "evaluation/terraformers-aws-official-v1/candidate-manifest.json",
+          "sha256": "b44908f3ecc926a623646ba10d5a6f2cd67bace781c8ce55f7468d5417c566f0"
+        },
+        {
+          "path": "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+          "sha256": "8828de056a9b2b121e8bf560bd1766b3ddc465770984317b67af3eb8001a6d45"
+        },
+        {
+          "path": "scripts/evaluation/pt2-realistic-baseline.py",
+          "sha256": "f1813c8257916334844c00055ea048f020832a0d8ea393255c793fea8285a92e"
+        },
+        {
+          "path": "scripts/evaluation/pt2-realistic-continuation.py",
+          "sha256": "77fe0d3ed8bab9f762b0b769ddd8c265d770ca0f4dea9140063c2e9260d0cf33"
+        }
+      ]
+    }
+  },
+  "mainDriftCheck": "PASS current remote main remains the once-bound preparation base; no refresh/rebase/rebind",
+  "normalRequiredCI": "GitHub exact preparation PR head pull_request event authoritative after push; run IDs/results recorded in PR, no dispatch/rerun",
+  "productionFilesChanged": false,
+  "allHistoricalPhaseEvidenceAndCountersPreserved": true,
+  "noNewProductMeasurements": true,
+  "modelCalls": 0,
+  "embeddingRequests": 0,
+  "officialImageFetches": 0,
+  "officialUploads": 0,
+  "liveGcpActions": 0,
+  "OpenSearchOperations": 0,
+  "browserExecutions": 0,
+  "manualDatabaseExecutions": 0,
+  "workflowDispatches": 0,
+  "liveExecutionAuthorized": false,
+  "liveReviewedSourceSha": null,
+  "stopGate": "HUMAN_REQUIRED: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE"
+}

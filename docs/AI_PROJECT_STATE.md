@@ -12,43 +12,49 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
-- Mode: **Approved Product Trust v4 / PT-6R2 COMPLETE / PT-7 repository implementation prepared**.
-- Gate after successful normal exact-head CI: **HUMAN_REQUIRED: PT7_REQUIRED_CHECK_RULESET_CHANGE**.
-  PT-7 independent acceptance/USER merge pending. Ruleset mutation is not authorized.
+- Mode: **Approved Product Trust v4 / PT-7 COMPLETE / PT-8A repository preparation only**.
+- Gate: **HUMAN_REQUIRED: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE**.
+  Preparation independent review/USER merge and separate live/model/cost approval remain required.
 - [Program](../.agents/programs/product-trust-v1.yml), [state](../.agents/state/product-trust-v1.json),
-  [plan](plans/active/product-trust-modernization.md), [PT-7 Work Package](../.agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml)
-  and [handoff/evidence](evaluation/product-trust-pt-7-ci-delivery-handoff.md) bind once-read main
-  **`6228d69b1da604e816b3e0a826563d79b8bcd844`**. No refresh/rebase/rebind; drift stops.
-- [PR #254 independent review 6037528315](https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037528315)
-  accepted head `987ec944c84ac74f99f2c2f3ae38b0bc16499f8a`; USER merged as the PT-7 base.
-  PT-6R2 COMPLETE preserves base 406981a8, all failures/audit/validation and auto repair 1/human 1.
-  Conditional Δ=P+B+S+T (5s model only for P≤2s, B/S/T≤1s) is not a production DB SLO, outage
-  guarantee or hard thread cancellation. Facts 370s, generation/compact/repair 220s, embeddings 10s,
-  SDK attempts 1 / statuses [], durable attempts 1, original 8-minute cutoff/fencing/sweep/cleanup/
-  post-commit success/MAX_TOKENS/single repair remain unchanged. Runtime is not deployed here.
-- Existing Backend Local Verification now scopes every main PR. Backend work requires both existing
-  Maven/package and MariaDB jobs. Dockerfile/pom/src/main changes select the actual unchanged Dockerfile
-  build with exact PR head revision inspection. One fail-closed `backend-required-verification` always
-  exists, including non-backend PRs. This CI-only PR selects backend checks, not Docker. No new workflow.
-- Read-only `protect-main-for-delivery` snapshot requires only `terraform-static-verification`.
-  Proposed addition is only `backend-required-verification`, preserving all other settings. Exact-head
-  automatic CI belongs to GitHub, is not acceptance and creates no PT-6R1 behavioral measurement.
-- PT-6R1 COMPLETE remains accepted REQUIRES_NEW convergence: base 00872520, before 2 (first invalid,
-  one USER-authorized valid), after 1, auto repair 1/human 1, all code/evidence/counters unchanged.
+  [plan](plans/active/product-trust-modernization.md), [PT-8A Work Package](../.agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml)
+  and [frozen procedure](evaluation/product-trust-pt-8a-official-acceptance-procedure.md) bind once-read
+  **`2bdb73d20486262856bfa6b680b7bf221fa23ca0`**. No refresh/rebase/rebind; drift stops. The later live
+  reviewed source/image remain null and will bind only after review/merge/live approval.
+- [PR #255 review 6038261202](https://github.com/siamese-lang/terraformers-platform/pull/255#issuecomment-6038261202)
+  independently accepts `b8645e564d4476c9ad8aad798d63d2a84b487787`; USER merged as the PT-8A base.
+  PT-7 COMPLETE reconciles here, with its original base/evidence/counters preserved. Authorized
+  administrator added only `backend-required-verification`/15368 beside
+  `terraform-static-verification`/15368 in ruleset 24074505; all other settings are preserved.
+  Original PT-7 Terraform-only snapshot is historical, not current ruleset authority.
+- Existing required checks remain stable. This preparation selects ordinary backend and Terraform
+  CI by changed tooling scope, no production image build. CI is neither acceptance nor a new PT-6R1
+  concurrency measurement. No new workflow or automatic live delivery gate is introduced.
+- PT-8A freezes exact v4 ID/non-vector source equality plus completed clean model/index lineage,
+  official-image acquisition checks, one-case-per-dispatch ledger and post-inference independent
+  ten-dimension review. Old HEAD-ID skips cannot establish exact serving content/model lineage.
+  [Historical artifact audit](evidence/product-trust-pt-8a/historical-provenance-audit.json) binds
+  corrected successful run 37344219922/artifact 11359644809; missing UUID/fresh-vs-skipped evidence
+  means **MODEL_PROVENANCE_UNPROVEN**, not a current retained-index observation. No automatic
+  ingestion/reembedding/rebuild. Current live readiness is not established.
+- PT-6R2 COMPLETE preserves original base 406981a8, all failures and auto repair 1/human 1.
+  Accepted Option D: 370/220/10s, SDK attempts 1/statuses [], durable attempts 1, original 8-minute
+  cutoff/fencing/sweep/cleanup/post-commit success/MAX_TOKENS/single repair remain unchanged.
+  Conditional Δ=P+B+S+T (5s injected model only) is not a production DB SLO/outage guarantee.
+- PT-6R1 COMPLETE preserves base 00872520, before 2 (first invalid/extra USER-authorized valid),
+  after 1, auto repair 1/human 1, all production/evidence bytes and historical counters unchanged.
 - AWS official revision 2 identity **`3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757`**
-  remains externally frozen by review/USER approval after PR #253. Its pinned pre-approval snapshots
-  stay exact; model-under-test count 0, official-input execution unauthorized. No new truth/model tuning.
-- Historical PT-1 revision 3 remains controlled reference-derived regression. PT-2 is final INCOMPLETE:
-  cases 03–10 NOT_RUN, all four aggregate rates null, case-02 **424846 ms** censor, zero-product recovery
-  failures unchanged and no further dispatch. Local/CI evidence cannot close final product trust.
-- Remaining **PT-7 -> PT-8A -> PT-8B -> PT-9**. PT-8A requires reviewed source→actual image→remote
-  digest→retained deployment/source/v4 config→exact serving/retrieval evidence and separate official
-  live/model/cost approval. Existing manual main-only delivery paths are unchanged and statically
-  audited; actual current live readiness is unestablished. No later phase/base is predicted.
-- GitHub owns transient PR lifecycle; active PR/branch/url remain null. Retained runtime stays
-  ACTIVE_RETAINED, teardown unauthorized, A7-8 deferred. PT-7 model/GCP/OpenSearch/browser/manual
-  database/workflow-dispatch actions are zero; no production/frontend/frozen-dataset changes.
-  Historical sections below are earlier checkpoints, not current phase authority.
+  remains externally frozen. Pinned pre-approval snapshots stay exact; official cases A–E NOT_RUN,
+  model count 0, execution unauthorized. No truth/prompt/model/retrieval/production changes.
+- PT-1 remains controlled reference-derived. PT-2 is final INCOMPLETE: 03–10 NOT_RUN, aggregate
+  rates null, case-02 **424846 ms** censor, zero-product recovery failures unchanged; no PT-2 dispatch.
+  Earlier A7/PT-6 mechanism evidence is not promoted to final external AI acceptance.
+- Remaining **PT-8A -> PT-8B -> PT-9**. Actual source→Dockerfile→SHA tag→digest→retained rollout→
+  deployed source/v4 config→exact serving/model lineage→correlated retrieval must precede official A.
+  Existing protected main-only workflow adds one bounded observation operation; no dispatch now.
+- GitHub owns transient PR/branch lifecycle; active PR fields stay null. Retained runtime remains
+  ACTIVE_RETAINED, teardown unauthorized. Preparation live/model/embedding/OpenSearch/image fetch/
+  upload/publish/rollout/browser/manual database/dispatch counts are all zero. Historical sections
+  below retain their original checkpoint meaning and do not authorize current phase execution.
 
 ## Product Trust reassessment checkpoint
 

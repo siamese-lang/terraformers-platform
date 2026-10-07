@@ -18,6 +18,7 @@ on:
           - backend-live-validation
           - backend-live-validation-c2-stability
           - a7-7-broad-v4-live-proof
+          - pt8a-official-acceptance
           - capacity-baseline
           - runtime-live-acceptance
       expected_sha:
@@ -49,7 +50,13 @@ on:
         required: false
         type: string
 
+      pt8a_request:
+        description: PT-8A reviewed JSON request binding mode/case and immutable approval/provenance/prior evidence IDs; no live authority implied.
+        required: false
+        type: string
+
 permissions:
+  actions: read
   contents: read
   id-token: write
 
@@ -3154,3 +3161,145 @@ jobs:
               echo '- Result: `INCOMPLETE`; inspect the sanitized artifact and failed step.'
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  pt8a-official-acceptance:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.operation == 'pt8a-official-acceptance'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 35
+    env:
+      NAMESPACE: terraformers-target
+      BACKEND_IMAGE: ${{ inputs.backend_image }}
+      BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
+      OPERATION: pt8a-official-acceptance
+      ISSUER_URI: https://identity.example.test/case-c
+      CLIENT_ID: case-c-runtime-client
+      CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate frozen procedure and explicit live authority before cloud access
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          PT8A_REQUEST: ${{ inputs.pt8a_request }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_RUN_ATTEMPT" == 1 ]]
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" && "$BACKEND_SOURCE_SHA" == "$GITHUB_SHA" ]]
+          [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_OFFICIAL_ACCEPTANCE_V1 ]]
+          printf '%s' "$PT8A_REQUEST" > "$RUNNER_TEMP/pt8a-request.json"
+          python3 scripts/evaluation/pt8a-official-acceptance.py preflight --request-file "$RUNNER_TEMP/pt8a-request.json"
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: kubectl
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          project_id: terraformers-platform
+          cluster_name: terraformers-target
+          location: asia-northeast3-a
+
+      - name: Verify exact deployed release and existing runtime identity
+        run: |
+          set -euo pipefail
+          [[ "$(kubectl -n "$NAMESPACE" get deployment terraformers-backend -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}')" == "$BACKEND_IMAGE" ]]
+          [[ "$(kubectl -n "$NAMESPACE" get deployment terraformers-backend -o jsonpath='{.status.readyReplicas}')" == 1 ]]
+          image_base="${BACKEND_IMAGE%@*}"
+          tag_digest="$(gcloud artifacts docker images describe "$image_base:$BACKEND_SOURCE_SHA" --project=terraformers-platform --format='value(image_summary.digest)')"
+          [[ "$image_base@$tag_digest" == "$BACKEND_IMAGE" ]]
+          runtime="$(kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend -- sh -c 'printf "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" "$BUILD_SOURCE_REVISION" "$CORPUS_VERSION" "$INDEX_NAME" "$VERTEX_EMBEDDING_MODEL_ID" "$VERTEX_EMBEDDING_DIMENSION" "$EXPECTED_VECTOR_DIMENSION" "$JWT_ISSUER_URI" "$JWT_JWK_SET_URI" "$ANALYSIS_PROVIDER" "$EMBEDDING_PROVIDER" "$RETRIEVAL_MODE" "$VERTEX_GENERATION_MODEL_ID" "$TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID" "$OBJECT_READER_PROVIDER" "$OBJECT_WRITER_PROVIDER" "$OPENSEARCH_ENDPOINT" "$PROVIDER_VERSION"')"
+          [[ "$runtime" == "$GITHUB_SHA|terraformers-reference-v4|terraformers-reference-v4|gemini-embedding-2|1536|1536|https://identity.example.test/case-c|http://terraformers-jwks:8080/jwks.json|vertex|vertex|REQUIRED|gemini-3.8-flash|case-c-runtime-client|gcs|gcs|http://terraformers-opensearch:9200|5.100.0" ]]
+          export PT8A_RUNTIME_IDENTITY="$runtime" PT8A_TAG_DIGEST="$tag_digest"
+          python3 - <<'PY'
+          import json, os, pathlib
+          pathlib.Path(os.environ['RUNNER_TEMP'], 'pt8a-release.json').write_text(json.dumps({
+              'sourceSha': os.environ['GITHUB_SHA'], 'image': os.environ['BACKEND_IMAGE'],
+              'sourceTagDigest': os.environ['PT8A_TAG_DIGEST'], 'readyReplicas': 1,
+              'deployedRuntimeIdentity': os.environ['PT8A_RUNTIME_IDENTITY'],
+              'publicationAuthority': '.github/workflows/gcp-backend-image-publish.yml',
+              'noRuntimeConfigurationMutation': True}, indent=2) + '\n')
+          PY
+          for permission in 'get pods/log' 'create pods/portforward' 'create pods' 'delete pods' 'patch configmaps'; do
+            kubectl auth can-i "${permission%% *}" "${permission#* }" -n "$NAMESPACE" | grep -Fxq yes
+          done
+
+      - name: Rebuild expected corpus from pinned authority without embedding
+        run: |
+          set -euo pipefail
+          provider_commit=f7a3b98da589ab1d52756b0dcee0dbf2de83d635
+          provider_dir="$RUNNER_TEMP/provider-source"
+          kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend -- cat /opt/terraform-provider-schema/aws-5.100.0.json > "$RUNNER_TEMP/provider-schema.json"
+          git init -q "$provider_dir"
+          git -C "$provider_dir" remote add origin https://github.com/hashicorp/terraform-provider-aws.git
+          git -C "$provider_dir" fetch -q --depth=1 origin "$provider_commit"
+          git -C "$provider_dir" checkout -q --detach FETCH_HEAD
+          [[ "$(git -C "$provider_dir" rev-parse HEAD)" == "$provider_commit" ]]
+          python3 scripts/rag/build-corpus-v4.py --provider-source-dir "$provider_dir" --provider-schema-json "$RUNNER_TEMP/provider-schema.json" --provider-source-commit "$provider_commit" --project-source-commit 1ae69d589ac3965733818819792d98c5638e0ae5 --output-dir "$RUNNER_TEMP/expected-v4" --all-documented-resources
+          python3 scripts/checks/rag-corpus-contract-verification.py --corpus-dir "$RUNNER_TEMP/expected-v4" --summary-json "$RUNNER_TEMP/expected-contract.json"
+          jq -e '.sha256 == "da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a" and .documentCount == 5395' "$RUNNER_TEMP/expected-contract.json"
+          jq -e '.providerSchemaResourceCount == 1526 and .officialDocumentationResourceCount == 1514 and .selectedResourceCount == 1514 and .selectedOfficialEvidenceResourceCount == 1514 and (.selectedOfficialEvidenceExtractionGapResourceTypes | length) == 0 and .providerDocumentChunkCount == 5387 and .projectDecisionCount == 8' "$RUNNER_TEMP/expected-v4/coverage-report.json"
+
+      - name: Start owned validation pod with the already deployed immutable image
+        id: pt8a-pod
+        run: |
+          set -euo pipefail
+          [[ -z "$(kubectl -n "$NAMESPACE" get pod terraformers-pt8a-validation --ignore-not-found -o name)" ]]
+          kubectl -n "$NAMESPACE" run terraformers-pt8a-validation --image="$BACKEND_IMAGE" --restart=Never --overrides='{"spec":{"serviceAccountName":"terraformers-backend","securityContext":{"runAsNonRoot":true,"runAsUser":10001,"seccompProfile":{"type":"RuntimeDefault"}},"containers":[{"name":"terraformers-pt8a-validation","image":"'"$BACKEND_IMAGE"'","command":["sh","-c","sleep 1800"],"securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]}},"resources":{"requests":{"cpu":"1m","memory":"128Mi"},"limits":{"cpu":"1","memory":"1Gi"}}}]}}'
+          echo 'created=true' >> "$GITHUB_OUTPUT"
+          kubectl -n "$NAMESPACE" wait --for=condition=Ready pod/terraformers-pt8a-validation --timeout=3m
+          kubectl -n "$NAMESPACE" exec terraformers-pt8a-validation -- terraform version | head -n 1 | grep -Fx 'Terraform v1.8.5'
+          kubectl -n "$NAMESPACE" exec terraformers-pt8a-validation -- test -s /opt/terraform-provider-schema/aws-5.100.0.json
+          kubectl -n "$NAMESPACE" exec terraformers-pt8a-validation -- test -x /opt/terraform-plugins/registry.terraform.io/hashicorp/aws/5.100.0/linux_amd64/terraform-provider-aws_v5.100.0_x5
+
+      - name: Observe read-only exact readiness and at most one accepted product job
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          backend_pf=''; search_pf=''
+          cleanup() {
+            local result=$?
+            trap - EXIT
+            if ! bash scripts/smoke/ephemeral-jwks-fixture.sh restore; then result=1; fi
+            [[ -z "$backend_pf" ]] || kill "$backend_pf" 2>/dev/null || true
+            [[ -z "$search_pf" ]] || kill "$search_pf" 2>/dev/null || true
+            exit "$result"
+          }
+          trap cleanup EXIT
+          kubectl -n "$NAMESPACE" port-forward service/terraformers-opensearch 19200:9200 > "$RUNNER_TEMP/pt8a-search-pf.log" 2>&1 & search_pf=$!
+          kubectl -n "$NAMESPACE" port-forward deployment/terraformers-backend 18080:8080 > "$RUNNER_TEMP/pt8a-backend-pf.log" 2>&1 & backend_pf=$!
+          ready=false
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:19200/ >/dev/null && curl -fsS http://127.0.0.1:18080/actuator/health >/dev/null; then ready=true; break; fi
+            sleep 2
+          done
+          [[ "$ready" == true ]]
+          python3 scripts/evaluation/pt8a-official-acceptance.py run --request-file "$RUNNER_TEMP/pt8a-request.json" --corpus "$RUNNER_TEMP/expected-v4" --output "$RUNNER_TEMP/pt8a-evidence"
+
+      - name: Preserve bounded evidence on every observation outcome
+        id: pt8a-artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pt8a-official-${{ github.run_id }}
+          path: ${{ runner.temp }}/pt8a-evidence
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Bind artifact for post-inference independent review
+        if: always()
+        env:
+          ARTIFACT_ID: ${{ steps.pt8a-artifact.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.pt8a-artifact.outputs.artifact-digest }}
+        run: |
+          printf 'PT8A run %s / attempt %s / source %s / artifact %s / digest %s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_SHA" "$ARTIFACT_ID" "$ARTIFACT_DIGEST" >> "$GITHUB_STEP_SUMMARY"
+          echo 'One accepted case maximum. No self-scoring/acceptance. Independent post-inference review precedes the next case.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove only the owned ephemeral validation pod
+        if: always() && steps.pt8a-pod.outputs.created == 'true'
+        run: kubectl -n "$NAMESPACE" delete pod terraformers-pt8a-validation --ignore-not-found --wait=false

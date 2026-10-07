@@ -1,0 +1,10 @@
+......RAG corpus contract passed: corpusVersion=terraformers-reference-v3 documents=128 chunks=128 sources=94 sha256=df8c198f0648827d754e1ef92ff4c07b1397e7dd36a06487eebfee1443ce892f
+......{"checked": 1, "indexed_this_run": 1, "total": 1}
+.{"checked": 1, "indexed_this_run": 1, "total": 1}
+.{"checked": 1, "indexed_this_run": 0, "total": 1}
+......{"checked": 1, "indexed_this_run": 1, "total": 1}
+.....
+----------------------------------------------------------------------
+Ran 25 tests in 1.725s
+
+OK

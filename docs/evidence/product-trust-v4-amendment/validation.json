@@ -1,0 +1,182 @@
+{
+  "status": "PASS",
+  "executionBaseSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+  "scope": "REPOSITORY_ONLY_DETERMINISTIC_METADATA_AND_EXTERNAL_PUBLIC_HASH_INSPECTION",
+  "changedFiles": [
+    ".agents/programs/product-trust-v1.yml",
+    ".agents/state/product-trust-v1.json",
+    ".agents/work-packages/product-trust-pt-6r1-first-user-identity-concurrency-v1.yml",
+    ".agents/work-packages/product-trust-v4-evidence-validity-amendment-v1.yml",
+    "docs/AI_PROJECT_STATE.md",
+    "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+    "docs/evaluation/product-trust-v4-evidence-validity-audit.md",
+    "docs/evidence/product-trust-v4-amendment/review-6031698220.json",
+    "docs/evidence/product-trust-v4-amendment/validation.json",
+    "docs/plans/active/product-trust-modernization.md",
+    "evaluation/terraformers-aws-official-v1/candidate-identity.json",
+    "evaluation/terraformers-aws-official-v1/candidate-manifest.json"
+  ],
+  "parsedYamlJsonFiles": 8,
+  "repositoryReferencesChecked": 42,
+  "programStatePlanAndWPConsistency": "PASS",
+  "PT6R1ReviewMergeSameTreeBinding": "PASS",
+  "reviewCommentId": 6031698220,
+  "acceptedTree": "c9792b42b4a6a9b8529a904d240c5bccf5d08d10",
+  "PT6R2AutoActivation": "BLOCKED_UNAUTHORIZED_NO_WP_NO_BASE",
+  "remainingMandatoryOrder": [
+    "PT-6R2",
+    "PT-7",
+    "PT-8A",
+    "PT-8B",
+    "PT-9"
+  ],
+  "historicalCountersVerified": 38,
+  "PT6R1BeforeAfter": [
+    2,
+    1
+  ],
+  "historicalPreservation": {
+    "evaluation/terraformers-realistic-v1/": {
+      "files": 27,
+      "inventorySha256": "276b5b022394995107565d6a658d3059b8175ff37be8193ec987e89411c20d06",
+      "unchanged": true
+    },
+    "evaluation/terraformers-eval-v1/": {
+      "files": 8,
+      "inventorySha256": "615dc62c46df4364ed074e918119357b9d46632e437ecff9becabe5f15d8b05a",
+      "unchanged": true
+    },
+    "evaluation/terraformers-eval-holdout-v1/": {
+      "files": 6,
+      "inventorySha256": "254cceaeb64ab600bbc2d69edc50bc713f5b984f867ef395230298bc12fbf491",
+      "unchanged": true
+    },
+    "docs/evidence/product-trust-pt-2/": {
+      "files": 17,
+      "inventorySha256": "cb7395d4f7e3077b7ea9d2b016aca5f7c37d09c70a87dc4f3e8b1571c1a1b5df",
+      "unchanged": true
+    },
+    "docs/evidence/product-trust-pt-6/": {
+      "files": 37,
+      "inventorySha256": "50414621d8433418de15cf1563d2515d71c73f7f27ca2fb7924b1bda142db717",
+      "unchanged": true
+    },
+    "docs/evidence/product-trust-pt-6r1/": {
+      "files": 26,
+      "inventorySha256": "bf0ad30d8c7957ceb452ea55ddcf620502196bb1367ce381d841ea480e1711b8",
+      "unchanged": true
+    },
+    "backend/": {
+      "files": 387,
+      "inventorySha256": "21aacb3f82d6bfd18f32c158e2a82b2931b7c63e45015a5b99709dca2ac847a2",
+      "unchanged": true
+    },
+    "frontend/": {
+      "files": 47,
+      "inventorySha256": "d9599d09fe865249cf9ddf81640af9f6880e928cf0386e94da18f37778cd8bbe",
+      "unchanged": true
+    },
+    "scripts/": {
+      "files": 112,
+      "inventorySha256": "d63d348f9eb9149e24e3cfeb3b7d5e915d77dedb9b925ab398eb59d07108cd09",
+      "unchanged": true
+    },
+    ".github/workflows/": {
+      "files": 48,
+      "inventorySha256": "6d0e0eda130cf34a3f7c206a595c24aeac0cd70c9d9207268371e1a44c2e70cc",
+      "unchanged": true
+    },
+    "infra/": {
+      "files": 112,
+      "inventorySha256": "543aec3cca2c7079d8b0172720354d5aea35e33bdb23cda1ee96b85ce665e269",
+      "unchanged": true
+    },
+    "corpus/": {
+      "files": 12,
+      "inventorySha256": "6de9618ea0c68ccdefae67f7d1af75840a26cf8627dfcd163d0685534b618ab0",
+      "unchanged": true
+    }
+  },
+  "canonicalRepositoryBytesUnchangedWithDeclaredCheckoutCRLF": [
+    "scripts/deploy/plan-live-foundation.ps1"
+  ],
+  "oneOffAuditHelperCorrection": "Initial raw-byte comparison stopped at unchanged PowerShell CRLF checkout (existing .gitattributes eol=crlf). Same clean-filter blob hashes proved unchanged; helper now records canonical repository bytes and explicit checkout line-ending differences. The next helper invocation stopped because its own referenced output report had not yet been created. Created a PENDING report before final validation; all reference checks remain enforced. No repository implementation correction, behavioral rerun or counter reset.",
+  "PT2DispositionAndNullRatesAndUnchangedExecution": "PASS",
+  "candidateIdentitySha256": "fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10",
+  "candidateTruthStatus": "NOT_APPROVED",
+  "officialImages": [
+    {
+      "caseId": "aws-official-a",
+      "sha256": "0a6a59273dc5a70ab10415328a53427291c2b08c25a94f088bb874a607946007",
+      "dimensions": [
+        974,
+        591
+      ],
+      "provenanceVerified": true
+    },
+    {
+      "caseId": "aws-official-b",
+      "sha256": "d14c4ba606cd3edf26abc93721577293d1378bc3f3903a0d678af020295b162b",
+      "dimensions": [
+        611,
+        481
+      ],
+      "provenanceVerified": true
+    },
+    {
+      "caseId": "aws-official-c",
+      "sha256": "ace1b957a920f516f2bd88cfa779cd8b899e4bd40b3cdf562f478d141c892a8d",
+      "dimensions": [
+        1280,
+        720
+      ],
+      "provenanceVerified": true
+    },
+    {
+      "caseId": "aws-official-d",
+      "sha256": "9439b99a3e99155ca9e943b305cf0e4ad738d6e81cb8ae853b1e8b82013ae59b",
+      "dimensions": [
+        824,
+        396
+      ],
+      "provenanceVerified": true
+    },
+    {
+      "caseId": "aws-official-e",
+      "sha256": "2ba2f1d238026058bde92c21f88ba9263dcd9e5341606ad80155239564c4ccaa",
+      "dimensions": [
+        2968,
+        1600
+      ],
+      "provenanceVerified": true
+    }
+  ],
+  "sourceImageTransforms": 0,
+  "externalImageBytesCommitted": false,
+  "diffScope": "PASS",
+  "diffCheck": "PASS_WORKTREE_AND_STAGED_ALL_NEW_FILES",
+  "executions": {
+    "modelCalls": 0,
+    "liveCloudActions": 0,
+    "OpenSearchOperations": 0,
+    "databaseMeasurements": 0,
+    "browserMeasurements": 0,
+    "workflowDispatches": 0,
+    "backendTestInvocations": 0,
+    "destructiveActions": 0
+  },
+  "normalAutomaticPRChecks": "ALLOWED_MERGE_POLICY_ONLY_NOT_NEW_PRODUCT_ACCEPTANCE",
+  "independentAcceptance": "PENDING",
+  "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
+  "activationMainReads": 1,
+  "prePublicationDriftChecks": 1,
+  "mainDriftCheckSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+  "mainDriftStatus": "PASS",
+  "boundedMetadataRepair": {
+    "used": 1,
+    "reason": "Initial tracked-only diff check omitted untracked truth document. Staged diff-check detected one blank line at EOF before any commit/PR. Removed exactly that line, recomputed identity.",
+    "supersededUnpublishedDraftIdentitySha256": "9a57d8fb1f42da1ffa66d4642e57fa22c52bfb7605d4dd17d5633e8d983e15e0",
+    "imageBytesOrTruthMeaningChanged": false,
+    "historicalCountersReset": false
+  }
+}

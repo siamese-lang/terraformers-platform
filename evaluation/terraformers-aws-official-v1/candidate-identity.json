@@ -1,0 +1,22 @@
+{
+  "datasetId": "terraformers-aws-official-v1",
+  "candidateRevision": 1,
+  "files": [
+    {
+      "path": "evaluation/terraformers-aws-official-v1/candidate-manifest.json",
+      "sha256": "e59d5ca412e4c1b9d175573935e38da98602d5ac224da466ee5f36294fee8499",
+      "sizeBytes": 30743
+    },
+    {
+      "path": "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+      "sha256": "5c6aa2b449e934b4ad4b40b2624d5dfcabaeb0aed42572dd4ba1145486b54349",
+      "sizeBytes": 26547
+    }
+  ],
+  "identityAlgorithm": "SHA256_OF_UTF8_CANONICAL_JSON_datasetId_candidateRevision_files_SORTED_KEYS_COMPACT_NO_NEWLINE",
+  "identitySha256": "fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10",
+  "status": "CANDIDATE_NOT_APPROVED",
+  "truthFrozen": false,
+  "modelUnderTestRunCount": 0,
+  "supersededUnpublishedDraftIdentitySha256": "9a57d8fb1f42da1ffa66d4642e57fa22c52bfb7605d4dd17d5633e8d983e15e0"
+}

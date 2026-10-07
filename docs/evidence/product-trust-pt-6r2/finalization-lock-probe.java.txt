@@ -1,0 +1,64 @@
+    @Autowired org.springframework.jdbc.core.JdbcTemplate probeJdbc;
+
+    @Test
+    void pt6r2ScopeProbeFinalizationLockBlocksDeadlineTransition() throws Exception {
+        String id = saveCommitted(pendingJob());
+        Instant accepted = repository.findById(id).orElseThrow().getCreatedAt();
+        assertThat(stateService.claimEligible(id, accepted, accepted.plusSeconds(600))).isPresent();
+        String key = "analysis-results/1/" + id + "/main.tf";
+        assertThat(stateService.recordResultObjectIntentOwned(id, 1, accepted, "bucket", key)).isTrue();
+        var reference = new com.terraformers.modernization.storage.ObjectReference("bucket", key);
+        var result = org.mockito.Mockito.mock(AnalysisResult.class);
+        when(result.qualityAssessment()).thenReturn(quality(EvidenceQualityAssessment.QualityStatus.DEGRADED,
+                EvidenceQualityAssessment.Reason.REQUIRED_EVIDENCE_NOT_RETRIEVED));
+        var write = new com.terraformers.modernization.storage.ObjectWriteResult(
+                "test-only", false, "bucket", key, null);
+        var enteredWrite = new java.util.concurrent.CountDownLatch(1);
+        var releaseWrite = new java.util.concurrent.CountDownLatch(1);
+        when(orchestrator.storeTerraformDraft(reference, result)).thenAnswer(invocation -> {
+            enteredWrite.countDown();
+            assertThat(releaseWrite.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            return write;
+        });
+        doAnswer(invocation -> {
+            AnalysisJobEntity entity = invocation.getArgument(0);
+            entity.setStatus(AnalysisJobStatus.SUCCEEDED);
+            entity.setResultObjectKey(key);
+            entity.setTerminalAt(accepted.plusSeconds(481));
+            return null;
+        }).when(orchestrator).markSucceeded(any(), any(), any(), any());
+        var workers = java.util.concurrent.Executors.newFixedThreadPool(2);
+        java.util.concurrent.Future<Boolean> finalizing = null;
+        java.util.concurrent.Future<Boolean> deadlineTransition = null;
+        try {
+            finalizing = workers.submit(() -> stateService.markSucceededOwned(
+                    id, 1, accepted.plusSeconds(470), result, reference));
+            assertThat(enteredWrite.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            deadlineTransition = workers.submit(() -> stateService.markFailedOwned(
+                    id, 1, accepted.plusSeconds(480), "deadline probe"));
+            long observationLimit = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(2);
+            boolean observedBlockedUpdate = false;
+            while (System.nanoTime() < observationLimit) {
+                observedBlockedUpdate = probeJdbc.queryForObject(
+                        "select count(*) from information_schema.sessions "
+                                + "where blocker_id is not null and lower(executing_statement) like 'update analysis_jobs%'",
+                        Integer.class) > 0;
+                if (observedBlockedUpdate) break;
+                java.util.concurrent.locks.LockSupport.parkNanos(5_000_000);
+            }
+            assertThat(observedBlockedUpdate).as("real H2 row-lock wait, not an arbitrary short future timeout").isTrue();
+            assertThat(deadlineTransition.isDone()).isFalse();
+            System.out.println("PT6R2_SCOPE_PROBE: terminal SQL is blocked on finalization row lock while object-write fake is held");
+            releaseWrite.countDown();
+            assertThat(finalizing.get(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            assertThat(deadlineTransition.get(5, java.util.concurrent.TimeUnit.SECONDS)).isFalse();
+            AnalysisJobEntity current = repository.findById(id).orElseThrow();
+            assertThat(current.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
+            assertThat(current.getTerminalAt()).isEqualTo(accepted.plusSeconds(481));
+            System.out.println("PT6R2_SCOPE_PROBE: after releasing write, finalization committed SUCCEEDED at logical accepted+481s; competing transition returned false");
+        } finally {
+            releaseWrite.countDown();
+            workers.shutdown();
+            assertThat(workers.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+        }
+    }

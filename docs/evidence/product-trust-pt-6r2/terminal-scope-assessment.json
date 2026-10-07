@@ -1,0 +1,113 @@
+{
+  "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+  "auditHead": "888255c979914d03e7794a26c2ed1a0f49d5f18d",
+  "selectedPolicy": "D",
+  "policyDecisionEvidence": "docs/evidence/product-trust-pt-6r2/policy-d-decision.json",
+  "currentHumanGate": "PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION",
+  "status": "BOUNDED_DELTA_NOT_ESTABLISHED_SCOPE_DECISION_REQUIRED_NOT_PHASE_ACCEPTANCE",
+  "blocker": {
+    "boundary": "AnalysisJobStateService.markSucceededOwned REQUIRES_NEW / AnalysisJobRepository.lockOwned PESSIMISTIC_WRITE",
+    "exactSourceLocations": [
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobStateService.java:96-138",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRepository.java:87-99",
+      "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisDispatchSchedulingConfig.java:37-54"
+    ],
+    "mechanism": "The write lock is retained across external result object write, relational registration, progress publication and compensation. A durable terminal UPDATE on that row waits for the transaction to finish. Current one-thread fixed-delay dispatch/cleanup does not independently establish a maximum inspection delay either. GenAI budgets do not bound this result-finalization transaction.",
+    "cutoffInterleaving": "Finalization starts just before accepted+480s and holds the row lock while storage is delayed. A competing deadline UPDATE waits; merely adding an age predicate or scheduler does not release this existing lock or establish finite durable commit delay.",
+    "scopeInterpretation": "This is an identified finalization/DB lock boundary expressly named in section 7 of the USER resume request. It is not a live GCS outage diagnosis or a demand for broad network hardening.",
+    "whyNotSilentlyChange": "Moving external write/compensation outside the transaction requires choosing new finalization ownership, recheck, cleanup and publication sequencing. The USER explicitly prohibits silently redesigning finalization if this boundary prevents proving delta.",
+    "scopeDecisionNeeded": "Authorize a narrowly specified finalization/terminal-fencing correction and deterministic failure/cleanup validation on this same PR, or supply an independently defensible finalization bound. No future architecture option is selected here."
+  },
+  "deterministicProbe": {
+    "command": "source /workspace/.cloud-setup/activate.sh && mvn -o -f backend/pom.xml -Dtest=AnalysisJobStateServiceTest test",
+    "executions": 1,
+    "tests": 6,
+    "existingTests": 5,
+    "temporaryDiagnosticTests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "build": "SUCCESS",
+    "finishedAtUtc": "2026-10-07T10:44:09Z",
+    "durationSeconds": 37.154,
+    "testEnvironment": "Existing DataJpaTest real in-memory H2 transactions and existing mocked orchestrator. Object write held by a latch; no external I/O. H2 INFORMATION_SCHEMA.SESSIONS confirms blocker_id for real terminal UPDATE.",
+    "sourceMethod": "docs/evidence/product-trust-pt-6r2/finalization-lock-probe.java.txt",
+    "probeMethodSha256": "c99505865887630291ccd3a9f6470f146cce576bc472a170a49acb7f35ba04c1",
+    "originalTestSha256": "ca64cb610b957dc6fe8f58b9792d2bb77b461d0f6391c3052197a99e782c5c4e",
+    "temporarilyCompiledTestSha256": "c984824163823baebc3116b4b8bfaaf4de94a1fa6d84d995161316e4c4ea6b29",
+    "testRestoredExactly": true,
+    "observations": [
+      "PT6R2_SCOPE_PROBE: terminal SQL is blocked on finalization row lock while object-write fake is held",
+      "PT6R2_SCOPE_PROBE: after releasing write, finalization committed SUCCEEDED at logical accepted+481s; competing transition returned false"
+    ],
+    "claimBoundary": "A local lock-interleaving diagnostic. The success mutation and accepted+481 terminal timestamp are test-controlled; this is not a measured real job latency, not a live provider/GCS observation, and not an implemented cutoff or after-state success.",
+    "reproduction": "Insert the archived method immediately before pendingJob() in the unchanged AnalysisJobStateServiceTest; execute the command once; restore the original SHA-256. Do not dispatch a workflow or run a database server.",
+    "sourceMethodArchiveNormalization": "Removed only extra blank separator line at EOF after execution; test logic unchanged and temporarily compiled full-test hash remains recorded."
+  },
+  "implementation": {
+    "productionFilesChanged": [],
+    "requestTimeoutsApplied": false,
+    "timeoutClassificationCorrected": false,
+    "durableAttemptPolicyApplied": false,
+    "cutoffImplemented": false,
+    "terminalDeltaBoundMs": null,
+    "phaseComplete": false,
+    "independentAcceptance": "PENDING",
+    "fullBackendRegression": "NOT_RUN: stopped before production implementation at the expressly declared finalization scope gate",
+    "requiredImplementationTests": "NOT_RUN: no production correction or cutoff claim is made",
+    "MAX_TOKENSFallbackAndClosureRepair": "UNCHANGED"
+  },
+  "preservation": {
+    "executionBaseRebound": false,
+    "modelCalls": 0,
+    "liveCloudActions": 0,
+    "OpenSearchOperations": 0,
+    "MariaDbExecutions": 0,
+    "browserExecutions": 0,
+    "workflowDispatches": 0,
+    "PT2Executions": 0,
+    "PT7Started": false,
+    "autoRepairsUsed": 0,
+    "humanCorrectiveIterations": 0,
+    "localH2DiagnosticExecutions": 1,
+    "originalCase02CensorMs": 424846,
+    "frozenAwsRevision": 2,
+    "frozenAwsIdentity": "3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757"
+  },
+  "metadataValidation": {
+    "status": "PASS",
+    "parsedFiles": [
+      ".agents/programs/product-trust-v1.yml",
+      ".agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml",
+      ".agents/state/product-trust-v1.json",
+      "docs/evidence/product-trust-pt-6r2/policy-d-decision.json",
+      "docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json"
+    ],
+    "ProgramStateWorkPackagePlanGateConsistency": "PASS",
+    "completionCriteriaAndDAGUnchanged": true,
+    "priorPhaseExecutionCompletionCountersAndReviewHistoryUnchanged": true,
+    "noTransientPRState": true,
+    "PT7Blocked": true,
+    "exactAuditAndFrozenSnapshotFilesChecked": 8,
+    "sourceBindingsUnchanged": 37,
+    "markdownReferencesChecked": 86,
+    "backendFrontendInfrastructureWorkflowsDatasetsAndPriorEvidenceUnchanged": true,
+    "allowedContinuationFiles": [
+      ".agents/programs/product-trust-v1.yml",
+      ".agents/state/product-trust-v1.json",
+      ".agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml",
+      "docs/AI_PROJECT_STATE.md",
+      "docs/evaluation/product-trust-pt-6r2-provider-terminality.md",
+      "docs/evidence/product-trust-pt-6r2/approved-policy-d-resume.md",
+      "docs/evidence/product-trust-pt-6r2/finalization-lock-probe.java.txt",
+      "docs/evidence/product-trust-pt-6r2/policy-d-decision.json",
+      "docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json",
+      "docs/plans/active/product-trust-modernization.md"
+    ],
+    "lastObservedRemoteMainSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+    "mainDrift": false,
+    "latestStructuredReviewOnPR254": "NONE_AT_START_AND_FINAL_RECHECK"
+  },
+  "gitDiffCheck": "PASS_UNSTAGED_AND_STAGED_INCLUDING_NEW_FILES",
+  "gitDiffCheckInitialObservation": "First staged diff check found one new blank line at EOF in archived diagnostic method; removed that line without rerunning tests or changing production."
+}

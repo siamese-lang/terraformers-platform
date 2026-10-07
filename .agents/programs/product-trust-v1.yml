@@ -7,7 +7,7 @@ program:
   active_work_package: .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
   amendment_preparation_authority: USER_explicit_repository_only_v4_request
   exact_candidate_truth_approved: true
-  current_human_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+  current_human_gate: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
   status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
@@ -59,7 +59,7 @@ program:
       exact_candidate_identity: 3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757
       candidate_bytes: IMMUTABLE_PRE_APPROVAL_SNAPSHOT_APPROVAL_RECORDED_EXTERNALLY
       status: COMPLETE
-      PT6R2_authority: AUDIT_AND_DECISION_GATE_PREPARATION_ONLY
+      PT6R2_authority: POLICY_D_APPROVED_IMPLEMENTATION_PAUSED_AT_TERMINAL_SCOPE_GATE
       live_authority_implied: false
 
   goal: >
@@ -191,7 +191,7 @@ program:
     auto_advance_repository_only_phases: false
     post_PT6R1_human_gate: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
     progression_resume_requires:
-      - PT6R2_budget_policy_explicit_USER_decision
+      - PT6R2_terminal_enforcement_scope_gate_released_without_weakening_approved_D
       - PT6R2_independent_completion_acceptance_and_USER_merge
     auto_repair_limit: 1
     auto_merge: false
@@ -212,6 +212,7 @@ program:
     - REALISTIC_DATASET_TRUTH_FREEZE
     - LIVE_REALISTIC_BASELINE
     - PRODUCT_OR_ARCHITECTURE_DECISION
+    - PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
     - IAM_OR_SECURITY_BOUNDARY_EXPANSION
     - NEW_PAID_OR_COST_INCREASING_CLOUD_ACTION
     - FINAL_PRODUCT_LIVE_PROOF
@@ -394,12 +395,15 @@ program:
         - evidence_validity_amendment_independently_accepted
         - evidence_validity_amendment_USER_merged
       execution_base_sha: BIND_AT_ACTIVATION
-      human_gate_when: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
-      current_step: AUDIT_COMPLETE_PENDING_USER_BUDGET_DECISION
+      human_gate_when: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+      resolved_numeric_decision_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+      current_step: POLICY_D_APPROVED_TERMINAL_SCOPE_BLOCKED
       active_work_package: .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
       activation_authority_evidence: docs/evidence/product-trust-pt-6r2/authority.json
       audit_and_decision_brief: docs/evaluation/product-trust-pt-6r2-provider-terminality.md
-      production_implementation_authorized: false
+      production_implementation_authorized: true
+      broader_finalization_correction_authorized: false
+      production_implementation_blocked_by: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
       objective: >
         Ensure one accepted AnalysisJob cannot remain provider-bound indefinitely. Audit the actual
         Google GenAI client request/deadline capability and provider/retry/job boundaries first.
@@ -407,12 +411,23 @@ program:
         provider/job budget or product tradeoff stops at the named product-decision gate with
         measured evidence and options. Preserve the original 424846 ms PT2 case-02 censor.
       budget_policy:
-        numeric_budget: NOT_PRESELECTED
-        selected_policy: null
+        numeric_budget: EXPLICIT_USER_APPROVED
+        selected_policy: D
+        USER_decision_evidence: docs/evidence/product-trust-pt-6r2/policy-d-decision.json
+        approved_request_timeouts_ms: {facts: 370000, generation_and_compact_and_repair: 220000, embedding: 10000}
+        approved_SDK_attempts: 1
+        approved_SDK_retryable_HTTP_statuses: []
+        approved_durable_attempts: 1
+        approved_original_accepted_age_cutoff_ms: 480000
+        applied_to_production: false
+        terminal_delta_bound_ms: null
+        terminal_scope_gate: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+        terminal_scope_evidence: docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json
         decision_options: docs/evidence/product-trust-pt-6r2/audit.json
         decision_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+        decision_gate_resolved_by_USER: true
         authority_required_if_product_choice_needed: USER
-        accepted_to_terminal_contract: FREEZE_IN_PT6R2_WORK_PACKAGE_AFTER_REQUIRED_DECISION
+        accepted_to_terminal_contract: ORIGINAL_ACCEPTED_AT_480000_MS_PLUS_BOUNDED_DELTA_NOT_YET_ESTABLISHED
       completion:
         - actual_SDK_deadline_and_provider_retry_job_boundaries_are_audited
         - any_required_numeric_budget_or_retry_policy_choice_has_explicit_USER_approval

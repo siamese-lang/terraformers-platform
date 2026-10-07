@@ -2,8 +2,8 @@
 
 ## Status
 
-**Approved Product Trust v4 / PT-6R1 COMPLETE / PT-6R2 audit prepared /
-HUMAN_REQUIRED: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION**
+**Approved Product Trust v4 / PT-6R1 COMPLETE / PT-6R2 policy D approved /
+HUMAN_REQUIRED: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION**
 
 PR #253 [review 6032563396](https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032563396)
 accepted revision 2 at `690b436d69c4b1671e86b8aeb2b2249623291276`. USER merged as
@@ -18,8 +18,14 @@ The [PT-6R2 Work Package](../../../.agents/work-packages/product-trust-pt-6r2-pr
 read remote main once and bound **`406981a8c629a02503f5660453dcc7921b8d5177`**. The [audit/decision brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md)
 confirms SDK 1.72.0 has no default finite transport timeout, five default SDK attempts, six maximum
 logical GenAI calls per job attempt and no accepted-age terminal cutoff despite ongoing heartbeat.
-Four request/retry/cutoff options are proposed, none selected. Production implementation and
-hang/timeout validation must wait for USER budget decision and remain on this same branch/PR.
+USER subsequently approved D: facts 370s, generation/compact/repair 220s, embeddings 10s,
+SDK attempts 1 / retryable statuses [], durable attempts 1 and original accepted-age cutoff 8 minutes.
+[Policy authority](../../evidence/product-trust-pt-6r2/policy-d-decision.json) is durable; defaults are
+not yet applied. [Scope evidence](../../evidence/product-trust-pt-6r2/terminal-scope-assessment.json)
+records 6 passing local H2 tests, including one temporary real-transaction lock diagnostic. Existing
+result-finalization holds the job write lock across object write, preventing a competing deadline
+transition from establishing finite Δ. The USER's section-7 scope gate stops correction before
+silently redesigning finalization or weakening cutoff. Same branch/PR; implementation not started.
 No SDK upgrade, prompt/model/retrieval/scorer/runtime/security change or later-phase execution here.
 
 PT-6R1 accepted production/evidence/base/counters remain exact; no database/browser remeasurement.
@@ -226,21 +232,23 @@ retry-until-green. This amendment records completion only; no production change 
 
 ### PT-6R2 — Provider terminality / latency-budget closure
 
-**Active audit only; HUMAN_REQUIRED: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION.** The reviewed,
-USER-approved and USER-merged v4 amendment released the reassessment activation gate. Its approval
-is externally reconciled without candidate-byte mutation. PT-6R1 completion alone did not activate it.
+**Policy D approved; HUMAN_REQUIRED: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION.** V4 activation
+and exact immutable external freeze are reconciled; audit head 888255c remains historical evidence.
 
-Audit exact SDK, provider/retry/job call boundaries before selecting numeric policy. Current source
-allows a synchronous Google request to outlive renewable leases indefinitely. Existing latency is
-completed/censored evidence with explicit comparability, not a chosen SLO or proved PT-2 root cause.
-[Decision brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md) and linked bound evidence
-provide four unselected alternatives and conditional terminal arithmetic. Recommendation is not
-approval. USER must choose request budgets, SDK/durable retries and accepted-age terminal contract.
-Then continue the same Work Package/PR with minimum bounded implementation and deterministic
-hang/timeout evidence; original completion criteria/independent review/USER merge remain required.
-No production timeout/retry edits, model/cloud/OpenSearch/MariaDB/browser activity or PT-7 now.
-Preserve PT-4 truthful status/timing and original PT-2 424846-ms censor; no claim Gemini is inherently
-fast or hard thread cancellation is provided by SDK timeout.
+USER-approved request budgets: facts 370s, generation/compact/repair 220s, embeddings 10s; SDK
+attempts 1 / statuses []; durable attempts 1; cutoff from original accepted time 480000ms plus
+bounded transition Δ. Current result-finalization transaction holds the job row lock across object
+write and cleanup. One existing H2 suite invocation (5 existing + 1 temporary diagnostic, all pass)
+observes a competing terminal UPDATE blocked at that lock. Temporary test bytes restored; no live
+I/O or PT-6R1 measurement. Δ is not established and production correction has not started.
+
+[Decision/scope brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md) records why the
+USER explicitly requires stopping before silently redesigning finalization. Resolve that narrow
+scope gate on the same Work Package/PR without weakening D, then finish request budgets, timeout
+classification, real one-attempt claim/reclaim, durable cutoff/fencing and deterministic regressions.
+Original completion criteria, independent review and USER merge remain required. No PT-7 or live
+model/cloud/OpenSearch/MariaDB/browser activity. Preserve PT-4 and original PT-2 424846-ms censor;
+no claim Gemini is inherently fast, eight-minute SLO or hard worker-thread cancellation.
 
 ### PT-7 — CI/CD trust gates and operational handoff
 
@@ -351,7 +359,7 @@ not imply that Kubernetes is required for every version of this product.
 
 Automatic Goal progression is paused at `PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION`.
 The v4 amendment and exact truth freeze are accepted/USER-approved/USER-merged; this releases only
-PT-6R2 audit activation. USER numeric policy decision resumes the same substantive PT-6R2 PR;
+PT-6R2 audit activation. USER selected policy D; the declared finalization scope decision resumes the same substantive PT-6R2 PR;
 implementation/timeout-hang acceptance/USER merge must precede PT-7. Every next eligible Work Package
 binds actual remote main once at activation and stops on drift; no separate state-sync/decision-only
 final PR or predicted future base. CI is supporting evidence, never independent acceptance.

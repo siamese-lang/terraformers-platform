@@ -20,7 +20,7 @@ work_package:
     predecessor_reviewed_head: 690b436d69c4b1671e86b8aeb2b2249623291276
     predecessor_merge_sha: 406981a8c629a02503f5660453dcc7921b8d5177
     authority_evidence: docs/evidence/product-trust-pt-6r2/authority.json
-    numeric_budget_or_retry_policy_approved: false
+    numeric_budget_or_retry_policy_approved: true
     production_implementation_authorized_before_decision: false
     live_model_cloud_OpenSearch_authorized: false
   improvement_axis: Backend_reliability
@@ -31,7 +31,7 @@ work_package:
     immutable AWS candidate approval here. Prepare grounded budget/retry options without selecting
     them. After explicit USER decision, continue this same Work Package/PR with its bounded
     implementation and deterministic hang/timeout evidence, preserving all Program criteria.
-  current_step: AUDIT_AND_DECISION_GATE_PREPARATION_ONLY
+  current_step: POLICY_D_APPROVED_TERMINAL_SCOPE_BLOCKED
   allowed_paths_before_decision:
     - .agents/programs/product-trust-v1.yml
     - .agents/state/product-trust-v1.json
@@ -62,16 +62,62 @@ work_package:
     freeze_grants_live_authority: false
   budget_decision:
     gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+    gate_resolved_by_USER: true
     authority_required: USER
     brief: docs/evaluation/product-trust-pt-6r2-provider-terminality.md
     options: docs/evidence/product-trust-pt-6r2/audit.json
-    selected_option: null
-    approved_request_timeouts_ms: null
-    approved_job_budget_ms: null
-    approved_SDK_attempts: null
-    approved_application_max_attempts: null
-    accepted_to_terminal_contract: NOT_SELECTED_NOT_IMPLEMENTED
-    implementation_path_authorization: BIND_AFTER_EXPLICIT_DECISION_ON_THIS_SAME_PR
+    selected_option: D
+    USER_decision_evidence: docs/evidence/product-trust-pt-6r2/policy-d-decision.json
+    USER_resume_request: docs/evidence/product-trust-pt-6r2/approved-policy-d-resume.md
+    approved_request_timeouts_ms:
+      facts: 370000
+      generation_and_compact_and_repair: 220000
+      initial_and_closure_embedding: 10000
+    approved_job_budget_ms: 480000
+    approved_SDK_attempts: 1
+    approved_SDK_retryable_HTTP_statuses: []
+    approved_application_max_attempts: 1
+    accepted_to_terminal_contract: ORIGINAL_ACCEPTED_AT_480000_MS_PLUS_BOUNDED_DELTA_NOT_YET_ESTABLISHED
+    implementation_path_authorization: USER_APPROVED_MINIMUM_PROVIDER_JOB_CORRECTION_SUBJECT_TO_TERMINAL_SCOPE_GATE
+  approved_policy_D_continuation:
+    authority: explicit_USER_reply_and_attached_resume_request
+    allowed_paths:
+      - .agents/programs/product-trust-v1.yml
+      - .agents/state/product-trust-v1.json
+      - .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
+      - docs/AI_PROJECT_STATE.md
+      - docs/plans/active/product-trust-modernization.md
+      - docs/evaluation/product-trust-pt-6r2-provider-terminality.md
+      - docs/evidence/product-trust-pt-6r2/**
+      - backend/src/main/java/com/terraformers/modernization/analysis/**
+      - backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java
+      - backend/src/main/java/com/terraformers/modernization/reference/VertexEmbeddingProvider.java
+      - backend/src/main/resources/application-prod.yml
+      - backend/src/test/java/com/terraformers/modernization/analysis/**
+      - backend/src/test/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractorTest.java
+      - backend/src/test/java/com/terraformers/modernization/reference/VertexEmbeddingProviderTest.java
+    current_bounded_validation:
+      - reuse_existing_AnalysisJobStateServiceTest_H2_and_mock_object_write_for_local_lock_probe
+      - one_temporary_test_method_no_committed_framework_no_MariaDB_or_live_I_O
+      - assert_competing_durable_terminal_update_waits_for_existing_result_finalization_row_lock
+      - restore_only_our_temporary_test_edit_and_verify_original_test_bytes
+      - no_production_write_before_terminal_scope_feasibility_assessment
+    conditional_implementation_validation:
+      - exact_typed_stage_budgets_SDK_attempts_one_and_empty_retryable_statuses
+      - real_SDK_timeout_chain_and_non_timeout_interruptions
+      - facts_generation_embedding_timeout_and_preserved_MAX_TOKENS_compact_fallback
+      - original_accepted_age_pending_and_blocked_running_cutoff_healthy_heartbeat_and_late_result_fencing
+      - actual_one_durable_attempt_no_process_loss_reclaim_loop_truthful_PT4_failure_quality
+      - focused_tests_then_proportional_existing_backend_suite
+    gate_if_scope_blocks:
+      name: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+      condition: DB_transaction_or_result_finalization_lock_prevents_bounded_delta_without_materially_broader_architecture_change
+      action: STOP_without_redesigning_finalization_or_weakening_cutoff
+    prohibited:
+      - SDK_upgrade_prompt_model_retrieval_output_policy_or_frozen_candidate_changes
+      - broad_GCS_OpenSearch_MariaDB_or_network_hardening
+      - live_model_GCP_OpenSearch_MariaDB_browser_PT2_PT7_or_new_workflow_framework
+      - self_acceptance_merge_or_cutoff_weakening
   audit_step_acceptance:
     - exact_base_PR253_review_USER_approval_merge_and_immutable_candidate_identity_bound
     - SDK_1_72_0_timeout_units_precedence_retry_defaults_exceptions_headers_and_cancellation_audited
@@ -117,16 +163,24 @@ work_package:
   workflow_dispatches: 0
   stop_on:
     - MAIN_DRIFT
-    - PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+    - PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
     - new_product_architecture_security_live_cost_or_destructive_authority_required
     - second_bounded_repair_or_failure_class_change
     - independent_review_and_USER_merge_checkpoint
   result:
     audit: PREPARED_FOR_INDEPENDENT_REVIEW
     phase_complete: false
-    human_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+    human_gate: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+    selected_policy: D
+    policy_decision_evidence: docs/evidence/product-trust-pt-6r2/policy-d-decision.json
+    terminal_scope_evidence: docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json
+    terminal_delta_bound_ms: null
+    production_configuration_applied: false
+    broader_finalization_correction_authorized: false
+    local_H2_diagnostic_executions: 1
     implementation_started: false
     independent_phase_acceptance: PENDING
     merge_authorized: false
     next_phase_execution_authorized: false
     validation_evidence: docs/evidence/product-trust-pt-6r2/validation.json
+    terminal_scope_validation_evidence: docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json

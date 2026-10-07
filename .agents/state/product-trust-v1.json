@@ -8,7 +8,7 @@
   "lastCompletedPhase": "PT-6R1",
   "activeWorkPackage": "product-trust-pt-6r2-provider-terminality-v1",
   "activePullRequest": null,
-  "humanGate": "PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION",
+  "humanGate": "PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
@@ -37,13 +37,14 @@
     "USER-authorized governance-only correction for review 6031593870 preserves accepted PT-6R1 code, all evidence, the bound execution base and repair/correction counters. PT-6R1 acceptance and USER merge lead to HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT, not automatic PT-6R2 activation. A subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged evidence-validity amendment must release the pause; its content/version/base are not selected here.",
     "PR #252 latest independent review 6031698220 accepted tree c9792b42b4a6a9b8529a904d240c5bccf5d08d10 at head 2b63e79; merge-policy-only empty head 25336fa preserves that tree. USER merged as 38f995b. PT-6R1 is COMPLETE without new database/behavioral measurements or counter changes. USER authorizes this substantive v4 evidence-validity preparation only. Historical reference-derived truth remains frozen but controlled regression; five exact official candidates require new human freeze. PT-6R2 stays unauthorized until amendment review, explicit USER approval, independent acceptance and USER merge. No future base, live/model/cloud action or self-acceptance is inferred.",
     "USER-authorized bounded correction for PR #253 review 6032307527 separates all five cases into image_observable_truth, documentation_context and conditional draft_technical_closure. Official image/source provenance is unchanged; exact pre-freeze candidate identity fad3627 and both pinned files are archived. New revision 2 remains unapproved, unexecuted and model count 0. V4 autonomous repair remains 1; human corrective iteration 1 is recorded separately. Base, accepted structural DAG, PT-6R1 completion and historical evidence/counters remain unchanged; no live/model/PT-6R2 authority.",
-    "PR #253 review 6032563396 accepted immutable AWS candidate revision 2; USER merged as 406981a8c629a02503f5660453dcc7921b8d5177 and approval 6032637762 externally freezes identity 3e105771… without changing candidate bytes. Exactly PT-6R2 audit activates on that once-read main. SDK 1.72.0 defaults five attempts and removes transport timeouts; synchronous worker plus independent heartbeat has no accepted-age terminal cutoff. Four options are recommendations only. Stop at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION; no production implementation, model/cloud/OpenSearch/database/browser action or PT-7 authority. Historical evidence/counters stay exact; transient PR/branch fields stay null."
+    "PR #253 review 6032563396 accepted immutable AWS candidate revision 2; USER merged as 406981a8c629a02503f5660453dcc7921b8d5177 and approval 6032637762 externally freezes identity 3e105771… without changing candidate bytes. Exactly PT-6R2 audit activates on that once-read main. SDK 1.72.0 defaults five attempts and removes transport timeouts; synchronous worker plus independent heartbeat has no accepted-age terminal cutoff. Four options are recommendations only. Stop at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION; no production implementation, model/cloud/OpenSearch/database/browser action or PT-7 authority. Historical evidence/counters stay exact; transient PR/branch fields stay null.",
+    "Explicit USER policy D approval selects facts 370s, generation/compact/repair 220s, embeddings 10s, SDK attempts 1 / no retryable statuses, durable attempts 1 and original accepted-age cutoff 8 minutes. One existing H2 state-service run (5 existing tests plus 1 temporary lock diagnostic) confirms terminal SQL waits on the external-I/O finalization row lock. Stop at the USER-declared PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION before redesigning finalization or weakening cutoff; no production configuration/implementation or live action occurred. Temporary test bytes restored. Historical audit/evidence/counters remain unchanged; diagnostic is not a PT-6R1 measurement or PT-6R2 acceptance."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
   "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
-  "resultBeforeHumanGate": "PT6R2_AUDIT_PREPARED_NUMERIC_POLICY_NOT_SELECTED",
+  "resultBeforeHumanGate": "PT6R2_POLICY_D_APPROVED_TERMINAL_SCOPE_BLOCKED_NO_PRODUCTION_IMPLEMENTATION",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -63,7 +64,7 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "USER must select provider/job numeric budgets and retry policy at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION. SDK request bounds alone do not establish an accepted-to-terminal guarantee.",
+    "Policy D is explicitly USER-approved. Existing result finalization holds the job write lock across external object write/compensation; a competing cutoff terminal UPDATE waits. Bounded delta requires PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION before any broader finalization correction.",
     "PT-6R2 implementation/hang-timeout validation and independent completion acceptance remain unperformed; PT-7 cannot start.",
     "Final product trust remains INCOMPLETE until accepted deployed GCP/exact v4/real-model/external official full-chain evidence, integrated equivalence and gated closure."
   ],
@@ -414,7 +415,7 @@
     "workPackage": null,
     "executionBaseSha": null,
     "activationRequires": [
-      "PT6R2_USER_budget_decision",
+      "PT6R2_terminal_enforcement_scope_gate_released",
       "PT6R2_independent_completion_acceptance_and_USER_merge"
     ]
   },
@@ -1148,12 +1149,24 @@
       "authority": "USER explicit attached audit request and approval 6032637762",
       "authorityEvidence": "docs/evidence/product-trust-pt-6r2/authority.json",
       "status": "HUMAN_REQUIRED",
-      "humanGate": "PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION",
-      "currentStep": "AUDIT_AND_DECISION_GATE_PREPARATION_ONLY",
+      "humanGate": "PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION",
+      "currentStep": "POLICY_D_APPROVED_TERMINAL_SCOPE_BLOCKED",
       "auditEvidence": "docs/evidence/product-trust-pt-6r2/audit.json",
       "decisionBrief": "docs/evaluation/product-trust-pt-6r2-provider-terminality.md",
-      "selectedBudgetPolicy": null,
-      "productionImplementationAuthorized": false,
+      "selectedBudgetPolicy": "D",
+      "policyDecisionEvidence": "docs/evidence/product-trust-pt-6r2/policy-d-decision.json",
+      "terminalScopeEvidence": "docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json",
+      "approvedRequestTimeoutsMs": {"facts": 370000, "generationAndCompactAndRepair": 220000, "embedding": 10000},
+      "approvedSDKAttempts": 1,
+      "approvedSDKRetryableHttpStatuses": [],
+      "approvedDurableAttempts": 1,
+      "approvedOriginalAcceptedAgeCutoffMs": 480000,
+      "productionImplementationAuthorized": true,
+      "broaderFinalizationCorrectionAuthorized": false,
+      "productionImplementationBlockedByScopeGate": true,
+      "productionConfigurationApplied": false,
+      "terminalDeltaBoundMs": null,
+      "localH2Diagnostic": {"executions": 1, "tests": 6, "failures": 0, "errors": 0, "skipped": 0},
       "implementationStarted": false,
       "autoRepairsUsed": 0,
       "humanAuthorizedCorrectiveIterations": 0,
@@ -1175,9 +1188,9 @@
     "transientPrLifecycleAuthority": "GitHub only",
     "humanGatesPreserved": true,
     "repetitiveContinuePromptsRequired": false,
-    "pausedAtHumanGate": "PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION",
+    "pausedAtHumanGate": "PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION",
     "resumeRequires": [
-      "PT6R2_budget_policy_explicit_USER_decision_on_same_Work_Package_and_PR"
+      "PT6R2_terminal_enforcement_scope_decision_on_same_Work_Package_and_PR_without_weakening_policy_D"
     ]
   },
   "programAmendments": [

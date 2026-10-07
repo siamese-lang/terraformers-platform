@@ -42,7 +42,8 @@
     "USER explicitly authorizes narrow PT6R2 finalization fencing following independent scope review 6036430154 at c516288. Candidate code implements policy D, external write outside finalization transaction, post-write/post-commit fencing, accepted-age sweep and one durable claim. Compile/test-compile pass. First focused 130 tests: 1 failure / 6 errors; one test-only repair rerun 11 tests: 2 failures / 0 errors. Two legacy assertions were missed; no second repair or full suite is run. Stop HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED on the same Work Package/PR. No acceptance, deployment, live/model/database remeasurement, PT7 or counter reset; immutable historical evidence and frozen bytes stay exact.",
     "USER explicitly authorizes one test-contract-only human correction following review 6037186101 at 2ac19e2. Exactly three legacy regression files align with existing finalization order / attempts=1; production bytes and PT6R1 identity scenario/counters remain unchanged. One local focused invocation passes 11/0/0/0; one offline clean package passes 576/0/0/4 (MariaDB skipped locally). Prior failed validation evidence is immutable. Autonomous repairs stay 1; human corrective iterations become 1. Return to PT6R2 implementation complete / independent acceptance pending. Exact corrective-head automatic Backend Local Verification is GitHub-authoritative regression only, not a PT6R1 before/after measurement. No manual DB/model/cloud/OpenSearch/browser/dispatch, PT7, self-acceptance or merge authority.",
     "PR #254 independent review 6037528315 accepted head 987ec944; USER merged as 6228d69b. PT6R2 COMPLETE is reconciled inside this substantive PT7 PR with original base/evidence/auto repair 1/human correction 1 and conditional \u0394 limits preserved. Explicit USER PT7 request binds that main once. Existing backend workflow gets separate backend/image scope and one always-present backend-required-verification; actual ruleset is read-only and still Terraform-only. Stop after exact-head normal CI at PT7_REQUIRED_CHECK_RULESET_CHANGE, then require explicit ruleset authority, independent phase acceptance and USER merge. No live/model/cloud/OpenSearch/runtime operation, PT8A execution, new workflow or transient PR lifecycle state.",
-    "PR #255 review 6038261202 accepted head b8645e56; USER merged as 2bdb73d2. Authorized administrator added only backend-required-verification/15368, preserving Terraform/15368 and other ruleset settings. PT7 COMPLETE reconciles in this substantive PT8A preparation PR. Explicit USER preparation binds main once and freezes one-case-per-dispatch/independent review plus exact v4 IDs/non-vector source and clean model-lineage readiness. Historical corrected ingestion 37344219922/artifact 11359644809 lacks retained UUID/fresh-vs-skipped lineage: MODEL_PROVENANCE_UNPROVEN, not live current-index proof. All frozen bytes and historical evidence/counters stay exact. Model/input/live counts remain zero; live source/digest null. Stop FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE; no automatic ingestion, dispatch, acceptance, merge, PT8B or teardown; GitHub owns transient lifecycle."
+    "PR #255 review 6038261202 accepted head b8645e56; USER merged as 2bdb73d2. Authorized administrator added only backend-required-verification/15368, preserving Terraform/15368 and other ruleset settings. PT7 COMPLETE reconciles in this substantive PT8A preparation PR. Explicit USER preparation binds main once and freezes one-case-per-dispatch/independent review plus exact v4 IDs/non-vector source and clean model-lineage readiness. Historical corrected ingestion 37344219922/artifact 11359644809 lacks retained UUID/fresh-vs-skipped lineage: MODEL_PROVENANCE_UNPROVEN, not live current-index proof. All frozen bytes and historical evidence/counters stay exact. Model/input/live counts remain zero; live source/digest null. Stop FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE; no automatic ingestion, dispatch, acceptance, merge, PT8B or teardown; GitHub owns transient lifecycle.",
+    "Review 6039675842 sole lineage blocker: USER authorizes one repository-only clean-v4 correction. Human correction 1 is separate from preserved autonomous repair 1. Procedure v1 bytes/hash are superseded, v2 frozen before outcomes. Existing workflow clean mode pins historical source/checksum, requires exact live authority, full non-vector/UUID admission and all-5395 vector overwrites, then completed receipt before first readiness. No live/cloud/model/image activity; independent acceptance pending."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
@@ -70,7 +71,8 @@
   "blockers": [
     "PT8A repository preparation requires independent review and USER merge; CI green is not acceptance.",
     "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE is not approved for this prepared procedure/source/image. No live source or image is predicted.",
-    "Historical corrected v4 ingestion receipt cannot prove all retained vectors share the required model lineage: MODEL_PROVENANCE_UNPROVEN. Exact current live readiness remains unmeasured; no automatic reembedding."
+    "Historical lineage remains MODEL_PROVENANCE_UNPROVEN. Clean-v4 repository correction pending independent re-review; later explicit live authority must complete exact all-5395 reembedding before first readiness dispatch. No live measurement or automatic rerun authorized.",
+    "Clean-v4 correction deterministic behavior tests pass; two one-off metadata invocations failed (self-output parse, untouched historical CRLF/LF mismatch). Failures preserved; no rerun or extra repair. Independent re-review must assess these limitations; CI does not self-accept."
   ],
   "evidenceDocument": "docs/evaluation/product-trust-pt-7-ci-delivery-handoff.md",
   "validation": {
@@ -259,15 +261,13 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6037528315,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037528315",
-    "decision": "ACCEPTED",
-    "reviewedHeadSha": "987ec944c84ac74f99f2c2f3ae38b0bc16499f8a",
-    "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
-    "workPackage": "product-trust-pt-6r2-provider-terminality-v1",
-    "productionImplementationReview": "PASS",
-    "testContractAlignmentReview": "PASS",
-    "overallAcceptance": "PASS",
+    "commentId": 6039675842,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/256#issuecomment-6039675842",
+    "decision": "CHANGES_REQUIRED",
+    "reviewedHeadSha": "e3d3b1ceaaf9bcee9a979273850482d6f00e5663",
+    "executionBaseSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+    "workPackage": "product-trust-pt-8a-official-deployed-acceptance-v1",
+    "unresolvedAcceptanceBlocker": "Clean retained-v4 lineage was not executable; USER-authorized correction pending independent re-review.",
     "reviewGrantsImplementationOrMergeAuthority": false
   },
   "lastCompletedWorkPackage": "product-trust-pt-6r2-provider-terminality-v1",
@@ -745,6 +745,18 @@
       "currentAcceptanceValidationAtReviewedHead": "FAIL",
       "mergeRecommendation": "HOLD",
       "subsequentUSERTestContractAuthority": "docs/evidence/product-trust-pt-6r2/approved-test-contract-correction.md",
+      "reviewGrantsImplementationOrMergeAuthority": false
+    },
+    {
+      "commentId": 6037528315,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037528315",
+      "decision": "ACCEPTED",
+      "reviewedHeadSha": "987ec944c84ac74f99f2c2f3ae38b0bc16499f8a",
+      "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+      "workPackage": "product-trust-pt-6r2-provider-terminality-v1",
+      "productionImplementationReview": "PASS",
+      "testContractAlignmentReview": "PASS",
+      "overallAcceptance": "PASS",
       "reviewGrantsImplementationOrMergeAuthority": false
     }
   ],
@@ -1398,7 +1410,7 @@
       "mainReadsAtActivation": 1,
       "status": "HUMAN_REQUIRED",
       "humanGate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
-      "currentStep": "REPOSITORY_PROCEDURE_READINESS_PREPARATION_ONLY",
+      "currentStep": "CLEAN_V4_LINEAGE_CORRECTION_PENDING_INDEPENDENT_REVIEW_NO_LIVE_AUTHORITY",
       "preparationAuthorized": true,
       "executionAuthorized": false,
       "executionStarted": false,
@@ -1406,7 +1418,7 @@
       "independentAcceptance": "PENDING",
       "liveReviewedSourceSha": null,
       "liveImageDigest": null,
-      "procedureVersion": "pt8a-official-acceptance-v1",
+      "procedureVersion": "pt8a-official-acceptance-v2",
       "procedurePath": "docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md",
       "procedureFrozenBeforeOutcomes": true,
       "authorityEvidence": "docs/evidence/product-trust-pt-8a/authority.json",
@@ -1424,7 +1436,7 @@
       "onlyReusableClass": "EXACT_REUSABLE_COMPLETED_V4",
       "autoRepairLimit": 1,
       "autoRepairsUsed": 1,
-      "humanAuthorizedCorrectiveIterations": 0,
+      "humanAuthorizedCorrectiveIterations": 1,
       "modelUnderTestRunCount": 0,
       "officialInputFetches": 0,
       "officialInputUploads": 0,
@@ -1474,9 +1486,28 @@
         "productionDefect": false,
         "correction": "Remove nonexistent v4 unittest module; run existing corpus/CI tests once, and compile the actual v4 builder. No application/code change or live action."
       },
-      "procedureSha256": "5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5",
+      "procedureSha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
       "validationEvidence": "docs/evidence/product-trust-pt-8a/validation.json",
-      "localDeterministicValidation": "PASS_25_RAG_17_OBSERVER_40_EXISTING_CORPUS_CI_STATIC_METADATA_WITH_ONE_PRESERVED_INVOCATION_ERROR_AND_ONE_BOUNDED_CORRECTION"
+      "localDeterministicValidation": "PASS_25_RAG_17_OBSERVER_40_EXISTING_CORPUS_CI_STATIC_METADATA_WITH_ONE_PRESERVED_INVOCATION_ERROR_AND_ONE_BOUNDED_CORRECTION",
+      "supersededProcedures": [
+        {
+          "version": "pt8a-official-acceptance-v1",
+          "sha256": "5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5",
+          "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/superseded-procedure-v1.md",
+          "disposition": "SUPERSEDED_BEFORE_OUTCOMES_NOT_IDENTICAL_TO_V2"
+        }
+      ],
+      "cleanV4Correction": {
+        "reviewCommentId": 6039675842,
+        "reviewedHeadSha": "e3d3b1ceaaf9bcee9a979273850482d6f00e5663",
+        "authority": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/approved-correction.md",
+        "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/validation.json",
+        "disposition": "BEHAVIOR_TESTS_PASS_METADATA_FAILURES_PRESERVED_PENDING_INDEPENDENT_REVIEW",
+        "futureExecutionOrder": "EXACT_CONTENT_ADMISSION_THEN_COMPLETE_CLEAN_REEMBED_RECEIPT_BEFORE_FIRST_READINESS_DISPATCH",
+        "liveExecutionAuthorized": false,
+        "autonomousRepairCounterReset": false,
+        "deterministicValidation": "35_RAG_19_OBSERVER_23_CI_SCOPE_PASS_METADATA_INVOCATIONS_FAILED_NO_RERUN"
+      }
     }
   },
   "goalContinuation": {

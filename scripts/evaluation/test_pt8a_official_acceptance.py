@@ -29,6 +29,25 @@ def accepted():
 
 
 class InputAndRequestContracts(unittest.TestCase):
+    def test_structured_authority_parser_keeps_sha256_and_dimension_keys(self):
+        values = pt8a.fields("[HUMAN_GATE_APPROVAL:v1]\nprocedure_sha256: pinned\nvector_dimension: 1536\n",
+                             "[HUMAN_GATE_APPROVAL:v1]")
+        self.assertEqual({"procedure_sha256": "pinned", "vector_dimension": "1536"}, values)
+
+    def test_readiness_requires_clean_receipt_at_same_source_and_live_approval(self):
+        receipt = {"ingestion_mode": pt8a.rag.PT8A_CLEAN_MODE, "reviewed_source_sha": SOURCE,
+                   "live_approval_comment_id": 123}
+        binding = {"sourceSha": SOURCE, "conclusion": "success"}
+        request = {"liveApprovalCommentId": 123}
+        pt8a.require_clean_receipt(receipt, binding, request, SOURCE)
+        for changed in ({"ingestion_mode": None}, {"ingestion_mode": "ordinary"},
+                        {"reviewed_source_sha": "c" * 40}, {"live_approval_comment_id": 124}):
+            with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, "MODEL_PROVENANCE_UNPROVEN"):
+                pt8a.require_clean_receipt(receipt | changed, binding, request, SOURCE)
+        for changed in ({"sourceSha": "c" * 40}, {"conclusion": "failure"}):
+            with self.subTest(changed=changed), self.assertRaises(ValueError):
+                pt8a.require_clean_receipt(receipt, binding | changed, request, SOURCE)
+
     def setUp(self):
         # Synthetic IHDR bytes, not a fetched/copied official fixture.
         self.png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 7, 9) + bytes(9)

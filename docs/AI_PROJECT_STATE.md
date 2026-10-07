@@ -36,6 +36,15 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   corrected successful run 37344219922/artifact 11359644809; missing UUID/fresh-vs-skipped evidence
   means **MODEL_PROVENANCE_UNPROVEN**, not a current retained-index observation. No automatic
   ingestion/reembedding/rebuild. Current live readiness is not established.
+- [Review 6039675842](https://github.com/siamese-lang/terraformers-platform/pull/256#issuecomment-6039675842)
+  required an executable clean lineage path. USER authorizes one repository-only correction:
+  existing ingestion workflow adds `pt8a-clean-v4`, pins project source 1ae69d58 and exact checksum,
+  checks all non-vector content before writing, freshly overwrites all 5395 vectors, zero skips,
+  and binds unchanged UUID/content before/after. Separate live approval binds reviewed source,
+  candidate, v2 procedure and clean purpose/model/corpus. Completed clean receipt must precede
+  **first readiness dispatch**; mismatch requires a separate destructive-rebuild decision.
+  Procedure v1 bytes/hash remain [superseded evidence](evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/superseded-procedure-v1.md).
+  Auto repair 1 remains; human correction 1 is separate. Independent re-review pending; live counts 0.
 - PT-6R2 COMPLETE preserves original base 406981a8, all failures and auto repair 1/human 1.
   Accepted Option D: 370/220/10s, SDK attempts 1/statuses [], durable attempts 1, original 8-minute
   cutoff/fencing/sweep/cleanup/post-commit success/MAX_TOKENS/single repair remain unchanged.

@@ -551,6 +551,7 @@ program:
         historical_realistic_v1: CONTROLLED_REFERENCE_DERIVED_REGRESSION_SET_NOT_SOLE_FINAL_AUTHORITY
       ordered_preflight_before_any_case:
         - bind_exact_reviewed_main_to_real_backend_Dockerfile_build_source_SHA_tag_remote_digest_and_deployed_BUILD_SOURCE_REVISION_equal_to_reviewed_main
+        - under_exact_live_gate_complete_pt8a_clean_v4_all_5395_vector_overwrites_before_first_readiness_dispatch
         - prove_exact_live_backend_v4_index_corpus_model_dimensions_and_content_checksum_equivalence
         - prove_correlated_deployed_backend_retrieval_returns_official_reference_evidence_from_exact_v4
         - obtain_separate_explicit_live_model_cost_approval_for_once_only_official_input_execution
@@ -578,7 +579,15 @@ program:
         historical_audit: docs/evidence/product-trust-pt-8a/historical-provenance-audit.json
         exact_content_test: all_IDs_and_every_non_vector_source_field_plus_bound_clean_model_receipt
         only_pass_class: EXACT_REUSABLE_COMPLETED_V4
-        exact_retained_index: reuse_no_ceremonial_5395_document_reembedding_or_ingestion
+        exact_retained_index: mandatory_one_clean_reembedding_for_known_unproven_lineage_then_reuse_completed_exact_receipt
+        clean_mode: pt8a-clean-v4_in_existing_gcp_target_corpus_ingestion_workflow
+        clean_project_source: 1ae69d589ac3965733818819792d98c5638e0ae5
+        clean_checksum: da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a
+        clean_authority: exact_FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE_source_candidate_procedure_purpose_corpus_model
+        clean_admission: full_exact_mapping_ID_non_vector_content_UUID_or_separate_destructive_rebuild_decision
+        clean_receipt: embedded_this_run_5395_skipped_existing_0_same_retained_UUID_exact_pre_post_content_identity
+        clean_failure: preserve_partial_non_reusable_receipt_stop_no_automatic_retry_or_index_rebuild
+        clean_execution_order: completed_clean_receipt_before_first_readiness_dispatch_no_history_reset
         name_count_and_vector_dimension_alone_prove_equivalence: false
         checksum_or_model_provenance_unprovable: STOP_READINESS_BEFORE_CASES
         repair_path: existing_reviewed_build_embed_ingest_only_under_separate_live_model_cost_authority

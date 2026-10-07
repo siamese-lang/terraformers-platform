@@ -1,0 +1,112 @@
+{
+  "kind": "REPOSITORY_ONLY_HUMAN_CORRECTION_1_NOT_LIVE_OR_PRODUCT_ACCEPTANCE",
+  "reviewCommentId": 6039675842,
+  "reviewedHeadSha": "e3d3b1ceaaf9bcee9a979273850482d6f00e5663",
+  "executionBaseSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+  "procedureVersion": "pt8a-official-acceptance-v2",
+  "procedureSha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+  "autonomousRepairsUsed": 1,
+  "humanCorrectiveIterations": 1,
+  "additionalImplementationRepairs": 0,
+  "focusedRag": {
+    "result": "PASS",
+    "tests": 35,
+    "failures": 0,
+    "errors": 0,
+    "invocations": 1,
+    "elapsedSeconds": 14.544,
+    "log": "focused-rag.log",
+    "sha256": "9c13f360114717bd87ce70ecd0cbe2dc9aefb2b66d1d924eb11e48d04891bcc6"
+  },
+  "focusedObserver": {
+    "result": "PASS",
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "invocations": 1,
+    "elapsedSeconds": 0.077,
+    "log": "focused-observer.log",
+    "sha256": "448c76019b692cc408025d8da1deb207e9d6a488776376dcd99c1d790ddba9bc"
+  },
+  "ciScopeRegression": {
+    "result": "PASS",
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "invocations": 1,
+    "elapsedSeconds": 0.483,
+    "log": "ci-scope.log",
+    "sha256": "d6ad04cb151571cb41f03416c547f65efa866b1fc5cb28ba64ccc30e725c5300"
+  },
+  "commands": {
+    "focusedRag": "python3 -m unittest tests/rag/test_ingest_gcp_target_corpus.py",
+    "focusedObserver": "python3 -m unittest discover -s scripts/evaluation -p test_pt8a_official_acceptance.py",
+    "ciScopeRegression": "python3 -m unittest tests/ci/test_ci_changed_scope.py"
+  },
+  "staticChecks": {
+    "pythonCompile": "PASS",
+    "actionlint": "PASS 1.7.7 -shellcheck= -pyflakes= existing ingestion workflow",
+    "automaticWorkflowPolicy": "PASS unchanged three automatic PR workflows",
+    "gitDiffCheckBeforeEvidenceFinalization": "PASS"
+  },
+  "metadataValidation": {
+    "result": "FAILED_INVOCATIONS_PRESERVED_NOT_RERUN_OR_REPAIRED",
+    "fullyPassed": false,
+    "first": {
+      "command": "python3 /tmp/pt8a-clean-metadata-check.py",
+      "exitCode": 1,
+      "stderr": "metadata-check.log",
+      "stdout": "failed-metadata-output.log",
+      "stdoutBytes": 0,
+      "cause": "The one-off validator attempted to parse its own still-empty redirected metadata-check.json output as repository JSON.",
+      "assertionsReachedBeforeFailure": [
+        "bound base/gate/procedure SHA and version",
+        "repair and human counters",
+        "no transient PR state",
+        "phase execution unauthorized/source image null",
+        "Program version unchanged",
+        "all live/input/model counters zero",
+        "case ledger unchanged",
+        "historical phase state/counters equal",
+        "frozen candidate fields/files equal",
+        "superseded procedure exact",
+        "initial allowed scope and YAML/JSON parse through preceding files"
+      ],
+      "assertionsAfterFailure": "NOT_RUN in this invocation"
+    },
+    "remainingIndependentChecks": {
+      "command": "python3 /tmp/pt8a-remaining-metadata-checks.py",
+      "exitCode": 1,
+      "stderr": "unfinished-metadata-check.log",
+      "stdout": "unfinished-metadata-output.log",
+      "stdoutBytes": 0,
+      "scope": "Only independent remaining checks; original failed invocation not rerun.",
+      "cause": "Untouched historical PT7 approved-request.md has CRLF working bytes, LF Git blob. Raw byte-equality assertion fails; normalized contents are equal and Git reports no file diff.",
+      "workingFileSha256": "a5f774de5a4252952b3b1c7d582dae0461a9be736eb57e73858973a388b7c5cc",
+      "gitBlobSha256": "2ad5fd55140975a20cb8403ea53f7d8965775fad50c91c0048cc9e3a1a86d178",
+      "workingBytes": 13416,
+      "gitBlobBytes": 13011,
+      "CRLFCount": 405,
+      "gitAttribute": "text=set eol=lf",
+      "historicalFileModifiedByCorrection": false,
+      "laterASTAndDocumentAssertions": "NOT_RUN"
+    }
+  },
+  "normalPrCI": "Exact corrective head normal pull_request workflows only after the single push; GitHub results recorded in the same PR. No manual dispatch/rerun.",
+  "liveExecutionAuthorized": false,
+  "liveReviewedSourceSha": null,
+  "liveImageDigest": null,
+  "modelCalls": 0,
+  "embeddingRequests": 0,
+  "OpenSearchOperations": 0,
+  "liveGcpActions": 0,
+  "officialImageFetches": 0,
+  "officialUploads": 0,
+  "workflowDispatches": 0,
+  "publishRolloutOperations": 0,
+  "productionFilesChanged": false,
+  "historicalRepositoryEvidenceChangedFiles": [],
+  "stopGate": "HUMAN_REQUIRED: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
+  "independentAcceptance": "PENDING",
+  "limitation": "Deterministic behavior suites passed, but the metadata validation invocations failed. Do not portray CI green as complete metadata validation or acceptance. No extra corrective iteration or rerun is performed."
+}

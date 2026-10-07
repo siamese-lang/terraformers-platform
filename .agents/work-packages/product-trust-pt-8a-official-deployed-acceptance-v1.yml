@@ -15,6 +15,8 @@ work_package:
     predecessor_review: 6038261202
     predecessor_reviewed_head: b8645e564d4476c9ad8aad798d63d2a84b487787
     predecessor_USER_merge: 2bdb73d20486262856bfa6b680b7bf221fa23ca0
+    clean_v4_correction_review: 6039675842
+    clean_v4_correction_authority: docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/approved-correction.md
     preparation_authorized: true
     live_execution_authorized: false
     live_reviewed_source_sha: null
@@ -37,6 +39,7 @@ work_package:
     - tests/rag/test_ingest_gcp_target_corpus.py
     - scripts/evaluation/pt8a-official-acceptance.py
     - scripts/evaluation/test_pt8a_official_acceptance.py
+    - .github/workflows/gcp-target-corpus-ingestion.yml
     - .github/workflows/gcp-target-runtime-dependencies.yml
     - .github/workflows/terraform-static-verification.yml
     - scripts/checks/ci_changed_scope.py
@@ -61,9 +64,13 @@ work_package:
     candidate_files: IMMUTABLE_PRE_APPROVAL_SNAPSHOT_EXTERNAL_APPROVAL_AUTHORITATIVE
   measurement_procedure:
     frozen_before_outcomes: true
-    version: pt8a-official-acceptance-v1
-    sha256: 5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5
+    version: pt8a-official-acceptance-v2
+    sha256: d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823
     document: docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md
+    superseded_version: pt8a-official-acceptance-v1
+    superseded_sha256: 5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5
+    superseded_document: docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/superseded-procedure-v1.md
+    clean_receipt_before_first_readiness_dispatch: required_no_known_failure_or_history_reset
     release_readiness_first: exact_reviewed_source_image_digest_deployment_v4_content_model_provenance_then_correlated_backend_retrieval
     readiness_query_sample: one_existing_PT1_05_private_web_fleet_controlled_reference_input_authenticated_job_mechanism_only_not_PT2_or_official_acceptance
     execution_unit: one_official_case_per_manual_dispatch_then_post_inference_independent_semantic_review_before_next_case
@@ -87,6 +94,13 @@ work_package:
     verification: full_mapping_total_ID_set_all_non_vector_source_fields_canonical_content_identity_and_bound_clean_ingestion_receipt
     historical_model_lineage: MODEL_PROVENANCE_UNPROVEN
     only_reusable_class: EXACT_REUSABLE_COMPLETED_V4
+    clean_mode: pt8a-clean-v4_in_existing_gcp_target_corpus_ingestion_workflow
+    clean_confirmation: REEMBED_REVIEWED_PT8A_CLEAN_V4
+    live_gate: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE_exact_source_candidate_procedure_purpose_corpus_model
+    pre_mutation_admission: exact_mapping_full_IDs_every_non_vector_field_UUID_or_HUMAN_REQUIRED_DESTRUCTIVE_INDEX_REBUILD_DECISION
+    clean_overwrite: all_5395_vectors_same_ID_no_upsert_zero_existing_ID_skips_no_metadata_relabel
+    clean_receipt: embedded_this_run_5395_skipped_existing_0_same_UUID_exact_pre_post_content_identity_completed_bound_GitHub_artifact
+    partial_receipt: never_reusable_preserve_failure_no_automatic_retry_resume_or_rebuild
     non_pass_class_action: STOP_BEFORE_OFFICIAL_CASES_NO_AUTOMATIC_REEMBED_OR_REBUILD
   acceptance_criteria:
     - PT7_ACCEPTED_USER_MERGED_and_both_protected_main_checks_reconciled_without_new_state_sync_PR
@@ -98,13 +112,16 @@ work_package:
     - real_authenticated_AnalysisJob_path_no_direct_model_call_or_truth_payload
     - accepted_case_consumed_once_pre_acceptance_and_unknown_acceptance_distinguished
     - independent_post_inference_review_required_before_next_case_and_material_defect_stops
-    - existing_v3_ingestion_behavior_preserved
+    - ordinary_v3_and_v4_HEAD_skip_behavior_preserved
+    - clean_mode_pins_historical_project_source_checksum_and_complete_broad_v4_contract
+    - exact_live_authority_required_before_embedding_and_clean_receipt_before_first_readiness
+    - all_expected_ID_vectors_overwritten_once_pre_post_UUID_content_exact_partial_receipts_rejected
     - normal_required_PR_CI_and_proportional_deterministic_checks_recorded_without_self_acceptance
     - live_execution_authorized_false_and_future_live_source_null_at_final_gate
   auto_repair_limit: 1
   auto_repairs_used: 1
   bounded_repair: validation_module_selection_only_failed_log_preserved_no_production_change
-  human_corrective_iterations: 0
+  human_corrective_iterations: 1
   stop_on:
     - FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
     - MAIN_DRIFT

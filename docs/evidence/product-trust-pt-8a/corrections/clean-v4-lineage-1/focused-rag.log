@@ -1,0 +1,65 @@
+......RAG corpus contract passed: corpusVersion=terraformers-reference-v3 documents=128 chunks=128 sources=94 sha256=df8c198f0648827d754e1ef92ff4c07b1397e7dd36a06487eebfee1443ce892f
+......{"checked": 1, "indexed_this_run": 1, "total": 1}
+.{"checked": 1, "indexed_this_run": 1, "total": 1}
+.{"checked": 1, "indexed_this_run": 0, "total": 1}
+......{"checked": 1, "indexed_this_run": 1, "total": 1}
+..........{"checked": 100, "indexed_this_run": 0, "total": 5395}
+{"checked": 200, "indexed_this_run": 0, "total": 5395}
+{"checked": 300, "indexed_this_run": 0, "total": 5395}
+{"checked": 400, "indexed_this_run": 0, "total": 5395}
+{"checked": 500, "indexed_this_run": 0, "total": 5395}
+{"checked": 600, "indexed_this_run": 0, "total": 5395}
+{"checked": 700, "indexed_this_run": 0, "total": 5395}
+{"checked": 800, "indexed_this_run": 0, "total": 5395}
+{"checked": 900, "indexed_this_run": 0, "total": 5395}
+{"checked": 1000, "indexed_this_run": 0, "total": 5395}
+{"checked": 1100, "indexed_this_run": 0, "total": 5395}
+{"checked": 1200, "indexed_this_run": 0, "total": 5395}
+{"checked": 1300, "indexed_this_run": 0, "total": 5395}
+{"checked": 1400, "indexed_this_run": 0, "total": 5395}
+{"checked": 1500, "indexed_this_run": 0, "total": 5395}
+{"checked": 1600, "indexed_this_run": 0, "total": 5395}
+{"checked": 1700, "indexed_this_run": 0, "total": 5395}
+{"checked": 1800, "indexed_this_run": 0, "total": 5395}
+{"checked": 1900, "indexed_this_run": 0, "total": 5395}
+{"checked": 2000, "indexed_this_run": 0, "total": 5395}
+{"checked": 2100, "indexed_this_run": 0, "total": 5395}
+{"checked": 2200, "indexed_this_run": 0, "total": 5395}
+{"checked": 2300, "indexed_this_run": 0, "total": 5395}
+{"checked": 2400, "indexed_this_run": 0, "total": 5395}
+{"checked": 2500, "indexed_this_run": 0, "total": 5395}
+{"checked": 2600, "indexed_this_run": 0, "total": 5395}
+{"checked": 2700, "indexed_this_run": 0, "total": 5395}
+{"checked": 2800, "indexed_this_run": 0, "total": 5395}
+{"checked": 2900, "indexed_this_run": 0, "total": 5395}
+{"checked": 3000, "indexed_this_run": 0, "total": 5395}
+{"checked": 3100, "indexed_this_run": 0, "total": 5395}
+{"checked": 3200, "indexed_this_run": 0, "total": 5395}
+{"checked": 3300, "indexed_this_run": 0, "total": 5395}
+{"checked": 3400, "indexed_this_run": 0, "total": 5395}
+{"checked": 3500, "indexed_this_run": 0, "total": 5395}
+{"checked": 3600, "indexed_this_run": 0, "total": 5395}
+{"checked": 3700, "indexed_this_run": 0, "total": 5395}
+{"checked": 3800, "indexed_this_run": 0, "total": 5395}
+{"checked": 3900, "indexed_this_run": 0, "total": 5395}
+{"checked": 4000, "indexed_this_run": 0, "total": 5395}
+{"checked": 4100, "indexed_this_run": 0, "total": 5395}
+{"checked": 4200, "indexed_this_run": 0, "total": 5395}
+{"checked": 4300, "indexed_this_run": 0, "total": 5395}
+{"checked": 4400, "indexed_this_run": 0, "total": 5395}
+{"checked": 4500, "indexed_this_run": 0, "total": 5395}
+{"checked": 4600, "indexed_this_run": 0, "total": 5395}
+{"checked": 4700, "indexed_this_run": 0, "total": 5395}
+{"checked": 4800, "indexed_this_run": 0, "total": 5395}
+{"checked": 4900, "indexed_this_run": 0, "total": 5395}
+{"checked": 5000, "indexed_this_run": 0, "total": 5395}
+{"checked": 5100, "indexed_this_run": 0, "total": 5395}
+{"checked": 5200, "indexed_this_run": 0, "total": 5395}
+{"checked": 5300, "indexed_this_run": 0, "total": 5395}
+{"checked": 5395, "indexed_this_run": 0, "total": 5395}
+...RAG corpus contract passed: corpusVersion=terraformers-reference-v3 documents=128 chunks=128 sources=94 sha256=df8c198f0648827d754e1ef92ff4c07b1397e7dd36a06487eebfee1443ce892f
+..
+----------------------------------------------------------------------
+Ran 35 tests in 14.544s
+
+OK

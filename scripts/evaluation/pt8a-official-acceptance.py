@@ -106,7 +106,7 @@ def acquire(case, directory):
 def fields(body, prefix):
     if not body.startswith(prefix + "\n"):
         raise ValueError("structured authority marker missing")
-    return dict(re.findall(r"^([a-z_]+):\s*([^\n]+)$", body, re.M))
+    return dict(re.findall(r"^([a-z_][a-z0-9_]*):\s*([^\n]+)$", body, re.M))
 
 
 def github(path):
@@ -208,6 +208,15 @@ def bound_artifact(run_id, artifact_id, names, directory, workflow):
             result[name] = json.loads(zipped.read(member))
     return result, {"runId": run_id, "artifactId": artifact_id, "digest": artifact["digest"],
                     "sourceSha": run["head_sha"], "conclusion": run["conclusion"]}
+
+
+def require_clean_receipt(receipt, binding, request, source):
+    """Clean re-embedding must precede the first readiness dispatch at this live source."""
+    expected = {"ingestion_mode": rag.PT8A_CLEAN_MODE, "reviewed_source_sha": source,
+                "live_approval_comment_id": request["liveApprovalCommentId"]}
+    if (binding.get("conclusion") != "success" or binding.get("sourceSha") != source
+            or any(receipt.get(key) != value for key, value in expected.items())):
+        raise ValueError("MODEL_PROVENANCE_UNPROVEN: completed approved clean-v4 receipt required before readiness")
 
 
 def next_case(ledger, case_id, review):
@@ -393,8 +402,7 @@ def main():
             private = Path(temporary)
             receipt, binding = bound_artifact(request["provenanceRunId"], request["provenanceArtifactId"],
                 ["receipt.json"], private, ".github/workflows/gcp-target-corpus-ingestion.yml")
-            if binding["conclusion"] != "success":
-                raise ValueError("completed successful ingestion required")
+            require_clean_receipt(receipt["receipt.json"], binding, request, source)
             manifest, schema, documents, checksum = rag.load_corpus(args.corpus)
             if checksum != CORPUS_CHECKSUM:
                 raise ValueError("rebuilt expected corpus checksum differs; do not tune authority")

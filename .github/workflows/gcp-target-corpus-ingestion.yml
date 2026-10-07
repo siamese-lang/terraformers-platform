@@ -14,12 +14,26 @@ on:
         options:
           - terraformers-reference-v3
           - terraformers-reference-v4
+      ingestion_mode:
+        description: Ordinary historical ingestion, or separately approved PT-8A full retained-v4 vector overwrite.
+        required: true
+        default: ordinary
+        type: choice
+        options:
+          - ordinary
+          - pt8a-clean-v4
+      live_approval_comment_id:
+        description: PT-8A only; exact repository USER live-gate comment binding reviewed source/candidate/procedure/clean-v4 purpose.
+        required: false
+        type: string
       confirmation:
-        description: Use the exact confirmation token for the selected corpus version.
+        description: Use the exact confirmation token for the selected corpus version and ingestion mode.
         required: true
         type: string
 
 permissions:
+  actions: read
+  issues: read
   contents: read
   id-token: write
 
@@ -42,6 +56,8 @@ jobs:
       TARGET_KSA: terraformers-backend
       INGESTION_POD: terraformers-rag-ingestion
       OPENSEARCH_SERVICE: terraformers-opensearch
+      INGESTION_MODE: ${{ inputs.ingestion_mode || 'ordinary' }}
+      LIVE_APPROVAL_COMMENT_ID: ${{ inputs.live_approval_comment_id }}
 
     steps:
       - uses: actions/checkout@v5
@@ -53,6 +69,7 @@ jobs:
           CONFIRMATION: ${{ inputs.confirmation }}
           WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
           APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
@@ -65,6 +82,22 @@ jobs:
             echo 'Approved SHA does not match the checked-out main commit.' >&2
             exit 1
           }
+          if [[ "$INGESTION_MODE" == pt8a-clean-v4 ]]; then
+            [[ "$CORPUS_VERSION" == terraformers-reference-v4 ]]
+            [[ "$CONFIRMATION" == REEMBED_REVIEWED_PT8A_CLEAN_V4 ]]
+            [[ "$GITHUB_RUN_ATTEMPT" == 1 ]]
+            python3 scripts/evaluation/pt8a-official-acceptance.py verify
+            python3 scripts/rag/ingest-gcp-target-corpus.py \
+              --pt8a-clean-v4 --check-pt8a-clean-authority \
+              --reviewed-source-sha "$GITHUB_SHA" --live-approval-comment-id "$LIVE_APPROVAL_COMMENT_ID" \
+              --project terraformers-platform --opensearch-endpoint http://terraformers-opensearch:9200
+            python3 - <<'PY'
+            import importlib.util, os
+            spec = importlib.util.spec_from_file_location('pt8a', 'scripts/evaluation/pt8a-official-acceptance.py')
+            pt8a = importlib.util.module_from_spec(spec); spec.loader.exec_module(pt8a)
+            pt8a.ensure_latest_dispatch({'mode': 'readiness'}, os.environ['GITHUB_SHA'], int(os.environ['GITHUB_RUN_ID']))
+            PY
+          elif [[ "$INGESTION_MODE" == ordinary ]]; then
           case "$CORPUS_VERSION" in
             terraformers-reference-v3)
               [[ "$CONFIRMATION" == INGEST_M3_R3B_REFERENCE_V3 ]] || {
@@ -83,6 +116,10 @@ jobs:
               exit 1
               ;;
           esac
+          else
+            echo 'Unsupported ingestion mode.' >&2
+            exit 1
+          fi
           [[ "$APPLY_SERVICE_ACCOUNT" == terraformers-apply@terraformers-platform.iam.gserviceaccount.com ]] || {
             echo 'Unexpected Kubernetes deployment identity.' >&2
             exit 1
@@ -174,6 +211,7 @@ jobs:
           done
 
       - name: Apply only the backend Kubernetes ServiceAccount
+        if: inputs.ingestion_mode != 'pt8a-clean-v4'
         run: |
           set -euo pipefail
           kubectl -n "$TARGET_NAMESPACE" apply             -f infra/kubernetes/base/backend-serviceaccount.yaml
@@ -231,7 +269,11 @@ jobs:
           git -C "$provider_dir" checkout -q --detach FETCH_HEAD
           [[ "$(git -C "$provider_dir" rev-parse HEAD)" == "$provider_commit" ]]
 
-          python3 scripts/rag/build-corpus-v4.py             --provider-source-dir "$provider_dir"             --provider-schema-json "$schema_json"             --provider-source-commit "$provider_commit"             --project-source-commit "$GITHUB_SHA"             --output-dir "$corpus_dir"             --all-documented-resources
+          project_source="$GITHUB_SHA"
+          if [[ "$INGESTION_MODE" == pt8a-clean-v4 ]]; then
+            project_source=1ae69d589ac3965733818819792d98c5638e0ae5
+          fi
+          python3 scripts/rag/build-corpus-v4.py             --provider-source-dir "$provider_dir"             --provider-schema-json "$schema_json"             --provider-source-commit "$provider_commit"             --project-source-commit "$project_source"             --output-dir "$corpus_dir"             --all-documented-resources
 
           python3 scripts/checks/rag-corpus-contract-verification.py             --corpus-dir "$corpus_dir"             --summary-json "${RUNNER_TEMP}/corpus-contract.json"
 
@@ -240,6 +282,10 @@ jobs:
             and .documentCount == 5395
             and (.sha256 | type == "string" and length == 64)
           ' "${RUNNER_TEMP}/corpus-contract.json" >/dev/null
+
+          if [[ "$INGESTION_MODE" == pt8a-clean-v4 ]]; then
+            jq -e '.sha256 == "da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a"' "${RUNNER_TEMP}/corpus-contract.json" >/dev/null
+          fi
 
           jq -e '
             .providerSchemaResourceCount == 1526
@@ -258,9 +304,17 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Start ephemeral Workload Identity ingestion pod
+        id: ingestion-pod
         run: |
           set -euo pipefail
-          kubectl -n "$TARGET_NAMESPACE" delete pod "$INGESTION_POD"             --ignore-not-found=true --wait=true
+          if [[ "$INGESTION_MODE" == pt8a-clean-v4 ]]; then
+            [[ -z "$(kubectl -n "$TARGET_NAMESPACE" get pod "$INGESTION_POD" --ignore-not-found -o name)" ]] || {
+              echo 'PT-8A refuses an existing ingestion pod; no takeover or automatic retry.' >&2
+              exit 1
+            }
+          else
+            kubectl -n "$TARGET_NAMESPACE" delete pod "$INGESTION_POD" --ignore-not-found=true --wait=true
+          fi
 
           cat > "${RUNNER_TEMP}/ingestion-pod.yaml" <<'EOF'
           apiVersion: v1
@@ -301,6 +355,7 @@ jobs:
           EOF
 
           kubectl -n "$TARGET_NAMESPACE" apply             -f "${RUNNER_TEMP}/ingestion-pod.yaml"
+          echo 'created=true' >> "$GITHUB_OUTPUT"
 
           if ! kubectl -n "$TARGET_NAMESPACE" wait \
             --for=condition=Ready "pod/${INGESTION_POD}" \
@@ -340,6 +395,10 @@ jobs:
           cp infra/terraform/envs/rag-runtime/main.tf "$bundle_root/infra/terraform/envs/rag-runtime/"
           cp infra/terraform/envs/rag-runtime/outputs.tf "$bundle_root/infra/terraform/envs/rag-runtime/"
           cp -R "$CORPUS_DIR" "$bundle_root/corpus/terraformers-reference/$CORPUS_DIR_NAME"
+          if [[ "$INGESTION_MODE" == pt8a-clean-v4 ]]; then
+            mkdir -p "$bundle_root/docs/evaluation"
+            cp docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md "$bundle_root/docs/evaluation/"
+          fi
 
           tar -C "$bundle_root" -czf "${RUNNER_TEMP}/rag-ingestion-bundle.tgz" .
 
@@ -365,6 +424,22 @@ jobs:
         run: |
           set -euo pipefail
           receipt="/tmp/${CORPUS_VERSION}-receipt.json"
+          if [[ "$INGESTION_MODE" == pt8a-clean-v4 ]]; then
+            result=0
+            kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" -- \
+              env PYTHONPATH=/tmp/terraformers-ingestion-deps \
+              GITHUB_SHA="$GITHUB_SHA" GITHUB_REF="$GITHUB_REF" \
+              GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+              python /tmp/workspace/scripts/rag/ingest-gcp-target-corpus.py \
+              --pt8a-clean-v4 --reviewed-source-sha "$GITHUB_SHA" --live-approval-comment-id "$LIVE_APPROVAL_COMMENT_ID" \
+              --corpus-dir "/tmp/workspace/corpus/terraformers-reference/${CORPUS_DIR_NAME}" \
+              --project terraformers-platform --location global \
+              --opensearch-endpoint "http://${OPENSEARCH_SERVICE}:9200" --receipt "$receipt" || result=$?
+            if kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" -- test -f "$receipt"; then
+              kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" -- cat "$receipt" > "${RUNNER_TEMP}/ingestion-receipt.json"
+            fi
+            exit "$result"
+          fi
           kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             env PYTHONPATH=/tmp/terraformers-ingestion-deps             python /tmp/workspace/scripts/rag/ingest-gcp-target-corpus.py               --corpus-dir "/tmp/workspace/corpus/terraformers-reference/${CORPUS_DIR_NAME}"               --project terraformers-platform               --location global               --opensearch-endpoint "http://${OPENSEARCH_SERVICE}:9200"               --receipt "$receipt"
 
           kubectl -n "$TARGET_NAMESPACE" exec "$INGESTION_POD" --             cat "$receipt" > "${RUNNER_TEMP}/ingestion-receipt.json"
@@ -391,6 +466,21 @@ jobs:
             and (.representative_hit_ids | type == "array" and length > 0)
             and (.outcome == "ingested" or .outcome == "already-ingested")
           ' "${RUNNER_TEMP}/ingestion-receipt.json" >/dev/null
+          if [[ "$INGESTION_MODE" == pt8a-clean-v4 ]]; then
+            procedure_sha="$(sha256sum docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md | cut -d ' ' -f 1)"
+            jq -e --arg source "$GITHUB_SHA" --arg procedure "$procedure_sha" --arg approval "$LIVE_APPROVAL_COMMENT_ID" '
+              .ingestion_mode == "pt8a-clean-v4" and .outcome == "ingested" and .embedded_this_run == 5395 and .skipped_existing == 0
+              and (.index_uuid | type == "string" and length > 0)
+              and .index_uuid_before == .index_uuid and .index_uuid_after == .index_uuid
+              and .pre_content_identity == .non_vector_content_identity and .post_content_identity == .non_vector_content_identity
+              and .reviewed_source_sha == $source and .procedure_sha256 == $procedure
+              and .live_approval_comment_id == ($approval | tonumber)
+              and .candidate_identity == "3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757"
+              and .project_decision_source == "1ae69d589ac3965733818819792d98c5638e0ae5"
+              and .provider_source == "f7a3b98da589ab1d52756b0dcee0dbf2de83d635"
+              and .checksum == "da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a"
+            ' "${RUNNER_TEMP}/ingestion-receipt.json" >/dev/null
+          fi
 
           {
             echo '## GCP target live corpus ingestion'
@@ -413,17 +503,33 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Prepare bounded ingestion evidence
+        if: always() && (inputs.ingestion_mode == 'pt8a-clean-v4' || success())
+        env:
+          RUN_STATUS: ${{ job.status }}
         run: |
           set -euo pipefail
           evidence_dir="${RUNNER_TEMP}/ingestion-evidence"
           mkdir -p "$evidence_dir"
-          cp "$CORPUS_CONTRACT_JSON" "$evidence_dir/contract.json"
-          cp "${RUNNER_TEMP}/ingestion-receipt.json" "$evidence_dir/receipt.json"
-          if [[ -f "$CORPUS_DIR/coverage-report.json" ]]; then
+          if [[ -n "${CORPUS_CONTRACT_JSON:-}" && -f "$CORPUS_CONTRACT_JSON" ]]; then cp "$CORPUS_CONTRACT_JSON" "$evidence_dir/contract.json"; fi
+          if [[ -f "${RUNNER_TEMP}/ingestion-receipt.json" ]]; then cp "${RUNNER_TEMP}/ingestion-receipt.json" "$evidence_dir/receipt.json"; fi
+          if [[ -n "${CORPUS_DIR:-}" && -f "$CORPUS_DIR/coverage-report.json" ]]; then
             cp "$CORPUS_DIR/coverage-report.json" "$evidence_dir/coverage-report.json"
+          fi
+          if [[ "$INGESTION_MODE" == pt8a-clean-v4 ]]; then
+            python3 - "$evidence_dir" <<'PY'
+            import hashlib, json, os, pathlib, sys
+            root = pathlib.Path(sys.argv[1])
+            (root / 'clean-run-binding.json').write_text(json.dumps({
+                'sourceSha': os.environ['GITHUB_SHA'], 'runId': os.environ['GITHUB_RUN_ID'],
+                'runAttempt': os.environ['GITHUB_RUN_ATTEMPT'], 'mode': os.environ['INGESTION_MODE'],
+                'liveApprovalCommentId': os.environ['LIVE_APPROVAL_COMMENT_ID'], 'status': os.environ['RUN_STATUS'],
+                'procedureSha256': hashlib.sha256(pathlib.Path('docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md').read_bytes()).hexdigest(),
+                'receiptAvailable': (root / 'receipt.json').exists()}, indent=2) + '\n')
+            PY
           fi
 
       - name: Upload bounded ingestion evidence
+        if: always() && (inputs.ingestion_mode == 'pt8a-clean-v4' || success())
         uses: actions/upload-artifact@v4
         with:
           name: gcp-corpus-ingestion-${{ github.run_id }}
@@ -432,6 +538,6 @@ jobs:
           retention-days: 30
 
       - name: Delete ephemeral ingestion pod
-        if: always()
+        if: always() && (inputs.ingestion_mode != 'pt8a-clean-v4' || steps.ingestion-pod.outputs.created == 'true')
         run: |
           kubectl -n "$TARGET_NAMESPACE" delete pod "$INGESTION_POD"             --ignore-not-found=true --wait=false || true

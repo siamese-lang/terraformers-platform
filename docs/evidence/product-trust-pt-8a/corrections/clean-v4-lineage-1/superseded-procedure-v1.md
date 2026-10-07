@@ -1,6 +1,6 @@
 # PT-8A frozen deployed official acceptance procedure
 
-Procedure `pt8a-official-acceptance-v2` is frozen before any new observation. This PR prepares
+Procedure `pt8a-official-acceptance-v1` is frozen before any new observation. This PR prepares
 execution; it does not authorize it or assert final product acceptance. The preparation base is
 `2bdb73d20486262856bfa6b680b7bf221fa23ca0`, read once at activation. The live reviewed source,
 publication run, image digest, rollout run and observation runs remain unbound until independent
@@ -10,12 +10,6 @@ neither the preparation base nor historical corpus provenance is rebound.
 Authority: [exact USER request](../evidence/product-trust-pt-8a/approved-request.md),
 [Work Package](../../.agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml),
 [PT-7 review 6038261202](https://github.com/siamese-lang/terraformers-platform/pull/255#issuecomment-6038261202).
-The USER-authorized clean-v4 correction addresses only [independent review 6039675842](https://github.com/siamese-lang/terraformers-platform/pull/256#issuecomment-6039675842).
-[Superseded v1 bytes](../evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/superseded-procedure-v1.md)
-retain SHA `5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5` as pre-correction
-procedure evidence, not an unchanged procedure identity. Version 2 is frozen before outcomes;
-this correction authorizes no live activity. Autonomous repair remains 1; human correction is 1.
-
 PT-7 is independently accepted at `b8645e564d4476c9ad8aad798d63d2a84b487787` and USER-merged
 as the preparation base. Ruleset 24074505 now requires both `terraform-static-verification` and
 `backend-required-verification`, integration 15368; other protections are preserved. This is the
@@ -60,60 +54,16 @@ certificates, names and user values may be variables, external references or edi
    it with a governance-only SHA. Historical corpus source is **not** the deployed backend source.
    Require schema resources 1526, official/selected 1514, gaps 0, provider chunks 5387, decisions 8,
    total 5395. No new embedding request is made by the exact verifier.
-4. **Before the first PT-8A readiness dispatch**, obtain a completed clean re-embedding receipt
-   through the existing `gcp-target-corpus-ingestion.yml`. Historical lineage is already known
-   unproven: do not dispatch a knowingly failing readiness job or reset its history afterward.
-   Require explicit live/model/cost approval for this clean operation, exact reviewed source,
-   frozen candidate, **this v2 procedure SHA**, purpose, corpus sources/checksum and model/dimension.
-   Select `ingestion_mode=pt8a-clean-v4`, `corpus_version=terraformers-reference-v4`,
-   `confirmation=REEMBED_REVIEWED_PT8A_CLEAN_V4`, exact `expected_sha` and `live_approval_comment_id`.
-   The historical A7-7 token alone is insufficient. Ordinary v3 and A7-7 v4 modes retain their
-   existing tokens, HEAD skips and current-SHA project-source behavior; only clean mode pins
-   historical project source `1ae69d589ac3965733818819792d98c5638e0ae5`.
-
-   Before WIF, the runner authenticates the repository USER's structured approval and main via
-   GitHub and checks existing runtime dispatch history: any prior non-skipped PT-8A dispatch at
-   this live source forbids clean ingestion/history reset. Existing protected environment,
-   WIF, cluster, namespace, OpenSearch, service account and serial workflow group are reused.
-   Clean mode does not reapply service-account/IAM configuration and refuses an existing
-   ingestion pod. The pod rechecks the same public GitHub authority over verified HTTPS before
-   embedding and after completion, without receiving the runner's GitHub token. Missing/unreadable
-   authority or main drift fails closed. No new credential, IAM grant or GitHub dispatch is made
-   by the script. If public authority is inaccessible, stop rather than expand access.
-
-   Rebuild the exact corpus and enforce checksum/coverage/source identities. Run the full read-only
-   verification described below **before any vector write**. Exact mapping, full ID universe,
-   every non-vector source field and retained UUID must match. Otherwise stop at
-   `HUMAN_REQUIRED: DESTRUCTIVE_INDEX_REBUILD_DECISION`; never create/delete/rebuild the index.
-   If exact, freshly embed **all 5,395 documents** using `gemini-embedding-2 / 1536`, preserving
-   existing title/content embedding semantics and bounded document-transport retry behavior.
-   Perform vector-only `POST /{index}/_update/{id}` with no upsert, using every expected existing
-   ID once, zero HEAD skips, no non-vector rewrite and no mapping metadata relabeling. A disappeared
-   ID fails instead of being recreated. This is a full vector overwrite, not a new-document count.
-   Cancel pending tasks after failure and settle active tasks; preserve acknowledged overwrite
-   count and failed stage in a partial receipt. Existing transport retries are not a second corpus
-   pass; no automatic workflow retry, rerun, resubmission or resume is permitted.
-
-   Refresh, repeat full ID/non-vector/mapping verification, and require the same retained UUID
-   before/after and unchanged canonical content identity. Verify representative retrieval using
-   one already-fresh vector, without an extra embedding. Only completed successful GitHub run /
-   digest-bound artifact with `embedded_this_run=5395`, `skipped_existing=0`, outcome `ingested`,
-   exact UUID/pre-post identities/sources/checksum/model/dimension/approval/source/candidate/
-   procedure can establish clean lineage. Partial/mixed, failed or unknown receipts remain
-   non-reusable. Preserve failure binding/partial receipt artifacts; stop for review, do not rerun.
-   In-place writes are not atomic: a failed run leaves model lineage unproven even when some/all
-   vectors were updated. No receipt claims a complete rollback or uninterrupted model equivalence.
-
-5. Only after that completed clean receipt, dispatch readiness. Through a temporary port-forward to the existing OpenSearch, inspect mapping fields/types,
+4. Through a temporary port-forward to the existing OpenSearch, inspect mapping fields/types,
    vector method/dimension, corpus metadata/checksum, index UUID and **match-all** total. Scroll
    the full ID universe with `embedding` excluded from `_source`. Require every expected ID once,
    no missing/extra ID, and exact equality of every non-vector source field, including content,
    resource metadata and provenance. Canonical content identity sorts IDs and JSON keys, preserves
    list ordering and UTF-8, excludes vectors, and uses SHA-256. Recheck total/UUID; release scroll
    resources in `finally`. Retain only hashes/counts/bounded differences, never source bodies.
-6. Verify model lineage using an authenticated GitHub completed ingestion run/artifact, immutable
+5. Verify model lineage using an authenticated GitHub completed ingestion run/artifact, immutable
    artifact archive digest, receipt source/model/dimension/checksum, retained index UUID, canonical
-   non-vector identity, `ingestion_mode=pt8a-clean-v4`, `embedded_this_run=5395`, `skipped_existing=0`. A self-declared current model,
+   non-vector identity, `indexed_this_run=5395`, `skipped_existing=0`. A self-declared current model,
    mapping checksum or dimensionality does not prove how old vectors were generated. No metadata
    write can retrofit that missing evidence.
 
@@ -138,14 +88,13 @@ requires human review; counts/UUID alone do not prove continuous immutability.
 corrected run **37344219922**, artifact **11359644809**, model gemini-embedding-2 / 1536 and checksum.
 Its receipt lacks retained UUID and fresh-vs-skipped counts; the old ingestion skips existing IDs.
 Disposition is **MODEL_PROVENANCE_UNPROVEN**, not a current live-index measurement. Do not claim
-that all 5395 vectors were regenerated by that run. The clean reviewed build/embed/ingest above is therefore mandatory **before the first readiness
-dispatch**, under later explicit live/model/cost authority.
+that all 5395 vectors were regenerated by that run. A future clean reviewed build/embed/ingest may
+be necessary, using the existing ingestion path and later **explicit live/model/cost authority**.
 No automatic rebuild, deletion, re-embedding or ceremonial ingestion is authorized by readiness.
-The observer additionally rejects ordinary/historical receipts, a different live source or approval
-comment before a readiness product job. The general verifier preserves ordinary all-fresh v4 receipt
-compatibility; no old receipt is rewritten or accepted as PT-8A clean evidence.
+The additive v4 receipt fields in this PR support a future fresh approved run and do not rewrite
+old receipts or change v3 ingestion behavior.
 
-7. After exact readiness and live authority, prepare the existing ephemeral placeholder JWKS
+6. After exact readiness and live authority, prepare the existing ephemeral placeholder JWKS
    fixture, refusing a non-placeholder or another owner. Submit **one** existing PT-1-05
    private-web-fleet controlled reference through authenticated production upload/AnalysisJob.
    It is a serving/retrieval mechanism sample, not PT-2 activity or official/generalization evidence.
@@ -189,18 +138,8 @@ decision: APPROVED
 reviewed_source_sha: <actual later reviewed main>
 backend_image: <exact immutable full image digest>
 candidate_identity: 3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757
-procedure_sha256: <SHA-256 of this exact v2 document>
-purpose: PT8A_CLEAN_V4_REEMBED_ALL_5395
-corpus_checksum: da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a
-provider_source: f7a3b98da589ab1d52756b0dcee0dbf2de83d635
-project_decision_source: 1ae69d589ac3965733818819792d98c5638e0ae5
-embedding_model: gemini-embedding-2
-vector_dimension: 1536
+procedure_sha256: <SHA-256 of this exact document>
 ```
-
-The same approval comment binds both the preceding clean receipt and later readiness/cases;
-its clean purpose fields are additional explicit cost authority, not implied by the observation
-token. The observation confirmation token remains the existing `_V1` token for compatibility.
 
 Fetch only the frozen HTTPS `docs.aws.amazon.com` raw image URL into a private temporary directory.
 Require HTTP 200, exact URL with no redirects, raw SHA-256/size, HTTP media type, PNG signature and

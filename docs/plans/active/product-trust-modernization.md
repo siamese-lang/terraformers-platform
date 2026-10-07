@@ -26,6 +26,16 @@ workflow supports one observation per manual dispatch, then independent review b
 Official frozen image acquisition fails closed on host/redirect/raw hash/size/media/dimensions.
 No truth enters inference and no model judge or new workflow is added.
 
+[Review 6039675842](https://github.com/siamese-lang/terraformers-platform/pull/256#issuecomment-6039675842)
+requires executable clean model lineage. The USER-authorized repository-only correction prepares
+`pt8a-clean-v4` in the existing ingestion workflow: historical project source/checksum, exact
+pre-write mapping/full IDs/non-vector content, all-5395 fresh vector overwrites, zero skips, same
+retained UUID and exact post-content. Explicit later live approval binds source/candidate/v2
+procedure/purpose/model/corpus. Obtain its completed receipt **before first readiness dispatch**;
+partial/mixed failures stop, and content mismatch requires a separate destructive-rebuild decision.
+Superseded v1 bytes/hash remain preserved; autonomous repair 1 is unchanged, human correction 1
+is separate. No live operation or automatic rerun. Preparation remains independently unaccepted.
+
 AWS official revision 2 identity **`3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757`**
 remains externally frozen with all bytes unchanged, A–E NOT_RUN and model count 0. Historical
 PT-1 is controlled reference-derived; PT-2 is permanently final INCOMPLETE, 03–10 NOT_RUN,
@@ -268,10 +278,14 @@ subset do not establish accepted final external-input performance.
    `gemini-embedding-2`, 1536 dimensions and immutable corpus/checksum/model/content equivalence.
    Required universe: schema 1526, official/selected 1514, gaps 0, provider chunks 5387,
    project decisions 8, total 5395. Counts/config names alone do not establish exact index identity.
-3. Distinguish exact reusable complete v4, partial, stale/mixed model space, wrong model/dimension
-   missing index and MODEL_PROVENANCE_UNPROVEN. Reuse exact proven v4; do not ceremonially re-embed/re-ingest 5395 documents.
-   Unprovable equivalence fails readiness before cases. Existing reviewed build/embed/ingest only
-   under the appropriate separate live/model/cost authority. Never add case labels or truth to RAG.
+3. Because historical lineage is already MODEL_PROVENANCE_UNPROVEN, under explicit live authority
+   complete one `pt8a-clean-v4` pass **before first readiness dispatch**. Require exact historical
+   sources/checksum, full non-vector content/mapping admission; mismatch stops for a separate
+   destructive-rebuild decision. Re-embed all 5395 vectors, zero skips, same UUID and exact post-content.
+   Distinguish exact reusable complete v4, partial, stale/mixed, wrong model/dimension, missing index
+   and MODEL_PROVENANCE_UNPROVEN. Only the completed clean receipt permits readiness; no partial
+   receipt, automatic retry, metadata relabeling, known-failing readiness or history reset.
+   Reuse that proven receipt thereafter. Never add case labels or truth to RAG.
 4. Correlated deployed-backend retrieval returns official reference evidence from the intended
    exact index. This is serving readiness, not a semantic case PASS.
 5. Separate explicit **FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE** approval immediately

@@ -2,47 +2,49 @@
 
 ## Status
 
-**PROGRAM v3 USER-APPROVED AMENDMENT PREPARED / PT-1 COMPLETE / PT-2 FINAL INCOMPLETE EVIDENCE
-ACCEPTED / PT-3..PT-6 COMPLETE WITH BOUNDED CLAIMS / HUMAN_REQUIRED: MERGE_CHECKPOINT**
+**PROGRAM v3 USER-MERGED / PT-6 COMPLETE / PT-6R1 ENGINEERING PASS /
+HUMAN_REQUIRED: MERGE_CHECKPOINT (governance correction review and USER merge pending)**
 
-USER approved `APPROVE product-trust-v1 v3 residual-closure amendment as audited above.` at
-`2026-10-07T04:15:00Z`; [exact request](../../evidence/product-trust-v3-amendment/approved-request.md).
-This one repository-only amendment is based on main
-`f344552fe58db26438a4f0b2c9abb1806e6a99d9`. It implements no residual correction or later phase.
-The [v3 Work Package](../../../.agents/work-packages/product-trust-v3-residual-closure-amendment-v1.yml)
-and [cross-phase integrity audit](../../evaluation/product-trust-v3-cross-phase-integrity-audit.md)
-separate production improvements, integration evidence, unresolved defects and portfolio residuals.
+[Review 6031040940](https://github.com/siamese-lang/terraformers-platform/pull/251#issuecomment-6031040940)
+accepted v3 amendment head `360fc827e2b6146f0961442b53e3eb172a8aa4e8`; USER merged PR #251 as
+`00872520036da38fd1809a9abf61f56d2344fcb5` at `2026-10-07T04:46:24Z`. Explicit USER approval
+activates exactly [PT-6R1](../../../.agents/work-packages/product-trust-pt-6r1-first-user-identity-concurrency-v1.yml)
+on that once-bound base. No rebase, refresh, rebind or separate activation/state-sync PR.
 
-[PT-6](../../evaluation/product-trust-pt-6-browser-journey.md) is COMPLETE because
-[review 6030408825](https://github.com/siamese-lang/terraformers-platform/pull/250#issuecomment-6030408825)
-accepted head `0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a`, then USER merged PR #250 at
-`2026-10-07T03:53:53Z` as the main above. This proves the declared deterministic browser integration,
-not production IdP/model quality/generalization. Its original base `37e006be4d5995019704ea8a4009e1a59da039b2`,
-repair counts, initial FAILED job and all failed/correction evidence remain unchanged. No extra
-browser execution is authorized. Earlier reports' pending-review markers are historical snapshots.
-First-user concurrency and missing original in-memory events are not claimed repaired.
+[Current evidence](../../evaluation/product-trust-pt-6r1-first-user-identity-concurrency.md) preserves
+the first instrumentation failure and separately records USER authorization for exactly one extra
+before execution. Actual MariaDB reproduced an immediate IDENTITY save uniqueness failure followed
+by a recovery query on a poisoned rollback-only session. The narrow correction isolates INSERT and
+recovery in existing Spring transactions; the original one same-condition after execution passes:
+both callers resolve one USER/ACTIVE durable account. Email ownership, distinct users and display
+semantics pass real-database controls; PT-5 access and full offline backend regressions pass.
+No additional local database measurement, independent acceptance or merge is authorized. Autonomous
+instrumentation repair stays 1; human corrective iteration is separately 1. Production INSERT may
+commit independently of a later enclosing operation rollback; that bounded tradeoff is documented.
 
-PT-3's authorization-omission exposure, PT-4's processing/trust/timing separation and PT-5's
-JWT route-default/access correction remain COMPLETE within independently accepted deterministic
-boundaries. No effective IAM, hosted IdP, production latency or realistic generalization claim follows.
+PT-6 remains independently accepted deterministic browser integration from review 6030408825,
+PR #250 accepted head `0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a`, USER merge
+`f344552fe58db26438a4f0b2c9abb1806e6a99d9`. All failed observations, original base/counters and
+bounded no-production-IdP/model-quality/generalization claims are preserved. PT-3..PT-5 accepted
+production corrections remain limited to their deterministic evidence.
 
-PT-2 remains permanently `PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION`,
-[reviewed by 6028079078](https://github.com/siamese-lang/terraformers-platform/pull/246#issuecomment-6028079078).
-Cases 03–10 remain NOT_RUN, neither pass nor fail; no aggregate classification/hallucination/
-semantic-success/executable-validity rates or ten-case generalization. Original case 02's censor
-remains `424846 ms`; runs `37500000739` and `37509368210` remain zero-product-observation measurement
-failures. No PT-2 dispatch/recovery/reopen/rerun/exception or artifact reinterpretation is authorized.
-PT-8A is a new final-system acceptance phase.
+PT-2 remains permanently `PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION`:
+03–10 NOT_RUN, null aggregate rates, original 424846 ms censor and zero-product recovery failures.
+No reopening/recovery/rerun/dispatch or artifact reinterpretation. PT-1 revision 3 frozen identity
+`04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014` remains unchanged.
 
-PT-1 revision 3 remains frozen at
-`04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`; all 26 pinned files and historical
-truth/provenance remain unchanged. Retained runtime stays ACTIVE_RETAINED; A7-8 teardown is deferred.
+[Review 6031593870](https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031593870)
+accepts PT-6R1 engineering at `9e668a5cd4bce17e2808b82b2521cc58c6d08894`; the governance correction
+addresses its stale next-phase authority blocker. After PT-6R1 independent acceptance and USER merge,
+stop at **HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT**. PT-6R2 remains
+execution-unauthorized until a subsequent evidence-validity amendment is reviewed, explicitly
+USER-approved, independently accepted and USER-merged. Its detailed contents are not selected here.
 
-Remaining mandatory order: **PT-6R1 -> PT-6R2 -> PT-7 -> PT-8A -> PT-8B -> PT-9**.
-Stop for amendment independent review and USER merge. Only then may PT-6R1 activate on the actual
-new main, binding its execution base once inside its substantive implementation PR. No future SHA
-is predicted/bound now, and no separate state-sync/activation/normalization PR is authorized.
-GitHub alone owns transient PR/branch state. CI success does not establish acceptance.
+Recorded order remains **PT-6R1 -> PT-6R2 -> PT-7 -> PT-8A -> PT-8B -> PT-9**, with automatic progression
+paused at the reassessment gate. No PT-6R2 activation, new Program version or future base prediction.
+The [cross-phase audit](../../evaluation/product-trust-v3-cross-phase-integrity-audit.md)
+and all portfolio/live/security/merge/destructive gates remain in force. Runtime stays retained,
+A7-8 remains deferred and GitHub alone holds transient PR/branch lifecycle. CI does not grant acceptance.
 
 ## Why this reassessment exists
 
@@ -235,7 +237,9 @@ work is required merely for this defect. Product/architecture/security decisions
 
 ### PT-6R2 — Provider terminality / latency-budget closure
 
-After independent PT-6R1 acceptance and USER merge, audit the actual Google GenAI request/deadline
+Activation is unauthorized until the evidence-validity reassessment gate above is released by the
+subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged amendment.
+PT-6R1 acceptance and merge alone are insufficient. Subject to that amendment, audit the actual Google GenAI request/deadline
 capability and provider/retry/job boundaries. Ensure one accepted job cannot remain provider-bound
 indefinitely. The original PT-2 `424846 ms` censor stays untouched; its upstream cause is unknown.
 Do not invent a timeout or silently choose retry tradeoffs. If a numeric provider/job latency budget
@@ -335,9 +339,11 @@ not imply that Kubernetes is required for every version of this product.
 
 ## Autonomous execution boundary
 
-Once the user explicitly approves `product-trust-v1`, Codex Cloud may choose and execute the next
-eligible repository Work Package from the program DAG without requiring a repeated "next task"
-instruction.
+The standing Goal's automatic selection/progression is paused at
+`PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT` after PT-6R1 independent acceptance and USER merge.
+It cannot select or execute PT-6R2 until the subsequent evidence-validity amendment is reviewed,
+explicitly USER-approved, independently accepted and USER-merged. This PR records only that pause;
+it does not implement the amendment or grant later execution authority.
 
 This autonomy does not include:
 

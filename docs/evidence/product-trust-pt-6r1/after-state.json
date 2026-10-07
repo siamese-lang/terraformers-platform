@@ -1,0 +1,129 @@
+{
+  "databaseVersion": "11.4.13-MariaDB-ubu2404",
+  "isolation": "REPEATABLE-READ",
+  "provider": "cognito",
+  "subject": "mariadb-first-40717a8e-856b-4e91-9452-56f55452c530",
+  "springProxiedService": true,
+  "callerCount": 2,
+  "events": [
+    {
+      "caller": "pool-3-thread-1",
+      "operation": "lookup",
+      "lookupNumber": 1,
+      "transactionActive": true,
+      "absent": true
+    },
+    {
+      "caller": "pool-3-thread-2",
+      "operation": "lookup",
+      "lookupNumber": 1,
+      "transactionActive": true,
+      "absent": true
+    },
+    {
+      "caller": "pool-3-thread-2",
+      "operation": "save",
+      "lookupNumber": 0,
+      "transactionActive": true,
+      "returned": true
+    },
+    {
+      "caller": "pool-3-thread-1",
+      "operation": "save",
+      "lookupNumber": 0,
+      "transactionActive": true,
+      "failure": [
+        {
+          "class": "org.springframework.dao.DataIntegrityViolationException",
+          "message": "could not execute statement [(conn=28) Duplicate entry 'mariadb-first-40717a8e-856b-4e91-9452-56f55452c530' for key 'uk_users_cognito_sub'] [insert into users (created_at,display_name,email,external_identity_provider,external_identity_subject,cognito_sub,role,status,updated_at) values (?,?,?,?,?,?,?,?,?) returning user_id]; SQL [insert into users (created_at,display_name,email,external_identity_provider,external_identity_subject,cognito_sub,role,status,updated_at) values (?,?,?,?,?,?,?,?,?) returning user_id]; constraint [uk_users_cognito_sub]"
+        },
+        {
+          "class": "org.hibernate.exception.ConstraintViolationException",
+          "message": "could not execute statement [(conn=28) Duplicate entry 'mariadb-first-40717a8e-856b-4e91-9452-56f55452c530' for key 'uk_users_cognito_sub'] [insert into users (created_at,display_name,email,external_identity_provider,external_identity_subject,cognito_sub,role,status,updated_at) values (?,?,?,?,?,?,?,?,?) returning user_id]"
+        },
+        {
+          "class": "java.sql.SQLIntegrityConstraintViolationException",
+          "message": "(conn=28) Duplicate entry 'mariadb-first-40717a8e-856b-4e91-9452-56f55452c530' for key 'uk_users_cognito_sub'",
+          "sqlState": "23000",
+          "errorCode": 1062
+        }
+      ],
+      "returned": false,
+      "rollbackOnlyAfterFailure": false,
+      "persistenceTransactionRollbackOnlyAfterFailure": true
+    },
+    {
+      "caller": "pool-3-thread-1",
+      "operation": "lookup",
+      "lookupNumber": 2,
+      "transactionActive": true,
+      "absent": false
+    }
+  ],
+  "outcomes": [
+    {
+      "caller": "pool-3-thread-1",
+      "userId": 6,
+      "role": "USER",
+      "status": "ACTIVE"
+    },
+    {
+      "caller": "pool-3-thread-2",
+      "userId": 6,
+      "role": "USER",
+      "status": "ACTIVE"
+    }
+  ],
+  "durableRows": [
+    {
+      "user_id": 6,
+      "external_identity_provider": "cognito",
+      "external_identity_subject": "mariadb-first-40717a8e-856b-4e91-9452-56f55452c530",
+      "role": "USER",
+      "status": "ACTIVE",
+      "display_name": "First user"
+    }
+  ],
+  "initialAbsentLookups": 2,
+  "remainingTestRows": 0,
+  "callersStopped": true,
+  "controls": {
+    "durableRows": [
+      {
+        "user_id": 4,
+        "external_identity_subject": "mariadb-identity-control-a325dd95-610a-4f2c-96f4-9df786eff1c8-first",
+        "email": "mariadb-identity-control-a325dd95-610a-4f2c-96f4-9df786eff1c8@example.test",
+        "role": "USER",
+        "status": "ACTIVE",
+        "display_name": "Explicit name"
+      },
+      {
+        "user_id": 5,
+        "external_identity_subject": "mariadb-identity-control-a325dd95-610a-4f2c-96f4-9df786eff1c8-second",
+        "email": null,
+        "role": "USER",
+        "status": "ACTIVE",
+        "display_name": "Provider fallback"
+      }
+    ],
+    "distinctIdentities": true,
+    "emailConflictRejected": true,
+    "fallbackPreservesCustomDisplayName": true,
+    "explicitDisplayNameUpdates": true,
+    "remainingTestRows": 0
+  },
+  "measurement": {
+    "afterExecution": 1,
+    "command": "source /tmp/pt6r1-db-env.sh; bash scripts/checks/mariadb-schema-validation.sh",
+    "exitCode": 0,
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "repositoryLogSha256": "1410ef6e4b4bffdc36bdbc52f4de00fb0dd217e43b57a83c39d08e358d758e09",
+    "testSourceSha256": "f752fb1aa620471b5c817ecdf5a10724482b418267fd450025a28dc2c5819823",
+    "schemaValidationPassed": true,
+    "image": "mariadb@sha256:1292844148b311e4ed4300022a996d39083f415a963e970cf47cad1b3b18e3a6"
+  },
+  "transactionObservationNote": "rollbackOnlyAfterFailure is the annotated outer service status. persistenceTransactionRollbackOnlyAfterFailure observes the current inner JPA insert transaction. The outer remains clean; the inner fails, rolls back, then a fresh recovery succeeds."
+}

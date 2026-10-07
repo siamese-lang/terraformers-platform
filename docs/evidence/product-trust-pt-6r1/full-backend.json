@@ -1,0 +1,737 @@
+{
+  "command": "mvn -o -f backend/pom.xml clean package",
+  "exitCode": 0,
+  "tests": 557,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 4,
+  "passed": 553,
+  "suites": [
+    {
+      "name": "com.terraformers.modernization.TerraformersBackendApplicationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisDispatchSchedulingConfigTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobControllerIntegrationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobDispatcherTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobDuplicateExecutionBaselineTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobOrchestratorTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobPartialSuccessBaselineTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobRepositoryTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobResponseQualityTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobRestartBaselineTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobRunnerTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobServiceTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobStateServiceTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisLogCorrelationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisObservabilityTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisResultCleanupDispatcherTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisResultQualityTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisResultStorageTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisRuntimePropertiesTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisUploadControllerTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisUploadServiceTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.EvidenceQualityAssessorTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.GeneratedTerraformContractInspectorTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.ProviderFailureClassifierTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.SelectedAnalysisProviderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.SqsProgressPublisherTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.StubAnalysisProviderTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.TerminalQualityAssessmentMapperTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.TerraformCliValidatorTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.TerraformDraftValidatorTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.bedrock.BedrockAnalysisProviderTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.bedrock.BedrockPromptBuilderTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.bedrock.BedrockResponseParserTest",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.bedrock.BedrockRuntimeConfigurationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.vertex.VertexAnalysisProviderTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.vertex.VertexFinalClientInjectionTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.vertex.VertexGenerationStageTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.vertex.VertexPromptBuilderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.vertex.VertexResponseParserTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.config.RuntimeAdapterContractValidatorTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.config.RuntimeConfigInspectorTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.CaseAAlternativeProbeTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.CaseAHoldoutDatasetTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.CaseAMeasurementReportTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.CaseAMultiRunAggregatorTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.CaseAQualityCalibrationTest",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.EvaluationContractTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.EvaluationDatasetLoaderTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.EvaluationRunnerTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.LiveEvaluationLauncherTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.ProductionEquivalentClosureEvaluationTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.RetrievalGroundingScorerTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.adaptive.AdaptiveRetrievalProbeTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.gemini.GeminiCanonicalEnvelopeExtractorTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.gemini.GeminiCurrentImagePipelineStageTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.gemini.GeminiFactReuseComparisonTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.gemini.GeminiFactReuseGenerationStageTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.gemini.GeminiFactReusePipelineStageTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.gemini.GeminiGenerationComparisonTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.gemini.GeminiLatencyTelemetryTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.gemini.GeminiThinkingComparisonTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.gemini.LegacyGeminiModelComparisonStageTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.evaluation.opus.OpusGenerationEvaluationTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.identity.AuthenticatedUserServiceTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.identity.CognitoJwtExternalIdentityMapperTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.identity.ExternalIdentityMigrationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.project.ProjectMetadataControllerTest",
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.project.TerraformDraftControllerTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.projectcomment.ProjectCommentControllerTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.projectcore.ProjectArtifactServiceTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.projectcore.ProjectDomainServiceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.projecttree.ProjectTreeControllerTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.AwsProviderSchemaCatalogTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.BedrockArchitectureFactsExtractorTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.BedrockEmbeddingProviderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.OfficialKnowledgeCoverageCatalogTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.ReferenceQueryTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.RetrievalModeReferenceRetrieverTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.RetrievalQueryTextBuilderTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.SelectedEmbeddingProviderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.VertexArchitectureFactsExtractorTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.VertexEmbeddingProviderTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.opensearch.OpenSearchEndpointTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.opensearch.OpenSearchKnnQueryBuilderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.opensearch.OpenSearchReferenceRetrieverTest",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.opensearch.OpenSearchResponseParserTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.opensearch.ReferenceEvidenceSelectorTest",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.opensearch.SelectedOpenSearchTransportTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.reference.opensearch.SignedOpenSearchHttpClientTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.security.CognitoAccessTokenValidatorTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.security.JwtResourceServerSecurityConfigTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.AwsS3ObjectReaderTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.AwsS3ObjectWriterTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.FileSystemObjectStoreTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.GcsObjectReaderTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.GcsObjectWriterTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.SourceObjectReaderServiceTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.StorageRuntimePropertiesTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.StubObjectReaderTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.StubObjectWriterTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.storage.UploadObjectStorageServiceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.terraformers.modernization.verification.MariaDbRepositorySmokeTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 4
+    },
+    {
+      "name": "com.terraformers.modernization.web.RuntimeReadinessControllerTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "finishedAt": "2026-10-07T05:15:48Z",
+  "logSha256": "9c2ca94af8d70cf1a13543612cf342dbfdd6fdf269c98d73df24d94e44982b16",
+  "externalDatasourceUnset": true,
+  "externalMariaDbTestsNotReexecuted": true,
+  "packagedJarSha256": "5ae62af210c8b3f2fc90786700932e6bb6ea46fec6953a75e209b880d6adff53"
+}

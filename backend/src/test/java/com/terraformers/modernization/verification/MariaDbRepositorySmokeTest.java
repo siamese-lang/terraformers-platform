@@ -1,6 +1,7 @@
 package com.terraformers.modernization.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.terraformers.modernization.analysis.AnalysisJobEntity;
 import com.terraformers.modernization.analysis.AnalysisJobRepository;
@@ -13,6 +14,12 @@ import com.terraformers.modernization.collaboration.CommentEntity;
 import com.terraformers.modernization.collaboration.CommentRepository;
 import com.terraformers.modernization.identity.UserEntity;
 import com.terraformers.modernization.identity.UserRepository;
+import com.terraformers.modernization.identity.AuthenticatedUserService;
+import com.terraformers.modernization.identity.CognitoJwtExternalIdentityMapper;
+import com.terraformers.modernization.identity.JwtExternalIdentityMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.sql.SQLException;
+import jakarta.persistence.EntityManagerFactory;
 import com.terraformers.modernization.project.ProjectVisibility;
 import com.terraformers.modernization.projectcore.OwnedProjectEntity;
 import com.terraformers.modernization.projectcore.OwnedProjectRepository;
@@ -21,6 +28,11 @@ import com.terraformers.modernization.projectcore.ProjectFileRepository;
 import com.terraformers.modernization.projectcore.ProjectStatus;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.UUID;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -33,6 +45,16 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.aop.framework.ProxyFactory;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.orm.jpa.EntityManagerFactoryUtils;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -40,11 +62,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 @SpringBootTest(properties = "terraformers.analysis.dispatch-enabled=false")
 @ActiveProfiles("prod")
 @EnabledIfEnvironmentVariable(named = "SPRING_DATASOURCE_URL", matches = "^jdbc:.*")
 @Transactional
+@Import(MariaDbRepositorySmokeTest.IdentityObservationConfiguration.class)
 class MariaDbRepositorySmokeTest {
 
     private static final long BARRIER_TIMEOUT_SECONDS = 10;
@@ -52,6 +77,48 @@ class MariaDbRepositorySmokeTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private IdentityRepositoryObservation identityObservation;
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class IdentityObservationConfiguration {
+        @Bean
+        static IdentityRepositoryObservation identityRepositoryObservation() {
+            return new IdentityRepositoryObservation();
+        }
+    }
+
+    // Observe and coordinate only; every invocation proceeds through the real repository proxy.
+    static class IdentityRepositoryObservation implements BeanPostProcessor {
+        private volatile MethodInterceptor observer;
+
+        @Override
+        public Object postProcessAfterInitialization(Object bean, String beanName) {
+            if (!"userRepository".equals(beanName)) return bean;
+            ProxyFactory proxy = new ProxyFactory(bean);
+            proxy.addAdvice((MethodInterceptor) invocation -> {
+                MethodInterceptor active = observer;
+                return active == null ? invocation.proceed() : active.invoke(invocation);
+            });
+            return proxy.getProxy();
+        }
+    }
+
+    @Autowired
+    private AuthenticatedUserService authenticatedUserService;
+
+    @Autowired
+    private JwtExternalIdentityMapper identityMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
 
     @Autowired
     private OwnedProjectRepository projectRepository;
@@ -70,6 +137,205 @@ class MariaDbRepositorySmokeTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void concurrentFirstExternalIdentityRequestsConvergeAgainstMariaDb() throws Exception {
+        assertThat(AopUtils.isAopProxy(authenticatedUserService)).isTrue();
+        assertThat(identityMapper).isInstanceOf(CognitoJwtExternalIdentityMapper.class);
+        String subject = "mariadb-first-" + UUID.randomUUID();
+        Jwt jwt = Jwt.withTokenValue("local-database-test").header("alg", "RS256")
+                .subject(subject).claim("cognito:username", "First user")
+                .claim("role", "ADMIN").claim("status", "INACTIVE").build();
+        CyclicBarrier firstLookups = new CyclicBarrier(2);
+        Map<String, AtomicInteger> lookups = new ConcurrentHashMap<>();
+        ConcurrentLinkedQueue<Map<String, Object>> events = new ConcurrentLinkedQueue<>();
+        Map<String, Object> evidence = new LinkedHashMap<>();
+        evidence.put("databaseVersion", jdbcTemplate.queryForObject("SELECT VERSION()", String.class));
+        evidence.put("isolation", jdbcTemplate.queryForObject("SELECT @@transaction_isolation", String.class));
+        evidence.put("provider", "cognito");
+        evidence.put("subject", subject);
+        evidence.put("springProxiedService", true);
+        evidence.put("callerCount", 2);
+        evidence.put("events", events);
+
+        identityObservation.observer = invocation -> {
+            String operation = invocation.getMethod().getName();
+            Object[] arguments = invocation.getArguments();
+            boolean lookup = "findByExternalIdentityProviderAndExternalIdentitySubject".equals(operation)
+                    && "cognito".equals(arguments[0]) && subject.equals(arguments[1]);
+            boolean save = "save".equals(operation) && arguments[0] instanceof UserEntity user
+                    && subject.equals(user.getExternalIdentitySubject());
+            if (!lookup && !save) return invocation.proceed();
+            String caller = Thread.currentThread().getName();
+            int number = lookup ? lookups.computeIfAbsent(caller, ignored -> new AtomicInteger()).incrementAndGet() : 0;
+            Map<String, Object> event = identityEvent(lookup ? "lookup" : "save", number);
+            events.add(event);
+            try {
+                Object result = invocation.proceed();
+                if (lookup) {
+                    boolean absent = ((java.util.Optional<?>) result).isEmpty();
+                    event.put("absent", absent);
+                    if (number == 1 && absent) firstLookups.await(BARRIER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                } else {
+                    event.put("returned", true);
+                }
+                return result;
+            } catch (Throwable failure) {
+                event.put("failure", identityFailure(failure));
+                if (save) {
+                    event.put("returned", false);
+                    event.put("rollbackOnlyAfterFailure", TransactionAspectSupport.currentTransactionStatus().isRollbackOnly());
+                    var persistenceContext = EntityManagerFactoryUtils.getTransactionalEntityManager(entityManagerFactory);
+                    event.put("persistenceTransactionRollbackOnlyAfterFailure", persistenceContext.getTransaction().getRollbackOnly());
+                }
+                throw failure;
+            }
+        };
+
+        ExecutorService callers = Executors.newFixedThreadPool(2);
+        try {
+            Future<Map<String, Object>> first = callers.submit(() -> firstIdentityOutcome(jwt));
+            Future<Map<String, Object>> second = callers.submit(() -> firstIdentityOutcome(jwt));
+            List<Map<String, Object>> outcomes = List.of(
+                    first.get(CLAIM_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+                    second.get(CLAIM_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            evidence.put("outcomes", outcomes);
+            List<Map<String, Object>> durable = jdbcTemplate.queryForList(
+                    "SELECT user_id, external_identity_provider, external_identity_subject, role, status, display_name "
+                            + "FROM users WHERE external_identity_provider = ? AND external_identity_subject = ?",
+                    "cognito", subject);
+            evidence.put("durableRows", durable);
+            long absent = events.stream().filter(e -> "lookup".equals(e.get("operation"))
+                    && Integer.valueOf(1).equals(e.get("lookupNumber")) && Boolean.TRUE.equals(e.get("absent"))).count();
+            evidence.put("initialAbsentLookups", absent);
+            assertThat(absent).isEqualTo(2);
+            assertThat(outcomes).allSatisfy(outcome -> assertThat(outcome).doesNotContainKey("failure"));
+            assertThat(outcomes.get(0).get("userId")).isEqualTo(outcomes.get(1).get("userId"));
+            assertThat(outcomes).allSatisfy(outcome -> {
+                assertThat(outcome.get("role")).isEqualTo("USER");
+                assertThat(outcome.get("status")).isEqualTo("ACTIVE");
+            });
+            assertThat(durable).hasSize(1);
+            assertThat(((Number) durable.get(0).get("user_id")).longValue())
+                    .isEqualTo(((Number) outcomes.get(0).get("userId")).longValue());
+            assertThat(durable.get(0)).containsEntry("external_identity_provider", "cognito")
+                    .containsEntry("external_identity_subject", subject).containsEntry("role", "USER")
+                    .containsEntry("status", "ACTIVE");
+            assertThat(events.stream().filter(e -> "save".equals(e.get("operation"))).toList()).hasSize(2);
+            assertThat(events.stream().filter(e -> "lookup".equals(e.get("operation"))
+                    && Integer.valueOf(2).equals(e.get("lookupNumber"))).toList())
+                    .singleElement().satisfies(event -> assertThat(event).containsEntry("absent", false)
+                            .doesNotContainKey("failure"));
+        } finally {
+            callers.shutdownNow();
+            boolean stopped = callers.awaitTermination(BARRIER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            identityObservation.observer = null;
+            jdbcTemplate.update("DELETE FROM users WHERE external_identity_provider = ? AND external_identity_subject = ?",
+                    "cognito", subject);
+            evidence.put("remainingTestRows", jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM users WHERE external_identity_provider = ? AND external_identity_subject = ?",
+                    Integer.class, "cognito", subject));
+            evidence.put("callersStopped", stopped);
+            System.out.println("PT6R1_IDENTITY_RACE " + objectMapper.writeValueAsString(evidence));
+            assertThat(stopped).isTrue();
+            assertThat(evidence.get("remainingTestRows")).isEqualTo(0);
+        }
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void externalIdentityOwnershipAndDisplayNamesRemainIsolatedAgainstMariaDb() throws Exception {
+        String prefix = "mariadb-identity-control-" + UUID.randomUUID();
+        String firstSubject = prefix + "-first";
+        String secondSubject = prefix + "-second";
+        String conflictingSubject = prefix + "-conflict";
+        String email = prefix + "@example.test";
+        Jwt firstJwt = identityJwt(firstSubject, email, null);
+        Jwt secondJwt = identityJwt(secondSubject, null, null);
+        Map<String, Object> evidence = new LinkedHashMap<>();
+        try {
+            UserEntity first = authenticatedUserService.getOrCreate(firstJwt);
+            UserEntity second = authenticatedUserService.getOrCreate(secondJwt);
+            assertThat(first.getUserId()).isNotEqualTo(second.getUserId());
+            assertThatThrownBy(() -> authenticatedUserService.getOrCreate(identityJwt(conflictingSubject, email, null)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("authenticated email is already linked to another external identity");
+            authenticatedUserService.updateCurrentDisplayName(firstJwt, "Custom nickname");
+            assertThat(authenticatedUserService.getOrCreate(firstJwt).getDisplayName()).isEqualTo("Custom nickname");
+            assertThat(authenticatedUserService.getOrCreate(identityJwt(firstSubject, email, "Explicit name"))
+                    .getDisplayName()).isEqualTo("Explicit name");
+            assertThat(first.getRole().name()).isEqualTo("USER");
+            assertThat(second.getStatus().name()).isEqualTo("ACTIVE");
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                    "SELECT user_id, external_identity_subject, email, role, status, display_name FROM users "
+                            + "WHERE external_identity_provider = ? AND external_identity_subject IN (?, ?, ?)",
+                    "cognito", firstSubject, secondSubject, conflictingSubject);
+            assertThat(rows).hasSize(2);
+            assertThat(rows).allSatisfy(row -> assertThat(row).containsEntry("role", "USER").containsEntry("status", "ACTIVE"));
+            evidence.put("durableRows", rows);
+            evidence.put("distinctIdentities", true);
+            evidence.put("emailConflictRejected", true);
+            evidence.put("fallbackPreservesCustomDisplayName", true);
+            evidence.put("explicitDisplayNameUpdates", true);
+        } finally {
+            jdbcTemplate.update("DELETE FROM users WHERE external_identity_provider = ? AND external_identity_subject IN (?, ?, ?)",
+                    "cognito", firstSubject, secondSubject, conflictingSubject);
+            int remaining = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM users WHERE external_identity_provider = ? AND external_identity_subject IN (?, ?, ?)",
+                    Integer.class, "cognito", firstSubject, secondSubject, conflictingSubject);
+            evidence.put("remainingTestRows", remaining);
+            System.out.println("PT6R1_IDENTITY_CONTROLS " + objectMapper.writeValueAsString(evidence));
+            assertThat(remaining).isZero();
+        }
+    }
+
+    private Jwt identityJwt(String subject, String email, String explicitName) {
+        var builder = Jwt.withTokenValue("local-database-control").header("alg", "RS256")
+                .subject(subject).claim("cognito:username", "Provider fallback")
+                .claim("role", "ADMIN").claim("status", "DISABLED");
+        if (email != null) builder.claim("email", email);
+        if (explicitName != null) builder.claim("name", explicitName);
+        return builder.build();
+    }
+
+    private Map<String, Object> firstIdentityOutcome(Jwt jwt) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("caller", Thread.currentThread().getName());
+        try {
+            UserEntity user = authenticatedUserService.getOrCreate(jwt);
+            result.put("userId", user.getUserId());
+            result.put("role", user.getRole().name());
+            result.put("status", user.getStatus().name());
+        } catch (Throwable failure) {
+            result.put("failure", identityFailure(failure));
+        }
+        return result;
+    }
+
+    private Map<String, Object> identityEvent(String operation, int lookupNumber) {
+        Map<String, Object> event = new LinkedHashMap<>();
+        event.put("caller", Thread.currentThread().getName());
+        event.put("operation", operation);
+        event.put("lookupNumber", lookupNumber);
+        event.put("transactionActive", TransactionSynchronizationManager.isActualTransactionActive());
+        return event;
+    }
+
+    private List<Map<String, Object>> identityFailure(Throwable failure) {
+        java.util.ArrayList<Map<String, Object>> chain = new java.util.ArrayList<>();
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("class", cause.getClass().getName());
+            entry.put("message", cause.getMessage());
+            if (cause instanceof SQLException sql) {
+                entry.put("sqlState", sql.getSQLState());
+                entry.put("errorCode", sql.getErrorCode());
+            }
+            chain.add(entry);
+        }
+        return chain;
+    }
 
     @Test
     void durableEligibilityDiscoveryExecutesAgainstMariaDb() {

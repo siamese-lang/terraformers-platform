@@ -6,17 +6,27 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class AuthenticatedUserService {
 
     private final UserRepository userRepository;
     private final JwtExternalIdentityMapper externalIdentityMapper;
+    private final TransactionTemplate identityWriteTransaction;
 
-    public AuthenticatedUserService(UserRepository userRepository, JwtExternalIdentityMapper externalIdentityMapper) {
+    public AuthenticatedUserService(
+            UserRepository userRepository,
+            JwtExternalIdentityMapper externalIdentityMapper,
+            PlatformTransactionManager transactionManager
+    ) {
         this.userRepository = userRepository;
         this.externalIdentityMapper = externalIdentityMapper;
+        this.identityWriteTransaction = new TransactionTemplate(transactionManager);
+        this.identityWriteTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     @Transactional
@@ -76,11 +86,13 @@ public class AuthenticatedUserService {
         user.setStatus(UserStatus.ACTIVE);
 
         try {
-            return userRepository.save(user);
+            // An IDENTITY insert can fail during save. Finish its rollback before any recovery query.
+            return identityWriteTransaction.execute(status -> userRepository.save(user));
         } catch (DataIntegrityViolationException exception) {
-            return findByExternalIdentity(identity)
+            // A fresh transaction also avoids the initial absent lookup's REPEATABLE-READ snapshot.
+            return identityWriteTransaction.execute(status -> findByExternalIdentity(identity)
                     .map(existing -> synchronize(existing, email, null))
-                    .orElseThrow(() -> exception);
+                    .orElseThrow(() -> exception));
         }
     }
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,12 +16,17 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class AuthenticatedUserServiceTest {
 
     private static final String PROVIDER = "test-provider";
     private UserRepository userRepository;
     private JwtExternalIdentityMapper mapper;
+    private PlatformTransactionManager transactionManager;
     private AuthenticatedUserService service;
     private Jwt jwt;
 
@@ -28,7 +34,9 @@ class AuthenticatedUserServiceTest {
     void setUp() {
         userRepository = mock(UserRepository.class);
         mapper = mock(JwtExternalIdentityMapper.class);
-        service = new AuthenticatedUserService(userRepository, mapper);
+        transactionManager = mock(PlatformTransactionManager.class);
+        when(transactionManager.getTransaction(any())).thenAnswer(ignored -> new SimpleTransactionStatus());
+        service = new AuthenticatedUserService(userRepository, mapper, transactionManager);
         jwt = Jwt.withTokenValue("token").header("alg", "none").claim("opaque", "value").build();
     }
 
@@ -105,6 +113,76 @@ class AuthenticatedUserServiceTest {
         assertThat(service.getOrCreate(jwt)).isSameAs(concurrentWinner);
         verify(userRepository, times(2))
                 .findByExternalIdentityProviderAndExternalIdentitySubject(PROVIDER, "subject");
+        var order = inOrder(transactionManager, userRepository);
+        order.verify(userRepository).findByExternalIdentityProviderAndExternalIdentitySubject(PROVIDER, "subject");
+        order.verify(transactionManager).getTransaction(any());
+        order.verify(userRepository).save(any(UserEntity.class));
+        order.verify(transactionManager).rollback(any());
+        order.verify(transactionManager).getTransaction(any());
+        order.verify(userRepository).findByExternalIdentityProviderAndExternalIdentitySubject(PROVIDER, "subject");
+        order.verify(transactionManager).commit(any());
+        verify(userRepository, times(1)).save(any());
+        ArgumentCaptor<TransactionDefinition> transactions = ArgumentCaptor.forClass(TransactionDefinition.class);
+        verify(transactionManager, times(2)).getTransaction(transactions.capture());
+        assertThat(transactions.getAllValues()).allSatisfy(definition ->
+                assertThat(definition.getPropagationBehavior()).isEqualTo(TransactionDefinition.PROPAGATION_REQUIRES_NEW));
+    }
+
+    @Test
+    void integrityFailureWithoutSameIdentityIsNotRetriedOrLinked() {
+        map(identity("subject", null, null, "fallback"));
+        when(findIdentity("subject")).thenReturn(Optional.empty());
+        DataIntegrityViolationException failure = new DataIntegrityViolationException("other constraint");
+        when(userRepository.save(any(UserEntity.class))).thenThrow(failure);
+
+        assertThatThrownBy(() -> service.getOrCreate(jwt)).isSameAs(failure);
+        verify(userRepository, times(1)).save(any());
+        verify(userRepository, times(2))
+                .findByExternalIdentityProviderAndExternalIdentitySubject(PROVIDER, "subject");
+        verify(transactionManager, times(2)).rollback(any());
+        verify(transactionManager, never()).commit(any());
+    }
+
+    @Test
+    void concurrentRecoveryPreservesPersistedRoleAndRejectsInactiveUser() {
+        map(identity("subject", null, null, "fallback"));
+        UserEntity winner = activeUser("subject", "Winner");
+        winner.setRole(UserRole.ADMIN);
+        when(findIdentity("subject")).thenReturn(Optional.empty(), Optional.of(winner));
+        when(userRepository.save(any(UserEntity.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate identity"));
+
+        assertThat(service.getOrCreate(jwt).getRole()).isEqualTo(UserRole.ADMIN);
+        assertThat(winner.getDisplayName()).isEqualTo("Winner");
+        verify(userRepository, never()).save(winner);
+
+        winner.setStatus(UserStatus.DISABLED);
+        when(findIdentity("subject")).thenReturn(Optional.empty(), Optional.of(winner));
+        assertThatThrownBy(() -> service.getOrCreate(jwt))
+                .isInstanceOf(IllegalStateException.class).hasMessage("authenticated user is not active");
+        assertThat(winner.getRole()).isEqualTo(UserRole.ADMIN);
+        assertThat(winner.getStatus()).isEqualTo(UserStatus.DISABLED);
+    }
+
+    @Test
+    void concurrentRecoveryCannotTakeEmailFromAnotherIdentity() {
+        map(identity("subject", "person@example.com", null, "fallback"));
+        UserEntity winner = activeUser("subject", "Winner");
+        ReflectionTestUtils.setField(winner, "userId", 1L);
+        UserEntity other = activeUser("other", "Other");
+        ReflectionTestUtils.setField(other, "userId", 2L);
+        other.setEmail("person@example.com");
+        when(findIdentity("subject")).thenReturn(Optional.empty(), Optional.of(winner));
+        when(userRepository.findByEmail("person@example.com"))
+                .thenReturn(Optional.empty(), Optional.of(other));
+        when(userRepository.save(any(UserEntity.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate identity"));
+
+        assertThatThrownBy(() -> service.getOrCreate(jwt))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("authenticated email is already linked to another user");
+        assertThat(winner.getEmail()).isNull();
+        verify(userRepository, never()).save(winner);
     }
 
     private void map(AuthenticatedExternalIdentity identity) {

@@ -1,0 +1,15 @@
+{
+  "status": "PASS_COMPILE_AND_EXISTING_IDENTITY_TESTS_ONLY_REAL_CONCURRENCY_NOT_EXECUTED_AFTER_COORDINATION_CHANGE",
+  "command": "source /workspace/.cloud-setup/activate.sh; mvn -o -f backend/pom.xml -Dtest=AuthenticatedUserServiceTest,CognitoJwtExternalIdentityMapperTest,ExternalIdentityMigrationTest test",
+  "tests": 14,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "rawLogSha256": "753b1a0b224987d8350ca87bef1be8e82bfd3f1fbe666d8aa583f5db75ade40e",
+  "correctedDraftTestSourceSha256": "08ec664ceed2f2dc2a6504f687e5c4fef945ebb5b88772da65a1354a786dd8f9",
+  "productionCodeChanged": false,
+  "firstBeforeAttemptPreserved": true,
+  "sameConditionAfterState": "NOT_RUN",
+  "realRepositoryDecoratorRuntimeValidated": false,
+  "additionalBeforeExecutionRequiresExplicitUserAuthority": true
+}

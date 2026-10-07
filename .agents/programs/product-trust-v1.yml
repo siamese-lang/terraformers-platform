@@ -1,7 +1,7 @@
 program:
   id: product-trust-v1
   version: 3
-  status: APPROVED_AMENDMENT_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE
+  status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
   activation_base_sha: BIND_AT_ACTIVATION
@@ -78,8 +78,14 @@ program:
     github_is_durable_ssot: true
     max_active_work_packages: 1
     codex_cloud_preferred_executor: true
-    auto_create_next_eligible_work_package: true
-    auto_advance_repository_only_phases: true
+    auto_create_next_eligible_work_package: false
+    auto_advance_repository_only_phases: false
+    post_PT6R1_human_gate: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
+    progression_resume_requires:
+      - evidence_validity_amendment_reviewed
+      - evidence_validity_amendment_explicitly_USER_approved
+      - evidence_validity_amendment_independently_accepted
+      - evidence_validity_amendment_USER_merged
     auto_repair_limit: 1
     auto_merge: false
     rerun_until_green: false
@@ -93,6 +99,7 @@ program:
 
   human_gates:
     - PROGRAM_APPROVAL
+    - PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
     - REALISTIC_DATASET_TRUTH_FREEZE
     - LIVE_REALISTIC_BASELINE
     - PRODUCT_OR_ARCHITECTURE_DECISION
@@ -232,6 +239,7 @@ program:
       activation_requires: V3_amendment_independent_acceptance_and_USER_merge
       execution_base_sha: BIND_AT_ACTIVATION
       human_gates_when: [PRODUCT_OR_ARCHITECTURE_DECISION, IAM_OR_SECURITY_BOUNDARY_EXPANSION]
+      human_gate_after_completion: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
       objective: >
         Audit and deterministically reproduce concurrent first requests for the same provider/subject
         against real MariaDB before selecting a fix. If reproduced, correct the actual persistence
@@ -253,7 +261,14 @@ program:
       title: Provider terminality and latency-budget closure
       kind: audit_and_conditional_implementation
       depends_on: [PT-6R1]
-      auto_start_after_dependencies: true
+      auto_start_after_dependencies: false
+      human_gate_before_start: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
+      activation_requires:
+        - PT6R1_independent_acceptance_and_USER_merge
+        - evidence_validity_amendment_reviewed
+        - evidence_validity_amendment_explicitly_USER_approved
+        - evidence_validity_amendment_independently_accepted
+        - evidence_validity_amendment_USER_merged
       execution_base_sha: BIND_AT_ACTIVATION
       human_gate_when: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
       objective: >

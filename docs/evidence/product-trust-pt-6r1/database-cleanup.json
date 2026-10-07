@@ -1,0 +1,39 @@
+{
+  "remainingUsersAfterAllMariaDbTests": 0,
+  "migrations": [
+    {
+      "version": "20260714.001",
+      "success": true
+    },
+    {
+      "version": "20260714.002",
+      "success": true
+    },
+    {
+      "version": "20260714.003",
+      "success": true
+    },
+    {
+      "version": "20260714.004",
+      "success": true
+    },
+    {
+      "version": "20260923.005",
+      "success": true
+    },
+    {
+      "version": "20260928.006",
+      "success": true
+    },
+    {
+      "version": "20261004.007",
+      "success": true
+    },
+    {
+      "version": "20261007.008",
+      "success": true
+    }
+  ],
+  "isolatedLocalTestContainerStoppedAndRemoved": true,
+  "retainedGcpRuntimeTouched": false
+}

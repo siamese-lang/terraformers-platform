@@ -1,0 +1,140 @@
+work_package:
+  id: product-trust-pt-6r1-first-user-identity-concurrency-v1
+  program: product-trust-v1
+  phase: PT-6R1
+  status: HUMAN_REQUIRED
+  approved_base_sha: 00872520036da38fd1809a9abf61f56d2344fcb5
+  execution_base_sha: 00872520036da38fd1809a9abf61f56d2344fcb5
+  activation:
+    main_reads_at_activation: 1
+    refresh_rebase_or_rebind: prohibited
+    main_drift: HUMAN_REQUIRED_MAIN_DRIFT
+  authority:
+    source: Explicit USER PT-6R1 bounded request in this conversation
+    predecessor_review: https://github.com/siamese-lang/terraformers-platform/pull/251#issuecomment-6031040940
+    predecessor_reviewed_head: 360fc827e2b6146f0961442b53e3eb172a8aa4e8
+    predecessor_merge_sha: 00872520036da38fd1809a9abf61f56d2344fcb5
+    predecessor_merge_at: "2026-10-07T04:46:24Z"
+    review_itself_authorizes_implementation_or_merge: false
+  objective: >
+    Concurrent first requests for one external provider/subject converge on one durable user
+    without leaked database constraint failure or privilege change. Reproduce the actual MariaDB
+    transaction mechanism before selecting any production correction.
+  procedure:
+    boundary: existing_MariaDbRepositorySmokeTest_real_prod_Spring_context_and_proxied_AuthenticatedUserService
+    identity: real_CognitoJwtExternalIdentityMapper_unique_subject_two_first_callers
+    database: existing_MariaDB_11.4_CI_service_contract_isolated_local_test_database
+    coordination: test_only_repository_observation_both_initial_absent_lookups_barrier_no_production_hook_or_sleep
+    evidence: >
+      Record lookup absence, transaction-active state, each save return/throw, re-read attempts,
+      exception/root database constraint, caller outcomes and final durable row/identity/role/status.
+      Real repository operations and transactions remain intact; all test-created rows are cleaned up.
+    before_executions: 1
+    after_same_condition_executions: 1
+    database_CI_regression: existing_automatic_MariaDB_validation_no_new_workflow_or_dispatch
+    no_reproduction: INCONCLUSIVE_STOP_NO_PRODUCTION_FIX
+    correction_selection: only_after_before_state_compare_viable_transaction_boundary_alternatives
+    repeats_for_green: prohibited
+  allowed_paths:
+    - backend/src/main/java/com/terraformers/modernization/identity/AuthenticatedUserService.java
+    - backend/src/main/java/com/terraformers/modernization/identity/UserRepository.java
+    - backend/src/main/java/com/terraformers/modernization/identity/*
+    - backend/src/test/java/com/terraformers/modernization/verification/MariaDbRepositorySmokeTest.java
+    - backend/src/test/java/com/terraformers/modernization/identity/AuthenticatedUserServiceTest.java
+    - .agents/programs/product-trust-v1.yml
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-v3-residual-closure-amendment-v1.yml
+    - .agents/work-packages/product-trust-pt-6r1-first-user-identity-concurrency-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-pt-6r1-first-user-identity-concurrency.md
+    - docs/evidence/product-trust-pt-6r1/**
+  allowed_actions:
+    - activate_one_substantive_PT6R1_branch_work_package_and_reconcile_accepted_USER_merged_v3
+    - reuse_existing_cached_Docker_MariaDB_11.4_for_isolated_database_only_and_cleanup_own_test_resources
+    - extend_existing_MariaDB_test_real_transactions_with_test_only_bounded_coordination
+    - one_before_and_one_post_correction_same_condition_local_database_scenario
+    - minimal_supported_existing_identity_transaction_boundary_correction_if_failure_reproduced
+    - focused_identity_PT5_access_full_backend_and_existing_schema_Flyway_validation
+    - commit_push_open_update_one_substantive_PT6R1_PR_and_read_CI_reviews
+  prohibited_actions:
+    - production_fix_before_actual_real_MariaDB_reproduction
+    - instantiate_service_without_Spring_proxy_as_database_proof
+    - preselect_saveAndFlush_upsert_locking_isolation_or_conflict_recovery
+    - global_isolation_change_schema_redesign_or_unproved_migration
+    - identity_account_linking_privilege_or_security_policy_change
+    - frontend_browser_model_GCP_OpenSearch_Kubernetes_Terraform_apply_IAM_IdP_or_teardown
+    - any_PT2_reopening_recovery_rerun_artifact_or_rate_change
+    - PT6R2_activation_or_future_execution_base_prediction
+    - new_workflow_database_harness_or_unrelated_framework
+    - separate_state_sync_activation_or_normalization_PR
+    - self_acceptance_self_merge_or_transient_PR_branch_state
+  acceptance_criteria:
+    - actual_before_state_root_mechanism_and_alternatives_are_recorded_before_correction
+    - both_concurrent_same_provider_subject_first_requests_succeed_with_same_userId
+    - exactly_one_durable_user_row_exists_for_the_external_identity
+    - no_raw_integrity_SQL_constraint_or_5xx_equivalent_persistence_failure_escapes
+    - durable_USER_ACTIVE_and_loser_cannot_overwrite_or_elevate_role_status
+    - distinct_external_identities_remain_distinct
+    - existing_email_owner_conflict_rejection_and_explicit_fallback_display_name_semantics_preserved
+    - PT5_owner_non_owner_anonymous_public_admin_authorization_matrix_intact
+    - same_condition_before_after_actual_MariaDB_evidence_and_test_row_cleanup
+    - PT2_final_INCOMPLETE_NOT_RUN_null_rates_censor_and_all_historical_evidence_preserved
+    - independent_acceptance_and_explicit_USER_merge_required
+  validation:
+    - focused_identity_unit_tests
+    - existing_MariaDbRepositorySmokeTest_extended_concurrency_once_post_correction
+    - existing_MariaDB_schema_repository_validation_and_Flyway_uniqueness
+    - relevant_existing_PT5_authorization_access_regressions
+    - full_offline_backend_suite_package_if_production_identity_changes
+    - scope_state_frozen_evidence_audit_and_git_diff_check
+  auto_repair_limit: 1
+  auto_repairs_used: 1
+  stop_on:
+    - MAIN_DRIFT
+    - INCONCLUSIVE_REAL_MARIADB_REPRODUCTION
+    - materially_different_mechanism_or_second_unrelated_failure_class
+    - schema_redesign_account_linking_security_or_material_portability_tradeoff
+    - PRODUCT_OR_ARCHITECTURE_DECISION
+    - corrected_deterministic_failure_repeats
+    - browser_frontend_live_cloud_model_or_new_security_work_required
+    - independent_review_and_explicit_merge_checkpoint
+  next_phase: null
+  post_completion_human_gate: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
+  blocked_next_phase: PT-6R2
+  next_phase_activation_requires: evidence_validity_amendment_reviewed_explicitly_USER_approved_independently_accepted_and_USER_merged
+  next_phase_activated_here: false
+  next_phase_execution_base_sha: null
+  current_result:
+    status: LOCAL_DETERMINISTIC_PASS_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE
+    before_state_attempts: 2
+    valid_database_race_measurements: 1
+    post_correction_database_executions: 1
+    product_root_mechanism: IMMEDIATE_IDENTITY_SAVE_UNIQUE_VIOLATION_THEN_POISONED_ROLLBACK_ONLY_SESSION_REREAD
+    production_correction_selected: true
+    test_only_observation_correction: RUNTIME_VALIDATED_REAL_REPOSITORY_DELEGATION
+    further_before_state_execution_authorized: false
+    original_measurement_failure_evidence: preserved
+  human_authorized_corrective_iterations: 1
+  human_corrective_iteration_1:
+    authority: "USER explicit reply: 추가 before-state 1회 승인"
+    maximum_additional_before_executions: 1
+    additional_before_executions_used: 1
+    autonomous_repair_counter_reset: false
+    original_measurement_failure_evidence: preserved
+    additional_after_state_authority: false
+    conditional_original_product_correction_and_after_state_authority: preserved
+  result:
+    independent_acceptance: PENDING
+    human_gate: MERGE_CHECKPOINT
+    merge_authorized: false
+    before_measurement_failures: 1
+    valid_before_state_measurements: 1
+    same_condition_after_pass: true
+    further_local_database_measurements_authorized: false
+    initial_product_implementation_attempts: 1
+    production_corrective_repairs_used: 0
+    validation_evidence: docs/evidence/product-trust-pt-6r1/validation.json
+    model_under_test_runs: 0
+    browser_executions: 0
+    live_cloud_actions: 0

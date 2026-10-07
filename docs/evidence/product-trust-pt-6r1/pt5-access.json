@@ -1,0 +1,109 @@
+{
+  "command": "mvn -o -f backend/pom.xml -Dtest=JwtResourceServerSecurityConfigTest,ProjectMetadataControllerTest,ProjectArtifactServiceTest,CognitoAccessTokenValidatorTest,AnalysisUploadControllerTest,AnalysisUploadServiceTest,AnalysisJobControllerIntegrationTest,AnalysisJobServiceTest,ProjectTreeControllerTest,TerraformDraftControllerTest,ProjectCommentControllerTest,SourceObjectReaderServiceTest,UploadObjectStorageServiceTest,ProjectDomainServiceTest test",
+  "exitCode": 0,
+  "tests": 87,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobControllerIntegrationTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.security.JwtResourceServerSecurityConfigTest",
+      "tests": "12",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.storage.SourceObjectReaderServiceTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisJobServiceTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.storage.UploadObjectStorageServiceTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisUploadServiceTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.projecttree.ProjectTreeControllerTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.analysis.AnalysisUploadControllerTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.projectcomment.ProjectCommentControllerTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.security.CognitoAccessTokenValidatorTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.projectcore.ProjectArtifactServiceTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.projectcore.ProjectDomainServiceTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.project.TerraformDraftControllerTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.project.ProjectMetadataControllerTest",
+      "tests": "27",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "logSha256": "f0281bae1d6c66db3d68c27e2415342f291877715b7ea012fcaaceedc663ff1b"
+}

@@ -1,0 +1,126 @@
+{
+  "databaseVersion": "11.4.13-MariaDB-ubu2404",
+  "isolation": "REPEATABLE-READ",
+  "provider": "cognito",
+  "subject": "mariadb-first-f115c460-e456-464f-9fd5-dd4a5fd4d1ea",
+  "springProxiedService": true,
+  "callerCount": 2,
+  "events": [
+    {
+      "caller": "pool-3-thread-2",
+      "operation": "lookup",
+      "lookupNumber": 1,
+      "transactionActive": true,
+      "absent": true
+    },
+    {
+      "caller": "pool-3-thread-1",
+      "operation": "lookup",
+      "lookupNumber": 1,
+      "transactionActive": true,
+      "absent": true
+    },
+    {
+      "caller": "pool-3-thread-2",
+      "operation": "save",
+      "lookupNumber": 0,
+      "transactionActive": true,
+      "returned": true
+    },
+    {
+      "caller": "pool-3-thread-1",
+      "operation": "save",
+      "lookupNumber": 0,
+      "transactionActive": true,
+      "failure": [
+        {
+          "class": "org.springframework.dao.DataIntegrityViolationException",
+          "message": "could not execute statement [(conn=5) Duplicate entry 'mariadb-first-f115c460-e456-464f-9fd5-dd4a5fd4d1ea' for key 'uk_users_cognito_sub'] [insert into users (created_at,display_name,email,external_identity_provider,external_identity_subject,cognito_sub,role,status,updated_at) values (?,?,?,?,?,?,?,?,?) returning user_id]; SQL [insert into users (created_at,display_name,email,external_identity_provider,external_identity_subject,cognito_sub,role,status,updated_at) values (?,?,?,?,?,?,?,?,?) returning user_id]; constraint [uk_users_cognito_sub]"
+        },
+        {
+          "class": "org.hibernate.exception.ConstraintViolationException",
+          "message": "could not execute statement [(conn=5) Duplicate entry 'mariadb-first-f115c460-e456-464f-9fd5-dd4a5fd4d1ea' for key 'uk_users_cognito_sub'] [insert into users (created_at,display_name,email,external_identity_provider,external_identity_subject,cognito_sub,role,status,updated_at) values (?,?,?,?,?,?,?,?,?) returning user_id]"
+        },
+        {
+          "class": "java.sql.SQLIntegrityConstraintViolationException",
+          "message": "(conn=5) Duplicate entry 'mariadb-first-f115c460-e456-464f-9fd5-dd4a5fd4d1ea' for key 'uk_users_cognito_sub'",
+          "sqlState": "23000",
+          "errorCode": 1062
+        }
+      ],
+      "returned": false,
+      "rollbackOnlyAfterFailure": true
+    },
+    {
+      "caller": "pool-3-thread-1",
+      "operation": "lookup",
+      "lookupNumber": 2,
+      "transactionActive": true,
+      "failure": [
+        {
+          "class": "org.hibernate.AssertionFailure",
+          "message": "null id in com.terraformers.modernization.identity.UserEntity entry (don't flush the Session after an exception occurs)"
+        }
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "caller": "pool-3-thread-1",
+      "failure": [
+        {
+          "class": "org.hibernate.AssertionFailure",
+          "message": "null id in com.terraformers.modernization.identity.UserEntity entry (don't flush the Session after an exception occurs)"
+        }
+      ]
+    },
+    {
+      "caller": "pool-3-thread-2",
+      "userId": 2,
+      "role": "USER",
+      "status": "ACTIVE"
+    }
+  ],
+  "durableRows": [
+    {
+      "user_id": 2,
+      "external_identity_provider": "cognito",
+      "external_identity_subject": "mariadb-first-f115c460-e456-464f-9fd5-dd4a5fd4d1ea",
+      "role": "USER",
+      "status": "ACTIVE",
+      "display_name": "First user"
+    }
+  ],
+  "initialAbsentLookups": 2,
+  "remainingTestRows": 0,
+  "callersStopped": true,
+  "measurement": {
+    "attempt": 2,
+    "humanAuthorizedAdditionalBeforeExecution": 1,
+    "productionSourceChanged": false,
+    "finishedAt": "2026-10-07T05:08:17Z",
+    "command": "mvn -o -f backend/pom.xml '-Dtest=MariaDbRepositorySmokeTest#concurrentFirstExternalIdentityRequestsConvergeAgainstMariaDb' test",
+    "exitCode": 1,
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "rawLogSha256": "8e2a011a2c10973572549869e373415c5935cedd209579606af7250834ba0644",
+    "testSourceSha256": "08ec664ceed2f2dc2a6504f687e5c4fef945ebb5b88772da65a1354a786dd8f9",
+    "image": "mariadb@sha256:1292844148b311e4ed4300022a996d39083f415a963e970cf47cad1b3b18e3a6"
+  },
+  "confirmedMechanism": {
+    "saveFailureImmediate": true,
+    "saveFailureDeferredToCommit": false,
+    "failedTransactionRollbackOnly": true,
+    "recoveryLookupAttempted": true,
+    "recoveryFailsInPoisonedSession": true,
+    "rootConstraint": "uk_users_cognito_sub",
+    "sqlState": "23000",
+    "vendorCode": 1062,
+    "externalIdentityMirrorNotEmailCollision": true,
+    "callerFailure": "org.hibernate.AssertionFailure",
+    "initialAbsentLookups": 2,
+    "durableRows": 1
+  }
+}

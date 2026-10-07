@@ -145,8 +145,8 @@ class AnalysisJobPartialSuccessBaselineTest {
                 .contains("Analysis job failed outcome=failed exceptionCategory=result_finalization")
                 .containsSubsequence(
                         "analysis stage outcome=success stage=analysis_execution",
-                        "analysis stage outcome=success stage=compensation",
-                        "analysis stage outcome=failure stage=result_finalize category=result_finalization"
+                        "analysis stage outcome=failure stage=result_finalize category=result_finalization",
+                        "analysis stage outcome=success stage=compensation"
                 );
     }
 

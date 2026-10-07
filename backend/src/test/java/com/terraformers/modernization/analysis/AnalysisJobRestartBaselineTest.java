@@ -154,15 +154,29 @@ class AnalysisJobRestartBaselineTest {
             assertThat(active.getClaimGeneration()).isEqualTo(1);
 
             TEST_CLOCK.set(firstLease.plusSeconds(1));
+            AnalysisJobStateService stateService = restarted.getBean(AnalysisJobStateService.class);
+            assertThat(stateService.claimEligible(jobId, TEST_CLOCK.instant(),
+                    TEST_CLOCK.instant().plusSeconds(60))).isEmpty();
             dispatcher.dispatchEligible();
-            assertThat(executor.tasks()).hasSize(1);
-            executor.runAll();
+            assertThat(executor.tasks()).isEmpty();
 
             AnalysisJobEntity recovered = repository.findById(jobId).orElseThrow();
             assertThat(recovered.getId()).isEqualTo(jobId);
-            assertThat(recovered.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
-            assertThat(recovered.getAttemptCount()).isEqualTo(2);
-            assertThat(recovered.getClaimGeneration()).isEqualTo(2);
+            assertThat(recovered.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+            assertThat(recovered.getFailureReason()).isEqualTo(AnalysisJobRunner.ATTEMPT_FAILURE_REASON);
+            assertThat(recovered.getAttemptCount()).isEqualTo(1);
+            assertThat(recovered.getClaimGeneration()).isEqualTo(1);
+            assertThat(recovered.getTerminalAt()).isEqualTo(TEST_CLOCK.instant());
+            assertThat(recovered.getLeaseExpiresAt()).isNull();
+            assertThat(recovered.getNextAttemptAt()).isNull();
+            assertThat(recovered.getResultFileId()).isNull();
+            assertThat(recovered.getResultObjectKey()).isNull();
+            assertThat(restarted.getBean(ProjectFileRepository.class)
+                    .findFirstByProject_ProjectIdAndFileTypeAndDeletedAtIsNullOrderByCreatedAtDesc(
+                            recovered.getProjectId(), "GENERATED_TERRAFORM")).isEmpty();
+            assertThat(stateService.claimEligible(jobId, TEST_CLOCK.instant(),
+                    TEST_CLOCK.instant().plusSeconds(60))).isEmpty();
+            assertThat(PROVIDER_INVOCATIONS).hasValue(0);
         }
     }
 

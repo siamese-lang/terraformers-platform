@@ -3,7 +3,7 @@
 ## Status
 
 **Approved Product Trust v4 / PT-6R1 COMPLETE / PT-6R2 policy D approved /
-HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED**
+PT-6R2 IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING**
 
 PR #253 [review 6032563396](https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032563396)
 accepted revision 2 at `690b436d69c4b1671e86b8aeb2b2249623291276`. USER merged as
@@ -23,14 +23,19 @@ cutoff 8 minutes. External result write is outside short DB finalization, late s
 success progress is post-commit, cleanup intent remains accountable and the existing lightweight
 tick sweeps over-age/exhausted jobs before dispatch. Runtime is not deployed or reconfigured.
 
-[Failed deterministic validation](../../evidence/product-trust-pt-6r2/implementation-validation.json):
-compile/test-compile pass; first focused 130 tests, 1 failure / 6 errors; one test-only bounded repair
-rerun 11 tests, 2 failures / 0 errors. Two legacy assertions were missed. Stop at **1/1 repairs**;
-no second autonomous repair or full backend tests/package. Conditional Δ model is P+B+S+T, with
-5s only under predeclared P≤2s and B/S/T≤1s assumptions, not a production SLO or outage bound.
-Overall validation, independent phase acceptance and USER merge are pending. The [current brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md)
-preserves historical audit/probe evidence and the exact implementation/failure boundary.
-No SDK/prompt/model/retrieval/scorer/security/cloud change, new framework or later-phase execution.
+[Initial failed deterministic validation](../../evidence/product-trust-pt-6r2/implementation-validation.json)
+remains byte-identical. Review 6037186101 accepted production design subject to validation; USER
+explicitly authorized one [test-contract-only human correction](../../evidence/product-trust-pt-6r2/approved-test-contract-correction.md).
+Exactly three existing tests align with already-approved semantics. Production files and PT-6R1
+identity-concurrency scenario remain unchanged. [Current local validation](../../evidence/product-trust-pt-6r2/test-contract-validation.json):
+focused 11/0/0/0 PASS, one offline clean package 576/0/0/4 PASS; MariaDB is skipped locally and the
+unchanged normal exact-head CI executes it as ordinary regression. CI outcomes live on the same PR;
+no evidence-only followup commit/new CI cycle. Auto repairs 1/1, human corrective 1.
+
+Conditional Δ remains P+B+S+T (5s model only for P≤2s, B/S/T≤1s), not a measured production SLO
+or outage bound. Stop at **PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE**, with implementation
+complete and independent phase acceptance pending. No SDK/prompt/model/retrieval/scorer/security/
+cloud change, new framework, later-phase execution, self-acceptance or merge.
 
 PT-6R1 accepted production/evidence/base/counters remain exact; no database/browser remeasurement.
 Historical PT-1 identity `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`
@@ -236,18 +241,18 @@ retry-until-green. This amendment records completion only; no production change 
 
 ### PT-6R2 — Provider terminality / latency-budget closure
 
-**Policy D / narrow correction approved; HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED.**
-V4 activation, immutable official freeze, original audit and finalization-lock probe remain durable.
-The candidate implements request budgets, SDK timeout classification, one durable attempt,
-accepted-age sweep and post-write/commit success fencing. See the [current brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md)
-for deterministic H2/timeout evidence and the conditional Δ formula/operating assumptions.
+**PT-6R2 IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING.** Original audit/probe,
+initial failed validation and exhausted autonomous repair remain immutable. Review 6037186101 is
+production-design PASS_WITH_VALIDATION_BLOCKER, not phase acceptance. Explicit USER test-contract
+correction 1 aligns exactly three legacy test files; production and PT-6R1 identity bytes stay exact.
+Focused 11/0/0/0 PASS and one full offline clean package 576/0/0/4 PASS; normal corrective-head
+Backend Local Verification is authoritative in GitHub, MariaDB skipped locally. No extra repair,
+manual DB execution or workflow rerun. Auto repair 1/1; human corrective 1.
 
-First focused 130 tests failed (1 failure / 6 errors). One test-only repair rerun 11 tests failed
-(2 failures / 0 errors); two old assertion bodies still require correction. Auto repair 1/1 and
-human corrective 0; full backend NOT_RUN. Independent review and explicit bounded test-only USER
-authority are required before further correction; original completion criteria and USER merge
-remain mandatory. No PT-7/live/model/GCP/OpenSearch/MariaDB/browser action or PT-6R1 remeasurement.
-Preserve PT-4 and original PT-2 424846-ms censor; no unconditional terminal SLO or hard cancellation.
+[Current brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md) preserves the conditional
+Δ contract/limits and source-bound evidence. Independent acceptance and explicit USER merge must
+precede further progression. PT-7 remains unauthorized. No live/model/GCP/OpenSearch/browser action;
+automatic CI never changes PT-6R1 acceptance counters or original PT-2 424846-ms censor.
 
 ### PT-7 — CI/CD trust gates and operational handoff
 
@@ -356,13 +361,11 @@ not imply that Kubernetes is required for every version of this product.
 
 ## Autonomous execution boundary
 
-Automatic Goal progression is paused at `PT6R2_BOUNDED_REPAIR_LIMIT_REACHED`.
-The approved narrow correction is a draft, with failed deterministic validation after its one
-autonomous test-only repair. Continue only after independent review and explicit bounded USER
-correction authority on the same substantive PT-6R2 PR; no second autonomous repair. Full validation,
-independent acceptance and USER merge must precede PT-7. Every next eligible Work Package binds
-actual remote main once and stops on drift; no separate state-sync PR or predicted future base.
-CI remains supporting evidence and cannot erase failures or create acceptance.
+Automatic Goal progression stops at `PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE`.
+USER-authorized test-contract correction 1 passes one local focused/full cycle; normal exact-head CI
+is GitHub-authoritative. Independent acceptance and explicit USER merge remain required; no PT-7
+execution, acceptance inference from CI or additional repair is authorized. The base remains bound,
+drift stops, no state-sync PR or predicted future base, and historical failures/counters remain exact.
 
 This autonomy does not include:
 

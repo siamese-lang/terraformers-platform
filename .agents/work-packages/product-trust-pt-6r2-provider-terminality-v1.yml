@@ -31,7 +31,7 @@ work_package:
     immutable AWS candidate approval here. Prepare grounded budget/retry options without selecting
     them. After explicit USER decision, continue this same Work Package/PR with its bounded
     implementation and deterministic hang/timeout evidence, preserving all Program criteria.
-  current_step: IMPLEMENTATION_VALIDATION_BLOCKED_AT_REPAIR_LIMIT
+  current_step: IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING
   allowed_paths_before_decision:
     - .agents/programs/product-trust-v1.yml
     - .agents/state/product-trust-v1.json
@@ -77,7 +77,7 @@ work_package:
     approved_SDK_attempts: 1
     approved_SDK_retryable_HTTP_statuses: []
     approved_application_max_attempts: 1
-    accepted_to_terminal_contract: ORIGINAL_ACCEPTED_AT_480000_MS_PLUS_BOUNDED_DELTA_NOT_YET_ESTABLISHED
+    accepted_to_terminal_contract: ORIGINAL_ACCEPTED_AT_480000_MS_PLUS_P_B_S_T_CONDITIONAL_ON_OPERATING_BOUNDS_INDEPENDENT_ACCEPTANCE_PENDING
     implementation_path_authorization: USER_APPROVED_MINIMUM_PROVIDER_JOB_CORRECTION_SUBJECT_TO_TERMINAL_SCOPE_GATE
   approved_policy_D_continuation:
     authority: explicit_USER_reply_and_attached_resume_request
@@ -162,7 +162,21 @@ work_package:
     new_live_or_general_network_redesign_authority: false
   auto_repair_limit: 1
   auto_repairs_used: 1
-  human_authorized_corrective_iterations: 0
+  human_authorized_corrective_iterations: 1
+  test_contract_correction_authority:
+    USER_request: docs/evidence/product-trust-pt-6r2/approved-test-contract-correction.md
+    independent_review: 6037186101
+    reviewed_head: 2ac19e2ca7d782bec1d47c6f29fb58543cbb3640
+    correction_iteration: 1
+    autonomous_repair_counter_reset: false
+    allowed_test_paths:
+      - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobPartialSuccessBaselineTest.java
+      - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRestartBaselineTest.java
+      - backend/src/test/java/com/terraformers/modernization/verification/MariaDbRepositorySmokeTest.java
+    production_writes: prohibited_STOP_if_new_defect_exposed
+    local_validation: affected_tests_once_then_full_offline_backend_package_once_if_passing
+    real_MariaDB_execution: normal_automatic_PR_CI_only_not_PT6R1_measurement
+    further_repair_or_workflow_rerun: prohibited
   provider_calls: 0
   live_cloud_actions: 0
   OpenSearch_operations: 0
@@ -178,7 +192,7 @@ work_package:
   result:
     audit: PREPARED_FOR_INDEPENDENT_REVIEW
     phase_complete: false
-    human_gate: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED
+    human_gate: PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE
     selected_policy: D
     policy_decision_evidence: docs/evidence/product-trust-pt-6r2/policy-d-decision.json
     terminal_scope_evidence: docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json
@@ -189,14 +203,19 @@ work_package:
     local_H2_diagnostic_executions: 1
     implementation_started: true
     production_defaults_implemented_in_candidate: true
-    implementation_validation: BUILD_FAILURE
-    implementation_validation_evidence: docs/evidence/product-trust-pt-6r2/implementation-validation.json
+    implementation_validation: BUILD_SUCCESS_LOCAL_CORRECTION_1
+    implementation_validation_evidence: docs/evidence/product-trust-pt-6r2/test-contract-validation.json
+    previous_failed_implementation_evidence: docs/evidence/product-trust-pt-6r2/implementation-validation.json
     first_focused: {tests: 130, failures: 1, errors: 6, skipped: 0}
     bounded_repair_focused: {tests: 11, failures: 2, errors: 0, skipped: 0}
-    full_backend: NOT_RUN_STOPPED_AT_REPAIR_LIMIT
+    full_backend: BUILD_SUCCESS_CORRECTION_1
+    human_correction_focused: {tests: 11, failures: 0, errors: 0, skipped: 0}
+    human_correction_full_backend: {tests: 576, failures: 0, errors: 0, skipped: 4}
+    normal_automatic_CI: GitHub_exact_corrective_head_authoritative_after_push
+    production_files_changed_by_human_iteration: false
     conditional_delta_model_ms: 5000
     conditional_delta_model_is_production_measurement: false
-    deterministic_test_invocations: 2
+    deterministic_test_invocations: 4
     embedded_H2_included: true
     independent_phase_acceptance: PENDING
     merge_authorized: false

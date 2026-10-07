@@ -1,0 +1,1050 @@
+{
+  "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+  "preCorrectionHead": "2ac19e2ca7d782bec1d47c6f29fb58543cbb3640",
+  "reviewCommentId": 6037186101,
+  "USERAuthority": "docs/evidence/product-trust-pt-6r2/approved-test-contract-correction.md",
+  "humanCorrectiveIteration": 1,
+  "autonomousRepairsUsed": 1,
+  "counterReset": false,
+  "status": "LOCAL_IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING",
+  "testSourceBindings": [
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobPartialSuccessBaselineTest.java",
+      "sha256": "b2ded499e751c348934ca69e6b23f8af7deea1c5fd6b195043b54df0d65dec85"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRestartBaselineTest.java",
+      "sha256": "7b64a21d55e9b75d2f4cbda747d7857885285a79dff22031c13c302c92be0d2c"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/verification/MariaDbRepositorySmokeTest.java",
+      "sha256": "c63ca5a852c1f30feae6fe50f21da2aaaefd0a27845b50aee0d802a6d73b6d4a"
+    }
+  ],
+  "validationPlan": {
+    "focusedCommand": "env -u SPRING_DATASOURCE_URL mvn -o -f backend/pom.xml -Dtest=AnalysisJobPartialSuccessBaselineTest,AnalysisJobRestartBaselineTest test",
+    "fullCommand": "env -u SPRING_DATASOURCE_URL mvn -o -f backend/pom.xml clean package",
+    "focusedInvocations": 1,
+    "fullInvocationsIfFocusedPasses": 1,
+    "manualMariaDBInvocations": 0,
+    "normalBackendCIExecutionsOnNewHead": 1,
+    "manualWorkflowRerunsOrDispatches": 0,
+    "stopIfAnyFailure": true
+  },
+  "focused": {
+    "result": "BUILD_SUCCESS",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "invocations": 1,
+    "logSha256": "f9f8773840133c4ee73ce8a14b94776a570ccad90d25644340b7c8bbc80ca758",
+    "reports": [
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobPartialSuccessBaselineTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "c94baad94ea234b03296ff7fbc9d82f639f6abc0f443f792c2efbd2646a1e7fb"
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobRestartBaselineTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "3413b16deac5bf60b302a77d54083efdf91dcee3c6a0c8ffe00926444bb4ce85"
+      }
+    ]
+  },
+  "fullBackend": {
+    "command": "env -u SPRING_DATASOURCE_URL mvn -o -f backend/pom.xml clean package",
+    "result": "BUILD_SUCCESS",
+    "tests": 576,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 4,
+    "invocations": 1,
+    "logSha256": "9b8d2898e595c6003c6a23828a24a0a5ab6bad8cc8e96c9e86febe8abeb61f87",
+    "reports": [
+      {
+        "class": "com.terraformers.modernization.TerraformersBackendApplicationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "61119baa60fae93b7416dada5824e59f104ed95ddce3eacd4721f9d515a38257",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisDispatchSchedulingConfigTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "fdc6ea94db035a3348dbc70d5c1116afcea764bd86edda23dc70b3c8107b358b",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobControllerIntegrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "40f7f5a4a0e99e54802185a97c2cbfb5b632c5ec41cf24a2f98501d946684b06",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobDispatcherTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "7bd8a673b064a503c07c309afebb5bd823b0ce186b1bf22369b90ae6febbc93b",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobDuplicateExecutionBaselineTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "7d7c2c675d7b6aed85254614dd9f40a6fd770821768ceb37701cb508bdb699ad",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobOrchestratorTest",
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "af1b7590247d2f44dd487d70a615fcd1d8173763c01e330faff1eb37ccf12c80",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobPartialSuccessBaselineTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "4624b1589476a03cdf5a8690b232c88ac318c0bf8490a6c8e07d5e2d9f78b1b1",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobRepositoryTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "f97eee3691856cefde23eb118a4b4ca4aca562bc9f2a96872764c4a2bcc5c312",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobResponseQualityTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "7774451328b6afa825d25afc7fe6e155028dffbf909a8d48ae56c84e5ce03657",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobRestartBaselineTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "68225dfacbd6761e4cffef8f29a2b5755d736c0c0b20f400af5eb5b4be73719a",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobRunnerTest",
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "ee6740902f22783dfae8cb805dbb77e8a6ece00484de9443f5bc8b52f3350fa5",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobServiceTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "a97154d5fff42f6af5c4e18c16ad61105cf6bf913b5ad2607b3eec4846fd8863",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisJobStateServiceTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "46ff63fd01fd7d34bf594848fe1dc97f26c26e4c0cb0ceaa5bc6dfaf348d82fd",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisLogCorrelationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "9cdcd3c922c0b0949a213304de195889dd89b8faba9c848a33a5f2de025164ff",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisObservabilityTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "fd3159138ca22191b21adf78a4fe7f882f1bff0f8bdf910740397dfe5fe8b960",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisResultCleanupDispatcherTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "522892b57d1503e4e3352793936dfb98f380dc40ec99fe16eb10b6c67a3e4569",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisResultQualityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "36a50b324d29bdcfaa6ba206cd8efe48e39e369e0152f0c490e5cf9368389336",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisResultStorageTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "254631df2abe983d90e53dff8d748f4cc199fe518f6cbd0f797260a4001e65dc",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisRuntimePropertiesTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "56ce99c07948ae66771651cd7ac11faacebcb417524ca330f7722bb717c7f942",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisUploadControllerTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "f6db0c4eb18885079afb1bd9f2baaa17650ee76de257b8e03f0f917510952cb8",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.AnalysisUploadServiceTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "f45a8595902d40de04bc422bcc45f37826d8aafd01dc93ae48ebe200157cc2f9",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.EvidenceQualityAssessorTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "287c3e669056a38c7a755adf8cee7d7a4e15a0c76398a7bd4a1df1186ef10638",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.GeneratedTerraformContractInspectorTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "d689f4a296bc5200b699b5f131da6308c438ff9e50ff868e8d607b95281ab9ac",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.ProviderFailureClassifierTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "e81640125a7293231b7149143e4dd45de8178447c35409a61e33733cc60bab00",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.SelectedAnalysisProviderTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "57b2dd313586011ff5da1ffd45aa41193677e43861e27f379dba11236558ba26",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.SqsProgressPublisherTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "77db27b955b9dbb72c3e82d4f34baedd9e97aa2555c6bc1a55ceed339ba4088f",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.StubAnalysisProviderTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "b8dbd0ce41b07c740cbc7e2d8ca5f9baa25ba8472063d469afa38bd6494b5a6a",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.TerminalQualityAssessmentMapperTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "a56e13e52e314c918c55f6e1cc2690e15f8667709bbfb71b3ca19ee080553d1f",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.TerraformCliValidatorTest",
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "b56b99f701be42d012f831a65314697b441255461f1cb0db6179ac14af2dd4c2",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.TerraformDraftValidatorTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "b339a88b66c5b3e2c4f8f379ae3cfb15d73ff655f7fade03f7ed8ad001ae3df5",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.bedrock.BedrockAnalysisProviderTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "0e0ed98d42df042afd5bc948865d60e975a37692cd2f525f446ed0a4a1fd8b41",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.bedrock.BedrockPromptBuilderTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "61829fab7d56df6677a8c6c6578f85550d6106a7a379f6194ca688558361fdba",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.bedrock.BedrockResponseParserTest",
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "956f0b5491fdcc7e0cfa1cd27c3ebce2714908cf7755cdb9707eef8d38e28149",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.bedrock.BedrockRuntimeConfigurationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "9bc7377750d0ff131ba6e061193e60d4baa4227f8995f1c86523af17b10ddebd",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.vertex.VertexAnalysisProviderTest",
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "213455646147a3c39b27f9efb0579098063626eabfccbcd4c1ab2bc92d9a11a9",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.vertex.VertexFinalClientInjectionTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "ce30190cfd49d640a3eb78ba2505e14bdff582a40c87d70d0d9a16dc56be89e6",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.vertex.VertexGenerationStageTest",
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "92b208cfd6afe78fffe6ef195f87ddb0b33b76314dfac92f6441e150ea9811f9",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.vertex.VertexPromptBuilderTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "adcddf894a31da35ccd6c8479d706a713ae3f53b5c43db2f88ddcfc6b25ff75f",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.analysis.vertex.VertexResponseParserTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "8741e096d92f98789d426ffbcd9b14e0cb4aec1cce61ef70b39a5c5aa3047b92",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.config.RuntimeAdapterContractValidatorTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "5e03735b6954a6a0c5a0747e21ceb279c2474b4d9b941ca871e8b0f994b9cf8f",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.config.RuntimeConfigInspectorTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "9c8c21743e20247704c222d7d100f3f86e08503dae03c7d5191aa0895458ba8e",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.CaseAAlternativeProbeTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "dfcf599a5bdf85ff5c37f332aae1e88f9bb3df6574b3205d1cf47ef86a7fd419",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.CaseAHoldoutDatasetTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "f5cbdbb26049011a8239cd54bfd76e184a9c42b416aee8438241f3bce3d7bf14",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.CaseAMeasurementReportTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "bdd622884ca091e29cb0526637b4d65749e49a5c88bca696a99a5a49c32081f2",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.CaseAMultiRunAggregatorTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "5d384c40ebe0c3e0ee3844b4fdbe5bb33d43acdba4402893b3d14a4cf489be08",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.CaseAQualityCalibrationTest",
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "b904f52a4394ac98eacfc8ef39610f8b533ba0a8ce2c21ca792ef8eb35a29a3e",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.EvaluationContractTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "97c52e67462cca8bf163bd8942e6b8ce12b8337506ca70ecbe07bf0be6a71288",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.EvaluationDatasetLoaderTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "df0a93205fad23b7c52e7b33453864a93c09b2f561720d4d85a08ec2db10fab4",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.EvaluationRunnerTest",
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "d7189701301475f795ba07c7d8eb2e3abc56867794e24bc6a9091c9ea48afd7d",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.LiveEvaluationLauncherTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "804d7eff180fc2de206784fed6c7aeaac5f7cfaf2ed296cbff967a9997c6a95d",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.ProductionEquivalentClosureEvaluationTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "4f7cd029716d15594d77d7e701f324b553dd0fd3301fd53bb827365d98d964c5",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.RetrievalGroundingScorerTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "481d6d0313c5833987157fa3ed0a9d06419bfddf32cfcd77002315c669795fb4",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.adaptive.AdaptiveRetrievalProbeTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "a41018c5b2bfa574be25cd9f92ef79dc3838ce359f13bed09a01f87bcf15356e",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.gemini.GeminiCanonicalEnvelopeExtractorTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "f12ae62661ddac5ddba9ffc6d9ffb36b516f9d5e1fe9db75144df81be8db2848",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.gemini.GeminiCurrentImagePipelineStageTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "db7ab280568dc9b1d0fc6944dcaf39fb641a1510963ab34aaf49244f802e0abd",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.gemini.GeminiFactReuseComparisonTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "a1b1085900cab9695c6a7084ef0afbe8f5d368a0aa2d37f680918fe61ed39f26",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.gemini.GeminiFactReuseGenerationStageTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "23248b1d34427be5f961a16f6eeb21fb44d1dd614413139cfe80820b2e0127d1",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.gemini.GeminiFactReusePipelineStageTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "39a6db92f077d889f66aa40d99117dbc62bb0ee502d9fdc598ad45e1dea398c2",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.gemini.GeminiGenerationComparisonTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "65eedb366f566d1f3267d0b5f9fb7f097ec2901d52bdee36b7a50d00420263e3",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.gemini.GeminiLatencyTelemetryTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "e46db7394f76e01f45d66830ea4581c5b3f962da67921b4274cc09adc2ecc1d0",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.gemini.GeminiThinkingComparisonTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "c106a6817785a1f546bc7382e7dfcebc1f0af5d2d4be94611c7d70c97855c318",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.gemini.LegacyGeminiModelComparisonStageTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "0d4ae89f8f66f4991a74377f5b34bdbc85eb97066417cf1255b16371a8678dc5",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.evaluation.opus.OpusGenerationEvaluationTest",
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "401f8256e242cbf7dd753d2e5444329dbe575638c6ba2b61acea043e19703577",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.identity.AuthenticatedUserServiceTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "71ff8eb361e20a27c5f67ace6d9cd930ecc7449cb71f04d605c44652e55d431d",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.identity.CognitoJwtExternalIdentityMapperTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "e025239208a2af57da2e6f7ef987b9a91f29ffe21472ffc9361d4c787faa0515",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.identity.ExternalIdentityMigrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "3318c083f805ebf1093ef1055a9ecad5039e506887354343d50b0f6bb58d07e6",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.project.ProjectMetadataControllerTest",
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "874d8a7e6743428b244f8e9168e943a697874255bdfbdce1527e9d09e6884ce8",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.project.TerraformDraftControllerTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "b2a6d4102abad35e15980e99abb0358f442ec443276d01066c9d1879a056ba87",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.projectcomment.ProjectCommentControllerTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "4f7192c5b40a30fdfc507331df868435e308c03c53a2d9e5c26b7e0df7aa895d",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.projectcore.ProjectArtifactServiceTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "d6a34b47f92257ab69dd154ceaf7e6c34dbf076bf4523ae086e411a5c675e871",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.projectcore.ProjectDomainServiceTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "5117eafd938c05e3939258177a5a39921598a7d6e650d41cfeb72dfd091fcfd5",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.projecttree.ProjectTreeControllerTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "fa896f1b61d246e2d19ccbbd4233d24826d2351202c1148b7840dfea589f10e0",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.AwsProviderSchemaCatalogTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "9914aa80061f567ae0848d2ac7d0bf2ee5445e9a90f9db95d2b00b03324d4b08",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.BedrockArchitectureFactsExtractorTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "111e7f962d8189c9dafe492a087ba55b67e1f987ce1c90dec04b5880e7b6854d",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.BedrockEmbeddingProviderTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "963ddfcb4ca331f5e7f2fad60e573aecd5ea1f24d7428e69e15cac37569d5d31",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.OfficialKnowledgeCoverageCatalogTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "a883317b01c0b1fd7ab9a8c3a979510ae5d1ba2bb1a7b12cc33d990a9fb35533",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.ReferenceQueryTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "71c524de3f528357ff8fd733672c857fa9e741ca71ce44fd12b62ebbcaf5a749",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.RetrievalModeReferenceRetrieverTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "d51d8e06f00353c8f58d622227da1d2260152c7594b446c088e64813d1c5852e",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.RetrievalQueryTextBuilderTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "87112508d7e97d24e20e99ca71c508e3e1487dfe1c7d6a74a64b5fb24dc65503",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.SelectedEmbeddingProviderTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "84c373c4ce33dbab5778531a80f25d1e94e25d954c6136be6d85d437d4d2f9a5",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.VertexArchitectureFactsExtractorTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "31baaea7964a3fd986e79a9fb6c4f6d736dff1789c49438209fd76fedc7696c4",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.VertexEmbeddingProviderTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "126d6a988ca3cff9e9c051394eb35d93097ab1931005921b0948f43d9e8d2fdc",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.opensearch.OpenSearchEndpointTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "1e28b62e77d5e59ed521680516debdc83f25d0735e87c1d7d313454bc78d02a1",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.opensearch.OpenSearchKnnQueryBuilderTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "41f71d23d42bab0f61db16538896fbd134148b742a3f126bbcfda487a549fa8a",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.opensearch.OpenSearchReferenceRetrieverTest",
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "e997f08beca9f8fd36d90739328fba0f7713f0d03439977c293ef687d1d50817",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.opensearch.OpenSearchResponseParserTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "16db356f6a33f3c75b7f1dd514053a20ee800c5ae5b264701b29a5d5ecf34dfb",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.opensearch.ReferenceEvidenceSelectorTest",
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "f49587b6093b0a21630428fa853c3742bea2fac0d77d53e3086d7d606993fa67",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.opensearch.SelectedOpenSearchTransportTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "5904a088c8d076a93b697c575c1eb2105e78874dd9fe942ccf705d1fee173986",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.reference.opensearch.SignedOpenSearchHttpClientTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "2a54b8cbec72640bc3d551aaa9de67abb979746403dfb2c7a50dfe31ff3146ea",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.security.CognitoAccessTokenValidatorTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "6e5378abbb326dce88c551eab258299ad04fa0f42d578710896ffc6f13213e73",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.security.JwtResourceServerSecurityConfigTest",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "b52b4f67863ba0a36c14230853fd43775a3fc363619d84e87f9d8c3d74b92bc3",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.AwsS3ObjectReaderTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "a6727f6ca3a9ead83653390f8a65d1e5fb226eda4c85182ce9ce8b36c5667c36",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.AwsS3ObjectWriterTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "957b0d7ba923e6e430e9b2853651b5ef70b9d4b95a0ad7de2324e4cdf845b42c",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.FileSystemObjectStoreTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "420cf67a12fb384196a05b8ac0f60d14d268fd2488d5cb0f6f7a97c640c127ff",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.GcsObjectReaderTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "36ea1987d118079a530540e071aa87a63970e86e4f8de41ee8fbb50e594ce45d",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.GcsObjectWriterTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "034899a010d4e43a4f7275d7a10da5b81ff0d2c33509c18dc1b6b89be764944c",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.SourceObjectReaderServiceTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "4350dac1eda28faa4619881ee2d9162545fa7b70e3cddf45addd241892430e22",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.StorageRuntimePropertiesTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "7f0f37577c3ad038b3e51935fcb3b9a26d3d46efbd341248a877419b351a210f",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.StubObjectReaderTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "47e28c3b344df14a98e9ae1696099de627381ccecd9ceebd3a649b8ba795e7a3",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.StubObjectWriterTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "17ea8e57ff9b6894a7c9d02010077d36ffdf6daf5175d99ab00a869b006f63ce",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.storage.UploadObjectStorageServiceTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "e339f01ba31d54a8a0a78c8911e8141c5864f1215dae3575770341f947d86d78",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.verification.MariaDbRepositorySmokeTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4,
+        "sha256": "852d2ebf79a208d45cfd10fccb950243c8cbc735bd349d7be1f100423ba0f951",
+        "failedCases": []
+      },
+      {
+        "class": "com.terraformers.modernization.web.RuntimeReadinessControllerTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "92802bb0ef5ef2418ed489872ead2b4fb02601efe970159104b56b3442282b51",
+        "failedCases": []
+      }
+    ],
+    "packageBuilt": true
+  },
+  "automaticCI": "GITHUB_EXACT_HEAD_AUTHORITATIVE_AFTER_PUSH_NOT_A_LOCAL_OR_PT6R1_MEASUREMENT",
+  "productionFilesChanged": false,
+  "phaseAcceptance": "PENDING",
+  "liveModelCloudOpenSearchCalls": 0,
+  "PT7Authorized": false,
+  "mergeAuthorized": false,
+  "previousFailedImplementationEvidence": "docs/evidence/product-trust-pt-6r2/implementation-validation.json",
+  "newProductionDefectExposed": false,
+  "repositoryValidation": {
+    "result": "PASS",
+    "checks": [
+      "same_branch_once_bound_base_and_no_main_drift",
+      "review_and_human_correction_1_no_autonomous_reset",
+      "completion_criteria_policy_D_and_earlier_phase_state_unchanged",
+      "PT6R1_PT2_frozen_candidate_root_counters_and_historical_amendments_unchanged",
+      "independent_acceptance_merge_and_PT7_still_blocked",
+      "current_gate_documents_and_transient_fields_consistent",
+      "one_local_focused_then_one_full_package_distinct_skipped_MariaDB",
+      "test_source_sha:backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobPartialSuccessBaselineTest.java",
+      "test_source_sha:backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRestartBaselineTest.java",
+      "test_source_sha:backend/src/test/java/com/terraformers/modernization/verification/MariaDbRepositorySmokeTest.java",
+      "failing_original_evidence_log_snapshots_not_replaced",
+      "production_dependency_configuration_dataset_evidence_cloud_workflow_frontend_bytes_unchanged",
+      "only_three_backend_test_files_changed",
+      "partial_success_all_assertions_preserved_except_order",
+      "restart_change_confined_to_requested_method",
+      "PT6R1_identity_concurrency_instrumentation_scenarios_unchanged",
+      "initial_one_winner_and_consumed_zero_winners_retained",
+      "allowed_iteration_scope",
+      "changed_JSON_YAML_parse",
+      "git_diff_check"
+    ],
+    "protectedExistingFilesChecked": 657,
+    "changedFiles": [
+      ".agents/programs/product-trust-v1.yml",
+      ".agents/state/product-trust-v1.json",
+      ".agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml",
+      "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobPartialSuccessBaselineTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRestartBaselineTest.java",
+      "backend/src/test/java/com/terraformers/modernization/verification/MariaDbRepositorySmokeTest.java",
+      "docs/AI_PROJECT_STATE.md",
+      "docs/evaluation/product-trust-pt-6r2-provider-terminality.md",
+      "docs/evidence/product-trust-pt-6r2/approved-test-contract-correction.md",
+      "docs/evidence/product-trust-pt-6r2/test-contract-validation.json",
+      "docs/plans/active/product-trust-modernization.md"
+    ],
+    "productionFilesChanged": false,
+    "existingAutomaticWorkflowPolicy": "PASS"
+  }
+}

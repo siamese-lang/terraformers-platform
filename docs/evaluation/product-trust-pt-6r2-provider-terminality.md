@@ -1,12 +1,16 @@
-# PT-6R2 — Option D implementation draft and failed deterministic validation
+# PT-6R2 — Option D implementation complete, independent acceptance pending
 
-**HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED.** USER released the finalization scope
-gate after [review 6036430154](https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6036430154).
-The narrow implementation is present on the same branch / draft PR #254, but its deterministic
-validation is **not complete** and it is **not merge-ready**. Execution base remains
-`406981a8c629a02503f5660453dcc7921b8d5177`; no refresh/rebase/rebind. Backend reliability advances
-Case A's provider boundary and Case B's durable accepted-job terminality; independent acceptance,
-USER merge, PT-7 and live/model/cloud/OpenSearch activity remain unauthorized.
+**PT-6R2 IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING.**
+USER-authorized test-contract correction 1 follows [review 6037186101](https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037186101)
+of head `2ac19e2ca7d782bec1d47c6f29fb58543cbb3640`: production design PASS_WITH_VALIDATION_BLOCKER,
+not implementation acceptance. Exactly three legacy tests align with already-approved Option D;
+all production files remain byte-identical to that reviewed head. Local deterministic validation
+now passes; normal corrective-head Backend Local Verification remains authoritative in GitHub.
+Independent acceptance and USER merge are required at `PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE`.
+
+Execution base remains `406981a8c629a02503f5660453dcc7921b8d5177`, same branch / draft PR #254;
+no refresh/rebase/rebind. Original failed evidence is immutable. No PT-7, live/model/GCP/OpenSearch,
+manual MariaDB/browser action, new workflow/PR, self-acceptance or merge authority.
 
 ## Current authority and correction
 
@@ -57,14 +61,46 @@ in the first focused run. Real H2 tests independently sweep a latch-blocked prov
 heartbeats, a latch-blocked external write, and reject late success/commit-time deadline crossing.
 
 The 1s B/S/T values are explicit operating assumptions, **not measured or enforced production SLOs**.
-Overall acceptance is pending failed regression validation. An unavailable DB/JVM or unbounded
+Overall independent acceptance is pending; the initial failed regression evidence below remains historical. An unavailable DB/JVM or unbounded
 scheduler/DB delay supplies no finite bound. Existing cleanup on FAILED jobs retains its serialized
 delete/row-lock path; any resulting DB wait is part of T. No general storage/network/DB timeout
 redesign occurred. A timed-out accepted job can leave a worker occupied by external work; neither
 hard thread cancellation nor upstream Google work/cost cessation is claimed. Original cutoff was
 not weakened to cover those residuals. Final live/runtime evidence still belongs to later gated phases.
 
-## Exact deterministic validation and stop
+## Human-authorized test-contract correction 1 and current validation
+
+[Bounded authority](../evidence/product-trust-pt-6r2/approved-test-contract-correction.md) and
+[current validation](../evidence/product-trust-pt-6r2/test-contract-validation.json) preserve the one-cycle
+procedure, commands, source/report/log hashes and production/identity immutability proof. No repair
+counter reset: autonomous **1/1**, human corrective **1**. No further repair is authorized.
+
+| Existing test file | Exact correction |
+| --- | --- |
+| AnalysisJobPartialSuccessBaselineTest | Only the log subsequence becomes execution success → finalization failure → compensation success; every state/metadata/cleanup/metrics/rollback assertion stays |
+| AnalysisJobRestartBaselineTest | Existing consumed-lease-expiry method asserts no queued worker or reclaim, sweep FAILED, attempt/generation 1, terminal timestamp, no result metadata or provider invocation |
+| MariaDbRepositorySmokeTest | Consumed expired row excluded; concurrent reclaim outcomes 0/0; existing terminalization SQL explicitly commits FAILED with count/generation 1 and no result; initial count-0 concurrency retains exactly one winner (0/1). Identity-concurrency code/expectations are unchanged |
+
+Local affected tests: `env -u SPRING_DATASOURCE_URL mvn -o -f backend/pom.xml
+-Dtest=AnalysisJobPartialSuccessBaselineTest,AnalysisJobRestartBaselineTest test` once:
+**11 tests, 0 failures, 0 errors, 0 skips; BUILD SUCCESS**.
+
+Then `env -u SPRING_DATASOURCE_URL mvn -o -f backend/pom.xml clean package` once:
+**576 tests, 0 failures, 0 errors, 4 skips; BUILD SUCCESS**, executable JAR repackaged.
+The four MariaDB tests are environment-gated and skipped locally; they are not counted as passing.
+The corrected repository tests are compiled locally and executed only by the unchanged automatic
+Backend Local Verification on the new exact PR head. No manual MariaDB measurement/workflow rerun.
+CI results are attached to the same PR in GitHub, avoiding another evidence-only commit/CI cycle.
+Automatic MariaDB CI is ordinary regression, not another PT-6R1 before/after acceptance measurement;
+historical PT-6R1 counters/evidence remain unchanged. Green CI alone cannot close phase acceptance.
+
+Current implementation preserves the preceding production responsibility and conditional Δ contract.
+No model/cloud/OpenSearch calls, official input execution, PT-2 activity or PT-7 start occurred.
+
+## Preserved initial implementation failures and repair-limit stop
+
+The following records describe the state at `2ac19e2ca7d782bec1d47c6f29fb58543cbb3640`, before
+USER-authorized test-contract correction 1; they are not current local validation outcomes.
 
 [Validation evidence](../evidence/product-trust-pt-6r2/implementation-validation.json) preserves
 separate commands, log/report SHA-256 bindings and changed-source hashes.
@@ -101,7 +137,7 @@ are not replaced by a successful attempt, and CI cannot override this validation
 Historical audit / scope probe / PT-2 and PT-6R1 evidence/counters and official candidate bytes are
 unchanged. Model-under-test calls, live GCP/OpenSearch/MariaDB/browser operations, workflow dispatch,
 official input execution and PT-7 execution: **0**. Embedded H2 deterministic tests are recorded
-separately; they are not new PT-6R1 before/after measurements. Same PR remains draft for independent
+separately; they are not new PT-6R1 before/after measurements. At that earlier stop the same PR remained draft for independent
 review and a specific USER bounded-correction decision; no acceptance or merge authority is inferred.
 
 ## Historical finalization scope gate

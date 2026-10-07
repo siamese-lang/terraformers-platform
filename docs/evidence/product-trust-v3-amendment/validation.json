@@ -1,0 +1,106 @@
+{
+  "status": "PASS_STRUCTURAL_GOVERNANCE_VALIDATION_ONLY",
+  "executionBaseSha": "f344552fe58db26438a4f0b2c9abb1806e6a99d9",
+  "programVersion": 3,
+  "command": "python3 /tmp/product-trust-v3-amendment-validate.py",
+  "validationImplementationScope": "One-off external metadata audit, not repository verifier infrastructure or production tests.",
+  "checks": {
+    "duplicateKeyRejectingYamlJsonParse": "PASS",
+    "dagReferencesAndNoDependencyBypass": "PASS",
+    "declaredHumanGatesAndOnceOnlyAcceptanceContracts": "PASS",
+    "manifestStateWorkPackagePlanConsistency": "PASS",
+    "pt6ReviewHeadMergeOriginalBaseAndBoundedCompletion": "PASS",
+    "pt2PermanentIncompleteNotRunNullRatesCensorAndZeroObservationEvidence": "PASS_UNCHANGED_STATE_AND_ARTIFACTS",
+    "historicalPhase1Through5StateAndEvidence": "PASS_PRESERVED",
+    "pt6FailedEvidenceCountersOriginalProcedureAndAcceptedSample": "PASS_PRESERVED",
+    "portfolioResidualsNotPromotedToPass": "PASS",
+    "noFuturePhaseActivationOrBasePrediction": "PASS",
+    "noTransientActivePrOrBranchLifecycleInDurableState": "PASS",
+    "localCrossReferences": "PASS",
+    "allowedScope": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "parsedYamlFiles": [
+    ".agents/programs/product-trust-v1.yml",
+    ".agents/work-packages/product-trust-v3-residual-closure-amendment-v1.yml",
+    ".agents/work-packages/product-trust-pt-6-browser-journey-v1.yml"
+  ],
+  "parsedJsonFiles": [
+    ".agents/state/product-trust-v1.json",
+    "docs/evidence/product-trust-v3-amendment/review-6030408825.json",
+    "docs/evidence/product-trust-v3-amendment/validation.json"
+  ],
+  "crossReferencesChecked": [
+    ".agents/programs/product-trust-v1.yml",
+    ".agents/state/product-trust-v1.json",
+    ".agents/work-packages/product-trust-pt-6-browser-journey-v1.yml",
+    ".agents/work-packages/product-trust-v3-residual-closure-amendment-v1.yml",
+    "docs/AI_PROJECT_STATE.md",
+    "docs/evaluation/product-trust-pt-2-final-disposition.md",
+    "docs/evaluation/product-trust-pt-3-origin-authorization.md",
+    "docs/evaluation/product-trust-pt-4-trust-status-waiting.md",
+    "docs/evaluation/product-trust-pt-5-access-safety.md",
+    "docs/evaluation/product-trust-pt-6-browser-journey.md",
+    "docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md",
+    "docs/evidence/product-trust-pt-6/correction-1/browser/result.json",
+    "docs/evidence/product-trust-v3-amendment/approved-request.md",
+    "docs/evidence/product-trust-v3-amendment/review-6030408825.json",
+    "docs/evidence/product-trust-v3-amendment/validation.json",
+    "docs/plans/active/product-trust-modernization.md",
+    "evaluation/terraformers-realistic-v1"
+  ],
+  "changedFilesIncludingThisReport": [
+    ".agents/programs/product-trust-v1.yml",
+    ".agents/state/product-trust-v1.json",
+    ".agents/work-packages/product-trust-pt-6-browser-journey-v1.yml",
+    ".agents/work-packages/product-trust-v3-residual-closure-amendment-v1.yml",
+    "docs/AI_PROJECT_STATE.md",
+    "docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md",
+    "docs/evidence/product-trust-v3-amendment/approved-request.md",
+    "docs/evidence/product-trust-v3-amendment/review-6030408825.json",
+    "docs/evidence/product-trust-v3-amendment/validation.json",
+    "docs/plans/active/product-trust-modernization.md"
+  ],
+  "fileSha256ExcludingThisReport": {
+    ".agents/programs/product-trust-v1.yml": "6e56d34f3d7e72716df46cf57bb2923e65fdf82cae1f45d80c2c837efdbc6ec5",
+    ".agents/state/product-trust-v1.json": "4905edd1eaab554cfabdabc25644ba4b175fbe156a708f8b8538390bdd0d9494",
+    ".agents/work-packages/product-trust-pt-6-browser-journey-v1.yml": "68c1515e77f9c0afb9e4947e7435e59a7c694d93d8d7168c6ae3cf2122f66cb7",
+    ".agents/work-packages/product-trust-v3-residual-closure-amendment-v1.yml": "c4369283d2b3f2ec39238ea7fbcdfdd4ea53f9cba873a99465e60c8d62020551",
+    "docs/AI_PROJECT_STATE.md": "ac4254ad7513ec14126a0f536595697c09b61d5eb35612c7a786a342a9a1ba7c",
+    "docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md": "be76ac80be9a8d0c3c63e07dab4197b5a2934adc197420b110e5921fdd9a68a5",
+    "docs/evidence/product-trust-v3-amendment/approved-request.md": "8182330d88fbd1c30eaf05ffa866af4ecead0c3ffe29ff55c71e91e2421da370",
+    "docs/evidence/product-trust-v3-amendment/review-6030408825.json": "812d17a369d4fa58814f9b8097952e100725f1de67806480831aafd6c411127a",
+    "docs/plans/active/product-trust-modernization.md": "533458552277861bb1a3b1afc89877a0b10bcebd7ab1b97c17a27d6c9a8651dc"
+  },
+  "historicalEvidence": {
+    "existingEvidenceAndEvaluationFilesUnchanged": 122,
+    "productTrustEvidenceFilesByteVerifiedAgainstBase": 61,
+    "productTrustEvidenceInventorySha256": "5e3201704e42a2e4b3d0ad960fa47eb399a1007f9a6ef1569ea4bce1cf4103cb",
+    "frozenDatasetPinnedFileHashesVerified": 26,
+    "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+    "pt2Disposition": "PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION",
+    "originalCase02CensorMs": 424846,
+    "pt2AggregateRealisticRates": {
+      "classificationAccuracy": null,
+      "hallucinationRate": null,
+      "semanticSuccessRate": null,
+      "executableValidityRate": null
+    },
+    "pt6OriginalBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+    "pt6AutonomousRepairs": 1,
+    "pt6HumanAuthorizedCorrections": 1
+  },
+  "currentAmendmentExecutions": {
+    "backendFrontendOrDatabaseTests": 0,
+    "browserJourneys": 0,
+    "modelCalls": 0,
+    "liveCloudActions": 0,
+    "workflowDispatches": 0,
+    "destructiveActions": 0
+  },
+  "approvalInterpretationBlockers": [],
+  "independentAcceptance": "PENDING",
+  "humanGate": "MERGE_CHECKPOINT",
+  "mergeAuthorized": false,
+  "nextActionAfterIndependentAcceptanceAndUserMerge": "Bind actual remote main once for PT-6R1 inside its substantive implementation PR."
+}

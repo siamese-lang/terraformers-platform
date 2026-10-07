@@ -12,10 +12,23 @@ beforeEach(() => { jest.clearAllMocks(); window.confirm = jest.fn(() => true); a
 test('renders owned projects as cards with status, visibility, and navigation actions', async () => {
   render(<MemoryRouter><MyProjectsPage /></MemoryRouter>);
   expect(await screen.findByText('Delete me')).toBeInTheDocument();
-  expect(screen.getByText('완료')).toBeInTheDocument();
+  expect(screen.getByText(/분석 작업의 처리가 완료/)).toBeInTheDocument();
+  expect(screen.getByText('결과 품질: 평가 기록 없음')).toBeInTheDocument();
   expect(screen.getByText('공개')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Delete me 프로젝트 상세 보기' })).toHaveAttribute('href', '/projects/42');
   expect(screen.getByRole('link', { name: '새 프로젝트 만들기' })).toHaveAttribute('href', '/generate');
+});
+
+test('completed project cards distinguish UNKNOWN from evidence-backed drafts', async () => {
+  const quality = (qualityStatus) => ({ contractVersion: 'evidence-quality-v1', qualityStatus, runtimeQualityBoundary: 'CONDITIONAL_ON_EXTRACTED_FACTS' });
+  api.get.mockResolvedValue({ data: [
+    { ...project, quality: quality('UNKNOWN') },
+    { ...project, projectId: 43, displayName: 'Grounded draft', quality: quality('EVIDENCE_BACKED') },
+  ] });
+  render(<MemoryRouter><MyProjectsPage /></MemoryRouter>);
+  await screen.findByText('Grounded draft');
+  expect(screen.getByText('결과 품질: 확인 불가 (UNKNOWN)')).toBeInTheDocument();
+  expect(screen.getByText('결과 품질: 선택된 근거로 뒷받침됨 (EVIDENCE_BACKED)')).toBeInTheDocument();
 });
 
 test('does not call DELETE when deletion is cancelled', async () => {

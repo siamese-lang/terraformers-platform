@@ -1,0 +1,129 @@
+work_package:
+  id: product-trust-pt-4-trust-status-waiting-v1
+  program: product-trust-v1
+  phase: PT-4
+  status: IMPLEMENTED_PENDING_INDEPENDENT_REVIEW
+  approved_base_sha: 5f623d820f5bf379636f933f5773f46177b5caf3
+  execution_base_sha: 5f623d820f5bf379636f933f5773f46177b5caf3
+  activated_at: "2026-10-07T01:29:08Z"
+  activation:
+    main_reads_at_activation: 1
+    refresh_rebase_or_rebind: prohibited
+    main_drift: HUMAN_REQUIRED
+  authority:
+    source: USER approved Product Trust Goal / Program repository-only DAG continuation
+    predecessor_review: https://github.com/siamese-lang/terraformers-platform/pull/247#issuecomment-6028631570
+    predecessor_reviewed_head: f127e71a5d36c9e8565c0e3e72260e67a5e71865
+    predecessor_merge_sha: 5f623d820f5bf379636f933f5773f46177b5caf3
+    predecessor_merge_at: "2026-10-07T01:05:47Z"
+    review_itself_authorizes_PT4: false
+    live_model_cloud_or_merge_authorized: false
+  objective: >
+    Make persisted processing state, output quality and accepted-to-terminal timing separately
+    visible in the supported private/project and public-detail flow. Reuse existing durable jobs
+    and quality snapshots, without fake stages, numeric confidence or completion estimates.
+  mechanism:
+    observed_gaps:
+      - project_and_tree_metadata_drop_the_existing_quality_snapshot
+      - SUCCEEDED_is_presented_as_undifferentiated_completion
+      - thirty_second_client_timer_invents_a_model_wait_stage
+      - unconditional_1_to_3_minute_guidance_conflicts_with_the_424846_ms_censor
+      - job_updatedAt_changes_on_heartbeat_and_cleanup_and_cannot_represent_terminal_time
+    selected_correction: >
+      Add a nullable terminal timestamp in the existing fenced terminal transitions, without
+      historical backfill. Expose the same-job quality and timing in existing job/project/tree
+      responses. Render shared processing/trust presentation and elapsed time anchored to durable
+      acceptance, preserve editable drafts, and show only persisted coarse states.
+    alternatives: >
+      Keeping completion-only presentation fails the approved phase. Inferring stage or terminal
+      timing from timers/updatedAt fabricates evidence. New telemetry services, status machines,
+      confidence scorers or model judges are unnecessary; use the existing job/quality contracts.
+    bounds: >
+      Terminal time records the backend terminal transition, not browser receipt or upload start.
+      Active elapsed time uses the browser clock and is approximate. Legacy terminal rows without
+      that timestamp have unknown elapsed duration; never reinterpret the original PT-2 censor.
+      Quality is conditional on extracted facts, and PT-3 omission detection is not effective IAM
+      authorization or deployment validation. No new product choice, identity or architecture.
+  allowed_paths:
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-pt-3-origin-authorization-v1.yml
+    - .agents/work-packages/product-trust-pt-4-trust-status-waiting-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-pt-3-origin-authorization.md
+    - docs/evaluation/product-trust-pt-4-trust-status-waiting.md
+    - docs/evidence/product-trust-pt-4/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobEntity.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRepository.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobOrchestrator.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobResponse.java
+    - backend/src/main/java/com/terraformers/modernization/project/ProjectResponse.java
+    - backend/src/main/java/com/terraformers/modernization/projecttree/ProjectTreeResponse.java
+    - backend/src/main/java/com/terraformers/modernization/projecttree/ProjectTreeService.java
+    - backend/src/main/resources/db/migration/V20261007_008__add_analysis_job_terminal_time.sql
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobResponseQualityTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRepositoryTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobOrchestratorTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobStateServiceTest.java
+    - backend/src/test/java/com/terraformers/modernization/project/ProjectMetadataControllerTest.java
+    - frontend/src/components/AnalysisStatus.js
+    - frontend/src/components/AnalysisStatus.test.js
+    - frontend/src/pages/ProjectDetailPage.js
+    - frontend/src/pages/ProjectDetailPage.test.js
+    - frontend/src/pages/MyProjectsPage.js
+    - frontend/src/pages/MyProjectsPage.test.js
+    - frontend/src/components/ProjectTreeReadOnly.js
+    - frontend/src/components/ProjectTreeReadOnly.test.js
+  allowed_actions:
+    - implement_existing_job_projection_timing_and_supported_UI_presentation
+    - deterministic_offline_or_mocked_backend_and_frontend_tests_and_builds
+    - existing_migration_uniqueness_check_and_CI_inspection
+    - bind_PT3_acceptance_merge_and_PT4_evidence_in_this_substantive_PR
+    - commit_push_and_open_or_update_one_PT4_PR
+  prohibited_actions:
+    - any_PT2_dispatch_rerun_continuation_exception_or_harness_recovery
+    - live_model_AI_GCP_deployment_infrastructure_IAM_or_teardown
+    - generation_quality_rules_prompt_model_retrieval_scorer_corpus_or_frozen_truth_changes
+    - new_workflow_or_orchestration_framework_or_observability_product
+    - authorization_identity_or_security_boundary_changes_reserved_for_PT5
+    - historical_timestamp_backfill_or_censor_reclassification
+    - self_acceptance_self_merge_or_PT5_execution_before_PT4_acceptance_and_merge
+    - transient_PR_branch_lifecycle_in_durable_program_state
+  acceptance_criteria:
+    - processing_success_and_output_trust_are_separate_on_project_and_public_detail
+    - UNKNOWN_DEGRADED_missing_or_unrecognized_quality_never_implies_trusted_deployment
+    - same_job_technical_knowledge_project_decision_boundary_and_reasons_are_preserved
+    - PT3_semantic_reason_is_visible_while_technical_PASS_and_editable_draft_remain
+    - no_numeric_confidence_percent_complete_or_invented_model_stage
+    - fenced_terminal_timing_survives_reload_cleanup_and_stale_worker_attempts
+    - active_elapsed_time_uses_durable_acceptance_without_reset_on_navigation
+    - legacy_or_invalid_terminal_timing_is_unknown_not_inferred_from_updatedAt
+    - unconditional_1_to_3_minute_promise_is_removed_without_a_new_SLO
+    - existing_owner_public_private_access_and_generation_contracts_remain_intact
+    - all_PT2_final_INCOMPLETE_residuals_frozen_identity_attempts_and_censor_are_preserved
+    - independent_review_and_explicit_merge_are_required
+  validation:
+    - controlled_before_correction_UI_regression_expected_failure
+    - focused_backend_persistence_terminal_and_project_projection_tests_offline
+    - focused_frontend_trust_waiting_reload_and_supported_surface_tests
+    - full_offline_backend_package_and_frontend_suite_build_after_focused_pass
+    - existing_migration_uniqueness_and_frozen_scope_state_checks
+    - git_diff_check
+  auto_repair_limit: 1
+  auto_repairs_used: 0
+  stop_on:
+    - MAIN_DRIFT
+    - acceptance_or_scope_expansion
+    - new_product_architecture_identity_security_or_live_decision
+    - more_than_one_autonomous_repair_or_changed_failure_class
+    - independent_review_and_explicit_merge_checkpoint
+  next_phase: PT-5
+  next_phase_authorized_before_PT4_acceptance_and_merge: false
+  completion:
+    implementation: DETERMINISTIC_CORRECTION_PREPARED
+    independent_acceptance: PENDING
+    current_human_gate: INDEPENDENT_REVIEW_AND_MERGE_CHECKPOINT
+    validation_evidence: docs/evidence/product-trust-pt-4/validation.json
+    model_calls: 0
+    live_cloud_actions: 0
+    auto_repairs_used: 0

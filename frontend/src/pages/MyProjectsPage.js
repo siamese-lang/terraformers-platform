@@ -3,8 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import OwnedProjectThumbnail from '../components/OwnedProjectThumbnail';
 import ProjectDeleteButton from '../components/ProjectDeleteButton';
+import AnalysisStatus from '../components/AnalysisStatus';
 
-const statusLabels = { PENDING: '대기 중', RUNNING: '분석 중', SUCCEEDED: '완료', FAILED: '실패' };
 const visibilityLabels = { PUBLIC: '공개', PRIVATE: '비공개' };
 
 function MyProjectsPage() {
@@ -49,11 +49,10 @@ function MyProjectsPage() {
       {loading ? <p>프로젝트를 불러오는 중입니다.</p> : projects.length === 0 ? <section className="empty-projects"><p>아직 생성한 프로젝트가 없습니다.</p><Link className="primary-link" to="/generate">새 프로젝트 만들기</Link></section> : <section className="project-card-grid" aria-label="내 프로젝트 목록">
         {projects.map((project) => {
           const name = project.displayName || project.projectName || `Project ${project.projectId}`;
-          const status = project.analysisStatus || 'NO_ANALYSIS';
           const visibility = project.visibility || 'PRIVATE';
           return <article key={project.projectId} className="project-card">
             <Link className="project-card-link" to={`/projects/${project.projectId}`} aria-label={`${name} 프로젝트 상세 보기`}><OwnedProjectThumbnail projectId={project.projectId} projectName={name} sourceFileId={project.sourceFileId} /><h2 className="project-card-title">{name}</h2></Link>
-            <div className="project-card-meta"><span className={`project-status-badge status-${status.toLowerCase()}`}>{statusLabels[status] || '분석 없음'}</span><span className="project-visibility-badge">{visibilityLabels[visibility] || '비공개'}</span>{(project.originalFilename || project.sourceFileName) && <p>{project.originalFilename || project.sourceFileName}</p>}</div>
+            <div className="project-card-meta"><AnalysisStatus compact status={project.analysisStatus} quality={project.quality} /><span className="project-visibility-badge">{visibilityLabels[visibility] || '비공개'}</span>{(project.originalFilename || project.sourceFileName) && <p>{project.originalFilename || project.sourceFileName}</p>}</div>
             <div className="project-card-actions"><Link className="secondary-button" to={`/projects/${project.projectId}`}>상세 보기</Link><ProjectDeleteButton projectId={project.projectId} projectName={name} onDeleted={() => deleteProject(project.projectId)} onError={setError} /></div>
           </article>;
         })}

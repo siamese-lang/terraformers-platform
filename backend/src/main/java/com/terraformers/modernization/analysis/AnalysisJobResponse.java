@@ -1,6 +1,7 @@
 package com.terraformers.modernization.analysis;
 
 import java.time.Instant;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,6 +24,7 @@ public record AnalysisJobResponse(
         List<String> warnings,
         String failureReason,
         Quality quality,
+        Timing timing,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -46,6 +48,7 @@ public record AnalysisJobResponse(
                 splitLines(entity.getAnalysisWarnings()),
                 entity.getFailureReason(),
                 Quality.from(entity),
+                Timing.from(entity),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
@@ -58,11 +61,25 @@ public record AnalysisJobResponse(
             EvidenceQualityAssessment.ProjectDecisionStatus projectDecisionStatus,
             EvidenceQualityAssessment.RuntimeQualityBoundary runtimeQualityBoundary,
             List<EvidenceQualityAssessment.Reason> reasons) {
-        static Quality from(AnalysisJobEntity entity) {
-            if (entity.getQualityContractVersion() == null) return null;
+        public static Quality from(AnalysisJobEntity entity) {
+            if (entity == null || entity.getQualityContractVersion() == null) return null;
             return new Quality(entity.getQualityContractVersion(), entity.getTechnicalStatus(),
                     entity.getKnowledgeStatus(), entity.getQualityStatus(), entity.getProjectDecisionStatus(),
                     entity.getRuntimeQualityBoundary(), entity.qualityReasonValues());
+        }
+    }
+
+    /** Persisted job acceptance to terminal transition, never inferred from updatedAt. */
+    public record Timing(Instant acceptedAt, Instant terminalAt, Long acceptedToTerminalMs) {
+        public static Timing from(AnalysisJobEntity entity) {
+            if (entity == null) return null;
+            Instant accepted = entity.getCreatedAt();
+            boolean terminal = entity.getStatus() == AnalysisJobStatus.SUCCEEDED
+                    || entity.getStatus() == AnalysisJobStatus.FAILED;
+            Instant ended = terminal ? entity.getTerminalAt() : null;
+            Long elapsed = accepted != null && ended != null && !ended.isBefore(accepted)
+                    ? Duration.between(accepted, ended).toMillis() : null;
+            return new Timing(accepted, ended, elapsed);
         }
     }
 

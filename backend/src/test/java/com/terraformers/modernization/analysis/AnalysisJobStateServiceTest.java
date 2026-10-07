@@ -152,6 +152,7 @@ class AnalysisJobStateServiceTest {
         assertThat(stateService.claimEligible(id, NOW, NOW.plusSeconds(60))).isPresent();
 
         assertThat(stateService.markFailedOwned(id, 99, NOW.plusSeconds(1), "stale")).isFalse();
+        assertThat(repository.findById(id).orElseThrow().getTerminalAt()).isNull();
         verify(orchestrator, never()).publishFailedProgress(any());
 
         assertThat(stateService.markFailedOwned(id, 1, NOW.plusSeconds(1), "owned")).isTrue();
@@ -159,6 +160,7 @@ class AnalysisJobStateServiceTest {
         AnalysisJobEntity failed = repository.findById(id).orElseThrow();
         assertThat(failed.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
         assertThat(failed.getFailureReason()).isEqualTo("owned");
+        assertThat(failed.getTerminalAt()).isEqualTo(NOW.plusSeconds(1));
         assertThat(failed.getLeaseExpiresAt()).isNull();
         assertThat(failed.getNextAttemptAt()).isNull();
     }

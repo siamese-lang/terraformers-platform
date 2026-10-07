@@ -26,6 +26,49 @@ class AnalysisJobRepositoryTest {
     private EntityManager entityManager;
 
     @Test
+    void ownedTerminalTimeSurvivesCleanupAndCannotBeReplacedByAStaleWorker() {
+        String id = savePending("terminal-time").getId();
+        entityManager.clear();
+        Instant accepted = repository.findById(id).orElseThrow().getCreatedAt();
+        Instant terminal = accepted.plusSeconds(10);
+        repository.claimEligible(id, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                accepted, accepted.plusSeconds(60));
+        repository.renewLease(id, AnalysisJobStatus.RUNNING, 1,
+                accepted.plusSeconds(1), accepted.plusSeconds(90));
+        repository.recordResultObjectIntentOwned(id, AnalysisJobStatus.RUNNING, 1,
+                accepted.plusSeconds(2), "bucket", "draft.tf", AnalysisResultCleanupStatus.PENDING);
+        assertThat(repository.findById(id).orElseThrow().getTerminalAt()).isNull();
+        assertThat(repository.markFailedOwned(id, AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED,
+                99, terminal, "stale")).isZero();
+        assertThat(repository.findById(id).orElseThrow().getTerminalAt()).isNull();
+        assertThat(repository.markFailedOwned(id, AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED,
+                1, terminal, "owned")).isEqualTo(1);
+        repository.markResultCleanupCompleted(id, 1, "bucket", "draft.tf", AnalysisResultCleanupStatus.PENDING,
+                AnalysisResultCleanupStatus.COMPLETED, terminal.plusSeconds(90));
+        entityManager.clear();
+        AnalysisJobEntity restored = repository.findById(id).orElseThrow();
+        assertThat(restored.getTerminalAt()).isEqualTo(terminal);
+        assertThat(restored.getUpdatedAt()).isAfter(terminal);
+        assertThat(AnalysisJobResponse.from(restored).timing().acceptedToTerminalMs()).isEqualTo(10000L);
+        assertThat(repository.markFailedOwned(id, AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED,
+                1, terminal.plusSeconds(120), "late")).isZero();
+        assertThat(repository.findById(id).orElseThrow().getTerminalAt()).isEqualTo(terminal);
+    }
+
+    @Test
+    void historicalTerminalRowStaysWithoutAnInferredTerminalTimeAfterUpdateAndReload() {
+        AnalysisJobEntity entity = savePending("legacy-timing");
+        entity.setStatus(AnalysisJobStatus.SUCCEEDED);
+        repository.saveAndFlush(entity);
+        entity.setAnalysisWarnings("edited later");
+        repository.saveAndFlush(entity);
+        entityManager.clear();
+        AnalysisJobEntity restored = repository.findById(entity.getId()).orElseThrow();
+        assertThat(restored.getTerminalAt()).isNull();
+        assertThat(AnalysisJobResponse.from(restored).timing().acceptedToTerminalMs()).isNull();
+    }
+
+    @Test
     void semanticOriginReasonIsPersistedWithoutTurningTechnicalPassIntoFailure() {
         AnalysisJobEntity entity = savePending("origin-authorization-reload");
         var quality = new EvidenceQualityAssessment(EvidenceQualityAssessment.CONTRACT_VERSION,

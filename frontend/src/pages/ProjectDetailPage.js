@@ -2,13 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../utils/api';
 import ProjectDeleteButton from '../components/ProjectDeleteButton';
-
-const labels = {
-  PENDING: '분석 요청이 대기 중입니다.',
-  RUNNING: 'AI가 아키텍처를 분석하고 있습니다.',
-  SUCCEEDED: '분석이 완료되었습니다.',
-  FAILED: '분석에 실패했습니다.',
-};
+import AnalysisStatus from '../components/AnalysisStatus';
 
 const visibilityDescriptions = {
   PRIVATE: '소유자만 조회할 수 있습니다.',
@@ -25,22 +19,24 @@ function ProjectDetailPage() {
   const [visibilityError, setVisibilityError] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);
-  const [waitingForBedrock, setWaitingForBedrock] = useState(false);
   const objectUrlRef = useRef(null);
 
   useEffect(() => {
     let timer;
     let active = true;
+    setProject(null);
+    setError('');
     const load = async () => {
       try {
         const response = await api.get(`/api/projects/${projectId}`);
         if (!active) return;
+        setError('');
         setProject(response.data);
         if (['PENDING', 'RUNNING'].includes(response.data.analysisStatus)) {
           timer = setTimeout(load, 2000);
         }
       } catch (err) {
-        if (active) setError(err?.response?.data || err.message);
+        if (active) setError('서버의 최신 작업 상태를 확인하지 못했습니다. 표시된 내용은 마지막 확인 기록입니다. 페이지를 다시 불러와 확인해 주세요.');
       }
     };
     load();
@@ -85,15 +81,6 @@ function ProjectDetailPage() {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
   }, []);
 
-  useEffect(() => {
-    if (project?.analysisStatus !== 'RUNNING') {
-      setWaitingForBedrock(false);
-      return undefined;
-    }
-    const timer = setTimeout(() => setWaitingForBedrock(true), 30000);
-    return () => clearTimeout(timer);
-  }, [project?.analysisStatus]);
-
   const updateVisibility = async () => {
     const nextVisibility = project.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC';
     if (!window.confirm(`프로젝트를 ${nextVisibility === 'PUBLIC' ? '공개' : '비공개'}로 전환하시겠습니까?`)) return;
@@ -110,7 +97,7 @@ function ProjectDetailPage() {
     }
   };
 
-  if (error) return <p role="alert" className="error">{error}</p>;
+  if (error && !project) return <p role="alert" className="error">{error}</p>;
   if (!project) return <p>프로젝트를 불러오는 중입니다.</p>;
 
   const isPublic = project.visibility === 'PUBLIC';
@@ -118,8 +105,9 @@ function ProjectDetailPage() {
     <section className="page-stack">
       <Link to="/projects">내 프로젝트 목록으로 돌아가기</Link>
       <h1>{project.displayName}</h1>
+      {error && <p role="alert" className="error">{error}</p>}
       <section className="project-detail-summary" aria-label="프로젝트 상태와 공개 범위">
-        <p><strong>{project.analysisStatus || 'NO_ANALYSIS'}</strong> {labels[project.analysisStatus]}</p>
+        <AnalysisStatus key={project.latestAnalysisJobId || projectId} status={project.analysisStatus} quality={project.quality} timing={project.analysisTiming} />
         <p><strong>공개 범위: {project.visibility}</strong></p>
         <p>{visibilityDescriptions[project.visibility]}</p>
         {visibilityError && <p role="alert" className="error">공개 범위 변경 실패: {visibilityError}</p>}
@@ -127,7 +115,6 @@ function ProjectDetailPage() {
           {isUpdatingVisibility ? '변경 중...' : isPublic ? '비공개로 전환' : '공개하기'}
         </button>
       </section>
-      {project.analysisStatus === 'RUNNING' && <div><p>이미지 복잡도에 따라 1~3분 정도 걸릴 수 있습니다.</p><p>다른 페이지로 이동해도 분석은 계속되며 내 프로젝트에서 다시 확인할 수 있습니다.</p>{waitingForBedrock && <p>분석 모델의 응답을 기다리고 있습니다.</p>}</div>}
       {imageUrl && <img src={imageUrl} alt={`${project.displayName} architecture`} style={{ objectFit: 'contain', maxWidth: '100%', height: 'auto', maxHeight: 640 }} />}
       {project.failureReason && <p role="alert" className="error">{project.failureReason}</p>}
       {project.analysisStatus === 'FAILED' && <Link to="/generate">새 분석 시작</Link>}

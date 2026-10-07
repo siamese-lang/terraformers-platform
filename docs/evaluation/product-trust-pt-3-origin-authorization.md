@@ -1,7 +1,12 @@
 # PT-3 — expose missing authorization on generated S3 origins
 
-Status: repository implementation / deterministic verification; independent acceptance and
-explicit merge pending. No live/model/GCP evaluation or rollout is authorized or performed.
+Status: COMPLETE within the bounded deterministic correction. Independent review
+[6028631570](https://github.com/siamese-lang/terraformers-platform/pull/247#issuecomment-6028631570)
+accepted exact head `f127e71a5d36c9e8565c0e3e72260e67a5e71865`; USER merged PR #247 as
+`5f623d820f5bf379636f933f5773f46177b5caf3` on `2026-10-07T01:05:47Z`.
+No live/model/GCP evaluation or rollout was required or performed. This completion does not
+establish effective IAM access, deployment success or realistic generalization. The approved
+Goal/Program DAG now permits repository-only PT-4; review alone grants no next-phase authority.
 
 USER approved PT-3 and the one Program amendment after independent review
 [6028079078](https://github.com/siamese-lang/terraformers-platform/pull/246#issuecomment-6028079078).
@@ -109,6 +114,7 @@ repair tests remain intact.
 
 No additional PT-2 action, frozen truth/model-output tuning, model/prompt/retrieval/scorer/corpus,
 IAM/GCP/runtime/infrastructure, teardown or frontend change occurred. Autonomous repairs used: 0.
-Independent review must verify original PT-3 criteria and limits; CI success alone is not acceptance.
-Stop at independent review / explicit merge checkpoint. New live/model evaluation requires its own
-approval; PT-4 cannot start before this correction is independently accepted and merged.
+Independent review verified original PT-3 criteria and limits; CI success alone was not acceptance.
+The independent-review / explicit-merge checkpoint is fulfilled by the binding above. New live/model
+evaluation still requires its own approval. All implementation and validation descriptions above
+refer to the accepted PT-3 revision, not a new evaluation.

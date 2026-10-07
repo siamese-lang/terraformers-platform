@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../utils/api';
+import AnalysisStatus from './AnalysisStatus';
 
 function flattenNodeCount(nodes = []) {
   return nodes.reduce((count, node) => count + 1 + flattenNodeCount(node.children || []), 0);
@@ -80,6 +81,8 @@ function normalizeTreeResponse(data, selectedProjectId) {
       latestAnalysisJobId: data.latestAnalysisJobId,
       latestResultObjectKey: data.latestResultObjectKey,
       analysisStatus: data.analysisStatus,
+      quality: data.quality,
+      analysisTiming: data.analysisTiming,
       analysisSummary: data.analysisSummary,
       detectedComponents: data.detectedComponents || [],
       detectedRelationships: data.detectedRelationships || [],
@@ -204,12 +207,10 @@ function ProjectTreeReadOnly({ selectedProjectId, refreshToken = 0 }) {
             <dt>Visibility</dt>
             <dd>{treeState.metadata.visibility}</dd>
           </div>
-          <div>
-            <dt>Analysis status</dt>
-            <dd>{treeState.metadata.analysisStatus || 'NO_ANALYSIS'}</dd>
-          </div>
         </dl>
       )}
+
+      {treeState.metadata && <AnalysisStatus key={treeState.metadata.latestAnalysisJobId || selectedProjectId} status={treeState.metadata.analysisStatus} quality={treeState.metadata.quality} timing={treeState.metadata.analysisTiming} />}
 
       {sourceImageUrl && <section className="project-source-image-section"><h3>Original architecture image</h3><div className="project-source-image-wrapper"><img src={sourceImageUrl} alt="Persisted architecture" className="project-source-image" /></div></section>}
 

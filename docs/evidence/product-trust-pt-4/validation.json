@@ -1,0 +1,253 @@
+{
+  "workPackage": "product-trust-pt-4-trust-status-waiting-v1",
+  "executionBaseSha": "5f623d820f5bf379636f933f5773f46177b5caf3",
+  "mainReadsAtActivation": 1,
+  "mainDrift": "PASS_NO_REFRESH",
+  "predecessor": {
+    "phase": "PT-3",
+    "independentReviewCommentId": 6028631570,
+    "reviewedHead": "f127e71a5d36c9e8565c0e3e72260e67a5e71865",
+    "mergedPullRequest": 247,
+    "mergedMainSha": "5f623d820f5bf379636f933f5773f46177b5caf3",
+    "acceptedBoundary": "DETERMINISTIC_OMISSION_CORRECTION_ONLY"
+  },
+  "environment": {
+    "java": "Temurin 17.0.18+8",
+    "maven": "3.9.9",
+    "mavenOffline": true,
+    "node": "24.19.0",
+    "npm": "11.9.0",
+    "newDependenciesInstalled": false,
+    "localMariaDbOrApplicationServersStarted": false
+  },
+  "beforeRegression": {
+    "command": "CI=true npm test -- --runInBand --runTestsByPath src/pages/ProjectDetailPage.test.js --testNamePattern='separates completed processing'",
+    "exitCode": 1,
+    "selectedTests": 1,
+    "failures": 1,
+    "filteredOutTests": 11,
+    "expectedFailure": true,
+    "finding": "Pre-correction page did not display persisted UNKNOWN quality",
+    "notAutonomousRepair": true,
+    "notLiveProductSample": true
+  },
+  "focusedBackend": {
+    "command": "mvn -o -Dtest=AnalysisJobResponseQualityTest,AnalysisJobRepositoryTest,AnalysisJobOrchestratorTest,AnalysisJobStateServiceTest,ProjectMetadataControllerTest test",
+    "exitCode": 0,
+    "tests": 45,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "classes": [
+      {
+        "name": "com.terraformers.modernization.analysis.AnalysisJobOrchestratorTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.terraformers.modernization.analysis.AnalysisJobRepositoryTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.terraformers.modernization.analysis.AnalysisJobResponseQualityTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.terraformers.modernization.analysis.AnalysisJobStateServiceTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.terraformers.modernization.project.ProjectMetadataControllerTest",
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "focusedFrontend": {
+    "command": "CI=true npm test -- --runInBand --runTestsByPath src/components/AnalysisStatus.test.js src/pages/ProjectDetailPage.test.js src/pages/MyProjectsPage.test.js src/components/ProjectTreeReadOnly.test.js",
+    "exitCode": 0,
+    "suites": 4,
+    "tests": 40,
+    "failed": 0,
+    "skipped": 0
+  },
+  "fullBackend": {
+    "command": "mvn -o clean package",
+    "exitCode": 0,
+    "tests": 526,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 2,
+    "passed": 524,
+    "artifact": "backend/target/terraformers-backend-modernization-0.1.0-SNAPSHOT.jar",
+    "onlySkipped": "2 existing external MariaDbRepositorySmokeTest tests"
+  },
+  "fullFrontend": {
+    "command": "CI=true npm test -- --runInBand --json --outputFile=/tmp/pt4-frontend-full-results.json",
+    "exitCode": 0,
+    "suites": 13,
+    "tests": 82,
+    "passed": 82,
+    "failed": 0,
+    "skipped": 0
+  },
+  "frontendBuild": {
+    "command": "CI=true npm run build",
+    "exitCode": 0,
+    "result": "Compiled successfully",
+    "assetManifestSha256": "f1796a9308aea6d4dd9b561a49ce1a0ec91048e02877fe68207b7320110793d0"
+  },
+  "migration": {
+    "command": "bash scripts/checks/flyway-migration-uniqueness.sh",
+    "exitCode": 0,
+    "uniqueVersions": 8,
+    "newVersion": "20261007.008",
+    "historicalBackfill": false,
+    "localMariaDbCompatibility": "NOT_RUN_EXTERNAL_SERVICE",
+    "existingPrCiSuppliesMariaDbCompatibility": true
+  },
+  "frozenIdentity": {
+    "status": "PASS",
+    "filesVerified": 26,
+    "identitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014"
+  },
+  "pt2RawArchivesUnchanged": [
+    {
+      "path": "docs/evidence/product-trust-pt-2/original-run-37480519016.zip",
+      "sha256": "499f31b4311737884a2b7d0fc0405d477be7e41a99e9969217570c91eb5ac561",
+      "inventorySha256": "107d31a942dcbc23bbfaf1f81e7c1b9c6a2fac4224d5689edb216a0bd4378f3d"
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-2/recovery-run-37509368210.zip",
+      "sha256": "c09ddf1c8273ddd0bcf29cfc06bd77b53548fef01225ac4c0e9caf8490281023",
+      "inventorySha256": "5213ed62ce2f18a6bcede35a95697b003a3c589d3163bf894907eee57e2987ca"
+    }
+  ],
+  "pt2FinalDispositionAndAllHistoricalAttemptsCensorAndResiduals": "UNCHANGED",
+  "pt2AggregateRealisticRates": null,
+  "additionalPt2ExecutionAuthorized": false,
+  "programManifestAndSingleAmendment": "BYTE_UNCHANGED",
+  "generationQualityRulesPromptModelRetrievalScorerCorpus": "UNCHANGED",
+  "stateAndScopeAudit": "PASS",
+  "diffCheck": "PASS",
+  "transientActivePrBranchFields": null,
+  "autoRepairsUsed": 0,
+  "modelCalls": 0,
+  "liveCloudActions": 0,
+  "independentAcceptance": "PENDING",
+  "mergeAuthorized": false,
+  "pt5ExecutionAuthorized": false,
+  "acceptanceEvidence": {
+    "separateProcessingAndQuality": "AnalysisStatus status/quality cases plus metadataAndPublicTreeExposeTheSameJobQualityAndTiming",
+    "semanticReasonAndDraft": "completed DEGRADED editable-draft reload and public detail tests",
+    "fencedDurableTiming": "ownedTerminalTimeSurvivesCleanupAndCannotBeReplacedByAStaleWorker, onlyOwnedFailurePublishesFailedProgress and orchestrator terminal tests",
+    "noHistoricalLatencyInference": "legacyCompletedProjectDoesNotInventQualityOrLatencyFromLaterMetadataUpdate and terminalDurationUsesTerminalTimeAndLeavesLegacyOrInvalidTimingUnknown",
+    "reloadAndTruthfulWaiting": "durable acceptance remount, terminal freeze, invalid clock and failed detail refresh regressions",
+    "noNewTrustOrGeneralizationClaims": "conditional evidence/IAM wording and preserved exact PT-2/frozen state"
+  },
+  "limits": [
+    "Backend transition timestamps exclude pre-job upload and browser receipt delay; not database-commit instrumentation",
+    "Active elapsed time is approximate browser-clock time; terminal duration may be unknown for legacy or invalid time",
+    "Public detail is a fetched durable snapshot, not a provider-stage stream",
+    "No browser E2E/live product acceptance or model/workload latency reduction claimed"
+  ],
+  "sourceFiles": [
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobEntity.java",
+      "sha256": "ec7086632c20ec731951017bc00ea283afe9b7d1d30351575590032fe4737f7e"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobOrchestrator.java",
+      "sha256": "1e054c86552e3b76a00c03d561ab83b31e03607ad6bccb9d50a41cb878660e3e"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRepository.java",
+      "sha256": "065e307e038f47ada12799e84229125e88da320bac9818d750971d72ef2c75d2"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobResponse.java",
+      "sha256": "7d40ef747658a5c94728a42d6f32e4e81833ea183950bc7b54ff5fb12c35d517"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/project/ProjectResponse.java",
+      "sha256": "c67d01b347424d744c02648a0aea4571bc2468147c1f50132a40cf6c04468d7c"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/projecttree/ProjectTreeResponse.java",
+      "sha256": "9a7f19170f8128a71a9dfbd32c2c8803305c5a6ca124132ab3e23769d2f89be9"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/projecttree/ProjectTreeService.java",
+      "sha256": "06e147665995ccdf42d72b9634d66d2c23d6ec8cbd8bb85f0a6ee6ec3de21baa"
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V20261007_008__add_analysis_job_terminal_time.sql",
+      "sha256": "f4bccef5364e3de22a60dcb4bc665415ed47f30eba33084cb4b9efe344b67c7d"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobOrchestratorTest.java",
+      "sha256": "76d2e5c8ff2c497a6387619c05b1454394f2e2714f184d59cb96c51e636b1a0a"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRepositoryTest.java",
+      "sha256": "1bcdd84c9eedfdcf5e1c0636d1d28622596d2f0ca2226f1a290368592081d35a"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobResponseQualityTest.java",
+      "sha256": "e37de64696d19253b70f8117fd1760032f331010467e20b107f5bc1a05a49f66"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobStateServiceTest.java",
+      "sha256": "ca64cb610b957dc6fe8f58b9792d2bb77b461d0f6391c3052197a99e782c5c4e"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/project/ProjectMetadataControllerTest.java",
+      "sha256": "2d0c07d36dd2deb5e0d5ad105c1935fc19f042275d54d4e137d44aaa6c6136a8"
+    },
+    {
+      "path": "frontend/src/components/AnalysisStatus.js",
+      "sha256": "21da647de99cbc5edf8d5edf54d7a396165984d530357749c8f3ed20458d05e4"
+    },
+    {
+      "path": "frontend/src/components/AnalysisStatus.test.js",
+      "sha256": "edbf97b2c8b44a39c8405ac476d7f8d40783998af3f12b8167a83c5525339674"
+    },
+    {
+      "path": "frontend/src/components/ProjectTreeReadOnly.js",
+      "sha256": "7f2a0fb37fc3668fb4de5c3b3cd937f94fb46ff135f1a959a4bef30d681812f5"
+    },
+    {
+      "path": "frontend/src/components/ProjectTreeReadOnly.test.js",
+      "sha256": "a45e30837de4841f40acb54a9e722702a01e8f168e5b50aeaca7c8bb5aa37de7"
+    },
+    {
+      "path": "frontend/src/pages/MyProjectsPage.js",
+      "sha256": "51b552922283502e6efd12312a65c4e34637636c9a1fa0ddb9dd811ab8df84dc"
+    },
+    {
+      "path": "frontend/src/pages/MyProjectsPage.test.js",
+      "sha256": "dcd5d15de41bab5195ed1b8568c445e2eae98a70796a832dc2c208e668dfa786"
+    },
+    {
+      "path": "frontend/src/pages/ProjectDetailPage.js",
+      "sha256": "e0322b93701226b3176ae647e52a12682884106fe696a04b7ed75a4cb41583a1"
+    },
+    {
+      "path": "frontend/src/pages/ProjectDetailPage.test.js",
+      "sha256": "45dd27f3c0e1797c714f7c75c9684d0f4fa5e86ae2e065e92fc7da893b361952"
+    }
+  ]
+}

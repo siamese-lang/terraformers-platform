@@ -124,6 +124,7 @@ public class AnalysisJobOrchestrator {
         entity.setDetectedComponents(String.join("\n", result.components() == null ? java.util.List.of() : result.components()));
         entity.setDetectedRelationships(String.join("\n", result.relationships() == null ? java.util.List.of() : result.relationships()));
         entity.setAnalysisWarnings(String.join("\n", result.warnings() == null ? java.util.List.of() : result.warnings()));
+        entity.setTerminalAt(java.time.Instant.now());
         progressPublisher.publish(ProgressEvent.of(entity, AnalysisJobStatus.SUCCEEDED, "analysis job completed"));
     }
 
@@ -134,6 +135,7 @@ public class AnalysisJobOrchestrator {
     public void markFailed(AnalysisJobEntity entity, String failureReason) {
         entity.setStatus(AnalysisJobStatus.FAILED);
         entity.setFailureReason(safeFailureReason(failureReason));
+        entity.setTerminalAt(java.time.Instant.now());
         publishFailedProgress(entity);
     }
 

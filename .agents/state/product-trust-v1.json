@@ -4,9 +4,9 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": null,
+  "activePhase": "PT-6R1",
   "lastCompletedPhase": "PT-6",
-  "activeWorkPackage": "product-trust-v3-residual-closure-amendment-v1",
+  "activeWorkPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
   "activePullRequest": null,
   "humanGate": "MERGE_CHECKPOINT",
   "liveRuntime": {
@@ -31,13 +31,15 @@
     "Current USER decision closes PT-2 as final INCOMPLETE evidence and authorizes repository-only PT-3 in one substantive PR. Earlier pending/unapproved notes remain historical. No more PT-2 dispatch, exception or harness recovery; no ten-case/aggregate realistic metric claim. PT-4 owns quality presentation and latency guidance.",
     "PR #247 independent review 6028631570 accepted exact head f127e71a5d36c9e8565c0e3e72260e67a5e71865; USER merged it as 5f623d820f5bf379636f933f5773f46177b5caf3. The approved Goal/Program DAG, not review alone, activates repository-only PT-4. PT-2 final INCOMPLETE, original censor/attempts/frozen bytes and all live/security/merge gates are preserved.",
     "PR #248 review 6029174275 independently accepted head 68110fc0429d88b3211c5811b1c470770bc4c3f7; USER merged it as 0c4fa0e9616881e281aa027a18a9d741ff614699. Goal/Program activates repository-only PT-5 on that once-bound main. Audit tightens default JWT routing while preserving existing owner/admin/public/comment policy. Deterministic JWKS is not a permanent production IdP; no model/cloud/runtime/IAM action or further PT-2 execution is authorized. GitHub alone owns transient PR lifecycle.",
-    "Historical preparation/gate notes above are superseded only where independently reviewed evidence and USER decisions permit. PR #250 review 6030408825 accepted head 0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a and USER merged it as f344552fe58db26438a4f0b2c9abb1806e6a99d9. PT-6 is COMPLETE for deterministic browser integration only; original failed evidence, base and counters remain preserved. USER-approved v3 residual closure is prepared in one repository-only amendment PR; no PT-6R1/later phase or live/model action is executed now, no future base is predicted, and GitHub alone owns transient PR lifecycle."
+    "Historical preparation/gate notes above are superseded only where independently reviewed evidence and USER decisions permit. PR #250 review 6030408825 accepted head 0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a and USER merged it as f344552fe58db26438a4f0b2c9abb1806e6a99d9. PT-6 is COMPLETE for deterministic browser integration only; original failed evidence, base and counters remain preserved. USER-approved v3 residual closure is prepared in one repository-only amendment PR; no PT-6R1/later phase or live/model action is executed now, no future base is predicted, and GitHub alone owns transient PR lifecycle.",
+    "PR #251 review 6031040940 independently accepted head 360fc827e2b6146f0961442b53e3eb172a8aa4e8; USER merged it as 00872520036da38fd1809a9abf61f56d2344fcb5. Explicit USER approves exactly PT-6R1, activated on that once-read main in this substantive PR. Real MariaDB reproduction must precede correction selection. No PT-6R2 or browser/model/cloud/security/teardown activity, and no transient active PR/branch lifecycle registration.",
+    "PT-6R1 first measurement failed only in Mockito instrumentation and is preserved. One test-only autonomous repair stays consumed. USER explicitly authorized one additional before execution as human corrective iteration 1; it reproduced immediate IDENTITY save uniqueness failure and poisoned rollback-only session re-read. One initial bounded transaction correction and one same-condition local after-state pass, with identity/PT-5/full backend validation. No additional measurement, acceptance, merge, PT-6R2 or live authority is inferred."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
-  "executionBaseSha": "f344552fe58db26438a4f0b2c9abb1806e6a99d9",
-  "resultBeforeHumanGate": "V3_RESIDUAL_CLOSURE_AMENDMENT_PREPARED_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE",
+  "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+  "resultBeforeHumanGate": "PT6R1_LOCAL_DETERMINISTIC_PASS_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -57,10 +59,9 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "Independent acceptance and explicit USER merge of the v3 amendment are required before PT-6R1 activation.",
-    "No future phase execution base is predicted or bound in this amendment."
+    "PT-6R1 original-criteria independent acceptance and explicit USER merge are required; CI success is not acceptance."
   ],
-  "evidenceDocument": "docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md",
+  "evidenceDocument": "docs/evaluation/product-trust-pt-6r1-first-user-identity-concurrency.md",
   "validation": {
     "initialFocused": {
       "tests": 10,
@@ -133,7 +134,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+  "lastObservedMainSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -243,21 +244,19 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6030408825,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/250#issuecomment-6030408825",
+    "commentId": 6031040940,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/251#issuecomment-6031040940",
     "decision": "ACCEPTED",
-    "reviewedHeadSha": "0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a",
-    "workPackage": "product-trust-pt-6-browser-journey-v1",
-    "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+    "reviewedHeadSha": "360fc827e2b6146f0961442b53e3eb172a8aa4e8",
+    "executionBaseSha": "f344552fe58db26438a4f0b2c9abb1806e6a99d9",
+    "workPackage": "product-trust-v3-residual-closure-amendment-v1",
     "independentAcceptance": "PASS",
-    "mergeRecommendation": "APPROVE",
-    "reviewGrantsMergeAuthority": false,
-    "reviewGrantsLaterPhaseOrLiveAuthority": false
+    "reviewGrantsImplementationOrMergeAuthority": false
   },
-  "lastCompletedWorkPackage": "product-trust-pt-6-browser-journey-v1",
-  "lastCompletedPullRequest": 250,
-  "nextPhase": "PT-6R1",
-  "executionBaseWorkPackage": "product-trust-v3-residual-closure-amendment-v1",
+  "lastCompletedWorkPackage": "product-trust-v3-residual-closure-amendment-v1",
+  "lastCompletedPullRequest": 251,
+  "nextPhase": "PT-6R2",
+  "executionBaseWorkPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
   "truthFreezeApproval": {
     "marker": "[HUMAN_GATE_APPROVAL:v1]",
     "commentId": 6015857324,
@@ -373,15 +372,14 @@
     }
   },
   "blockedNextPhase": {
-    "phase": "PT-6R1",
-    "status": "AWAITING_V3_AMENDMENT_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE",
+    "phase": "PT-6R2",
+    "status": "AWAITING_PT6R1_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE",
     "executionAuthorized": false,
     "executionStarted": false,
     "workPackage": null,
     "executionBaseSha": null,
     "modelUnderTestRunCount": 0,
-    "liveCloudActions": 0,
-    "activationRule": "Bind actual remote main once after amendment independent acceptance and USER merge, inside the substantive PT-6R1 PR; no separate activation/state-sync PR."
+    "liveCloudActions": 0
   },
   "prReviewFeedbackHistory": [
     {
@@ -539,6 +537,16 @@
       "mergeRecommendation": "APPROVE",
       "reviewGrantsMergeAuthority": false,
       "reviewGrantsLaterPhaseOrLiveAuthority": false
+    },
+    {
+      "commentId": 6031040940,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/251#issuecomment-6031040940",
+      "decision": "ACCEPTED",
+      "reviewedHeadSha": "360fc827e2b6146f0961442b53e3eb172a8aa4e8",
+      "executionBaseSha": "f344552fe58db26438a4f0b2c9abb1806e6a99d9",
+      "workPackage": "product-trust-v3-residual-closure-amendment-v1",
+      "independentAcceptance": "PASS",
+      "reviewGrantsImplementationOrMergeAuthority": false
     }
   ],
   "repositoryStateUpdate": {
@@ -945,6 +953,78 @@
       "mergedMainSha": "f344552fe58db26438a4f0b2c9abb1806e6a99d9",
       "mergedAt": "2026-10-07T03:53:53Z",
       "completionBoundary": "DETERMINISTIC_BROWSER_INTEGRATION_ONLY_NO_PRODUCTION_IDP_MODEL_QUALITY_OR_GENERALIZATION"
+    },
+    "PT-6R1": {
+      "status": "LOCAL_DETERMINISTIC_PASS_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE",
+      "workPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+      "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+      "activatedAt": "2026-10-07T04:55:13Z",
+      "mainReadsAtActivation": 1,
+      "authorization": "Explicit USER PT-6R1 bounded request after v3 independent acceptance and USER merge",
+      "predecessorReviewCommentId": 6031040940,
+      "autoRepairsUsed": 1,
+      "humanAuthorizedCorrectiveIterations": 1,
+      "beforeStateExecutions": 2,
+      "afterStateExecutions": 1,
+      "productionCorrectionSelected": true,
+      "modelUnderTestRunCount": 0,
+      "browserExecutions": 0,
+      "liveCloudActions": 0,
+      "independentAcceptance": "PENDING",
+      "mergeAuthorized": false,
+      "validBeforeStateMeasurements": 1,
+      "productionCodeChanged": true,
+      "measurementCorrection": "TEST_ONLY_REAL_REPOSITORY_DECORATOR_RUNTIME_VALIDATED",
+      "additionalBeforeStateExecutionAuthorized": false,
+      "beforeEvidence": "docs/evidence/product-trust-pt-6r1/before-state.json",
+      "draftValidation": "docs/evidence/product-trust-pt-6r1/draft-validation.json",
+      "confirmedRootMechanism": "IMMEDIATE_IDENTITY_SAVE_UNIQUE_VIOLATION_THEN_POISONED_ROLLBACK_ONLY_SESSION_REREAD",
+      "additionalBeforeStateExecutionLimit": 1,
+      "additionalBeforeStateExecutionsUsed": 1,
+      "humanCorrectiveIteration1": {
+        "authority": "USER explicit reply: 추가 before-state 1회 승인",
+        "scope": "One additional real-MariaDB before-state only; conditional minimum product correction and one after-state remain under original authority.",
+        "maximumAdditionalBeforeExecutions": 1,
+        "additionalBeforeExecutionsUsed": 1,
+        "originalFailureEvidencePreserved": true,
+        "autonomousRepairCounterReset": false,
+        "extraAfterStateExecutionsAuthorized": 0
+      },
+      "preservedMeasurementFailureEvidence": "docs/evidence/product-trust-pt-6r1/before-state-measurement-failure.json",
+      "afterEvidence": "docs/evidence/product-trust-pt-6r1/after-state.json",
+      "validationEvidence": "docs/evidence/product-trust-pt-6r1/validation.json",
+      "localValidation": {
+        "identity": {
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "mariaDb": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "schemaPassed": true
+        },
+        "pt5Access": {
+          "tests": 87,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "fullBackend": {
+          "tests": 557,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 4
+        }
+      },
+      "sameConditionAfterPass": true,
+      "furtherLocalDatabaseMeasurementsAuthorized": false,
+      "initialImplementationAttempts": 1,
+      "productionCorrectiveRepairsUsed": 0,
+      "measurementFailures": 1
     }
   },
   "goalContinuation": {
@@ -981,9 +1061,9 @@
       "approvalEvidence": "docs/evidence/product-trust-v3-amendment/approved-request.md",
       "executionBaseSha": "f344552fe58db26438a4f0b2c9abb1806e6a99d9",
       "workPackage": "product-trust-v3-residual-closure-amendment-v1",
-      "status": "PREPARED_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE",
-      "independentAcceptance": "PENDING",
-      "mergeAuthorized": false,
+      "status": "COMPLETE",
+      "independentAcceptance": "PASS",
+      "mergeAuthorized": true,
       "remainingMandatoryOrder": [
         "PT-6R1",
         "PT-6R2",
@@ -1004,7 +1084,13 @@
       "destructiveActions": 0,
       "validationEvidence": "docs/evidence/product-trust-v3-amendment/validation.json",
       "autoRepairsUsed": 0,
-      "historicalRepairCountersReset": false
+      "historicalRepairCountersReset": false,
+      "independentReviewCommentId": 6031040940,
+      "reviewedHeadSha": "360fc827e2b6146f0961442b53e3eb172a8aa4e8",
+      "mergedPullRequest": 251,
+      "mergedMainSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+      "mergedAt": "2026-10-07T04:46:24Z",
+      "mergeAuthority": "USER_ACTUAL_MERGE_OF_PR_251"
     }
   ],
   "mandatoryPhaseInputs": {

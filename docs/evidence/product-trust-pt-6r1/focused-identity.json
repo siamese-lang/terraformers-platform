@@ -1,0 +1,32 @@
+{
+  "command": "mvn -o -f backend/pom.xml -Dtest=AuthenticatedUserServiceTest,CognitoJwtExternalIdentityMapperTest,ExternalIdentityMigrationTest test",
+  "exitCode": 0,
+  "logSha256": "6baf118e3c5eb4e01995923e3ae242d8aa21ff1dbe86c31534e52a1d5c658a35",
+  "tests": 17,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "name": "com.terraformers.modernization.identity.AuthenticatedUserServiceTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.identity.CognitoJwtExternalIdentityMapperTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.terraformers.modernization.identity.ExternalIdentityMigrationTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ]
+}

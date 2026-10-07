@@ -1,0 +1,71 @@
+{
+  "databaseVersion": "11.4.13-MariaDB-ubu2404",
+  "isolation": "REPEATABLE-READ",
+  "provider": "cognito",
+  "subject": "mariadb-first-cd07ea19-effa-4bf2-9e07-3a7e2d8c3fbf",
+  "springProxiedService": true,
+  "callerCount": 2,
+  "events": [
+    {
+      "caller": "pool-3-thread-1",
+      "operation": "lookup",
+      "lookupNumber": 1,
+      "transactionActive": true,
+      "failure": [
+        {
+          "class": "org.mockito.exceptions.base.MockitoException",
+          "message": "\nCannot call abstract real method on java object!\nCalling real methods is only possible when mocking non abstract method.\n  //correct example:\n  when(mockOfConcreteClass.nonAbstractMethod()).thenCallRealMethod();"
+        }
+      ]
+    },
+    {
+      "caller": "pool-3-thread-2",
+      "operation": "lookup",
+      "lookupNumber": 1,
+      "transactionActive": true,
+      "failure": [
+        {
+          "class": "org.mockito.exceptions.base.MockitoException",
+          "message": "\nCannot call abstract real method on java object!\nCalling real methods is only possible when mocking non abstract method.\n  //correct example:\n  when(mockOfConcreteClass.nonAbstractMethod()).thenCallRealMethod();"
+        }
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "caller": "pool-3-thread-1",
+      "failure": [
+        {
+          "class": "org.mockito.exceptions.base.MockitoException",
+          "message": "\nCannot call abstract real method on java object!\nCalling real methods is only possible when mocking non abstract method.\n  //correct example:\n  when(mockOfConcreteClass.nonAbstractMethod()).thenCallRealMethod();"
+        }
+      ]
+    },
+    {
+      "caller": "pool-3-thread-2",
+      "failure": [
+        {
+          "class": "org.mockito.exceptions.base.MockitoException",
+          "message": "\nCannot call abstract real method on java object!\nCalling real methods is only possible when mocking non abstract method.\n  //correct example:\n  when(mockOfConcreteClass.nonAbstractMethod()).thenCallRealMethod();"
+        }
+      ]
+    }
+  ],
+  "durableRows": [],
+  "initialAbsentLookups": 0,
+  "remainingTestRows": 0,
+  "callersStopped": true,
+  "disposition": "MEASUREMENT_FAILURE_NO_FIRST_LOOKUP_OR_CREATE_DATABASE_OBSERVATION",
+  "productionRaceReproduced": false,
+  "productionCorrectionAuthorizedByThisEvidence": false,
+  "beforeStateExecutionAttempts": 1,
+  "rawLogSha256": "5b691d63db638a9e4f0dd8c29637b8797ef978a1177303d359bbc63a6d51a3ac",
+  "observationTestSourceSha256": "430a4c1770402ebabd17018c2794e35448569644bcccfc10adb0675833e559b1",
+  "productionServiceSourceSha256": "912e24a3f4293d1f27b2dbcff8e659d03ccc7966f619340504228527e3057f15",
+  "databaseImageDigest": "sha256:1292844148b311e4ed4300022a996d39083f415a963e970cf47cad1b3b18e3a6",
+  "initialServiceIdentityDatabaseLookups": 0,
+  "serviceSaveInvocations": 0,
+  "durableReadbackPerformed": true,
+  "durableReadbackRowCount": 0,
+  "additionalBeforeExecutionAuthorized": false
+}

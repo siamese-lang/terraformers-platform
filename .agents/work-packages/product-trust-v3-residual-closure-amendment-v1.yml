@@ -4,7 +4,7 @@ work_package:
   kind: repository_only_program_amendment
   lane: D_DECISION_USER_APPROVED
   phase: null
-  status: HUMAN_REQUIRED
+  status: COMPLETE
   approved_base_sha: f344552fe58db26438a4f0b2c9abb1806e6a99d9
   execution_base_sha: f344552fe58db26438a4f0b2c9abb1806e6a99d9
   activation:
@@ -84,9 +84,9 @@ work_package:
     - production_or_live_action_or_future_phase_activation_required
     - independent_review_and_USER_merge_checkpoint
   result:
-    status: PREPARED_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE
-    independent_acceptance: PENDING
-    human_gate: MERGE_CHECKPOINT
+    status: COMPLETE
+    independent_acceptance: PASS
+    original_independent_review_and_USER_merge_checkpoint: FULFILLED
     next_phase: PT-6R1
     next_phase_execution_base_sha: null
     next_phase_activation: Bind remote main once after accepted USER merge in substantive PT-6R1 PR
@@ -96,3 +96,8 @@ work_package:
     live_cloud_actions: 0
     workflow_dispatches: 0
     destructive_actions: 0
+  completion:
+    independent_review_comment: 6031040940
+    reviewed_head: 360fc827e2b6146f0961442b53e3eb172a8aa4e8
+    USER_merged_main_sha: 00872520036da38fd1809a9abf61f56d2344fcb5
+    merged_at: "2026-10-07T04:46:24Z"

@@ -1,0 +1,167 @@
+{
+  "workPackage": "product-trust-pt-3-origin-authorization-v1",
+  "executionBaseSha": "5aa275e666d45f4181a3ca2ebee6740f0700a75b",
+  "mainReadsAtActivation": 1,
+  "environment": {
+    "java": "Temurin 17.0.18+8",
+    "maven": "3.9.9",
+    "offline": true,
+    "additionalDependenciesInstalled": false
+  },
+  "beforeRegression": {
+    "command": "mvn -o -Dtest=EvidenceQualityAssessorTest#absentOriginAuthorizationDegradesFullyEvidencedTechnicallyValidDraft test",
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "expectedFailure": true,
+    "observed": "EVIDENCE_BACKED instead of DEGRADED",
+    "notAutonomousRepair": true
+  },
+  "focused": {
+    "command": "mvn -o -Dtest=GeneratedTerraformContractInspectorTest,EvidenceQualityAssessorTest,VertexAnalysisProviderTest,VertexGenerationStageTest,AnalysisJobRepositoryTest test",
+    "tests": 63,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "observedHclReplay": {
+    "command": "mvn -o -Dtest=EvidenceQualityAssessorTest#preservedCliValidatedObservationExposesSemanticOmissionWithProductionUnknownApplicability test",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "hclSha256": "962ea2b714bee2981b0a3993046dc5a65eeefb6fd05d29f4e7026f6665e16971",
+    "notNewProductOrModelSample": true
+  },
+  "fullBackend": {
+    "command": "mvn -o clean package",
+    "tests": 517,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 2,
+    "passed": 515,
+    "artifact": "backend/target/terraformers-backend-modernization-0.1.0-SNAPSHOT.jar",
+    "externalMariaDbSmokeTestsSkipped": 2,
+    "focusedClasses": [
+      {
+        "name": "com.terraformers.modernization.analysis.AnalysisJobRepositoryTest",
+        "tests": "11",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.terraformers.modernization.analysis.EvidenceQualityAssessorTest",
+        "tests": "11",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.terraformers.modernization.analysis.GeneratedTerraformContractInspectorTest",
+        "tests": "11",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.terraformers.modernization.analysis.vertex.VertexAnalysisProviderTest",
+        "tests": "18",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.terraformers.modernization.analysis.vertex.VertexGenerationStageTest",
+        "tests": "13",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      }
+    ]
+  },
+  "frozenIdentity": {
+    "status": "PASS",
+    "filesVerified": 26,
+    "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014"
+  },
+  "rawArchives": [
+    {
+      "path": "docs/evidence/product-trust-pt-2/original-run-37480519016.zip",
+      "sha256": "499f31b4311737884a2b7d0fc0405d477be7e41a99e9969217570c91eb5ac561",
+      "inventorySha256": "107d31a942dcbc23bbfaf1f81e7c1b9c6a2fac4224d5689edb216a0bd4378f3d",
+      "files": 275,
+      "listedHashesVerified": 274
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-2/recovery-run-37509368210.zip",
+      "sha256": "c09ddf1c8273ddd0bcf29cfc06bd77b53548fef01225ac4c0e9caf8490281023",
+      "inventorySha256": "5213ed62ce2f18a6bcede35a95697b003a3c589d3163bf894907eee57e2987ca",
+      "files": 22,
+      "listedHashesVerified": 20
+    }
+  ],
+  "independentResultReviewCommentId": 6028079078,
+  "pt2Disposition": "PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION",
+  "pt2SuccessfulBenchmarkCompletion": false,
+  "additionalPt2DispatchAuthorized": false,
+  "stateConsistency": "PASS",
+  "originalSuccessCriteriaPreserved": "PASS",
+  "scopeAudit": "PASS",
+  "diffCheck": "PASS",
+  "autoRepairsUsed": 0,
+  "modelCalls": 0,
+  "liveCloudActions": 0,
+  "frontendStatusLatencyChanges": false,
+  "newJudgeOrFramework": false,
+  "generationClosureRepairAndRetryChanges": false,
+  "independentAcceptance": "PENDING",
+  "mergeAuthorized": false,
+  "sourceFiles": [
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/EvidenceQualityAssessment.java",
+      "sha256": "156b6eba00faaa6682c5191eccdeb0fbe00e2d697c5b35c9b3978a4725815cea"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/EvidenceQualityAssessor.java",
+      "sha256": "437feca5c249ecea89d2ad45cc5727c5733fd69e2d3a7a66c15af472f314009e"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspector.java",
+      "sha256": "002db5e4416058dabed8f0d082debcfc89557256e9f0178b13da755a3a36ab90"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRepositoryTest.java",
+      "sha256": "dd9781f93d06310cf4ad795358ea5d153c70d905a4da825627e1f6a152129cfd"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/EvidenceQualityAssessorTest.java",
+      "sha256": "49afa7b25fedb10b5d7d9f31f40a0806b3f923d5ba1af576b543ec4ef6e13a16"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspectorTest.java",
+      "sha256": "a96f280e28ba1c9bf6cf3d9519f2b4f603b83b32d5550d8ada5a7bc294051b80"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java",
+      "sha256": "5bc21e186862f8e506344ef2ed058b06cd9fa7e91e5f987204962df453fa8b02"
+    },
+    {
+      "path": "backend/src/test/resources/terraform/pt3-observed-origin-draft.tf",
+      "sha256": "962ea2b714bee2981b0a3993046dc5a65eeefb6fd05d29f4e7026f6665e16971"
+    },
+    {
+      "path": "backend/src/test/resources/terraform/pt3-origin-without-authorization.tf",
+      "sha256": "041739adc6a220f779efdea68292663616b5399e79767cbf1e9556004a405555"
+    }
+  ],
+  "priorA7Evidence": {
+    "runId": 37401380524,
+    "artifactId": 11385926347,
+    "archiveDigest": "sha256:3df24aa8744c93b5d543b466d718f33ed6f54f089e214689137b82623acd43a0",
+    "readOnlyInspection": true,
+    "syntheticRegressionOnly": true,
+    "notRealisticGeneralization": true
+  }
+}

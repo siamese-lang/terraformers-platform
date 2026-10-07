@@ -4,9 +4,9 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": "PT-2",
+  "activePhase": "PT-3",
   "lastCompletedPhase": "PT-1",
-  "activeWorkPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
+  "activeWorkPackage": "product-trust-pt-3-origin-authorization-v1",
   "activePullRequest": null,
   "humanGate": "MERGE_CHECKPOINT",
   "liveRuntime": {
@@ -27,13 +27,14 @@
     "Frozen dataset/identity/provenance bytes are immutable pre-approval snapshots. Current truth approval is recorded outside those pinned bytes in candidate/truthFreezeApproval and review evidence; their historical null approval or NOT_APPROVED markers do not replace the later explicit approval.",
     "Current USER approval activates PT-2 on its own exact base without changing historical PT-1 freeze/repair evidence. Preparation has made zero model/GCP calls; one existing-workflow scope is prepared for merge review. Actual trust/accepted-to-terminal evidence remains an explicit blocker. No transient active PR/branch state is registered.",
     "PT-2 human-authorized review correction 1 replaces unexecuted standalone procedure with one authenticated production job per case and immutable Actions artifact handoff. Existing base, frozen bytes, PT-1 history and autonomous repair counters are preserved. No baseline or cloud action has occurred; independent review and explicit merge approval remain required.",
-    "Historical preparation notes above predate live execution. Original run 37480519016 accepted two cases once; continuation 37500000739 failed before product API observation/inference. USER authorizes only bounded repository-only recovery correction preparation. Exact zero-inference proof and complete history are required before its one future continuation; no live dispatch before independent acceptance and explicit merge. No transient correction PR/branch is registered."
+    "Historical preparation notes above predate live execution. Original run 37480519016 accepted two cases once; continuation 37500000739 failed before product API observation/inference. USER authorizes only bounded repository-only recovery correction preparation. Exact zero-inference proof and complete history are required before its one future continuation; no live dispatch before independent acceptance and explicit merge. No transient correction PR/branch is registered.",
+    "Current USER decision closes PT-2 as final INCOMPLETE evidence and authorizes repository-only PT-3 in one substantive PR. Earlier pending/unapproved notes remain historical. No more PT-2 dispatch, exception or harness recovery; no ten-case/aggregate realistic metric claim. PT-4 owns quality presentation and latency guidance."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
-  "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "resultBeforeHumanGate": "PT_2_BOUNDED_RECOVERY_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_MERGE",
+  "executionBaseSha": "5aa275e666d45f4181a3ca2ebee6740f0700a75b",
+  "resultBeforeHumanGate": "PT3_DETERMINISTIC_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_EXPLICIT_MERGE",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -53,10 +54,10 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "Recovery correction requires independent acceptance and explicit merge before continuation dispatch.",
-    "PT-2 remains incomplete: case 02 original censor retained; cases 03-10 NOT_RUN; combined result review pending."
+    "PT-3 correction needs independent acceptance and explicit merge; CI green is not acceptance.",
+    "No new live/model evaluation is authorized. PT-2 remains final INCOMPLETE; PT-4 awaits PT-3 acceptance/merge."
   ],
-  "evidenceDocument": "docs/evaluation/product-trust-pt-2-continuation-protocol.md",
+  "evidenceDocument": "docs/evaluation/product-trust-pt-3-origin-authorization.md",
   "validation": {
     "initialFocused": {
       "tests": 10,
@@ -125,7 +126,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+  "lastObservedMainSha": "5aa275e666d45f4181a3ca2ebee6740f0700a75b",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -208,8 +209,10 @@
       "fixtureBytesChanged": false,
       "correctionLiveActions": 0,
       "correctionModelCalls": 0,
-      "independentAcceptance": "PENDING_CORRECTION_REVIEW",
-      "liveDispatchAuthorized": false
+      "independentAcceptance": "PASS_PREPARATION_ONLY",
+      "liveDispatchAuthorized": false,
+      "independentAcceptanceReviewCommentId": 6022313774,
+      "resultDispositionReviewCommentId": 6028079078
     }
   ],
   "prReviewFeedbackPolicy": {
@@ -233,22 +236,24 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6021688827,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/245#issuecomment-6021688827",
-    "decision": "APPROVE_BOUNDED_RECOVERY_CORRECTION_PREPARATION",
+    "commentId": 6028079078,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/246#issuecomment-6028079078",
+    "decision": "PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION",
     "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
     "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-    "sourceRunId": 37500000739,
-    "sourceDispatchSha": "026adab4dec17fd3b57ee950f174f277ed7c6d80",
-    "repositoryOnlyCorrectionAuthorized": true,
-    "liveDispatchAuthorized": false,
-    "sourceRunRerunAuthorized": false,
-    "pt3Authorized": false
+    "baselineComplete": false,
+    "additionalDispatchAuthorized": false,
+    "reviewAloneAuthorizesPt3": false,
+    "reviewedRuns": [
+      37480519016,
+      37500000739,
+      37509368210
+    ]
   },
   "lastCompletedWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
   "lastCompletedPullRequest": 241,
-  "nextPhase": "PT-3",
-  "executionBaseWorkPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
+  "nextPhase": "PT-4",
+  "executionBaseWorkPackage": "product-trust-pt-3-origin-authorization-v1",
   "truthFreezeApproval": {
     "marker": "[HUMAN_GATE_APPROVAL:v1]",
     "commentId": 6015857324,
@@ -281,11 +286,31 @@
       "independentAcceptanceReviewCommentId": 6015807394,
       "truthFreezeApprovalCommentId": 6015857324,
       "completedAt": "2026-10-06T12:04:51Z"
+    },
+    "PT-2": {
+      "status": "INCOMPLETE",
+      "finalDisposition": "PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION",
+      "final": true,
+      "successfulBenchmarkCompletion": false,
+      "independentResultDispositionAccepted": true,
+      "independentResultReviewCommentId": 6028079078,
+      "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "tenCaseGeneralizationEstablished": false,
+      "additionalDispatchAuthorized": false,
+      "measurementHarnessRecoveryAuthorized": false,
+      "evidenceDocument": "docs/evaluation/product-trust-pt-2-final-disposition.md",
+      "aggregateRealisticRates": {
+        "classificationAccuracy": null,
+        "hallucinationRate": null,
+        "semanticSuccessRate": null,
+        "executableValidityRate": null
+      }
     }
   },
   "blockedNextPhase": {
-    "phase": "PT-3",
-    "status": "AWAITING_PT_2_BASELINE_AND_INDEPENDENT_REVIEW",
+    "phase": "PT-4",
+    "status": "AWAITING_PT3_INDEPENDENT_ACCEPTANCE_AND_EXPLICIT_MERGE",
     "executionAuthorized": false,
     "executionStarted": false,
     "workPackage": null,
@@ -386,6 +411,19 @@
       "liveDispatchAuthorized": false,
       "sourceRunRerunAuthorized": false,
       "pt3Authorized": false
+    },
+    {
+      "commentId": 6021688827,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/245#issuecomment-6021688827",
+      "decision": "APPROVE_BOUNDED_RECOVERY_CORRECTION_PREPARATION",
+      "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "sourceRunId": 37500000739,
+      "sourceDispatchSha": "026adab4dec17fd3b57ee950f174f277ed7c6d80",
+      "repositoryOnlyCorrectionAuthorized": true,
+      "liveDispatchAuthorized": false,
+      "sourceRunRerunAuthorized": false,
+      "pt3Authorized": false
     }
   ],
   "repositoryStateUpdate": {
@@ -422,7 +460,7 @@
   },
   "phaseExecution": {
     "PT-2": {
-      "status": "INCOMPLETE_RECOVERY_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_MERGE",
+      "status": "PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION",
       "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
       "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
       "activatedAt": "2026-10-06T12:45:08Z",
@@ -441,9 +479,9 @@
       "persistedTrustMeasurement": "PARTIAL_ORIGINAL_CASE_01_ONLY",
       "acceptedToTerminalMeasurement": "ORIGINAL_CASE_01_TERMINAL_CASE_02_CENSORED",
       "originalAcceptanceObservabilityBlocker": true,
-      "independentAcceptance": "BASELINE_RESULT_PENDING_INDEPENDENT_REVIEW",
+      "independentAcceptance": "FINAL_INCOMPLETE_EVIDENCE_DISPOSITION_ACCEPTED",
       "procedureSha256": "d8e615ef3fdc26de9be5e34b922da6c06055ca60e4b4e5b004775301d5479f90",
-      "liveExecutionAuthorized": true,
+      "liveExecutionAuthorized": false,
       "workflowDispatchReady": false,
       "preparationValidation": {
         "evidencePath": "docs/evidence/product-trust-pt-2/preparation-validation.json",
@@ -514,7 +552,8 @@
           "status": "TERMINAL_NOT_OBSERVED",
           "censoredObservationMs": 424846
         },
-        "resultAccepted": false
+        "resultAccepted": false,
+        "evidenceDispositionAccepted": true
       },
       "continuationRecovery": {
         "reviewCommentId": 6021688827,
@@ -536,11 +575,55 @@
         "sourceModelCalls": 0,
         "sourceRerunAuthorized": false,
         "subsequentRecoveryDispatchLimitAfterAcceptanceAndMerge": 1,
-        "correctionAcceptance": "PENDING_INDEPENDENT_REVIEW",
+        "correctionAcceptance": "PASS_PREPARATION_ONLY",
         "correctionModelCalls": 0,
         "correctionLiveActions": 0,
-        "validationEvidence": "docs/evidence/product-trust-pt-2/recovery-correction-validation.json"
+        "validationEvidence": "docs/evidence/product-trust-pt-2/recovery-correction-validation.json",
+        "preparationAcceptanceReviewCommentId": 6022313774,
+        "permittedRecoveryDispatchConsumed": true,
+        "additionalDispatchAuthorized": false,
+        "executedRecovery": {
+          "runId": 37509368210,
+          "runAttempt": 1,
+          "dispatchSha": "5aa275e666d45f4181a3ca2ebee6740f0700a75b",
+          "jobId": 112426204015,
+          "artifactId": 11435085417,
+          "artifactDigest": "sha256:c09ddf1c8273ddd0bcf29cfc06bd77b53548fef01225ac4c0e9caf8490281023",
+          "inventorySha256": "5213ed62ce2f18a6bcede35a95697b003a3c589d3163bf894907eee57e2987ca",
+          "productApiObservations": 0,
+          "uploads": 0,
+          "acceptedJobs": 0,
+          "modelCalls": 0,
+          "outcome": "ZERO_PRODUCT_OBSERVATION_MEASUREMENT_FAILURE",
+          "historyResponseOriginCause": "UNKNOWN"
+        },
+        "resultDisposition": "PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION"
+      },
+      "additionalDispatchAuthorized": false,
+      "measurementHarnessRecoveryAuthorized": false,
+      "retainedRawEvidence": {
+        "originalArchive": "docs/evidence/product-trust-pt-2/original-run-37480519016.zip",
+        "recoveryArchiveWithEmbeddedZeroInferenceSource": "docs/evidence/product-trust-pt-2/recovery-run-37509368210.zip",
+        "combinedDerivedAnalysis": "docs/evidence/product-trust-pt-2/combined-analysis-before-final-disposition.md",
+        "combinedDerivedAnalysisSha256": "a21ca90e73dc0a8875fe5eca396f66c4cc139aa1361e30a56bd6d0d700473da7",
+        "independentResultReview": "docs/evidence/product-trust-pt-2/independent-result-review-6028079078.json"
       }
+    },
+    "PT-3": {
+      "status": "IMPLEMENTED_DETERMINISTICALLY_PENDING_INDEPENDENT_REVIEW",
+      "workPackage": "product-trust-pt-3-origin-authorization-v1",
+      "executionBaseSha": "5aa275e666d45f4181a3ca2ebee6740f0700a75b",
+      "activatedAt": "2026-10-07T00:36:55Z",
+      "mainReadsAtActivation": 1,
+      "authorization": "USER explicit evidence-bounded PT-3 approval",
+      "predecessorDisposition": "PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION",
+      "autoRepairsUsed": 0,
+      "humanAuthorizedCorrectiveIterations": 0,
+      "modelUnderTestRunCount": 0,
+      "liveCloudActions": 0,
+      "independentAcceptance": "PENDING",
+      "mergeAuthorized": false,
+      "validationEvidence": "docs/evidence/product-trust-pt-3/validation.json"
     }
   },
   "goalContinuation": {
@@ -550,5 +633,41 @@
     "transientPrLifecycleAuthority": "GitHub only",
     "humanGatesPreserved": true,
     "repetitiveContinuePromptsRequired": false
-  }
+  },
+  "programAmendments": [
+    {
+      "id": "PT2_FINAL_INCOMPLETE_TO_BOUNDED_PT3",
+      "authority": "USER",
+      "approvedOn": "2026-10-07",
+      "approvalEvidence": "Explicit PT-3 progression approval and final INCOMPLETE decision in current conversation",
+      "independentReviewCommentId": 6028079078,
+      "disposition": "PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION",
+      "successfulBenchmarkCompletion": false,
+      "additionalPt2DispatchAuthorized": false,
+      "measurementHarnessRecoveryAuthorized": false,
+      "repositoryOnlyPt3Authorized": true,
+      "newLiveModelOrCloudAuthorized": false,
+      "mergeAuthorized": false,
+      "recordedIn": "one substantive PT-3 PR"
+    }
+  ],
+  "mandatoryPhaseInputs": {
+    "PT-4": [
+      {
+        "finding": "Persisted quality UNKNOWN is hidden by API SUCCEEDED/current frontend completion",
+        "sourceReviewCommentId": 6028079078,
+        "sourceCase": "pt1-01-serverless-portal"
+      },
+      {
+        "finding": "Original case 02 latency censor at 424846 ms contradicts unconditional 1~3 minute guidance; exact upstream cause unknown",
+        "sourceReviewCommentId": 6028079078,
+        "sourceCase": "pt1-02-order-fanout"
+      },
+      {
+        "finding": "PT-3 semantic degradation/reasons must remain distinct from terminal processing completion",
+        "source": "product-trust-pt-3-origin-authorization-v1"
+      }
+    ]
+  },
+  "lastDisposedPhase": "PT-2"
 }

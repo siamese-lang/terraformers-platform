@@ -1,0 +1,106 @@
+work_package:
+  id: product-trust-pt-3-origin-authorization-v1
+  program: product-trust-v1
+  phase: PT-3
+  status: IMPLEMENTED_PENDING_INDEPENDENT_REVIEW
+  approved_base_sha: 5aa275e666d45f4181a3ca2ebee6740f0700a75b
+  execution_base_sha: 5aa275e666d45f4181a3ca2ebee6740f0700a75b
+  activated_at: "2026-10-07T00:36:55Z"
+  activation:
+    main_read_count_at_activation: 1
+    main_drift: HUMAN_REQUIRED
+    refresh_rebase_or_rebind: prohibited
+  authorization:
+    authority: USER
+    approved_on: "2026-10-07"
+    evidence: Explicit PT-3 approval and one substantive-PR Program amendment in this conversation
+    result_review: https://github.com/siamese-lang/terraformers-platform/pull/246#issuecomment-6028079078
+    predecessor_disposition: PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION
+    repository_only: true
+    live_model_or_cloud_action: false
+    further_PT2_dispatch_or_harness_recovery: false
+    merge_authorized: false
+  objective: >
+    Expose the independently confirmed CloudFront OAC/new-S3-origin authorization omission
+    through the existing deterministic generated-contract/evidence-quality responsibility,
+    retaining the editable draft and accurate technical status. No realistic-generalization claim.
+  mechanism:
+    earliest_supported_gap: Resource-type evidence closure cannot detect absent relationship authorization
+    chosen_correction: >
+      Inspect final generated HCL for OAC origins directly referencing newly declared S3 buckets
+      and missing supplied bucket authorization. Add one bounded persisted semantic reason and
+      deterministic quality degradation; provider/schema/CLI validity remains a separate dimension.
+    bounds: >
+      Detect omission, not arbitrary IAM policy correctness or deployment success. Supplied policy
+      expressions/references and alternate explicit read-authorization wiring remain eligible.
+      Do not infer full authorization from mere provider validity, hardcode case/resource names,
+      synthesize IAM grants, or add generation/repair/model calls.
+  allowed_paths:
+    - .agents/programs/product-trust-v1.yml
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-pt-3-origin-authorization-v1.yml
+    - .agents/work-packages/product-trust-pt-2-current-system-realistic-live-baseline-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/architecture/decisions/ADR-008-evidence-backed-ai-quality.md
+    - docs/evaluation/product-trust-pt-2-final-disposition.md
+    - docs/evaluation/product-trust-pt-3-origin-authorization.md
+    - docs/evidence/product-trust-pt-2/**
+    - docs/evidence/product-trust-pt-3/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspector.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/EvidenceQualityAssessor.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/EvidenceQualityAssessment.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspectorTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/EvidenceQualityAssessorTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java
+    - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRepositoryTest.java
+    - backend/src/test/resources/terraform/pt3-*.tf
+  allowed_actions:
+    - preserve_exact_observed_evidence_and_independent_review
+    - implement_minimum_general_omission_detection_in_existing_responsibility
+    - deterministic_mocked_or_offline_tests_and_backend_package
+    - record_one_USER_authorized_Program_amendment_and_final_INCOMPLETE_disposition
+    - commit_push_and_open_or_update_one_substantive_PT3_PR
+    - inspect_review_and_CI_without_self_acceptance_or_merge
+  prohibited_changes:
+    - frozen_truth_dataset_fixtures_or_scorer_policy
+    - prompts_models_retrieval_corpus_or_generation_retry_limits
+    - PT2_workflow_or_measurement_harness
+    - frontend_status_latency_or_PT4_implementation
+    - IAM_GCP_runtime_configuration_infrastructure_rollout_or_teardown
+    - independent_evaluator_LLM_judge_or_orchestration_framework
+    - transient_PR_or_branch_lifecycle_in_durable_program_state
+  acceptance_criteria:
+    - original_case01_omission_has_a_bounded_persisted_semantic_reason_and_cannot_be_EVIDENCE_BACKED
+    - technical_PASS_is_not_reclassified_as_schema_or_CLI_failure
+    - no_case_image_or_resource_name_special_rule
+    - supplied_authorization_variants_and_editable_unknown_values_are_not_blanket_rejected
+    - final_post_repair_HCL_is_assessed_without_another_closure_or_repair
+    - deterministic_regressions_cover_missing_unrelated_commented_and_valid_authorization
+    - existing_bounded_generation_and_valid_nonaffected_behavior_remain_intact
+    - PT2_final_INCOMPLETE_residuals_and_all_original_attempts_censor_and_zero_observation_failures_preserved
+    - PT4_mandatory_quality_presentation_and_latency_inputs_carried_forward
+    - no_live_model_cloud_or_additional_PT2_action
+    - independent_review_and_explicit_merge_required
+  validation:
+    - focused_contract_quality_provider_and_persistence_tests_offline
+    - full_offline_backend_package_after_focused_pass
+    - frozen_identity_scope_and_durable_state_consistency
+    - git_diff_check
+  auto_repair_limit: 1
+  auto_repairs_used: 0
+  stop_on:
+    - MAIN_DRIFT
+    - independent_review_or_MERGE_CHECKPOINT
+    - new_product_architecture_security_or_live_decision
+    - second_autonomous_repair_or_changed_failure_class
+    - scope_or_acceptance_expansion
+  next_phase: PT-4
+  next_phase_authorized_before_PT3_acceptance_and_merge: false
+  completion:
+    implementation: DETERMINISTIC_CORRECTION_PREPARED
+    independent_acceptance: PENDING
+    live_model_or_cloud_actions: 0
+    auto_repairs_used: 0
+    current_human_gate: INDEPENDENT_REVIEW_AND_MERGE_CHECKPOINT
+    validation_evidence: docs/evidence/product-trust-pt-3/validation.json

@@ -51,6 +51,54 @@ import org.mockito.ArgumentCaptor;
 class VertexAnalysisProviderTest {
 
     @Test
+    void finalOriginOmissionDegradesWithoutAnotherProviderOrRetrievalCall() throws Exception {
+        String missing = java.nio.file.Files.readString(java.nio.file.Path.of(
+                "src/test/resources/terraform/pt3-origin-without-authorization.tf"));
+        var fixture = closureFixture(originEvidence(), List.of(), missing, null);
+        var result = fixture.provider().analyze(context());
+        assertThat(result.terraformCode()).isEqualTo(missing);
+        assertThat(result.qualityAssessment().technicalStatus())
+                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.TechnicalStatus.PASS);
+        assertThat(result.qualityAssessment().qualityStatus())
+                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.QualityStatus.DEGRADED);
+        assertThat(result.qualityAssessment().reasons()).contains(
+                com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING);
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), org.mockito.Mockito.never()).repair(any(), any(), any(), any());
+        verify(fixture.retriever(), times(1)).retrieve(any());
+    }
+
+    @Test
+    void originAuthorizationAssessmentUsesOnlyFinalRepairAndNeverStartsAnotherCycle() throws Exception {
+        String missing = java.nio.file.Files.readString(java.nio.file.Path.of(
+                "src/test/resources/terraform/pt3-origin-without-authorization.tf"));
+        String supplied = missing + """
+                resource "aws_s3_bucket_policy" "provided_read_access" {
+                  bucket = aws_s3_bucket.delivery_store.id
+                  policy = var.supplied_read_policy
+                }
+                """;
+        for (String finalDraft : List.of(missing, supplied)) {
+            var fixture = closureFixture(originEvidence(), List.of(official("read-policy", "aws_s3_bucket_policy")),
+                    supplied, finalDraft);
+            var result = fixture.provider().analyze(context());
+            assertThat(result.terraformCode()).isEqualTo(finalDraft);
+            assertThat(result.qualityAssessment().reasons().contains(
+                    com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING))
+                    .isEqualTo(finalDraft.equals(missing));
+            verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+            verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
+            verify(fixture.retriever(), times(2)).retrieve(any());
+        }
+    }
+
+    private List<ReferenceDocument> originEvidence() {
+        return List.of(official("vpc", "aws_vpc"), official("bucket", "aws_s3_bucket"),
+                official("control", "aws_cloudfront_origin_access_control"),
+                official("distribution", "aws_cloudfront_distribution"));
+    }
+
+    @Test
     void passesStructuredFactResourceTypesToRetrievalWithoutParsingQueryText() {
         ObjectContent source = source();
         ObjectReader objectReader = mock(ObjectReader.class);
@@ -425,7 +473,8 @@ class VertexAnalysisProviderTest {
         ReferenceRetriever retriever = mock(ReferenceRetriever.class);
         when(retriever.retrieve(any())).thenReturn(initial, closure);
         var catalog = mock(AwsProviderSchemaCatalog.class);
-        for (String type : List.of("aws_vpc", "aws_instance", "aws_subnet", "aws_security_group")) {
+        for (String type : List.of("aws_vpc", "aws_instance", "aws_subnet", "aws_security_group",
+                "aws_s3_bucket", "aws_cloudfront_origin_access_control", "aws_cloudfront_distribution", "aws_s3_bucket_policy")) {
             when(catalog.contains(type)).thenReturn(true);
         }
         when(catalog.resolve(any())).thenAnswer(invocation -> {

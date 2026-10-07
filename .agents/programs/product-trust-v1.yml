@@ -1,12 +1,28 @@
 program:
   id: product-trust-v1
-  version: 1
+  version: 2
   status: APPROVED_AWAITING_ACTIVATION
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
   activation_base_sha: BIND_AT_ACTIVATION
   plan: docs/plans/active/product-trust-modernization.md
   state: .agents/state/product-trust-v1.json
+
+  approved_amendments:
+    - id: PT2_FINAL_INCOMPLETE_TO_BOUNDED_PT3
+      authority: USER
+      approved_on: "2026-10-07"
+      independent_result_review: https://github.com/siamese-lang/terraformers-platform/pull/246#issuecomment-6028079078
+      accepted_disposition: PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION
+      baseline_complete: false
+      applies_once_in_substantive_PT3_PR: true
+      additional_PT2_dispatch_rerun_exception_or_harness_recovery: prohibited
+      residuals:
+        - PT2_did_not_establish_ten_case_realistic_generalization
+        - cases_03_to_10_remain_NOT_RUN_neither_pass_nor_fail
+        - no_aggregate_realistic_classification_hallucination_semantic_success_or_executable_validity_rate
+        - original_case02_latency_remains_censored_at_424846_ms
+        - runs_37500000739_and_37509368210_are_zero_product_observation_measurement_failures
 
   goal: >
     Establish whether Terraformers is trustworthy as an actual user-facing AI service on realistic
@@ -86,6 +102,11 @@ program:
       depends_on: [PT-1]
       auto_start_after_dependencies: false
       human_gate_before_start: LIVE_REALISTIC_BASELINE
+      final_disposition:
+        status: PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION
+        independently_reviewed: true
+        successful_benchmark_completion: false
+        further_execution_authorized: false
       objective: >
         Measure the current production-equivalent system once on the frozen realistic dataset before
         tuning prompts, retrieval, models, repair logic or scoring.
@@ -101,6 +122,11 @@ program:
       title: Baseline driven AI trust correction
       kind: conditional_implementation
       depends_on: [PT-2]
+      dependency_acceptance:
+        original_success_criteria_are_not_weakened: true
+        alternative_authorized_once: PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION
+        authority: USER_approved_amendment_PT2_FINAL_INCOMPLETE_TO_BOUNDED_PT3
+        corrective_evidence: independently_supported_observed_subset_and_existing_earlier_evidence_only
       auto_start_after_dependencies: true
       human_gate_when: PRODUCT_OR_ARCHITECTURE_DECISION
       allowed_candidate_tracks:
@@ -114,7 +140,10 @@ program:
         - new_vector_database
         - new_model_family
       objective: >
-        Correct only defects directly evidenced by PT-2. If correction requires a product choice,
+        Correct only independently supported defects evidenced by the observed PT-2 subset or
+        existing earlier evidence. PT-2 remains historically INCOMPLETE, without ten-case or
+        aggregate realistic metric claims. Do not reopen PT-2 or recover its measurement harness.
+        If correction requires a new product choice,
         write a decision brief and stop rather than choosing silently.
 
     - id: PT-4
@@ -122,6 +151,10 @@ program:
       kind: implementation
       depends_on: [PT-3]
       auto_start_after_dependencies: true
+      mandatory_baseline_inputs:
+        - persisted_quality_UNKNOWN_hidden_by_SUCCEEDED_API_and_frontend_completion
+        - original_case02_424846_ms_censor_contradicts_unconditional_1_to_3_minute_guidance
+        - semantic_degradation_reasons_from_PT3_must_remain_distinct_from_processing_completion
       objective: >
         Separate terminal processing state from output trust for the user and expose truthful durable
         progress plus accepted-to-terminal latency without fake confidence or percent-complete values.

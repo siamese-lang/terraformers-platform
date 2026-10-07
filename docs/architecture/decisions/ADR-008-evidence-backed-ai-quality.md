@@ -148,6 +148,7 @@ Reason codes distinguish at least these classes when applicable:
 - REQUIRED_EVIDENCE_NOT_RETRIEVED
 - REQUIRED_PROJECT_DECISION_NOT_RETRIEVED
 - GENERATED_RESOURCE_UNSUPPORTED_BY_EVIDENCE
+- CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING
 - PROVIDER_CONTENT_BLOCKED
 - PROVIDER_OUTPUT_TRUNCATED
 - PROVIDER_EMPTY_RESPONSE
@@ -159,6 +160,15 @@ Reason codes distinguish at least these classes when applicable:
 
 Reason codes may be refined during implementation only when directly derived from observed
 mechanics. They must remain bounded and low-cardinality.
+
+The USER-approved PT-3 correction adds `CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING` for the
+independently observed OAC/new-S3-origin omission. The existing final-output contract inspector
+checks identifiable authorization declarations; the existing quality assessor records DEGRADED
+without rewriting a valid provider/CLI technical PASS as a syntax/schema failure. This is a
+bounded omission check, not general IAM-policy evaluation or deployment validation. Supplied
+policy expressions/references and alternate declared read access remain editable; their presence
+does not prove policy correctness, deployment readiness or realistic generalization. UI status and
+waiting behavior remain PT-4 responsibilities.
 
 ### 5. Evidence-backed quality rules
 

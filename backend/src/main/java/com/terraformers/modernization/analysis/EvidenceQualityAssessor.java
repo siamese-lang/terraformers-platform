@@ -94,11 +94,17 @@ public final class EvidenceQualityAssessor {
         if (!projectDecisions.missing().isEmpty()) {
             reasons.add(Reason.REQUIRED_PROJECT_DECISION_NOT_RETRIEVED);
         }
+        boolean missingOriginAuthorization =
+                terraformInspector.missingCloudFrontS3Authorization(input.generatedTerraform());
+        if (missingOriginAuthorization) {
+            reasons.add(Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING);
+        }
 
         KnowledgeStatus knowledgeStatus = knowledgeStatus(
                 extracted, extractedUnknownToProvider, missingOfficialKnowledge);
 
         boolean deterministicDegradation = !missingSelectedEvidence.isEmpty()
+                || missingOriginAuthorization
                 || !generatedAbsentFromProvider.isEmpty()
                 || !generatedWithoutSelectedEvidence.isEmpty()
                 || projectDecisions.status() == ProjectDecisionStatus.INCOMPLETE;

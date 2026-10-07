@@ -1,5 +1,19 @@
 # Product Trust v4 — evidence-validity amendment
 
+**COMPLETE — independent acceptance 6032563396 / USER approval 6032637762 / USER-merged PR #253.**
+Exact candidate revision 2 / `3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757` is USER-frozen externally in
+[PT-6R2 authority evidence](../evidence/product-trust-pt-6r2/authority.json). USER merge is
+`406981a8c629a02503f5660453dcc7921b8d5177`; the original amendment execution base remains unchanged.
+All candidate/truth-review/identity bytes and historical evidence/counters remain exact. Their
+pre-approval markers are immutable snapshots, not current approval authority. No live authority
+or model run follows from this freeze. The next substantive [PT-6R2 audit](product-trust-pt-6r2-provider-terminality.md)
+is active on that once-bound main and stops at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION.
+
+The original proposal/audit below is retained as historical preparation evidence. Its pending
+review/freeze and PT-6R2-unauthorized wording describes that earlier checkpoint, superseded only by
+the independently accepted amendment, explicit USER approval/merge and current bounded audit request.
+
+
 **Repository-only proposal / HUMAN_REQUIRED:
 AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW.**
 

@@ -1,0 +1,906 @@
+{
+  "newProviderMeasurements": 0,
+  "percentilesFabricated": false,
+  "broadV4": {
+    "runId": 37419983898,
+    "sourceSha": "46d50f5e13f85199e25ca62088b43158f9084264",
+    "artifactId": 11393232503,
+    "artifactName": "a7-7-v4-production-evaluation-37419983898",
+    "archiveSha256": "293f8371fb9c65afad988ca386fe03ba7ab3ad66de98853cbfdc0597e723f0ac",
+    "archiveDigestVerifiedAgainstGitHub": true,
+    "sdkPinAtHistoricalSource": "1.72.0",
+    "files": [
+      {
+        "pathInArtifact": "a7-7-v4-canonical-1.json",
+        "sha256": "bda5c0b0aebbb93efe5baefe0277e768ff9b9ccb54443428e1c1356979f9dcab",
+        "configuration": {
+          "corpusVersion": "terraformers-reference-v4",
+          "providerVersion": "5.100.0",
+          "analysisProvider": "vertex",
+          "embeddingProvider": "vertex",
+          "retrievalMode": "REQUIRED",
+          "topK": 8,
+          "generationModelId": "gemini-3.8-flash",
+          "embeddingModelId": "gemini-embedding-2",
+          "configurationFingerprint": "sha256:e28f2516cfbc6ed42802f0d983d9207148541eb938545b0301af19884f40e08a",
+          "factExtractionThinkingLevel": "LOW",
+          "factExtractionMaxOutputTokens": 800,
+          "generationMaxOutputTokens": 8192
+        }
+      },
+      {
+        "pathInArtifact": "a7-7-v4-canonical-2.json",
+        "sha256": "47f7bfc5d15cfeb6092e9a4ee4aae7520cd5633d728c818e0bdfaceb0a22ecb2",
+        "configuration": {
+          "corpusVersion": "terraformers-reference-v4",
+          "providerVersion": "5.100.0",
+          "analysisProvider": "vertex",
+          "embeddingProvider": "vertex",
+          "retrievalMode": "REQUIRED",
+          "topK": 8,
+          "generationModelId": "gemini-3.8-flash",
+          "embeddingModelId": "gemini-embedding-2",
+          "configurationFingerprint": "sha256:e28f2516cfbc6ed42802f0d983d9207148541eb938545b0301af19884f40e08a",
+          "factExtractionThinkingLevel": "LOW",
+          "factExtractionMaxOutputTokens": 800,
+          "generationMaxOutputTokens": 8192
+        }
+      },
+      {
+        "pathInArtifact": "a7-7-v4-canonical-3.json",
+        "sha256": "7f888169765f7a549c9ec9f777ec12072a39364afb99b0d8a4d75fbcf608bc24",
+        "configuration": {
+          "corpusVersion": "terraformers-reference-v4",
+          "providerVersion": "5.100.0",
+          "analysisProvider": "vertex",
+          "embeddingProvider": "vertex",
+          "retrievalMode": "REQUIRED",
+          "topK": 8,
+          "generationModelId": "gemini-3.8-flash",
+          "embeddingModelId": "gemini-embedding-2",
+          "configurationFingerprint": "sha256:e28f2516cfbc6ed42802f0d983d9207148541eb938545b0301af19884f40e08a",
+          "factExtractionThinkingLevel": "LOW",
+          "factExtractionMaxOutputTokens": 800,
+          "generationMaxOutputTokens": 8192
+        }
+      },
+      {
+        "pathInArtifact": "a7-7-v4-holdout.json",
+        "sha256": "de6d3aad90d9179bdc8833e76a50abdb1feba23002ed8a1f043f6f5c17e416a6",
+        "configuration": {
+          "corpusVersion": "terraformers-reference-v4",
+          "providerVersion": "5.100.0",
+          "analysisProvider": "vertex",
+          "embeddingProvider": "vertex",
+          "retrievalMode": "REQUIRED",
+          "topK": 8,
+          "generationModelId": "gemini-3.8-flash",
+          "embeddingModelId": "gemini-embedding-2",
+          "configurationFingerprint": "sha256:e28f2516cfbc6ed42802f0d983d9207148541eb938545b0301af19884f40e08a",
+          "factExtractionThinkingLevel": "LOW",
+          "factExtractionMaxOutputTokens": 800,
+          "generationMaxOutputTokens": 8192
+        }
+      }
+    ],
+    "entries": [
+      {
+        "artifactFile": "a7-7-v4-canonical-1.json",
+        "caseId": "arch-vpc-three-tier",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 12698,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 1920,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 23809,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 36504,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-1.json",
+        "caseId": "arch-cloudfront-private-alb",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 24627,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 695,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 27071,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 20997,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-1.json",
+        "caseId": "arch-private-aoss",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 3008,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 694,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 14029,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 20085,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-1.json",
+        "caseId": "arch-s3-metadata-split",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2494,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 602,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 8751,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 20027,
+            "status": "FAIL",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-1.json",
+        "caseId": "ambiguous-cropped-service-sketch",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2742,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 639,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 5381,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": null,
+            "status": "NOT_RUN",
+            "observation": "NOT_RUN"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-1.json",
+        "caseId": "non-architecture-deployment-dashboard",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 3291,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 637,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 16526,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": null,
+            "status": "NOT_RUN",
+            "observation": "NOT_RUN"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-2.json",
+        "caseId": "arch-vpc-three-tier",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 7023,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 1817,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 21764,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 17265,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-2.json",
+        "caseId": "arch-cloudfront-private-alb",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2161,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 796,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 22509,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 14766,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-2.json",
+        "caseId": "arch-private-aoss",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2905,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 696,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 18344,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 14622,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-2.json",
+        "caseId": "arch-s3-metadata-split",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2609,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 631,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 8034,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 17786,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-2.json",
+        "caseId": "ambiguous-cropped-service-sketch",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2384,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 625,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 4616,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": null,
+            "status": "NOT_RUN",
+            "observation": "NOT_RUN"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-2.json",
+        "caseId": "non-architecture-deployment-dashboard",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2614,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 750,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 4528,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": null,
+            "status": "NOT_RUN",
+            "observation": "NOT_RUN"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-3.json",
+        "caseId": "arch-vpc-three-tier",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 5619,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 1682,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 25893,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 18869,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-3.json",
+        "caseId": "arch-cloudfront-private-alb",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 3787,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 811,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 88451,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 17807,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": true,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-3.json",
+        "caseId": "arch-private-aoss",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2628,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 795,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 16773,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 14421,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-3.json",
+        "caseId": "arch-s3-metadata-split",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2214,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 561,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 22424,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 15510,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-3.json",
+        "caseId": "ambiguous-cropped-service-sketch",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 3455,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 523,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 44077,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": null,
+            "status": "NOT_RUN",
+            "observation": "NOT_RUN"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-canonical-3.json",
+        "caseId": "non-architecture-deployment-dashboard",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 2423,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 507,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 5530,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": null,
+            "status": "NOT_RUN",
+            "observation": "NOT_RUN"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-holdout.json",
+        "caseId": "holdout-eks-irsa",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 68747,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 1441,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 17386,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 18450,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-holdout.json",
+        "caseId": "holdout-workload-rds-sg",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 183242,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 805,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 9090,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": 17948,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-holdout.json",
+        "caseId": "holdout-ambiguous-obscured-flow",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 6070,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 615,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 6211,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": null,
+            "status": "NOT_RUN",
+            "observation": "NOT_RUN"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      },
+      {
+        "artifactFile": "a7-7-v4-holdout.json",
+        "caseId": "holdout-non-architecture-status-board",
+        "stages": {
+          "factExtraction": {
+            "durationMs": 39805,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "retrieval": {
+            "durationMs": 512,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "generation": {
+            "durationMs": 4851,
+            "status": "PASS",
+            "observation": "COMPLETED"
+          },
+          "validation": {
+            "durationMs": null,
+            "status": "NOT_RUN",
+            "observation": "NOT_RUN"
+          }
+        },
+        "generationCompactRetryOccurred": false,
+        "sameGenerationModel": true,
+        "sameEmbeddingModelAsRetainedOverlay": true,
+        "stageTimingsAreNotIsolatedProviderRPCs": true,
+        "comparability": "Synthetic evaluator; facts/embedding/generation adapters unchanged from bound source, but before PR238 shared closure orchestration. Not a durable accepted-to-terminal measurement."
+      }
+    ],
+    "observedMaximaMs": {
+      "factExtraction": 183242,
+      "generation": 88451,
+      "summedCompletedStages": 211085
+    },
+    "generationMaxIncludesCompactRetry": true,
+    "embeddingIsNotSeparatelyTimed": true,
+    "tinyControlledDatasetIsNotLatencyDistribution": true
+  },
+  "originalPT2": {
+    "runId": 37480519016,
+    "artifactId": 11422455892,
+    "archivePath": "docs/evidence/product-trust-pt-2/original-run-37480519016.zip",
+    "archiveSha256": "499f31b4311737884a2b7d0fc0405d477be7e41a99e9969217570c91eb5ac561",
+    "runtimeIdentity": {
+      "dispatchSha": "c3e9ed4e854778dfb2eefbc0182ae53a008025bf",
+      "backendSourceSha": "688119631a790e876235565711c07085aff15124",
+      "backendImage": "asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:211e32a2eced268a9ce884060a65e9e8ef5794307d8203cd19b72ac75d44f91d",
+      "productionSourceEquivalent": true,
+      "configurationVerified": true,
+      "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+      "initialEvidenceBudget": 16,
+      "protocolSha256": "d8e615ef3fdc26de9be5e34b922da6c06055ca60e4b4e5b004775301d5479f90"
+    },
+    "observations": [
+      {
+        "caseId": "pt1-01-serverless-portal",
+        "analysisJobId": "2337e6bd-1f70-4382-a515-b4cdb9cba7d9",
+        "latency": {
+          "caseId": "pt1-01-serverless-portal",
+          "status": "SUCCEEDED",
+          "uploadAttempts": 1,
+          "requestStartedAt": "2026-10-06T14:42:53.255810+00:00",
+          "analysisJobId": "2337e6bd-1f70-4382-a515-b4cdb9cba7d9",
+          "projectId": 5,
+          "acceptedResponseObservedAt": "2026-10-06T14:42:58.650247+00:00",
+          "serverCreatedAt": "2026-10-06T14:42:58.253508005Z",
+          "sourceFileId": 7,
+          "terminalObservedAt": "2026-10-06T14:45:01.113764+00:00",
+          "acceptedToTerminalObservedMs": 122464,
+          "lastNonterminalAfterAcceptanceMs": 116946,
+          "quality": {
+            "contractVersion": "evidence-quality-v1",
+            "technicalStatus": "PASS",
+            "knowledgeStatus": "COMPLETE",
+            "qualityStatus": "UNKNOWN",
+            "projectDecisionStatus": "UNKNOWN",
+            "runtimeQualityBoundary": "CONDITIONAL_ON_EXTRACTED_FACTS",
+            "reasons": []
+          },
+          "failureReason": null
+        },
+        "internalStageTimings": "NOT_OBSERVED"
+      },
+      {
+        "caseId": "pt1-02-order-fanout",
+        "analysisJobId": "578c05b9-2905-4d60-8432-ce7593c96133",
+        "latency": {
+          "caseId": "pt1-02-order-fanout",
+          "status": "TERMINAL_NOT_OBSERVED",
+          "uploadAttempts": 1,
+          "requestStartedAt": "2026-10-06T14:45:04.739214+00:00",
+          "analysisJobId": "578c05b9-2905-4d60-8432-ce7593c96133",
+          "projectId": 6,
+          "acceptedResponseObservedAt": "2026-10-06T14:45:06.190778+00:00",
+          "serverCreatedAt": "2026-10-06T14:45:06.099516804Z",
+          "sourceFileId": 9,
+          "censoredObservationMs": 424846
+        },
+        "internalStageTimings": "NOT_OBSERVED"
+      }
+    ],
+    "case01CorrelatedStageMs": {
+      "analysis_execution": 116633,
+      "result_finalize": 481,
+      "initialCompositeRetrieval": 3227,
+      "closureCompositeRetrieval": 777
+    },
+    "case02CompositeRetrievalMs": {
+      "initial": 1005,
+      "closure": 1245
+    },
+    "case02ClaimToInitialRetrievalLogGapMs": 375181,
+    "claimToRetrievalGapIsNotExactFactCall": true,
+    "case02RootCause": "NOT_ESTABLISHED",
+    "case03to10": "NOT_RUN",
+    "additionalDispatchAuthorized": false,
+    "zeroProductRecoveryRuns": [
+      37500000739,
+      37509368210
+    ],
+    "comparability": "Same Vertex provider/adapters at runtime source 6881196 as bound source; PT3 semantic inspector and PT4 trust/timing changed afterward. Original polling censor is never replaced by terminalAt or later recovery."
+  },
+  "olderSupportingEvidence": [
+    {
+      "runId": 36758290144,
+      "sourceSha": "b7de917d1c97c591f863f3e473f99c3d670161ef",
+      "artifactId": 11118632138,
+      "artifactDigest": "sha256:fff83ff7ab22e5e7188a6b394d135dd1234e9a1efc6be3f994018f31c698f4ad",
+      "stage": "CloudFront candidate TEXT generation",
+      "durationMs": 109773,
+      "observation": "COMPLETED",
+      "reference": "docs/evaluation/gemini-fact-reuse-latency-diagnostic-closure.md",
+      "sameGenerationModel": true,
+      "currentProductionPath": false,
+      "comparability": "Evaluation-only fact reuse / MEDIUM; one exchange, zero network failures, HTTP200; SDK pin also 1.72.0, but older v3/source and non-production candidate path, not current production RPC calibration.",
+      "sdkPinAtHistoricalSource": "1.72.0"
+    },
+    {
+      "runId": 36739886593,
+      "stage": "CloudFront control and AOSS text-only candidate generation",
+      "durationApproximateSeconds": [
+        626,
+        326
+      ],
+      "observation": "COMPLETED_ROUNDED_SUPPORTING_DOCUMENT_ONLY",
+      "reference": "docs/evaluation/gemini-fact-reuse-latency-diagnostic-closure.md",
+      "sameGenerationModel": true,
+      "currentProductionPath": false,
+      "comparability": "Earlier experimental comparison; stage-level approximately reported values, not exact current RPC samples; legitimate multi-minute tails can exceed proposed budgets."
+    },
+    {
+      "runId": 36391698161,
+      "sourceSha": "2526f85b4bef781976126f99e5ed0c25344d0f94",
+      "artifactId": 10955719668,
+      "artifactDigest": "sha256:3697bf1a703b437132d6bf98eb89a51ab45810154afb02d3e5d3e1ffcbb7d1c6",
+      "stage": "arch-private-aoss FACT_EXTRACTION",
+      "durationMs": 130489,
+      "observation": "COMPLETED",
+      "reference": "docs/evaluation/m4-targeted-improvement-closure.md",
+      "sameGenerationModel": true,
+      "currentProductionPath": false,
+      "comparability": "Older v3/embedding001/source; retained fact-extraction tail, not current broad-v4 full-chain evidence.",
+      "sdkPinAtHistoricalSource": "1.72.0"
+    }
+  ]
+}

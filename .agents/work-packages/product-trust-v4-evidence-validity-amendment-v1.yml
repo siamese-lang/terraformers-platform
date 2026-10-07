@@ -2,7 +2,7 @@ work_package:
   id: product-trust-v4-evidence-validity-amendment-v1
   program: product-trust-v1
   kind: repository_only_evidence_validity_amendment
-  status: HUMAN_REQUIRED
+  status: COMPLETE
   approved_base_sha: 38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d
   execution_base_sha: 38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d
   activation:
@@ -19,7 +19,12 @@ work_package:
     predecessor_merge_sha: 38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d
     predecessor_merge_at: "2026-10-07T05:52:50Z"
     empty_merge_policy_commit_is_new_behavioral_evidence: false
-    exact_candidate_truth_approval_supplied: false
+    exact_candidate_truth_approval_supplied: true
+    later_USER_approval_comment: 6032637762
+    independent_acceptance_comment: 6032563396
+    USER_merged_pull_request: 253
+    USER_merged_main_sha: 406981a8c629a02503f5660453dcc7921b8d5177
+    subsequent_approval_evidence: docs/evidence/product-trust-pt-6r2/authority.json
     amendment_merge_authorized: false
   objective: >
     Prevent controlled/local evidence from closing final AI/RAG trust. Prepare five exact external
@@ -114,10 +119,12 @@ work_package:
     - second_bounded_repair_or_failure_class_change
     - AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW
   result:
-    candidate_truth: NOT_APPROVED
-    independent_acceptance: PENDING
-    human_gate: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW
+    candidate_truth: USER_FROZEN_EXACT_IMMUTABLE_REVISION_2
+    independent_acceptance: PASS_COMMENT_6032563396
+    human_gate: null
     merge_authorized: false
-    PT6R2_execution_authorized: false
-    next_phase: null
+    USER_merge_completed: true
+    PT6R2_execution_authorized: AUDIT_AND_DECISION_GATE_ONLY_BY_USER_COMMENT_6032637762_AND_NEXT_REQUEST
+    next_phase: PT-6R2
+    completion_evidence: docs/evidence/product-trust-pt-6r2/authority.json
     validation_evidence: docs/evidence/product-trust-v4-amendment/validation.json

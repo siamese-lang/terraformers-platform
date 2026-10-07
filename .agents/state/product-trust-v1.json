@@ -4,11 +4,11 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": null,
+  "activePhase": "PT-6R2",
   "lastCompletedPhase": "PT-6R1",
-  "activeWorkPackage": "product-trust-v4-evidence-validity-amendment-v1",
+  "activeWorkPackage": "product-trust-pt-6r2-provider-terminality-v1",
   "activePullRequest": null,
-  "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
+  "humanGate": "PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
@@ -36,13 +36,14 @@
     "PT-6R1 first measurement failed only in Mockito instrumentation and is preserved. One test-only autonomous repair stays consumed. USER explicitly authorized one additional before execution as human corrective iteration 1; it reproduced immediate IDENTITY save uniqueness failure and poisoned rollback-only session re-read. One initial bounded transaction correction and one same-condition local after-state pass, with identity/PT-5/full backend validation. No additional measurement, acceptance, merge, PT-6R2 or live authority is inferred.",
     "USER-authorized governance-only correction for review 6031593870 preserves accepted PT-6R1 code, all evidence, the bound execution base and repair/correction counters. PT-6R1 acceptance and USER merge lead to HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT, not automatic PT-6R2 activation. A subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged evidence-validity amendment must release the pause; its content/version/base are not selected here.",
     "PR #252 latest independent review 6031698220 accepted tree c9792b42b4a6a9b8529a904d240c5bccf5d08d10 at head 2b63e79; merge-policy-only empty head 25336fa preserves that tree. USER merged as 38f995b. PT-6R1 is COMPLETE without new database/behavioral measurements or counter changes. USER authorizes this substantive v4 evidence-validity preparation only. Historical reference-derived truth remains frozen but controlled regression; five exact official candidates require new human freeze. PT-6R2 stays unauthorized until amendment review, explicit USER approval, independent acceptance and USER merge. No future base, live/model/cloud action or self-acceptance is inferred.",
-    "USER-authorized bounded correction for PR #253 review 6032307527 separates all five cases into image_observable_truth, documentation_context and conditional draft_technical_closure. Official image/source provenance is unchanged; exact pre-freeze candidate identity fad3627 and both pinned files are archived. New revision 2 remains unapproved, unexecuted and model count 0. V4 autonomous repair remains 1; human corrective iteration 1 is recorded separately. Base, accepted structural DAG, PT-6R1 completion and historical evidence/counters remain unchanged; no live/model/PT-6R2 authority."
+    "USER-authorized bounded correction for PR #253 review 6032307527 separates all five cases into image_observable_truth, documentation_context and conditional draft_technical_closure. Official image/source provenance is unchanged; exact pre-freeze candidate identity fad3627 and both pinned files are archived. New revision 2 remains unapproved, unexecuted and model count 0. V4 autonomous repair remains 1; human corrective iteration 1 is recorded separately. Base, accepted structural DAG, PT-6R1 completion and historical evidence/counters remain unchanged; no live/model/PT-6R2 authority.",
+    "PR #253 review 6032563396 accepted immutable AWS candidate revision 2; USER merged as 406981a8c629a02503f5660453dcc7921b8d5177 and approval 6032637762 externally freezes identity 3e105771… without changing candidate bytes. Exactly PT-6R2 audit activates on that once-read main. SDK 1.72.0 defaults five attempts and removes transport timeouts; synchronous worker plus independent heartbeat has no accepted-age terminal cutoff. Four options are recommendations only. Stop at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION; no production implementation, model/cloud/OpenSearch/database/browser action or PT-7 authority. Historical evidence/counters stay exact; transient PR/branch fields stay null."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
-  "executionBaseSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
-  "resultBeforeHumanGate": "V4_EVIDENCE_VALIDITY_CANDIDATE_PREPARED_NOT_ACCEPTED",
+  "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+  "resultBeforeHumanGate": "PT6R2_AUDIT_PREPARED_NUMERIC_POLICY_NOT_SELECTED",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -62,11 +63,11 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "Candidate revision 2 image-only truth requires independent re-review and explicit USER freeze. Documentation is disambiguation/context only; technical closure is conditional on generated choices, not unseen page-only image labels.",
-    "The substantive v4 amendment requires independent review/acceptance, explicit USER approval and USER merge; PT-6R2 remains unstarted, execution-unauthorized and without a bound future base.",
+    "USER must select provider/job numeric budgets and retry policy at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION. SDK request bounds alone do not establish an accepted-to-terminal guarantee.",
+    "PT-6R2 implementation/hang-timeout validation and independent completion acceptance remain unperformed; PT-7 cannot start.",
     "Final product trust remains INCOMPLETE until accepted deployed GCP/exact v4/real-model/external official full-chain evidence, integrated equivalence and gated closure."
   ],
-  "evidenceDocument": "docs/evaluation/product-trust-v4-evidence-validity-audit.md",
+  "evidenceDocument": "docs/evaluation/product-trust-pt-6r2-provider-terminality.md",
   "validation": {
     "initialFocused": {
       "tests": 10,
@@ -143,7 +144,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+  "lastObservedMainSha": "406981a8c629a02503f5660453dcc7921b8d5177",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -253,24 +254,24 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6032307527,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032307527",
-    "decision": "CHANGES_REQUIRED",
-    "reviewedHeadSha": "af6aefc6391c62146654cfc90f53b472332078fc",
+    "commentId": 6032563396,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032563396",
+    "decision": "ACCEPTED",
+    "reviewedHeadSha": "690b436d69c4b1671e86b8aeb2b2249623291276",
     "executionBaseSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
     "workPackage": "product-trust-v4-evidence-validity-amendment-v1",
-    "structuralAmendmentAcceptance": "PASS_WITH_ONE_TRUTH_CONTRACT_BLOCKER",
-    "candidateProvenanceAcceptance": "PASS",
-    "candidateTruthFreezeAcceptance": "BLOCKED",
-    "soleBlocker": "PAGE_ONLY_DOCUMENTATION_FACTS_MIXED_INTO_IMAGE_ONLY_SEMANTIC_TRUTH",
-    "correctionDisposition": "IMPLEMENTED_PENDING_INDEPENDENT_RE_REVIEW",
+    "structuralAmendmentAcceptance": "PASS",
+    "candidateTruthContractAcceptance": "PASS",
+    "correctionDisposition": "SOLE_BLOCKER_CLOSED",
+    "truthFrozenByReview": false,
     "pt6r2AuthorizedByReview": false,
+    "USERApprovalEvidence": "docs/evidence/product-trust-pt-6r2/authority.json",
     "reviewGrantsImplementationOrMergeAuthority": false
   },
-  "lastCompletedWorkPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
-  "lastCompletedPullRequest": 252,
+  "lastCompletedWorkPackage": "product-trust-v4-evidence-validity-amendment-v1",
+  "lastCompletedPullRequest": 253,
   "nextPhase": null,
-  "executionBaseWorkPackage": "product-trust-v4-evidence-validity-amendment-v1",
+  "executionBaseWorkPackage": "product-trust-pt-6r2-provider-terminality-v1",
   "truthFreezeApproval": {
     "marker": "[HUMAN_GATE_APPROVAL:v1]",
     "commentId": 6015857324,
@@ -406,21 +407,15 @@
     }
   },
   "blockedNextPhase": {
-    "phase": "PT-6R2",
-    "status": "UNAUTHORIZED_PENDING_V4_AMENDMENT_ACCEPTANCE_AND_USER_MERGE",
+    "phase": "PT-7",
+    "status": "BLOCKED_BY_UNCOMPLETED_PT6R2",
     "executionAuthorized": false,
     "executionStarted": false,
     "workPackage": null,
     "executionBaseSha": null,
-    "modelUnderTestRunCount": 0,
-    "liveCloudActions": 0,
-    "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
     "activationRequires": [
-      "PT6R1_independent_acceptance_and_USER_merge",
-      "evidence_validity_amendment_reviewed",
-      "evidence_validity_amendment_explicitly_USER_approved",
-      "evidence_validity_amendment_independently_accepted",
-      "evidence_validity_amendment_USER_merged"
+      "PT6R2_USER_budget_decision",
+      "PT6R2_independent_completion_acceptance_and_USER_merge"
     ]
   },
   "prReviewFeedbackHistory": [
@@ -625,6 +620,21 @@
       "governanceCorrectionAcceptance": "PASS",
       "overallPrAcceptance": "PASS",
       "postMergeGate": "PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
+      "pt6r2AuthorizedByReview": false,
+      "reviewGrantsImplementationOrMergeAuthority": false
+    },
+    {
+      "commentId": 6032307527,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032307527",
+      "decision": "CHANGES_REQUIRED",
+      "reviewedHeadSha": "af6aefc6391c62146654cfc90f53b472332078fc",
+      "executionBaseSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+      "workPackage": "product-trust-v4-evidence-validity-amendment-v1",
+      "structuralAmendmentAcceptance": "PASS_WITH_ONE_TRUTH_CONTRACT_BLOCKER",
+      "candidateProvenanceAcceptance": "PASS",
+      "candidateTruthFreezeAcceptance": "BLOCKED",
+      "soleBlocker": "PAGE_ONLY_DOCUMENTATION_FACTS_MIXED_INTO_IMAGE_ONLY_SEMANTIC_TRUTH",
+      "correctionDisposition": "IMPLEMENTED_PENDING_INDEPENDENT_RE_REVIEW",
       "pt6r2AuthorizedByReview": false,
       "reviewGrantsImplementationOrMergeAuthority": false
     }
@@ -1130,6 +1140,32 @@
         "rawEvidenceAndCountersPreserved": true,
         "furtherDatabaseExecutionAuthorized": false
       }
+    },
+    "PT-6R2": {
+      "workPackage": "product-trust-pt-6r2-provider-terminality-v1",
+      "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+      "mainReadsAtActivation": 1,
+      "authority": "USER explicit attached audit request and approval 6032637762",
+      "authorityEvidence": "docs/evidence/product-trust-pt-6r2/authority.json",
+      "status": "HUMAN_REQUIRED",
+      "humanGate": "PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION",
+      "currentStep": "AUDIT_AND_DECISION_GATE_PREPARATION_ONLY",
+      "auditEvidence": "docs/evidence/product-trust-pt-6r2/audit.json",
+      "decisionBrief": "docs/evaluation/product-trust-pt-6r2-provider-terminality.md",
+      "selectedBudgetPolicy": null,
+      "productionImplementationAuthorized": false,
+      "implementationStarted": false,
+      "autoRepairsUsed": 0,
+      "humanAuthorizedCorrectiveIterations": 0,
+      "providerCalls": 0,
+      "modelUnderTestRunCount": 0,
+      "liveCloudActions": 0,
+      "OpenSearchOperations": 0,
+      "browserExecutions": 0,
+      "databaseExecutions": 0,
+      "workflowDispatches": 0,
+      "phaseComplete": false,
+      "independentAcceptance": "PENDING"
     }
   },
   "goalContinuation": {
@@ -1139,12 +1175,9 @@
     "transientPrLifecycleAuthority": "GitHub only",
     "humanGatesPreserved": true,
     "repetitiveContinuePromptsRequired": false,
-    "pausedAtHumanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
+    "pausedAtHumanGate": "PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION",
     "resumeRequires": [
-      "evidence_validity_amendment_reviewed",
-      "evidence_validity_amendment_explicitly_USER_approved",
-      "evidence_validity_amendment_independently_accepted",
-      "evidence_validity_amendment_USER_merged"
+      "PT6R2_budget_policy_explicit_USER_decision_on_same_Work_Package_and_PR"
     ]
   },
   "programAmendments": [
@@ -1209,12 +1242,12 @@
       "fromVersion": 3,
       "toVersion": 4,
       "preparationAuthority": "USER explicit repository-only amendment request",
-      "exactCandidateTruthApproved": false,
-      "independentAcceptance": "PENDING",
-      "USERAmendmentApproval": "PENDING_EXACT_COMPLETED_CANDIDATE_REVIEW",
+      "exactCandidateTruthApproved": true,
+      "independentAcceptance": "PASS",
+      "USERAmendmentApproval": "APPROVED",
       "mergeAuthorized": false,
-      "status": "HUMAN_REQUIRED",
-      "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
+      "status": "COMPLETE",
+      "humanGate": null,
       "executionBaseSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
       "workPackage": "product-trust-v4-evidence-validity-amendment-v1",
       "mainReadsAtActivation": 1,
@@ -1226,7 +1259,7 @@
         "PT-9"
       ],
       "nextPhaseExecutionBaseSha": null,
-      "pt6r2ExecutionAuthorized": false,
+      "pt6r2ExecutionAuthorized": true,
       "autoRepairsUsed": 1,
       "humanAuthorizedCorrectiveIterations": 1,
       "historicalRepairCountersReset": false,
@@ -1254,9 +1287,17 @@
         "liveCloudActions": 0,
         "OpenSearchOperations": 0,
         "PT6R2ExecutionAuthorized": false,
-        "acceptance": "PENDING_INDEPENDENT_RE_REVIEW_AND_USER_TRUTH_FREEZE",
+        "acceptance": "PASS_REVIEW_6032563396_USER_APPROVAL_6032637762_MERGE_253",
         "validationEvidence": "docs/evidence/product-trust-v4-amendment/validation.json#structuredReviewCorrection"
-      }
+      },
+      "independentReviewCommentId": 6032563396,
+      "USERApprovalCommentId": 6032637762,
+      "USERMerged": true,
+      "mergedPullRequest": 253,
+      "mergedMainSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+      "mergedAt": "2026-10-07T06:51:11Z",
+      "completionEvidence": "docs/evidence/product-trust-pt-6r2/authority.json",
+      "pt6r2ExecutionAuthority": "AUDIT_AND_DECISION_GATE_PREPARATION_ONLY"
     }
   ],
   "mandatoryPhaseInputs": {
@@ -1365,7 +1406,7 @@
       "claimLimit": "Human-reviewed reference-derived recreations are not a statistical sample of all real user exports; no universal diagram generalization."
     }
   ],
-  "programContractStatus": "PROPOSED_PENDING_TRUTH_FREEZE_INDEPENDENT_REVIEW_AND_USER_MERGE",
+  "programContractStatus": "APPROVED_V4_INDEPENDENTLY_ACCEPTED_AND_USER_MERGED",
   "historicalDatasetAuthority": {
     "directory": "evaluation/terraformers-realistic-v1",
     "classification": "CONTROLLED_REFERENCE_DERIVED_REGRESSION_SET",
@@ -1379,16 +1420,16 @@
     "manifestPath": "evaluation/terraformers-aws-official-v1/candidate-manifest.json",
     "truthReviewPath": "docs/evaluation/product-trust-aws-official-truth-candidate.md",
     "identitySha256": "3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757",
-    "status": "CANDIDATE_NOT_APPROVED",
-    "truthApprovedBy": null,
-    "truthFrozenAt": null,
-    "freezeApprovalEvidence": null,
+    "status": "USER_FROZEN_EXACT_IMMUTABLE_CANDIDATE",
+    "truthApprovedBy": "USER",
+    "truthFrozenAt": "2026-10-07T06:52:05Z",
+    "freezeApprovalEvidence": "docs/evidence/product-trust-pt-6r2/authority.json",
     "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE",
     "modelUnderTestRunCount": 0,
     "externalImageBytesCommitted": false,
     "executionAuthorized": false,
     "supersededUnpublishedDraftIdentitySha256": "9a57d8fb1f42da1ffa66d4642e57fa22c52bfb7605d4dd17d5633e8d983e15e0",
-    "truthFrozen": false,
+    "truthFrozen": true,
     "supersededPreFreezeCandidate": {
       "candidateRevision": 1,
       "identitySha256": "fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10",
@@ -1412,7 +1453,11 @@
       "image_observable_truth": "ONLY_MANDATORY_IMAGE_SEMANTIC_AUTHORITY",
       "documentation_context": "DISAMBIGUATION_NO_UNSEEN_SEMANTIC_EXPANSION",
       "draft_technical_closure": "CONDITIONAL_GENERATED_CHOICE_COHERENCE_REAL_CLI_PROVIDER_VALIDITY"
-    }
+    },
+    "approvalCommentId": 6032637762,
+    "independentReviewCommentId": 6032563396,
+    "candidateFilesRemainPreApprovalSnapshots": true,
+    "approvalGrantsLiveAuthority": false
   },
   "finalEvidenceContract": {
     "invariant": "SYNTHETIC_OR_LOCAL_ONLY_EVIDENCE_CANNOT_CLOSE_FINAL_PRODUCT_TRUST",

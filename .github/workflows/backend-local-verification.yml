@@ -5,25 +5,53 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - "backend/**"
-      - "scripts/checks/backend-local-verification.sh"
-      - "scripts/checks/mariadb-schema-validation.sh"
-      - "scripts/checks/flyway-migration-uniqueness.sh"
-      - ".github/workflows/backend-local-verification.yml"
 
 permissions:
   contents: read
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      backend_verification: ${{ steps.scope.outputs.backend_verification }}
+      production_image_build: ${{ steps.scope.outputs.production_image_build }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Classify changed files
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          python3 -m unittest tests/ci/test_ci_changed_scope.py
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            python3 scripts/checks/ci_changed_scope.py --workflow backend --all --github-output "$GITHUB_OUTPUT"
+          else
+            python3 scripts/checks/ci_changed_scope.py --workflow backend --base "$BASE_SHA" --head "$HEAD_SHA" --github-output "$GITHUB_OUTPUT"
+          fi
+
   backend-local-verification:
     name: Backend local smoke baseline
+    needs: scope
+    if: needs.scope.outputs.backend_verification == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      production_image_build_verified: ${{ steps.verify.outputs.production_image_build_verified }}
+    env:
+      RUN_DOCKER_BUILD: ${{ needs.scope.outputs.production_image_build }}
+      BUILD_SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -33,6 +61,7 @@ jobs:
           cache: maven
 
       - name: Verify backend local baseline
+        id: verify
         run: bash scripts/checks/backend-local-verification.sh
 
       - name: Upload backend verification diagnostics
@@ -46,6 +75,8 @@ jobs:
 
   mariadb-schema-validation:
     name: MariaDB schema and repository validation
+    needs: scope
+    if: needs.scope.outputs.backend_verification == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -79,6 +110,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -99,3 +132,32 @@ jobs:
             backend/target/mariadb-schema-validation.log
             backend/target/mariadb-repository-smoke.log
             backend/target/surefire-reports
+
+  backend-required-verification:
+    name: backend-required-verification
+    needs: [scope, backend-local-verification, mariadb-schema-validation]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Enforce backend verification result
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          BACKEND_REQUIRED: ${{ needs.scope.outputs.backend_verification }}
+          IMAGE_REQUIRED: ${{ needs.scope.outputs.production_image_build }}
+          BACKEND_RESULT: ${{ needs.backend-local-verification.result }}
+          MARIADB_RESULT: ${{ needs.mariadb-schema-validation.result }}
+          IMAGE_VERIFIED: ${{ needs.backend-local-verification.outputs.production_image_build_verified }}
+        run: |
+          set -euo pipefail
+          [[ "$SCOPE_RESULT" == success ]] || { echo "Scope did not succeed" >&2; exit 1; }
+          [[ "$BACKEND_REQUIRED" == true || "$BACKEND_REQUIRED" == false ]] || { echo "Missing backend scope" >&2; exit 1; }
+          [[ "$IMAGE_REQUIRED" == true || "$IMAGE_REQUIRED" == false ]] || { echo "Missing image scope" >&2; exit 1; }
+          if [[ "$BACKEND_REQUIRED" == false ]]; then
+            [[ "$IMAGE_REQUIRED" == false ]] || { echo "Image build requires backend verification" >&2; exit 1; }
+            echo "No backend changes; expensive verification is unnecessary"
+            exit 0
+          fi
+          [[ "$BACKEND_RESULT" == success && "$MARIADB_RESULT" == success ]] || { echo "Required backend/MariaDB verification did not succeed" >&2; exit 1; }
+          [[ "$IMAGE_VERIFIED" == "$IMAGE_REQUIRED" ]] || { echo "Selected image verification was not completed" >&2; exit 1; }
+          echo "Required backend verification completed"

@@ -12,16 +12,43 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
-- Mode: **Approved Product Trust v4 / PT-6R2 IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING**.
-- Status: **HUMAN_REQUIRED: PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE**. Review 6037186101 found production design PASS_WITH_VALIDATION_BLOCKER at 2ac19e2; USER authorizes exactly human test-contract correction 1. Only three legacy test contracts changed. Focused 11/0/0/0 and one offline full clean package 576/0/0/4 pass; MariaDB is skipped locally, corrective-head automatic regression is GitHub-authoritative. Autonomous repair remains 1/1, human corrective 1. Phase acceptance/USER merge remain pending; no PT-7 authority.
-- [Program](../.agents/programs/product-trust-v1.yml), [state](../.agents/state/product-trust-v1.json), [plan](plans/active/product-trust-modernization.md), [Work Package](../.agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml) and [current brief](evaluation/product-trust-pt-6r2-provider-terminality.md) preserve once-bound base **`406981a8c629a02503f5660453dcc7921b8d5177`** on the same branch/PR; no refresh/rebase/rebind. [Narrow authority](evidence/product-trust-pt-6r2/approved-finalization-correction.md) releases only finalization fencing/sweep/one-attempt implementation. Policy D candidate defaults are facts 370s, generation/compact/repair 220s, embeddings 10s, SDK attempts 1 / statuses [], durable attempts 1 and original accepted-age cutoff 8 minutes; runtime is not deployed or reconfigured.
-- **v4 amendment COMPLETE**: [review 6032563396](https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032563396) accepted head `690b436d69c4b1671e86b8aeb2b2249623291276`; USER merged PR #253 as this main and then [approval 6032637762](https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032637762) froze exact AWS candidate revision 2 / **`3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757`**. [External approval evidence](evidence/product-trust-pt-6r2/authority.json) is reconciled in this substantive PT-6R2 PR. Manifest, candidate identity JSON and truth-review document are unchanged pre-approval snapshots; their false/null markers do not override later approval. Official-input execution remains unauthorized, model-under-test count **0**; freeze grants no model/cloud/OpenSearch authority.
-- Original SDK/source audit and lock probe stay byte-identical. Candidate code classifies SDK `GenAiIOException -> InterruptedIOException("timeout")`, preserves MAX_TOKENS compact fallback and single closure/repair, moves result write outside short finalization, checks age/ownership/intent after write and before commit, publishes success after commit, retains cleanup intent and sweeps age/exhausted attempts before dispatch. [Initial implementation failure evidence](evidence/product-trust-pt-6r2/implementation-validation.json) preserves exact prior failures/source bytes. [Correction validation](evidence/product-trust-pt-6r2/test-contract-validation.json) records current local PASS with production bytes unchanged; automatic exact-head CI and independent acceptance are separate.
-- Conditional Δ≤P+B+S+T; predeclared model P≤2s and B/S/T≤1s gives 5s, tested with injected scheduling/DB timing. It is not a measured production/SLO/outage bound or arbitrary thread cancellation. Existing FAILED cleanup/network/DB delays remain operating assumptions and explicit residuals; original cutoff is not weakened. [Latency evidence](evidence/product-trust-pt-6r2/latency.json) remains historical, including original PT-2 case-02 **424846 ms censor**.
-- **PT-6R1 COMPLETE**: review 6031698220 / USER-merged PR #252; original base `00872520036da38fd1809a9abf61f56d2344fcb5`, accepted REQUIRES_NEW correction, before attempts 2 (first invalid, one USER-authorized valid), after 1, instrumentation repair 1 and human iteration 1 unchanged. No MariaDB/browser remeasurement; PT-6R2 embedded-H2 deterministic tests do not change PT-6R1 before/after evidence. The earlier repair-limit stop is preserved; the current USER-authorized local full regression skips MariaDB and creates no new PT-6R1 before/after acceptance measurement. PT-3..PT-6 bounded accepted claims and all failed observations/counters remain intact.
-- Evidence invariant **SYNTHETIC_OR_LOCAL_ONLY_EVIDENCE_CANNOT_CLOSE_FINAL_PRODUCT_TRUST** and **REVIEWABLE_IAC_DRAFT** remain. Historical PT-1 revision 3 / `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014` frozen bytes are controlled reference-derived regression. PT-2 is permanently final INCOMPLETE: 03–10 NOT_RUN, four aggregate realistic rates null, censor unchanged, recovery runs 37500000739/37509368210 zero-product-observation failures, no further dispatch.
-- Remaining **PT-6R2 -> PT-7 -> PT-8A -> PT-8B -> PT-9**. PT-7 is blocked until independently accepted PT-6R2 completion and USER merge. PT-8A still binds reviewed real-Dockerfile image/digest/deployed revision and exact broad-v4 serving/correlated retrieval before separately approved once-only A–E inputs. PT-8B composes accepted evidence under source equivalence. All product/security/live/model/cost/merge/destructive gates survive; no later WP/base is predicted.
-- GitHub owns transient PR lifecycle; active PR/branch/url fields remain null. Compatible retained GCP remains ACTIVE_RETAINED, teardown unauthorized, A7-8 deferred. Candidate production defaults/code are changed within explicit authority; model/cloud/OpenSearch/MariaDB/browser/deployment/workflow-dispatch actions remain zero. One historical H2 diagnostic, three focused invocations (two historical failed, one human-correction PASS) and one full package are recorded separately; automatic MariaDB CI is ordinary regression, not PT-6R1 acceptance measurement. Original audit evidence is preserved unchanged. No green CI/docs/audit can close final trust. Historical sections below are earlier checkpoints, not current phase authority.
+- Mode: **Approved Product Trust v4 / PT-6R2 COMPLETE / PT-7 repository implementation prepared**.
+- Gate after successful normal exact-head CI: **HUMAN_REQUIRED: PT7_REQUIRED_CHECK_RULESET_CHANGE**.
+  PT-7 independent acceptance/USER merge pending. Ruleset mutation is not authorized.
+- [Program](../.agents/programs/product-trust-v1.yml), [state](../.agents/state/product-trust-v1.json),
+  [plan](plans/active/product-trust-modernization.md), [PT-7 Work Package](../.agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml)
+  and [handoff/evidence](evaluation/product-trust-pt-7-ci-delivery-handoff.md) bind once-read main
+  **`6228d69b1da604e816b3e0a826563d79b8bcd844`**. No refresh/rebase/rebind; drift stops.
+- [PR #254 independent review 6037528315](https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037528315)
+  accepted head `987ec944c84ac74f99f2c2f3ae38b0bc16499f8a`; USER merged as the PT-7 base.
+  PT-6R2 COMPLETE preserves base 406981a8, all failures/audit/validation and auto repair 1/human 1.
+  Conditional Δ=P+B+S+T (5s model only for P≤2s, B/S/T≤1s) is not a production DB SLO, outage
+  guarantee or hard thread cancellation. Facts 370s, generation/compact/repair 220s, embeddings 10s,
+  SDK attempts 1 / statuses [], durable attempts 1, original 8-minute cutoff/fencing/sweep/cleanup/
+  post-commit success/MAX_TOKENS/single repair remain unchanged. Runtime is not deployed here.
+- Existing Backend Local Verification now scopes every main PR. Backend work requires both existing
+  Maven/package and MariaDB jobs. Dockerfile/pom/src/main changes select the actual unchanged Dockerfile
+  build with exact PR head revision inspection. One fail-closed `backend-required-verification` always
+  exists, including non-backend PRs. This CI-only PR selects backend checks, not Docker. No new workflow.
+- Read-only `protect-main-for-delivery` snapshot requires only `terraform-static-verification`.
+  Proposed addition is only `backend-required-verification`, preserving all other settings. Exact-head
+  automatic CI belongs to GitHub, is not acceptance and creates no PT-6R1 behavioral measurement.
+- PT-6R1 COMPLETE remains accepted REQUIRES_NEW convergence: base 00872520, before 2 (first invalid,
+  one USER-authorized valid), after 1, auto repair 1/human 1, all code/evidence/counters unchanged.
+- AWS official revision 2 identity **`3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757`**
+  remains externally frozen by review/USER approval after PR #253. Its pinned pre-approval snapshots
+  stay exact; model-under-test count 0, official-input execution unauthorized. No new truth/model tuning.
+- Historical PT-1 revision 3 remains controlled reference-derived regression. PT-2 is final INCOMPLETE:
+  cases 03–10 NOT_RUN, all four aggregate rates null, case-02 **424846 ms** censor, zero-product recovery
+  failures unchanged and no further dispatch. Local/CI evidence cannot close final product trust.
+- Remaining **PT-7 -> PT-8A -> PT-8B -> PT-9**. PT-8A requires reviewed source→actual image→remote
+  digest→retained deployment/source/v4 config→exact serving/retrieval evidence and separate official
+  live/model/cost approval. Existing manual main-only delivery paths are unchanged and statically
+  audited; actual current live readiness is unestablished. No later phase/base is predicted.
+- GitHub owns transient PR lifecycle; active PR/branch/url remain null. Retained runtime stays
+  ACTIVE_RETAINED, teardown unauthorized, A7-8 deferred. PT-7 model/GCP/OpenSearch/browser/manual
+  database/workflow-dispatch actions are zero; no production/frontend/frozen-dataset changes.
+  Historical sections below are earlier checkpoints, not current phase authority.
 
 ## Product Trust reassessment checkpoint
 

@@ -1,6 +1,9 @@
 import importlib.util
+import os
+import shutil
 import subprocess
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -57,6 +60,107 @@ class ChangedScopeTest(unittest.TestCase):
         self.assertFalse(any(flags["m2-authenticated"].values()))
         self.assertFalse(any(flags["terraform-static"].values()))
         self.assertFalse(any(flags["aws-runtime-package"].values()))
+
+    def test_backend_scope_and_image_inputs_are_separate(self):
+        cases = {
+            "docs/AI_PROJECT_STATE.md": (False, False),
+            ".agents/state/product-trust-v1.json": (False, False),
+            "frontend/src/App.js": (False, False),
+            "infra/terraform/main.tf": (False, False),
+            "backend/src/test/java/example/Test.java": (True, False),
+            "backend/README.md": (True, False),
+            "backend/src/main/java/example/App.java": (True, True),
+            "backend/src/main/resources/application-prod.yml": (True, True),
+            "backend/Dockerfile": (True, True),
+            "backend/pom.xml": (True, True),
+            ".github/workflows/backend-local-verification.yml": (True, False),
+            "scripts/checks/backend-local-verification.sh": (True, False),
+            "scripts/checks/mariadb-schema-validation.sh": (True, False),
+            "scripts/checks/flyway-migration-uniqueness.sh": (True, False),
+            "scripts/checks/ci_changed_scope.py": (True, False),
+            "tests/ci/test_ci_changed_scope.py": (True, False),
+        }
+        for path, (backend, image) in cases.items():
+            with self.subTest(path=path):
+                self.assertEqual(self.flags(path)["backend"], {
+                    "backend_verification": backend, "production_image_build": image,
+                })
+
+    def test_required_backend_gate_fails_closed(self):
+        # Execute the actual final-job shell contract, including failure/skip/missing-output paths.
+        workflow = (SCRIPT.parents[2] / ".github/workflows/backend-local-verification.yml").read_text()
+        final_job = workflow.split("  backend-required-verification:\n", 1)[1]
+        self.assertIn("    if: always()\n", final_job)
+        self.assertIn("needs: [scope, backend-local-verification, mariadb-schema-validation]", final_job)
+        gate = textwrap.dedent(final_job.split("        run: |\n", 1)[1])
+        required = {
+            "SCOPE_RESULT": "success", "BACKEND_REQUIRED": "true", "IMAGE_REQUIRED": "false",
+            "BACKEND_RESULT": "success", "MARIADB_RESULT": "success", "IMAGE_VERIFIED": "false",
+        }
+        cases = [
+            ({}, True),
+            ({"BACKEND_REQUIRED": "false", "BACKEND_RESULT": "skipped", "MARIADB_RESULT": "skipped", "IMAGE_VERIFIED": ""}, True),
+            ({"IMAGE_REQUIRED": "true", "IMAGE_VERIFIED": "true"}, True),
+            ({"IMAGE_REQUIRED": "true", "IMAGE_VERIFIED": "false"}, False),
+            ({"IMAGE_VERIFIED": ""}, False),
+            ({"BACKEND_REQUIRED": "false", "IMAGE_REQUIRED": "true"}, False),
+            ({"BACKEND_REQUIRED": ""}, False),
+            ({"IMAGE_REQUIRED": ""}, False),
+            ({"IMAGE_REQUIRED": "unexpected"}, False),
+        ]
+        for status in ("failure", "cancelled", "skipped", ""):
+            for key in ("SCOPE_RESULT", "BACKEND_RESULT", "MARIADB_RESULT"):
+                cases.append(({key: status}, False))
+        for overrides, succeeds in cases:
+            with self.subTest(overrides=overrides):
+                result = subprocess.run(["bash", "-c", gate], env={**os.environ, **required, **overrides}, capture_output=True, text=True)
+                self.assertEqual(result.returncode == 0, succeeds, result.stdout + result.stderr)
+
+    def test_selected_image_build_binds_and_verifies_revision(self):
+        # Command doubles test script plumbing only. Real image/pin validation belongs to Dockerfile.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "backend").mkdir()
+            checks = root / "scripts/checks"
+            checks.mkdir(parents=True)
+            script = checks / "backend-local-verification.sh"
+            shutil.copyfile(SCRIPT.with_name(script.name), script)
+            (checks / "flyway-migration-uniqueness.sh").write_text("exit 0\n")
+            commands = root / "bin"
+            commands.mkdir()
+            (commands / "mvn").write_text("#!/bin/bash\nexit 0\n")
+            (commands / "docker").write_text(
+                '#!/bin/bash\nprintf "%s\\n" "$*" >>"$DOCKER_CALLS"\n'
+                'if [[ "$1" == image ]]; then printf "BUILD_SOURCE_REVISION=%s\\n" "$INSPECT_REVISION"; fi\n'
+            )
+            for path in commands.iterdir():
+                path.chmod(0o755)
+            revision = "a" * 40
+            output = root / "output"
+            calls = root / "calls"
+            env = {**os.environ, "PATH": str(commands) + os.pathsep + os.environ["PATH"],
+                   "RUN_DOCKER_BUILD": "true", "BUILD_SOURCE_REVISION": revision,
+                   "INSPECT_REVISION": revision, "GITHUB_OUTPUT": str(output), "DOCKER_CALLS": str(calls)}
+            result = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(output.read_text(), "production_image_build_verified=true\n")
+            build, inspect = calls.read_text().splitlines()
+            self.assertIn(f"build --file {root}/backend/Dockerfile --build-arg BUILD_SOURCE_REVISION={revision}", build)
+            self.assertIn(f"--tag terraformers-backend:pr-{revision} {root}/backend", build)
+            self.assertTrue(inspect.startswith(f"image inspect terraformers-backend:pr-{revision} "))
+            for overrides in ({"INSPECT_REVISION": "b" * 40}, {"BUILD_SOURCE_REVISION": "unknown"}):
+                with self.subTest(overrides=overrides):
+                    output.unlink()
+                    result = subprocess.run(["bash", str(script)], env={**env, **overrides}, capture_output=True, text=True)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(output.exists(), "Failed image binding must not publish verified output")
+                    output.touch()
+            output.unlink()
+            calls.unlink()
+            result = subprocess.run(["bash", str(script)], env={**env, "RUN_DOCKER_BUILD": "false"}, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(output.read_text(), "production_image_build_verified=false\n")
+            self.assertFalse(calls.exists(), "No Docker command for non-image changes")
 
     def test_frontend_only_runs_m1_frontend_and_boundary(self):
         flags = self.flags("frontend/src/App.js")["m1"]

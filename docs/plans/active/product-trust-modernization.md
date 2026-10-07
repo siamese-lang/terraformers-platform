@@ -17,9 +17,14 @@ repair/correction counters remain unchanged. Completion reconciliation is in thi
 separate state-sync PR. No database/browser/production validation is repeated.
 
 The [v4 audit](../../evaluation/product-trust-v4-evidence-validity-audit.md) revises evidence design,
-not implementation. [AWS official candidate revision 1](../../evaluation/product-trust-aws-official-truth-candidate.md)
+not implementation. [AWS official candidate revision 2](../../evaluation/product-trust-aws-official-truth-candidate.md)
 contains five exact external AWS diagrams with source/image hashes and proposed human truth.
 **Truth is NOT APPROVED**; the USER has approved preparation, not the completed candidate identity.
+USER-authorized correction for review 6032307527 preserves the five exact images/provenance and
+archives pre-freeze identity `fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10`.
+Only image_observable_truth is mandatory semantic authority; documentation_context disambiguates
+without adding page-only requirements, and draft_technical_closure applies only to actual generated
+choices/coherence. Visible topology/cardinality is preserved.
 Stop at `AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE` and independent v4 review/USER merge.
 No self-freeze or self-merge. PT-6R2 remains execution-unauthorized with no Work Package/base.
 

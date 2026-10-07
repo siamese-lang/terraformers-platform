@@ -124,11 +124,22 @@ program:
 
   official_acceptance_candidate:
     dataset: terraformers-aws-official-v1
-    revision: 1
+    revision: 2
     manifest: evaluation/terraformers-aws-official-v1/candidate-manifest.json
     identity: evaluation/terraformers-aws-official-v1/candidate-identity.json
     human_review: docs/evaluation/product-trust-aws-official-truth-candidate.md
     status: CANDIDATE_NOT_APPROVED
+    truth_authority:
+      system_input: IMAGE_BYTES_ONLY
+      mandatory_semantic_truth: image_observable_truth
+      documentation_context: disambiguation_only_no_hidden_page_only_semantic_requirements
+      draft_technical_closure: conditional_on_chosen_generated_resource_relationship_coherence_and_real_CLI_provider_validity
+      unavailable_personalized_values: valid_declared_inputs_references_or_editable_placeholders
+      no_visible_topology_weakening: true
+    superseded_pre_freeze_candidate:
+      revision: 1
+      identity: fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10
+      archived_identity: evaluation/terraformers-aws-official-v1/superseded/candidate-01-identity.json
     truth_freeze_gate: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE
     exact_completed_candidate_USER_approval: absent
     model_under_test_runs: 0
@@ -511,6 +522,9 @@ program:
         - real_Terraform_CLI_REVIEWABLE_IAC_DRAFT_validity
         - persisted_user_visible_trust_consistency
       scoring_policy:
+        mandatory_semantic_authority: image_observable_truth
+        documentation_context_can_add_unseen_semantic_requirements: false
+        draft_technical_closure: generated_choice_coherence_only_not_a_missing_page_fact
         procedure_and_truth_frozen_before_outcomes: true
         compare_after_inference_only: true
         deterministic_where_meaningful_and_explicit_human_semantic_alias_review: true

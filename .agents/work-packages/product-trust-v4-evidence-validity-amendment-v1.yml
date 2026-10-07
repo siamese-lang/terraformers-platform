@@ -46,6 +46,9 @@ work_package:
     - docs/evaluation/product-trust-aws-official-truth-candidate.md
     - evaluation/terraformers-aws-official-v1/candidate-manifest.json
     - evaluation/terraformers-aws-official-v1/candidate-identity.json
+    - evaluation/terraformers-aws-official-v1/superseded/candidate-01-manifest.json
+    - evaluation/terraformers-aws-official-v1/superseded/candidate-01-identity.json
+    - evaluation/terraformers-aws-official-v1/superseded/candidate-01-truth-review.md
     - docs/evidence/product-trust-v4-amendment/review-6031698220.json
     - docs/evidence/product-trust-v4-amendment/validation.json
   allowed_actions:
@@ -87,7 +90,20 @@ work_package:
   auto_repair_limit: 1
   auto_repairs_used: 1
   repair_evidence: One_staged_diff_check_EOF_whitespace_correction_identity_recomputed_no_image_or_semantic_change
-  human_authorized_corrective_iterations: 0
+  human_authorized_corrective_iterations: 1
+  human_corrective_iteration_1:
+    authority: USER_explicit_correction_request_for_independent_review_6032307527
+    review: https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032307527
+    reviewed_head: af6aefc6391c62146654cfc90f53b472332078fc
+    sole_blocker: page_only_facts_mixed_into_image_only_semantic_truth
+    scope: split_all_A_to_E_truth_authorities_and_archive_revision_1_recompute_revision_2_identity
+    five_image_provenance_and_visible_fidelity: unchanged
+    validation: proportional_metadata_provenance_and_diff_check_only
+    same_branch_and_execution_base: preserved
+    autonomous_repair_counter_reset: false
+    model_cloud_OpenSearch_or_PT6R2_execution: prohibited
+    independent_re_review_truth_freeze_and_USER_merge: still_required
+
   model_under_test_runs: 0
   live_cloud_actions: 0
   stop_on:

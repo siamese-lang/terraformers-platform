@@ -178,5 +178,100 @@
     "supersededUnpublishedDraftIdentitySha256": "9a57d8fb1f42da1ffa66d4642e57fa22c52bfb7605d4dd17d5633e8d983e15e0",
     "imageBytesOrTruthMeaningChanged": false,
     "historicalCountersReset": false
+  },
+  "structuredReviewCorrection": {
+    "status": "PASS_REPOSITORY_METADATA_ONLY_PENDING_INDEPENDENT_RE_REVIEW",
+    "reviewCommentId": 6032307527,
+    "reviewUrl": "https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032307527",
+    "reviewedHeadSha": "af6aefc6391c62146654cfc90f53b472332078fc",
+    "executionBaseSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+    "branch": "codex/product-trust-v4-evidence-validity",
+    "changedFiles": [
+      ".agents/programs/product-trust-v1.yml",
+      ".agents/state/product-trust-v1.json",
+      ".agents/work-packages/product-trust-v4-evidence-validity-amendment-v1.yml",
+      "docs/AI_PROJECT_STATE.md",
+      "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+      "docs/evaluation/product-trust-v4-evidence-validity-audit.md",
+      "docs/evidence/product-trust-v4-amendment/validation.json",
+      "docs/plans/active/product-trust-modernization.md",
+      "evaluation/terraformers-aws-official-v1/candidate-identity.json",
+      "evaluation/terraformers-aws-official-v1/candidate-manifest.json",
+      "evaluation/terraformers-aws-official-v1/superseded/candidate-01-identity.json",
+      "evaluation/terraformers-aws-official-v1/superseded/candidate-01-manifest.json",
+      "evaluation/terraformers-aws-official-v1/superseded/candidate-01-truth-review.md"
+    ],
+    "parsedYamlJsonFiles": 8,
+    "activeDocumentReferencesChecked": 95,
+    "existingStructuralAmendmentAndDAGPreserved": true,
+    "fiveOfficialImageAndSourceProvenanceUnchanged": true,
+    "cases": [
+      {
+        "caseId": "aws-official-a",
+        "sourceAndImageProvenanceUnchanged": true,
+        "rawImageSha256": "0a6a59273dc5a70ab10415328a53427291c2b08c25a94f088bb874a607946007",
+        "allThreeAuthoritiesPresent": true,
+        "oldRequirementsAudited": 29
+      },
+      {
+        "caseId": "aws-official-b",
+        "sourceAndImageProvenanceUnchanged": true,
+        "rawImageSha256": "d14c4ba606cd3edf26abc93721577293d1378bc3f3903a0d678af020295b162b",
+        "allThreeAuthoritiesPresent": true,
+        "oldRequirementsAudited": 31
+      },
+      {
+        "caseId": "aws-official-c",
+        "sourceAndImageProvenanceUnchanged": true,
+        "rawImageSha256": "ace1b957a920f516f2bd88cfa779cd8b899e4bd40b3cdf562f478d141c892a8d",
+        "allThreeAuthoritiesPresent": true,
+        "oldRequirementsAudited": 22
+      },
+      {
+        "caseId": "aws-official-d",
+        "sourceAndImageProvenanceUnchanged": true,
+        "rawImageSha256": "9439b99a3e99155ca9e943b305cf0e4ad738d6e81cb8ae853b1e8b82013ae59b",
+        "allThreeAuthoritiesPresent": true,
+        "oldRequirementsAudited": 18
+      },
+      {
+        "caseId": "aws-official-e",
+        "sourceAndImageProvenanceUnchanged": true,
+        "rawImageSha256": "2ba2f1d238026058bde92c21f88ba9263dcd9e5341606ad80155239564c4ccaa",
+        "allThreeAuthoritiesPresent": true,
+        "oldRequirementsAudited": 37
+      }
+    ],
+    "priorRequirementsAudited": 137,
+    "all137DispositionTargetsExist": true,
+    "supersededPreFreezeIdentitySha256": "fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10",
+    "supersededCandidatePinnedBytesAndCanonicalIdentityVerified": true,
+    "candidateRevision": 2,
+    "candidateIdentitySha256": "3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757",
+    "truthFrozen": false,
+    "executionAuthorized": false,
+    "modelUnderTestRunCount": 0,
+    "imageOnlySemanticAuthority": "PASS",
+    "pageOnlyContextCannotAddSemanticRequirement": "PASS",
+    "draftChosenConditionalClosureAndUnknownInputValidity": "PASS",
+    "PT6R2StillUnauthorized": true,
+    "historicalExecutionCompletionEvidenceAndCountersPreserved": true,
+    "autonomousRepairsUsed": 1,
+    "humanAuthorizedCorrectiveIterations": 1,
+    "gitDiffCheck": "PASS",
+    "scope": "PASS",
+    "executions": {
+      "modelCalls": 0,
+      "liveCloudActions": 0,
+      "OpenSearchOperations": 0,
+      "databaseMeasurements": 0,
+      "browserMeasurements": 0,
+      "workflowDispatches": 0,
+      "backendTestInvocations": 0
+    },
+    "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
+    "independentAcceptance": "PENDING_RE_REVIEW",
+    "prePublicationMainDriftCheckSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+    "mainDriftStatus": "PASS_EXISTING_BASE_PRESERVED_NO_REBIND"
   }
 }

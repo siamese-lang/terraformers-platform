@@ -1,0 +1,96 @@
+{
+  "executionBaseSha": "6228d69b1da604e816b3e0a826563d79b8bcd844",
+  "mainReadsAtActivation": 1,
+  "source": "git fetch origin main; FETCH_HEAD",
+  "expectedMain": "6228d69b1da604e816b3e0a826563d79b8bcd844",
+  "predecessor": {
+    "pullRequest": 254,
+    "independentAcceptanceReviewCommentId": 6037528315,
+    "reviewedHeadSha": "987ec944c84ac74f99f2c2f3ae38b0bc16499f8a",
+    "mergedMainSha": "6228d69b1da604e816b3e0a826563d79b8bcd844",
+    "mergedAt": "2026-10-07T12:09:23Z",
+    "reviewUrl": "https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037528315"
+  },
+  "observedMainRuleset": {
+    "id": 24074505,
+    "name": "protect-main-for-delivery",
+    "target": "branch",
+    "source_type": "Repository",
+    "source": "siamese-lang/terraformers-platform",
+    "enforcement": "active",
+    "conditions": {
+      "ref_name": {
+        "exclude": [],
+        "include": [
+          "~DEFAULT_BRANCH"
+        ]
+      }
+    },
+    "rules": [
+      {
+        "type": "deletion"
+      },
+      {
+        "type": "non_fast_forward"
+      },
+      {
+        "type": "pull_request",
+        "parameters": {
+          "required_approving_review_count": 0,
+          "dismiss_stale_reviews_on_push": false,
+          "required_reviewers": [],
+          "require_code_owner_review": false,
+          "require_last_push_approval": false,
+          "required_review_thread_resolution": false,
+          "require_extra_approval_for_unattributed_changes": false,
+          "allowed_merge_methods": [
+            "merge",
+            "squash",
+            "rebase"
+          ]
+        }
+      },
+      {
+        "type": "required_status_checks",
+        "parameters": {
+          "strict_required_status_checks_policy": false,
+          "do_not_enforce_on_create": false,
+          "required_status_checks": [
+            {
+              "context": "terraform-static-verification",
+              "integration_id": 15368
+            }
+          ]
+        }
+      }
+    ],
+    "node_id": "RRS_lACqUmVwb3NpdG9yec5R5g3TzgFvWQk",
+    "created_at": "2026-09-27T13:39:55.155Z",
+    "updated_at": "2026-09-27T15:16:41.271Z",
+    "bypass_actors": [],
+    "current_user_can_bypass": "never",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/siamese-lang/terraformers-platform/rulesets/24074505"
+      },
+      "html": {
+        "href": "https://github.com/siamese-lang/terraformers-platform/rules/24074505"
+      }
+    }
+  },
+  "rulesetMutationAuthorized": false,
+  "proposedAddition": {
+    "context": "backend-required-verification",
+    "integration_id": 15368
+  },
+  "sourceBindings": {
+    "AGENTS.md": "0122e2266e799cc980d08604f35113b4142c032395d4fb1970f78d52c420b2ee",
+    "backend/Dockerfile": "36172e189b3369f9b7dd05bdd7d01d75b3d6da6528410d49068590499793f8e3",
+    ".github/workflows/gcp-backend-image-publish.yml": "d6d7eb1d04297d00c11b3438ec8bb36be8a44864fd1ed5dd28846386b5ef9bbe",
+    ".github/workflows/gcp-target-runtime-dependencies.yml": "a6ab6436183272dff6443235399b362d084206288b3ef72ffe1217c7db227f54",
+    "docs/evaluation/case-c-immutable-backend-image-delivery-readiness.md": "fb539264a4835b8a0bb704238ebab91a0f4785301dfd0f3dcd0146b0dc8c6c9d",
+    "docs/evaluation/product-trust-v4-evidence-validity-audit.md": "50f4339a4cd4397fd50df43d6d5ad5900d7d981d04f7cbf58bba16be503d018e"
+  },
+  "liveModelCloudOpenSearchOperations": 0,
+  "automaticCIIsPT6R1Measurement": false
+}

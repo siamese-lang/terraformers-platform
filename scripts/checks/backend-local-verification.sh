@@ -65,16 +65,30 @@ echo "[backend] packaging application without re-running tests"
 mvn -q -DskipTests package
 
 if [[ "${RUN_DOCKER_BUILD}" == "true" ]]; then
+  if [[ ! "${BUILD_SOURCE_REVISION:-}" =~ ^[0-9a-f]{40}$ ]]; then
+    echo "Docker build requires the exact 40-character source revision." >&2
+    exit 1
+  fi
   if ! command -v docker >/dev/null 2>&1; then
     echo "Docker build requested, but docker command was not found." >&2
     exit 1
   fi
 
   echo "[backend] building Docker image"
-  docker build -t terraformers-backend:local .
+  image_tag="terraformers-backend:pr-${BUILD_SOURCE_REVISION}"
+  docker build --file "${BACKEND_DIR}/Dockerfile" \
+    --build-arg "BUILD_SOURCE_REVISION=${BUILD_SOURCE_REVISION}" \
+    --tag "${image_tag}" "${BACKEND_DIR}"
+  docker image inspect "${image_tag}" --format '{{range .Config.Env}}{{println .}}{{end}}' \
+    | grep -Fx "BUILD_SOURCE_REVISION=${BUILD_SOURCE_REVISION}"
+  image_verified=true
 else
   echo "[backend] skipping Docker image build"
   echo "[backend] set RUN_DOCKER_BUILD=true to include docker build validation"
+  image_verified=false
 fi
 
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+  echo "production_image_build_verified=${image_verified}" >>"${GITHUB_OUTPUT}"
+fi
 echo "[backend] local verification completed"

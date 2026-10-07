@@ -4,11 +4,11 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": "PT-6R2",
-  "lastCompletedPhase": "PT-6R1",
-  "activeWorkPackage": "product-trust-pt-6r2-provider-terminality-v1",
+  "activePhase": "PT-7",
+  "lastCompletedPhase": "PT-6R2",
+  "activeWorkPackage": "product-trust-pt-7-ci-delivery-trust-v1",
   "activePullRequest": null,
-  "humanGate": "PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE",
+  "humanGate": "PT7_REQUIRED_CHECK_RULESET_CHANGE",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
@@ -37,16 +37,17 @@
     "USER-authorized governance-only correction for review 6031593870 preserves accepted PT-6R1 code, all evidence, the bound execution base and repair/correction counters. PT-6R1 acceptance and USER merge lead to HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT, not automatic PT-6R2 activation. A subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged evidence-validity amendment must release the pause; its content/version/base are not selected here.",
     "PR #252 latest independent review 6031698220 accepted tree c9792b42b4a6a9b8529a904d240c5bccf5d08d10 at head 2b63e79; merge-policy-only empty head 25336fa preserves that tree. USER merged as 38f995b. PT-6R1 is COMPLETE without new database/behavioral measurements or counter changes. USER authorizes this substantive v4 evidence-validity preparation only. Historical reference-derived truth remains frozen but controlled regression; five exact official candidates require new human freeze. PT-6R2 stays unauthorized until amendment review, explicit USER approval, independent acceptance and USER merge. No future base, live/model/cloud action or self-acceptance is inferred.",
     "USER-authorized bounded correction for PR #253 review 6032307527 separates all five cases into image_observable_truth, documentation_context and conditional draft_technical_closure. Official image/source provenance is unchanged; exact pre-freeze candidate identity fad3627 and both pinned files are archived. New revision 2 remains unapproved, unexecuted and model count 0. V4 autonomous repair remains 1; human corrective iteration 1 is recorded separately. Base, accepted structural DAG, PT-6R1 completion and historical evidence/counters remain unchanged; no live/model/PT-6R2 authority.",
-    "PR #253 review 6032563396 accepted immutable AWS candidate revision 2; USER merged as 406981a8c629a02503f5660453dcc7921b8d5177 and approval 6032637762 externally freezes identity 3e105771… without changing candidate bytes. Exactly PT-6R2 audit activates on that once-read main. SDK 1.72.0 defaults five attempts and removes transport timeouts; synchronous worker plus independent heartbeat has no accepted-age terminal cutoff. Four options are recommendations only. Stop at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION; no production implementation, model/cloud/OpenSearch/database/browser action or PT-7 authority. Historical evidence/counters stay exact; transient PR/branch fields stay null.",
+    "PR #253 review 6032563396 accepted immutable AWS candidate revision 2; USER merged as 406981a8c629a02503f5660453dcc7921b8d5177 and approval 6032637762 externally freezes identity 3e105771\u2026 without changing candidate bytes. Exactly PT-6R2 audit activates on that once-read main. SDK 1.72.0 defaults five attempts and removes transport timeouts; synchronous worker plus independent heartbeat has no accepted-age terminal cutoff. Four options are recommendations only. Stop at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION; no production implementation, model/cloud/OpenSearch/database/browser action or PT-7 authority. Historical evidence/counters stay exact; transient PR/branch fields stay null.",
     "Explicit USER policy D approval selects facts 370s, generation/compact/repair 220s, embeddings 10s, SDK attempts 1 / no retryable statuses, durable attempts 1 and original accepted-age cutoff 8 minutes. One existing H2 state-service run (5 existing tests plus 1 temporary lock diagnostic) confirms terminal SQL waits on the external-I/O finalization row lock. Stop at the USER-declared PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION before redesigning finalization or weakening cutoff; no production configuration/implementation or live action occurred. Temporary test bytes restored. Historical audit/evidence/counters remain unchanged; diagnostic is not a PT-6R1 measurement or PT-6R2 acceptance.",
     "USER explicitly authorizes narrow PT6R2 finalization fencing following independent scope review 6036430154 at c516288. Candidate code implements policy D, external write outside finalization transaction, post-write/post-commit fencing, accepted-age sweep and one durable claim. Compile/test-compile pass. First focused 130 tests: 1 failure / 6 errors; one test-only repair rerun 11 tests: 2 failures / 0 errors. Two legacy assertions were missed; no second repair or full suite is run. Stop HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED on the same Work Package/PR. No acceptance, deployment, live/model/database remeasurement, PT7 or counter reset; immutable historical evidence and frozen bytes stay exact.",
-    "USER explicitly authorizes one test-contract-only human correction following review 6037186101 at 2ac19e2. Exactly three legacy regression files align with existing finalization order / attempts=1; production bytes and PT6R1 identity scenario/counters remain unchanged. One local focused invocation passes 11/0/0/0; one offline clean package passes 576/0/0/4 (MariaDB skipped locally). Prior failed validation evidence is immutable. Autonomous repairs stay 1; human corrective iterations become 1. Return to PT6R2 implementation complete / independent acceptance pending. Exact corrective-head automatic Backend Local Verification is GitHub-authoritative regression only, not a PT6R1 before/after measurement. No manual DB/model/cloud/OpenSearch/browser/dispatch, PT7, self-acceptance or merge authority."
+    "USER explicitly authorizes one test-contract-only human correction following review 6037186101 at 2ac19e2. Exactly three legacy regression files align with existing finalization order / attempts=1; production bytes and PT6R1 identity scenario/counters remain unchanged. One local focused invocation passes 11/0/0/0; one offline clean package passes 576/0/0/4 (MariaDB skipped locally). Prior failed validation evidence is immutable. Autonomous repairs stay 1; human corrective iterations become 1. Return to PT6R2 implementation complete / independent acceptance pending. Exact corrective-head automatic Backend Local Verification is GitHub-authoritative regression only, not a PT6R1 before/after measurement. No manual DB/model/cloud/OpenSearch/browser/dispatch, PT7, self-acceptance or merge authority.",
+    "PR #254 independent review 6037528315 accepted head 987ec944; USER merged as 6228d69b. PT6R2 COMPLETE is reconciled inside this substantive PT7 PR with original base/evidence/auto repair 1/human correction 1 and conditional \u0394 limits preserved. Explicit USER PT7 request binds that main once. Existing backend workflow gets separate backend/image scope and one always-present backend-required-verification; actual ruleset is read-only and still Terraform-only. Stop after exact-head normal CI at PT7_REQUIRED_CHECK_RULESET_CHANGE, then require explicit ruleset authority, independent phase acceptance and USER merge. No live/model/cloud/OpenSearch/runtime operation, PT8A execution, new workflow or transient PR lifecycle state."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
-  "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
-  "resultBeforeHumanGate": "PT6R2_IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING",
+  "executionBaseSha": "6228d69b1da604e816b3e0a826563d79b8bcd844",
+  "resultBeforeHumanGate": "PT7_REPOSITORY_IMPLEMENTATION_PREPARED_EXACT_HEAD_CI_AND_RULESET_AUTHORITY_PENDING",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -66,11 +67,11 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "PT6R2 local implementation validation is complete after USER-authorized test-contract correction 1. Exact corrective-head automatic Backend Local Verification is authoritative in GitHub and must be inspected; independent acceptance and USER merge remain required. CI success alone is not acceptance; PT7 execution stays unauthorized.",
-    "Conditional terminal delta is P+B+S+T (5s model only under P<=2s and B/S/T<=1s); no measured production SLO/outage/thread-cancellation claim.",
-    "Final product trust remains INCOMPLETE until accepted deployed GCP/exact v4/real-model/external official full-chain evidence, integrated equivalence and gated closure."
+    "Normal exact-head PR CI must succeed before PT7_REQUIRED_CHECK_RULESET_CHANGE. Existing ruleset still requires only terraform-static-verification; explicit USER ruleset-write authority is absent.",
+    "PT7 independent acceptance and USER merge are pending; CI green alone is not acceptance.",
+    "PT8A source/image/deployment/exact-v4/retrieval readiness and separate live/model/cost gate remain unmet; no frozen official input consumption or live action authorized."
   ],
-  "evidenceDocument": "docs/evaluation/product-trust-pt-6r2-provider-terminality.md",
+  "evidenceDocument": "docs/evaluation/product-trust-pt-7-ci-delivery-handoff.md",
   "validation": {
     "initialFocused": {
       "tests": 10,
@@ -147,7 +148,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+  "lastObservedMainSha": "6228d69b1da604e816b3e0a826563d79b8bcd844",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -257,26 +258,21 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6037186101,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037186101",
-    "decision": "HUMAN_REQUIRED",
-    "reviewedHeadSha": "2ac19e2ca7d782bec1d47c6f29fb58543cbb3640",
+    "commentId": 6037528315,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037528315",
+    "decision": "ACCEPTED",
+    "reviewedHeadSha": "987ec944c84ac74f99f2c2f3ae38b0bc16499f8a",
     "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
     "workPackage": "product-trust-pt-6r2-provider-terminality-v1",
-    "productionImplementationDesignReview": "PASS_WITH_VALIDATION_BLOCKER",
-    "optionDBinding": "PASS",
-    "finalizationFencingDesign": "PASS",
-    "deadlineSweepDesign": "PASS",
-    "durableAttemptOneDesign": "PASS",
-    "currentAcceptanceValidationAtReviewedHead": "FAIL",
-    "mergeRecommendation": "HOLD",
-    "subsequentUSERTestContractAuthority": "docs/evidence/product-trust-pt-6r2/approved-test-contract-correction.md",
+    "productionImplementationReview": "PASS",
+    "testContractAlignmentReview": "PASS",
+    "overallAcceptance": "PASS",
     "reviewGrantsImplementationOrMergeAuthority": false
   },
-  "lastCompletedWorkPackage": "product-trust-v4-evidence-validity-amendment-v1",
-  "lastCompletedPullRequest": 253,
+  "lastCompletedWorkPackage": "product-trust-pt-6r2-provider-terminality-v1",
+  "lastCompletedPullRequest": 254,
   "nextPhase": null,
-  "executionBaseWorkPackage": "product-trust-pt-6r2-provider-terminality-v1",
+  "executionBaseWorkPackage": "product-trust-pt-7-ci-delivery-trust-v1",
   "truthFreezeApproval": {
     "marker": "[HUMAN_GATE_APPROVAL:v1]",
     "commentId": 6015857324,
@@ -409,18 +405,41 @@
       "CIIsNewBehavioralMeasurement": false,
       "rawEvidenceAndCountersPreserved": true,
       "furtherDatabaseExecutionAuthorized": false
+    },
+    "PT-6R2": {
+      "status": "COMPLETE",
+      "workPackage": "product-trust-pt-6r2-provider-terminality-v1",
+      "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+      "reviewedHeadSha": "987ec944c84ac74f99f2c2f3ae38b0bc16499f8a",
+      "sourceHeadSha": "987ec944c84ac74f99f2c2f3ae38b0bc16499f8a",
+      "independentAcceptance": "PASS",
+      "independentReviewCommentId": 6037528315,
+      "mergedPullRequest": 254,
+      "mergedMainSha": "6228d69b1da604e816b3e0a826563d79b8bcd844",
+      "mergedAt": "2026-10-07T12:09:23Z",
+      "completionBoundary": "CONDITIONAL_OPERATING_SERVICE_TERMINAL_CONTRACT_NOT_PRODUCTION_SLO_OR_OUTAGE_GUARANTEE",
+      "conditionalDeltaFormula": "P+B+S+T",
+      "conditionalDeltaModelMs": 5000,
+      "conditionalDeltaIsProductionMeasurement": false,
+      "autoRepairsUsed": 1,
+      "humanAuthorizedCorrectiveIterations": 1,
+      "rawEvidenceAndCountersPreserved": true,
+      "productionRuntimeRolledOut": false,
+      "CIIsPT6R1Measurement": false
     }
   },
   "blockedNextPhase": {
-    "phase": "PT-7",
-    "status": "BLOCKED_BY_UNCOMPLETED_PT6R2",
+    "phase": "PT-8A",
+    "status": "BLOCKED_BY_PT7_AND_LIVE_READINESS_GATES",
     "executionAuthorized": false,
     "executionStarted": false,
     "workPackage": null,
     "executionBaseSha": null,
     "activationRequires": [
-      "PT6R2_terminal_enforcement_scope_gate_released",
-      "PT6R2_independent_completion_acceptance_and_USER_merge"
+      "PT7_required_check_ruleset_change_explicitly_USER_approved_and_applied",
+      "PT7_independent_acceptance_and_USER_merge",
+      "later_exact_source_image_deployed_runtime_v4_retrieval_readiness",
+      "separate_FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE"
     ]
   },
   "prReviewFeedbackHistory": [
@@ -670,6 +689,23 @@
       "productionImplementationAcceptance": "NOT_YET_EXECUTED_AT_REVIEWED_HEAD",
       "mergeRecommendation": "HOLD",
       "subsequentUSERNarrowScopeAuthority": "docs/evidence/product-trust-pt-6r2/approved-finalization-correction.md",
+      "reviewGrantsImplementationOrMergeAuthority": false
+    },
+    {
+      "commentId": 6037186101,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037186101",
+      "decision": "HUMAN_REQUIRED",
+      "reviewedHeadSha": "2ac19e2ca7d782bec1d47c6f29fb58543cbb3640",
+      "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+      "workPackage": "product-trust-pt-6r2-provider-terminality-v1",
+      "productionImplementationDesignReview": "PASS_WITH_VALIDATION_BLOCKER",
+      "optionDBinding": "PASS",
+      "finalizationFencingDesign": "PASS",
+      "deadlineSweepDesign": "PASS",
+      "durableAttemptOneDesign": "PASS",
+      "currentAcceptanceValidationAtReviewedHead": "FAIL",
+      "mergeRecommendation": "HOLD",
+      "subsequentUSERTestContractAuthority": "docs/evidence/product-trust-pt-6r2/approved-test-contract-correction.md",
       "reviewGrantsImplementationOrMergeAuthority": false
     },
     {
@@ -1198,9 +1234,9 @@
       "mainReadsAtActivation": 1,
       "authority": "USER explicit attached audit request and approval 6032637762",
       "authorityEvidence": "docs/evidence/product-trust-pt-6r2/authority.json",
-      "status": "HUMAN_REQUIRED",
-      "humanGate": "PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE",
-      "currentStep": "IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING",
+      "status": "COMPLETE",
+      "humanGate": null,
+      "currentStep": "INDEPENDENTLY_ACCEPTED_AND_USER_MERGED",
       "auditEvidence": "docs/evidence/product-trust-pt-6r2/audit.json",
       "decisionBrief": "docs/evaluation/product-trust-pt-6r2-provider-terminality.md",
       "selectedBudgetPolicy": "D",
@@ -1237,8 +1273,8 @@
       "browserExecutions": 0,
       "databaseExecutions": 0,
       "workflowDispatches": 0,
-      "phaseComplete": false,
-      "independentAcceptance": "PENDING",
+      "phaseComplete": true,
+      "independentAcceptance": "PASS",
       "narrowFinalizationFencingCorrectionAuthorized": true,
       "finalizationCorrectionAuthority": "docs/evidence/product-trust-pt-6r2/approved-finalization-correction.md",
       "scopeReviewCommentId": 6036430154,
@@ -1284,9 +1320,50 @@
         "result": "BUILD_SUCCESS",
         "invocations": 1
       },
-      "normalAutomaticCI": "GitHub_exact_corrective_head_authoritative_after_push",
+      "normalAutomaticCI": {
+        "runId": 37617690039,
+        "backendLocal": "PASS",
+        "mariadbSchemaRepository": "PASS",
+        "isPT6R1AcceptanceMeasurement": false
+      },
       "productionFilesChangedByHumanIteration": false,
-      "terminalDeltaFormula": "P+B+S+T"
+      "terminalDeltaFormula": "P+B+S+T",
+      "independentReviewCommentId": 6037528315,
+      "reviewedHeadSha": "987ec944c84ac74f99f2c2f3ae38b0bc16499f8a",
+      "mergedMainSha": "6228d69b1da604e816b3e0a826563d79b8bcd844"
+    },
+    "PT-7": {
+      "workPackage": "product-trust-pt-7-ci-delivery-trust-v1",
+      "executionBaseSha": "6228d69b1da604e816b3e0a826563d79b8bcd844",
+      "mainReadsAtActivation": 1,
+      "authority": "Explicit USER PT7 repository-only request; review alone does not grant execution authority",
+      "authorityEvidence": "docs/evidence/product-trust-pt-7/authority.json",
+      "status": "HUMAN_REQUIRED",
+      "humanGate": "PT7_REQUIRED_CHECK_RULESET_CHANGE",
+      "currentStep": "REPOSITORY_IMPLEMENTATION_PREPARED_EXACT_HEAD_NORMAL_CI_PENDING",
+      "phaseComplete": false,
+      "independentAcceptance": "PENDING",
+      "autoRepairLimit": 1,
+      "autoRepairsUsed": 0,
+      "humanAuthorizedCorrectiveIterations": 0,
+      "rulesetMutationAuthorized": false,
+      "rulesetMutationPerformed": false,
+      "proposedRequiredCheckAddition": "backend-required-verification",
+      "currentRequiredChecks": [
+        "terraform-static-verification"
+      ],
+      "thisPRScope": {
+        "backendVerification": true,
+        "productionImageBuild": false
+      },
+      "validationEvidence": "docs/evidence/product-trust-pt-7/validation.json",
+      "normalAutomaticCI": "GitHub_exact_PR_head_normal_pull_request_event_authoritative_after_push",
+      "modelUnderTestRunCount": 0,
+      "liveCloudActions": 0,
+      "OpenSearchOperations": 0,
+      "browserExecutions": 0,
+      "manualDatabaseExecutions": 0,
+      "workflowDispatches": 0
     }
   },
   "goalContinuation": {
@@ -1296,9 +1373,11 @@
     "transientPrLifecycleAuthority": "GitHub only",
     "humanGatesPreserved": true,
     "repetitiveContinuePromptsRequired": false,
-    "pausedAtHumanGate": "PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE",
+    "pausedAtHumanGate": "PT7_REQUIRED_CHECK_RULESET_CHANGE",
     "resumeRequires": [
-      "exact_corrective_head_automatic_regression_and_independent_PT6R2_acceptance_followed_by_explicit_USER_merge_no_PT7_execution_now"
+      "exact_head_normal_PR_CI_success_then_explicit_USER_required_check_ruleset_change_approval",
+      "PT7_independent_acceptance_and_explicit_USER_merge",
+      "later_phase_human_readiness_live_model_cost_authority"
     ]
   },
   "programAmendments": [
@@ -1498,7 +1577,6 @@
   "lastDisposedPhase": "PT-2",
   "programVersion": 4,
   "remainingMandatoryOrder": [
-    "PT-6R2",
     "PT-7",
     "PT-8A",
     "PT-8B",

@@ -3,11 +3,11 @@ program:
   version: 4
   contract_status: APPROVED_V4_INDEPENDENTLY_ACCEPTED_AND_USER_MERGED
   active_amendment: null
-  active_phase: PT-6R2
-  active_work_package: .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
+  active_phase: PT-7
+  active_work_package: .agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml
   amendment_preparation_authority: USER_explicit_repository_only_v4_request
   exact_candidate_truth_approved: true
-  current_human_gate: PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE
+  current_human_gate: PT7_REQUIRED_CHECK_RULESET_CHANGE
   status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
@@ -16,7 +16,7 @@ program:
   state: .agents/state/product-trust-v1.json
   integrity_audit: docs/evaluation/product-trust-v4-evidence-validity-audit.md
   historical_v3_audit: docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md
-  remaining_mandatory_order: [PT-6R2, PT-7, PT-8A, PT-8B, PT-9]
+  remaining_mandatory_order: [PT-7, PT-8A, PT-8B, PT-9]
 
   approved_amendments:
     - id: PT2_FINAL_INCOMPLETE_TO_BOUNDED_PT3
@@ -59,7 +59,7 @@ program:
       exact_candidate_identity: 3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757
       candidate_bytes: IMMUTABLE_PRE_APPROVAL_SNAPSHOT_APPROVAL_RECORDED_EXTERNALLY
       status: COMPLETE
-      PT6R2_authority: POLICY_D_APPROVED_IMPLEMENTATION_PAUSED_AT_TERMINAL_SCOPE_GATE
+      PT6R2_authority: POLICY_D_INDEPENDENTLY_ACCEPTED_AND_USER_MERGED
       live_authority_implied: false
 
   goal: >
@@ -191,8 +191,10 @@ program:
     auto_advance_repository_only_phases: false
     post_PT6R1_human_gate: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
     progression_resume_requires:
-      - PT6R2_terminal_enforcement_scope_gate_released_without_weakening_approved_D
-      - PT6R2_independent_completion_acceptance_and_USER_merge
+      - PT7_exact_head_normal_PR_CI_success
+      - PT7_required_check_addition_explicitly_USER_approved_and_applied_without_other_ruleset_changes
+      - PT7_independent_acceptance_and_USER_merge
+      - later_PT8A_readiness_and_separate_live_model_cost_authority
     auto_repair_limit: 1
     auto_merge: false
     rerun_until_green: false
@@ -205,6 +207,7 @@ program:
     completion_reconciliation: IN_NEXT_SUBSTANTIVE_PR_NO_SEPARATE_STATE_SYNC_PR
 
   human_gates:
+    - PT7_REQUIRED_CHECK_RULESET_CHANGE
     - PROGRAM_APPROVAL
     - PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
     - AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE
@@ -398,13 +401,17 @@ program:
       execution_base_sha: BIND_AT_ACTIVATION
       human_gate_when: PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE
       resolved_numeric_decision_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
-      current_step: IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING
+      status: COMPLETE
+      current_step: INDEPENDENTLY_ACCEPTED_AND_USER_MERGED
+      independent_acceptance_review: 6037528315
+      reviewed_head: 987ec944c84ac74f99f2c2f3ae38b0bc16499f8a
+      USER_merged_main_sha: 6228d69b1da604e816b3e0a826563d79b8bcd844
       active_work_package: .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
       activation_authority_evidence: docs/evidence/product-trust-pt-6r2/authority.json
       audit_and_decision_brief: docs/evaluation/product-trust-pt-6r2-provider-terminality.md
       production_implementation_authorized: true
       broader_finalization_correction_authorized: false
-      production_implementation_blocked_by: PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE
+      production_implementation_blocked_by: null
       narrow_finalization_fencing_correction_authorized: true
       finalization_correction_authority: docs/evidence/product-trust-pt-6r2/approved-finalization-correction.md
       scope_review: 6036430154
@@ -413,8 +420,8 @@ program:
       test_contract_correction_authority: docs/evidence/product-trust-pt-6r2/approved-test-contract-correction.md
       human_authorized_corrective_iterations: 1
       autonomous_repairs_used: 1
-      implementation_acceptance: LOCAL_IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING
-      normal_automatic_CI: GitHub_exact_corrective_head_authoritative_after_push
+      implementation_acceptance: INDEPENDENT_ACCEPTANCE_PASS
+      normal_automatic_CI: https://github.com/siamese-lang/terraformers-platform/actions/runs/37617690039
       objective: >
         Ensure one accepted AnalysisJob cannot remain provider-bound indefinitely. Audit the actual
         Google GenAI client request/deadline capability and provider/retry/job boundaries first.
@@ -442,7 +449,7 @@ program:
         decision_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
         decision_gate_resolved_by_USER: true
         authority_required_if_product_choice_needed: USER
-        accepted_to_terminal_contract: ORIGINAL_ACCEPTED_AT_480000_MS_PLUS_P_B_S_T_CONDITIONAL_ON_OPERATING_BOUNDS_INDEPENDENT_ACCEPTANCE_PENDING
+        accepted_to_terminal_contract: ORIGINAL_ACCEPTED_AT_480000_MS_PLUS_P_B_S_T_CONDITIONAL_ON_OPERATING_BOUNDS_INDEPENDENTLY_ACCEPTED
       completion:
         - actual_SDK_deadline_and_provider_retry_job_boundaries_are_audited
         - any_required_numeric_budget_or_retry_policy_choice_has_explicit_USER_approval
@@ -456,6 +463,19 @@ program:
       kind: repository
       depends_on: [PT-6R2]
       auto_start_after_dependencies: true
+      active_work_package: .agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml
+      execution_base_sha: 6228d69b1da604e816b3e0a826563d79b8bcd844
+      status: HUMAN_REQUIRED
+      current_step: REPOSITORY_IMPLEMENTATION_PREPARED_EXACT_HEAD_NORMAL_CI_PENDING
+      human_gate_when: PT7_REQUIRED_CHECK_RULESET_CHANGE
+      evidence: docs/evaluation/product-trust-pt-7-ci-delivery-handoff.md
+      ruleset_change:
+        target: protect-main-for-delivery
+        observed_required_checks: [terraform-static-verification]
+        proposed_addition_only: backend-required-verification
+        mutation_authorized: false
+        mutation_performed: false
+        retain_all_other_settings: true
       objective: >
         Correct demonstrated protected-main and pre-publication validation gaps and document the
         source-to-live session handoff without enabling automatic GCP deploy-on-merge.

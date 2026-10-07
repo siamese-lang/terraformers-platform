@@ -1,0 +1,85 @@
+work_package:
+  id: product-trust-pt-7-ci-delivery-trust-v1
+  program: product-trust-v1
+  phase: PT-7
+  kind: repository
+  status: HUMAN_REQUIRED
+  current_step: REPOSITORY_IMPLEMENTATION_PREPARED_EXACT_HEAD_NORMAL_CI_PENDING
+  human_gate_after_successful_exact_head_CI: PT7_REQUIRED_CHECK_RULESET_CHANGE
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: 6228d69b1da604e816b3e0a826563d79b8bcd844
+  activation:
+    main_reads_at_activation: 1
+    expected_and_observed_remote_main: 6228d69b1da604e816b3e0a826563d79b8bcd844
+    refresh_rebase_or_rebind: prohibited
+    subsequent_main_drift: HUMAN_REQUIRED_MAIN_DRIFT
+  authority:
+    source: USER_explicit_PT7_repository_only_request
+    request: docs/evidence/product-trust-pt-7/approved-request.md
+    predecessor_pull_request: 254
+    independent_acceptance_comment: 6037528315
+    predecessor_reviewed_head: 987ec944c84ac74f99f2c2f3ae38b0bc16499f8a
+    predecessor_merge_sha: 6228d69b1da604e816b3e0a826563d79b8bcd844
+    evidence: docs/evidence/product-trust-pt-7/authority.json
+  improvement_axis: Backend_reliability
+  representative_case: Case_C_reviewed_source_to_immutable_delivery_and_Case_B_required_regression_boundary
+  objective: >
+    Reconcile accepted PT6R2 in this substantive PR. Close demonstrated PR image-build and stable
+    backend-check gaps within the existing workflow; audit the existing source-to-live handoff.
+    Prepare, but do not apply, the single required-check addition after exact-head normal CI.
+  allowed_paths:
+    - .agents/programs/product-trust-v1.yml
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml
+    - .github/workflows/backend-local-verification.yml
+    - scripts/checks/backend-local-verification.sh
+    - scripts/checks/ci_changed_scope.py
+    - tests/ci/test_ci_changed_scope.py
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-pt-7-ci-delivery-handoff.md
+    - docs/evidence/product-trust-pt-7/**
+  allowed_actions:
+    - read_GitHub_review_merge_ruleset_and_subsequent_main_drift_metadata
+    - edit_scope_and_existing_backend_workflow_script_with_narrow_regression_tests
+    - repository_only_deterministic_validation_without_services
+    - commit_push_open_one_PT7_PR_without_CI_skip_and_inspect_normal_exact_head_CI
+    - one_same_failure_class_bounded_repair_with_immutable_failed_evidence
+  prohibited_actions:
+    - ruleset_write_self_accept_merge_or_main_refresh
+    - new_workflow_framework_or_duplicate_Dockerfile_pin_verifier
+    - backend_production_frontend_prompt_model_retrieval_SDK_frozen_truth_changes
+    - manual_MariaDB_browser_Docker_stack_model_GCP_OpenSearch_or_runtime_operations
+    - image_push_live_inventory_rollout_ingestion_or_teardown
+    - PT8A_activation_or_official_input_consumption
+    - rerun_until_green_or_manual_failed_workflow_rerun
+  acceptance_criteria:
+    - backend_scope_runs_on_every_main_PR_and_non_backend_work_skips_expensive_jobs
+    - existing_backend_and_MariaDB_jobs_are_both_required_when_backend_scope_is_true
+    - image_build_selected_only_for_backend_Dockerfile_pom_or_src_main_changes
+    - selected_image_build_executes_real_unchanged_Dockerfile_with_exact_PR_head_revision_and_inspects_it
+    - stable_backend_required_verification_always_exists_and_fails_closed_on_scope_or_required_job_failure
+    - deterministic_cases_cover_non_backend_test_only_main_Dockerfile_pom_and_gate_failure_paths
+    - normal_exact_head_PR_CI_reports_backend_required_verification_success_without_manual_reruns
+    - actual_ruleset_is_audited_and_only_backend_required_verification_addition_is_proposed
+    - existing_manual_main_only_publish_and_rollout_chain_is_source_tag_digest_runtime_bound
+    - PT6R2_original_base_evidence_counters_and_conditional_delta_claim_are_preserved
+    - PT8A_requires_independent_PT7_acceptance_USER_merge_readiness_and_separate_live_model_cost_authority
+  validation_procedure:
+    frozen_before_implementation: true
+    local: [existing_ci_scope_unit_tests, shell_syntax, YAML_JSON_parse, scope_gate_failure_cases, metadata_and_immutable_path_checks, git_diff_check]
+    automatic: normal_pull_request_event_existing_Backend_Local_Verification_and_Terraform_Static_Verification
+    this_PR_expected_scope: {backend_verification: true, production_image_build: false}
+    Dockerfile_validation_authority: backend/Dockerfile
+    no_live_acceptance_claim: true
+    CI_is_not_independent_acceptance: true
+  auto_repair_limit: 1
+  auto_repairs_used: 0
+  human_authorized_corrective_iterations: 0
+  stop_on:
+    - HUMAN_REQUIRED_PT7_REQUIRED_CHECK_RULESET_CHANGE_after_exact_head_CI_success
+    - MAIN_DRIFT
+    - repeated_or_changed_failure_class_or_exhausted_repair
+    - demonstrated_publish_rollout_defect_requiring_scope_expansion
+    - architecture_product_live_cost_security_IAM_CORS_or_destructive_decision
+    - independent_acceptance_and_USER_merge_checkpoint

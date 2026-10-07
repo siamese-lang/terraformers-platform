@@ -16,6 +16,7 @@ AUTO_PR_WORKFLOW_ALLOWLIST = frozenset({
 
 
 WORKFLOW_OUTPUTS = {
+    "backend": ("backend_verification", "production_image_build"),
     "m1": ("boundary_contract", "backend_regression", "mariadb_regression", "frontend_regression", "runtime_contract"),
     "m2-baseline": ("kind_local_stub_baseline",),
     "m2-persistent": ("portable_persistent_runtime",),
@@ -89,6 +90,17 @@ def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
         frontend = under(path, "frontend")
         base = under(path, "infra/kubernetes/base")
         aws_overlay = under(path, "infra/kubernetes/overlays/aws-runtime-template")
+
+        backend = result["backend"]
+        backend["backend_verification"] |= under(path, "backend") or path in {
+            "scripts/checks/backend-local-verification.sh",
+            "scripts/checks/mariadb-schema-validation.sh",
+            "scripts/checks/flyway-migration-uniqueness.sh",
+            ".github/workflows/backend-local-verification.yml",
+            "scripts/checks/ci_changed_scope.py",
+            "tests/ci/test_ci_changed_scope.py",
+        }
+        backend["production_image_build"] |= backend_main or path in {"backend/Dockerfile", "backend/pom.xml"}
 
         m1 = result["m1"]
         m1["boundary_contract"] |= (
@@ -202,8 +214,9 @@ def classify(paths: list[str]) -> dict[str, dict[str, bool]]:
             }
         )
         if path == "scripts/checks/ci_changed_scope.py":
-            for workflow in result.values():
-                workflow.update(dict.fromkeys(workflow, True))
+            for name, workflow in result.items():
+                if name != "backend":
+                    workflow.update(dict.fromkeys(workflow, True))
     return result
 
 

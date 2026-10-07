@@ -2,7 +2,7 @@
 
 ## Status
 
-**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 FINAL INCOMPLETE EVIDENCE ACCEPTED / PT-3 COMPLETE / PT-4 DETERMINISTIC CORRECTION / HUMAN_REQUIRED: INDEPENDENT REVIEW AND MERGE_CHECKPOINT**
+**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 FINAL INCOMPLETE EVIDENCE ACCEPTED / PT-3 COMPLETE / PT-4 COMPLETE / PT-5 ACCESS AUDIT AND ROUTE CORRECTION / HUMAN_REQUIRED: INDEPENDENT REVIEW AND MERGE_CHECKPOINT**
 
 PT-1 revision 3 remains USER-frozen at
 `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`.
@@ -24,16 +24,23 @@ Technical PASS remains separate from semantic DEGRADED/reason; the omission chec
 effective IAM authorization, deployment success or realistic generalization. No live proof followed.
 The one Program dependency amendment remains unchanged.
 
-The approved Goal and Program DAG now activate repository-only
-[PT-4](../../../.agents/work-packages/product-trust-pt-4-trust-status-waiting-v1.yml) on that exact main.
-[The correction](../../evaluation/product-trust-pt-4-trust-status-waiting.md) presents durable processing
-status, bounded quality and accepted-to-terminal timing separately. It removes unsupported waiting
-promises/client-invented stages and does not backfill historical terminal time from heartbeat or
-cleanup metadata. PT-2's censor is never a measured terminal latency.
+[PT-4](../../evaluation/product-trust-pt-4-trust-status-waiting.md) is COMPLETE within deterministic
+processing/trust separation and durable timing. [Independent review 6029174275](https://github.com/siamese-lang/terraformers-platform/pull/248#issuecomment-6029174275)
+accepted head `68110fc0429d88b3211c5811b1c470770bc4c3f7`; USER merged PR #248 as
+`0c4fa0e9616881e281aa027a18a9d741ff614699` on `2026-10-07T01:52:07Z`.
+Its original base, validation evidence and bounded residuals are retained; no live proof is implied.
 
-GitHub owns transient PR lifecycle. This substantive PR records PT-3's accepted completion without
-another state/activation/normalization PR. Independent PT-4 acceptance and USER merge are required
-before PT-5; CI success alone is not acceptance. Live/model/GCP, architecture/security expansion,
+The approved Goal / Program DAG activates repository-only
+[PT-5](../../../.agents/work-packages/product-trust-pt-5-access-safety-v1.yml) on that exact main.
+[The access audit](../../evaluation/product-trust-pt-5-access-safety.md) preserves current
+owner/admin/public/discussion policy and corrects default-open JWT routing. Only supported public
+GETs are allowed anonymously; other routes require authentication. No new IdP, IAM grant, CORS
+origin, runtime configuration or cloud action is introduced. MockMvc/JWKS fixture evidence is not
+permanent production identity; authenticated request cost has no established per-user quota.
+
+GitHub owns transient PR lifecycle. This substantive PR records PT-4 accepted completion without
+another state/activation/normalization PR. Independent PT-5 acceptance and USER merge are required
+before PT-6; CI success alone is not acceptance. Live/model/GCP, architecture/security expansion,
 cost and teardown remain separately gated. Runtime is retained and A7-8 remains deferred.
 
 Historical synthetic controls remain mechanism/regression evidence, not realistic generalization.
@@ -128,7 +135,7 @@ repository-owned faithful test diagram rather than copying copyrighted artwork.
 
 ### PT-2 — Current-system realistic live baseline
 
-**Status: LIVE_REALISTIC_BASELINE approved; PROCEDURE FROZEN / HUMAN_REQUIRED: MERGE_CHECKPOINT.**
+**Status: PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION; further execution prohibited.**
 
 Use the frozen PT-1 dataset against the current production-equivalent path exactly once under a
 reviewed live checkpoint.
@@ -151,6 +158,8 @@ Do not tune prompts, retrieval, models or scoring before this baseline. Preserve
 
 ### PT-3 — Baseline-driven AI trust correction
 
+**Status: COMPLETE within the independently accepted deterministic omission correction.**
+
 Only evidence-backed defects from PT-2 may create implementation Work Packages.
 
 Predeclared candidate tracks are:
@@ -168,6 +177,8 @@ synthetic scores.
 
 ### PT-4 — Trustworthy user-facing status and waiting experience
 
+**Status: COMPLETE within the independently accepted deterministic presentation/timing correction.**
+
 Correct the already observed user-facing contract gap:
 
 - expose terminal technical/evidence quality semantics without inventing numeric confidence;
@@ -181,6 +192,8 @@ Correct the already observed user-facing contract gap:
 Reuse Case B durable job state and existing telemetry where possible.
 
 ### PT-5 — Access-safety and authentication-boundary audit
+
+**Status: AUDITED / BOUNDED ROUTE CORRECTION; independent review and USER merge pending.**
 
 Audit the supported API/user flow as an IDOR/ownership boundary:
 

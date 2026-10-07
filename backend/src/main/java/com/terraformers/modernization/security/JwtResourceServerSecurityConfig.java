@@ -26,16 +26,19 @@ public class JwtResourceServerSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/upload", "/api/analysis/jobs").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/analysis/jobs/*").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/projects", "/api/project-tree").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/projects/*/visibility").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/users/me/display-name").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/projects/*/terraform/main.tf").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/projects/*/comments", "/api/addProjectComment")
-                        .authenticated()
-                        .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
-                        .anyRequest().permitAll())
+                        // Public project handlers still enforce visibility before returning any data.
+                        .requestMatchers(HttpMethod.GET, "/api/projects/public", "/api/public-projects",
+                                "/api/projects/{projectId:[0-9]+}",
+                                "/api/projects/{projectId:[0-9]+}/terraform/main.tf",
+                                "/api/projects/{projectId:[0-9]+}/source-image",
+                                "/api/projects/{projectId:[0-9]+}/source-object",
+                                "/api/projects/{projectId:[0-9]+}/comments",
+                                "/api/getProjectComments/{projectId:[0-9]+}",
+                                "/api/project-tree/{projectId:[0-9]+}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**",
+                                "/actuator/info", "/actuator/prometheus", "/internal/runtime/required-config")
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable());

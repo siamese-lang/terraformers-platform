@@ -4,9 +4,9 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": "PT-4",
-  "lastCompletedPhase": "PT-3",
-  "activeWorkPackage": "product-trust-pt-4-trust-status-waiting-v1",
+  "activePhase": "PT-5",
+  "lastCompletedPhase": "PT-4",
+  "activeWorkPackage": "product-trust-pt-5-access-safety-v1",
   "activePullRequest": null,
   "humanGate": "MERGE_CHECKPOINT",
   "liveRuntime": {
@@ -29,13 +29,14 @@
     "PT-2 human-authorized review correction 1 replaces unexecuted standalone procedure with one authenticated production job per case and immutable Actions artifact handoff. Existing base, frozen bytes, PT-1 history and autonomous repair counters are preserved. No baseline or cloud action has occurred; independent review and explicit merge approval remain required.",
     "Historical preparation notes above predate live execution. Original run 37480519016 accepted two cases once; continuation 37500000739 failed before product API observation/inference. USER authorizes only bounded repository-only recovery correction preparation. Exact zero-inference proof and complete history are required before its one future continuation; no live dispatch before independent acceptance and explicit merge. No transient correction PR/branch is registered.",
     "Current USER decision closes PT-2 as final INCOMPLETE evidence and authorizes repository-only PT-3 in one substantive PR. Earlier pending/unapproved notes remain historical. No more PT-2 dispatch, exception or harness recovery; no ten-case/aggregate realistic metric claim. PT-4 owns quality presentation and latency guidance.",
-    "PR #247 independent review 6028631570 accepted exact head f127e71a5d36c9e8565c0e3e72260e67a5e71865; USER merged it as 5f623d820f5bf379636f933f5773f46177b5caf3. The approved Goal/Program DAG, not review alone, activates repository-only PT-4. PT-2 final INCOMPLETE, original censor/attempts/frozen bytes and all live/security/merge gates are preserved."
+    "PR #247 independent review 6028631570 accepted exact head f127e71a5d36c9e8565c0e3e72260e67a5e71865; USER merged it as 5f623d820f5bf379636f933f5773f46177b5caf3. The approved Goal/Program DAG, not review alone, activates repository-only PT-4. PT-2 final INCOMPLETE, original censor/attempts/frozen bytes and all live/security/merge gates are preserved.",
+    "PR #248 review 6029174275 independently accepted head 68110fc0429d88b3211c5811b1c470770bc4c3f7; USER merged it as 0c4fa0e9616881e281aa027a18a9d741ff614699. Goal/Program activates repository-only PT-5 on that once-bound main. Audit tightens default JWT routing while preserving existing owner/admin/public/comment policy. Deterministic JWKS is not a permanent production IdP; no model/cloud/runtime/IAM action or further PT-2 execution is authorized. GitHub alone owns transient PR lifecycle."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
-  "executionBaseSha": "5f623d820f5bf379636f933f5773f46177b5caf3",
-  "resultBeforeHumanGate": "PT4_DETERMINISTIC_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_EXPLICIT_MERGE",
+  "executionBaseSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+  "resultBeforeHumanGate": "PT5_ACCESS_AUDIT_AND_DEFAULT_ROUTE_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_EXPLICIT_MERGE",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -55,10 +56,10 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "PT-4 needs independent original-criteria acceptance and explicit USER merge; CI green is not acceptance.",
-    "PT-5 is blocked until accepted merge. No live/model/GCP/security expansion or additional PT-2 execution is authorized."
+    "PT-5 needs independent original-criteria acceptance and explicit USER merge; CI green is not acceptance.",
+    "PT-6 is blocked until accepted merge. New IdP/IAM/security expansion and live/model/GCP/cost/teardown remain human-gated; PT-2 stays permanently closed."
   ],
-  "evidenceDocument": "docs/evaluation/product-trust-pt-4-trust-status-waiting.md",
+  "evidenceDocument": "docs/evaluation/product-trust-pt-5-access-safety.md",
   "validation": {
     "initialFocused": {
       "tests": 10,
@@ -127,7 +128,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "5aa275e666d45f4181a3ca2ebee6740f0700a75b",
+  "lastObservedMainSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -251,10 +252,10 @@
       37509368210
     ]
   },
-  "lastCompletedWorkPackage": "product-trust-pt-1-realistic-input-benchmark-v1",
-  "lastCompletedPullRequest": 241,
-  "nextPhase": "PT-4",
-  "executionBaseWorkPackage": "product-trust-pt-3-origin-authorization-v1",
+  "lastCompletedWorkPackage": "product-trust-pt-4-trust-status-waiting-v1",
+  "lastCompletedPullRequest": 248,
+  "nextPhase": "PT-6",
+  "executionBaseWorkPackage": "product-trust-pt-5-access-safety-v1",
   "truthFreezeApproval": {
     "marker": "[HUMAN_GATE_APPROVAL:v1]",
     "commentId": 6015857324,
@@ -321,11 +322,25 @@
       "completionBoundary": "DETERMINISTIC_OMISSION_CORRECTION_ONLY_NO_LIVE_GENERALIZATION",
       "modelCalls": 0,
       "liveCloudActions": 0
+    },
+    "PT-4": {
+      "status": "COMPLETE",
+      "workPackage": "product-trust-pt-4-trust-status-waiting-v1",
+      "executionBaseSha": "5f623d820f5bf379636f933f5773f46177b5caf3",
+      "sourceHeadSha": "68110fc0429d88b3211c5811b1c470770bc4c3f7",
+      "independentAcceptance": "PASS",
+      "independentReviewCommentId": 6029174275,
+      "mergedPullRequest": 248,
+      "mergedMainSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+      "mergedAt": "2026-10-07T01:52:07Z",
+      "completionBoundary": "DETERMINISTIC_TRUST_PRESENTATION_AND_TIMING_ONLY_NO_LIVE_PROOF",
+      "modelCalls": 0,
+      "liveCloudActions": 0
     }
   },
   "blockedNextPhase": {
-    "phase": "PT-5",
-    "status": "AWAITING_PT4_INDEPENDENT_ACCEPTANCE_AND_EXPLICIT_MERGE",
+    "phase": "PT-6",
+    "status": "AWAITING_PT5_INDEPENDENT_ACCEPTANCE_AND_EXPLICIT_MERGE",
     "executionAuthorized": false,
     "executionStarted": false,
     "workPackage": null,
@@ -439,6 +454,19 @@
       "liveDispatchAuthorized": false,
       "sourceRunRerunAuthorized": false,
       "pt3Authorized": false
+    },
+    {
+      "commentId": 6029174275,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/248#issuecomment-6029174275",
+      "decision": "ACCEPTED",
+      "pullRequest": 248,
+      "scope": "PT-4 trust/status/waiting",
+      "reviewedHeadSha": "68110fc0429d88b3211c5811b1c470770bc4c3f7",
+      "workPackage": "product-trust-pt-4-trust-status-waiting-v1",
+      "executionBaseSha": "5f623d820f5bf379636f933f5773f46177b5caf3",
+      "independentAcceptance": "PASS",
+      "mergeAuthorizedByReview": false,
+      "nextPhaseAuthorizedByReview": false
     }
   ],
   "repositoryStateUpdate": {
@@ -645,7 +673,7 @@
       "mergedAt": "2026-10-07T01:05:47Z"
     },
     "PT-4": {
-      "status": "IMPLEMENTED_DETERMINISTICALLY_PENDING_INDEPENDENT_REVIEW",
+      "status": "COMPLETE",
       "workPackage": "product-trust-pt-4-trust-status-waiting-v1",
       "executionBaseSha": "5f623d820f5bf379636f933f5773f46177b5caf3",
       "activatedAt": "2026-10-07T01:29:08Z",
@@ -656,7 +684,7 @@
       "humanAuthorizedCorrectiveIterations": 0,
       "modelUnderTestRunCount": 0,
       "liveCloudActions": 0,
-      "independentAcceptance": "PENDING",
+      "independentAcceptance": "PASS",
       "mergeAuthorized": false,
       "validationEvidence": "docs/evidence/product-trust-pt-4/validation.json",
       "validation": {
@@ -672,7 +700,43 @@
         "frontendBuild": "PASS",
         "migrationUniqueness": "PASS_8_MIGRATIONS",
         "autoRepairsUsed": 0
-      }
+      },
+      "independentReviewCommentId": 6029174275,
+      "mergedMainSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+      "mergedAt": "2026-10-07T01:52:07Z",
+      "reviewedHeadSha": "68110fc0429d88b3211c5811b1c470770bc4c3f7"
+    },
+    "PT-5": {
+      "status": "AUDITED_AND_CORRECTED_DETERMINISTICALLY_PENDING_INDEPENDENT_REVIEW",
+      "workPackage": "product-trust-pt-5-access-safety-v1",
+      "executionBaseSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+      "activatedAt": "2026-10-07T01:57:33Z",
+      "mainReadsAtActivation": 1,
+      "authorization": "USER approved Goal / Program PT-5 repository-only DAG after independently accepted and USER-merged PT-4",
+      "predecessorReviewCommentId": 6029174275,
+      "autoRepairsUsed": 0,
+      "humanAuthorizedCorrectiveIterations": 0,
+      "modelUnderTestRunCount": 0,
+      "liveCloudActions": 0,
+      "independentAcceptance": "PENDING",
+      "mergeAuthorized": false,
+      "validationEvidence": "docs/evidence/product-trust-pt-5/validation.json",
+      "validation": {
+        "focusedBackendTests": 101,
+        "fullBackendTests": 552,
+        "backendFailures": 0,
+        "backendErrors": 0,
+        "backendSkippedExternalMariaDbTests": 2,
+        "frontendAuthTests": 21,
+        "frontendAuthSuites": 3,
+        "frontendFailures": 0,
+        "frontendSkipped": 0,
+        "beforeRouteRegressionExpectedFailures": 6,
+        "autoRepairsUsed": 0
+      },
+      "correctionBoundary": "JWT_ENABLED_DEFAULT_ROUTE_AUTHENTICATION_ONLY_EXISTING_OWNERSHIP_PUBLIC_READS_AND_ADMIN_EXCEPTION_PRESERVED",
+      "productionIdentityEstablished": false,
+      "newIdpIamOrRuntimeConfiguration": false
     }
   },
   "goalContinuation": {
@@ -715,6 +779,20 @@
       {
         "finding": "PT-3 semantic degradation/reasons must remain distinct from terminal processing completion",
         "source": "product-trust-pt-3-origin-authorization-v1"
+      }
+    ],
+    "PT-6": [
+      {
+        "finding": "Use PT-5 existing API ownership matrix and PT-4 separated quality/durable timing in browser integration; MockMvc and mocked auth tests are not browser/live IdP evidence.",
+        "source": "docs/evaluation/product-trust-pt-5-access-safety.md"
+      },
+      {
+        "finding": "Deterministic retained JWKS is not a permanent production IdP; no new IdP, CORS origin, IAM or security expansion is authorized by PT-5.",
+        "source": "docs/evaluation/product-trust-pt-5-access-safety.md"
+      },
+      {
+        "finding": "No per-user request/model-cost quota is established; servlet byte limits and provider retries do not bound authenticated total cost. New policy requires product decision.",
+        "source": "docs/evaluation/product-trust-pt-5-access-safety.md"
       }
     ]
   },

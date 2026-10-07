@@ -98,6 +98,7 @@ class AnalysisJobOrchestratorTest {
         AnalysisJobEntity job = sampleEntity(101L);
 
         orchestrator.markRunning(job);
+        assertThat(job.getTerminalAt()).isNull();
         AnalysisResult result = orchestrator.executeProviderAndValidate(job);
         var reference = orchestrator.resolveResultObjectReference(job);
         ObjectWriteResult writeResult = orchestrator.storeTerraformDraft(reference, result);
@@ -105,6 +106,7 @@ class AnalysisJobOrchestratorTest {
         orchestrator.markSucceeded(job, result, writeResult, registered);
 
         assertThat(job.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
+        assertThat(job.getTerminalAt()).isNotNull();
         assertThat(job.getProvider()).isEqualTo("test-provider");
         assertThat(job.getResultFileId()).isEqualTo(301L);
         assertThat(job.getResultObjectKey()).startsWith("test-results/101/");
@@ -119,6 +121,19 @@ class AnalysisJobOrchestratorTest {
                 AnalysisJobStatus.RUNNING,
                 AnalysisJobStatus.SUCCEEDED
         );
+    }
+
+    @Test
+    void failureTransitionRecordsTerminalTimeWithoutChangingAcceptance() {
+        AnalysisJobEntity job = sampleEntity(102L);
+        job.prePersist();
+        var accepted = job.getCreatedAt();
+        AnalysisJobOrchestrator orchestrator = orchestrator(context -> validResult(),
+                mock(AnalysisResultStorage.class));
+        orchestrator.markFailed(job, "safe failure");
+        assertThat(job.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+        assertThat(job.getTerminalAt()).isAfterOrEqualTo(accepted);
+        assertThat(job.getCreatedAt()).isEqualTo(accepted);
     }
 
     @Test

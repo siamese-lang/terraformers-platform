@@ -110,7 +110,8 @@ public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, 
                    job.projectDecisionStatus = :projectDecisionStatus,
                    job.runtimeQualityBoundary = :runtimeQualityBoundary,
                    job.qualityReasons = :qualityReasons,
-                   job.leaseExpiresAt = null, job.nextAttemptAt = null, job.updatedAt = :now
+                   job.leaseExpiresAt = null, job.nextAttemptAt = null,
+                   job.terminalAt = :now, job.updatedAt = :now
              where job.id = :jobId and job.status = :running
                and job.claimGeneration = :generation and job.leaseExpiresAt > :now
             """)

@@ -15,6 +15,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.terraformers.modernization.analysis.AnalysisJobRepository;
 import com.terraformers.modernization.analysis.AnalysisJobEntity;
 import com.terraformers.modernization.analysis.AnalysisJobStatus;
+import com.terraformers.modernization.analysis.EvidenceQualityAssessment;
+import java.util.List;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import com.terraformers.modernization.analysis.SynchronousAnalysisExecutorTestConfig;
 import com.terraformers.modernization.collaboration.BoardRepository;
 import com.terraformers.modernization.collaboration.CommentRepository;
@@ -73,6 +77,58 @@ class ProjectMetadataControllerTest {
         projectFileRepository.deleteAll();
         projectRepository.deleteAll();
         userRepository.deleteAll();
+    }
+
+    @ParameterizedTest
+    @EnumSource(EvidenceQualityAssessment.QualityStatus.class)
+    void metadataAndPublicTreeExposeTheSameJobQualityAndTiming(EvidenceQualityAssessment.QualityStatus qualityStatus) throws Exception {
+        Long projectId = upload("Trust projection.png");
+        AnalysisJobEntity job = analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(projectId).orElseThrow();
+        var reasons = qualityStatus == EvidenceQualityAssessment.QualityStatus.DEGRADED
+                ? List.of(EvidenceQualityAssessment.Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING)
+                : List.<EvidenceQualityAssessment.Reason>of();
+        job.setQualityAssessment(new EvidenceQualityAssessment(EvidenceQualityAssessment.CONTRACT_VERSION,
+                EvidenceQualityAssessment.TechnicalStatus.PASS, EvidenceQualityAssessment.KnowledgeStatus.COMPLETE,
+                qualityStatus, EvidenceQualityAssessment.ProjectDecisionStatus.UNKNOWN,
+                EvidenceQualityAssessment.RuntimeQualityBoundary.CONDITIONAL_ON_EXTRACTED_FACTS,
+                reasons, List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of()));
+        analysisJobRepository.saveAndFlush(job);
+        JsonNode jobResponse = objectMapper.readTree(mockMvc.perform(get("/api/analysis/jobs/" + job.getId()).with(testUserJwt()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        JsonNode detail = objectMapper.readTree(mockMvc.perform(get("/api/projects/" + projectId).with(testUserJwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.analysisStatus").value("SUCCEEDED"))
+                .andExpect(jsonPath("$.quality.qualityStatus").value(qualityStatus.name()))
+                .andExpect(jsonPath("$.quality.technicalStatus").value("PASS"))
+                .andExpect(jsonPath("$.analysisTiming.acceptedToTerminalMs").isNumber())
+                .andReturn().getResponse().getContentAsString());
+        org.assertj.core.api.Assertions.assertThat(detail.get("quality")).isEqualTo(jobResponse.get("quality"));
+        org.assertj.core.api.Assertions.assertThat(detail.get("analysisTiming")).isEqualTo(jobResponse.get("timing"));
+        mockMvc.perform(get("/api/projects").with(testUserJwt()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].quality.qualityStatus").value(qualityStatus.name()));
+        // Existing private/public authorization is reused; adding metadata does not open a route.
+        mockMvc.perform(get("/api/projects/" + projectId)).andExpect(status().isForbidden());
+        publishProject(projectId);
+        JsonNode tree = objectMapper.readTree(mockMvc.perform(get("/api/project-tree/" + projectId))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        org.assertj.core.api.Assertions.assertThat(tree.get("quality")).isEqualTo(detail.get("quality"));
+        org.assertj.core.api.Assertions.assertThat(tree.get("analysisTiming")).isEqualTo(detail.get("analysisTiming"));
+    }
+
+    @Test
+    void legacyCompletedProjectDoesNotInventQualityOrLatencyFromLaterMetadataUpdate() throws Exception {
+        Long projectId = upload("Legacy trust.png");
+        AnalysisJobEntity job = analysisJobRepository.findFirstByProjectIdOrderByCreatedAtDesc(projectId).orElseThrow();
+        org.springframework.test.util.ReflectionTestUtils.setField(job, "qualityContractVersion", null);
+        job.setTerminalAt(null);
+        job.setAnalysisWarnings("later metadata edit");
+        analysisJobRepository.saveAndFlush(job);
+        mockMvc.perform(get("/api/projects/" + projectId).with(testUserJwt()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.analysisStatus").value("SUCCEEDED"))
+                .andExpect(jsonPath("$.quality").doesNotExist())
+                .andExpect(jsonPath("$.analysisTiming.acceptedAt").isNotEmpty())
+                .andExpect(jsonPath("$.analysisTiming.terminalAt").doesNotExist())
+                .andExpect(jsonPath("$.analysisTiming.acceptedToTerminalMs").doesNotExist());
     }
 
     @Test

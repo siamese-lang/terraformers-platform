@@ -1,10 +1,23 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ProjectDetailPage from './ProjectDetailPage';
 import api from '../utils/api';
 
 jest.mock('../utils/api', () => ({ get: jest.fn(), patch: jest.fn(), delete: jest.fn() }));
 const renderPage = () => render(<MemoryRouter initialEntries={['/projects/7']}><Routes><Route path="/projects/:projectId" element={<ProjectDetailPage />} /></Routes></MemoryRouter>);
+
+test('separates completed processing from persisted UNKNOWN quality', async () => {
+  api.get.mockResolvedValue({ data: {
+    displayName: 'Diagram', analysisStatus: 'SUCCEEDED', resultFileId: null,
+    quality: { contractVersion: 'evidence-quality-v1', technicalStatus: 'PASS',
+      knowledgeStatus: 'COMPLETE', qualityStatus: 'UNKNOWN', projectDecisionStatus: 'UNKNOWN',
+      runtimeQualityBoundary: 'CONDITIONAL_ON_EXTRACTED_FACTS', reasons: [] },
+  } });
+  renderPage();
+  await screen.findByText('Diagram');
+  expect(screen.getByText('결과 품질: 확인 불가 (UNKNOWN)')).toBeInTheDocument();
+  expect(screen.getByText(/기술 검사: 통과/)).toBeInTheDocument();
+});
 
 beforeEach(() => { jest.useFakeTimers(); jest.clearAllMocks(); jest.spyOn(window, 'confirm').mockReturnValue(true); global.URL.createObjectURL = jest.fn(() => 'blob:source'); global.URL.revokeObjectURL = jest.fn(); });
 afterEach(() => { window.confirm.mockRestore(); jest.useRealTimers(); });
@@ -19,7 +32,7 @@ test('polls metadata only until success, then loads each job-linked artifact onc
   renderPage();
   await screen.findByText(/대기 중/);
   expect(api.get).toHaveBeenCalledWith('/api/projects/7/source-image', { responseType: 'blob' });
-  jest.advanceTimersByTime(2000);
+  act(() => jest.advanceTimersByTime(2000));
   await waitFor(() => expect(screen.getByText(/aws_s3_bucket/)).toBeInTheDocument());
   expect(api.get.mock.calls.filter(([url]) => url === '/api/projects/7/source-image')).toHaveLength(1);
   expect(api.get.mock.calls.filter(([url]) => url === '/api/projects/7/terraform/main.tf')).toHaveLength(1);
@@ -35,16 +48,44 @@ test('shows failure without requesting Terraform and cleans object URLs on unmou
   expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:source');
 });
 
-test('shows running guidance and analysis waiting message after 30 seconds without fake progress', async () => {
-  api.get.mockResolvedValue({ data: { displayName: 'Diagram', analysisStatus: 'RUNNING', sourceFileId: null, resultFileId: null } });
+test('shows durable coarse status and elapsed time with no invented model wait or fixed promise', async () => {
+  jest.setSystemTime(new Date('2026-10-07T00:08:00Z'));
+  api.get.mockResolvedValue({ data: { displayName: 'Diagram', analysisStatus: 'RUNNING', sourceFileId: null, resultFileId: null, analysisTiming: { acceptedAt: '2026-10-07T00:00:00Z' } } });
   renderPage();
-  await screen.findByText('AI가 아키텍처를 분석하고 있습니다.');
-  expect(screen.getByText('이미지 복잡도에 따라 1~3분 정도 걸릴 수 있습니다.')).toBeInTheDocument();
-  expect(screen.getByText('다른 페이지로 이동해도 분석은 계속되며 내 프로젝트에서 다시 확인할 수 있습니다.')).toBeInTheDocument();
+  await screen.findByText(/분석 작업을 처리 중입니다/);
+  expect(screen.getByText('접수 후 경과 (기기 시각 기준): 약 8분 0초')).toBeInTheDocument();
+  expect(screen.getByText(/서버에 저장된 작업 상태를 내 프로젝트에서 다시 확인/)).toBeInTheDocument();
   expect(screen.queryByText('분석 모델의 응답을 기다리고 있습니다.')).not.toBeInTheDocument();
-  jest.advanceTimersByTime(30000);
-  expect(await screen.findByText('분석 모델의 응답을 기다리고 있습니다.')).toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(30000));
+  expect(await screen.findByText('접수 후 경과 (기기 시각 기준): 약 8분 30초')).toBeInTheDocument();
+  expect(screen.queryByText('분석 모델의 응답을 기다리고 있습니다.')).not.toBeInTheDocument();
+  expect(screen.queryByText(/1~3분/)).not.toBeInTheDocument();
   expect(screen.queryByText(/%/)).not.toBeInTheDocument();
+});
+
+test('retains the last durable snapshot while explicitly reporting a failed status refresh', async () => {
+  api.get.mockResolvedValueOnce({ data: { displayName: 'Last snapshot', analysisStatus: 'RUNNING', sourceFileId: null } })
+    .mockRejectedValueOnce(new Error('network'));
+  renderPage();
+  await screen.findByText('Last snapshot');
+  act(() => jest.advanceTimersByTime(2000));
+  expect(await screen.findByRole('alert')).toHaveTextContent('마지막 확인 기록');
+  expect(screen.getByText('Last snapshot')).toBeInTheDocument();
+});
+
+test('a completed DEGRADED result retains the editable draft and the semantic reason across reload', async () => {
+  api.get.mockImplementation((url) => Promise.resolve({ data: url.endsWith('/main.tf') ? { content: 'resource "aws_s3_bucket" "editable" {}' } : {
+    displayName: 'Review draft', analysisStatus: 'SUCCEEDED', resultFileId: 20,
+    quality: { contractVersion: 'evidence-quality-v1', technicalStatus: 'PASS', qualityStatus: 'DEGRADED', runtimeQualityBoundary: 'CONDITIONAL_ON_EXTRACTED_FACTS', reasons: ['CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING'] },
+  } }));
+  const { unmount } = renderPage();
+  await screen.findByText(/aws_s3_bucket/);
+  expect(screen.getByText('결과 품질: 검토 필요 (DEGRADED)')).toBeInTheDocument();
+  expect(screen.getByText('CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING')).toBeInTheDocument();
+  unmount();
+  renderPage();
+  await screen.findByText(/aws_s3_bucket/);
+  expect(screen.getByText('결과 품질: 검토 필요 (DEGRADED)')).toBeInTheDocument();
 });
 
 test('shows safe failure reason and link to start a new analysis', async () => {

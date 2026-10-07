@@ -36,6 +36,8 @@ public class ProjectTreeService {
                 project.latestResultFileId(),
                 project.latestResultObjectKey(),
                 project.analysisStatus(),
+                project.quality(),
+                project.analysisTiming(),
                 project.analysisSummary(),
                 project.detectedComponents(),
                 project.detectedRelationships(),

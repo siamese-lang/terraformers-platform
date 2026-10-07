@@ -1,6 +1,7 @@
 package com.terraformers.modernization.project;
 
 import com.terraformers.modernization.analysis.AnalysisJobEntity;
+import com.terraformers.modernization.analysis.AnalysisJobResponse;
 import com.terraformers.modernization.projectcore.OwnedProjectEntity;
 import com.terraformers.modernization.projectcore.ProjectFileEntity;
 import java.time.Instant;
@@ -17,6 +18,8 @@ public record ProjectResponse(
         Long latestResultFileId,
         String latestResultObjectKey,
         String analysisStatus,
+        AnalysisJobResponse.Quality quality,
+        AnalysisJobResponse.Timing analysisTiming,
         String analysisSummary,
         java.util.List<String> detectedComponents,
         java.util.List<String> detectedRelationships,
@@ -52,6 +55,8 @@ public record ProjectResponse(
                 terraformFile == null ? null : terraformFile.getFileId(),
                 terraformFile == null ? null : terraformFile.getS3Key(),
                 latestJob == null ? null : latestJob.getStatus().name(),
+                AnalysisJobResponse.Quality.from(latestJob),
+                AnalysisJobResponse.Timing.from(latestJob),
                 latestJob == null ? null : latestJob.getAnalysisSummary(),
                 splitLines(latestJob == null ? null : latestJob.getDetectedComponents()),
                 splitLines(latestJob == null ? null : latestJob.getDetectedRelationships()),

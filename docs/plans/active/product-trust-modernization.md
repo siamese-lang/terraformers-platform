@@ -2,49 +2,42 @@
 
 ## Status
 
-**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 FINAL INCOMPLETE EVIDENCE ACCEPTED / PT-3 DETERMINISTIC CORRECTION / HUMAN_REQUIRED: INDEPENDENT REVIEW AND MERGE_CHECKPOINT**
+**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 FINAL INCOMPLETE EVIDENCE ACCEPTED / PT-3 COMPLETE / PT-4 DETERMINISTIC CORRECTION / HUMAN_REQUIRED: INDEPENDENT REVIEW AND MERGE_CHECKPOINT**
 
-PT-1 revision 3 remains independently accepted and USER-frozen at identity
-`04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`. Original base,
-all 26 pinned files, truth/provenance, repair history and freeze approval remain unchanged.
+PT-1 revision 3 remains USER-frozen at
+`04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`.
+All 26 pinned files, truth/provenance, original bases and repair history remain unchanged.
 
 [Independent result review 6028079078](https://github.com/siamese-lang/terraformers-platform/pull/246#issuecomment-6028079078)
-and explicit USER decision accept PT-2's [final INCOMPLETE evidence disposition](../../evaluation/product-trust-pt-2-final-disposition.md).
-This is not successful benchmark completion or satisfaction of its original success criteria.
-Original cases 01/02 were accepted once; case 01 reached SUCCEEDED and case 02 retains its original
-`424846 ms` censor. Cases 03–10 remain NOT_RUN, neither pass nor fail. No ten-case realistic
-generalization or aggregate classification, hallucination, semantic-success or executable-validity
-rate is established. Runs `37500000739` and `37509368210` are zero-product-observation measurement
-failures; provider RPC totals remain unknown. No further PT-2 dispatch/rerun/exception/harness
-recovery is authorized. Its execution base remains `3caae454661d21d84c3e469a7d76aff5633d5b26`.
+and USER's decision closed PT-2 as [final INCOMPLETE evidence](../../evaluation/product-trust-pt-2-final-disposition.md).
+It did not establish ten-case realistic generalization. Cases 03–10 remain NOT_RUN, neither pass nor
+fail, with no aggregate realistic classification/hallucination/semantic-success/executable-validity
+rate. Case 02 remains censored at `424846 ms`; the two original accepted jobs are preserved.
+Runs `37500000739` and `37509368210` remain zero-product-observation measurement failures.
+No further PT-2 dispatch/rerun/exception/harness recovery is authorized. PT-2 base is unchanged.
 
-The one USER-approved Program amendment lives inside the substantive
-[PT-3 Work Package](../../../.agents/work-packages/product-trust-pt-3-origin-authorization-v1.yml) correction PR.
-It permits evidence-bounded correction from `PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION`,
-without inventing metrics or weakening original benchmark success criteria. PT-3 binds main once at
-`5aa275e666d45f4181a3ca2ebee6740f0700a75b` and retains the original accepted evidence.
+[PT-3](../../evaluation/product-trust-pt-3-origin-authorization.md) is COMPLETE within its bounded
+omission-detection correction. [Independent review 6028631570](https://github.com/siamese-lang/terraformers-platform/pull/247#issuecomment-6028631570)
+accepted exact head `f127e71a5d36c9e8565c0e3e72260e67a5e71865`, then USER merged PR #247 as
+`5f623d820f5bf379636f933f5773f46177b5caf3` on `2026-10-07T01:05:47Z`.
+Technical PASS remains separate from semantic DEGRADED/reason; the omission check does not prove
+effective IAM authorization, deployment success or realistic generalization. No live proof followed.
+The one Program dependency amendment remains unchanged.
 
-[PT-3](../../evaluation/product-trust-pt-3-origin-authorization.md) exposes the independently supported
-OAC/new-S3-origin authorization omission in existing deterministic contract/quality assessment.
-It preserves the editable draft and accurate technical PASS, with semantic DEGRADED and a bounded
-persisted reason. No model/prompt/retrieval/scorer/corpus, new judge, IAM/GCP/runtime/infrastructure,
-frontend/status/waiting change or additional generation/closure/repair call is included.
+The approved Goal and Program DAG now activate repository-only
+[PT-4](../../../.agents/work-packages/product-trust-pt-4-trust-status-waiting-v1.yml) on that exact main.
+[The correction](../../evaluation/product-trust-pt-4-trust-status-waiting.md) presents durable processing
+status, bounded quality and accepted-to-terminal timing separately. It removes unsupported waiting
+promises/client-invented stages and does not backfill historical terminal time from heartbeat or
+cleanup metadata. PT-2's censor is never a measured terminal latency.
 
-PT-4 must address persisted UNKNOWN versus completed-analysis presentation and the original
->7-minute censored observation versus unconditional `1~3분` waiting guidance. Exact upstream
-latency cause remains unknown. Those findings are not expanded into PT-3 implementation.
+GitHub owns transient PR lifecycle. This substantive PR records PT-3's accepted completion without
+another state/activation/normalization PR. Independent PT-4 acceptance and USER merge are required
+before PT-5; CI success alone is not acceptance. Live/model/GCP, architecture/security expansion,
+cost and teardown remain separately gated. Runtime is retained and A7-8 remains deferred.
 
-GitHub owns transient PR lifecycle. No separate Program/state-sync/activation/normalization PR is
-created; durable state retains phase/base/approval/evidence only. Independent correction acceptance
-and explicit merge are required before PT-4. New live/model evaluation and teardown remain separately
-gated; the retained runtime is not torn down. CI success is not acceptance. USER's active Goal still
-permits eligible repository-only continuation after those gates without repetitive continue prompts.
-
-This plan supersedes automatic progression to A7-8 and teardown. Historical synthetic controls remain
-mechanism/regression evidence, not realistic-product generalization. The program asks whether a real
-user can understand processing, distinguish trustworthy output, wait with truthful expectations and
-retain correct ownership/access. Contract: `.agents/programs/product-trust-v1.yml`; durable state:
-`.agents/state/product-trust-v1.json`.
+Historical synthetic controls remain mechanism/regression evidence, not realistic generalization.
+Contract: `.agents/programs/product-trust-v1.yml`; state: `.agents/state/product-trust-v1.json`.
 
 ## Why this reassessment exists
 

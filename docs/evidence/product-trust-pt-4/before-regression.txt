@@ -1,0 +1,8 @@
+Expected pre-correction UI regression; no product/model evaluation.
+UNKNOWN quality label was absent. Log summary excerpt; trailing whitespace normalized.
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 11 skipped, 12 total
+Snapshots:   0 total
+Time:        2.524 s
+Ran all test suites within paths "src/pages/ProjectDetailPage.test.js".

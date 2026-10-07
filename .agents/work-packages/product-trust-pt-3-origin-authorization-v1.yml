@@ -2,7 +2,7 @@ work_package:
   id: product-trust-pt-3-origin-authorization-v1
   program: product-trust-v1
   phase: PT-3
-  status: IMPLEMENTED_PENDING_INDEPENDENT_REVIEW
+  status: COMPLETE
   approved_base_sha: 5aa275e666d45f4181a3ca2ebee6740f0700a75b
   execution_base_sha: 5aa275e666d45f4181a3ca2ebee6740f0700a75b
   activated_at: "2026-10-07T00:36:55Z"
@@ -98,9 +98,13 @@ work_package:
   next_phase: PT-4
   next_phase_authorized_before_PT3_acceptance_and_merge: false
   completion:
-    implementation: DETERMINISTIC_CORRECTION_PREPARED
-    independent_acceptance: PENDING
+    implementation: DETERMINISTIC_CORRECTION_ACCEPTED
+    independent_acceptance: PASS
     live_model_or_cloud_actions: 0
     auto_repairs_used: 0
-    current_human_gate: INDEPENDENT_REVIEW_AND_MERGE_CHECKPOINT
+    current_human_gate: null
     validation_evidence: docs/evidence/product-trust-pt-3/validation.json
+    independent_review_comment_id: 6028631570
+    reviewed_head_sha: f127e71a5d36c9e8565c0e3e72260e67a5e71865
+    merged_main_sha: 5f623d820f5bf379636f933f5773f46177b5caf3
+    merged_at: "2026-10-07T01:05:47Z"

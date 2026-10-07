@@ -125,6 +125,10 @@ public class AnalysisJobEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    // Written at the terminal transition only; heartbeat/cleanup updatedAt is not terminal time.
+    @Column(name = "terminal_at")
+    private Instant terminalAt;
+
     @PrePersist
     void prePersist() {
         Instant now = Instant.now();
@@ -297,6 +301,9 @@ public class AnalysisJobEntity {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    public Instant getTerminalAt() { return terminalAt; }
+    public void setTerminalAt(Instant terminalAt) { this.terminalAt = terminalAt; }
 
     void clearLease() {
         leaseExpiresAt = null;

@@ -1,0 +1,57 @@
+{
+  "recordType": "DETERMINISTIC_CORRECTION_VALIDATION_NOT_LIVE_ACCEPTANCE",
+  "correctionExecutionBaseSha": "dff2995aa1047d76f3917e4c7015aebb0faf2212",
+  "unitTests": {
+    "command": "python3 -m unittest -v tests/rag/test_ingest_gcp_target_corpus.py",
+    "exitCode": 0,
+    "tests": 35,
+    "failures": 0,
+    "errors": 0,
+    "strengthenedWorkflowRegression": "PASS",
+    "logSha256": "9d8f6fd9f27cfcc40316f3fda1e9d04badbb75f444045b7751ef252d49c3d850"
+  },
+  "metadataChecks": {
+    "yamlJsonParse": "PASS",
+    "bashSyntaxChecks": [
+      {
+        "step": "Validate trusted ingestion request",
+        "command": "bash -n /tmp/pt8a-preauth-correction/validation-run.sh",
+        "exitCode": 0,
+        "pythonBodyAstUnchanged": true
+      },
+      {
+        "step": "Prepare bounded ingestion evidence",
+        "command": "bash -n /tmp/pt8a-preauth-correction/evidence-run.sh",
+        "exitCode": 0,
+        "pythonBodyAstUnchanged": true
+      }
+    ],
+    "workflowChangesOnlyHeredocIndentation": "PASS",
+    "pythonBodySemanticsPreserved": "PASS",
+    "governanceOnlyAuthorizedBookkeeping": "PASS",
+    "frozenCandidateByteComparison": "PASS",
+    "ingesterProgramPlanProductionUnchanged": "PASS",
+    "procedureSha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+    "gitDiffCheck": "PASS"
+  },
+  "failedRunPreserved": 37662854852,
+  "failedRunAttempt": 1,
+  "historicalAutonomousRepairsUnchanged": 1,
+  "humanCorrectiveIterations": 2,
+  "correctionLiveActions": 0,
+  "newLiveExecutionAuthorized": false,
+  "cleanV4Lineage": "MODEL_PROVENANCE_UNPROVEN",
+  "normalPrCi": "GitHub exact-head normal pull_request checks are authoritative; no manual dispatch/rerun. CI is regression evidence only.",
+  "independentAcceptance": "PENDING",
+  "mergeAuthority": false,
+  "stagingDiagnostic": {
+    "initialScopeCheck": "FAILED_APPROVED_LOG_EXCLUDED_BY_EXISTING_GITIGNORE",
+    "expectedMissingPath": "docs/evidence/product-trust-pt-8a/corrections/preauth-workflow-syntax-1/observed-errors.log",
+    "gitAddReportedIgnoredPath": true,
+    "initialDraftCommitHadSevenFiles": true,
+    "resolution": "Force-add only the USER-authorized sanitized error evidence; verify the final eight-file scope and amend the unpublished draft commit.",
+    "unitTestsRepeated": false,
+    "workflowDispatches": 0,
+    "autonomousRepairCountersChanged": false
+  }
+}

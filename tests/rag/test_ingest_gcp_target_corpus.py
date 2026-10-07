@@ -656,19 +656,40 @@ class Pt8aCleanV4Tests(unittest.TestCase):
     def test_existing_workflow_rejects_old_token_and_v3_clean_before_cloud_auth(self):
         import os
         import subprocess
+        import tempfile
         import yaml
         workflow = yaml.safe_load((ROOT / ".github/workflows/gcp-target-corpus-ingestion.yml").read_text())
         steps = workflow["jobs"]["ingest"]["steps"]
         validation = next(s for s in steps if s.get("name") == "Validate trusted ingestion request")
         auth_index = next(i for i, s in enumerate(steps) if s.get("uses") == "google-github-actions/auth@v3")
         self.assertLess(steps.index(validation), auth_index)
-        for version, token in (("terraformers-reference-v4", "INGEST_A7_7_REFERENCE_V4"),
-                               ("terraformers-reference-v3", "REEMBED_REVIEWED_PT8A_CLEAN_V4")):
-            env = os.environ | self.env | {"EXPECTED_SHA": self.source, "INGESTION_MODE": "pt8a-clean-v4",
-                "CORPUS_VERSION": version, "CONFIRMATION": token}
-            result = subprocess.run(["bash", "-c", validation["run"]], cwd=ROOT, env=env, capture_output=True, text=True)
-            self.assertNotEqual(0, result.returncode)
-            self.assertNotIn("Frozen official identity/order: PASS", result.stdout)
+        for name in ("Validate trusted ingestion request", "Prepare bounded ingestion evidence"):
+            with self.subTest(syntax=name):
+                script = next(s["run"] for s in steps if s.get("name") == name)
+                syntax = subprocess.run(["bash", "-n"], input=script, capture_output=True, text=True)
+                self.assertEqual(0, syntax.returncode, syntax.stderr)
+                self.assertEqual("", syntax.stderr)
+        # A lost input guard must never execute the authority/network Python path in this test.
+        with tempfile.TemporaryDirectory() as tools_dir:
+            python_guard = Path(tools_dir) / "python3"
+            python_guard.write_text("#!/bin/sh\necho 'Unexpected pre-auth Python execution' >&2\nexit 97\n")
+            python_guard.chmod(0o755)
+            for version, token, failed_guard in (
+                    ("terraformers-reference-v4", "INGEST_A7_7_REFERENCE_V4",
+                     "[[ INGEST_A7_7_REFERENCE_V4 == REEMBED_REVIEWED_PT8A_CLEAN_V4 ]]"),
+                    ("terraformers-reference-v3", "REEMBED_REVIEWED_PT8A_CLEAN_V4",
+                     "[[ terraformers-reference-v3 == terraformers-reference-v4 ]]")):
+                with self.subTest(version=version, token=token):
+                    env = os.environ | self.env | {"EXPECTED_SHA": self.source, "INGESTION_MODE": "pt8a-clean-v4",
+                        "CORPUS_VERSION": version, "CONFIRMATION": token,
+                        "PATH": tools_dir + os.pathsep + os.environ["PATH"]}
+                    result = subprocess.run(["bash", "-x", "-c", validation["run"]], cwd=ROOT, env=env,
+                                            capture_output=True, text=True)
+                    self.assertEqual(1, result.returncode, result.stderr)
+                    self.assertIn(failed_guard, result.stderr)
+                    self.assertNotRegex(result.stderr, r"(?i)syntax error|here-document|delimited by end-of-file|wanted.*PY")
+                    self.assertNotIn("Unexpected pre-auth Python execution", result.stderr)
+                    self.assertNotIn("Frozen official identity/order: PASS", result.stdout)
 
 
 if __name__ == "__main__":

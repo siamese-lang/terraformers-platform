@@ -1,0 +1,22 @@
+{
+  "01-login-probe-failure/backend-failure.log.gz": {
+    "encoding": "gzip",
+    "uncompressedSha256": "4d575cc186b5b224557972cc636e97b255102964f23af0bb4fddb792e0918618",
+    "uncompressedBytes": 1701
+  },
+  "backend-package.log.gz": {
+    "encoding": "gzip",
+    "uncompressedSha256": "0b9e87578837e1ecb3cfbc1b130ab09b2cc03884df7ea4957a838a00c4fa14a6",
+    "uncompressedBytes": 2531
+  },
+  "frontend-build.log.gz": {
+    "encoding": "gzip",
+    "uncompressedSha256": "a37dd13e963e0bc0c48a7337b1cbfc68a9be91d3bec2f4e59c72d6578fea77f7",
+    "uncompressedBytes": 751
+  },
+  "jwks-helper-tests.log.gz": {
+    "encoding": "gzip",
+    "uncompressedSha256": "dcdf5824756749640fa6ebc0965879f3c3314f49921184ea922389c9403957bf",
+    "uncompressedBytes": 1506
+  }
+}

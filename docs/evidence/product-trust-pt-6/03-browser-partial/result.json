@@ -1,0 +1,345 @@
+{
+  "procedure": "docs/evaluation/product-trust-pt-6-browser-protocol.md",
+  "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+  "datasetIdentity": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+  "input": "evaluation/terraformers-realistic-v1/fixtures/pt1-06-thumbnail-pipeline.png",
+  "inputSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+  "modelUnderTestRunCount": 0,
+  "liveCloudActionCount": 0,
+  "automaticRetries": 0,
+  "steps": {
+    "authentication": "PASS",
+    "one_upload": "PASS",
+    "pending_navigation_reload": "PASS",
+    "terminal_draft": "FAIL",
+    "other_identity_denial": "NOT_RUN"
+  },
+  "outcome": "FAIL_PRESERVED_NO_RETRY",
+  "timingScope": "LOCAL_STUB_INCLUDING_CONTROLLED_EXECUTOR_HOLD_NOT_PRODUCTION_LATENCY",
+  "bindings": {
+    "jarSha256": "867f95e61c696b44ed14ae97c745119fb56f00bc68abfee9b1dffa88f6d2b8bb",
+    "frontendFiles": {
+      "asset-manifest.json": "669d07e5f0007880cf2d4ebfb95a95e84593d12906879d93762a855847c1bfba",
+      "index.html": "f8d07bd7b48c49889c5d118b1ce0ac10a1376db05dcd6d75ceb41c299ad7bc8a",
+      "static/css/main.28f1fa56.css": "1f5d399d0389647548acd0363f0cae0865be6df6e0cb0ba41212dcdca19c73cd",
+      "static/css/main.28f1fa56.css.map": "347d3c192a14f00511f3110fa54dde254277bb5bad3b6f31bad4544734515337",
+      "static/js/main.eb29c0e6.js": "6a5b27fa022b6a1721ac09bd2077579bc14bf7c298afad254e8b4b4fa4479322",
+      "static/js/main.eb29c0e6.js.LICENSE.txt": "3c163c043b470ed4ccb149e4b0e2d45fcc8bfd688a18f9aab11a464b2d88b481",
+      "static/js/main.eb29c0e6.js.map": "3666b24e7ea710c8b73345595a1e396900dc1c6bb02878382d80a739e8ca4299"
+    },
+    "sources": {
+      "scripts/checks/product-trust-browser-journey.py": "7e11bc64d2133a011d0a9dcc62524976bf58a17cfb05d9efb1d400197edae8fd",
+      "scripts/smoke/ephemeral-jwks-fixture.sh": "22370156d38ad12ea314b9a03843d740f4751686366fa8dd367adbb28bc133b6",
+      "backend/src/test/java/com/terraformers/modernization/analysis/BrowserJourneyFixture.java": "eb624674bfa618a268cf3a4cf6578d67b203f1279f29c688fc94e18ea421c263",
+      "docs/evaluation/product-trust-pt-6-browser-protocol.md": "ba7c024602fb27ac6e10f88d91ec02779ba52252b47ec2618819fd3c3e3ba0f5"
+    }
+  },
+  "browserVersion": "151.0.7922.173",
+  "upload": {
+    "uploadMode": "owned-project-analysis",
+    "storageProvider": "filesystem",
+    "binaryPersisted": true,
+    "storageETag": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+    "analysisJobId": "604890dc-c272-485c-b9d5-95fdede77504",
+    "projectId": 1,
+    "sourceFileId": 1,
+    "resultFileId": null,
+    "sourceBucket": "example-bucket",
+    "sourceKey": "browser-uploads/1/2026/10/07/1791340715083-pt1-06-thumbnail-pipeline.png",
+    "originalFilename": "pt1-06-thumbnail-pipeline.png",
+    "contentType": "image/png",
+    "size": 30073,
+    "status": "PENDING",
+    "analysisMode": "INTEGRATED_JAVA",
+    "provider": null,
+    "resultObjectKey": null,
+    "resultPreview": null,
+    "analysisSummary": null,
+    "detectedComponents": [],
+    "detectedRelationships": [],
+    "warnings": [],
+    "failureReason": null,
+    "createdAt": "2026-10-07T02:38:35.115933199Z",
+    "updatedAt": "2026-10-07T02:38:35.115933199Z"
+  },
+  "pendingJob": {
+    "id": "604890dc-c272-485c-b9d5-95fdede77504",
+    "projectId": 1,
+    "sourceFileId": 1,
+    "resultFileId": null,
+    "sourceBucket": "example-bucket",
+    "sourceKey": "browser-uploads/1/2026/10/07/1791340715083-pt1-06-thumbnail-pipeline.png",
+    "correlationId": "upload-1c3d5fb7-6778-43de-bf72-fcd65d7dae3d",
+    "status": "PENDING",
+    "analysisMode": "INTEGRATED_JAVA",
+    "provider": null,
+    "resultObjectKey": null,
+    "resultPreview": null,
+    "analysisSummary": null,
+    "detectedComponents": [],
+    "detectedRelationships": [],
+    "warnings": [],
+    "failureReason": null,
+    "quality": null,
+    "timing": {
+      "acceptedAt": "2026-10-07T02:38:35.115933Z",
+      "terminalAt": null,
+      "acceptedToTerminalMs": null
+    },
+    "createdAt": "2026-10-07T02:38:35.115933Z",
+    "updatedAt": "2026-10-07T02:38:35.115933Z"
+  },
+  "releaseAtEpochSeconds": 1791340716.6103716,
+  "failure": {
+    "step": "terminal_draft",
+    "type": "AssertionError",
+    "message": "Original job terminal FAILED"
+  },
+  "serverStages": [
+    "2026-10-07T02:38:36.710Z ERROR [analysis-job-1] c.t.m.analysis.AnalysisJobRunner trace_id= span_id= analysisJobId=604890dc-c272-485c-b9d5-95fdede77504 source_revision=unknown - Analysis job failed outcome=failed exceptionCategory=terraform_internal generation=1"
+  ],
+  "temporaryMaterialRemoved": true,
+  "httpEvents": [
+    {
+      "method": "PATCH",
+      "path": "/api/users/me/display-name",
+      "status": 204,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200,
+      "responseBytes": 2,
+      "responseSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 401,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 401,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "POST",
+      "path": "/api/upload",
+      "status": 201,
+      "responseBytes": 800,
+      "responseSha256": "a4c5e277341aef07b65dd97143b922f4e112c2fe199a3f4c9e1cd0493c0b0039"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/604890dc-c272-485c-b9d5-95fdede77504",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "e4a45330d359044f365f4637ef48229b19407c010658ba294f24dae07263ed28"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "7a99f527dd1188fef860bba2dca4f220105eac147672c36b367900f147b5bb5e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "7a99f527dd1188fef860bba2dca4f220105eac147672c36b367900f147b5bb5e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200,
+      "responseBytes": 1012,
+      "responseSha256": "fa10e38c4b460874a70dc573eb4afba907cccb282cdeab49fad5a6260aaa6b4b"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "7a99f527dd1188fef860bba2dca4f220105eac147672c36b367900f147b5bb5e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/users/me/display-name",
+      "status": 204,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "7a99f527dd1188fef860bba2dca4f220105eac147672c36b367900f147b5bb5e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1/source-image",
+      "status": 200,
+      "responseBytes": 30073,
+      "responseSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/604890dc-c272-485c-b9d5-95fdede77504",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "e4a45330d359044f365f4637ef48229b19407c010658ba294f24dae07263ed28"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "status": 200,
+      "responseBytes": 1010,
+      "responseSha256": "7a99f527dd1188fef860bba2dca4f220105eac147672c36b367900f147b5bb5e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/604890dc-c272-485c-b9d5-95fdede77504",
+      "status": 200,
+      "responseBytes": 697,
+      "responseSha256": "e4a45330d359044f365f4637ef48229b19407c010658ba294f24dae07263ed28"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/604890dc-c272-485c-b9d5-95fdede77504",
+      "status": 200,
+      "responseBytes": 1055,
+      "responseSha256": "d6d41cd550cddce3c5272b1c7e9766f7fb0876984756911ce4e863e8ab283494"
+    }
+  ],
+  "browserApiObservations": [
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "auth": "session",
+      "status": 200,
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "text": "[]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "auth": "anonymous",
+      "status": 401,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "auth": "forged",
+      "status": 401,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/604890dc-c272-485c-b9d5-95fdede77504",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "e4a45330d359044f365f4637ef48229b19407c010658ba294f24dae07263ed28",
+      "text": "{\"id\":\"604890dc-c272-485c-b9d5-95fdede77504\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791340715083-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-1c3d5fb7-6778-43de-bf72-fcd65d7dae3d\",\"status\":\"PENDING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T02:38:35.115933Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T02:38:35.115933Z\",\"updatedAt\":\"2026-10-07T02:38:35.115933Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1010,
+      "sha256": "7a99f527dd1188fef860bba2dca4f220105eac147672c36b367900f147b5bb5e",
+      "text": "{\"projectId\":1,\"displayName\":\"PT6 bounded browser journey\",\"description\":null,\"visibility\":\"PRIVATE\",\"latestAnalysisJobId\":\"604890dc-c272-485c-b9d5-95fdede77504\",\"provider\":null,\"failureReason\":null,\"resultFileId\":null,\"latestResultFileId\":null,\"latestResultObjectKey\":null,\"analysisStatus\":\"PENDING\",\"quality\":null,\"analysisTiming\":{\"acceptedAt\":\"2026-10-07T02:38:35.115933Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"terraformDraftUpdatedAt\":null,\"sourceFileId\":1,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791340715083-pt1-06-thumbnail-pipeline.png\",\"sourceStorageProvider\":\"filesystem\",\"sourceBinaryPersisted\":true,\"sourceETag\":\"b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c\",\"originalFilename\":\"pt1-06-thumbnail-pipeline.png\",\"contentType\":\"image/png\",\"uploadSizeBytes\":30073,\"createdAt\":\"2026-10-07T02:38:35.079920Z\",\"updatedAt\":\"2026-10-07T02:38:35.079920Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/604890dc-c272-485c-b9d5-95fdede77504",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "e4a45330d359044f365f4637ef48229b19407c010658ba294f24dae07263ed28",
+      "text": "{\"id\":\"604890dc-c272-485c-b9d5-95fdede77504\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791340715083-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-1c3d5fb7-6778-43de-bf72-fcd65d7dae3d\",\"status\":\"PENDING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T02:38:35.115933Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T02:38:35.115933Z\",\"updatedAt\":\"2026-10-07T02:38:35.115933Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/1",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1010,
+      "sha256": "7a99f527dd1188fef860bba2dca4f220105eac147672c36b367900f147b5bb5e",
+      "text": "{\"projectId\":1,\"displayName\":\"PT6 bounded browser journey\",\"description\":null,\"visibility\":\"PRIVATE\",\"latestAnalysisJobId\":\"604890dc-c272-485c-b9d5-95fdede77504\",\"provider\":null,\"failureReason\":null,\"resultFileId\":null,\"latestResultFileId\":null,\"latestResultObjectKey\":null,\"analysisStatus\":\"PENDING\",\"quality\":null,\"analysisTiming\":{\"acceptedAt\":\"2026-10-07T02:38:35.115933Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"terraformDraftUpdatedAt\":null,\"sourceFileId\":1,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791340715083-pt1-06-thumbnail-pipeline.png\",\"sourceStorageProvider\":\"filesystem\",\"sourceBinaryPersisted\":true,\"sourceETag\":\"b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c\",\"originalFilename\":\"pt1-06-thumbnail-pipeline.png\",\"contentType\":\"image/png\",\"uploadSizeBytes\":30073,\"createdAt\":\"2026-10-07T02:38:35.079920Z\",\"updatedAt\":\"2026-10-07T02:38:35.079920Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/604890dc-c272-485c-b9d5-95fdede77504",
+      "auth": "session",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "e4a45330d359044f365f4637ef48229b19407c010658ba294f24dae07263ed28",
+      "text": "{\"id\":\"604890dc-c272-485c-b9d5-95fdede77504\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791340715083-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-1c3d5fb7-6778-43de-bf72-fcd65d7dae3d\",\"status\":\"PENDING\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":null,\"quality\":null,\"timing\":{\"acceptedAt\":\"2026-10-07T02:38:35.115933Z\",\"terminalAt\":null,\"acceptedToTerminalMs\":null},\"createdAt\":\"2026-10-07T02:38:35.115933Z\",\"updatedAt\":\"2026-10-07T02:38:35.115933Z\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analysis/jobs/604890dc-c272-485c-b9d5-95fdede77504",
+      "auth": "session",
+      "status": 200,
+      "bytes": 1055,
+      "sha256": "d6d41cd550cddce3c5272b1c7e9766f7fb0876984756911ce4e863e8ab283494",
+      "text": "{\"id\":\"604890dc-c272-485c-b9d5-95fdede77504\",\"projectId\":1,\"sourceFileId\":1,\"resultFileId\":null,\"sourceBucket\":\"example-bucket\",\"sourceKey\":\"browser-uploads/1/2026/10/07/1791340715083-pt1-06-thumbnail-pipeline.png\",\"correlationId\":\"upload-1c3d5fb7-6778-43de-bf72-fcd65d7dae3d\",\"status\":\"FAILED\",\"analysisMode\":\"INTEGRATED_JAVA\",\"provider\":null,\"resultObjectKey\":null,\"resultPreview\":null,\"analysisSummary\":null,\"detectedComponents\":[],\"detectedRelationships\":[],\"warnings\":[],\"failureReason\":\"분석을 완료하지 못했습니다. 잠시 후 새 분석을 시작해 주세요.\",\"quality\":{\"contractVersion\":\"evidence-quality-v1\",\"technicalStatus\":\"FAIL\",\"knowledgeStatus\":\"UNKNOWN\",\"qualityStatus\":\"UNKNOWN\",\"projectDecisionStatus\":\"UNKNOWN\",\"runtimeQualityBoundary\":\"CONDITIONAL_ON_EXTRACTED_FACTS\",\"reasons\":[\"TERRAFORM_EXECUTABLE_FAILURE\"]},\"timing\":{\"acceptedAt\":\"2026-10-07T02:38:35.115933Z\",\"terminalAt\":\"2026-10-07T02:38:36.698294Z\",\"acceptedToTerminalMs\":1582},\"createdAt\":\"2026-10-07T02:38:35.115933Z\",\"updatedAt\":\"2026-10-07T02:38:36.698294Z\"}"
+    }
+  ],
+  "identityTransportEvents": [
+    {
+      "identity": "owner",
+      "operation": "InitiateAuth",
+      "supported": true
+    },
+    {
+      "identity": "owner",
+      "operation": "GetUser",
+      "supported": true
+    },
+    {
+      "identity": "owner",
+      "operation": "GetUser",
+      "supported": true
+    }
+  ],
+  "blockedExternalHosts": []
+}

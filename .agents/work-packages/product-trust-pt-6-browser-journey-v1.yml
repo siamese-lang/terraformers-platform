@@ -1,0 +1,187 @@
+work_package:
+  id: product-trust-pt-6-browser-journey-v1
+  program: product-trust-v1
+  phase: PT-6
+  status: HUMAN_REQUIRED
+  approved_base_sha: 37e006be4d5995019704ea8a4009e1a59da039b2
+  execution_base_sha: 37e006be4d5995019704ea8a4009e1a59da039b2
+  activated_at: "2026-10-07T02:26:08Z"
+  activation:
+    main_reads_at_activation: 1
+    refresh_rebase_or_rebind: prohibited
+    main_drift: HUMAN_REQUIRED
+  authority:
+    source: USER approved Goal and explicit bounded PT-6 real-browser/local-stub instruction
+    predecessor_review: https://github.com/siamese-lang/terraformers-platform/pull/249#issuecomment-6029459989
+    predecessor_reviewed_head: bc13af0cb889b803a8d83352ef869896c97348f8
+    predecessor_merge_sha: 37e006be4d5995019704ea8a4009e1a59da039b2
+    predecessor_merge_at: "2026-10-07T02:16:09Z"
+    review_itself_authorizes_PT6: false
+    live_model_GCP_IAM_security_expansion_or_merge_authorized: false
+  objective: >
+    Validate one real browser journey: fixture authentication, one realistic-image upload,
+    real durable acceptance/progress across navigation/reload, terminal trust and Terraform
+    display, and denial of private data/mutations to a second identity.
+  procedure: docs/evaluation/product-trust-pt-6-browser-protocol.md
+  measurement:
+    browser: one_headless_Chromium_with_two_isolated_identity_contexts
+    production_frontend: existing_CRA_build_and_Cognito_Amplify_adapter_no_module_or_API_mock
+    identity_fixture: >
+      Existing portable issuer/client and shared ephemeral-jwks-fixture.sh RSA/JWKS construction.
+      Fulfill only Cognito InitiateAuth/GetUser transport with signed fixture tokens; all application
+      API requests use real HTTP and the unchanged backend JWT decoder/ownership services.
+    application: local_H2_filesystem_store_stub_provider_JWT_enabled_no_cloud
+    progress_control: >
+      An isolated test-source executor decorator holds work before the existing runner's claim
+      until a local release marker. This provides genuine persisted PENDING for navigation/reload;
+      it adds no API/control endpoint or production bean. Dispatch-disabled only disables scanning,
+      so it is not used to claim upload nudge suppression. Controlled hold is not provider latency.
+    input: evaluation/terraformers-realistic-v1/fixtures/pt1-06-thumbnail-pipeline.png
+    input_sha256: b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c
+    dataset_identity: 04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014
+    maximum_upload_attempts_per_execution: 1
+    automatic_browser_retries: 0
+    terminal_wait_bound_seconds: 60
+    worker_hold_bound_seconds: 120
+    repetitions: one_complete_journey_default_no_repeat_for_a_pass
+    on_failure: preserve_first_outcome_stop_and_diagnose_never_resubmit_for_green
+    bounded_repair: >
+      At most one supported correction of the same observed integration mechanism; preserve failed
+      evidence and declare any necessary post-change regression execution separately. No natural
+      outcome is replaced. New product/identity/security/CORS/cloud decision stops execution.
+  allowed_paths:
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-pt-5-access-safety-v1.yml
+    - .agents/work-packages/product-trust-pt-6-browser-journey-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-pt-5-access-safety.md
+    - docs/evaluation/product-trust-pt-6-browser-protocol.md
+    - docs/evaluation/product-trust-pt-6-browser-journey.md
+    - docs/evidence/product-trust-pt-6/**
+    - scripts/checks/product-trust-browser-journey.py
+    - scripts/smoke/ephemeral-jwks-fixture.sh
+    - backend/src/test/java/com/terraformers/modernization/analysis/BrowserJourneyFixture.java
+    - frontend/src/components/EntryPage.js
+    - frontend/src/components/Dropzone.js
+    - frontend/src/pages/ProjectDetailPage.js
+    - frontend/src/components/EntryPage.test.js
+    - frontend/src/components/Dropzone.test.js
+    - frontend/src/pages/ProjectDetailPage.test.js
+  allowed_actions:
+    - reuse_preinstalled_Playwright_Chromium_and_cached_Java_Maven_Node_tools
+    - shared_local_signed_identity_fixture_and_one_minimal_browser_runner
+    - temporary_loopback_frontend_backend_JWKS_with_existing_H2_filesystem_stub_contracts
+    - one_browser_journey_and_proportional_deterministic_build_tests
+    - bounded_same_mechanism_correction_only_if_supported_by_browser_evidence
+    - record_PT5_accepted_merge_and_PT6_raw_derived_evidence_in_one_substantive_PR
+    - commit_push_open_update_one_PT6_PR_and_inspect_CI_review
+  prohibited_actions:
+    - any_PT2_dispatch_rerun_exception_continuation_or_harness_recovery
+    - live_AI_model_GCP_cloud_identity_or_runtime_calls
+    - new_IdP_IAM_security_boundary_or_CORS_policy
+    - production_authentication_backend_generation_quality_prompt_model_RAG_corpus_truth_changes
+    - Docker_MariaDB_Kubernetes_infrastructure_rollout_or_retained_runtime_teardown
+    - broad_E2E_framework_cross_browser_matrix_new_CI_workflow_or_gate
+    - mocked_application_API_fake_frontend_state_seeded_quality_or_fabricated_latency
+    - persistent_private_keys_tokens_passwords_storage_state_HAR_or_unredacted_traces
+    - self_acceptance_self_merge_or_PT7_before_independent_PT6_acceptance_and_USER_merge
+    - transient_active_PR_branch_lifecycle_in_durable_program_state
+  acceptance_criteria:
+    - actual_built_frontend_and_real_HTTP_backend_exercise_the_declared_journey
+    - valid_signed_fixture_identity_is_verified_by_real_backend_JWKS_decoder
+    - forged_signature_and_anonymous_controls_fail_closed
+    - one_realistic_image_upload_is_accepted_once_with_persisted_job_project_source_binding
+    - pending_status_job_identity_and_acceptance_time_survive_navigation_and_reload
+    - original_job_reaches_terminal_without_another_upload_or_job_creation
+    - processing_completion_missing_quality_and_conditional_draft_limits_are_visible
+    - displayed_Terraform_matches_same_job_backend_artifact
+    - second_identity_private_reads_and_mutations_are_denied_without_state_change
+    - screenshots_and_sanitized_HTTP_server_and_binding_evidence_are_independently_reviewable
+    - fixture_control_timing_and_authentication_limits_are_explicit_not_production_AI_or_IdP_proof
+    - frozen_identity_PT2_INCOMPLETE_NOT_RUN_censor_and_historical_counters_are_preserved
+    - independent_review_and_explicit_merge_are_required
+  validation:
+    - syntax_check_shared_JWKS_fixture_and_single_browser_runner
+    - existing_deterministic_ephemeral_JWKS_helper_regressions
+    - offline_backend_package_and_isolated_test_fixture_compile
+    - production_frontend_build_with_nonsecret_fixture_identity_configuration
+    - one_real_browser_journey_no_retries
+    - one_off_scope_state_frozen_identity_audit_and_git_diff_check
+  auto_repair_limit: 1
+  auto_repairs_used: 1
+  human_authorized_corrective_iterations: 1
+  corrective_iteration_1:
+    authority: USER_EXPLICIT_APPROVAL_UNDER_REVIEW_6029913071
+    reviewed_head: 4ac4c3b339276cd181e07cf78f339692038aaf89
+    execution_base_sha: 37e006be4d5995019704ea8a4009e1a59da039b2
+    procedure: docs/evidence/product-trust-pt-6/correction-1/procedure.md
+    status: PASS_PENDING_INDEPENDENT_REVIEW
+    maximum_browser_executions: 1
+    browser_executions_used: 1
+    automatic_retries: 0
+    autonomous_repair_counter_reset: false
+    existing_failed_evidence_byte_changes: prohibited
+    production_system_paths_or_Docker_changes: prohibited
+    production_validator_or_pass_through_validation_changes: prohibited
+    next_failure_or_prerequisite: HUMAN_REQUIRED_WITHOUT_SECOND_JOURNEY
+    evidence: docs/evidence/product-trust-pt-6/correction-1/browser/result.json
+    validation: docs/evidence/product-trust-pt-6/correction-1/validation.json
+    accepted_jobs: 1
+    accepted_job_id: 345d4807-bf84-4b81-9a8e-4144339abc50
+    terminal_status: SUCCEEDED
+    accepted_to_terminal_ms_including_fixture_hold: 6642
+    real_validator: TerraformCliValidator
+    real_executor: ProcessCommandExecutor
+    version_and_checksum_verified: Terraform_1.8.5_AWS_provider_5.100.0
+    focused_tests_passed: 19
+    original_criteria_browser_steps_passed: 5
+    remaining_browser_executions_authorized: 0
+    independent_acceptance: PENDING_CORRECTED_HEAD_REVIEW
+    merge_authorized: false
+  stop_on:
+    - MAIN_DRIFT
+    - changed_failure_class_or_more_than_one_autonomous_repair
+    - acceptance_scope_expansion
+    - new_IdP_IAM_security_CORS_live_GCP_product_or_architecture_decision
+    - independent_review_and_explicit_merge_checkpoint
+  next_phase: PT-7
+  next_phase_authorized_before_PT6_acceptance_and_merge: false
+  result:
+    status: BROWSER_JOURNEY_VERIFIED_PENDING_INDEPENDENT_REVIEW
+    independent_acceptance: PENDING_CORRECTED_HEAD_REVIEW
+    human_gate: INDEPENDENT_REVIEW_AND_MERGE_CHECKPOINT
+    evidence: docs/evaluation/product-trust-pt-6-browser-journey.md
+    failed_evidence_replaced: false
+    auto_repairs_used: 1
+    human_authorized_corrective_iterations: 1
+    additional_journey_authorized: false
+    model_calls: 0
+    live_cloud_actions: 0
+  initial_result:
+    status: INCOMPLETE_BROWSER_EVIDENCE_MEASUREMENT_PREREQUISITE_BLOCKED
+    independent_acceptance: PENDING
+    human_gate: BOUNDED_REPAIR_LIMIT_AND_BROWSER_MEASUREMENT_BLOCKER
+    evidence: docs/evaluation/product-trust-pt-6-browser-journey.md
+    signed_identity_anonymous_and_forged_signature: PASS
+    one_realistic_upload_acceptance: PASS
+    pending_navigation_reload_same_job_and_time: PASS
+    original_job_terminal: FAILED_TERRAFORM_EXECUTABLE_FAILURE
+    terminal_draft_and_other_identity_journey: NOT_COMPLETED
+    accepted_jobs: 1
+    accepted_job_id: 604890dc-c272-485c-b9d5-95fdede77504
+    accepted_to_failed_terminal_ms: 1582
+    timing_scope: LOCAL_STUB_INCLUDING_CONTROLLED_HOLD_NOT_PRODUCTION_LATENCY
+    model_calls: 0
+    live_cloud_actions: 0
+    product_code_changes: 0
+    frozen_procedure_changed_after_outcomes: false
+    failed_evidence_replaced: false
+    known_missing_prerequisite_now_rejected_before_upload: true
+    bounded_driver_correction: >
+      One integration-driver correction boundary: preserve failed pre-upload observations,
+      finish the UI's existing 204 profile write before supplemental probes, and keep Playwright
+      alive until cleanup/evidence serialization. The initial missing-xxd bootstrap error was
+      a local dependency portability fix. Each unsuccessful execution is retained separately.
+      No production identity race is claimed repaired. No additional full journey is authorized
+      after the newly observed Terraform runtime prerequisite failure.

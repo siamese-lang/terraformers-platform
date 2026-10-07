@@ -1,0 +1,15 @@
+{
+  "authority": "USER",
+  "source": "Explicit PT-6 additional bounded corrective iteration 1 approved under independent review comment 6029913071 in current conversation",
+  "reviewCommentId": 6029913071,
+  "reviewedHeadSha": "4ac4c3b339276cd181e07cf78f339692038aaf89",
+  "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+  "samePullRequest": 250,
+  "humanAuthorizedCorrectiveIteration": 1,
+  "autonomousRepairCounterReset": false,
+  "maximumPostChangeCompleteBrowserExecutions": 1,
+  "automaticRetries": 0,
+  "oldFailedEvidenceMustRemainByteUnchanged": true,
+  "productionCloudModelIdpIamCorsPt2Pt7ChangesAuthorized": false,
+  "mergeAuthorized": false
+}

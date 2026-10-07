@@ -1,0 +1,85 @@
+{
+  "dockerfileSha256": "36172e189b3369f9b7dd05bdd7d01d75b3d6da6528410d49068590499793f8e3",
+  "pins": {
+    "TERRAFORM_VERSION": "1.8.5",
+    "TERRAFORM_SHA256": "bb1ee3e8314da76658002e2e584f2d8854b6def50b7f124e27b957a42ddacfea",
+    "AWS_PROVIDER_VERSION": "5.100.0",
+    "AWS_PROVIDER_SHA256": "1589a2266af699cbd5d80737a0fe02e54ec9cf2ca54e7e00ac51c7359056f274"
+  },
+  "source": "Existing backend/Dockerfile verified official releases.hashicorp.com archives",
+  "systemPathsModified": false,
+  "dockerUsed": false,
+  "artifacts": {
+    "terraform": {
+      "archiveSha256": "bb1ee3e8314da76658002e2e584f2d8854b6def50b7f124e27b957a42ddacfea",
+      "executableSha256": "026da7f222d6c7506e882173cb48611d50638dcbe98e87639e047797bee69817",
+      "executablePath": "/workspace/.cloud-setup/pt6-terraform/bin/terraform"
+    },
+    "aws-provider": {
+      "archiveSha256": "1589a2266af699cbd5d80737a0fe02e54ec9cf2ca54e7e00ac51c7359056f274",
+      "executableSha256": "8cb98768bcea942df561a918d65a8751f787ab348f7498bdfe6667dffcebd528",
+      "executablePath": "/workspace/.cloud-setup/pt6-terraform/terraform-plugins/registry.terraform.io/hashicorp/aws/5.100.0/linux_amd64/terraform-provider-aws_v5.100.0_x5"
+    }
+  },
+  "versionOutput": {
+    "terraform_version": "1.8.5",
+    "platform": "linux_amd64",
+    "provider_selections": {
+      "registry.terraform.io/hashicorp/aws": "5.100.0"
+    },
+    "terraform_outdated": false
+  },
+  "offlineInitialization": {
+    "exitCode": 0,
+    "stdout": "\nInitializing provider plugins...\n- Finding hashicorp/aws versions matching \"5.100.0\"...\n- Installing hashicorp/aws v5.100.0...\n- Installed hashicorp/aws v5.100.0 (unauthenticated)\n\nTerraform has created a lock file .terraform.lock.hcl to record the provider\nselections it made above. Include this file in your version control repository\nso that Terraform can guarantee to make the same selections by default when\nyou run \"terraform init\" in the future.\n\n\nWarning: Incomplete lock file information for providers\n\nDue to your customized provider installation methods, Terraform was forced to\ncalculate lock file checksums locally for the following providers:\n  - hashicorp/aws\n\nThe current .terraform.lock.hcl file only includes checksums for linux_amd64,\nso Terraform running on another platform will fail to install these\nproviders.\n\nTo calculate additional checksums for another platform, run:\n  terraform providers lock -platform=linux_amd64\n(where linux_amd64 is the platform to generate)\n\nTerraform has been successfully initialized!\n"
+  },
+  "validSchemaProbe": {
+    "exitCode": 0,
+    "diagnostics": {
+      "format_version": "1.0",
+      "valid": true,
+      "error_count": 0,
+      "warning_count": 0,
+      "diagnostics": []
+    }
+  },
+  "invalidSchemaProbe": {
+    "exitCode": 1,
+    "diagnostics": {
+      "format_version": "1.0",
+      "valid": false,
+      "error_count": 1,
+      "warning_count": 0,
+      "diagnostics": [
+        {
+          "severity": "error",
+          "summary": "Unsupported argument",
+          "detail": "An argument named \"unsupported_pt6_argument\" is not expected here.",
+          "range": {
+            "filename": "main.tf",
+            "start": {
+              "line": 10,
+              "column": 40,
+              "byte": 197
+            },
+            "end": {
+              "line": 10,
+              "column": 64,
+              "byte": 221
+            }
+          },
+          "snippet": {
+            "context": "resource \"aws_s3_bucket\" \"preflight\"",
+            "code": "resource \"aws_s3_bucket\" \"preflight\" { unsupported_pt6_argument = true }",
+            "start_line": 10,
+            "highlight_start_offset": 39,
+            "highlight_end_offset": 63,
+            "values": []
+          }
+        }
+      ]
+    }
+  },
+  "cloudCredentialsProvided": false,
+  "onlyInitAndValidateNoPlanApply": true
+}

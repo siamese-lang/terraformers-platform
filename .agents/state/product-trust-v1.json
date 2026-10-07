@@ -4,9 +4,9 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": "PT-5",
-  "lastCompletedPhase": "PT-4",
-  "activeWorkPackage": "product-trust-pt-5-access-safety-v1",
+  "activePhase": "PT-6",
+  "lastCompletedPhase": "PT-5",
+  "activeWorkPackage": "product-trust-pt-6-browser-journey-v1",
   "activePullRequest": null,
   "humanGate": "MERGE_CHECKPOINT",
   "liveRuntime": {
@@ -35,8 +35,8 @@
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
-  "executionBaseSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
-  "resultBeforeHumanGate": "PT5_ACCESS_AUDIT_AND_DEFAULT_ROUTE_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_EXPLICIT_MERGE",
+  "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+  "resultBeforeHumanGate": "PT6_ONE_USER_AUTHORIZED_CORRECTION_BROWSER_JOURNEY_PASS_PENDING_INDEPENDENT_REVIEW_AND_EXPLICIT_MERGE",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -56,10 +56,10 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "PT-5 needs independent original-criteria acceptance and explicit USER merge; CI green is not acceptance.",
-    "PT-6 is blocked until accepted merge. New IdP/IAM/security expansion and live/model/GCP/cost/teardown remain human-gated; PT-2 stays permanently closed."
+    "New independent review must verify the original PT-6 criteria against the corrected head.",
+    "Explicit merge authority is required; no PT-7, extra journey or live/model/cloud authority is granted."
   ],
-  "evidenceDocument": "docs/evaluation/product-trust-pt-5-access-safety.md",
+  "evidenceDocument": "docs/evaluation/product-trust-pt-6-browser-journey.md",
   "validation": {
     "initialFocused": {
       "tests": 10,
@@ -128,7 +128,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+  "lastObservedMainSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -238,24 +238,21 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6028079078,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/246#issuecomment-6028079078",
-    "decision": "PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION",
-    "workPackage": "product-trust-pt-2-current-system-realistic-live-baseline-v1",
-    "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-    "baselineComplete": false,
-    "additionalDispatchAuthorized": false,
-    "reviewAloneAuthorizesPt3": false,
-    "reviewedRuns": [
-      37480519016,
-      37500000739,
-      37509368210
-    ]
+    "commentId": 6029913071,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/250#issuecomment-6029913071",
+    "decision": "INCOMPLETE_HUMAN_CORRECTION_RECOMMENDED",
+    "reviewedHeadSha": "4ac4c3b339276cd181e07cf78f339692038aaf89",
+    "workPackage": "product-trust-pt-6-browser-journey-v1",
+    "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+    "independentAcceptance": "NOT_YET",
+    "mergeRecommendation": "DO_NOT_MERGE_YET",
+    "reviewGrantsCorrectiveAuthority": false,
+    "explicitUserCorrectiveAuthorityGrantedSeparately": true
   },
-  "lastCompletedWorkPackage": "product-trust-pt-4-trust-status-waiting-v1",
-  "lastCompletedPullRequest": 248,
-  "nextPhase": "PT-6",
-  "executionBaseWorkPackage": "product-trust-pt-5-access-safety-v1",
+  "lastCompletedWorkPackage": "product-trust-pt-5-access-safety-v1",
+  "lastCompletedPullRequest": 249,
+  "nextPhase": "PT-7",
+  "executionBaseWorkPackage": "product-trust-pt-6-browser-journey-v1",
   "truthFreezeApproval": {
     "marker": "[HUMAN_GATE_APPROVAL:v1]",
     "commentId": 6015857324,
@@ -336,11 +333,25 @@
       "completionBoundary": "DETERMINISTIC_TRUST_PRESENTATION_AND_TIMING_ONLY_NO_LIVE_PROOF",
       "modelCalls": 0,
       "liveCloudActions": 0
+    },
+    "PT-5": {
+      "status": "COMPLETE",
+      "workPackage": "product-trust-pt-5-access-safety-v1",
+      "executionBaseSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+      "sourceHeadSha": "bc13af0cb889b803a8d83352ef869896c97348f8",
+      "independentAcceptance": "PASS",
+      "independentReviewCommentId": 6029459989,
+      "mergedPullRequest": 249,
+      "mergedMainSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+      "mergedAt": "2026-10-07T02:16:09Z",
+      "completionBoundary": "DETERMINISTIC_ACCESS_AUDIT_AND_DEFAULT_ROUTE_CORRECTION_ONLY_NO_HOSTED_IDP_OR_BROWSER_PROOF",
+      "modelCalls": 0,
+      "liveCloudActions": 0
     }
   },
   "blockedNextPhase": {
-    "phase": "PT-6",
-    "status": "AWAITING_PT5_INDEPENDENT_ACCEPTANCE_AND_EXPLICIT_MERGE",
+    "phase": "PT-7",
+    "status": "AWAITING_COMPLETE_PT6_INDEPENDENT_ACCEPTANCE_AND_EXPLICIT_MERGE",
     "executionAuthorized": false,
     "executionStarted": false,
     "workPackage": null,
@@ -467,6 +478,31 @@
       "independentAcceptance": "PASS",
       "mergeAuthorizedByReview": false,
       "nextPhaseAuthorizedByReview": false
+    },
+    {
+      "commentId": 6029459989,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/249#issuecomment-6029459989",
+      "decision": "ACCEPTED",
+      "pullRequest": 249,
+      "scope": "PT-5 access safety and authentication boundary audit",
+      "reviewedHeadSha": "bc13af0cb889b803a8d83352ef869896c97348f8",
+      "workPackage": "product-trust-pt-5-access-safety-v1",
+      "executionBaseSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
+      "independentAcceptance": "PASS",
+      "mergeAuthorizedByReview": false,
+      "nextPhaseAuthorizedByReview": false
+    },
+    {
+      "commentId": 6029913071,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/250#issuecomment-6029913071",
+      "decision": "INCOMPLETE_HUMAN_CORRECTION_RECOMMENDED",
+      "reviewedHeadSha": "4ac4c3b339276cd181e07cf78f339692038aaf89",
+      "workPackage": "product-trust-pt-6-browser-journey-v1",
+      "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+      "independentAcceptance": "NOT_YET",
+      "mergeRecommendation": "DO_NOT_MERGE_YET",
+      "reviewGrantsCorrectiveAuthority": false,
+      "explicitUserCorrectiveAuthorityGrantedSeparately": true
     }
   ],
   "repositoryStateUpdate": {
@@ -707,7 +743,7 @@
       "reviewedHeadSha": "68110fc0429d88b3211c5811b1c470770bc4c3f7"
     },
     "PT-5": {
-      "status": "AUDITED_AND_CORRECTED_DETERMINISTICALLY_PENDING_INDEPENDENT_REVIEW",
+      "status": "COMPLETE",
       "workPackage": "product-trust-pt-5-access-safety-v1",
       "executionBaseSha": "0c4fa0e9616881e281aa027a18a9d741ff614699",
       "activatedAt": "2026-10-07T01:57:33Z",
@@ -718,7 +754,7 @@
       "humanAuthorizedCorrectiveIterations": 0,
       "modelUnderTestRunCount": 0,
       "liveCloudActions": 0,
-      "independentAcceptance": "PENDING",
+      "independentAcceptance": "PASS",
       "mergeAuthorized": false,
       "validationEvidence": "docs/evidence/product-trust-pt-5/validation.json",
       "validation": {
@@ -736,7 +772,139 @@
       },
       "correctionBoundary": "JWT_ENABLED_DEFAULT_ROUTE_AUTHENTICATION_ONLY_EXISTING_OWNERSHIP_PUBLIC_READS_AND_ADMIN_EXCEPTION_PRESERVED",
       "productionIdentityEstablished": false,
-      "newIdpIamOrRuntimeConfiguration": false
+      "newIdpIamOrRuntimeConfiguration": false,
+      "independentReviewCommentId": 6029459989,
+      "mergedMainSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+      "mergedAt": "2026-10-07T02:16:09Z"
+    },
+    "PT-6": {
+      "status": "BROWSER_JOURNEY_VERIFIED_PENDING_INDEPENDENT_REVIEW",
+      "workPackage": "product-trust-pt-6-browser-journey-v1",
+      "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+      "activatedAt": "2026-10-07T02:26:08Z",
+      "mainReadsAtActivation": 1,
+      "authorization": "USER approved Goal / DAG after accepted USER-merged PT-5; explicit bounded real-browser and local signed identity/stub preference",
+      "predecessorReviewCommentId": 6029459989,
+      "autoRepairsUsed": 1,
+      "humanAuthorizedCorrectiveIterations": 1,
+      "modelUnderTestRunCount": 0,
+      "liveCloudActions": 0,
+      "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW",
+      "mergeAuthorized": false,
+      "validationEvidence": "docs/evidence/product-trust-pt-6/correction-1/validation.json",
+      "browserEvidence": "docs/evidence/product-trust-pt-6/correction-1/browser/result.json",
+      "acceptedLocalStubJobs": 1,
+      "acceptedJobId": "345d4807-bf84-4b81-9a8e-4144339abc50",
+      "acceptedJobTerminalStatus": "SUCCEEDED",
+      "acceptedToTerminalMs": 6642,
+      "timingScope": "LOCAL_FIXTURE_INCLUDING_CONTROLLED_HOLD_NOT_PRODUCTION_OR_MODEL_LATENCY",
+      "journeySteps": {
+        "authentication": "PASS",
+        "oneUpload": "PASS",
+        "pendingNavigationReload": "PASS",
+        "terminalDraft": "PASS",
+        "otherIdentityDenial": "PASS"
+      },
+      "productCodeChanged": false,
+      "permanentIdpEstablished": false,
+      "newIdpIamCorsRuntimeConfiguration": false,
+      "failedMeasurementsPreserved": true,
+      "additionalJourneyAuthorized": false,
+      "remainingAcceptanceBlockers": [
+        "New independent review must verify the original PT-6 criteria against the corrected head.",
+        "Explicit merge authority is required; no PT-7, extra journey or live/model/cloud authority is granted."
+      ],
+      "residualFinding": {
+        "firstUserConcurrency": "Observed duplicate external identity creation during supplemental probe/UI profile concurrency; driver sequencing is not a product repair and concurrent first-user safety is unproven.",
+        "earlierFailureEvidenceLoss": "First browser driver cleanup masked original assertion; only surviving log and read-only empty inventory are claimed."
+      },
+      "correctiveIteration1": {
+        "authority": "USER_EXPLICIT_APPROVAL_UNDER_REVIEW_6029913071",
+        "reviewedHeadSha": "4ac4c3b339276cd181e07cf78f339692038aaf89",
+        "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+        "status": "PASS_PENDING_INDEPENDENT_REVIEW",
+        "maximumBrowserExecutions": 1,
+        "browserExecutionsUsed": 1,
+        "autoRepairsUsedUnchanged": 1,
+        "automaticRetries": 0,
+        "procedure": "docs/evidence/product-trust-pt-6/correction-1/procedure.md",
+        "prerequisites": "docs/evidence/product-trust-pt-6/correction-1/prerequisites.json",
+        "existingEvidenceUnchanged": true,
+        "mergeAuthorized": false,
+        "acceptedLocalStubJobs": 1,
+        "acceptedJobId": "345d4807-bf84-4b81-9a8e-4144339abc50",
+        "acceptedJobTerminalStatus": "SUCCEEDED",
+        "acceptedToTerminalMs": 6642,
+        "qualitySnapshot": null,
+        "qualityUi": "평가 기록 없음; editable/reference draft and conditional limits visible",
+        "realValidator": "TerraformCliValidator",
+        "realCommandExecutor": "ProcessCommandExecutor",
+        "terraformVersion": "1.8.5",
+        "awsProviderVersion": "5.100.0",
+        "browserSteps": {
+          "authentication": "PASS",
+          "one_upload": "PASS",
+          "pending_navigation_reload": "PASS",
+          "terminal_draft": "PASS",
+          "other_identity_denial": "PASS"
+        },
+        "jwksFetchCount": 1,
+        "browserEvidence": "docs/evidence/product-trust-pt-6/correction-1/browser/result.json",
+        "focusedTests": 19,
+        "testFailures": 0,
+        "testErrors": 0,
+        "testSkipped": 0,
+        "remainingBrowserExecutionsAuthorized": 0,
+        "fixtureTimeIsNotProductionLatency": true,
+        "modelUnderTestRunCount": 0,
+        "liveCloudActions": 0,
+        "independentAcceptance": "PENDING_CORRECTED_HEAD_REVIEW"
+      },
+      "initialBrowserAttempt": {
+        "status": "INCOMPLETE_BROWSER_EVIDENCE_MEASUREMENT_PREREQUISITE_BLOCKED",
+        "workPackage": "product-trust-pt-6-browser-journey-v1",
+        "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+        "activatedAt": "2026-10-07T02:26:08Z",
+        "mainReadsAtActivation": 1,
+        "authorization": "USER approved Goal / DAG after accepted USER-merged PT-5; explicit bounded real-browser and local signed identity/stub preference",
+        "predecessorReviewCommentId": 6029459989,
+        "autoRepairsUsed": 1,
+        "humanAuthorizedCorrectiveIterations": 0,
+        "modelUnderTestRunCount": 0,
+        "liveCloudActions": 0,
+        "independentAcceptance": "PENDING",
+        "mergeAuthorized": false,
+        "validationEvidence": "docs/evidence/product-trust-pt-6/validation.json",
+        "browserEvidence": "docs/evidence/product-trust-pt-6/03-browser-partial/result.json",
+        "acceptedLocalStubJobs": 1,
+        "acceptedJobId": "604890dc-c272-485c-b9d5-95fdede77504",
+        "acceptedJobTerminalStatus": "FAILED",
+        "acceptedToTerminalMs": 1582,
+        "timingScope": "LOCAL_FIXTURE_INCLUDING_CONTROLLED_HOLD_NOT_PRODUCTION_OR_MODEL_LATENCY",
+        "journeySteps": {
+          "authentication": "PASS",
+          "oneUpload": "PASS",
+          "pendingNavigationReload": "PASS",
+          "terminalDraft": "NOT_COMPLETED",
+          "otherIdentityDenial": "NOT_RUN"
+        },
+        "productCodeChanged": false,
+        "permanentIdpEstablished": false,
+        "newIdpIamCorsRuntimeConfiguration": false,
+        "failedMeasurementsPreserved": true,
+        "additionalJourneyAuthorized": false,
+        "remainingAcceptanceBlockers": [
+          "Local real Terraform validator CLI/provider prerequisites absent at hardcoded paths; no pass-through/production config change allowed.",
+          "Terminal draft/trust/HCL and second-identity browser journey not completed.",
+          "Bounded measurement-driver correction spent; independent review and explicit additional bounded correction authority required."
+        ],
+        "residualFinding": {
+          "firstUserConcurrency": "Observed duplicate external identity creation during supplemental probe/UI profile concurrency; driver sequencing is not a product repair and concurrent first-user safety is unproven.",
+          "earlierFailureEvidenceLoss": "First browser driver cleanup masked original assertion; only surviving log and read-only empty inventory are claimed."
+        }
+      },
+      "acceptedJobFieldsScope": "ONE_DISTINCT_USER_AUTHORIZED_CORRECTION_JOURNEY",
+      "totalAcceptedLocalStubJobsIncludingPreservedFailure": 2
     }
   },
   "goalContinuation": {

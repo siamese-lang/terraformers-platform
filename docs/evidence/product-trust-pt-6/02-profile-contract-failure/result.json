@@ -1,0 +1,68 @@
+{
+  "procedure": "docs/evaluation/product-trust-pt-6-browser-protocol.md",
+  "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+  "datasetIdentity": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+  "input": "evaluation/terraformers-realistic-v1/fixtures/pt1-06-thumbnail-pipeline.png",
+  "inputSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+  "modelUnderTestRunCount": 0,
+  "liveCloudActionCount": 0,
+  "automaticRetries": 0,
+  "steps": {
+    "authentication": "FAIL",
+    "one_upload": "NOT_RUN",
+    "pending_navigation_reload": "NOT_RUN",
+    "terminal_draft": "NOT_RUN",
+    "other_identity_denial": "NOT_RUN"
+  },
+  "outcome": "FAIL_PRESERVED_NO_RETRY",
+  "timingScope": "LOCAL_STUB_INCLUDING_CONTROLLED_EXECUTOR_HOLD_NOT_PRODUCTION_LATENCY",
+  "bindings": {
+    "jarSha256": "867f95e61c696b44ed14ae97c745119fb56f00bc68abfee9b1dffa88f6d2b8bb",
+    "frontendFiles": {
+      "asset-manifest.json": "669d07e5f0007880cf2d4ebfb95a95e84593d12906879d93762a855847c1bfba",
+      "index.html": "f8d07bd7b48c49889c5d118b1ce0ac10a1376db05dcd6d75ceb41c299ad7bc8a",
+      "static/css/main.28f1fa56.css": "1f5d399d0389647548acd0363f0cae0865be6df6e0cb0ba41212dcdca19c73cd",
+      "static/css/main.28f1fa56.css.map": "347d3c192a14f00511f3110fa54dde254277bb5bad3b6f31bad4544734515337",
+      "static/js/main.eb29c0e6.js": "6a5b27fa022b6a1721ac09bd2077579bc14bf7c298afad254e8b4b4fa4479322",
+      "static/js/main.eb29c0e6.js.LICENSE.txt": "3c163c043b470ed4ccb149e4b0e2d45fcc8bfd688a18f9aab11a464b2d88b481",
+      "static/js/main.eb29c0e6.js.map": "3666b24e7ea710c8b73345595a1e396900dc1c6bb02878382d80a739e8ca4299"
+    },
+    "sources": {
+      "scripts/checks/product-trust-browser-journey.py": "5420a10fed90b3c2d09c2bdbb8b553faa846cb630879e8b7be84fc4c6ffe503a",
+      "scripts/smoke/ephemeral-jwks-fixture.sh": "22370156d38ad12ea314b9a03843d740f4751686366fa8dd367adbb28bc133b6",
+      "backend/src/test/java/com/terraformers/modernization/analysis/BrowserJourneyFixture.java": "eb624674bfa618a268cf3a4cf6578d67b203f1279f29c688fc94e18ea421c263",
+      "docs/evaluation/product-trust-pt-6-browser-protocol.md": "ba7c024602fb27ac6e10f88d91ec02779ba52252b47ec2618819fd3c3e3ba0f5"
+    }
+  },
+  "browserVersion": "151.0.7922.173",
+  "failure": {
+    "step": "authentication",
+    "type": "AssertionError",
+    "message": "Real UI profile persistence failed"
+  },
+  "serverStages": [],
+  "temporaryMaterialRemoved": true,
+  "httpEvents": [
+    {
+      "method": "PATCH",
+      "path": "/api/users/me/display-name",
+      "status": 204,
+      "responseBytes": 0,
+      "responseSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "browserApiObservations": [],
+  "identityTransportEvents": [
+    {
+      "identity": "owner",
+      "operation": "InitiateAuth",
+      "supported": true
+    },
+    {
+      "identity": "owner",
+      "operation": "GetUser",
+      "supported": true
+    }
+  ],
+  "blockedExternalHosts": []
+}

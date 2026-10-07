@@ -2,7 +2,7 @@
 
 ## Status
 
-**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 FINAL INCOMPLETE EVIDENCE ACCEPTED / PT-3 COMPLETE / PT-4 COMPLETE / PT-5 ACCESS AUDIT AND ROUTE CORRECTION / HUMAN_REQUIRED: INDEPENDENT REVIEW AND MERGE_CHECKPOINT**
+**PROGRAM APPROVED — PT-1 COMPLETE / PT-2 FINAL INCOMPLETE EVIDENCE ACCEPTED / PT-3 COMPLETE / PT-4 COMPLETE / PT-5 COMPLETE / PT-6 BROWSER JOURNEY VERIFIED PENDING INDEPENDENT REVIEW / HUMAN_REQUIRED: MERGE_CHECKPOINT**
 
 PT-1 revision 3 remains USER-frozen at
 `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`.
@@ -30,21 +30,27 @@ accepted head `68110fc0429d88b3211c5811b1c470770bc4c3f7`; USER merged PR #248 as
 `0c4fa0e9616881e281aa027a18a9d741ff614699` on `2026-10-07T01:52:07Z`.
 Its original base, validation evidence and bounded residuals are retained; no live proof is implied.
 
-The approved Goal / Program DAG activates repository-only
-[PT-5](../../../.agents/work-packages/product-trust-pt-5-access-safety-v1.yml) on that exact main.
-[The access audit](../../evaluation/product-trust-pt-5-access-safety.md) preserves current
-owner/admin/public/discussion policy and corrects default-open JWT routing. Only supported public
-GETs are allowed anonymously; other routes require authentication. No new IdP, IAM grant, CORS
-origin, runtime configuration or cloud action is introduced. MockMvc/JWKS fixture evidence is not
-permanent production identity; authenticated request cost has no established per-user quota.
+[PT-5](../../evaluation/product-trust-pt-5-access-safety.md) is COMPLETE after
+[independent review 6029459989](https://github.com/siamese-lang/terraformers-platform/pull/249#issuecomment-6029459989)
+accepted head `bc13af0cb889b803a8d83352ef869896c97348f8` and USER merged PR #249 at
+`2026-10-07T02:16:09Z` as `37e006be4d5995019704ea8a4009e1a59da039b2`.
+Its original base and owner/admin/public policy, evidence and residuals remain preserved.
 
-GitHub owns transient PR lifecycle. This substantive PR records PT-4 accepted completion without
-another state/activation/normalization PR. Independent PT-5 acceptance and USER merge are required
-before PT-6; CI success alone is not acceptance. Live/model/GCP, architecture/security expansion,
-cost and teardown remain separately gated. Runtime is retained and A7-8 remains deferred.
+USER authorized one additional bounded corrective iteration under
+[review 6029913071](https://github.com/siamese-lang/terraformers-platform/pull/250#issuecomment-6029913071)
+on the same [PT-6 Work Package](../../../.agents/work-packages/product-trust-pt-6-browser-journey-v1.yml),
+branch and bound base. [Current evidence](../../evaluation/product-trust-pt-6-browser-journey.md)
+passes all five real-browser steps after local cache preparation for the exact pinned real Terraform
+validator. One distinct new job SUCCEEDED; the original FAILED job and all 21 old evidence files
+remain unchanged. No product/frontend/auth/model/truth/IAM/CORS/workflow/cloud change.
 
-Historical synthetic controls remain mechanism/regression evidence, not realistic generalization.
-Contract: `.agents/programs/product-trust-v1.yml`; state: `.agents/state/product-trust-v1.json`.
+Autonomous repair count remains 1; human-authorized corrective iteration count is separately 1.
+Exactly one post-change journey was consumed; no further run is authorized. Local stub/CLI timings,
+fixture identities and absent-quality display do not establish realistic AI quality, hosted IdP or
+production latency. GitHub owns transient PR lifecycle; durable active PR/branch fields stay null.
+Stop for new independent review and explicit merge. PT-6 is not COMPLETE and PT-7 stays blocked;
+CI success alone is not acceptance. Live/model/GCP, architecture/security expansion, cost and
+teardown remain gated. Runtime is retained and A7-8 remains deferred.
 
 ## Why this reassessment exists
 

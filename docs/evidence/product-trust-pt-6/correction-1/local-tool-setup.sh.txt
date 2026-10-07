@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+PT6_CACHE=/workspace/.cloud-setup/pt6-terraform
+mkdir -p "$PT6_CACHE/downloads"
+fetch_pt6_pin() {
+  local url="$1" archive="$2" expected="$3"
+  if [[ ! -f "$archive" ]]; then curl -fsSL --max-time 120 "$url" -o "$archive"; fi
+  printf '%s  %s\n' "$expected" "$archive" | sha256sum -c -
+}
+fetch_pt6_pin https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_linux_amd64.zip "$PT6_CACHE/downloads/terraform.zip" bb1ee3e8314da76658002e2e584f2d8854b6def50b7f124e27b957a42ddacfea
+fetch_pt6_pin https://releases.hashicorp.com/terraform-provider-aws/5.100.0/terraform-provider-aws_5.100.0_linux_amd64.zip "$PT6_CACHE/downloads/aws-provider.zip" 1589a2266af699cbd5d80737a0fe02e54ec9cf2ca54e7e00ac51c7359056f274
+python3 - <<'PY'
+import hashlib, pathlib, shutil, zipfile
+cache = pathlib.Path('/workspace/.cloud-setup/pt6-terraform')
+for name, member, target in [
+    ('terraform', 'terraform', cache / 'bin/terraform'),
+    ('aws-provider', 'terraform-provider-aws_v5.100.0_x5', cache / 'terraform-plugins/registry.terraform.io/hashicorp/aws/5.100.0/linux_amd64/terraform-provider-aws_v5.100.0_x5'),
+]:
+    with zipfile.ZipFile(cache / 'downloads' / (name + '.zip')) as zipped:
+        with zipped.open(member) as source:
+            expected = hashlib.file_digest(source, 'sha256').hexdigest()
+        if not target.exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with zipped.open(member) as source, target.open('wb') as output:
+                shutil.copyfileobj(source, output)
+            target.chmod(0o755)
+        with target.open('rb') as current:
+            assert hashlib.file_digest(current, 'sha256').hexdigest() == expected, 'Refusing changed cached executable'
+        if 'LICENSE.txt' in zipped.namelist():
+            (target.parent / 'LICENSE.txt').write_bytes(zipped.read('LICENSE.txt'))
+PY
+CHECKPOINT_DISABLE=1 "$PT6_CACHE/bin/terraform" version -json

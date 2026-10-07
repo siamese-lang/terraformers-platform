@@ -2,7 +2,7 @@ work_package:
   id: product-trust-pt-2-current-system-realistic-live-baseline-v1
   program: product-trust-v1
   phase: PT-2
-  status: PROCEDURE_FROZEN
+  status: FINAL_INCOMPLETE_EVIDENCE_DISPOSITION_ACCEPTED
   approved_base_sha: 3caae454661d21d84c3e469a7d76aff5633d5b26
   execution_base_sha: 3caae454661d21d84c3e469a7d76aff5633d5b26
   activated_at: "2026-10-06T12:45:08Z"
@@ -123,8 +123,8 @@ work_package:
     subsequent_recovery_dispatch_limit_after_review_and_merge: 1
     original_case_upload_attempts: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     original_case_02_censored_ms: 424846
-    baseline_result_acceptance: PENDING_INDEPENDENT_RESULT_REVIEW
-    correction_acceptance: PENDING_INDEPENDENT_REVIEW
+    baseline_result_acceptance: PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION
+    correction_acceptance: PASS_PREPARATION_ONLY
     gate: MERGE_CHECKPOINT
   evidence_handoff:
     preparation: same existing branch and PR; explicit independent review and merge checkpoint
@@ -223,10 +223,23 @@ work_package:
     - missing_original_acceptance_evidence
     - independent_review_checkpoint
   completion:
-    preparation_result: BOUNDED_RECOVERY_CORRECTION_PENDING_INDEPENDENT_REVIEW_AND_MERGE
-    current_human_gate: MERGE_CHECKPOINT
+    preparation_result: INDEPENDENTLY_ACCEPTED_AND_MERGED
+    current_human_gate: NONE_FINAL_DISPOSITION
     baseline_complete: false
     model_under_test_case_runs: 2
     live_cloud_actions: ORIGINAL_BASELINE_AND_ZERO_INFERENCE_PREFLIGHT_ONLY
     next_phase: PT-3
     next_phase_authorized: false
+  final_disposition:
+    status: PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION
+    independent_review_comment_id: 6028079078
+    successful_benchmark_completion: false
+    original_success_acceptance_criteria_met: false
+    additional_dispatch_rerun_exception_or_harness_recovery: prohibited
+    original_case_upload_attempts: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+    original_case02_censored_ms: 424846
+    consumed_recovery_run: 37509368210
+    zero_product_observation_runs: [37500000739, 37509368210]
+    next_substantive_work_package: product-trust-pt-3-origin-authorization-v1
+    separate_USER_authorized_program_amendment: PT2_FINAL_INCOMPLETE_TO_BOUNDED_PT3
+    note: PT3 has its own USER authority; this closed PT2 Work Package never authorizes PT3 writes.

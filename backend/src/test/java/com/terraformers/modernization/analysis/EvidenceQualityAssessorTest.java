@@ -13,6 +13,7 @@ import com.terraformers.modernization.analysis.EvidenceQualityAssessor.ProjectDe
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
 import com.terraformers.modernization.reference.ReferenceDocument;
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,69 @@ class EvidenceQualityAssessorTest {
     private final GeneratedTerraformContractInspector inspector =
             new GeneratedTerraformContractInspector(catalog);
     private final EvidenceQualityAssessor assessor = new EvidenceQualityAssessor(catalog, inspector);
+
+    @Test
+    void absentOriginAuthorizationDegradesFullyEvidencedTechnicallyValidDraft() throws Exception {
+        String terraform = Files.readString(Path.of("src/test/resources/terraform/pt3-origin-without-authorization.tf"));
+        EvidenceQualityAssessment assessment = assessSupportedOrigin(terraform, ProjectDecisionApplicability.NOT_APPLICABLE);
+
+        assertThat(assessment.technicalStatus()).isEqualTo(TechnicalStatus.PASS);
+        assertThat(assessment.knowledgeStatus()).isEqualTo(KnowledgeStatus.COMPLETE);
+        assertThat(assessment.generatedResourcesWithoutSelectedEvidence()).isEmpty();
+        assertThat(assessment.qualityStatus()).isEqualTo(QualityStatus.DEGRADED);
+        assertThat(assessment.reasons()).extracting(Enum::name)
+                .containsExactly("CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING");
+    }
+
+    @Test
+    void missingAuthorizationRemainsExplicitWithUnknownProjectDecisionsAndSurvivesJson() throws Exception {
+        String terraform = Files.readString(Path.of("src/test/resources/terraform/pt3-origin-without-authorization.tf"));
+        EvidenceQualityAssessment assessment = assessSupportedOrigin(terraform, ProjectDecisionApplicability.UNKNOWN);
+        assertThat(assessment.projectDecisionStatus()).isEqualTo(ProjectDecisionStatus.UNKNOWN);
+        assertThat(assessment.qualityStatus()).isEqualTo(QualityStatus.DEGRADED);
+        assertThat(assessment.technicalStatus()).isEqualTo(TechnicalStatus.PASS);
+        assertThat(assessment.reasons()).contains(Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING);
+        assertThat(objectMapper.readValue(objectMapper.writeValueAsString(assessment), EvidenceQualityAssessment.class))
+                .isEqualTo(assessment);
+    }
+
+    @Test
+    void preservedCliValidatedObservationExposesSemanticOmissionWithProductionUnknownApplicability() throws Exception {
+        String terraform = Files.readString(Path.of("src/test/resources/terraform/pt3-observed-origin-draft.tf"));
+        EvidenceQualityAssessment assessment = assessSupportedOrigin(terraform, ProjectDecisionApplicability.UNKNOWN);
+        assertThat(assessment.technicalStatus()).isEqualTo(TechnicalStatus.PASS);
+        assertThat(assessment.qualityStatus()).isEqualTo(QualityStatus.DEGRADED);
+        assertThat(assessment.reasons()).containsExactly(Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING);
+        assertThat(assessment.generatedResourcesWithoutSelectedEvidence()).isEmpty();
+    }
+
+    @Test
+    void suppliedAuthorizationPreservesExistingQualityRules() throws Exception {
+        String terraform = Files.readString(Path.of("src/test/resources/terraform/pt3-origin-without-authorization.tf"))
+                + """
+                resource "aws_s3_bucket_policy" "supplied" {
+                  bucket = aws_s3_bucket.delivery_store.id
+                  policy = var.supplied_read_policy
+                }
+                """;
+        EvidenceQualityAssessment assessment = assessSupportedOrigin(terraform, ProjectDecisionApplicability.NOT_APPLICABLE);
+        assertThat(assessment.qualityStatus()).isEqualTo(QualityStatus.EVIDENCE_BACKED);
+        assertThat(assessment.reasons()).isEmpty();
+        assertThat(assessSupportedOrigin(terraform, ProjectDecisionApplicability.UNKNOWN).qualityStatus())
+                .isEqualTo(QualityStatus.UNKNOWN);
+    }
+
+    private EvidenceQualityAssessment assessSupportedOrigin(String terraform,
+            ProjectDecisionApplicability applicability) {
+        var supportedCatalog = org.mockito.Mockito.mock(AwsProviderSchemaCatalog.class);
+        org.mockito.Mockito.when(supportedCatalog.contains(org.mockito.ArgumentMatchers.anyString())).thenReturn(true);
+        var supportedInspector = new GeneratedTerraformContractInspector(supportedCatalog);
+        var supportedAssessor = new EvidenceQualityAssessor(supportedCatalog, supportedInspector);
+        List<String> types = supportedInspector.resourceTypes(terraform);
+        return supportedAssessor.assess(input(TechnicalStatus.PASS, types, Set.copyOf(types),
+                types.stream().map(type -> providerDocument(type, type)).toList(), terraform,
+                applicability, List.of()));
+    }
 
     @Test
     void treatsMissingOfficialKnowledgeAsKnowledgeGapNotQualityFailure() {

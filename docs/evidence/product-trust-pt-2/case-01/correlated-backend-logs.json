@@ -1,0 +1,36 @@
+{
+  "jobId": "2337e6bd-1f70-4382-a515-b4cdb9cba7d9",
+  "since": "2026-10-06T14:42:53.255810+00:00",
+  "exitCode": 0,
+  "lines": [
+    "2026-10-06T14:42:58.517035669Z 2026-10-06T14:42:58.497Z INFO  [analysis-job-1] c.t.m.a.LoggingProgressPublisher trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - analysis progress jobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 projectId=5 status=RUNNING message=analysis job started",
+    "2026-10-06T14:42:58.517542168Z 2026-10-06T14:42:58.516Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisJobRunner trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - Analysis job claimed outcome=initial_claim generation=1 attempt=1",
+    "2026-10-06T14:42:58.525111810Z 2026-10-06T14:42:58.524Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisJobRunner trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - Analysis job execution started",
+    "2026-10-06T14:43:13.847869405Z 2026-10-06T14:43:13.847Z INFO  [analysis-job-1] c.t.m.r.RetrievalModeReferenceRetriever trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - reference retrieval outcome=success mode=REQUIRED embeddingProvider=VERTEX index=terraformers-reference-v4 topK=8 hitCount=8 documentIds=[tfaws-5.100.0-aws_cloudfront_distribution-schema, tfref-v2-alb-private-origin, tfaws-5.100.0-aws_cloudfront_distribution-example-1-the-example-below-creates-a-cloudfront-distribution-with-an-s3-origin, tfaws-5.100.0-aws_dynamodb_table-overview, tfaws-5.100.0-aws_apigatewayv2_api-example-2-basic-http-api, tfref-v2-s3-content-metadata, tfaws-5.100.0-aws_s3_bucket-overview, tfaws-5.100.0-aws_lambda_function-overview] elapsedMs=3227",
+    "2026-10-06T14:43:13.848429369Z 2026-10-06T14:43:13.848Z INFO  [analysis-job-1] c.t.m.a.v.VertexAnalysisProvider trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - Vertex reference retrieval outcome=success mode=REQUIRED corpusVersion=terraformers-reference-v4 referenceCount=8",
+    "2026-10-06T14:43:32.003930722Z 2026-10-06T14:43:32.003Z INFO  [analysis-job-1] c.t.m.r.RetrievalModeReferenceRetriever trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - reference retrieval outcome=success mode=REQUIRED embeddingProvider=VERTEX index=terraformers-reference-v4 topK=8 hitCount=7 documentIds=[tfaws-5.100.0-aws_cloudfront_origin_access_control-overview, tfaws-5.100.0-aws_iam_role-overview, tfaws-5.100.0-aws_iam_role_policy-overview, tfaws-5.100.0-aws_apigatewayv2_stage-overview, tfaws-5.100.0-aws_apigatewayv2_integration-example-2-lambda-integration, tfaws-5.100.0-aws_apigatewayv2_route-overview, tfaws-5.100.0-aws_lambda_permission-overview] elapsedMs=777",
+    "2026-10-06T14:44:24.483227717Z 2026-10-06T14:44:24.482Z INFO  [analysis-job-1] c.t.m.a.AnalysisJobOrchestrator trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - Analysis provider completed provider=vertex:gemini-3.8-flash",
+    "2026-10-06T14:44:24.483871387Z 2026-10-06T14:44:24.483Z INFO  [analysis-job-1] c.t.m.a.AnalysisJobOrchestrator trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - Terraform draft validation passed",
+    "2026-10-06T14:44:55.160538463Z 2026-10-06T14:44:55.158Z INFO  [analysis-job-1] c.t.m.a.AnalysisJobOrchestrator trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - Terraform executable validation passed",
+    "2026-10-06T14:44:55.161130012Z 2026-10-06T14:44:55.160Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisObservability trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - analysis stage outcome=success stage=analysis_execution elapsedMs=116633",
+    "2026-10-06T14:44:55.625779661Z 2026-10-06T14:44:55.625Z INFO  [analysis-job-1] c.t.m.a.LoggingProgressPublisher trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - analysis progress jobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 projectId=5 status=SUCCEEDED message=analysis job completed",
+    "2026-10-06T14:44:55.687747221Z 2026-10-06T14:44:55.686Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisObservability trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - analysis stage outcome=success stage=result_finalize elapsedMs=481",
+    "2026-10-06T14:44:55.690156202Z 2026-10-06T14:44:55.689Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisObservability trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - terminal quality contract=evidence-quality-v1 technical=PASS knowledge=COMPLETE quality=UNKNOWN projectDecision=UNKNOWN runtimeBoundary=CONDITIONAL_ON_EXTRACTED_FACTS reasons=[]"
+  ],
+  "stageTimings": [
+    {
+      "outcome": "success",
+      "stage": "analysis_execution",
+      "elapsedMs": 116633,
+      "line": "2026-10-06T14:44:55.161130012Z 2026-10-06T14:44:55.160Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisObservability trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - analysis stage outcome=success stage=analysis_execution elapsedMs=116633"
+    },
+    {
+      "outcome": "success",
+      "stage": "result_finalize",
+      "elapsedMs": 481,
+      "line": "2026-10-06T14:44:55.687747221Z 2026-10-06T14:44:55.686Z INFO  [analysis-job-1] c.t.m.analysis.AnalysisObservability trace_id= span_id= analysisJobId=2337e6bd-1f70-4382-a515-b4cdb9cba7d9 source_revision=688119631a790e876235565711c07085aff15124 - analysis stage outcome=success stage=result_finalize elapsedMs=481"
+    }
+  ],
+  "internalFactRetrievalGenerationTimings": "NOT_OBSERVED",
+  "diagnostic": ""
+}

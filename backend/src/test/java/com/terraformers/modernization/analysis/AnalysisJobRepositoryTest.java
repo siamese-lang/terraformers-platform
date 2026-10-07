@@ -26,6 +26,29 @@ class AnalysisJobRepositoryTest {
     private EntityManager entityManager;
 
     @Test
+    void semanticOriginReasonIsPersistedWithoutTurningTechnicalPassIntoFailure() {
+        AnalysisJobEntity entity = savePending("origin-authorization-reload");
+        var quality = new EvidenceQualityAssessment(EvidenceQualityAssessment.CONTRACT_VERSION,
+                EvidenceQualityAssessment.TechnicalStatus.PASS,
+                EvidenceQualityAssessment.KnowledgeStatus.COMPLETE,
+                EvidenceQualityAssessment.QualityStatus.DEGRADED,
+                EvidenceQualityAssessment.ProjectDecisionStatus.UNKNOWN,
+                EvidenceQualityAssessment.RuntimeQualityBoundary.CONDITIONAL_ON_EXTRACTED_FACTS,
+                List.of(EvidenceQualityAssessment.Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING),
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+        entity.setQualityAssessment(quality);
+        repository.saveAndFlush(entity);
+        entityManager.clear();
+        var restored = repository.findById(entity.getId()).orElseThrow();
+        var response = AnalysisJobResponse.from(restored);
+        assertThat(restored.getTechnicalStatus()).isEqualTo(EvidenceQualityAssessment.TechnicalStatus.PASS);
+        assertThat(restored.getQualityStatus()).isEqualTo(EvidenceQualityAssessment.QualityStatus.DEGRADED);
+        assertThat(restored.qualityReasonValues()).containsExactly(
+                EvidenceQualityAssessment.Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING);
+        assertThat(response.quality().reasons()).containsExactlyElementsOf(quality.reasons());
+    }
+
+    @Test
     void qualitySnapshotSurvivesFreshPersistenceContextWithoutRecomputation() {
         AnalysisJobEntity entity = savePending("quality-reload");
         var quality = new EvidenceQualityAssessment(EvidenceQualityAssessment.CONTRACT_VERSION,

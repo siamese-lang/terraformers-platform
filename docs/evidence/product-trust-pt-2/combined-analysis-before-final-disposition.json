@@ -1,0 +1,216 @@
+{
+  "assessment": "INCOMPLETE_PENDING_INDEPENDENT_RESULT_REVIEW",
+  "executionBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
+  "datasetVersion": "terraformers-realistic-v1",
+  "candidateRevision": 3,
+  "candidateIdentitySha256": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+  "originalRun": {
+    "id": 37480519016,
+    "attempt": 1,
+    "dispatchSha": "c3e9ed4e854778dfb2eefbc0182ae53a008025bf",
+    "artifactId": 11422455892,
+    "archiveSha256": "499f31b4311737884a2b7d0fc0405d477be7e41a99e9969217570c91eb5ac561",
+    "inventorySha256": "107d31a942dcbc23bbfaf1f81e7c1b9c6a2fac4224d5689edb216a0bd4378f3d"
+  },
+  "zeroInferenceSource": {
+    "id": 37500000739,
+    "attempt": 1,
+    "dispatchSha": "026adab4dec17fd3b57ee950f174f277ed7c6d80",
+    "artifactId": 11429522041,
+    "archiveSha256": "49b017e98cb05a546a2c7900044ae6d742762df2c59fdd10a5abe2a4a64a179f",
+    "inventorySha256": "0875d2814b3e42f87eccd6f15cf7d309c2f6684cdd6e09b331ba24447f0d2888"
+  },
+  "recoveryRun": {
+    "id": 37509368210,
+    "attempt": 1,
+    "dispatchSha": "5aa275e666d45f4181a3ca2ebee6740f0700a75b",
+    "conclusion": "failure",
+    "jobId": 112426204015,
+    "jobStepCount": 63,
+    "jobStepsCanonicalSha256": "45b6bb1cf24009a7cdf991988ab7f2155b2bb517ec2d4136f07d3889fb2fd305",
+    "artifactId": 11435085417,
+    "archiveSha256": "c09ddf1c8273ddd0bcf29cfc06bd77b53548fef01225ac4c0e9caf8490281023",
+    "inventorySha256": "5213ed62ce2f18a6bcede35a95697b003a3c589d3163bf894907eee57e2987ca",
+    "listedFilesVerified": 20,
+    "exactArchiveFiles": 22,
+    "nestedInventorySeparatelyPinned": true,
+    "expiresAt": "2027-01-04T18:11:24Z"
+  },
+  "protocols": {
+    "baselineSha256": "d8e615ef3fdc26de9be5e34b922da6c06055ca60e4b4e5b004775301d5479f90",
+    "continuationSha256": "218d9d48503a7a8e986081279fb8b77beb692a279e4393319867558c8ee88281"
+  },
+  "historyFailure": {
+    "error": "incomplete repository dispatch history",
+    "archivedHistorySha256": "5286a648e72f7524d35c184d8874e8c32aa8f205560dc649023812f2121648de",
+    "pageTotals": [
+      122,
+      154
+    ],
+    "pageSizes": [
+      100,
+      54
+    ],
+    "combinedRunCount": 154,
+    "uniqueRunCount": 125,
+    "duplicateRunIds": 29,
+    "missingExpectedRunIds": [
+      37480519016,
+      37500000739,
+      37509368210
+    ],
+    "responseOriginCause": "UNKNOWN"
+  },
+  "newRecoveryProductApiObservations": 0,
+  "newRecoveryUploads": 0,
+  "newRecoveryAcceptedJobs": 0,
+  "newRecoveryModelCalls": 0,
+  "aggregateAcceptedJobs": 2,
+  "aggregateProviderRpcCount": null,
+  "counts": {
+    "terminalObserved": 1,
+    "latencyCensored": 1,
+    "notRun": 8,
+    "backendEvidenceBackedClaimsObserved": 0,
+    "completionPresentedSemanticDefectCandidates": 1
+  },
+  "semanticDenominators": {
+    "components": 39,
+    "relationships": 30,
+    "resourceTypes": 26
+  },
+  "perCase": [
+    {
+      "caseId": "pt1-01-serverless-portal",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "originalStatus": "SUCCEEDED",
+      "uploadAttempts": 1,
+      "analysisJobId": "2337e6bd-1f70-4382-a515-b4cdb9cba7d9",
+      "projectId": 5,
+      "acceptedToTerminalObservedMs": 122464,
+      "censoredObservationMs": null,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "PARTIAL_STATIC_ACCESS_DEFECT_PENDING_REVIEW"
+    },
+    {
+      "caseId": "pt1-02-order-fanout",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "originalStatus": "TERMINAL_NOT_OBSERVED",
+      "uploadAttempts": 1,
+      "analysisJobId": "578c05b9-2905-4d60-8432-ce7593c96133",
+      "projectId": 6,
+      "acceptedToTerminalObservedMs": null,
+      "censoredObservationMs": 424846,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "NOT_OBSERVED"
+    },
+    {
+      "caseId": "pt1-03-parallel-lookup",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "originalStatus": "NOT_RUN",
+      "uploadAttempts": 0,
+      "analysisJobId": null,
+      "projectId": null,
+      "acceptedToTerminalObservedMs": null,
+      "censoredObservationMs": null,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "NOT_OBSERVED"
+    },
+    {
+      "caseId": "pt1-04-analytics-catalog",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "originalStatus": "NOT_RUN",
+      "uploadAttempts": 0,
+      "analysisJobId": null,
+      "projectId": null,
+      "acceptedToTerminalObservedMs": null,
+      "censoredObservationMs": null,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "NOT_OBSERVED"
+    },
+    {
+      "caseId": "pt1-05-private-web-fleet",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "originalStatus": "NOT_RUN",
+      "uploadAttempts": 0,
+      "analysisJobId": null,
+      "projectId": null,
+      "acceptedToTerminalObservedMs": null,
+      "censoredObservationMs": null,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "NOT_OBSERVED"
+    },
+    {
+      "caseId": "pt1-06-thumbnail-pipeline",
+      "expectedClassification": "ARCHITECTURE_DIAGRAM",
+      "originalStatus": "NOT_RUN",
+      "uploadAttempts": 0,
+      "analysisJobId": null,
+      "projectId": null,
+      "acceptedToTerminalObservedMs": null,
+      "censoredObservationMs": null,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "NOT_OBSERVED"
+    },
+    {
+      "caseId": "pt1-07-unresolved-design",
+      "expectedClassification": "AMBIGUOUS",
+      "originalStatus": "NOT_RUN",
+      "uploadAttempts": 0,
+      "analysisJobId": null,
+      "projectId": null,
+      "acceptedToTerminalObservedMs": null,
+      "censoredObservationMs": null,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "NOT_OBSERVED"
+    },
+    {
+      "caseId": "pt1-08-partial-export",
+      "expectedClassification": "AMBIGUOUS",
+      "originalStatus": "NOT_RUN",
+      "uploadAttempts": 0,
+      "analysisJobId": null,
+      "projectId": null,
+      "acceptedToTerminalObservedMs": null,
+      "censoredObservationMs": null,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "NOT_OBSERVED"
+    },
+    {
+      "caseId": "pt1-09-sprint-board",
+      "expectedClassification": "NON_ARCHITECTURE_IMAGE",
+      "originalStatus": "NOT_RUN",
+      "uploadAttempts": 0,
+      "analysisJobId": null,
+      "projectId": null,
+      "acceptedToTerminalObservedMs": null,
+      "censoredObservationMs": null,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "NOT_OBSERVED"
+    },
+    {
+      "caseId": "pt1-10-workshop-table",
+      "expectedClassification": "NON_ARCHITECTURE_IMAGE",
+      "originalStatus": "NOT_RUN",
+      "uploadAttempts": 0,
+      "analysisJobId": null,
+      "projectId": null,
+      "acceptedToTerminalObservedMs": null,
+      "censoredObservationMs": null,
+      "newRecoveryObservation": "NOT_RUN",
+      "semanticAssessment": "NOT_OBSERVED"
+    }
+  ],
+  "unchangedTestsNotRepeated": true,
+  "actualArchivedHistoryRejectionReproduced": true,
+  "hypotheticalSubsequentDispatchRejected": true,
+  "repositoryWrites": false,
+  "pt2ResultAccepted": false,
+  "pt3Authorized": false,
+  "furtherDispatchAuthorized": false,
+  "case01TerraformSha256": "962ea2b714bee2981b0a3993046dc5a65eeefb6fd05d29f4e7026f6665e16971",
+  "case01StaticAccessAuthority": {
+    "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html",
+    "readOnlyHtmlSha256": "0247062fae316bf52d7f434bdc1e8d3ad0245459a225c286f1f0a94ec7df19ea"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "outcome": "INCOMPLETE_FAILURE_EVIDENCE_PRESERVED_NOT_ACCEPTED",
+  "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+  "browserJourneyAttempts": 1,
+  "uploadEvidence": "NOT_RECORDED; owner read-only inventory after failure was empty",
+  "readonlyRecoveryInventory": {
+    "status": 200,
+    "body": []
+  },
+  "steps": {
+    "authentication": "INCOMPLETE_WITH_USER_CREATION_ERROR",
+    "one_upload": "NOT_RUN",
+    "pending_navigation_reload": "NOT_RUN",
+    "terminal_draft": "NOT_RUN",
+    "other_identity_denial": "NOT_RUN"
+  },
+  "failure": {
+    "driverCleanup": "Playwright event loop closed during finally; masked the original assertion and prevented structured evidence serialization",
+    "backendObservation": "Concurrent first-user requests collided on uk_users_external_identity; recovery must not change backend authentication or claim this race is repaired"
+  },
+  "modelUnderTestRunCount": 0,
+  "liveCloudActionCount": 0,
+  "temporaryMaterialRemoved": true,
+  "limitations": "Browser HTTP events/identity transport events were lost; no exact original driver assertion or browser screenshots are claimed. Only surviving backend log, driver traceback and read-only inventory are authoritative."
+}

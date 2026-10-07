@@ -1,7 +1,9 @@
 # PT-5 — access safety and authentication boundary
 
-Status: repository audit and bounded route correction; independent acceptance and USER merge
-pending. Execution base `0c4fa0e9616881e281aa027a18a9d741ff614699` was read once and is preserved
+Status: COMPLETE after [independent review 6029459989](https://github.com/siamese-lang/terraformers-platform/pull/249#issuecomment-6029459989)
+accepted head `bc13af0cb889b803a8d83352ef869896c97348f8` and USER merged PR #249 as
+`37e006be4d5995019704ea8a4009e1a59da039b2` at `2026-10-07T02:16:09Z`.
+Execution base `0c4fa0e9616881e281aa027a18a9d741ff614699` was read once and is preserved
 in the [Work Package](../../.agents/work-packages/product-trust-pt-5-access-safety-v1.yml).
 No live API/model/GCP action, deployment, IdP selection or IAM grant is performed.
 
@@ -145,5 +147,6 @@ and repair counters are unchanged. Model calls and live cloud actions in PT-5 ar
 
 The bounded improvement is that an unlisted JWT-mode handler cannot inherit anonymous access;
 existing application ownership/sharing policy continues to decide returned data. CI is supporting
-evidence only. Stop for independent original-criteria review and explicit USER merge. PT-6 is
-blocked until both are fulfilled; this PR neither self-accepts nor grants new live/security authority.
+evidence only. Independent original-criteria review and explicit USER merge were fulfilled as
+recorded above; this accepted PT-5 scope grants no new live/security authority. PT-6 has its own
+browser acceptance and human boundaries, recorded in the substantive continuation PR.

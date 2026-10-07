@@ -1,0 +1,29 @@
+{
+  "procedure": "docs/evaluation/product-trust-pt-6-browser-protocol.md",
+  "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+  "datasetIdentity": "04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014",
+  "input": "evaluation/terraformers-realistic-v1/fixtures/pt1-06-thumbnail-pipeline.png",
+  "inputSha256": "b41f87b2f8afa2fb60496b8a68289d804748a6d881d8d46cba2df13241b6578c",
+  "modelUnderTestRunCount": 0,
+  "liveCloudActionCount": 0,
+  "automaticRetries": 0,
+  "steps": {
+    "authentication": "NOT_RUN",
+    "one_upload": "NOT_RUN",
+    "pending_navigation_reload": "NOT_RUN",
+    "terminal_draft": "NOT_RUN",
+    "other_identity_denial": "NOT_RUN"
+  },
+  "outcome": "FAIL_PRESERVED_NO_RETRY",
+  "timingScope": "LOCAL_STUB_INCLUDING_CONTROLLED_EXECUTOR_HOLD_NOT_PRODUCTION_LATENCY",
+  "failure": {
+    "step": "startup",
+    "type": "AssertionError",
+    "message": "Missing pinned local Terraform CLI/provider prerequisites; no upload is authorized"
+  },
+  "httpEvents": [],
+  "browserApiObservations": [],
+  "identityTransportEvents": [],
+  "blockedExternalHosts": [],
+  "jwksFetchCount": 0
+}

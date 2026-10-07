@@ -1,0 +1,60 @@
+{
+  "status": "PARTIAL_DETERMINISTIC_EVIDENCE_NOT_PT6_ACCEPTANCE",
+  "executionBaseSha": "37e006be4d5995019704ea8a4009e1a59da039b2",
+  "workPackage": "product-trust-pt-6-browser-journey-v1",
+  "independentAcceptance": "PENDING",
+  "humanGate": "BOUNDED_REPAIR_LIMIT_AND_BROWSER_MEASUREMENT_BLOCKER",
+  "commands": {
+    "backend": "mvn -o -DskipTests package",
+    "frontend": "CI=true REACT_APP_AWS_REGION=ap-northeast-2 REACT_APP_COGNITO_USER_POOL_ID=ap-northeast-2_portableFixture REACT_APP_COGNITO_USER_POOL_CLIENT_ID=portable-runtime-client REACT_APP_API_BASE_URL= npm run build",
+    "sharedHelper": "python3 -m unittest scripts.evaluation.test_pt2_realistic_baseline.SharedJwksFixtureTest -v",
+    "syntax": [
+      "bash -n scripts/smoke/ephemeral-jwks-fixture.sh",
+      "python3 -m py_compile scripts/checks/product-trust-browser-journey.py"
+    ],
+    "diff": "git diff --check"
+  },
+  "backendPackage": "PASS_TESTS_INTENTIONALLY_SKIPPED",
+  "frontendBuild": "PASS",
+  "sharedHelperTests": 7,
+  "sharedHelperFailures": 0,
+  "syntax": "PASS",
+  "browserJourney": {
+    "authentication": "PASS",
+    "one_upload": "PASS",
+    "pending_navigation_reload": "PASS",
+    "terminal_draft": "FAIL",
+    "other_identity_denial": "NOT_RUN"
+  },
+  "acceptedLocalStubJobs": 1,
+  "acceptedLocalStubTerminal": "FAILED",
+  "acceptedToTerminalMs": 1582,
+  "additionalJourneyRun": false,
+  "knownMissingPrerequisiteRefusal": "PASS_EXPECTED_FAILURE_NO_BROWSER_SERVER_OR_UPLOAD",
+  "frozenFilesVerified": 26,
+  "programContractAndEarlierPhaseStatePreserved": "PASS",
+  "scopeAudit": "PASS",
+  "durableStateAudit": "PASS",
+  "evidenceHashesAndSecretAudit": "PASS",
+  "diffCheck": "PASS",
+  "autoRepairsUsed": 1,
+  "modelUnderTestRunCount": 0,
+  "liveCloudActions": 0,
+  "initialCommandInvocationIssue": "Helper syntax/unittest first invoked from backend cwd produced missing-file/import errors (0 tests); corrected cwd before 7 real helper tests. Not a product failure.",
+  "fullBackendSuiteRepeated": false,
+  "acceptedPriorFullSuite": {
+    "phase": "PT-5",
+    "tests": 552,
+    "failures": 0,
+    "errors": 0,
+    "externalMariaDbSkipped": 2,
+    "reviewCommentId": 6029459989
+  },
+  "setupPortabilityCorrection": "Use Python stdlib for RSA modulus byte conversion because xxd absent; preserved initial bootstrap failure.",
+  "boundedDriverCorrection": "Finish actual UI profile 204 before supplemental controls; preserve Playwright lifecycle through cleanup; all unsuccessful observations retained.",
+  "residuals": [
+    "Local Terraform CLI/provider absent at production absolute paths; accepted job preserved as FAILED.",
+    "Earlier first-user persistence collision not repaired; exact masked assertion and browser events unavailable.",
+    "Terminal draft/trust/HCL and other-identity browser acceptance incomplete."
+  ]
+}

@@ -4,17 +4,17 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": "PT-6R1",
-  "lastCompletedPhase": "PT-6",
-  "activeWorkPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+  "activePhase": null,
+  "lastCompletedPhase": "PT-6R1",
+  "activeWorkPackage": "product-trust-v4-evidence-validity-amendment-v1",
   "activePullRequest": null,
-  "humanGate": "MERGE_CHECKPOINT",
+  "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",
     "teardownAuthorized": false
   },
-  "evidencePolicy": "REALISTIC_PRODUCT_EVIDENCE_OVERRIDES_BROADER_HISTORICAL_CLAIMS",
+  "evidencePolicy": "SYNTHETIC_OR_LOCAL_ONLY_EVIDENCE_CANNOT_CLOSE_FINAL_PRODUCT_TRUST",
   "notes": [
     "A7-8 is deferred.",
     "Do not teardown before the Product Trust program reaches its reviewed destructive checkpoint.",
@@ -34,13 +34,15 @@
     "Historical preparation/gate notes above are superseded only where independently reviewed evidence and USER decisions permit. PR #250 review 6030408825 accepted head 0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a and USER merged it as f344552fe58db26438a4f0b2c9abb1806e6a99d9. PT-6 is COMPLETE for deterministic browser integration only; original failed evidence, base and counters remain preserved. USER-approved v3 residual closure is prepared in one repository-only amendment PR; no PT-6R1/later phase or live/model action is executed now, no future base is predicted, and GitHub alone owns transient PR lifecycle.",
     "PR #251 review 6031040940 independently accepted head 360fc827e2b6146f0961442b53e3eb172a8aa4e8; USER merged it as 00872520036da38fd1809a9abf61f56d2344fcb5. Explicit USER approves exactly PT-6R1, activated on that once-read main in this substantive PR. Real MariaDB reproduction must precede correction selection. No PT-6R2 or browser/model/cloud/security/teardown activity, and no transient active PR/branch lifecycle registration.",
     "PT-6R1 first measurement failed only in Mockito instrumentation and is preserved. One test-only autonomous repair stays consumed. USER explicitly authorized one additional before execution as human corrective iteration 1; it reproduced immediate IDENTITY save uniqueness failure and poisoned rollback-only session re-read. One initial bounded transaction correction and one same-condition local after-state pass, with identity/PT-5/full backend validation. No additional measurement, acceptance, merge, PT-6R2 or live authority is inferred.",
-    "USER-authorized governance-only correction for review 6031593870 preserves accepted PT-6R1 code, all evidence, the bound execution base and repair/correction counters. PT-6R1 acceptance and USER merge lead to HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT, not automatic PT-6R2 activation. A subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged evidence-validity amendment must release the pause; its content/version/base are not selected here."
+    "USER-authorized governance-only correction for review 6031593870 preserves accepted PT-6R1 code, all evidence, the bound execution base and repair/correction counters. PT-6R1 acceptance and USER merge lead to HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT, not automatic PT-6R2 activation. A subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged evidence-validity amendment must release the pause; its content/version/base are not selected here.",
+    "PR #252 latest independent review 6031698220 accepted tree c9792b42b4a6a9b8529a904d240c5bccf5d08d10 at head 2b63e79; merge-policy-only empty head 25336fa preserves that tree. USER merged as 38f995b. PT-6R1 is COMPLETE without new database/behavioral measurements or counter changes. USER authorizes this substantive v4 evidence-validity preparation only. Historical reference-derived truth remains frozen but controlled regression; five exact official candidates require new human freeze. PT-6R2 stays unauthorized until amendment review, explicit USER approval, independent acceptance and USER merge. No future base, live/model/cloud action or self-acceptance is inferred.",
+    "USER-authorized bounded correction for PR #253 review 6032307527 separates all five cases into image_observable_truth, documentation_context and conditional draft_technical_closure. Official image/source provenance is unchanged; exact pre-freeze candidate identity fad3627 and both pinned files are archived. New revision 2 remains unapproved, unexecuted and model count 0. V4 autonomous repair remains 1; human corrective iteration 1 is recorded separately. Base, accepted structural DAG, PT-6R1 completion and historical evidence/counters remain unchanged; no live/model/PT-6R2 authority."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
   "nextEligiblePhase": null,
-  "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
-  "resultBeforeHumanGate": "PT6R1_LOCAL_DETERMINISTIC_PASS_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE",
+  "executionBaseSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+  "resultBeforeHumanGate": "V4_EVIDENCE_VALIDITY_CANDIDATE_PREPARED_NOT_ACCEPTED",
   "autoRepairsUsed": 1,
   "acceptanceBeforeHumanFreeze": "INDEPENDENT_ACCEPTANCE_PASS",
   "activePullRequestBranch": null,
@@ -60,10 +62,11 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "Independent review of the governance correction and explicit USER merge are required; PT-6R1 engineering acceptance is PASS under review 6031593870.",
-    "After PT-6R1 independent acceptance and USER merge, HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT; PT-6R2 stays execution-unauthorized until a subsequent evidence-validity amendment is reviewed, explicitly USER-approved, independently accepted and USER-merged."
+    "Candidate revision 2 image-only truth requires independent re-review and explicit USER freeze. Documentation is disambiguation/context only; technical closure is conditional on generated choices, not unseen page-only image labels.",
+    "The substantive v4 amendment requires independent review/acceptance, explicit USER approval and USER merge; PT-6R2 remains unstarted, execution-unauthorized and without a bound future base.",
+    "Final product trust remains INCOMPLETE until accepted deployed GCP/exact v4/real-model/external official full-chain evidence, integrated equivalence and gated closure."
   ],
-  "evidenceDocument": "docs/evaluation/product-trust-pt-6r1-first-user-identity-concurrency.md",
+  "evidenceDocument": "docs/evaluation/product-trust-v4-evidence-validity-audit.md",
   "validation": {
     "initialFocused": {
       "tests": 10,
@@ -133,10 +136,14 @@
     "programV3Amendment": {
       "evidence": "docs/evidence/product-trust-v3-amendment/validation.json",
       "scope": "STRUCTURAL_METADATA_ONLY"
+    },
+    "programV4Amendment": {
+      "evidence": "docs/evidence/product-trust-v4-amendment/validation.json",
+      "scope": "REPOSITORY_ONLY_METADATA_AND_EXTERNAL_PUBLIC_HASH_INSPECTION"
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+  "lastObservedMainSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -246,21 +253,24 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6031593870,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031593870",
+    "commentId": 6032307527,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032307527",
     "decision": "CHANGES_REQUIRED",
-    "reviewedHeadSha": "9e668a5cd4bce17e2808b82b2521cc58c6d08894",
-    "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
-    "workPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
-    "implementationAcceptance": "PASS",
-    "overallPrAcceptance": "BLOCKED_BY_DURABLE_NEXT_PHASE_AUTHORITY",
-    "mergeRecommendation": "HOLD",
+    "reviewedHeadSha": "af6aefc6391c62146654cfc90f53b472332078fc",
+    "executionBaseSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+    "workPackage": "product-trust-v4-evidence-validity-amendment-v1",
+    "structuralAmendmentAcceptance": "PASS_WITH_ONE_TRUTH_CONTRACT_BLOCKER",
+    "candidateProvenanceAcceptance": "PASS",
+    "candidateTruthFreezeAcceptance": "BLOCKED",
+    "soleBlocker": "PAGE_ONLY_DOCUMENTATION_FACTS_MIXED_INTO_IMAGE_ONLY_SEMANTIC_TRUTH",
+    "correctionDisposition": "IMPLEMENTED_PENDING_INDEPENDENT_RE_REVIEW",
+    "pt6r2AuthorizedByReview": false,
     "reviewGrantsImplementationOrMergeAuthority": false
   },
-  "lastCompletedWorkPackage": "product-trust-v3-residual-closure-amendment-v1",
-  "lastCompletedPullRequest": 251,
+  "lastCompletedWorkPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+  "lastCompletedPullRequest": 252,
   "nextPhase": null,
-  "executionBaseWorkPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+  "executionBaseWorkPackage": "product-trust-v4-evidence-validity-amendment-v1",
   "truthFreezeApproval": {
     "marker": "[HUMAN_GATE_APPROVAL:v1]",
     "commentId": 6015857324,
@@ -373,18 +383,38 @@
       "historicalFailedEvidencePreserved": true,
       "additionalBrowserJourneyAuthorized": false,
       "firstUserConcurrencyClosed": false
+    },
+    "PT-6R1": {
+      "status": "COMPLETE",
+      "workPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+      "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+      "reviewedHeadSha": "2b63e79d91548e5e87b48ad9c1bf353467349d12",
+      "reviewedTreeSha": "c9792b42b4a6a9b8529a904d240c5bccf5d08d10",
+      "sourceHeadSha": "25336fafa4bd1d53d9df897629198f6480b96fd1",
+      "mergedHeadTreeEqualsReviewedTree": true,
+      "independentAcceptance": "PASS",
+      "independentReviewCommentId": 6031698220,
+      "engineeringReviewCommentId": 6031593870,
+      "mergedPullRequest": 252,
+      "mergedMainSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+      "mergedAt": "2026-10-07T05:52:50Z",
+      "completionBoundary": "REAL_MARIADB_TRANSACTION_CONVERGENCE_ONLY_NO_AI_OR_LIVE_GENERALIZATION",
+      "mergePolicyOnlyEmptyCommit": "25336fafa4bd1d53d9df897629198f6480b96fd1",
+      "CIIsNewBehavioralMeasurement": false,
+      "rawEvidenceAndCountersPreserved": true,
+      "furtherDatabaseExecutionAuthorized": false
     }
   },
   "blockedNextPhase": {
     "phase": "PT-6R2",
-    "status": "UNAUTHORIZED_PENDING_PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
+    "status": "UNAUTHORIZED_PENDING_V4_AMENDMENT_ACCEPTANCE_AND_USER_MERGE",
     "executionAuthorized": false,
     "executionStarted": false,
     "workPackage": null,
     "executionBaseSha": null,
     "modelUnderTestRunCount": 0,
     "liveCloudActions": 0,
-    "humanGate": "PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
+    "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
     "activationRequires": [
       "PT6R1_independent_acceptance_and_USER_merge",
       "evidence_validity_amendment_reviewed",
@@ -570,6 +600,32 @@
       "implementationAcceptance": "PASS",
       "overallPrAcceptance": "BLOCKED_BY_DURABLE_NEXT_PHASE_AUTHORITY",
       "mergeRecommendation": "HOLD",
+      "reviewGrantsImplementationOrMergeAuthority": false
+    },
+    {
+      "commentId": 6031593870,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031593870",
+      "decision": "CHANGES_REQUIRED",
+      "reviewedHeadSha": "9e668a5cd4bce17e2808b82b2521cc58c6d08894",
+      "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+      "workPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+      "implementationAcceptance": "PASS",
+      "overallPrAcceptance": "BLOCKED_BY_DURABLE_NEXT_PHASE_AUTHORITY",
+      "mergeRecommendation": "HOLD",
+      "reviewGrantsImplementationOrMergeAuthority": false
+    },
+    {
+      "commentId": 6031698220,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031698220",
+      "decision": "ACCEPTED",
+      "reviewedHeadSha": "2b63e79d91548e5e87b48ad9c1bf353467349d12",
+      "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+      "workPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+      "implementationAcceptance": "PASS",
+      "governanceCorrectionAcceptance": "PASS",
+      "overallPrAcceptance": "PASS",
+      "postMergeGate": "PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
+      "pt6r2AuthorizedByReview": false,
       "reviewGrantsImplementationOrMergeAuthority": false
     }
   ],
@@ -901,7 +957,7 @@
         "acceptedJobTerminalStatus": "SUCCEEDED",
         "acceptedToTerminalMs": 6642,
         "qualitySnapshot": null,
-        "qualityUi": "평가 기록 없음; editable/reference draft and conditional limits visible",
+        "qualityUi": "\ud3c9\uac00 \uae30\ub85d \uc5c6\uc74c; editable/reference draft and conditional limits visible",
         "realValidator": "TerraformCliValidator",
         "realCommandExecutor": "ProcessCommandExecutor",
         "terraformVersion": "1.8.5",
@@ -979,7 +1035,7 @@
       "completionBoundary": "DETERMINISTIC_BROWSER_INTEGRATION_ONLY_NO_PRODUCTION_IDP_MODEL_QUALITY_OR_GENERALIZATION"
     },
     "PT-6R1": {
-      "status": "LOCAL_DETERMINISTIC_PASS_PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE",
+      "status": "COMPLETE",
       "workPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
       "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
       "activatedAt": "2026-10-07T04:55:13Z",
@@ -994,8 +1050,8 @@
       "modelUnderTestRunCount": 0,
       "browserExecutions": 0,
       "liveCloudActions": 0,
-      "independentAcceptance": "PENDING",
-      "mergeAuthorized": false,
+      "independentAcceptance": "PASS",
+      "mergeAuthorized": true,
       "validBeforeStateMeasurements": 1,
       "productionCodeChanged": true,
       "measurementCorrection": "TEST_ONLY_REAL_REPOSITORY_DECORATOR_RUNTIME_VALIDATED",
@@ -1006,7 +1062,7 @@
       "additionalBeforeStateExecutionLimit": 1,
       "additionalBeforeStateExecutionsUsed": 1,
       "humanCorrectiveIteration1": {
-        "authority": "USER explicit reply: 추가 before-state 1회 승인",
+        "authority": "USER explicit reply: \ucd94\uac00 before-state 1\ud68c \uc2b9\uc778",
         "scope": "One additional real-MariaDB before-state only; conditional minimum product correction and one after-state remain under original authority.",
         "maximumAdditionalBeforeExecutions": 1,
         "additionalBeforeExecutionsUsed": 1,
@@ -1051,7 +1107,29 @@
       "measurementFailures": 1,
       "postMergeHumanGate": "PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
       "engineeringAcceptance": "PASS",
-      "engineeringReviewCommentId": 6031593870
+      "engineeringReviewCommentId": 6031593870,
+      "independentReviewCommentId": 6031698220,
+      "mergeAuthority": "USER_ACTUAL_MERGE_OF_PR_252",
+      "completion": {
+        "status": "COMPLETE",
+        "workPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+        "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+        "reviewedHeadSha": "2b63e79d91548e5e87b48ad9c1bf353467349d12",
+        "reviewedTreeSha": "c9792b42b4a6a9b8529a904d240c5bccf5d08d10",
+        "sourceHeadSha": "25336fafa4bd1d53d9df897629198f6480b96fd1",
+        "mergedHeadTreeEqualsReviewedTree": true,
+        "independentAcceptance": "PASS",
+        "independentReviewCommentId": 6031698220,
+        "engineeringReviewCommentId": 6031593870,
+        "mergedPullRequest": 252,
+        "mergedMainSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+        "mergedAt": "2026-10-07T05:52:50Z",
+        "completionBoundary": "REAL_MARIADB_TRANSACTION_CONVERGENCE_ONLY_NO_AI_OR_LIVE_GENERALIZATION",
+        "mergePolicyOnlyEmptyCommit": "25336fafa4bd1d53d9df897629198f6480b96fd1",
+        "CIIsNewBehavioralMeasurement": false,
+        "rawEvidenceAndCountersPreserved": true,
+        "furtherDatabaseExecutionAuthorized": false
+      }
     }
   },
   "goalContinuation": {
@@ -1061,7 +1139,7 @@
     "transientPrLifecycleAuthority": "GitHub only",
     "humanGatesPreserved": true,
     "repetitiveContinuePromptsRequired": false,
-    "pausedAtHumanGate": "PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
+    "pausedAtHumanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
     "resumeRequires": [
       "evidence_validity_amendment_reviewed",
       "evidence_validity_amendment_explicitly_USER_approved",
@@ -1125,6 +1203,60 @@
       "mergedMainSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
       "mergedAt": "2026-10-07T04:46:24Z",
       "mergeAuthority": "USER_ACTUAL_MERGE_OF_PR_251"
+    },
+    {
+      "id": "V4_EVIDENCE_VALIDITY",
+      "fromVersion": 3,
+      "toVersion": 4,
+      "preparationAuthority": "USER explicit repository-only amendment request",
+      "exactCandidateTruthApproved": false,
+      "independentAcceptance": "PENDING",
+      "USERAmendmentApproval": "PENDING_EXACT_COMPLETED_CANDIDATE_REVIEW",
+      "mergeAuthorized": false,
+      "status": "HUMAN_REQUIRED",
+      "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW",
+      "executionBaseSha": "38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d",
+      "workPackage": "product-trust-v4-evidence-validity-amendment-v1",
+      "mainReadsAtActivation": 1,
+      "remainingMandatoryOrder": [
+        "PT-6R2",
+        "PT-7",
+        "PT-8A",
+        "PT-8B",
+        "PT-9"
+      ],
+      "nextPhaseExecutionBaseSha": null,
+      "pt6r2ExecutionAuthorized": false,
+      "autoRepairsUsed": 1,
+      "humanAuthorizedCorrectiveIterations": 1,
+      "historicalRepairCountersReset": false,
+      "productionCodeChanged": false,
+      "modelCalls": 0,
+      "browserExecutions": 0,
+      "databaseExecutions": 0,
+      "liveCloudActions": 0,
+      "OpenSearchOperations": 0,
+      "workflowDispatches": 0,
+      "destructiveActions": 0,
+      "validationEvidence": "docs/evidence/product-trust-v4-amendment/validation.json",
+      "repairEvidence": "One pre-commit staged diff-check EOF whitespace correction only; candidate identity recomputed, image bytes and semantic truth unchanged.",
+      "humanCorrectiveIteration1": {
+        "authority": "USER explicit review 6032307527 correction request",
+        "reviewCommentId": 6032307527,
+        "reviewedHeadSha": "af6aefc6391c62146654cfc90f53b472332078fc",
+        "scope": "Sole image-only semantic authority blocker; preserve all five official images/provenance, accepted structural amendment and bound base.",
+        "supersededCandidateIdentitySha256": "fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10",
+        "newCandidateIdentitySha256": "3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757",
+        "candidateRevision": 2,
+        "autonomousRepairCounterReset": false,
+        "autoRepairsUsedPreserved": 1,
+        "modelCalls": 0,
+        "liveCloudActions": 0,
+        "OpenSearchOperations": 0,
+        "PT6R2ExecutionAuthorized": false,
+        "acceptance": "PENDING_INDEPENDENT_RE_REVIEW_AND_USER_TRUTH_FREEZE",
+        "validationEvidence": "docs/evidence/product-trust-v4-amendment/validation.json#structuredReviewCorrection"
+      }
     }
   ],
   "mandatoryPhaseInputs": {
@@ -1202,9 +1334,8 @@
     ]
   },
   "lastDisposedPhase": "PT-2",
-  "programVersion": 3,
+  "programVersion": 4,
   "remainingMandatoryOrder": [
-    "PT-6R1",
     "PT-6R2",
     "PT-7",
     "PT-8A",
@@ -1233,5 +1364,66 @@
       "status": "BOUNDED_REFERENCE_DERIVED_DATASET_NON_BLOCKING_FOR_PORTFOLIO_TARGET",
       "claimLimit": "Human-reviewed reference-derived recreations are not a statistical sample of all real user exports; no universal diagram generalization."
     }
-  ]
+  ],
+  "programContractStatus": "PROPOSED_PENDING_TRUTH_FREEZE_INDEPENDENT_REVIEW_AND_USER_MERGE",
+  "historicalDatasetAuthority": {
+    "directory": "evaluation/terraformers-realistic-v1",
+    "classification": "CONTROLLED_REFERENCE_DERIVED_REGRESSION_SET",
+    "historicalFreezePreserved": true,
+    "soleFinalExternalAcceptanceAuthority": false
+  },
+  "officialAcceptanceCandidate": {
+    "directory": "evaluation/terraformers-aws-official-v1",
+    "candidateRevision": 2,
+    "identityPath": "evaluation/terraformers-aws-official-v1/candidate-identity.json",
+    "manifestPath": "evaluation/terraformers-aws-official-v1/candidate-manifest.json",
+    "truthReviewPath": "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+    "identitySha256": "3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757",
+    "status": "CANDIDATE_NOT_APPROVED",
+    "truthApprovedBy": null,
+    "truthFrozenAt": null,
+    "freezeApprovalEvidence": null,
+    "humanGate": "AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE",
+    "modelUnderTestRunCount": 0,
+    "externalImageBytesCommitted": false,
+    "executionAuthorized": false,
+    "supersededUnpublishedDraftIdentitySha256": "9a57d8fb1f42da1ffa66d4642e57fa22c52bfb7605d4dd17d5633e8d983e15e0",
+    "truthFrozen": false,
+    "supersededPreFreezeCandidate": {
+      "candidateRevision": 1,
+      "identitySha256": "fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10",
+      "identityPath": "evaluation/terraformers-aws-official-v1/superseded/candidate-01-identity.json",
+      "archivedFiles": [
+        {
+          "originalPath": "evaluation/terraformers-aws-official-v1/candidate-manifest.json",
+          "archivedPath": "evaluation/terraformers-aws-official-v1/superseded/candidate-01-manifest.json",
+          "sha256": "e59d5ca412e4c1b9d175573935e38da98602d5ac224da466ee5f36294fee8499"
+        },
+        {
+          "originalPath": "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+          "archivedPath": "evaluation/terraformers-aws-official-v1/superseded/candidate-01-truth-review.md",
+          "sha256": "5c6aa2b449e934b4ad4b40b2624d5dfcabaeb0aed42572dd4ba1145486b54349"
+        }
+      ],
+      "truthWasFrozen": false,
+      "reason": "Independent review 6032307527: page-only details mixed into image-only semantic authority."
+    },
+    "truthAuthority": {
+      "image_observable_truth": "ONLY_MANDATORY_IMAGE_SEMANTIC_AUTHORITY",
+      "documentation_context": "DISAMBIGUATION_NO_UNSEEN_SEMANTIC_EXPANSION",
+      "draft_technical_closure": "CONDITIONAL_GENERATED_CHOICE_COHERENCE_REAL_CLI_PROVIDER_VALIDITY"
+    }
+  },
+  "finalEvidenceContract": {
+    "invariant": "SYNTHETIC_OR_LOCAL_ONLY_EVIDENCE_CANNOT_CLOSE_FINAL_PRODUCT_TRUST",
+    "principle": "REVIEWABLE_IAC_DRAFT",
+    "finalAcceptanceStatus": "NOT_EXECUTED_NOT_ACCEPTED",
+    "hierarchyAuthority": ".agents/programs/product-trust-v1.yml",
+    "requiredLiveChain": "OFFICIAL_IMAGE_REVIEWED_SOURCE_IMMUTABLE_IMAGE_DEPLOYED_GCP_EXACT_V4_REAL_RETRIEVAL_MODEL_AUTH_PERSISTED_JOB_RESULT_QUALITY_REAL_CLI_POST_INFERENCE_TRUTH",
+    "beforeCasesSourceRuntimeCorpusRetrievalReadinessRequired": true,
+    "retainedRuntimeReusePreferred": true,
+    "thisAmendmentAuthorizesCloud": false,
+    "falseTrustedSuccessRequired": 0
+  },
+  "legacyRootAcceptanceFieldsScope": "acceptanceBeforeHumanFreeze and truthFreezeApproval describe historical PT-1 only; current v4 candidate/amendment authority is officialAcceptanceCandidate and programAmendments[V4_EVIDENCE_VALIDITY]. Root repair counters are preserved; per-phase/amendment counters are authoritative for their own executions."
 }

@@ -2,49 +2,44 @@
 
 ## Status
 
-**PROGRAM v3 USER-MERGED / PT-6 COMPLETE / PT-6R1 ENGINEERING PASS /
-HUMAN_REQUIRED: MERGE_CHECKPOINT (governance correction review and USER merge pending)**
+**Proposed Product Trust v4 / PT-6R1 COMPLETE /
+HUMAN_REQUIRED: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW**
 
-[Review 6031040940](https://github.com/siamese-lang/terraformers-platform/pull/251#issuecomment-6031040940)
-accepted v3 amendment head `360fc827e2b6146f0961442b53e3eb172a8aa4e8`; USER merged PR #251 as
-`00872520036da38fd1809a9abf61f56d2344fcb5` at `2026-10-07T04:46:24Z`. Explicit USER approval
-activates exactly [PT-6R1](../../../.agents/work-packages/product-trust-pt-6r1-first-user-identity-concurrency-v1.yml)
-on that once-bound base. No rebase, refresh, rebind or separate activation/state-sync PR.
+This substantive repository-only amendment is once-bound to
+`38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d`, the actual USER merge of PR #252 at
+`2026-10-07T05:52:50Z`. [Review 6031698220](https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031698220)
+accepted head `2b63e79d91548e5e87b48ad9c1bf353467349d12`, tree
+`c9792b42b4a6a9b8529a904d240c5bccf5d08d10`. Merged head `25336fafa4bd1d53d9df897629198f6480b96fd1`
+adds exactly one empty merge-policy CI commit, with the same tree. It is not new before/after
+behavioral evidence. PT-6R1's original `00872520036da38fd1809a9abf61f56d2344fcb5` base, invalid
+instrumentation attempt, one USER-authorized valid additional before-state, one after-state and all
+repair/correction counters remain unchanged. Completion reconciliation is in this amendment, not a
+separate state-sync PR. No database/browser/production validation is repeated.
 
-[Current evidence](../../evaluation/product-trust-pt-6r1-first-user-identity-concurrency.md) preserves
-the first instrumentation failure and separately records USER authorization for exactly one extra
-before execution. Actual MariaDB reproduced an immediate IDENTITY save uniqueness failure followed
-by a recovery query on a poisoned rollback-only session. The narrow correction isolates INSERT and
-recovery in existing Spring transactions; the original one same-condition after execution passes:
-both callers resolve one USER/ACTIVE durable account. Email ownership, distinct users and display
-semantics pass real-database controls; PT-5 access and full offline backend regressions pass.
-No additional local database measurement, independent acceptance or merge is authorized. Autonomous
-instrumentation repair stays 1; human corrective iteration is separately 1. Production INSERT may
-commit independently of a later enclosing operation rollback; that bounded tradeoff is documented.
+The [v4 audit](../../evaluation/product-trust-v4-evidence-validity-audit.md) revises evidence design,
+not implementation. [AWS official candidate revision 2](../../evaluation/product-trust-aws-official-truth-candidate.md)
+contains five exact external AWS diagrams with source/image hashes and proposed human truth.
+**Truth is NOT APPROVED**; the USER has approved preparation, not the completed candidate identity.
+USER-authorized correction for review 6032307527 preserves the five exact images/provenance and
+archives pre-freeze identity `fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10`.
+Only image_observable_truth is mandatory semantic authority; documentation_context disambiguates
+without adding page-only requirements, and draft_technical_closure applies only to actual generated
+choices/coherence. Visible topology/cardinality is preserved.
+Stop at `AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE` and independent v4 review/USER merge.
+No self-freeze or self-merge. PT-6R2 remains execution-unauthorized with no Work Package/base.
 
-PT-6 remains independently accepted deterministic browser integration from review 6030408825,
-PR #250 accepted head `0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a`, USER merge
-`f344552fe58db26438a4f0b2c9abb1806e6a99d9`. All failed observations, original base/counters and
-bounded no-production-IdP/model-quality/generalization claims are preserved. PT-3..PT-5 accepted
-production corrections remain limited to their deterministic evidence.
+Remaining order: **PT-6R2 -> PT-7 -> PT-8A -> PT-8B -> PT-9**. Only an independently accepted,
+explicitly USER-approved and USER-merged amendment releases the current pause; all later
+live/model/cost/product/security/destructive gates survive. GitHub owns transient PR lifecycle.
+The existing retained representative GCP runtime is preferred where compatible; no inventory or
+cloud action is authorized by this amendment. A7-8 stays deferred.
 
-PT-2 remains permanently `PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION`:
-03–10 NOT_RUN, null aggregate rates, original 424846 ms censor and zero-product recovery failures.
-No reopening/recovery/rerun/dispatch or artifact reinterpretation. PT-1 revision 3 frozen identity
-`04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014` remains unchanged.
-
-[Review 6031593870](https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031593870)
-accepts PT-6R1 engineering at `9e668a5cd4bce17e2808b82b2521cc58c6d08894`; the governance correction
-addresses its stale next-phase authority blocker. After PT-6R1 independent acceptance and USER merge,
-stop at **HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT**. PT-6R2 remains
-execution-unauthorized until a subsequent evidence-validity amendment is reviewed, explicitly
-USER-approved, independently accepted and USER-merged. Its detailed contents are not selected here.
-
-Recorded order remains **PT-6R1 -> PT-6R2 -> PT-7 -> PT-8A -> PT-8B -> PT-9**, with automatic progression
-paused at the reassessment gate. No PT-6R2 activation, new Program version or future base prediction.
-The [cross-phase audit](../../evaluation/product-trust-v3-cross-phase-integrity-audit.md)
-and all portfolio/live/security/merge/destructive gates remain in force. Runtime stays retained,
-A7-8 remains deferred and GitHub alone holds transient PR/branch lifecycle. CI does not grant acceptance.
+Historical `terraformers-realistic-v1`, revision 3, identity
+`04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`, remains frozen for its
+exact bytes as **CONTROLLED_REFERENCE_DERIVED_REGRESSION_SET**, not sole final external-input
+acceptance. PT-2 remains final INCOMPLETE: 03–10 NOT_RUN, null aggregate rates, original 424846 ms
+censor, and both recovery runs zero-product-observation measurement failures. No reopening.
+PT-3..PT-6 accepted bounded corrections and the historical v3 audit remain intact.
 
 ## Why this reassessment exists
 
@@ -70,30 +65,36 @@ decision.
 
 ## Evidence policy
 
-### Retain as direct mechanism evidence
+**SYNTHETIC_OR_LOCAL_ONLY_EVIDENCE_CANNOT_CLOSE_FINAL_PRODUCT_TRUST**.
 
-Retain unless new contradictory evidence appears:
+| Authority | Evidence | Permitted claim |
+| --- | --- | --- |
+| Controlled regression | Mockito/unit, H2/local fixtures, repository-authored architecture images, canonical/holdout synthetic sets, historical reference-derived PT-1 set, local browser/stub-provider journeys | Regression and integration under declared controls; never independently final AI/RAG trust. |
+| Mechanism | Real MariaDB concurrency, real Terraform CLI, provider schema/broad corpus measurements, real Dockerfile/CI image reproducibility, ownership/durability and WIF/source binding | That mechanism only; not image interpretation, semantic usability or deployed final AI/RAG acceptance. |
+| Final AI/RAG | External frozen AWS image -> reviewed source -> immutable real-Dockerfile image/digest -> deployed retained representative GCP -> exact broad-v4 OpenSearch -> real retrieval/configured model -> authenticated persisted AnalysisJob -> persisted result/quality -> real CLI draft validation -> post-inference frozen truth scoring | Independently accepted bounded five-official-positive sample/runtime claim only, with every link present. |
 
-- Case B durable AnalysisJob ownership, lease/fencing, bounded retry and cleanup accountability;
-- provider schema and broad-v4 corpus coverage measurements;
-- real Terraform CLI executable validation;
-- project owner/non-owner authorization semantics already demonstrated by deterministic/runtime tests;
-- WIF, immutable image digest and source-revision delivery evidence;
-- real provider latency observations and stage telemetry;
-- durable quality persistence and API representation.
+No unit/local evaluator/synthetic/repository image/browser-fixture PASS, green CI, or consistent docs
+can mark Product Trust or modernization complete. Final trust remains incomplete without the full
+independently accepted deployed external-input chain. Keep historical numbers, failures and
+censors; reclassify authority without rewriting evidence. Existing PT-1 ambiguous/non-architecture
+controls remain controlled regression only; do not invent new synthetic final controls.
 
-### Downgrade to controlled-regression evidence
+### Reviewable Terraform draft
 
-The following remain useful but may not support realistic-user claims by themselves:
+Formal principle: **REVIEWABLE_IAC_DRAFT**. Unknown account IDs, domains/zone/certificate/role ARNs,
+callbacks/federated IdP settings, secrets, existing networks and externally owned resources may be
+declared variables, coherent references/data boundaries or clearly editable placeholder/TODO inputs.
+An unavailable personalized value alone is not a failure; fabricated identifiers are not rewarded.
+This never excuses missing core service intent, wrong directed relations/material cardinality,
+unrelated architecture, missing required wiring/authorization, invalid provider arguments,
+undeclared references or invalid HCL. Equivalent valid grounded mechanisms are acceptable; one icon
+need not imply one newly created resource. A TODO must not erase a required relationship.
 
-- `terraformers-eval-v1` synthetic positive fixtures;
-- `terraformers-eval-holdout-v1` synthetic holdout fixtures;
-- canonical N=3 and holdout scores derived only from those fixtures;
-- generated-resource evidence coverage percentages measured only on those fixtures;
-- one positive A7-7 live request using the synthetic canonical fixture.
-
-Historical numbers are never changed to preserve a narrative. If realistic evidence contradicts
-them, the realistic evidence becomes authoritative for the broader product claim.
+Use real `backend/Dockerfile`-pinned Terraform **1.8.5** and AWS provider **5.100.0**: initialization
+and `terraform validate` must pass. No real AWS plan/apply/deployment is part of acceptance;
+validation alone proves neither semantic fidelity nor effective deployed IAM. Preserve the existing
+repair prompt's variable/reference behavior. Current prompt/evaluator gaps are audited for future
+bounded Work Packages, with no prompt/scorer changes here.
 
 ## Product-trust success criteria
 
@@ -227,13 +228,12 @@ behavior; do not expand it into broad cross-browser/UI testing.
 
 ### PT-6R1 — First-user identity concurrency closure
 
-Begin with deterministic reproduction/audit against **real MariaDB concurrency**. Inspect actual
-lookup/create/flush/commit/recovery semantics before selecting any implementation. If reproduced,
-correct the atomicity boundary with the smallest production change; do not preselect upsert versus
-conflict-and-reread. Concurrent first requests for one provider/subject must converge on exactly one
-durable user and the same identity, without 5xx/constraint leakage or privilege escalation. Distinct
-identities remain distinct and the full PT-5 authorization matrix stays intact. No browser/model/GCP
-work is required merely for this defect. Product/architecture/security decisions retain human gates.
+**COMPLETE** under review 6031698220 and USER-merged PR #252. The real MariaDB before-state
+established immediate IDENTITY save uniqueness failure and rollback-only poisoned recovery.
+Selected REQUIRES_NEW INSERT/recovery correction and one same-condition after-state are accepted.
+Distinct identities, email/display semantics and PT-5 access invariants remain intact. The first
+instrumentation failure and separately authorized additional before-state remain evidence, not
+retry-until-green. This amendment records completion only; no production change or remeasurement.
 
 ### PT-6R2 — Provider terminality / latency-budget closure
 
@@ -258,48 +258,64 @@ Dockerfile**, not a duplicate bespoke pin verifier. Inspect actual protected-mai
 checks and reconcile only demonstrated gaps; security/ruleset writes retain their human gate.
 No workflow breadth for appearance, no automatic GCP deployment on merge.
 
-Produce one concise handoff: **source SHA -> immutable image -> digest -> rollout -> evidence ->
-teardown**. Live/model/cost actions remain separately approved.
+Produce one concise handoff before PT-8A: **reviewed source -> real Dockerfile build -> immutable
+source-SHA image -> remote digest -> retained GCP rollout -> deployed revision/corpus evidence ->
+gated teardown**. Live/model/cost actions remain separately approved.
 
-### PT-8A — Final realistic AI/RAG trust acceptance
+### PT-8A — Final external official AI/RAG deployed acceptance
 
-This is **NEW final-system acceptance**, not PT-2 recovery. It is required because approved audit of
-broad-v4 run `37419983898` found substantial positive false-green/semantic failures; PR #237 changed
-production generated-resource closure and PR #238 aligned the evaluator with production orchestration.
-No complete final live AI/broad-v4 remeasurement established realistic acceptance after those
-corrections. Partial PT-2 does not close this gap.
+NEW final-system acceptance, never PT-2 recovery. Final truth must be USER-frozen on the exact
+[official candidate](../../evaluation/product-trust-aws-official-truth-candidate.md) identity before
+model-under-test use. Historical PT-1 recreations are not the final substitute. The prior broad-v4
+run `37419983898`, PR #237 closure correction, PR #238 orchestration alignment and PT-2 partial
+subset do not establish accepted final external-input performance.
 
-**Human gate immediately before execution: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE.**
+**Mandatory order before any official evaluation image is consumed:**
 
-Bind final post-PT-7 reviewed source/runtime, broad `terraformers-reference-v4`,
-`gemini-embedding-2 / 1536`, current final production generation/grounding closure and real Terraform
-CLI validator. Use frozen revision 3 / identity above. Submit each of ten frozen inputs through the
-authenticated production AnalysisJob path **exactly once** in frozen order. No correctness
-resubmission, replacement sample or rerun-until-green. Preserve natural failures; score only after
-inference against frozen human truth, never tune truth from output.
+1. Exact post-PT-7 reviewed main -> production backend Dockerfile -> immutable source-SHA tag ->
+   remote sha256 digest -> deployed backend `BUILD_SOURCE_REVISION == reviewed main`.
+2. Prove actual serving `INDEX_NAME=CORPUS_VERSION=terraformers-reference-v4`,
+   `gemini-embedding-2`, 1536 dimensions and immutable corpus/checksum/model/content equivalence.
+   Required universe: schema 1526, official/selected 1514, gaps 0, provider chunks 5387,
+   project decisions 8, total 5395. Counts/config names alone do not establish exact index identity.
+3. Distinguish exact reusable complete v4, partial, stale/mixed model space, wrong model/dimension
+   and missing index. Reuse exact proven v4; do not ceremonially re-embed/re-ingest 5395 documents.
+   Unprovable equivalence fails readiness before cases. Existing reviewed build/embed/ingest only
+   under the appropriate separate live/model/cost authority. Never add case labels or truth to RAG.
+4. Correlated deployed-backend retrieval returns official reference evidence from the intended
+   exact index. This is serving readiness, not a semantic case PASS.
+5. Separate explicit **FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE** approval immediately
+   before once-only official-input execution. Earlier cloud/model actions also need their authority.
+6. Fetch raw frozen external image URLs; exact SHA/media/dimensions mismatch stops before upload.
 
-For each of six positives, inspect required components, directed relationships, resource
-intent/cardinality, forbidden interpretations, generated-resource official-evidence closure and real
-Terraform executable validity. Both ambiguous and both non-architecture controls must not produce
-trusted Terraform success. Acceptance requires **false trusted success = 0**, every accepted job
-following PT-6R2's independently accepted bounded terminal contract, and persisted/user-visible trust
-agreeing with observed semantic/technical results. Aggregate percentages are secondary; any positive
-semantic, evidence, executable or false-trusted defect prevents PASS. Classify and stop for a bounded
-corrective Work Package; only an actual correction may justify the minimum declared post-change
-regression for the affected mechanism. No universal user-export generalization claim.
+Submit A–E in frozen order through authenticated production upload/object persistence -> durable
+AnalysisJob -> image/facts -> embedding/live v4 retrieval -> configured-model generation/closure ->
+real CLI draft validation -> persisted result/quality -> API readback, **once per case**. No correctness
+resubmission, observed-result replacement or rerun-until-green. Preserve natural failures. Freeze the
+procedure before outcomes; score only afterward against unchanged frozen truth.
 
-### PT-8B — Final integrated release proof
+Individually score classification, core components, directed relationships, material containment/
+cardinality, forbidden/invented interpretations, resource intent, unknown-input handling,
+generated-resource official evidence closure, real CLI draft validity and persisted/user-visible trust.
+Use deterministic comparisons where meaningful and explicit human semantic-alias review; no exact
+text/naming requirement or model judge. **FALSE_TRUSTED_SUCCESS = 0**. A materially wrong trusted
+architecture is NOT_PASS even if HCL validates; a valid input-variable draft is not a failure solely
+for missing account values. No averages hide a material positive defect. PT-6R2's accepted bounded
+terminal contract must hold for every accepted job. Claim only this five-official-positive
+sample/runtime, not universal AWS/user-export generalization. Existing synthetic negatives cannot
+replace external positive proof.
 
-Eligible only after **independent PT-8A acceptance** and authorized merge. Bind exact reviewed main
-SHA -> immutable backend image -> source-SHA tag -> digest -> deployed `BUILD_SOURCE_REVISION` ->
-exact broad-v4 corpus/index identity. Compose accepted PT-8A semantic and PT-6 browser/access evidence
-where explicit source-equivalence permits. Do not rerun ten-case inference for ceremony if
-AI-relevant source/runtime identity is unchanged; rerun only an affected boundary when later code
-actually invalidates prior evidence. Do not add public ingress to make proof more live.
+### PT-8B — Integrated evidence composition / release equivalence
 
-**Human gate: FINAL_PRODUCT_LIVE_PROOF** (and any separately required live/model/cost gate).
-Final claims are bounded to the reviewed dataset and representative runtime, not universal AWS
-image generalization or deployment-correct IAM. Independent integrated acceptance is required.
+Only after independent PT-8A acceptance and authorized merge. Verify the **already bound** PT-8A
+source/image/deployed revision/exact corpus identity; PT-8B is not first identity discovery. Compose
+semantic/RAG evidence with accepted browser/access/durability evidence only under explicit source-
+equivalence. Later code invalidation permits only the minimum required boundary regression under
+its authority, not ceremonial repeats of all official model cases. No new ingress/IdP/runtime.
+
+**Human gate: FINAL_PRODUCT_LIVE_PROOF**, plus required live/model/cost gates. Independent integrated
+acceptance is required; no universal generalization, fully parameterized apply or deployment-correct
+IAM claim follows.
 
 ### PT-9 — Destructive teardown and final closure
 
@@ -339,11 +355,12 @@ not imply that Kubernetes is required for every version of this product.
 
 ## Autonomous execution boundary
 
-The standing Goal's automatic selection/progression is paused at
-`PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT` after PT-6R1 independent acceptance and USER merge.
-It cannot select or execute PT-6R2 until the subsequent evidence-validity amendment is reviewed,
-explicitly USER-approved, independently accepted and USER-merged. This PR records only that pause;
-it does not implement the amendment or grant later execution authority.
+Automatic Goal progression remains paused at
+`AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW`. This PR prepares v4;
+it does not grant independent acceptance, exact truth freeze or merge. PT-6R2 is the next engineering
+phase only after the amendment is reviewed, explicitly USER-approved, independently accepted and
+USER-merged; it remains unactivated with no future execution base now. Each future substantive Work
+Package reads actual remote main once at activation and stops on drift. No separate state-sync PR.
 
 This autonomy does not include:
 

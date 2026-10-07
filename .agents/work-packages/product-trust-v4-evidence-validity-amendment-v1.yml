@@ -1,0 +1,123 @@
+work_package:
+  id: product-trust-v4-evidence-validity-amendment-v1
+  program: product-trust-v1
+  kind: repository_only_evidence_validity_amendment
+  status: HUMAN_REQUIRED
+  approved_base_sha: 38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d
+  execution_base_sha: 38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d
+  activation:
+    main_reads_at_activation: 1
+    refresh_rebase_or_rebind: prohibited
+    subsequent_main_drift: HUMAN_REQUIRED_MAIN_DRIFT
+  authority:
+    source: USER explicit repository-only v4 evidence-validity amendment request
+    predecessor_pull_request: 252
+    predecessor_review: https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031698220
+    predecessor_reviewed_head: 2b63e79d91548e5e87b48ad9c1bf353467349d12
+    predecessor_merged_head: 25336fafa4bd1d53d9df897629198f6480b96fd1
+    predecessor_reviewed_tree: c9792b42b4a6a9b8529a904d240c5bccf5d08d10
+    predecessor_merge_sha: 38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d
+    predecessor_merge_at: "2026-10-07T05:52:50Z"
+    empty_merge_policy_commit_is_new_behavioral_evidence: false
+    exact_candidate_truth_approval_supplied: false
+    amendment_merge_authorized: false
+  objective: >
+    Prevent controlled/local evidence from closing final AI/RAG trust. Prepare five exact external
+    AWS image/truth candidates, amend final deployed acceptance and reconcile accepted PT-6R1
+    completion in this substantive PR. Do not implement the later engineering/live phases.
+  procedure:
+    - inspect_merged_review_history_and_current_governance_delivery_RAG_prompt_evaluator_contracts
+    - fetch_only_five_USER_named_AWS_pages_and_their_exact_selected_images_for_hash_and_visual_inspection
+    - retain_external_bytes_only_in_temporary_storage_no_redraw_crop_restyle_or_model_execution
+    - record_image_URL_SHA256_media_dimensions_source_access_times_and_proposed_semantic_truth
+    - bind_candidate_identity_to_exact_manifest_and_human_review_document_bytes_before_review
+    - amend_v4_evidence_hierarchy_draft_semantics_and_ordered_PT8A_preflight_then_once_only_execution
+    - reconcile_PT6R1_review_and_actual_USER_merge_without_changing_raw_evidence_or_counters
+    - perform_repository_only_parse_scope_reference_identity_preservation_consistency_and_diff_checks
+    - open_one_substantive_PR_and_stop_for_truth_freeze_independent_amendment_review_and_USER_merge
+  allowed_paths:
+    - .agents/programs/product-trust-v1.yml
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-v4-evidence-validity-amendment-v1.yml
+    - .agents/work-packages/product-trust-pt-6r1-first-user-identity-concurrency-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-v4-evidence-validity-audit.md
+    - docs/evaluation/product-trust-aws-official-truth-candidate.md
+    - evaluation/terraformers-aws-official-v1/candidate-manifest.json
+    - evaluation/terraformers-aws-official-v1/candidate-identity.json
+    - evaluation/terraformers-aws-official-v1/superseded/candidate-01-manifest.json
+    - evaluation/terraformers-aws-official-v1/superseded/candidate-01-identity.json
+    - evaluation/terraformers-aws-official-v1/superseded/candidate-01-truth-review.md
+    - docs/evidence/product-trust-v4-amendment/review-6031698220.json
+    - docs/evidence/product-trust-v4-amendment/validation.json
+  allowed_actions:
+    - read_GitHub_PR_review_merge_and_main_drift_metadata
+    - read_existing_repository_code_configuration_workflows_and_evidence_without_execution
+    - official_public_AWS_HTTP_fetch_hash_inspection_only
+    - repository_governance_provenance_truth_candidate_and_completion_metadata_edits
+    - proportional_repository_only_deterministic_validation
+    - commit_push_open_one_amendment_PR_without_CI_skip_directive
+  prohibited_actions:
+    - PT6R2_or_later_phase_activation_implementation_or_future_base_prediction
+    - production_test_prompt_model_RAG_corpus_scoring_workflow_or_infrastructure_change
+    - MariaDB_browser_backend_suite_or_other_product_measurement
+    - model_inference_GCP_inventory_OpenSearch_query_ingestion_image_publish_rollout_or_teardown
+    - external_image_redistribution_without_established_rights
+    - historical_evidence_truth_fixture_or_repair_counter_rewrite
+    - final_truth_self_freeze_acceptance_self_merge_or_transient_PR_branch_state
+    - separate_state_sync_PR_new_verifier_evaluator_workflow_or_framework
+  acceptance_criteria:
+    - exact_PT6R1_accepted_tree_review_6031698220_USER_merge_and_preserved_0087252_execution_base_bound
+    - historical_PT2_PT6_PT6R1_evidence_counters_and_PT1_frozen_bytes_unchanged
+    - controlled_regression_mechanism_and_final_external_deployed_evidence_authorities_are_distinct
+    - SYNTHETIC_OR_LOCAL_ONLY_EVIDENCE_CANNOT_CLOSE_FINAL_PRODUCT_TRUST
+    - five_primary_official_images_resolved_without_substitution_with_fail_closed_fetch_identity
+    - human_reviewable_components_relationships_containment_cardinality_resource_intent_and_forbidden_truth
+    - REVIEWABLE_IAC_DRAFT_accepts_valid_unknown_inputs_but_requires_topology_and_real_pinned_CLI_validity
+    - PT8A_source_image_runtime_exact_v4_readiness_and_retrieval_precede_any_official_case_consumption
+    - PT8A_once_only_auth_persisted_live_path_ten_scoring_dimensions_and_FALSE_TRUSTED_SUCCESS_0
+    - PT8B_composes_already_bound_PT8A_identity_and_only_equivalent_prior_evidence
+    - PT6R2_remains_unauthorized_and_candidate_truth_remains_unapproved
+    - zero_model_cloud_OpenSearch_database_browser_dispatch_or_destructive_execution
+  validation:
+    - YAML_JSON_parse_and_referenced_file_existence
+    - Program_state_plan_Work_Package_and_gate_consistency
+    - exact_PT6R1_review_merge_tree_binding_and_historical_byte_counter_preservation
+    - five_image_source_URL_SHA_media_dimensions_and_candidate_identity_consistency
+    - no_external_image_bytes_or_disallowed_repository_changes
+    - git_diff_check
+  auto_repair_limit: 1
+  auto_repairs_used: 1
+  repair_evidence: One_staged_diff_check_EOF_whitespace_correction_identity_recomputed_no_image_or_semantic_change
+  human_authorized_corrective_iterations: 1
+  human_corrective_iteration_1:
+    authority: USER_explicit_correction_request_for_independent_review_6032307527
+    review: https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032307527
+    reviewed_head: af6aefc6391c62146654cfc90f53b472332078fc
+    sole_blocker: page_only_facts_mixed_into_image_only_semantic_truth
+    scope: split_all_A_to_E_truth_authorities_and_archive_revision_1_recompute_revision_2_identity
+    five_image_provenance_and_visible_fidelity: unchanged
+    validation: proportional_metadata_provenance_and_diff_check_only
+    same_branch_and_execution_base: preserved
+    autonomous_repair_counter_reset: false
+    model_cloud_OpenSearch_or_PT6R2_execution: prohibited
+    independent_re_review_truth_freeze_and_USER_merge: still_required
+
+  model_under_test_runs: 0
+  live_cloud_actions: 0
+  stop_on:
+    - MAIN_DRIFT
+    - primary_official_image_cannot_be_resolved
+    - truth_ambiguity_requires_human_decision
+    - product_architecture_IAM_security_live_model_cost_or_destructive_action_needed
+    - second_bounded_repair_or_failure_class_change
+    - AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW
+  result:
+    candidate_truth: NOT_APPROVED
+    independent_acceptance: PENDING
+    human_gate: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW
+    merge_authorized: false
+    PT6R2_execution_authorized: false
+    next_phase: null
+    validation_evidence: docs/evidence/product-trust-v4-amendment/validation.json

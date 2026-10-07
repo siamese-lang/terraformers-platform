@@ -1,14 +1,20 @@
 program:
   id: product-trust-v1
-  version: 3
+  version: 4
+  contract_status: PROPOSED_PENDING_TRUTH_FREEZE_INDEPENDENT_REVIEW_AND_USER_MERGE
+  active_amendment: product-trust-v4-evidence-validity-amendment-v1
+  amendment_preparation_authority: USER_explicit_repository_only_v4_request
+  exact_candidate_truth_approved: false
+  current_human_gate: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW
   status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
   activation_base_sha: BIND_AT_ACTIVATION
   plan: docs/plans/active/product-trust-modernization.md
   state: .agents/state/product-trust-v1.json
-  integrity_audit: docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md
-  remaining_mandatory_order: [PT-6R1, PT-6R2, PT-7, PT-8A, PT-8B, PT-9]
+  integrity_audit: docs/evaluation/product-trust-v4-evidence-validity-audit.md
+  historical_v3_audit: docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md
+  remaining_mandatory_order: [PT-6R2, PT-7, PT-8A, PT-8B, PT-9]
 
   approved_amendments:
     - id: PT2_FINAL_INCOMPLETE_TO_BOUNDED_PT3
@@ -53,26 +59,110 @@ program:
     - same_external_identity_first_requests_converge_without_privilege_escalation
     - each_accepted_job_has_a_reviewed_bounded_provider_and_terminal_contract
     - final_browser_user_flow_is_validated
-    - all_ten_frozen_final_acceptance_inputs_are_submitted_once_and_natural_failures_retained
+    - all_five_USER_frozen_external_AWS_official_inputs_are_submitted_once_after_readiness_and_natural_failures_retained
+    - final_AI_RAG_acceptance_binds_exact_reviewed_source_image_deployed_GCP_v4_retrieval_model_job_result_and_truth
     - final_realistic_false_trusted_success_equals_zero_and_no_positive_defect_is_hidden_by_averages
-    - final_release_identity_is_source_and_digest_bound
+    - final_release_identity_is_source_and_digest_bound_before_any_final_evaluation_input
     - live_runtime_is_torn_down_after_final_acceptance
 
   evidence_policy:
-    preserve_direct_mechanism_evidence:
-      - case_b_durable_job_semantics
-      - broad_v4_provider_schema_and_corpus_coverage
-      - real_terraform_cli_validation
-      - existing_owner_non_owner_authorization_evidence
-      - wif_immutable_image_and_source_binding
-      - real_provider_latency_and_stage_telemetry
-      - durable_quality_snapshot_persistence
-    downgrade_to_controlled_regression_only:
-      - terraformers_eval_v1_synthetic_positive_quality_claims
-      - terraformers_eval_holdout_v1_synthetic_positive_quality_claims
-      - synthetic_only_grounding_percentages
-      - single_synthetic_positive_live_proof_as_generalization_evidence
-    contradiction_rule: REALISTIC_PRODUCT_EVIDENCE_OVERRIDES_BROADER_HISTORICAL_CLAIMS
+    invariant: SYNTHETIC_OR_LOCAL_ONLY_EVIDENCE_CANNOT_CLOSE_FINAL_PRODUCT_TRUST
+    controlled_regression:
+      - Mockito_and_unit_tests
+      - H2_and_local_fixtures
+      - repository_authored_architecture_images
+      - canonical_and_holdout_synthetic_datasets
+      - terraformers_realistic_v1_reference_derived_redraws
+      - local_browser_and_stub_provider_journeys
+    mechanism_only:
+      - real_MariaDB_concurrency
+      - real_Terraform_CLI_validation
+      - exact_provider_schema_and_broad_corpus_coverage
+      - CI_and_real_Dockerfile_image_reproducibility
+      - owner_non_owner_authorization_and_durable_quality_persistence
+      - WIF_immutable_image_source_binding_and_observed_latency
+    final_AI_RAG_acceptance:
+      authority: independently_accepted_approved_external_official_live_procedure
+      required_ordered_chain:
+        - exact_external_AWS_official_image_and_frozen_human_truth
+        - reviewed_source_SHA
+        - real_Dockerfile_immutable_backend_image_and_remote_digest
+        - deployed_representative_retained_GCP_runtime_and_BUILD_SOURCE_REVISION
+        - exact_broad_v4_OpenSearch_serving_identity_and_real_correlated_retrieval
+        - real_configured_model
+        - authenticated_persisted_AnalysisJob_and_object
+        - persisted_result_quality_and_API_readback
+        - real_pinned_Terraform_CLI_draft_validation
+        - post_inference_frozen_truth_semantic_scoring
+      every_link_required: true
+      local_or_synthetic_substitute_allowed: false
+    historical_PT1_authority:
+      directory: evaluation/terraformers-realistic-v1
+      classification: CONTROLLED_REFERENCE_DERIVED_REGRESSION_SET
+      historical_freeze_remains_valid_for_exact_bytes: true
+      sole_final_external_acceptance_authority: false
+    contradiction_rule: external_product_evidence_constrains_broader_historical_claims_without_rewriting_history
+
+  terraform_acceptance:
+    principle: REVIEWABLE_IAC_DRAFT
+    unknown_account_specific_values:
+      examples: [account_ids, hosted_zone_ids, domains, certificate_ARNS, role_ARNS, callback_logout_URLs, federated_IdP_settings, secrets, existing_VPC_subnet_ids, organization_names, externally_owned_resources]
+      acceptable: [declared_variables, coherent_external_references_or_data_boundaries, clearly_editable_valid_placeholder_or_TODO_inputs]
+      unavailable_personalized_value_alone_is_failure: false
+      fabricated_concrete_identifiers_are_rewarded: false
+    mandatory: [core_depicted_service_intent, directed_relationships, material_cardinality_containment, supplied_or_explicit_required_wiring_authorization, declared_references, valid_HCL, provider_argument_compatibility]
+    forbidden: [unrelated_invented_architecture, silent_required_wiring_omission, invalid_provider_arguments, undeclared_references, invalid_HCL]
+    resources_need_not_be_created_one_per_icon: true
+    equivalent_valid_grounded_authorization_is_acceptable: true
+    technical_boundary:
+      real_Terraform_CLI: "1.8.5"
+      AWS_provider: "5.100.0"
+      pin_authority: backend/Dockerfile
+      init_and_validate_must_pass: true
+      AWS_plan_apply_or_deployment_required: false
+      validation_does_not_prove_effective_deployed_IAM_or_semantic_fidelity: true
+
+  official_acceptance_candidate:
+    dataset: terraformers-aws-official-v1
+    revision: 2
+    manifest: evaluation/terraformers-aws-official-v1/candidate-manifest.json
+    identity: evaluation/terraformers-aws-official-v1/candidate-identity.json
+    human_review: docs/evaluation/product-trust-aws-official-truth-candidate.md
+    status: CANDIDATE_NOT_APPROVED
+    truth_authority:
+      system_input: IMAGE_BYTES_ONLY
+      mandatory_semantic_truth: image_observable_truth
+      documentation_context: disambiguation_only_no_hidden_page_only_semantic_requirements
+      draft_technical_closure: conditional_on_chosen_generated_resource_relationship_coherence_and_real_CLI_provider_validity
+      unavailable_personalized_values: valid_declared_inputs_references_or_editable_placeholders
+      no_visible_topology_weakening: true
+    superseded_pre_freeze_candidate:
+      revision: 1
+      identity: fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10
+      archived_identity: evaluation/terraformers-aws-official-v1/superseded/candidate-01-identity.json
+    truth_freeze_gate: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE
+    exact_completed_candidate_USER_approval: absent
+    model_under_test_runs: 0
+    external_bytes_in_repository: false
+    future_fetch: exact_frozen_URL_raw_SHA256_media_dimensions_or_fail_closed_before_inference
+    case_order: [aws-official-a, aws-official-b, aws-official-c, aws-official-d, aws-official-e]
+    positives: 5
+    new_synthetic_negative_controls: prohibited
+    negative_evidence: existing_PT1_controls_only_as_controlled_regression_not_final_external_substitution
+
+  retained_runtime_policy:
+    USER_decision: reuse_existing_retained_representative_GCP_if_topology_remains_compatible
+    second_runtime_or_fake_local_final_substitute: prohibited
+    this_amendment_cloud_execution_authorized: false
+    inventory_publish_rollout_ingestion_model_and_teardown: separately_gated
+
+  final_closure_policy:
+    invariant: SYNTHETIC_OR_LOCAL_ONLY_EVIDENCE_CANNOT_CLOSE_FINAL_PRODUCT_TRUST
+    insufficient_alone: [unit_tests, local_evaluator, synthetic_fixtures, repository_authored_images, browser_fixtures, green_CI, consistent_docs_or_state]
+    required: independently_accepted_final_deployed_GCP_OpenSearch_real_model_official_external_input_full_chain
+    until_required_evidence_accepted: FINAL_PRODUCT_TRUST_INCOMPLETE
+    claim: bounded_to_frozen_five_official_AWS_positive_sample_and_representative_runtime
+    universal_generalization_or_AWS_apply_correctness: not_claimed
 
   execution_policy:
     github_is_durable_ssot: true
@@ -100,6 +190,8 @@ program:
   human_gates:
     - PROGRAM_APPROVAL
     - PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
+    - AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE
+    - AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW
     - REALISTIC_DATASET_TRUTH_FREEZE
     - LIVE_REALISTIC_BASELINE
     - PRODUCT_OR_ARCHITECTURE_DECISION
@@ -257,12 +349,27 @@ program:
         - PT5_owner_non_owner_anonymous_public_admin_authorization_matrix_remains_intact
         - deterministic_before_after_evidence_and_independent_acceptance
 
+      accepted_completion:
+        status: COMPLETE
+        merged_pull_request: 252
+        independent_review_comment: 6031698220
+        engineering_review_comment: 6031593870
+        reviewed_head: 2b63e79d91548e5e87b48ad9c1bf353467349d12
+        reviewed_tree: c9792b42b4a6a9b8529a904d240c5bccf5d08d10
+        merged_head: 25336fafa4bd1d53d9df897629198f6480b96fd1
+        merged_head_tree_equals_reviewed_tree: true
+        merge_policy_empty_commit_is_behavioral_measurement: false
+        merged_main_sha: 38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d
+        execution_base_sha_preserved: 00872520036da38fd1809a9abf61f56d2344fcb5
+        raw_evidence_and_counters: unchanged
+        further_database_execution_authorized: false
+
     - id: PT-6R2
       title: Provider terminality and latency-budget closure
       kind: audit_and_conditional_implementation
       depends_on: [PT-6R1]
       auto_start_after_dependencies: false
-      human_gate_before_start: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
+      human_gate_before_start: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW
       activation_requires:
         - PT6R1_independent_acceptance_and_USER_merge
         - evidence_validity_amendment_reviewed
@@ -303,6 +410,11 @@ program:
         backend/Dockerfile PR changes, preferably within the existing automatic PR workflow.
         Inspect actual protected-main/ruleset required checks and reconcile only demonstrated gaps;
         a required ruleset/security-boundary change still needs explicit human authority.
+      final_delivery_handoff:
+        sequence: [reviewed_source, real_backend_Dockerfile_build, immutable_source_SHA_tag, remote_digest, retained_GCP_rollout, deployed_revision_and_corpus_evidence]
+        must_be_ready_before: PT8A_official_input_consumption
+        automatic_GCP_deploy_on_merge: prohibited
+        live_model_cost_security_actions: separately_USER_gated
       build_contract:
         validation_authority: real_backend_Dockerfile
         terraform_version: "1.8.5"
@@ -319,73 +431,136 @@ program:
         - handoff_binds_source_SHA_immutable_image_digest_rollout_evidence_teardown
 
     - id: PT-8A
-      title: Final realistic AI RAG trust acceptance
+      title: Final external official AI RAG deployed acceptance
       kind: live_acceptance
       depends_on: [PT-7]
       auto_start_after_dependencies: false
       human_gate_before_start: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
       human_gate_immediately_before_execution: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
+      activation_requires:
+        - v4_amendment_independently_accepted_and_USER_merged
+        - exact_official_candidate_identity_and_truth_explicitly_USER_frozen
+        - PT7_independently_accepted_and_USER_merged
       objective: >
-        Perform NEW final-system acceptance on the frozen human-reviewed realistic dataset, never
-        PT2 recovery or reopening. Bind the final post-PT7 reviewed source/runtime identity, broad
-        terraformers-reference-v4, gemini-embedding-2 / 1536, final production generation/grounding
-        closure and the real Terraform CLI validator. Submit all ten inputs through the authenticated
-        production AnalysisJob path exactly once in frozen order. Score only after inference against
-        frozen truth. Preserve natural failures and individual case evidence.
+        NEW final-system acceptance, never PT2 recovery: first bind reviewed source/image/deployed
+        runtime and exact broad-v4 serving/retrieval. Only after readiness and separate live/model/cost
+        approval, first-submit the five exact USER-frozen official AWS images once in frozen order
+        through the authenticated persisted production AnalysisJob path; score frozen truth after
+        inference. No controlled-regression or local substitute can close final trust.
       rationale:
         prior_broad_v4_run: 37419983898
         prior_findings: substantial_positive_false_green_and_semantic_failures
         production_generated_resource_closure_changed_by_PR: 237
         evaluator_aligned_to_production_orchestration_by_PR: 238
-        complete_live_broad_v4_remeasurement_after_final_corrections: NOT_EXECUTED
-        final_corrected_path_realistic_acceptance: UNPROVEN
-      frozen_dataset:
-        directory: evaluation/terraformers-realistic-v1
-        revision: 3
-        identity: 04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014
-        positives: 6
-        ambiguous_controls: 2
-        non_architecture_controls: 2
+        final_external_official_deployed_acceptance: NOT_EXECUTED
+      final_input:
+        candidate: evaluation/terraformers-aws-official-v1/candidate-identity.json
+        manifest: evaluation/terraformers-aws-official-v1/candidate-manifest.json
+        truth: docs/evaluation/product-trust-aws-official-truth-candidate.md
+        freeze_status: NOT_APPROVED
+        positives: 5
+        frozen_order: [aws-official-a, aws-official-b, aws-official-c, aws-official-d, aws-official-e]
+        historical_realistic_v1: CONTROLLED_REFERENCE_DERIVED_REGRESSION_SET_NOT_SOLE_FINAL_AUTHORITY
+      ordered_preflight_before_any_case:
+        - bind_exact_reviewed_main_to_real_backend_Dockerfile_build_source_SHA_tag_remote_digest_and_deployed_BUILD_SOURCE_REVISION_equal_to_reviewed_main
+        - prove_exact_live_backend_v4_index_corpus_model_dimensions_and_content_checksum_equivalence
+        - prove_correlated_deployed_backend_retrieval_returns_official_reference_evidence_from_exact_v4
+        - obtain_separate_explicit_live_model_cost_approval_for_once_only_official_input_execution
+        - verify_exact_frozen_external_image_bytes_before_authenticated_upload
+      serving_contract:
+        INDEX_NAME: terraformers-reference-v4
+        CORPUS_VERSION: terraformers-reference-v4
+        embedding_model: gemini-embedding-2
+        vector_dimension: 1536
+        provider_schema_resources: 1526
+        officially_documented_resources: 1514
+        selected_documented_resources: 1514
+        extraction_gaps: 0
+        provider_chunks: 5387
+        project_decisions: 8
+        total_documents: 5395
+        provider_source_commit: f7a3b98da589ab1d52756b0dcee0dbf2de83d635
+        required_identity_evidence:
+          - immutable_reviewed_corpus_manifest_contract_checksum_schema_and_project_decision_provenance
+          - live_mapping_checksum_model_dimension_and_exact_document_content_ID_equivalence
+          - deployed_backend_actual_environment_not_only_repository_ConfigMap
+          - correlated_live_retrieval_index_and_official_reference_provenance
+        readiness_classes: [EXACT_REUSABLE_COMPLETED_V4, PARTIAL_INDEX, STALE_OR_MIXED_MODEL_SPACE, WRONG_MODEL_OR_DIMENSION, MISSING_INDEX]
+        only_pass_class: EXACT_REUSABLE_COMPLETED_V4
+        exact_retained_index: reuse_no_ceremonial_5395_document_reembedding_or_ingestion
+        name_count_and_vector_dimension_alone_prove_equivalence: false
+        checksum_or_model_provenance_unprovable: STOP_READINESS_BEFORE_CASES
+        repair_path: existing_reviewed_build_embed_ingest_only_under_separate_live_model_cost_authority
+        embedding_spaces: never_mix_v3_embedding001_1024_with_v4_embedding2_1536
+        corpus_scope: provider_and_project_knowledge_only_no_truth_expected_components_relationships_or_case_labels
+      production_path:
+        - official_image_authenticated_upload_and_object_persistence
+        - durable_AnalysisJob
+        - image_fact_extraction
+        - real_embedding_and_live_OpenSearch_v4_retrieval
+        - configured_model_generation_and_grounding_closure
+        - real_Terraform_CLI_draft_validation
+        - persisted_result_and_quality_trust
+        - authenticated_API_readback
       repetition_policy:
         first_submissions_per_input: 1
+        frozen_order_required: true
         correctness_resubmission_rerun_until_green_or_replacement_sample: prohibited
         truth_tuning_from_model_output: prohibited
-        on_positive_semantic_evidence_executable_or_false_trusted_defect: >
-          NOT_PASS; classify the failure mechanism and stop for a bounded corrective Work Package.
-        after_actual_correction: >
-          Only the minimum predeclared post-change regression for the affected mechanism may be
-          authorized; preserve the original failure, never retry until green.
+        failures: preserve_individual_evidence_never_replace_with_later_success
+        material_defect: NOT_PASS_classify_and_stop_for_bounded_corrective_Work_Package
+        after_actual_correction: minimum_predeclared_affected_mechanism_regression_only_under_new_required_authority
+      scoring_dimensions:
+        - architecture_classification
+        - core_component_service_fidelity
+        - directed_relationship_fidelity
+        - material_containment_cardinality
+        - forbidden_invented_interpretations
+        - Terraform_resource_intent
+        - unknown_personalized_input_handling
+        - generated_resource_official_evidence_closure
+        - real_Terraform_CLI_REVIEWABLE_IAC_DRAFT_validity
+        - persisted_user_visible_trust_consistency
+      scoring_policy:
+        mandatory_semantic_authority: image_observable_truth
+        documentation_context_can_add_unseen_semantic_requirements: false
+        draft_technical_closure: generated_choice_coherence_only_not_a_missing_page_fact
+        procedure_and_truth_frozen_before_outcomes: true
+        compare_after_inference_only: true
+        deterministic_where_meaningful_and_explicit_human_semantic_alias_review: true
+        exact_text_or_resource_names_required: false
+        LLM_model_judge: prohibited
+        false_trusted_success: 0
+        unknown_input_variable_reference_alone_is_failure: false
+        aggregate_percentages_hide_material_defects: prohibited
       completion:
-        - all_ten_frozen_inputs_have_individually_preserved_once_only_first_submission_evidence
-        - all_six_positives_satisfy_required_components_directed_relationships_resource_intent_and_cardinality
-        - all_six_positives_satisfy_forbidden_interpretations_official_generated_resource_evidence_closure_and_real_CLI_validity
-        - neither_ambiguous_nor_non_architecture_controls_allow_trusted_Terraform_success
+        - source_image_deployed_revision_exact_v4_and_correlated_retrieval_readiness_pass_before_any_case
+        - all_five_frozen_official_images_have_preserved_once_only_authenticated_first_submission_evidence
+        - every_positive_satisfies_all_ten_semantic_evidence_draft_and_trust_dimensions
+        - each_accepted_job_follows_independently_accepted_PT6R2_bounded_terminal_contract
         - false_trusted_success_equals_zero
-        - every_accepted_job_follows_independently_accepted_PT6R2_bounded_terminal_contract
-        - persisted_and_user_visible_quality_trust_agree_with_observed_semantic_and_technical_results
-        - no_failing_case_is_hidden_by_aggregate_percentages_and_any_positive_defect_prevents_PASS
-        - independent_acceptance_is_bounded_to_this_frozen_human_reviewed_realistic_dataset
+        - no_material_case_defect_is_hidden_by_averages_or_technical_CLI_success
+        - independent_acceptance_bounded_to_frozen_five_official_AWS_positive_sample_and_representative_runtime
 
     - id: PT-8B
-      title: Final integrated release proof
+      title: Final integrated evidence composition and release equivalence
       kind: live_acceptance
       depends_on: [PT-8A]
       dependency_acceptance: INDEPENDENT_PT8A_ACCEPTANCE_REQUIRED
       auto_start_after_dependencies: false
       human_gate_before_start: FINAL_PRODUCT_LIVE_PROOF
       objective: >
-        Bind exact reviewed main SHA to immutable backend image, source-SHA tag, digest, deployed
-        BUILD_SOURCE_REVISION and exact broad-v4 corpus/index identity. Compose accepted PT8A
-        semantic evidence with PT6 browser/access evidence only where source-equivalence permits.
-        Do not rerun ten-case model inference for ceremony when AI-relevant source/runtime identity
-        is unchanged; rerun only an affected boundary if later code actually invalidates evidence.
-        Do not add public ingress or a GCP frontend merely to make proof more live.
+        Verify the already independently accepted PT8A source/image/deployed revision/corpus identity;
+        PT8B is not its first discovery. Compose PT8A semantic/RAG proof with accepted browser/access/
+        durability evidence only where explicit source-equivalence remains valid. Rerun only a
+        boundary actually invalidated by later code under its required authority; no ceremonial
+        repeat of the official model cases, no new public ingress or frontend runtime.
       completion:
-        - reviewed_source_SHA_immutable_image_source_tag_digest_BUILD_SOURCE_REVISION_and_corpus_index_are_bound
+        - already_accepted_PT8A_source_SHA_image_tag_digest_deployed_revision_and_exact_v4_identity_are_verified
         - PT8A_semantic_evidence_has_independent_acceptance
         - PT6_browser_access_evidence_is_composed_only_with_explicit_source_equivalence
         - any_later_invalidated_boundary_has_only_its_minimum_authorized_regression
-        - claim_is_bounded_to_reviewed_realistic_dataset_and_representative_runtime
+        - claim_is_bounded_to_frozen_official_AWS_sample_and_representative_runtime
         - no_universal_AWS_diagram_generalization_or_deployment_correct_IAM_claim
         - independent_integrated_release_acceptance
 

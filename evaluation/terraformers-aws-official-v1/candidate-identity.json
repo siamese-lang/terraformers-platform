@@ -1,0 +1,41 @@
+{
+  "datasetId": "terraformers-aws-official-v1",
+  "candidateRevision": 2,
+  "files": [
+    {
+      "path": "evaluation/terraformers-aws-official-v1/candidate-manifest.json",
+      "sha256": "b44908f3ecc926a623646ba10d5a6f2cd67bace781c8ce55f7468d5417c566f0",
+      "sizeBytes": 98414
+    },
+    {
+      "path": "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+      "sha256": "8828de056a9b2b121e8bf560bd1766b3ddc465770984317b67af3eb8001a6d45",
+      "sizeBytes": 48195
+    }
+  ],
+  "identityAlgorithm": "SHA256_OF_UTF8_CANONICAL_JSON_datasetId_candidateRevision_files_SORTED_KEYS_COMPACT_NO_NEWLINE",
+  "identitySha256": "3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757",
+  "status": "CANDIDATE_NOT_APPROVED",
+  "truthFrozen": false,
+  "executionAuthorized": false,
+  "modelUnderTestRunCount": 0,
+  "supersededPreFreezeCandidate": {
+    "candidateRevision": 1,
+    "identitySha256": "fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10",
+    "identityPath": "evaluation/terraformers-aws-official-v1/superseded/candidate-01-identity.json",
+    "archivedFiles": [
+      {
+        "originalPath": "evaluation/terraformers-aws-official-v1/candidate-manifest.json",
+        "archivedPath": "evaluation/terraformers-aws-official-v1/superseded/candidate-01-manifest.json",
+        "sha256": "e59d5ca412e4c1b9d175573935e38da98602d5ac224da466ee5f36294fee8499"
+      },
+      {
+        "originalPath": "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+        "archivedPath": "evaluation/terraformers-aws-official-v1/superseded/candidate-01-truth-review.md",
+        "sha256": "5c6aa2b449e934b4ad4b40b2624d5dfcabaeb0aed42572dd4ba1145486b54349"
+      }
+    ],
+    "truthWasFrozen": false,
+    "reason": "Independent review 6032307527: page-only details mixed into image-only semantic authority."
+  }
+}

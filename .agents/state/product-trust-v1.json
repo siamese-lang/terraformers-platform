@@ -33,7 +33,8 @@
     "PR #248 review 6029174275 independently accepted head 68110fc0429d88b3211c5811b1c470770bc4c3f7; USER merged it as 0c4fa0e9616881e281aa027a18a9d741ff614699. Goal/Program activates repository-only PT-5 on that once-bound main. Audit tightens default JWT routing while preserving existing owner/admin/public/comment policy. Deterministic JWKS is not a permanent production IdP; no model/cloud/runtime/IAM action or further PT-2 execution is authorized. GitHub alone owns transient PR lifecycle.",
     "Historical preparation/gate notes above are superseded only where independently reviewed evidence and USER decisions permit. PR #250 review 6030408825 accepted head 0b8f7ef0eefc472a0438a3d0eeedee0f1c919c7a and USER merged it as f344552fe58db26438a4f0b2c9abb1806e6a99d9. PT-6 is COMPLETE for deterministic browser integration only; original failed evidence, base and counters remain preserved. USER-approved v3 residual closure is prepared in one repository-only amendment PR; no PT-6R1/later phase or live/model action is executed now, no future base is predicted, and GitHub alone owns transient PR lifecycle.",
     "PR #251 review 6031040940 independently accepted head 360fc827e2b6146f0961442b53e3eb172a8aa4e8; USER merged it as 00872520036da38fd1809a9abf61f56d2344fcb5. Explicit USER approves exactly PT-6R1, activated on that once-read main in this substantive PR. Real MariaDB reproduction must precede correction selection. No PT-6R2 or browser/model/cloud/security/teardown activity, and no transient active PR/branch lifecycle registration.",
-    "PT-6R1 first measurement failed only in Mockito instrumentation and is preserved. One test-only autonomous repair stays consumed. USER explicitly authorized one additional before execution as human corrective iteration 1; it reproduced immediate IDENTITY save uniqueness failure and poisoned rollback-only session re-read. One initial bounded transaction correction and one same-condition local after-state pass, with identity/PT-5/full backend validation. No additional measurement, acceptance, merge, PT-6R2 or live authority is inferred."
+    "PT-6R1 first measurement failed only in Mockito instrumentation and is preserved. One test-only autonomous repair stays consumed. USER explicitly authorized one additional before execution as human corrective iteration 1; it reproduced immediate IDENTITY save uniqueness failure and poisoned rollback-only session re-read. One initial bounded transaction correction and one same-condition local after-state pass, with identity/PT-5/full backend validation. No additional measurement, acceptance, merge, PT-6R2 or live authority is inferred.",
+    "USER-authorized governance-only correction for review 6031593870 preserves accepted PT-6R1 code, all evidence, the bound execution base and repair/correction counters. PT-6R1 acceptance and USER merge lead to HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT, not automatic PT-6R2 activation. A subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged evidence-validity amendment must release the pause; its content/version/base are not selected here."
   ],
   "approvedOn": "2026-10-06",
   "approvalEvidence": "User explicitly approved: APPROVE product-trust-v1",
@@ -59,7 +60,8 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "PT-6R1 original-criteria independent acceptance and explicit USER merge are required; CI success is not acceptance."
+    "Independent review of the governance correction and explicit USER merge are required; PT-6R1 engineering acceptance is PASS under review 6031593870.",
+    "After PT-6R1 independent acceptance and USER merge, HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT; PT-6R2 stays execution-unauthorized until a subsequent evidence-validity amendment is reviewed, explicitly USER-approved, independently accepted and USER-merged."
   ],
   "evidenceDocument": "docs/evaluation/product-trust-pt-6r1-first-user-identity-concurrency.md",
   "validation": {
@@ -244,18 +246,20 @@
     ]
   },
   "latestPrReviewFeedback": {
-    "commentId": 6031040940,
-    "url": "https://github.com/siamese-lang/terraformers-platform/pull/251#issuecomment-6031040940",
-    "decision": "ACCEPTED",
-    "reviewedHeadSha": "360fc827e2b6146f0961442b53e3eb172a8aa4e8",
-    "executionBaseSha": "f344552fe58db26438a4f0b2c9abb1806e6a99d9",
-    "workPackage": "product-trust-v3-residual-closure-amendment-v1",
-    "independentAcceptance": "PASS",
+    "commentId": 6031593870,
+    "url": "https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031593870",
+    "decision": "CHANGES_REQUIRED",
+    "reviewedHeadSha": "9e668a5cd4bce17e2808b82b2521cc58c6d08894",
+    "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+    "workPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+    "implementationAcceptance": "PASS",
+    "overallPrAcceptance": "BLOCKED_BY_DURABLE_NEXT_PHASE_AUTHORITY",
+    "mergeRecommendation": "HOLD",
     "reviewGrantsImplementationOrMergeAuthority": false
   },
   "lastCompletedWorkPackage": "product-trust-v3-residual-closure-amendment-v1",
   "lastCompletedPullRequest": 251,
-  "nextPhase": "PT-6R2",
+  "nextPhase": null,
   "executionBaseWorkPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
   "truthFreezeApproval": {
     "marker": "[HUMAN_GATE_APPROVAL:v1]",
@@ -373,13 +377,21 @@
   },
   "blockedNextPhase": {
     "phase": "PT-6R2",
-    "status": "AWAITING_PT6R1_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE",
+    "status": "UNAUTHORIZED_PENDING_PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
     "executionAuthorized": false,
     "executionStarted": false,
     "workPackage": null,
     "executionBaseSha": null,
     "modelUnderTestRunCount": 0,
-    "liveCloudActions": 0
+    "liveCloudActions": 0,
+    "humanGate": "PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
+    "activationRequires": [
+      "PT6R1_independent_acceptance_and_USER_merge",
+      "evidence_validity_amendment_reviewed",
+      "evidence_validity_amendment_explicitly_USER_approved",
+      "evidence_validity_amendment_independently_accepted",
+      "evidence_validity_amendment_USER_merged"
+    ]
   },
   "prReviewFeedbackHistory": [
     {
@@ -546,6 +558,18 @@
       "executionBaseSha": "f344552fe58db26438a4f0b2c9abb1806e6a99d9",
       "workPackage": "product-trust-v3-residual-closure-amendment-v1",
       "independentAcceptance": "PASS",
+      "reviewGrantsImplementationOrMergeAuthority": false
+    },
+    {
+      "commentId": 6031593870,
+      "url": "https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031593870",
+      "decision": "CHANGES_REQUIRED",
+      "reviewedHeadSha": "9e668a5cd4bce17e2808b82b2521cc58c6d08894",
+      "executionBaseSha": "00872520036da38fd1809a9abf61f56d2344fcb5",
+      "workPackage": "product-trust-pt-6r1-first-user-identity-concurrency-v1",
+      "implementationAcceptance": "PASS",
+      "overallPrAcceptance": "BLOCKED_BY_DURABLE_NEXT_PHASE_AUTHORITY",
+      "mergeRecommendation": "HOLD",
       "reviewGrantsImplementationOrMergeAuthority": false
     }
   ],
@@ -1024,16 +1048,26 @@
       "furtherLocalDatabaseMeasurementsAuthorized": false,
       "initialImplementationAttempts": 1,
       "productionCorrectiveRepairsUsed": 0,
-      "measurementFailures": 1
+      "measurementFailures": 1,
+      "postMergeHumanGate": "PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
+      "engineeringAcceptance": "PASS",
+      "engineeringReviewCommentId": 6031593870
     }
   },
   "goalContinuation": {
     "authority": "USER /goal Complete the approved product-trust-v1 program from current thread and authoritative repository state",
-    "autoContinueEligibleActionsAfterAcceptedAuthorizedMerge": true,
+    "autoContinueEligibleActionsAfterAcceptedAuthorizedMerge": false,
     "selectionAuthority": "program DAG, durable evidence, active Work Package and GitHub history",
     "transientPrLifecycleAuthority": "GitHub only",
     "humanGatesPreserved": true,
-    "repetitiveContinuePromptsRequired": false
+    "repetitiveContinuePromptsRequired": false,
+    "pausedAtHumanGate": "PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT",
+    "resumeRequires": [
+      "evidence_validity_amendment_reviewed",
+      "evidence_validity_amendment_explicitly_USER_approved",
+      "evidence_validity_amendment_independently_accepted",
+      "evidence_validity_amendment_USER_merged"
+    ]
   },
   "programAmendments": [
     {

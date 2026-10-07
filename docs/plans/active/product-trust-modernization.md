@@ -2,8 +2,8 @@
 
 ## Status
 
-**PROGRAM v3 USER-MERGED / PT-6 COMPLETE / PT-6R1 LOCAL DETERMINISTIC PASS /
-HUMAN_REQUIRED: MERGE_CHECKPOINT (independent acceptance and USER merge pending)**
+**PROGRAM v3 USER-MERGED / PT-6 COMPLETE / PT-6R1 ENGINEERING PASS /
+HUMAN_REQUIRED: MERGE_CHECKPOINT (governance correction review and USER merge pending)**
 
 [Review 6031040940](https://github.com/siamese-lang/terraformers-platform/pull/251#issuecomment-6031040940)
 accepted v3 amendment head `360fc827e2b6146f0961442b53e3eb172a8aa4e8`; USER merged PR #251 as
@@ -33,8 +33,16 @@ PT-2 remains permanently `PT2_INCOMPLETE_ACCEPTED_AS_FINAL_EVIDENCE_DISPOSITION`
 No reopening/recovery/rerun/dispatch or artifact reinterpretation. PT-1 revision 3 frozen identity
 `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014` remains unchanged.
 
-Mandatory order remains **PT-6R1 -> PT-6R2 -> PT-7 -> PT-8A -> PT-8B -> PT-9**. No PT-6R2 activation
-or future base prediction. The [cross-phase audit](../../evaluation/product-trust-v3-cross-phase-integrity-audit.md)
+[Review 6031593870](https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031593870)
+accepts PT-6R1 engineering at `9e668a5cd4bce17e2808b82b2521cc58c6d08894`; the governance correction
+addresses its stale next-phase authority blocker. After PT-6R1 independent acceptance and USER merge,
+stop at **HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT**. PT-6R2 remains
+execution-unauthorized until a subsequent evidence-validity amendment is reviewed, explicitly
+USER-approved, independently accepted and USER-merged. Its detailed contents are not selected here.
+
+Recorded order remains **PT-6R1 -> PT-6R2 -> PT-7 -> PT-8A -> PT-8B -> PT-9**, with automatic progression
+paused at the reassessment gate. No PT-6R2 activation, new Program version or future base prediction.
+The [cross-phase audit](../../evaluation/product-trust-v3-cross-phase-integrity-audit.md)
 and all portfolio/live/security/merge/destructive gates remain in force. Runtime stays retained,
 A7-8 remains deferred and GitHub alone holds transient PR/branch lifecycle. CI does not grant acceptance.
 
@@ -229,7 +237,9 @@ work is required merely for this defect. Product/architecture/security decisions
 
 ### PT-6R2 — Provider terminality / latency-budget closure
 
-After independent PT-6R1 acceptance and USER merge, audit the actual Google GenAI request/deadline
+Activation is unauthorized until the evidence-validity reassessment gate above is released by the
+subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged amendment.
+PT-6R1 acceptance and merge alone are insufficient. Subject to that amendment, audit the actual Google GenAI request/deadline
 capability and provider/retry/job boundaries. Ensure one accepted job cannot remain provider-bound
 indefinitely. The original PT-2 `424846 ms` censor stays untouched; its upstream cause is unknown.
 Do not invent a timeout or silently choose retry tradeoffs. If a numeric provider/job latency budget
@@ -329,9 +339,11 @@ not imply that Kubernetes is required for every version of this product.
 
 ## Autonomous execution boundary
 
-Once the user explicitly approves `product-trust-v1`, Codex Cloud may choose and execute the next
-eligible repository Work Package from the program DAG without requiring a repeated "next task"
-instruction.
+The standing Goal's automatic selection/progression is paused at
+`PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT` after PT-6R1 independent acceptance and USER merge.
+It cannot select or execute PT-6R2 until the subsequent evidence-validity amendment is reviewed,
+explicitly USER-approved, independently accepted and USER-merged. This PR records only that pause;
+it does not implement the amendment or grant later execution authority.
 
 This autonomy does not include:
 

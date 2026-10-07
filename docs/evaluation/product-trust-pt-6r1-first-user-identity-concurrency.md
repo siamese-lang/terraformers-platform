@@ -1,8 +1,9 @@
 # PT-6R1 — first-user identity transaction recovery
 
-**HUMAN_REQUIRED: MERGE_CHECKPOINT.** Actual MariaDB before-state reproduced and the original one
-same-condition local after-state passed. Independent original-criteria acceptance and USER merge
-remain pending. The first measurement failure below remains historical evidence.
+**HUMAN_REQUIRED: MERGE_CHECKPOINT.** [Review 6031593870](https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031593870)
+accepts the engineering implementation and actual MariaDB before/after evidence at
+`9e668a5cd4bce17e2808b82b2521cc58c6d08894`. The governance correction's independent acceptance and
+USER merge remain pending. The first measurement failure below remains historical evidence.
 
 ## Authority and bound base
 
@@ -167,7 +168,7 @@ proof; they do not replace it.
 The existing MariaDB script and Backend Local Verification workflow remain byte-identical. CI
 automatically invokes the extended existing repository test; there is no workflow or dispatch.
 GitHub alone holds exact-head CI/PR lifecycle. No source changed after these successful validations.
-[Changed files](../evidence/product-trust-pt-6r1/changed-files.txt) and validation bind source/log
+[Original implementation changed files](../evidence/product-trust-pt-6r1/changed-files.txt) and validation bind source/log
 checksums. Final database readback has zero users; all eight existing migrations are successful;
 only the owned disposable local container is stopped/removed. Retained GCP runtime is untouched.
 
@@ -184,4 +185,11 @@ iteration: 1; initial product implementation: 1; product corrective retries: 0. 
 PT-2 is permanently final INCOMPLETE: 03–10 NOT_RUN, null aggregate rates, 424846 ms original censor,
 zero-product recovery failures; all frozen/historical bytes remain preserved. No PT-6R2 activation
 or future base, model/browser/cloud/IAM/IdP/teardown action. Do not self-accept or self-merge. Next
-actual gate is independent original-criteria review and explicit USER merge of this substantive PR.
+actual gate is independent review of the governance correction and explicit USER merge of this substantive PR.
+
+After PT-6R1 independent acceptance and USER merge, the durable gate is
+**HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT**. PT-6R2 is execution-unauthorized
+until a subsequent evidence-validity amendment is reviewed, explicitly USER-approved, independently
+accepted and USER-merged. This governance-only correction leaves all implementation/evidence bytes,
+execution base and repair/correction counters unchanged; no database measurement is rerun. It does
+not select that amendment's contents, a new Program version or a future execution base.

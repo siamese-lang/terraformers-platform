@@ -99,7 +99,10 @@ work_package:
     - corrected_deterministic_failure_repeats
     - browser_frontend_live_cloud_model_or_new_security_work_required
     - independent_review_and_explicit_merge_checkpoint
-  next_phase: PT-6R2
+  next_phase: null
+  post_completion_human_gate: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
+  blocked_next_phase: PT-6R2
+  next_phase_activation_requires: evidence_validity_amendment_reviewed_explicitly_USER_approved_independently_accepted_and_USER_merged
   next_phase_activated_here: false
   next_phase_execution_base_sha: null
   current_result:

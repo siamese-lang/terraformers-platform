@@ -1,0 +1,4 @@
+automatic_pr_workflow_policy=passed
+automatic_pr_workflow=.github/workflows/backend-local-verification.yml
+automatic_pr_workflow=.github/workflows/frontend-ci.yml
+automatic_pr_workflow=.github/workflows/terraform-static-verification.yml

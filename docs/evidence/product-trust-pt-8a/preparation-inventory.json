@@ -1,0 +1,112 @@
+{
+  "kind": "PREPARATION_TREE_BYTES_NOT_LIVE_OUTCOMES",
+  "executionBaseSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+  "hashSource": "Git staged normalized bytes; excludes this self-referential inventory",
+  "files": [
+    {
+      "path": ".agents/programs/product-trust-v1.yml",
+      "sha256": "669a6c224c8695822c53b929605360c38cfed8231aeaa5556a4e21fa13ab6fa3",
+      "sizeBytes": 39816
+    },
+    {
+      "path": ".agents/state/product-trust-v1.json",
+      "sha256": "3ef720aa152026533afa7250731ed41a4318f8188a12cb36273a23878bc49f3b",
+      "sizeBytes": 94417
+    },
+    {
+      "path": ".agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml",
+      "sha256": "573acab985ce2f169e4fb34f145ca92cd487b577c6e28e624f1109747494beb7",
+      "sizeBytes": 6895
+    },
+    {
+      "path": ".github/workflows/gcp-target-runtime-dependencies.yml",
+      "sha256": "338b0ebb20c167d338d71c79911934e53a078f0e53b315b695f6110a9b5acaf3",
+      "sizeBytes": 156038
+    },
+    {
+      "path": ".github/workflows/terraform-static-verification.yml",
+      "sha256": "2d23b7501bf5e40e48b62d51a97321f3e86717eeaf15ac219dfb530c71025c50",
+      "sizeBytes": 17582
+    },
+    {
+      "path": "docs/AI_PROJECT_STATE.md",
+      "sha256": "52492aa42e36d22b3c68e4bd850413c8aefa40c60715253cc5ccfe6191bd529e",
+      "sizeBytes": 63059
+    },
+    {
+      "path": "docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md",
+      "sha256": "5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5",
+      "sizeBytes": 17331
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/approved-request.md",
+      "sha256": "65ce4182207db6fde7887798a084400f9f1fcb4268ad9983e168a4b2de60883f",
+      "sizeBytes": 17833
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/authority.json",
+      "sha256": "fbcc88dc4f034884154fca05d1bfb385a66c0b0df56436c9596c365f713bf88e",
+      "sizeBytes": 923
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corpus-ci-regression.log",
+      "sha256": "28988523b7bfa26bb2bfc028559265c926294f4e42327a197e30aedfea166173",
+      "sizeBytes": 485
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/failed-validation/nonexistent-test-module.log",
+      "sha256": "a8c63937b8dad678a7d2be7f205b08905f961a044e9e0ec851b135a6079223a2",
+      "sizeBytes": 1134
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/focused-observer.log",
+      "sha256": "a115624924fd80947cf50dfad96b5674af653bb005a473bdf80285aa3ad644ad",
+      "sizeBytes": 116
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/focused-rag.log",
+      "sha256": "fb576643d568c336e01668a0a65b0839ed80529c95a21ee4ddf97b56c8e23550",
+      "sizeBytes": 500
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/historical-provenance-audit.json",
+      "sha256": "aba83b47812b405812b2b1c45f4eeecae4d1ade4e60424fd9a4b52697d296e7c",
+      "sizeBytes": 4043
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/validation.json",
+      "sha256": "969852c8e25fa28b8d385f840f9c487292c42d8a3494833de85af271aece0b78",
+      "sizeBytes": 4175
+    },
+    {
+      "path": "docs/plans/active/product-trust-modernization.md",
+      "sha256": "0538d4a4d1c837c48ffc7eb4f6983763e04b96768727b786f67faa42c7f8b1d3",
+      "sizeBytes": 22745
+    },
+    {
+      "path": "scripts/checks/ci_changed_scope.py",
+      "sha256": "46883ff5c5fcdc52276333e520f04adc696e74e075f9fcf137e08bc5283af558",
+      "sizeBytes": 12038
+    },
+    {
+      "path": "scripts/evaluation/pt8a-official-acceptance.py",
+      "sha256": "a82437ad527daf5549e3bf7a1acb7f1cb8577970aa6a176a82b8b1476030bad1",
+      "sizeBytes": 28769
+    },
+    {
+      "path": "scripts/evaluation/test_pt8a_official_acceptance.py",
+      "sha256": "027317b006649aa10f83ae497a1baf4bec29abe5d0188a569932e395abe17133",
+      "sizeBytes": 19116
+    },
+    {
+      "path": "scripts/rag/ingest-gcp-target-corpus.py",
+      "sha256": "aadf727a1508871a6752f6be1bcc539641f38ce1f74418c456b3164ec4c89f7b",
+      "sizeBytes": 27013
+    },
+    {
+      "path": "tests/rag/test_ingest_gcp_target_corpus.py",
+      "sha256": "5ed6295c83d75e5cc72f6b99232ad02922ec98414a025dcc9f936168e2cd0cb3",
+      "sizeBytes": 22346
+    }
+  ]
+}

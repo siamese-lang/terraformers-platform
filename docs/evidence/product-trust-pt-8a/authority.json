@@ -1,0 +1,28 @@
+{
+  "executionBaseSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+  "mainReadsAtActivation": 1,
+  "source": "git fetch origin main; FETCH_HEAD",
+  "expectedMain": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+  "predecessor": {
+    "pullRequest": 255,
+    "reviewedHeadSha": "b8645e564d4476c9ad8aad798d63d2a84b487787",
+    "independentAcceptanceCommentId": 6038261202,
+    "mergeSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+    "mergedAt": "2026-10-07T12:49:59Z"
+  },
+  "protectedMainRequiredChecks": [
+    {
+      "context": "terraform-static-verification",
+      "integration_id": 15368
+    },
+    {
+      "context": "backend-required-verification",
+      "integration_id": 15368
+    }
+  ],
+  "preparationOnly": true,
+  "liveExecutionAuthorized": false,
+  "liveReviewedSourceSha": null,
+  "frozenCandidateIdentity": "3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757",
+  "modelUnderTestRunCount": 0
+}

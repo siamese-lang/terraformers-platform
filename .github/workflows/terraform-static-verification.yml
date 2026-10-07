@@ -62,6 +62,7 @@ jobs:
             tests/rag/test_derive_corpus_v3.py \
             tests/rag/test_ingest_corpus.py \
             tests/rag/test_ingest_gcp_target_corpus.py
+          python3 -m unittest discover -s scripts/evaluation -p 'test_pt8a_official_acceptance.py'
 
       - name: Verify GCP target delivery and billing fallback gates
         run: |

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/pt8a-remaining-metadata-checks.py", line 14, in <module>
+    for path in historical:assert (root/path).read_bytes()==old(path),path
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: docs/evidence/product-trust-pt-7/approved-request.md

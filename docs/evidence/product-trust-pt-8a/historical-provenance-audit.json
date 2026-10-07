@@ -1,0 +1,116 @@
+{
+  "inspection": "READ_ONLY_GITHUB_NO_LIVE_QUERY",
+  "successfulCorrectedV4Run": 37344219922,
+  "headSha": "1ae69d589ac3965733818819792d98c5638e0ae5",
+  "artifactId": 11359644809,
+  "artifactDigest": "sha256:7b1d34681574a1006db0cb76b54a1dfcd6150dd70b5889d9f83a37b592598b7f",
+  "expiredAtInspection": false,
+  "boundedReceipt": {
+    "checksum": "da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a",
+    "corpus_version": "terraformers-reference-v4",
+    "document_count": 5395,
+    "elapsed_seconds": 713.757,
+    "embedding_model_id": "gemini-embedding-2",
+    "index_name": "terraformers-reference-v4",
+    "outcome": "ingested",
+    "representative_hit_ids": [
+      "tfaws-5.100.0-aws_accessanalyzer_analyzer-overview",
+      "tfaws-5.100.0-aws_accessanalyzer_analyzer-example-1-account-analyzer",
+      "tfaws-5.100.0-aws_accessanalyzer_archive_rule-overview"
+    ],
+    "vector_dimension": 1536
+  },
+  "boundedContract": {
+    "chunkCount": 5395,
+    "corpusVersion": "terraformers-reference-v4",
+    "documentCount": 5395,
+    "sha256": "da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a",
+    "sourceCount": 4534
+  },
+  "downloadedFileSha256": {
+    "receipt.json": "5deb97548eee27f0b7dd4632128d980d39ce010559ed097a6d22a66a55886445",
+    "coverage-report.json": "8472b49850a5ab6cb67beab2bf88f8d78832ecc321b3188839b18ed7c65d88c8",
+    "contract.json": "a7f9b5b6c44a52821c4e488b812aa4c2c554ccfce0d2e2443c01536ea4e2aa8f"
+  },
+  "readinessImplication": "MODEL_PROVENANCE_UNPROVEN",
+  "reasons": [
+    "Receipt has no live index UUID or retained-index binding.",
+    "Receipt outcome ingested does not distinguish 5395 fresh embeddings from same-ID skips.",
+    "HEAD-existing skips cannot prove source-body or model equality; no document-lineage proof in receipt."
+  ],
+  "futureRequirement": "Clean reviewed exact-v4 ingestion through existing approved path only after explicit live/model/cost authority; never relabel old mapping metadata.",
+  "history": [
+    {
+      "conclusion": "success",
+      "created_at": "2026-10-05T16:53:03Z",
+      "head_sha": "1ae69d589ac3965733818819792d98c5638e0ae5",
+      "id": 37344219922,
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-10-05T16:40:15Z",
+      "head_sha": "64aa8e9870aac281744cb8ca7cf6cf06cba2716a",
+      "id": 37342605040,
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-10-05T15:23:39Z",
+      "head_sha": "faaaf0f89376cddc59ac7a0f4caf7087cdb25878",
+      "id": 37332461233,
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "created_at": "2026-10-05T13:28:03Z",
+      "head_sha": "8f19da2dbcf2b810954a3a7e160b0999e3321bbf",
+      "id": 37317012191,
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-10-05T13:21:43Z",
+      "head_sha": "9700fd3d45e318f0b98032a1e337d239d066a67d",
+      "id": 37316192690,
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "created_at": "2026-09-28T03:48:46Z",
+      "head_sha": "155b7293a7d7a8cbd6c2e69eb6b45d86c08b25e8",
+      "id": 36375171823,
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-09-28T03:39:46Z",
+      "head_sha": "a8a2aebcabc12e85f0f4690da0ca9668c260d651",
+      "id": 36374589690,
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-09-28T03:28:30Z",
+      "head_sha": "20d36d3325648bc034d2d3cade48354d6724ada1",
+      "id": 36373857760,
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-09-28T03:16:23Z",
+      "head_sha": "d325f052d4d84ed926457b92ddef68af608551bf",
+      "id": 36373081665,
+      "run_attempt": 1,
+      "status": "completed"
+    }
+  ]
+}

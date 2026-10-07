@@ -2,42 +2,51 @@
 
 ## Status
 
-**Approved Product Trust v4 / PT-6R2 COMPLETE / PT-7 repository implementation prepared**
+**Approved Product Trust v4 / PT-7 COMPLETE / PT-8A repository preparation only**
 
-[PR #254 independent review 6037528315](https://github.com/siamese-lang/terraformers-platform/pull/254#issuecomment-6037528315)
-accepted head `987ec944c84ac74f99f2c2f3ae38b0bc16499f8a`; USER merged it as
-**`6228d69b1da604e816b3e0a826563d79b8bcd844`**. Explicit USER authorizes PT-7 on that once-read
-main. [PT-7 Work Package](../../../.agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml)
-freezes the narrow scope and deterministic procedure before implementation. No refresh/rebase/rebind.
+[PR #255 independent review 6038261202](https://github.com/siamese-lang/terraformers-platform/pull/255#issuecomment-6038261202)
+accepted `b8645e564d4476c9ad8aad798d63d2a84b487787`; USER merged as
+**`2bdb73d20486262856bfa6b680b7bf221fa23ca0`**, bound once for this explicit PT-8A preparation.
+PT-7 completion reconciles inside this substantive PR. Ruleset 24074505 requires Terraform and
+backend stable checks, integration 15368; authorized administrator changed only the added check.
+Original PT-7 base/counters/read-only snapshot are preserved as historical evidence.
 
-[PT-7 handoff/evidence](../../evaluation/product-trust-pt-7-ci-delivery-handoff.md) audits two gaps:
-backend PR checks skipped the real production Dockerfile, and protected main required only Terraform.
-Existing Backend Local Verification now separates backend and production-image scope, runs existing
-Maven/package/MariaDB when needed, and always creates `backend-required-verification`. Real unchanged
-Dockerfile builds only for Dockerfile/pom/src/main changes and must embed the exact PR head revision.
-This CI-only PR selects backend regression, not Docker. Normal exact-head CI is GitHub-authoritative
-and is not acceptance or new PT-6R1 concurrency evidence. Local deterministic validation is recorded
-separately; no live runtime/tooling is started.
+[PT-8A Work Package](../../../.agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml)
+and [frozen procedure](../../evaluation/product-trust-pt-8a-official-acceptance-procedure.md) declare
+release/readiness, once-only observations and post-inference independent ten-dimension scoring
+before any outcome. Live reviewed source/image are null until preparation acceptance/USER merge
+and separate **HUMAN_REQUIRED: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE** approval.
+No refresh/rebase/rebind, future source prediction, state-sync PR, dispatch, publish or rollout.
 
-After successful exact-head CI, stop at **HUMAN_REQUIRED: PT7_REQUIRED_CHECK_RULESET_CHANGE**.
-The observed ruleset still requires only `terraform-static-verification`; proposed addition is only
-`backend-required-verification`. Ruleset mutation requires explicit USER approval; all other settings
-are preserved. PT-7 independent acceptance and USER merge remain pending. No PT-8A execution.
+Existing RAG tooling now compares every expected/live ID and non-vector source field, mapping,
+checksum and bound clean-ingestion model/index lineage. Historical successful corrected v4 receipt
+37344219922/artifact 11359644809 lacks UUID/fresh-vs-skipped proof: **MODEL_PROVENANCE_UNPROVEN**.
+No current live readiness is established; no automatic reembedding. Existing protected runtime
+workflow supports one observation per manual dispatch, then independent review before the next.
+Official frozen image acquisition fails closed on host/redirect/raw hash/size/media/dimensions.
+No truth enters inference and no model judge or new workflow is added.
 
-PT-6R2 original base `406981a8c629a02503f5660453dcc7921b8d5177`, all failed/successful evidence,
-auto repairs 1 and human correction 1 are unchanged. Accepted Option D is original 480000-ms age
-plus conditional Δ=P+B+S+T (5s injected model for P≤2s, B/S/T≤1s), not a production DB SLO,
-outage guarantee or hard thread cancellation. It is not deployed/reconfigured by PT-7.
-PT-6R1 code, before/after evidence and counters also remain exact.
+[Review 6039675842](https://github.com/siamese-lang/terraformers-platform/pull/256#issuecomment-6039675842)
+requires executable clean model lineage. The USER-authorized repository-only correction prepares
+`pt8a-clean-v4` in the existing ingestion workflow: historical project source/checksum, exact
+pre-write mapping/full IDs/non-vector content, all-5395 fresh vector overwrites, zero skips, same
+retained UUID and exact post-content. Explicit later live approval binds source/candidate/v2
+procedure/purpose/model/corpus. Obtain its completed receipt **before first readiness dispatch**;
+partial/mixed failures stop, and content mismatch requires a separate destructive-rebuild decision.
+Superseded v1 bytes/hash remain preserved; autonomous repair 1 is unchanged, human correction 1
+is separate. No live operation or automatic rerun. Preparation remains independently unaccepted.
 
-V4 AWS revision 2 identity **`3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757`**
-remains externally frozen; immutable candidate bytes, model count 0 and official execution unauthorized
-are unchanged. Historical PT-1 identity `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`
-is controlled reference-derived regression. PT-2 is permanently final INCOMPLETE: 03–10 NOT_RUN,
-four aggregate rates null, original 424846-ms censor and zero-product recovery failures unchanged.
-No further PT-2 dispatch. Retain the single representative runtime; A7-8 deferred and teardown
-unauthorized. Remaining **PT-7 -> PT-8A -> PT-8B -> PT-9** preserves every readiness/live/model/cost/
-security/merge/destructive gate. GitHub owns transient PR lifecycle; no state-sync PR.
+AWS official revision 2 identity **`3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757`**
+remains externally frozen with all bytes unchanged, A–E NOT_RUN and model count 0. Historical
+PT-1 is controlled reference-derived; PT-2 is permanently final INCOMPLETE, 03–10 NOT_RUN,
+aggregate rates null, original 424846-ms censor and zero-product recovery failures unchanged.
+PT-6R1 and PT-6R2 production/evidence/counters/Option D/conditional Δ remain exact; no new
+behavioral measurement. Normal required CI is regression/merge evidence only, not acceptance.
+
+Remaining **PT-8A -> PT-8B -> PT-9** preserves all live/model/cost/security/merge/destructive gates.
+Retain the representative runtime; teardown unauthorized. GitHub owns transient PR lifecycle.
+Preparation cloud/model/OpenSearch/embedding/image fetch/upload/publish/rollout/browser/manual DB/
+workflow-dispatch counts are zero. No final trust or universal diagram generalization is claimed.
 
 ## Why this reassessment exists
 
@@ -245,20 +254,13 @@ Accepted Δ is conditional on operating scheduler/DB bounds, never a production 
 
 ### PT-7 — CI/CD trust gates and operational handoff
 
-**Repository implementation prepared; exact-head normal CI and independent acceptance pending.**
-The [Work Package](../../../.agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml) binds
-6228d69b once. Existing workflow removes its PR paths filter, classifies backend/image scopes,
-conditionally reuses both existing regression jobs and always creates the fail-closed
-`backend-required-verification`. Production-image scope is exactly backend Dockerfile/pom/src/main.
-The real Dockerfile is sole Terraform/provider pin/schema/positive/negative authority; no new workflow
-or duplicate verifier. Non-backend/test-only/image-input and gate failure cases are deterministic tests.
-
-[One handoff document](../../evaluation/product-trust-pt-7-ci-delivery-handoff.md) records actual
-read-only ruleset settings and unchanged manual source→SHA tag→digest→retained rollout→deployed
-source/v4 identity→later exact serving/retrieval readiness. No live action/readiness claim.
-Successful normal CI leads to **PT7_REQUIRED_CHECK_RULESET_CHANGE**, proposing only one added check
-while preserving Terraform and every other setting. Explicit USER approval is still required for
-ruleset mutation, then independent phase acceptance and USER merge. PT-8A remains unauthorized.
+**COMPLETE** after independent acceptance 6038261202 at b8645e56 and USER merge 2bdb73d2.
+[Historical Work Package](../../../.agents/work-packages/product-trust-pt-7-ci-delivery-trust-v1.yml)
+retains once-bound 6228d69b and prepared evidence. Existing backend/image scopes, actual Dockerfile
+pin/schema/build authority and stable required backend gate were accepted. Authorized administrator
+added only backend-required-verification/15368 beside Terraform/15368; all other ruleset settings
+remain exact. The [handoff](../../evaluation/product-trust-pt-7-ci-delivery-handoff.md) remains the
+source→SHA-tag→digest→retained-rollout authority. Completion grants no live/model authority.
 
 ### PT-8A — Final external official AI/RAG deployed acceptance
 
@@ -276,16 +278,22 @@ subset do not establish accepted final external-input performance.
    `gemini-embedding-2`, 1536 dimensions and immutable corpus/checksum/model/content equivalence.
    Required universe: schema 1526, official/selected 1514, gaps 0, provider chunks 5387,
    project decisions 8, total 5395. Counts/config names alone do not establish exact index identity.
-3. Distinguish exact reusable complete v4, partial, stale/mixed model space, wrong model/dimension
-   and missing index. Reuse exact proven v4; do not ceremonially re-embed/re-ingest 5395 documents.
-   Unprovable equivalence fails readiness before cases. Existing reviewed build/embed/ingest only
-   under the appropriate separate live/model/cost authority. Never add case labels or truth to RAG.
+3. Because historical lineage is already MODEL_PROVENANCE_UNPROVEN, under explicit live authority
+   complete one `pt8a-clean-v4` pass **before first readiness dispatch**. Require exact historical
+   sources/checksum, full non-vector content/mapping admission; mismatch stops for a separate
+   destructive-rebuild decision. Re-embed all 5395 vectors, zero skips, same UUID and exact post-content.
+   Distinguish exact reusable complete v4, partial, stale/mixed, wrong model/dimension, missing index
+   and MODEL_PROVENANCE_UNPROVEN. Only the completed clean receipt permits readiness; no partial
+   receipt, automatic retry, metadata relabeling, known-failing readiness or history reset.
+   Reuse that proven receipt thereafter. Never add case labels or truth to RAG.
 4. Correlated deployed-backend retrieval returns official reference evidence from the intended
    exact index. This is serving readiness, not a semantic case PASS.
 5. Separate explicit **FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE** approval immediately
    before once-only official-input execution. Earlier cloud/model actions also need their authority.
 6. Fetch raw frozen external image URLs; exact SHA/media/dimensions mismatch stops before upload.
 
+The frozen preparation procedure uses one case per dispatch and independent ten-dimension
+post-inference review before the next case; no stale artifact can reset the once-only ledger.
 Submit A–E in frozen order through authenticated production upload/object persistence -> durable
 AnalysisJob -> image/facts -> embedding/live v4 retrieval -> configured-model generation/closure ->
 real CLI draft validation -> persisted result/quality -> API readback, **once per case**. No correctness
@@ -353,12 +361,12 @@ not imply that Kubernetes is required for every version of this product.
 
 ## Autonomous execution boundary
 
-Automatic Goal progression stops after exact-head normal CI at `PT7_REQUIRED_CHECK_RULESET_CHANGE`.
-The observed required check remains Terraform-only; no ruleset mutation is authorized. Explicit USER
-ruleset authority, independent PT-7 acceptance and USER merge are required before later phase
-readiness, and separate live/model/cost approval precedes official inputs. CI is not acceptance.
-Original execution bases, historical failures/counters and frozen bytes remain exact. No state-sync
-PR, predicted future base, manual workflow rerun, new runtime or live operation is authorized here.
+Current repository-only preparation stops at `FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE`.
+PT-7 acceptance, USER merge and authorized required-check change are complete. PT-8A preparation
+still requires independent review/USER merge and separate live authority; exact source/image/content/
+model-lineage/retrieval readiness precedes official A. CI does not grant acceptance. Original bases,
+historical failures/counters and frozen bytes remain exact. No state-sync PR, predicted future live
+source, manual workflow rerun, new runtime, ingestion or live operation is authorized here.
 
 This autonomy does not include:
 

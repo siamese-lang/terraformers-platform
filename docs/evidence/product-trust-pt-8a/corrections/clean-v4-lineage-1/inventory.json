@@ -1,0 +1,143 @@
+{
+  "reviewedHeadSha": "e3d3b1ceaaf9bcee9a979273850482d6f00e5663",
+  "executionBaseSha": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+  "identityScope": "Git index normalized file bytes; inventory excludes itself. Includes unchanged prior procedure as superseded evidence.",
+  "files": [
+    {
+      "path": ".agents/programs/product-trust-v1.yml",
+      "sha256": "fd45584d485a14a76fbdf2e1f57091de3a473fe789b6b32a055b53418fe5f0ce",
+      "sizeBytes": 40771
+    },
+    {
+      "path": ".agents/state/product-trust-v1.json",
+      "sha256": "e05873e89daf81f489ebecadf37c7d0c6ffce5414769911378d2ff57a76c0feb",
+      "sizeBytes": 97091
+    },
+    {
+      "path": ".agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml",
+      "sha256": "b1bff05f402f8f5fb15e560e6bafbff2008890652783db05c9487c048dc0a383",
+      "sizeBytes": 8467
+    },
+    {
+      "path": ".github/workflows/gcp-target-corpus-ingestion.yml",
+      "sha256": "526a5f8ac7a5c368d04c1b63d782fae06a18d8607622ee05063aa3faccb2e0d5",
+      "sizeBytes": 27433
+    },
+    {
+      "path": "docs/AI_PROJECT_STATE.md",
+      "sha256": "6ea8c2458734909da239f82975b8e1ad5439e54e95f039d5fea6f5d85cc46158",
+      "sizeBytes": 63988
+    },
+    {
+      "path": "docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md",
+      "sha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+      "sizeBytes": 22522
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/actionlint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/approved-correction.md",
+      "sha256": "97df7aaf855a52d5b11d942ab05d98abab519ca8b3824834d3711ed4b9666fa9",
+      "sizeBytes": 5234
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/ci-scope.log",
+      "sha256": "d6ad04cb151571cb41f03416c547f65efa866b1fc5cb28ba64ccc30e725c5300",
+      "sizeBytes": 122
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/failed-metadata-output.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/focused-observer.log",
+      "sha256": "448c76019b692cc408025d8da1deb207e9d6a488776376dcd99c1d790ddba9bc",
+      "sizeBytes": 118
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/focused-rag.log",
+      "sha256": "9c13f360114717bd87ce70ecd0cbe2dc9aefb2b66d1d924eb11e48d04891bcc6",
+      "sizeBytes": 3702
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/git-diff-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/metadata-check.log",
+      "sha256": "b2b7315a73303ae50f3026feb1553b0bc1688d1a2c1e4f65cdb8836c438e4f16",
+      "sizeBytes": 932
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/python-syntax.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/result.md",
+      "sha256": "92fddf9503645051a7eff45b892f546418358d0d7deaec8fe3561dd0c6a00d08",
+      "sizeBytes": 2277
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/superseded-procedure-v1.md",
+      "sha256": "5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5",
+      "sizeBytes": 17331
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/unfinished-metadata-check.log",
+      "sha256": "6c66d4fb2c6bf367db9a6efe7e357db6aee969c1adb8ab66ec75ba7ccf2d9b08",
+      "sizeBytes": 319
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/unfinished-metadata-output.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/validation.json",
+      "sha256": "ff8fdfd87fe22c0230dac1aec15d7a0fb215dbf74eadd3c7eb98ea08dd9718bc",
+      "sizeBytes": 4803
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/workflow-policy.log",
+      "sha256": "aa6576e868f637b695ad00a1486200a36f8fc15bc0288cdee0effcb38bf7f58a",
+      "sizeBytes": 237
+    },
+    {
+      "path": "docs/plans/active/product-trust-modernization.md",
+      "sha256": "05a6ded48f212621f144771819980610d9c76b727a0c50d081472a79c43b26b3",
+      "sizeBytes": 23972
+    },
+    {
+      "path": "scripts/evaluation/pt8a-official-acceptance.py",
+      "sha256": "488774f9bc1b98956fc7c45806ef40d51bc0c1dc8bcfe69b7a74931fc353bd72",
+      "sizeBytes": 29341
+    },
+    {
+      "path": "scripts/evaluation/test_pt8a_official_acceptance.py",
+      "sha256": "1d9e4ca422667da1d8f95a312194c2796b5230867be1659d76c3eabe992783c4",
+      "sizeBytes": 20495
+    },
+    {
+      "path": "scripts/rag/ingest-gcp-target-corpus.py",
+      "sha256": "1e49de471c79592b1805b87bd4f1485d2a20401c9eab60724a561ea02e211133",
+      "sizeBytes": 40003
+    },
+    {
+      "path": "tests/rag/test_ingest_gcp_target_corpus.py",
+      "sha256": "b05865fcdeb57fc87bce6b182270f2d18c3d62b4ac39fdd4f7dbe406d0ca04d6",
+      "sizeBytes": 36619
+    }
+  ],
+  "historicalEvidenceChangedFiles": [],
+  "productionFilesChanged": false,
+  "credentials": false,
+  "vectors": false,
+  "officialImages": false,
+  "liveActions": 0
+}

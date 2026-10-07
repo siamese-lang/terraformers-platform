@@ -1,0 +1,7 @@
+............RAG corpus contract passed: corpusVersion=terraformers-reference-v1 documents=12 chunks=12 sources=8 sha256=d6b47a15c6a41f4d8fd11ba931fa2dd677ff8ae635837fcefda0899efa3e9089
+RAG corpus contract passed: corpusVersion=terraformers-reference-v1 documents=12 chunks=12 sources=8 sha256=59b51fcd2e584aee39cd1c39dc5d6ba0587643b15cb1b620c9e8f90776a7a00b
+............................
+----------------------------------------------------------------------
+Ran 40 tests in 0.744s
+
+OK

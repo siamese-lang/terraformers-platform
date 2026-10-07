@@ -1,0 +1,130 @@
+work_package:
+  id: product-trust-pt-8a-official-deployed-acceptance-v1
+  program: product-trust-v1
+  phase: PT-8A
+  kind: repository_preparation_then_separately_gated_live_acceptance
+  status: HUMAN_REQUIRED
+  approved_base_sha: 2bdb73d20486262856bfa6b680b7bf221fa23ca0
+  execution_base_sha: 2bdb73d20486262856bfa6b680b7bf221fa23ca0
+  activation:
+    main_reads_at_activation: 1
+    refresh_rebase_rebind: prohibited
+    subsequent_main_drift: HUMAN_REQUIRED_MAIN_DRIFT
+  authority:
+    request: docs/evidence/product-trust-pt-8a/approved-request.md
+    predecessor_review: 6038261202
+    predecessor_reviewed_head: b8645e564d4476c9ad8aad798d63d2a84b487787
+    predecessor_USER_merge: 2bdb73d20486262856bfa6b680b7bf221fa23ca0
+    clean_v4_correction_review: 6039675842
+    clean_v4_correction_authority: docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/approved-correction.md
+    preparation_authorized: true
+    live_execution_authorized: false
+    live_reviewed_source_sha: null
+    live_source_binding: BIND_ONLY_AFTER_PREPARATION_INDEPENDENT_ACCEPTANCE_USER_MERGE_AND_LIVE_GATE
+  improvement_axes: [AI_RAG_evidence_validity, Backend_reliability]
+  representative_case: Case_A_exact_serving_and_external_official_product_trust_with_Case_C_source_bound_delivery
+  objective: >
+    Freeze the final release/readiness, official-case and post-inference scoring procedure before
+    outcomes. Reconcile accepted PT7 here; close same-ID/content and model-lineage readiness gaps
+    using existing RAG tooling and one operation in the existing protected runtime workflow.
+  allowed_paths:
+    - .agents/programs/product-trust-v1.yml
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md
+    - docs/evidence/product-trust-pt-8a/**
+    - scripts/rag/ingest-gcp-target-corpus.py
+    - tests/rag/test_ingest_gcp_target_corpus.py
+    - scripts/evaluation/pt8a-official-acceptance.py
+    - scripts/evaluation/test_pt8a_official_acceptance.py
+    - .github/workflows/gcp-target-corpus-ingestion.yml
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+    - .github/workflows/terraform-static-verification.yml
+    - scripts/checks/ci_changed_scope.py
+  allowed_actions:
+    - read_GitHub_reviews_artifacts_run_history_ruleset_and_main_drift_metadata
+    - repository_only_preparation_deterministic_tests_commit_push_and_one_PR
+    - normal_PR_CI_no_dispatch_or_manual_rerun
+    - one_same_failure_class_bounded_repair_with_failed_evidence_preserved
+  prohibited_actions:
+    - any_live_GCP_OpenSearch_model_embedding_image_fetch_upload_publish_rollout_or_teardown
+    - production_prompt_model_retrieval_SDK_frontend_IAM_security_changes
+    - frozen_candidate_truth_image_URL_hash_dimension_or_case_order_changes
+    - new_workflow_vector_DB_LLM_judge_or_orchestration_framework
+    - PT2_reopening_or_historical_evidence_promotion
+    - self_accept_merge_or_future_live_source_prediction
+  frozen_input:
+    dataset: terraformers-aws-official-v1
+    revision: 2
+    identity: 3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757
+    order: [aws-official-a, aws-official-b, aws-official-c, aws-official-d, aws-official-e]
+    model_under_test_runs: 0
+    candidate_files: IMMUTABLE_PRE_APPROVAL_SNAPSHOT_EXTERNAL_APPROVAL_AUTHORITATIVE
+  measurement_procedure:
+    frozen_before_outcomes: true
+    version: pt8a-official-acceptance-v2
+    sha256: d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823
+    document: docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md
+    superseded_version: pt8a-official-acceptance-v1
+    superseded_sha256: 5baee129bf48603fde3659b03e5c74c026730155b7af3785f63bc56cd9413ab5
+    superseded_document: docs/evidence/product-trust-pt-8a/corrections/clean-v4-lineage-1/superseded-procedure-v1.md
+    clean_receipt_before_first_readiness_dispatch: required_no_known_failure_or_history_reset
+    release_readiness_first: exact_reviewed_source_image_digest_deployment_v4_content_model_provenance_then_correlated_backend_retrieval
+    readiness_query_sample: one_existing_PT1_05_private_web_fleet_controlled_reference_input_authenticated_job_mechanism_only_not_PT2_or_official_acceptance
+    execution_unit: one_official_case_per_manual_dispatch_then_post_inference_independent_semantic_review_before_next_case
+    official_first_uploads_per_case: 1
+    result_driven_retry_resubmission: prohibited
+    ambiguous_POST_acceptance: STOP_NO_RESUBMISSION
+    later_cases_on_material_defect_or_pending_review: NOT_RUN
+    truth_in_inference_request_or_corpus: prohibited
+    scoring_dimensions: [architecture_classification, core_components_services, directed_relationships, containment_cardinality, forbidden_invented_interpretations, resource_intent, personalized_inputs, official_evidence_closure, real_cli_reviewable_draft, persisted_visible_trust]
+    false_trusted_success_required: 0
+    evidence: hashes_counts_sanitized_product_and_retrieval_ids_generated_HCL_and_immutable_run_artifact_inventory
+  exact_v4:
+    index: terraformers-reference-v4
+    model: gemini-embedding-2
+    dimension: 1536
+    document_count: 5395
+    provider_source: f7a3b98da589ab1d52756b0dcee0dbf2de83d635
+    historical_corpus_project_source: 1ae69d589ac3965733818819792d98c5638e0ae5
+    historical_corpus_checksum: da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a
+    preserve_project_decision_provenance_no_governance_SHA_ceremonial_rebuild: true
+    verification: full_mapping_total_ID_set_all_non_vector_source_fields_canonical_content_identity_and_bound_clean_ingestion_receipt
+    historical_model_lineage: MODEL_PROVENANCE_UNPROVEN
+    only_reusable_class: EXACT_REUSABLE_COMPLETED_V4
+    clean_mode: pt8a-clean-v4_in_existing_gcp_target_corpus_ingestion_workflow
+    clean_confirmation: REEMBED_REVIEWED_PT8A_CLEAN_V4
+    live_gate: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE_exact_source_candidate_procedure_purpose_corpus_model
+    pre_mutation_admission: exact_mapping_full_IDs_every_non_vector_field_UUID_or_HUMAN_REQUIRED_DESTRUCTIVE_INDEX_REBUILD_DECISION
+    clean_overwrite: all_5395_vectors_same_ID_no_upsert_zero_existing_ID_skips_no_metadata_relabel
+    clean_receipt: embedded_this_run_5395_skipped_existing_0_same_UUID_exact_pre_post_content_identity_completed_bound_GitHub_artifact
+    partial_receipt: never_reusable_preserve_failure_no_automatic_retry_resume_or_rebuild
+    non_pass_class_action: STOP_BEFORE_OFFICIAL_CASES_NO_AUTOMATIC_REEMBED_OR_REBUILD
+  acceptance_criteria:
+    - PT7_ACCEPTED_USER_MERGED_and_both_protected_main_checks_reconciled_without_new_state_sync_PR
+    - frozen_candidate_bytes_and_all_PT2_PT6_PT6R1_PT6R2_evidence_counters_preserved
+    - full_ID_and_non_vector_body_comparison_rejects_same_count_changed_or_replaced_documents
+    - mapping_checksum_model_dimension_and_clean_receipt_retained_index_binding_fail_closed
+    - verifier_issues_no_embedding_requests_and_persists_only_bounded_hashes_counts_diff_summaries
+    - exact_image_URL_host_raw_hash_size_media_dimensions_fail_closed_before_upload
+    - real_authenticated_AnalysisJob_path_no_direct_model_call_or_truth_payload
+    - accepted_case_consumed_once_pre_acceptance_and_unknown_acceptance_distinguished
+    - independent_post_inference_review_required_before_next_case_and_material_defect_stops
+    - ordinary_v3_and_v4_HEAD_skip_behavior_preserved
+    - clean_mode_pins_historical_project_source_checksum_and_complete_broad_v4_contract
+    - exact_live_authority_required_before_embedding_and_clean_receipt_before_first_readiness
+    - all_expected_ID_vectors_overwritten_once_pre_post_UUID_content_exact_partial_receipts_rejected
+    - normal_required_PR_CI_and_proportional_deterministic_checks_recorded_without_self_acceptance
+    - live_execution_authorized_false_and_future_live_source_null_at_final_gate
+  auto_repair_limit: 1
+  auto_repairs_used: 1
+  bounded_repair: validation_module_selection_only_failed_log_preserved_no_production_change
+  human_corrective_iterations: 1
+  stop_on:
+    - FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
+    - MAIN_DRIFT
+    - repeated_or_changed_failure_class_or_exhausted_repair
+    - broader_architecture_product_security_or_cost_decision
+    - independent_acceptance_and_USER_merge

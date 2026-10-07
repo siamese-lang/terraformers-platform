@@ -1,0 +1,224 @@
+work_package:
+  id: product-trust-pt-6r2-provider-terminality-v1
+  program: product-trust-v1
+  phase: PT-6R2
+  kind: audit_and_conditional_implementation
+  status: HUMAN_REQUIRED
+  approved_base_sha: BIND_AT_ACTIVATION
+  execution_base_sha: 406981a8c629a02503f5660453dcc7921b8d5177
+  activation:
+    main_reads_at_activation: 1
+    expected_and_observed_remote_main: 406981a8c629a02503f5660453dcc7921b8d5177
+    refresh_rebase_or_rebind: prohibited
+    subsequent_main_drift: HUMAN_REQUIRED_MAIN_DRIFT
+  authority:
+    source: USER_explicit_PT6R2_audit_and_decision_gate_request
+    request: docs/evidence/product-trust-pt-6r2/approved-request.md
+    predecessor_pull_request: 253
+    independent_acceptance_comment: 6032563396
+    USER_approval_comment: 6032637762
+    predecessor_reviewed_head: 690b436d69c4b1671e86b8aeb2b2249623291276
+    predecessor_merge_sha: 406981a8c629a02503f5660453dcc7921b8d5177
+    authority_evidence: docs/evidence/product-trust-pt-6r2/authority.json
+    numeric_budget_or_retry_policy_approved: true
+    production_implementation_authorized_before_decision: false
+    live_model_cloud_OpenSearch_authorized: false
+  improvement_axis: Backend_reliability
+  representative_case: Case_A_provider_boundary_and_Case_B_durable_accepted_job_terminality
+  objective: >
+    Audit the exact Google GenAI 1.72.0 transport, every production provider call, timeout translation,
+    lease/retry/finalization and historical latency. Reconcile the accepted v4 amendment and exact
+    immutable AWS candidate approval here. Prepare grounded budget/retry options without selecting
+    them. After explicit USER decision, continue this same Work Package/PR with its bounded
+    implementation and deterministic hang/timeout evidence, preserving all Program criteria.
+  current_step: IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING
+  allowed_paths_before_decision:
+    - .agents/programs/product-trust-v1.yml
+    - .agents/state/product-trust-v1.json
+    - .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
+    - .agents/work-packages/product-trust-v4-evidence-validity-amendment-v1.yml
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+    - docs/evaluation/product-trust-v4-evidence-validity-audit.md
+    - docs/evaluation/product-trust-pt-6r2-provider-terminality.md
+    - docs/evidence/product-trust-pt-6r2/**
+  allowed_actions_before_decision:
+    - read_GitHub_main_once_at_activation_then_PR_review_approval_merge_and_drift_metadata
+    - read_exact_bound_source_tests_configuration_and_historical_artifacts
+    - fetch_official_exact_SDK_release_source_and_compare_cached_binary_and_tag_without_requests
+    - reconcile_v4_approval_freeze_externally_without_editing_identity_bound_candidate_files
+    - write_governance_audit_and_unselected_decision_options
+    - proportional_repository_metadata_source_binding_arithmetic_and_diff_validation
+    - commit_push_open_one_PT6R2_PR_without_CI_skip_directive
+  immutable_frozen_candidate:
+    revision: 2
+    identity: 3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757
+    files:
+      - evaluation/terraformers-aws-official-v1/candidate-manifest.json
+      - evaluation/terraformers-aws-official-v1/candidate-identity.json
+      - docs/evaluation/product-trust-aws-official-truth-candidate.md
+    later_approval_authority: docs/evidence/product-trust-pt-6r2/authority.json
+    model_under_test_run_count: 0
+    freeze_grants_live_authority: false
+  budget_decision:
+    gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+    gate_resolved_by_USER: true
+    authority_required: USER
+    brief: docs/evaluation/product-trust-pt-6r2-provider-terminality.md
+    options: docs/evidence/product-trust-pt-6r2/audit.json
+    selected_option: D
+    USER_decision_evidence: docs/evidence/product-trust-pt-6r2/policy-d-decision.json
+    USER_resume_request: docs/evidence/product-trust-pt-6r2/approved-policy-d-resume.md
+    approved_request_timeouts_ms:
+      facts: 370000
+      generation_and_compact_and_repair: 220000
+      initial_and_closure_embedding: 10000
+    approved_job_budget_ms: 480000
+    approved_SDK_attempts: 1
+    approved_SDK_retryable_HTTP_statuses: []
+    approved_application_max_attempts: 1
+    accepted_to_terminal_contract: ORIGINAL_ACCEPTED_AT_480000_MS_PLUS_P_B_S_T_CONDITIONAL_ON_OPERATING_BOUNDS_INDEPENDENT_ACCEPTANCE_PENDING
+    implementation_path_authorization: USER_APPROVED_MINIMUM_PROVIDER_JOB_CORRECTION_SUBJECT_TO_TERMINAL_SCOPE_GATE
+  approved_policy_D_continuation:
+    authority: explicit_USER_reply_and_attached_resume_request
+    allowed_paths:
+      - .agents/programs/product-trust-v1.yml
+      - .agents/state/product-trust-v1.json
+      - .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
+      - docs/AI_PROJECT_STATE.md
+      - docs/plans/active/product-trust-modernization.md
+      - docs/evaluation/product-trust-pt-6r2-provider-terminality.md
+      - docs/evidence/product-trust-pt-6r2/**
+      - backend/src/main/java/com/terraformers/modernization/analysis/**
+      - backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java
+      - backend/src/main/java/com/terraformers/modernization/reference/VertexEmbeddingProvider.java
+      - backend/src/main/resources/application-prod.yml
+      - backend/src/test/java/com/terraformers/modernization/analysis/**
+      - backend/src/test/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractorTest.java
+      - backend/src/test/java/com/terraformers/modernization/reference/VertexEmbeddingProviderTest.java
+    current_bounded_validation:
+      - reuse_existing_AnalysisJobStateServiceTest_H2_and_mock_object_write_for_local_lock_probe
+      - one_temporary_test_method_no_committed_framework_no_MariaDB_or_live_I_O
+      - assert_competing_durable_terminal_update_waits_for_existing_result_finalization_row_lock
+      - restore_only_our_temporary_test_edit_and_verify_original_test_bytes
+      - no_production_write_before_terminal_scope_feasibility_assessment
+    conditional_implementation_validation:
+      - exact_typed_stage_budgets_SDK_attempts_one_and_empty_retryable_statuses
+      - real_SDK_timeout_chain_and_non_timeout_interruptions
+      - facts_generation_embedding_timeout_and_preserved_MAX_TOKENS_compact_fallback
+      - original_accepted_age_pending_and_blocked_running_cutoff_healthy_heartbeat_and_late_result_fencing
+      - actual_one_durable_attempt_no_process_loss_reclaim_loop_truthful_PT4_failure_quality
+      - focused_tests_then_proportional_existing_backend_suite
+    gate_if_scope_blocks:
+      name: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+      condition: DB_transaction_or_result_finalization_lock_prevents_bounded_delta_without_materially_broader_architecture_change
+      action: STOP_without_redesigning_finalization_or_weakening_cutoff
+    prohibited:
+      - SDK_upgrade_prompt_model_retrieval_output_policy_or_frozen_candidate_changes
+      - broad_GCS_OpenSearch_MariaDB_or_network_hardening
+      - live_model_GCP_OpenSearch_MariaDB_browser_PT2_PT7_or_new_workflow_framework
+      - self_acceptance_merge_or_cutoff_weakening
+  audit_step_acceptance:
+    - exact_base_PR253_review_USER_approval_merge_and_immutable_candidate_identity_bound
+    - SDK_1_72_0_timeout_units_precedence_retry_defaults_exceptions_headers_and_cancellation_audited
+    - production_call_graph_derived_including_truncation_closure_embedding_and_single_repair
+    - current_heartbeat_and_synchronous_provider_terminality_defect_mechanically_explained
+    - existing_latency_values_bound_to_stage_artifact_completed_or_censored_and_comparability
+    - two_to_four_unselected_options_with_calculated_bounds_explicit_retry_layers_and_residuals
+    - production_candidate_bytes_historical_evidence_and_counters_unchanged
+    - stop_for_USER_budget_decision_without_production_live_or_later_phase_execution
+  phase_completion_criteria_preserved:
+    - actual_SDK_deadline_and_provider_retry_job_boundaries_are_audited
+    - any_required_numeric_budget_or_retry_policy_choice_has_explicit_USER_approval
+    - timeout_and_hang_injection_prove_truthful_bounded_terminal_semantics_for_accepted_jobs
+    - bounded_terminal_contract_and_failure_semantics_are_durable_and_independently_accepted
+    - PT4_truthful_waiting_status_and_original_PT2_censor_are_preserved
+    - no_claim_that_Gemini_is_inherently_fast
+  validation_before_decision:
+    - exact_SDK_source_binary_tag_and_historical_artifact_binding
+    - Program_state_Work_Package_plan_and_gate_consistency
+    - external_truth_freeze_approval_reconciliation_and_frozen_bytes_unchanged
+    - call_graph_and_option_arithmetic_consistency
+    - historical_references_and_allowed_scope
+    - YAML_JSON_parse
+    - git_diff_check_including_staged_new_files
+  prohibited_actions_before_decision:
+    - numeric_timeout_retry_selection_or_production_test_dependency_configuration_edits
+    - speculative_SDK_upgrade_or_generation_retrieval_prompt_model_scorer_change
+    - Vertex_Gemini_GCP_OpenSearch_query_ingestion_image_publish_rollout_or_official_input_execution
+    - PT2_reopen_rerun_recovery_PT6R1_MariaDB_or_PT6_browser_execution
+    - PT7_or_later_phase_activation_new_workflow_evaluator_model_judge_or_orchestration_framework
+    - frozen_candidate_or_historical_evidence_counter_rewrite
+    - separate_state_sync_or_decision_only_final_PR
+    - self_acceptance_self_merge_IAM_security_or_destructive_action
+    - transient_GitHub_PR_branch_lifecycle_as_durable_program_state
+  finalization_correction_authority:
+    USER_request: docs/evidence/product-trust-pt-6r2/approved-finalization-correction.md
+    validated_scope_review: 6036430154
+    reviewed_head: c51628853eef8fd22e5fa1549cbe33ddf775995f
+    scope_gate_released: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+    implementation_plan_frozen_before_tests: docs/evidence/product-trust-pt-6r2/implementation-plan.json
+    allowed: external_write_outside_lock_short_DB_recheck_after_commit_progress_existing_cleanup_deadline_sweep_one_attempt
+    new_live_or_general_network_redesign_authority: false
+  auto_repair_limit: 1
+  auto_repairs_used: 1
+  human_authorized_corrective_iterations: 1
+  test_contract_correction_authority:
+    USER_request: docs/evidence/product-trust-pt-6r2/approved-test-contract-correction.md
+    independent_review: 6037186101
+    reviewed_head: 2ac19e2ca7d782bec1d47c6f29fb58543cbb3640
+    correction_iteration: 1
+    autonomous_repair_counter_reset: false
+    allowed_test_paths:
+      - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobPartialSuccessBaselineTest.java
+      - backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRestartBaselineTest.java
+      - backend/src/test/java/com/terraformers/modernization/verification/MariaDbRepositorySmokeTest.java
+    production_writes: prohibited_STOP_if_new_defect_exposed
+    local_validation: affected_tests_once_then_full_offline_backend_package_once_if_passing
+    real_MariaDB_execution: normal_automatic_PR_CI_only_not_PT6R1_measurement
+    further_repair_or_workflow_rerun: prohibited
+  provider_calls: 0
+  live_cloud_actions: 0
+  OpenSearch_operations: 0
+  browser_executions: 0
+  database_executions: 0
+  workflow_dispatches: 0
+  stop_on:
+    - MAIN_DRIFT
+    - PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+    - new_product_architecture_security_live_cost_or_destructive_authority_required
+    - second_bounded_repair_or_failure_class_change
+    - independent_review_and_USER_merge_checkpoint
+  result:
+    audit: PREPARED_FOR_INDEPENDENT_REVIEW
+    phase_complete: false
+    human_gate: PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE
+    selected_policy: D
+    policy_decision_evidence: docs/evidence/product-trust-pt-6r2/policy-d-decision.json
+    terminal_scope_evidence: docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json
+    terminal_delta_bound_ms: null
+    production_configuration_applied: false
+    broader_finalization_correction_authorized: false
+    narrow_finalization_fencing_correction_authorized: true
+    local_H2_diagnostic_executions: 1
+    implementation_started: true
+    production_defaults_implemented_in_candidate: true
+    implementation_validation: BUILD_SUCCESS_LOCAL_CORRECTION_1
+    implementation_validation_evidence: docs/evidence/product-trust-pt-6r2/test-contract-validation.json
+    previous_failed_implementation_evidence: docs/evidence/product-trust-pt-6r2/implementation-validation.json
+    first_focused: {tests: 130, failures: 1, errors: 6, skipped: 0}
+    bounded_repair_focused: {tests: 11, failures: 2, errors: 0, skipped: 0}
+    full_backend: BUILD_SUCCESS_CORRECTION_1
+    human_correction_focused: {tests: 11, failures: 0, errors: 0, skipped: 0}
+    human_correction_full_backend: {tests: 576, failures: 0, errors: 0, skipped: 4}
+    normal_automatic_CI: GitHub_exact_corrective_head_authoritative_after_push
+    production_files_changed_by_human_iteration: false
+    conditional_delta_model_ms: 5000
+    conditional_delta_model_is_production_measurement: false
+    deterministic_test_invocations: 4
+    embedded_H2_included: true
+    independent_phase_acceptance: PENDING
+    merge_authorized: false
+    next_phase_execution_authorized: false
+    validation_evidence: docs/evidence/product-trust-pt-6r2/validation.json
+    terminal_scope_validation_evidence: docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json

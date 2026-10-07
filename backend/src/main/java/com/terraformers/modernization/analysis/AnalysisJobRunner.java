@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AnalysisJobRunner {
+    static final String DEADLINE_FAILURE_REASON = "분석 작업의 대기 및 처리 시간 한도를 초과했습니다. 필요하면 새 분석을 시작해 주세요.";
+    static final String ATTEMPT_FAILURE_REASON = "분석 작업의 실행 소유권이 만료되어 완료하지 못했습니다. 필요하면 새 분석을 시작해 주세요.";
     static final String TIMEOUT_FAILURE_REASON = "AI 모델의 응답 시간이 초과되었습니다. 잠시 후 새 분석을 시작해 주세요.";
     static final String TRUNCATED_FAILURE_REASON = "아키텍처가 복잡해 AI 출력 한도를 초과했습니다. 핵심 구성만 남기거나 이미지를 여러 장으로 나누어 다시 시도해 주세요.";
     static final String FORMAT_FAILURE_REASON = "AI 응답 형식을 확인하지 못했습니다. 잠시 후 새 분석을 시작해 주세요.";
@@ -75,6 +77,9 @@ public class AnalysisJobRunner {
             observability.jobStarted();
             log.info("Analysis job execution started");
             AnalysisResult result = null;
+            ObjectReference writtenReference = null;
+            boolean writeAttempted = false;
+            boolean successCommitted = false;
             try {
                 result = observability.recordStage(AnalysisTelemetryStage.ANALYSIS_EXECUTION,
                         () -> orchestrator.executeProviderAndValidate(runningJob));
@@ -94,8 +99,15 @@ public class AnalysisJobRunner {
                     return;
                 }
                 AnalysisResult completed = result;
-                boolean finalized = observability.recordStage(AnalysisTelemetryStage.RESULT_FINALIZE,
-                        () -> stateService.markSucceededOwned(jobId, generation, clock.instant(), completed, reference));
+                writtenReference = reference;
+                writeAttempted = true;
+                boolean finalized = observability.recordStage(AnalysisTelemetryStage.RESULT_FINALIZE, () -> {
+                    // No analysis-job row lock is held during external write.
+                    var writeResult = orchestrator.storeTerraformDraft(reference, completed);
+                    return stateService.markSucceededOwned(jobId, generation, clock.instant(), completed,
+                            reference, writeResult);
+                });
+                successCommitted = finalized;
                 if (finalized) observability.jobSucceeded();
                 if (finalized) observability.terminalQuality(completed.qualityAssessment());
                 else {
@@ -118,22 +130,6 @@ public class AnalysisJobRunner {
                     }
                 }
                 if (result == null && isRetryable(exception)) {
-                    if (runningJob.getAttemptCount() < properties.getMaxAttempts()) {
-                        Instant now = clock.instant();
-                        Instant nextAttemptAt = now.plus(properties.getRetryDelay());
-                        boolean scheduled = stateService.scheduleRetryOwned(jobId, generation, now, nextAttemptAt);
-                        if (scheduled) {
-                            observability.retryOutcome("scheduled");
-                            log.warn("Analysis retry scheduled attempt={} generation={} nextAttemptAt={}",
-                                    runningJob.getAttemptCount(), generation, nextAttemptAt);
-                        } else {
-                            leaseLost.set(true);
-                            observability.retryOutcome("ownership_lost");
-                            log.warn("Analysis retry scheduling rejected because durable ownership was lost generation={}",
-                                    generation);
-                        }
-                        return;
-                    }
                     observability.retryOutcome("exhausted");
                     log.warn("Analysis retry budget exhausted attempt={} generation={}",
                             runningJob.getAttemptCount(), generation);
@@ -152,8 +148,28 @@ public class AnalysisJobRunner {
                 }
             } finally {
                 heartbeat.cancel(false);
+                if (writeAttempted && !successCommitted) cleanupWrittenResult(jobId, generation, writtenReference);
                 observability.stopAnalysis(sample);
             }
+        }
+    }
+
+    private void cleanupWrittenResult(String jobId, long generation, ObjectReference reference) {
+        try {
+            // A failed-job cleanup can finish before a blocked writer returns. Re-arm AFTER write,
+            // serialized by the existing cleanup lock, so the later object cannot disappear from accountability.
+            if (!stateService.rearmResultCleanup(jobId, generation, reference, clock.instant())) return;
+            observability.recordStage(AnalysisTelemetryStage.COMPENSATION, () -> {
+                orchestrator.removeStoredDraft(reference);
+                return null;
+            });
+            boolean completed = stateService.markResultCleanupCompleted(jobId, generation,
+                    reference.bucket(), reference.key(), clock.instant());
+            observability.cleanupOutcome(completed ? "immediate_completed" : "immediate_pending");
+        } catch (RuntimeException exception) {
+            observability.cleanupOutcome("immediate_pending");
+            log.warn("Written analysis result retains cleanup accountability errorClass={}",
+                    exception.getClass().getSimpleName());
         }
     }
 
@@ -200,6 +216,7 @@ public class AnalysisJobRunner {
                     case RESPONSE_FORMAT -> FORMAT_FAILURE_REASON;
                 };
             }
+            if (current instanceof AnalysisJobBudgetExceededException) return DEADLINE_FAILURE_REASON;
             if (current instanceof SocketTimeoutException || current instanceof AnalysisProviderTimeoutException) return TIMEOUT_FAILURE_REASON;
             current = current.getCause();
         }

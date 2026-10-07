@@ -1,11 +1,13 @@
 program:
   id: product-trust-v1
   version: 4
-  contract_status: PROPOSED_PENDING_TRUTH_FREEZE_INDEPENDENT_REVIEW_AND_USER_MERGE
-  active_amendment: product-trust-v4-evidence-validity-amendment-v1
+  contract_status: APPROVED_V4_INDEPENDENTLY_ACCEPTED_AND_USER_MERGED
+  active_amendment: null
+  active_phase: PT-6R2
+  active_work_package: .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
   amendment_preparation_authority: USER_explicit_repository_only_v4_request
-  exact_candidate_truth_approved: false
-  current_human_gate: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW
+  exact_candidate_truth_approved: true
+  current_human_gate: PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE
   status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
@@ -44,6 +46,21 @@ program:
       separate_state_sync_or_activation_PR: prohibited
       production_or_live_execution_in_amendment: prohibited
       PT2_final_disposition_and_evidence: immutable
+
+    - id: V4_EVIDENCE_VALIDITY
+      authority: USER
+      independent_review_comment: 6032563396
+      USER_approval_comment: 6032637762
+      reviewed_head: 690b436d69c4b1671e86b8aeb2b2249623291276
+      merged_pull_request: 253
+      merged_main_sha: 406981a8c629a02503f5660453dcc7921b8d5177
+      approval_evidence: docs/evidence/product-trust-pt-6r2/authority.json
+      exact_candidate_revision: 2
+      exact_candidate_identity: 3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757
+      candidate_bytes: IMMUTABLE_PRE_APPROVAL_SNAPSHOT_APPROVAL_RECORDED_EXTERNALLY
+      status: COMPLETE
+      PT6R2_authority: POLICY_D_APPROVED_IMPLEMENTATION_PAUSED_AT_TERMINAL_SCOPE_GATE
+      live_authority_implied: false
 
   goal: >
     Establish whether Terraformers is trustworthy as an actual user-facing AI service on realistic
@@ -128,7 +145,9 @@ program:
     manifest: evaluation/terraformers-aws-official-v1/candidate-manifest.json
     identity: evaluation/terraformers-aws-official-v1/candidate-identity.json
     human_review: docs/evaluation/product-trust-aws-official-truth-candidate.md
-    status: CANDIDATE_NOT_APPROVED
+    status: USER_FROZEN_EXACT_IMMUTABLE_CANDIDATE
+    truth_frozen: true
+    freeze_approval_evidence: docs/evidence/product-trust-pt-6r2/authority.json
     truth_authority:
       system_input: IMAGE_BYTES_ONLY
       mandatory_semantic_truth: image_observable_truth
@@ -141,7 +160,7 @@ program:
       identity: fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10
       archived_identity: evaluation/terraformers-aws-official-v1/superseded/candidate-01-identity.json
     truth_freeze_gate: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE
-    exact_completed_candidate_USER_approval: absent
+    exact_completed_candidate_USER_approval: comment_6032637762_after_independent_review_6032563396_and_USER_merge_253
     model_under_test_runs: 0
     external_bytes_in_repository: false
     future_fetch: exact_frozen_URL_raw_SHA256_media_dimensions_or_fail_closed_before_inference
@@ -172,10 +191,8 @@ program:
     auto_advance_repository_only_phases: false
     post_PT6R1_human_gate: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT
     progression_resume_requires:
-      - evidence_validity_amendment_reviewed
-      - evidence_validity_amendment_explicitly_USER_approved
-      - evidence_validity_amendment_independently_accepted
-      - evidence_validity_amendment_USER_merged
+      - PT6R2_terminal_enforcement_scope_gate_released_without_weakening_approved_D
+      - PT6R2_independent_completion_acceptance_and_USER_merge
     auto_repair_limit: 1
     auto_merge: false
     rerun_until_green: false
@@ -195,6 +212,8 @@ program:
     - REALISTIC_DATASET_TRUTH_FREEZE
     - LIVE_REALISTIC_BASELINE
     - PRODUCT_OR_ARCHITECTURE_DECISION
+    - PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+    - PT6R2_BOUNDED_REPAIR_LIMIT_REACHED
     - IAM_OR_SECURITY_BOUNDARY_EXPANSION
     - NEW_PAID_OR_COST_INCREASING_CLOUD_ACTION
     - FINAL_PRODUCT_LIVE_PROOF
@@ -377,7 +396,25 @@ program:
         - evidence_validity_amendment_independently_accepted
         - evidence_validity_amendment_USER_merged
       execution_base_sha: BIND_AT_ACTIVATION
-      human_gate_when: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+      human_gate_when: PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE
+      resolved_numeric_decision_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+      current_step: IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING
+      active_work_package: .agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml
+      activation_authority_evidence: docs/evidence/product-trust-pt-6r2/authority.json
+      audit_and_decision_brief: docs/evaluation/product-trust-pt-6r2-provider-terminality.md
+      production_implementation_authorized: true
+      broader_finalization_correction_authorized: false
+      production_implementation_blocked_by: PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE
+      narrow_finalization_fencing_correction_authorized: true
+      finalization_correction_authority: docs/evidence/product-trust-pt-6r2/approved-finalization-correction.md
+      scope_review: 6036430154
+      implementation_validation: docs/evidence/product-trust-pt-6r2/test-contract-validation.json
+      previous_failed_implementation_validation: docs/evidence/product-trust-pt-6r2/implementation-validation.json
+      test_contract_correction_authority: docs/evidence/product-trust-pt-6r2/approved-test-contract-correction.md
+      human_authorized_corrective_iterations: 1
+      autonomous_repairs_used: 1
+      implementation_acceptance: LOCAL_IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING
+      normal_automatic_CI: GitHub_exact_corrective_head_authoritative_after_push
       objective: >
         Ensure one accepted AnalysisJob cannot remain provider-bound indefinitely. Audit the actual
         Google GenAI client request/deadline capability and provider/retry/job boundaries first.
@@ -385,10 +422,27 @@ program:
         provider/job budget or product tradeoff stops at the named product-decision gate with
         measured evidence and options. Preserve the original 424846 ms PT2 case-02 censor.
       budget_policy:
-        numeric_budget: NOT_PRESELECTED
+        numeric_budget: EXPLICIT_USER_APPROVED
+        selected_policy: D
+        USER_decision_evidence: docs/evidence/product-trust-pt-6r2/policy-d-decision.json
+        approved_request_timeouts_ms: {facts: 370000, generation_and_compact_and_repair: 220000, embedding: 10000}
+        approved_SDK_attempts: 1
+        approved_SDK_retryable_HTTP_statuses: []
+        approved_durable_attempts: 1
+        approved_original_accepted_age_cutoff_ms: 480000
+        applied_to_production: false
+        implemented_in_candidate: true
+        terminal_delta_bound_ms: null
+        conditional_delta_model_ms: 5000
+        conditional_delta_is_production_measurement: false
+        terminal_scope_gate: PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION
+        terminal_scope_gate_released_by_USER: true
+        terminal_scope_evidence: docs/evidence/product-trust-pt-6r2/terminal-scope-assessment.json
+        decision_options: docs/evidence/product-trust-pt-6r2/audit.json
         decision_gate: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION
+        decision_gate_resolved_by_USER: true
         authority_required_if_product_choice_needed: USER
-        accepted_to_terminal_contract: FREEZE_IN_PT6R2_WORK_PACKAGE_AFTER_REQUIRED_DECISION
+        accepted_to_terminal_contract: ORIGINAL_ACCEPTED_AT_480000_MS_PLUS_P_B_S_T_CONDITIONAL_ON_OPERATING_BOUNDS_INDEPENDENT_ACCEPTANCE_PENDING
       completion:
         - actual_SDK_deadline_and_provider_retry_job_boundaries_are_audited
         - any_required_numeric_budget_or_retry_policy_choice_has_explicit_USER_approval
@@ -457,7 +511,8 @@ program:
         candidate: evaluation/terraformers-aws-official-v1/candidate-identity.json
         manifest: evaluation/terraformers-aws-official-v1/candidate-manifest.json
         truth: docs/evaluation/product-trust-aws-official-truth-candidate.md
-        freeze_status: NOT_APPROVED
+        freeze_status: USER_FROZEN_EXACT_IMMUTABLE_CANDIDATE
+        freeze_approval_evidence: docs/evidence/product-trust-pt-6r2/authority.json
         positives: 5
         frozen_order: [aws-official-a, aws-official-b, aws-official-c, aws-official-d, aws-official-e]
         historical_realistic_v1: CONTROLLED_REFERENCE_DERIVED_REGRESSION_SET_NOT_SOLE_FINAL_AUTHORITY

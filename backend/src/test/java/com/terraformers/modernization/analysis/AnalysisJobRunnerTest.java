@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.terraformers.modernization.storage.ObjectReference;
+import com.terraformers.modernization.storage.ObjectWriteResult;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.SocketTimeoutException;
 import java.time.Clock;
@@ -35,12 +36,12 @@ class AnalysisJobRunnerTest {
         AnalysisResult result = result();
         when(fixture.state.claimEligible("job-1", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
         when(fixture.orchestrator.executeProviderAndValidate(running)).thenReturn(result);
-        when(fixture.state.markSucceededOwned("job-1", 7, NOW, result, new ObjectReference("result-bucket", "analysis/main.tf"))).thenReturn(true);
+        when(fixture.state.markSucceededOwned("job-1", 7, NOW, result, new ObjectReference("result-bucket", "analysis/main.tf"), writeResult())).thenReturn(true);
 
         fixture.runner.run("job-1");
 
         verify(fixture.state).claimEligible("job-1", NOW, NOW.plusSeconds(60));
-        verify(fixture.state).markSucceededOwned("job-1", 7, NOW, result, new ObjectReference("result-bucket", "analysis/main.tf"));
+        verify(fixture.state).markSucceededOwned("job-1", 7, NOW, result, new ObjectReference("result-bucket", "analysis/main.tf"), writeResult());
         assertThat(fixture.registry.find("terraformers.analysis.claims")
                 .tags("outcome", "initial_claim").counter().count()).isEqualTo(1);
     }
@@ -58,26 +59,21 @@ class AnalysisJobRunnerTest {
     }
 
     @Test
-    void providerTimeoutSchedulesDurableRetryBeforeExhaustion() {
+    void providerTimeoutIsTerminalAfterExactlyOneAttemptWithoutDurableRetry() {
         Fixture fixture = fixture();
         AnalysisJobEntity running = runningJob(1, 3);
-        AtomicInteger invocations = new AtomicInteger();
         when(fixture.state.claimEligible("job-transient", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
-        when(fixture.orchestrator.executeProviderAndValidate(running)).thenAnswer(ignored -> {
-            invocations.incrementAndGet();
-            throw new AnalysisProviderTimeoutException(new SocketTimeoutException("temporary timeout"));
-        });
-        when(fixture.state.scheduleRetryOwned("job-transient", 3, NOW, NOW.plusSeconds(10))).thenReturn(true);
-
+        when(fixture.orchestrator.executeProviderAndValidate(running))
+                .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("timeout")));
+        when(fixture.state.markFailedOwned(eq("job-transient"), eq(3L), eq(NOW),
+                eq(AnalysisJobRunner.TIMEOUT_FAILURE_REASON), any())).thenReturn(true);
         fixture.runner.run("job-transient");
-
-        assertThat(invocations).hasValue(1);
-        verify(fixture.state).scheduleRetryOwned("job-transient", 3, NOW, NOW.plusSeconds(10));
-        verify(fixture.state, never()).markFailedOwned(any(), anyLong(), any(), any(), any());
-        assertThat(fixture.registry.find("terraformers.analysis.retries")
-                .tags("outcome", "scheduled").counter().count()).isEqualTo(1);
-        assertThat(fixture.registry.find("terraformers.analysis.jobs")
-                .tags("outcome", "failed").counter()).isNull();
+        verify(fixture.orchestrator).executeProviderAndValidate(running);
+        verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
+        verify(fixture.state).markFailedOwned(eq("job-transient"), eq(3L), eq(NOW),
+                eq(AnalysisJobRunner.TIMEOUT_FAILURE_REASON), any());
+        assertThat(fixture.registry.find("terraformers.analysis.jobs").tags("outcome", "failed").counter().count())
+                .isEqualTo(1);
     }
 
     @Test
@@ -100,19 +96,15 @@ class AnalysisJobRunnerTest {
     }
 
     @Test
-    void staleOwnerCannotScheduleRetryOrMarkTerminalFailure() {
+    void staleOwnerCannotScheduleRetryOrPublishTerminalFailure() {
         Fixture fixture = fixture();
         AnalysisJobEntity running = runningJob(1, 6);
         when(fixture.state.claimEligible("job-stale-retry", NOW, NOW.plusSeconds(60))).thenReturn(Optional.of(running));
         when(fixture.orchestrator.executeProviderAndValidate(running))
                 .thenThrow(new AnalysisProviderTimeoutException(new SocketTimeoutException("timeout")));
-        when(fixture.state.scheduleRetryOwned("job-stale-retry", 6, NOW, NOW.plusSeconds(10))).thenReturn(false);
-
         fixture.runner.run("job-stale-retry");
-
-        verify(fixture.state, never()).markFailedOwned(any(), anyLong(), any(), any(), any());
-        assertThat(fixture.registry.find("terraformers.analysis.retries")
-                .tags("outcome", "ownership_lost").counter().count()).isEqualTo(1);
+        verify(fixture.state, never()).scheduleRetryOwned(any(), anyLong(), any(), any());
+        assertThat(fixture.registry.find("terraformers.analysis.jobs").tags("outcome", "failed").counter()).isNull();
     }
 
     @Test
@@ -182,7 +174,7 @@ class AnalysisJobRunnerTest {
 
         fixture.runner.run("job-stale");
 
-        verify(fixture.state, never()).markSucceededOwned(eq("job-stale"), anyLong(), any(), any(), any());
+        verify(fixture.state, never()).markSucceededOwned(eq("job-stale"), anyLong(), any(), any(), any(), any());
         verify(fixture.state, never()).markFailedOwned(eq("job-stale"), anyLong(), any(), any(), any());
         assertThat(fixture.registry.find("terraformers.analysis.lease.renewals")
                 .tags("outcome", "lost").counter().count()).isEqualTo(1);
@@ -199,7 +191,7 @@ class AnalysisJobRunnerTest {
             fixture.heartbeat.getValue().run();
             return result;
         });
-        when(fixture.state.markSucceededOwned("job-long", 4, NOW, result, new ObjectReference("result-bucket", "analysis/main.tf"))).thenReturn(true);
+        when(fixture.state.markSucceededOwned("job-long", 4, NOW, result, new ObjectReference("result-bucket", "analysis/main.tf"), writeResult())).thenReturn(true);
 
         fixture.runner.run("job-long");
 
@@ -218,6 +210,7 @@ class AnalysisJobRunnerTest {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
         ObjectReference reference = new ObjectReference("result-bucket", "analysis/main.tf");
         when(orchestrator.resolveResultObjectReference(any())).thenReturn(reference);
+        when(orchestrator.storeTerraformDraft(any(), any())).thenReturn(writeResult());
         when(state.recordResultObjectIntentOwned(any(), anyLong(), any(), any(), any())).thenReturn(true);
         ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
         ScheduledFuture<?> future = mock(ScheduledFuture.class);
@@ -239,6 +232,10 @@ class AnalysisJobRunnerTest {
         entity.setClaimGeneration(generation);
         entity.prePersist();
         return entity;
+    }
+
+    private ObjectWriteResult writeResult() {
+        return new ObjectWriteResult("metadata-only", false, "result-bucket", "analysis/main.tf", null);
     }
 
     private AnalysisResult result() {

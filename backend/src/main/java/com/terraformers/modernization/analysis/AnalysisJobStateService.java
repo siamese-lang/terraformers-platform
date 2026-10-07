@@ -1,6 +1,12 @@
 package com.terraformers.modernization.analysis;
 
 import java.time.Instant;
+import java.time.Clock;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import java.util.Optional;
@@ -13,12 +19,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AnalysisJobStateService {
 
+    private static final Logger log = LoggerFactory.getLogger(AnalysisJobStateService.class);
+    private final AnalysisRuntimeProperties properties;
+    private final Clock clock;
     private final AnalysisJobRepository repository;
     private final AnalysisJobOrchestrator orchestrator;
     private final AnalysisObservability observability;
 
     public AnalysisJobStateService(AnalysisJobRepository repository, AnalysisJobOrchestrator orchestrator,
-            AnalysisObservability observability) {
+            AnalysisObservability observability, ObjectProvider<AnalysisRuntimeProperties> properties,
+            ObjectProvider<Clock> clock) {
+        this.properties = properties.getIfAvailable(AnalysisRuntimeProperties::new);
+        this.clock = clock.getIfAvailable(Clock::systemUTC);
         this.repository = repository;
         this.orchestrator = orchestrator;
         this.observability = observability;
@@ -26,15 +38,15 @@ public class AnalysisJobStateService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<AnalysisJobEntity> claimEligible(String jobId, Instant now, Instant leaseExpiresAt) {
-        int claimed = repository.claimEligible(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
-                now, leaseExpiresAt);
+        int claimed = repository.claimEligibleBeforeCutoff(jobId, AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                now, leaseExpiresAt, now.minus(properties.getAcceptedAgeCutoff()));
         return claimed == 0 ? Optional.empty() : repository.findById(jobId);
     }
 
     @Transactional(readOnly = true)
     public List<String> findEligibleJobIds(Instant now, int batchSize) {
-        return repository.findEligibleJobIds(AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, now,
-                PageRequest.of(0, batchSize));
+        return repository.findEligibleJobIdsBeforeCutoff(AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, now,
+                now.minus(properties.getAcceptedAgeCutoff()), PageRequest.of(0, batchSize));
     }
 
     @Transactional(readOnly = true)
@@ -50,7 +62,8 @@ public class AnalysisJobStateService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean renewLease(String jobId, long generation, Instant now, Instant newLeaseExpiry) {
-        return repository.renewLease(jobId, AnalysisJobStatus.RUNNING, generation, now, newLeaseExpiry) == 1;
+        return repository.renewLeaseBeforeCutoff(jobId, AnalysisJobStatus.RUNNING, generation, now, newLeaseExpiry,
+                now.minus(properties.getAcceptedAgeCutoff())) == 1;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -69,7 +82,7 @@ public class AnalysisJobStateService {
                 quality.knowledgeStatus(), quality.qualityStatus(), quality.projectDecisionStatus(),
                 quality.runtimeQualityBoundary(), reasons) == 1;
         if (transitioned) {
-            repository.findById(jobId).ifPresent(orchestrator::publishFailedProgress);
+            repository.findById(jobId).ifPresent(entity -> afterCommit(() -> orchestrator.publishFailedProgress(entity)));
         }
         return transitioned;
     }
@@ -83,8 +96,8 @@ public class AnalysisJobStateService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean recordResultObjectIntentOwned(String jobId, long generation, Instant now,
             String bucket, String key) {
-        return repository.recordResultObjectIntentOwned(jobId, AnalysisJobStatus.RUNNING, generation, now,
-                bucket, key, AnalysisResultCleanupStatus.PENDING) == 1;
+        return repository.recordResultObjectIntentBeforeCutoff(jobId, AnalysisJobStatus.RUNNING, generation, now,
+                bucket, key, AnalysisResultCleanupStatus.PENDING, now.minus(properties.getAcceptedAgeCutoff())) == 1;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -94,49 +107,99 @@ public class AnalysisJobStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean rearmResultCleanup(String jobId, long generation, ObjectReference reference, Instant now) {
+        return repository.rearmResultCleanup(jobId, generation, reference.bucket(), reference.key(),
+                AnalysisJobStatus.RUNNING, AnalysisJobStatus.FAILED, AnalysisResultCleanupStatus.PENDING, now) == 1;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public SweepResult terminalizeIneligible(Instant now) {
+        // No provider, storage or progress-publisher I/O in the scheduler's transaction.
+        EvidenceQualityAssessment quality = TerminalQualityAssessmentMapper.failure(new AnalysisJobBudgetExceededException());
+        int expired = terminalize(now, true, AnalysisJobRunner.DEADLINE_FAILURE_REASON, quality);
+        int exhausted = terminalize(now, false, AnalysisJobRunner.ATTEMPT_FAILURE_REASON, quality);
+        afterCommit(() -> {
+            observability.terminalSweepFailures("accepted_age_cutoff", expired, quality);
+            observability.terminalSweepFailures("attempts_exhausted", exhausted, quality);
+        });
+        return new SweepResult(expired, exhausted);
+    }
+
+    private int terminalize(Instant now, boolean expired, String reason, EvidenceQualityAssessment quality) {
+        return repository.terminalizeIneligible(AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                AnalysisJobStatus.FAILED, now, now.minus(properties.getAcceptedAgeCutoff()), expired,
+                reason, quality.contractVersion(), quality.technicalStatus(), quality.knowledgeStatus(),
+                quality.qualityStatus(), quality.projectDecisionStatus(), quality.runtimeQualityBoundary(), "");
+    }
+
+    public record SweepResult(int expired, int exhausted) {}
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean markSucceededOwned(String jobId, long generation, Instant now, AnalysisResult result,
-            ObjectReference reference) {
+            ObjectReference reference, ObjectWriteResult writeResult) {
         Optional<AnalysisJobEntity> owned = repository.lockOwned(
                 jobId, AnalysisJobStatus.RUNNING, generation, now);
-        if (owned.isEmpty()) {
-            return false;
-        }
+        if (owned.isEmpty()) return false;
         AnalysisJobEntity entity = owned.get();
+        // Fresh time AFTER the lock: waiting for DB ownership must not freeze the deadline check.
+        if (entity.getStatus() != AnalysisJobStatus.RUNNING || entity.getClaimGeneration() != generation
+                || !withinBudgetAndLease(entity, latest(now))) return false;
         if (!reference.bucket().equals(entity.getResultObjectIntentBucket())
                 || !reference.key().equals(entity.getResultObjectIntentKey())
-                || entity.getResultCleanupStatus() != AnalysisResultCleanupStatus.PENDING) {
+                || entity.getResultCleanupStatus() != AnalysisResultCleanupStatus.PENDING
+                || !reference.bucket().equals(writeResult.bucket()) || !reference.key().equals(writeResult.key())) {
             throw new IllegalStateException("owned result finalization does not match durable object intent");
         }
-        boolean cleanupCompleted = false;
         try {
-            ObjectWriteResult writeResult = orchestrator.storeTerraformDraft(reference, result);
-            orchestrator.markSucceeded(
-                    entity,
-                    result,
-                    writeResult,
-                    orchestrator.registerGeneratedTerraform(entity.getProjectId(), result, writeResult)
-            );
+            var file = orchestrator.registerGeneratedTerraform(entity.getProjectId(), result, writeResult);
+            Instant terminalTime = latest(now);
+            if (!withinBudgetAndLease(entity, terminalTime)) throw new AnalysisJobBudgetExceededException();
+            // Mutation only; externally visible success is scheduled after the durable commit.
+            orchestrator.markSucceeded(entity, result, writeResult, file);
+            entity.setTerminalAt(terminalTime);
             entity.setQualityAssessment(result.qualityAssessment());
             if (!reference.key().equals(entity.getResultObjectKey())) {
                 throw new IllegalStateException("successful result key does not match durable object intent");
             }
             entity.setResultCleanupStatus(AnalysisResultCleanupStatus.NOT_REQUIRED);
             entity.clearLease();
-            repository.save(entity);
-            repository.flush();
+            repository.saveAndFlush(entity);
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void beforeCommit(boolean readOnly) {
+                    if (deadlineReached(entity, latest(now))) throw new AnalysisJobBudgetExceededException();
+                }
+            });
+            afterCommit(() -> orchestrator.publishSucceededProgress(entity));
             return true;
         } catch (RuntimeException exception) {
-            try {
-                observability.recordStage(AnalysisTelemetryStage.COMPENSATION, () -> {
-                    orchestrator.removeStoredDraft(reference);
-                    return null;
-                });
-                cleanupCompleted = true;
-            } catch (RuntimeException cleanupException) {
-                exception.addSuppressed(cleanupException);
-            }
-            throw new AnalysisResultFinalizationException(exception, reference, cleanupCompleted);
+            // External compensation is performed by the runner AFTER this transaction rolls back.
+            throw new AnalysisResultFinalizationException(exception, reference, false);
         }
+    }
+
+    private Instant latest(Instant supplied) {
+        Instant current = clock.instant();
+        return current.isAfter(supplied) ? current : supplied;
+    }
+
+    private boolean deadlineReached(AnalysisJobEntity entity, Instant now) {
+        return entity.getCreatedAt() == null || !now.isBefore(entity.getCreatedAt().plus(properties.getAcceptedAgeCutoff()));
+    }
+
+    private boolean withinBudgetAndLease(AnalysisJobEntity entity, Instant now) {
+        return !deadlineReached(entity, now) && entity.getLeaseExpiresAt() != null && entity.getLeaseExpiresAt().isAfter(now);
+    }
+
+    private void afterCommit(Runnable action) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() {
+                try { action.run(); }
+                catch (RuntimeException exception) {
+                    log.warn("Committed analysis state retained after progress/telemetry failure errorClass={}",
+                            exception.getClass().getSimpleName());
+                }
+            }
+        });
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

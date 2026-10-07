@@ -45,73 +45,27 @@ class AnalysisJobRestartBaselineTest {
     }
 
     @Test
-    void durableRetryWaitsUntilDueThenSucceedsOnSecondClaim() {
-        TIMEOUTS_REMAINING.set(1);
-        try (ConfigurableApplicationContext context = start(datasourceUrl(), "create")) {
-            UserEntity owner = owner(context);
-            OwnedProjectEntity project = project(context, owner);
-            ProjectFileEntity source = source(context, owner, project);
-            String jobId = context.getBean(AnalysisJobService.class).create(
-                    new AnalysisJobRequest(project.getProjectId(), source.getFileId(), "retry-success"), owner).id();
-            CapturingExecutor executor = context.getBean(CapturingExecutor.class);
-            AnalysisJobDispatcher dispatcher = context.getBean(AnalysisJobDispatcher.class);
-
-            executor.runAll();
-            AnalysisJobEntity waiting = context.getBean(AnalysisJobRepository.class).findById(jobId).orElseThrow();
-            assertThat(waiting.getStatus()).isEqualTo(AnalysisJobStatus.PENDING);
-            assertThat(waiting.getAttemptCount()).isEqualTo(1);
-            assertThat(waiting.getClaimGeneration()).isEqualTo(1);
-            assertThat(waiting.getNextAttemptAt()).isEqualTo(START.plusSeconds(10));
-            assertThat(waiting.getLeaseExpiresAt()).isNull();
-
-            TEST_CLOCK.set(START.plusSeconds(9));
-            dispatcher.dispatchEligible();
-            assertThat(executor.tasks()).isEmpty();
-
-            TEST_CLOCK.set(START.plusSeconds(10));
-            dispatcher.dispatchEligible();
-            assertThat(executor.tasks()).hasSize(1);
-            executor.runAll();
-            AnalysisJobEntity succeeded = context.getBean(AnalysisJobRepository.class).findById(jobId).orElseThrow();
-            assertThat(succeeded.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
-            assertThat(succeeded.getAttemptCount()).isEqualTo(2);
-            assertThat(succeeded.getClaimGeneration()).isEqualTo(2);
-            assertThat(PROVIDER_INVOCATIONS).hasValue(2);
-        }
-    }
-
-    @Test
-    void durableRetryExhaustionFailsThirdAttemptAndNeverExecutesFourth() {
+    void providerTimeoutConsumesOneAttemptAndNeverResubmitsAfterRestartScan() {
         TIMEOUTS_REMAINING.set(Integer.MAX_VALUE);
         try (ConfigurableApplicationContext context = start(datasourceUrl(), "create")) {
             UserEntity owner = owner(context);
             OwnedProjectEntity project = project(context, owner);
             ProjectFileEntity source = source(context, owner, project);
-            String jobId = context.getBean(AnalysisJobService.class).create(
-                    new AnalysisJobRequest(project.getProjectId(), source.getFileId(), "retry-exhausted"), owner).id();
+            String id = context.getBean(AnalysisJobService.class).create(
+                    new AnalysisJobRequest(project.getProjectId(), source.getFileId(), "single-attempt"), owner).id();
             CapturingExecutor executor = context.getBean(CapturingExecutor.class);
-            AnalysisJobDispatcher dispatcher = context.getBean(AnalysisJobDispatcher.class);
-
             executor.runAll();
-            TEST_CLOCK.set(START.plusSeconds(10));
-            dispatcher.dispatchEligible();
-            executor.runAll();
-            TEST_CLOCK.set(START.plusSeconds(20));
-            dispatcher.dispatchEligible();
-            executor.runAll();
-
-            AnalysisJobEntity failed = context.getBean(AnalysisJobRepository.class).findById(jobId).orElseThrow();
+            TEST_CLOCK.set(START.plusSeconds(40));
+            context.getBean(AnalysisJobDispatcher.class).dispatchEligible();
+            assertThat(executor.tasks()).isEmpty();
+            AnalysisJobEntity failed = context.getBean(AnalysisJobRepository.class).findById(id).orElseThrow();
             assertThat(failed.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
-            assertThat(failed.getAttemptCount()).isEqualTo(3);
-            assertThat(failed.getClaimGeneration()).isEqualTo(3);
+            assertThat(failed.getAttemptCount()).isEqualTo(1);
+            assertThat(failed.getClaimGeneration()).isEqualTo(1);
+            assertThat(failed.getFailureReason()).isEqualTo(AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
             assertThat(failed.getNextAttemptAt()).isNull();
             assertThat(failed.getLeaseExpiresAt()).isNull();
-            assertThat(failed.getFailureReason()).isEqualTo(AnalysisJobRunner.TIMEOUT_FAILURE_REASON);
-
-            TEST_CLOCK.set(START.plusSeconds(40));
-            dispatcher.dispatchEligible();
-            executor.runAll();
-            assertThat(PROVIDER_INVOCATIONS).hasValue(3);
+            assertThat(PROVIDER_INVOCATIONS).hasValue(1);
         }
     }
 
@@ -173,7 +127,7 @@ class AnalysisJobRestartBaselineTest {
     }
 
     @Test
-    void claimedRunningJobIsNotStolenBeforeLeaseExpiryAndIsReclaimedAfterExpiry() {
+    void claimedRunningJobIsNotStolenAndLeaseExpiryFailsWithoutASecondAttempt() {
         String datasourceUrl = datasourceUrl();
         String jobId;
         Instant firstLease = START.plusSeconds(60);
@@ -200,15 +154,29 @@ class AnalysisJobRestartBaselineTest {
             assertThat(active.getClaimGeneration()).isEqualTo(1);
 
             TEST_CLOCK.set(firstLease.plusSeconds(1));
+            AnalysisJobStateService stateService = restarted.getBean(AnalysisJobStateService.class);
+            assertThat(stateService.claimEligible(jobId, TEST_CLOCK.instant(),
+                    TEST_CLOCK.instant().plusSeconds(60))).isEmpty();
             dispatcher.dispatchEligible();
-            assertThat(executor.tasks()).hasSize(1);
-            executor.runAll();
+            assertThat(executor.tasks()).isEmpty();
 
             AnalysisJobEntity recovered = repository.findById(jobId).orElseThrow();
             assertThat(recovered.getId()).isEqualTo(jobId);
-            assertThat(recovered.getStatus()).isEqualTo(AnalysisJobStatus.SUCCEEDED);
-            assertThat(recovered.getAttemptCount()).isEqualTo(2);
-            assertThat(recovered.getClaimGeneration()).isEqualTo(2);
+            assertThat(recovered.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+            assertThat(recovered.getFailureReason()).isEqualTo(AnalysisJobRunner.ATTEMPT_FAILURE_REASON);
+            assertThat(recovered.getAttemptCount()).isEqualTo(1);
+            assertThat(recovered.getClaimGeneration()).isEqualTo(1);
+            assertThat(recovered.getTerminalAt()).isEqualTo(TEST_CLOCK.instant());
+            assertThat(recovered.getLeaseExpiresAt()).isNull();
+            assertThat(recovered.getNextAttemptAt()).isNull();
+            assertThat(recovered.getResultFileId()).isNull();
+            assertThat(recovered.getResultObjectKey()).isNull();
+            assertThat(restarted.getBean(ProjectFileRepository.class)
+                    .findFirstByProject_ProjectIdAndFileTypeAndDeletedAtIsNullOrderByCreatedAtDesc(
+                            recovered.getProjectId(), "GENERATED_TERRAFORM")).isEmpty();
+            assertThat(stateService.claimEligible(jobId, TEST_CLOCK.instant(),
+                    TEST_CLOCK.instant().plusSeconds(60))).isEmpty();
+            assertThat(PROVIDER_INVOCATIONS).hasValue(0);
         }
     }
 
@@ -238,7 +206,7 @@ class AnalysisJobRestartBaselineTest {
     }
 
     private ConfigurableApplicationContext start(String url, String ddl) {
-        return start(url, ddl, "1h");
+        return start(url, ddl, "2s");
     }
 
     private ConfigurableApplicationContext start(String url, String ddl, String pollInterval) {
@@ -306,6 +274,13 @@ class AnalysisJobRestartBaselineTest {
 
     @TestConfiguration
     static class CapturingExecutorConfig {
+        // Invoke the registered scan deterministically; production keeps its real 2s scheduler.
+        @Bean(name = "analysisDispatchTaskScheduler")
+        org.springframework.scheduling.TaskScheduler testScheduler() {
+            var scheduler = org.mockito.Mockito.mock(org.springframework.scheduling.TaskScheduler.class);
+            org.mockito.Mockito.when(scheduler.getClock()).thenReturn(TEST_CLOCK);
+            return scheduler;
+        }
         @Bean @Primary @Qualifier("analysisJobExecutor")
         CapturingExecutor capturingExecutor() { return new CapturingExecutor(); }
 

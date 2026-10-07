@@ -2,6 +2,8 @@ package com.terraformers.modernization.analysis.vertex;
 
 import com.google.genai.types.ThinkingLevel;
 import java.util.Locale;
+import java.time.Duration;
+import com.google.genai.types.HttpOptions;
 import java.util.Optional;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -15,6 +17,29 @@ public class VertexRuntimeProperties {
     private int embeddingDimension = 1024;
     private int maxOutputTokens = 8192;
     private String generationThinkingLevel;
+    private Duration factsTimeout = Duration.ofSeconds(370);
+    private Duration generationTimeout = Duration.ofSeconds(220);
+    private Duration embeddingTimeout = Duration.ofSeconds(10);
+
+    public Duration getFactsTimeout() { return factsTimeout; }
+    public void setFactsTimeout(Duration value) { factsTimeout = value; }
+    public Duration getGenerationTimeout() { return generationTimeout; }
+    public void setGenerationTimeout(Duration value) { generationTimeout = value; }
+    public Duration getEmbeddingTimeout() { return embeddingTimeout; }
+    public void setEmbeddingTimeout(Duration value) { embeddingTimeout = value; }
+
+    public HttpOptions factsHttpOptions() { return timeoutOptions(factsTimeout, 370, "facts-timeout"); }
+    public HttpOptions generationHttpOptions() { return timeoutOptions(generationTimeout, 220, "generation-timeout"); }
+    public HttpOptions embeddingHttpOptions() { return timeoutOptions(embeddingTimeout, 10, "embedding-timeout"); }
+
+    private HttpOptions timeoutOptions(Duration duration, int ceilingSeconds, String property) {
+        if (duration == null || duration.compareTo(Duration.ofMillis(1)) < 0
+                || duration.compareTo(Duration.ofSeconds(ceilingSeconds)) > 0) {
+            throw new IllegalStateException("terraformers.analysis.vertex." + property
+                    + " must be between 1ms and " + ceilingSeconds + "s");
+        }
+        return HttpOptions.builder().timeout(Math.toIntExact(duration.toMillis())).build();
+    }
 
     public String getProjectId() { return projectId; }
     public void setProjectId(String projectId) { this.projectId = projectId; }

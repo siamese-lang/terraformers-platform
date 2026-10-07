@@ -2,44 +2,48 @@
 
 ## Status
 
-**Proposed Product Trust v4 / PT-6R1 COMPLETE /
-HUMAN_REQUIRED: AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW**
+**Approved Product Trust v4 / PT-6R1 COMPLETE / PT-6R2 policy D approved /
+PT-6R2 IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING**
 
-This substantive repository-only amendment is once-bound to
-`38f995bad0bef538d0e4f5a12908d8c8d8fb7d2d`, the actual USER merge of PR #252 at
-`2026-10-07T05:52:50Z`. [Review 6031698220](https://github.com/siamese-lang/terraformers-platform/pull/252#issuecomment-6031698220)
-accepted head `2b63e79d91548e5e87b48ad9c1bf353467349d12`, tree
-`c9792b42b4a6a9b8529a904d240c5bccf5d08d10`. Merged head `25336fafa4bd1d53d9df897629198f6480b96fd1`
-adds exactly one empty merge-policy CI commit, with the same tree. It is not new before/after
-behavioral evidence. PT-6R1's original `00872520036da38fd1809a9abf61f56d2344fcb5` base, invalid
-instrumentation attempt, one USER-authorized valid additional before-state, one after-state and all
-repair/correction counters remain unchanged. Completion reconciliation is in this amendment, not a
-separate state-sync PR. No database/browser/production validation is repeated.
+PR #253 [review 6032563396](https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032563396)
+accepted revision 2 at `690b436d69c4b1671e86b8aeb2b2249623291276`. USER merged as
+`406981a8c629a02503f5660453dcc7921b8d5177` and subsequently [approval 6032637762](https://github.com/siamese-lang/terraformers-platform/pull/253#issuecomment-6032637762)
+froze exact identity **`3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757`**. [External approval](../../evidence/product-trust-pt-6r2/authority.json)
+reconciles completion here, inside substantive PT-6R2. Candidate manifest/identity/truth-review bytes
+remain immutable pre-approval snapshots. Model-under-test count stays 0 and official-input execution
+unauthorized. Image-only semantic authority, documentation disambiguation and conditional technical
+closure remain independently accepted; no freeze grants model/cloud/OpenSearch authority.
 
-The [v4 audit](../../evaluation/product-trust-v4-evidence-validity-audit.md) revises evidence design,
-not implementation. [AWS official candidate revision 2](../../evaluation/product-trust-aws-official-truth-candidate.md)
-contains five exact external AWS diagrams with source/image hashes and proposed human truth.
-**Truth is NOT APPROVED**; the USER has approved preparation, not the completed candidate identity.
-USER-authorized correction for review 6032307527 preserves the five exact images/provenance and
-archives pre-freeze identity `fad362718ea64050aaa2f0b37dd8225e58ad68da9fb11d143295e32b7c404a10`.
-Only image_observable_truth is mandatory semantic authority; documentation_context disambiguates
-without adding page-only requirements, and draft_technical_closure applies only to actual generated
-choices/coherence. Visible topology/cardinality is preserved.
-Stop at `AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE` and independent v4 review/USER merge.
-No self-freeze or self-merge. PT-6R2 remains execution-unauthorized with no Work Package/base.
+The [PT-6R2 Work Package](../../../.agents/work-packages/product-trust-pt-6r2-provider-terminality-v1.yml)
+remains bound to once-read main **`406981a8c629a02503f5660453dcc7921b8d5177`**, on the same branch/PR.
+USER approved policy D and the [narrow finalization-fencing correction](../../evidence/product-trust-pt-6r2/approved-finalization-correction.md)
+following scope review 6036430154. Candidate defaults implement facts 370s, generation/compact/repair
+220s, embedding 10s, SDK attempts 1 / statuses [], durable attempts 1 and original accepted-age
+cutoff 8 minutes. External result write is outside short DB finalization, late success is fenced,
+success progress is post-commit, cleanup intent remains accountable and the existing lightweight
+tick sweeps over-age/exhausted jobs before dispatch. Runtime is not deployed or reconfigured.
 
-Remaining order: **PT-6R2 -> PT-7 -> PT-8A -> PT-8B -> PT-9**. Only an independently accepted,
-explicitly USER-approved and USER-merged amendment releases the current pause; all later
-live/model/cost/product/security/destructive gates survive. GitHub owns transient PR lifecycle.
-The existing retained representative GCP runtime is preferred where compatible; no inventory or
-cloud action is authorized by this amendment. A7-8 stays deferred.
+[Initial failed deterministic validation](../../evidence/product-trust-pt-6r2/implementation-validation.json)
+remains byte-identical. Review 6037186101 accepted production design subject to validation; USER
+explicitly authorized one [test-contract-only human correction](../../evidence/product-trust-pt-6r2/approved-test-contract-correction.md).
+Exactly three existing tests align with already-approved semantics. Production files and PT-6R1
+identity-concurrency scenario remain unchanged. [Current local validation](../../evidence/product-trust-pt-6r2/test-contract-validation.json):
+focused 11/0/0/0 PASS, one offline clean package 576/0/0/4 PASS; MariaDB is skipped locally and the
+unchanged normal exact-head CI executes it as ordinary regression. CI outcomes live on the same PR;
+no evidence-only followup commit/new CI cycle. Auto repairs 1/1, human corrective 1.
 
-Historical `terraformers-realistic-v1`, revision 3, identity
-`04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`, remains frozen for its
-exact bytes as **CONTROLLED_REFERENCE_DERIVED_REGRESSION_SET**, not sole final external-input
-acceptance. PT-2 remains final INCOMPLETE: 03–10 NOT_RUN, null aggregate rates, original 424846 ms
-censor, and both recovery runs zero-product-observation measurement failures. No reopening.
-PT-3..PT-6 accepted bounded corrections and the historical v3 audit remain intact.
+Conditional Δ remains P+B+S+T (5s model only for P≤2s, B/S/T≤1s), not a measured production SLO
+or outage bound. Stop at **PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE**, with implementation
+complete and independent phase acceptance pending. No SDK/prompt/model/retrieval/scorer/security/
+cloud change, new framework, later-phase execution, self-acceptance or merge.
+
+PT-6R1 accepted production/evidence/base/counters remain exact; no database/browser remeasurement.
+Historical PT-1 identity `04f65a5c2c82a5afcab9ffe567018d0190b95877adb7c87a22797f0193e5c014`
+remains controlled reference-derived regression. PT-2 stays final INCOMPLETE: 03–10 NOT_RUN,
+aggregate rates null, original 424846-ms censor and zero-product recovery failures unchanged.
+No further dispatch. The retained representative GCP is reused only under future separate gates;
+no fresh cloud inventory or live action now. A7-8 remains deferred; GitHub owns transient PR lifecycle.
+Remaining order **PT-6R2 -> PT-7 -> PT-8A -> PT-8B -> PT-9** and all human gates remain mandatory.
 
 ## Why this reassessment exists
 
@@ -237,16 +241,18 @@ retry-until-green. This amendment records completion only; no production change 
 
 ### PT-6R2 — Provider terminality / latency-budget closure
 
-Activation is unauthorized until the evidence-validity reassessment gate above is released by the
-subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged amendment.
-PT-6R1 acceptance and merge alone are insufficient. Subject to that amendment, audit the actual Google GenAI request/deadline
-capability and provider/retry/job boundaries. Ensure one accepted job cannot remain provider-bound
-indefinitely. The original PT-2 `424846 ms` censor stays untouched; its upstream cause is unknown.
-Do not invent a timeout or silently choose retry tradeoffs. If a numeric provider/job latency budget
-or retry policy requires a product choice, stop at
-**HUMAN_REQUIRED: PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION**, with measured evidence and options.
-After required approval, freeze a bounded terminal contract and validate timeout/hang injection.
-Preserve PT-4 truthful waiting/status; do not claim Gemini is inherently fast.
+**PT-6R2 IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING.** Original audit/probe,
+initial failed validation and exhausted autonomous repair remain immutable. Review 6037186101 is
+production-design PASS_WITH_VALIDATION_BLOCKER, not phase acceptance. Explicit USER test-contract
+correction 1 aligns exactly three legacy test files; production and PT-6R1 identity bytes stay exact.
+Focused 11/0/0/0 PASS and one full offline clean package 576/0/0/4 PASS; normal corrective-head
+Backend Local Verification is authoritative in GitHub, MariaDB skipped locally. No extra repair,
+manual DB execution or workflow rerun. Auto repair 1/1; human corrective 1.
+
+[Current brief](../../evaluation/product-trust-pt-6r2-provider-terminality.md) preserves the conditional
+Δ contract/limits and source-bound evidence. Independent acceptance and explicit USER merge must
+precede further progression. PT-7 remains unauthorized. No live/model/GCP/OpenSearch/browser action;
+automatic CI never changes PT-6R1 acceptance counters or original PT-2 424846-ms censor.
 
 ### PT-7 — CI/CD trust gates and operational handoff
 
@@ -355,12 +361,11 @@ not imply that Kubernetes is required for every version of this product.
 
 ## Autonomous execution boundary
 
-Automatic Goal progression remains paused at
-`AWS_OFFICIAL_ACCEPTANCE_SET_TRUTH_FREEZE_AND_V4_AMENDMENT_REVIEW`. This PR prepares v4;
-it does not grant independent acceptance, exact truth freeze or merge. PT-6R2 is the next engineering
-phase only after the amendment is reviewed, explicitly USER-approved, independently accepted and
-USER-merged; it remains unactivated with no future execution base now. Each future substantive Work
-Package reads actual remote main once at activation and stops on drift. No separate state-sync PR.
+Automatic Goal progression stops at `PT6R2_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE`.
+USER-authorized test-contract correction 1 passes one local focused/full cycle; normal exact-head CI
+is GitHub-authoritative. Independent acceptance and explicit USER merge remain required; no PT-7
+execution, acceptance inference from CI or additional repair is authorized. The base remains bound,
+drift stops, no state-sync PR or predicted future base, and historical failures/counters remain exact.
 
 This autonomy does not include:
 

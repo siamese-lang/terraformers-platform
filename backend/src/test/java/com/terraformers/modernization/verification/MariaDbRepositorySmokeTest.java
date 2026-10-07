@@ -8,6 +8,8 @@ import com.terraformers.modernization.analysis.AnalysisJobRepository;
 import com.terraformers.modernization.analysis.AnalysisJobStatus;
 import com.terraformers.modernization.analysis.AnalysisMode;
 import com.terraformers.modernization.analysis.AnalysisResultCleanupStatus;
+import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
+import com.terraformers.modernization.analysis.EvidenceQualityAssessment;
 import com.terraformers.modernization.collaboration.BoardEntity;
 import com.terraformers.modernization.collaboration.BoardRepository;
 import com.terraformers.modernization.collaboration.CommentEntity;
@@ -383,8 +385,17 @@ class MariaDbRepositorySmokeTest {
         List<String> eligible = analysisJobRepository.findEligibleJobIds(
                 AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING, now, PageRequest.of(0, 10));
 
-        assertThat(eligible).contains(due.getId(), expired.getId(), legacy.getId());
-        assertThat(eligible).doesNotContain(future.getId(), active.getId(), succeeded.getId(), failed.getId());
+        assertThat(eligible).contains(due.getId(), legacy.getId());
+        assertThat(eligible).doesNotContain(expired.getId(), future.getId(), active.getId(),
+                succeeded.getId(), failed.getId());
+        assertThat(terminalizeConsumedAttempts(now)).isEqualTo(1);
+        AnalysisJobEntity exhausted = analysisJobRepository.findById(expired.getId()).orElseThrow();
+        assertThat(exhausted.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+        assertThat(exhausted.getAttemptCount()).isEqualTo(1);
+        assertThat(exhausted.getClaimGeneration()).isEqualTo(1);
+        assertThat(exhausted.getTerminalAt()).isEqualTo(now);
+        assertThat(exhausted.getResultFileId()).isNull();
+        assertThat(exhausted.getResultObjectKey()).isNull();
     }
 
     private AnalysisJobEntity saveEligibilityJob(OwnedProjectEntity project, ProjectFileEntity source,
@@ -584,7 +595,8 @@ class MariaDbRepositorySmokeTest {
             Instant durableLease = Instant.parse("2026-09-28T00:05:00Z");
             durableInitialJob = newClaimJob(project, sourceFile, "repository-smoke-durable-initial");
             durableInitialJob = analysisJobRepository.saveAndFlush(durableInitialJob);
-            assertConcurrentDurableClaim(durableInitialJob.getId(), durableNow, durableLease);
+            assertThat(durableInitialJob.getAttemptCount()).isZero();
+            assertConcurrentDurableClaim(durableInitialJob.getId(), durableNow, durableLease, 0, 1);
             AnalysisJobEntity claimed = analysisJobRepository.findById(durableInitialJob.getId()).orElseThrow();
             assertThat(claimed.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
             assertThat(claimed.getAttemptCount()).isEqualTo(1);
@@ -609,11 +621,20 @@ class MariaDbRepositorySmokeTest {
             durableReclaimJob.setClaimGeneration(1);
             durableReclaimJob.setLeaseExpiresAt(durableNow.minusSeconds(1));
             durableReclaimJob = analysisJobRepository.saveAndFlush(durableReclaimJob);
-            assertConcurrentDurableClaim(durableReclaimJob.getId(), durableNow, durableLease);
+            assertConcurrentDurableClaim(durableReclaimJob.getId(), durableNow, durableLease, 0, 0);
             AnalysisJobEntity reclaimed = analysisJobRepository.findById(durableReclaimJob.getId()).orElseThrow();
             assertThat(reclaimed.getStatus()).isEqualTo(AnalysisJobStatus.RUNNING);
-            assertThat(reclaimed.getAttemptCount()).isEqualTo(2);
-            assertThat(reclaimed.getClaimGeneration()).isEqualTo(2);
+            assertThat(reclaimed.getAttemptCount()).isEqualTo(1);
+            assertThat(reclaimed.getClaimGeneration()).isEqualTo(1);
+            assertThat(terminalizeConsumedAttempts(durableNow)).isEqualTo(1);
+            AnalysisJobEntity exhausted = analysisJobRepository.findById(durableReclaimJob.getId()).orElseThrow();
+            assertThat(exhausted.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+            assertThat(exhausted.getAttemptCount()).isEqualTo(1);
+            assertThat(exhausted.getClaimGeneration()).isEqualTo(1);
+            assertThat(exhausted.getTerminalAt()).isEqualTo(durableNow);
+            assertThat(exhausted.getLeaseExpiresAt()).isNull();
+            assertThat(exhausted.getResultFileId()).isNull();
+            assertThat(exhausted.getResultObjectKey()).isNull();
 
             board = new BoardEntity();
             board.setProject(project);
@@ -760,7 +781,8 @@ class MariaDbRepositorySmokeTest {
         return job;
     }
 
-    private void assertConcurrentDurableClaim(String jobId, Instant now, Instant leaseExpiry) {
+    private void assertConcurrentDurableClaim(String jobId, Instant now, Instant leaseExpiry,
+            Integer... expectedOutcomes) {
         CyclicBarrier contendersReady = new CyclicBarrier(2);
         ExecutorService contenders = Executors.newFixedThreadPool(2);
         try {
@@ -768,10 +790,22 @@ class MariaDbRepositorySmokeTest {
                     () -> durableClaimInIndependentTransaction(jobId, now, leaseExpiry, contendersReady));
             Future<Integer> second = contenders.submit(
                     () -> durableClaimInIndependentTransaction(jobId, now, leaseExpiry, contendersReady));
-            assertThat(List.of(awaitClaim(first), awaitClaim(second))).containsExactlyInAnyOrder(0, 1);
+            assertThat(List.of(awaitClaim(first), awaitClaim(second))).containsExactlyInAnyOrder(expectedOutcomes);
         } finally {
             contenders.shutdownNow();
         }
+    }
+
+    private int terminalizeConsumedAttempts(Instant now) {
+        return new TransactionTemplate(transactionManager).execute(status ->
+                analysisJobRepository.terminalizeIneligible(AnalysisJobStatus.PENDING, AnalysisJobStatus.RUNNING,
+                        AnalysisJobStatus.FAILED, now, now.minus(AnalysisRuntimeProperties.ACCEPTED_AGE_CUTOFF),
+                        false, "Consumed durable attempt", EvidenceQualityAssessment.CONTRACT_VERSION,
+                        EvidenceQualityAssessment.TechnicalStatus.FAIL,
+                        EvidenceQualityAssessment.KnowledgeStatus.UNKNOWN,
+                        EvidenceQualityAssessment.QualityStatus.UNKNOWN,
+                        EvidenceQualityAssessment.ProjectDecisionStatus.UNKNOWN,
+                        EvidenceQualityAssessment.RuntimeQualityBoundary.CONDITIONAL_ON_EXTRACTED_FACTS, ""));
     }
 
     private RuntimeException cleanup(

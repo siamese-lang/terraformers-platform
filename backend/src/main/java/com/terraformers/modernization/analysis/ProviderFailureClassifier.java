@@ -1,6 +1,8 @@
 package com.terraformers.modernization.analysis;
 
 import java.lang.reflect.Method;
+import java.io.InterruptedIOException;
+import com.google.genai.errors.GenAiIOException;
 import java.util.List;
 
 /** Bounded transport classification shared by provider adapters. */
@@ -19,9 +21,14 @@ public final class ProviderFailureClassifier {
     }
 
     public static boolean isTimeout(Throwable failure) {
+        boolean genAiIo = false;
         for (Throwable current = failure; current != null; current = current.getCause()) {
+            if (current instanceof GenAiIOException) genAiIo = true;
             String name = current.getClass().getSimpleName().toLowerCase();
             if (name.contains("timeout") || name.contains("timedout")) return true;
+            // OkHttp whole-call expiry in the audited SDK; ordinary interrupted I/O is not timeout.
+            if (genAiIo && current instanceof InterruptedIOException
+                    && "timeout".equals(current.getMessage())) return true;
         }
         return false;
     }

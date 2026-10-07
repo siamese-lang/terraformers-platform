@@ -1,0 +1,560 @@
+{
+  "executionBaseSha": "406981a8c629a02503f5660453dcc7921b8d5177",
+  "method": "BOUND_SOURCE_AND_EXACT_RELEASE_SOURCE_AUDIT_NO_PRODUCT_EXECUTION",
+  "sourceBindings": [
+    {
+      "path": "backend/pom.xml",
+      "sha256": "e723196ed5d6a99d045b84de8409357dbb3812fe6b1723ad53706a5eabe3dcde"
+    },
+    {
+      "path": "backend/src/main/resources/application-prod.yml",
+      "sha256": "d5efc512a1b3151c55c85cc65947085db0ad100e1c5c4e873a9f82c9b3450f45"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeConfiguration.java",
+      "sha256": "b5249c044dfa1013ba6a5a2e019868a72d2edced4b88b5a0a59e3d30e22f6899"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeProperties.java",
+      "sha256": "64b1d4f8dfb34d54222790b79b3de9fb7ea938b0e5fa83902c540da697059292"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java",
+      "sha256": "0d6ada22d14fdfdb3ecfd1cdb890c5a5c970be760925106c65347a539e2f2eda"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGroundedGenerationOrchestrator.java",
+      "sha256": "dca7604de6cc0b95f2ffcf0fa508b4f397de89f16bcbeaab817a3df92c6564c8"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProvider.java",
+      "sha256": "a8154fa20a57d9e5419ad1ceb3040f1f806d957d843d0d4520f4dcbb62e7569a"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java",
+      "sha256": "c6c07abd88a51016e5ab012fa68524a553eb025f3915203a6433a1467377483f"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/reference/VertexEmbeddingProvider.java",
+      "sha256": "e555a592541e51e50b00a1ad054b1ce965879e91c58e17d2a47c83366b009fc4"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/reference/opensearch/OpenSearchReferenceRetriever.java",
+      "sha256": "617a1141bd8dda87974c5299ed99a83ee988d749a45e5f474b45492294752a34"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/reference/opensearch/HttpOpenSearchTransport.java",
+      "sha256": "6d81275c68e524a29adea6d898a480dbf3b90134ea498fb00b1d61889890815e"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/reference/RetrievalModeReferenceRetriever.java",
+      "sha256": "36d35e6883be691379b6433a379046273a4e3c76d15dcc25906a5c8b4fd43501"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/reference/ReferenceQuery.java",
+      "sha256": "786ab547ae5f432fa0b97d32c28a4799be6a9376570aa253dcf785c176ed0529"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/ProviderFailureClassifier.java",
+      "sha256": "59c423097c17d6c1ed1103a0965af6b19972f25a65b98e19ceb80bceab2d85c7"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobOrchestrator.java",
+      "sha256": "1e054c86552e3b76a00c03d561ab83b31e03607ad6bccb9d50a41cb878660e3e"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRunner.java",
+      "sha256": "8f6dcc249fb7f679a2e2f97f292a9b7858a9867e7929cb1c546c029e283c8e49"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobRepository.java",
+      "sha256": "065e307e038f47ada12799e84229125e88da320bac9818d750971d72ef2c75d2"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobStateService.java",
+      "sha256": "4313229c135c1e0019b0d78468b159049e19fb3a5a75eec0d61036abc8877807"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobDispatcher.java",
+      "sha256": "157211933a8e5d1dd1cae4c0c82579ee419ef51c47628ddec1a77c58b567d04b"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisExecutorConfig.java",
+      "sha256": "80695498f074c616a931337f47a90bc53d9cdfbd9d395ed27963779d7d3e62be"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisDispatchSchedulingConfig.java",
+      "sha256": "c009c32f4b10851a5d058de4e449847728b560fa4ffc3a8b27cbdd8f30d6bd8d"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobService.java",
+      "sha256": "f75369f21b47f560c7b0519225528aa35f07233195b61a81017af6c1cf00d675"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisRuntimeProperties.java",
+      "sha256": "6508d71e17ad923e5475c96d3c23cc933b2b572f66d84c55032608ff9c577edc"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/TerminalQualityAssessmentMapper.java",
+      "sha256": "d02bb8466fda8c4935713957bfb1780b8383ab2d931013a2828f852561a87a1b"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/TerraformCliValidator.java",
+      "sha256": "463e37032453a644930c712d9db5901252892a3f72f2c0ded663e048d1f25b40"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/storage/GcsObjectReader.java",
+      "sha256": "2981edab41509949053d902b0ce838428725006f37139799abc7a009fd8b6f33"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/storage/GcsObjectWriter.java",
+      "sha256": "f2733950e08f41956a4f0482757c85cf96ec0c1b013ab4edaa268f510748371b"
+    },
+    {
+      "path": "backend/src/main/java/com/terraformers/modernization/analysis/SelectedAnalysisProvider.java",
+      "sha256": "d4df8d39c5879be17fa52f500c6827906fc1c96d18c08725e4cf9608bdd16214"
+    },
+    {
+      "path": "infra/kubernetes/overlays/gcp-target/backend-configmap-patch.yaml",
+      "sha256": "83d5432d1d8edd116719d72d6d4c545fb48219fcb844fefedd9586f2cd90f794"
+    },
+    {
+      "path": "backend/src/main/resources/application-gcp-target.yml",
+      "sha256": "18f76bc181480254b54456bab35751a63e55ccd884def0beb1c9a64cc27fb035"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobRunnerTest.java",
+      "sha256": "7a37841d1a13b7f842ed4c8a4b475aa1b1cfbd7ec26d1277ccfbdf4c1f566762"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/AnalysisJobOrchestratorTest.java",
+      "sha256": "76d2e5c8ff2c497a6387619c05b1454394f2e2714f184d59cb96c51e636b1a0a"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/ProviderFailureClassifierTest.java",
+      "sha256": "3d576cea8e2b526062eb24bd02ae1f5adca64ff4ec826c2a65f1bc07c0934817"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java",
+      "sha256": "64dcbc75dfbc6d237774a2ffdc102d272ae832c9226fffa182cd656d054f2801"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java",
+      "sha256": "5bc21e186862f8e506344ef2ed058b06cd9fa7e91e5f987204962df453fa8b02"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractorTest.java",
+      "sha256": "e4dac422fd2bca7125de30096b8b5fa92e03fb4d61c8e73d8266919711ed240d"
+    },
+    {
+      "path": "backend/src/test/java/com/terraformers/modernization/reference/VertexEmbeddingProviderTest.java",
+      "sha256": "6982ab01cf93c49612fcc8f0e614238c9f304f145705eafc884b30006452d7ba"
+    }
+  ],
+  "sdk": {
+    "coordinate": "com.google.genai:google-genai:1.72.0",
+    "officialTag": "v1.72.0",
+    "officialTagCommit": "af291504959d6d644090ab70f01e6840a3614e79",
+    "artifacts": [
+      {
+        "artifact": "google-genai-1.72.0.jar",
+        "url": "https://repo.maven.apache.org/maven2/com/google/genai/google-genai/1.72.0/google-genai-1.72.0.jar",
+        "sha256": "cfe7ec39bf80e08a97c0f8179f425e03d64402fe7140f4274681a48769dea42d",
+        "sha1": "2f7798d779be8883e5e61e6b302eecaceed5abed",
+        "officialMavenPublishedSha1Verified": true
+      },
+      {
+        "artifact": "google-genai-1.72.0-sources.jar",
+        "url": "https://repo.maven.apache.org/maven2/com/google/genai/google-genai/1.72.0/google-genai-1.72.0-sources.jar",
+        "sha256": "7763a629c1df4cdd610e04c98db9b0f6eec28320216f7f4daf75fdb9821c3cf1",
+        "sha1": "67ac63a838d35bd34b815ae490f1b0f81cf4e09d",
+        "officialMavenPublishedSha1Verified": true
+      },
+      {
+        "artifact": "okhttp-4.12.0-sources.jar",
+        "url": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp/4.12.0/okhttp-4.12.0-sources.jar",
+        "sha256": "d91a769a4140e542cddbac4e67fcf279299614e8bfd53bd23b85e60c2861341c",
+        "sha1": "ae6ec072a7ddfd4e225a36de1c185e76ebc7348d",
+        "officialMavenPublishedSha1Verified": true
+      }
+    ],
+    "sourceBindings": [
+      {
+        "path": "com/google/genai/ApiClient.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/ApiClient.java",
+        "sha256": "a6ce33d1afb937ef0b52480b5eeb66573b0f4442d62af4d20b117a866991169c",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/HttpApiClient.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/HttpApiClient.java",
+        "sha256": "978d65e721360e88d1875ddbfe7230a281c7c8e265dea68289c738cf7da00dd8",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/RetryInterceptor.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/RetryInterceptor.java",
+        "sha256": "7cfd0a9ddfeb20c0bf2666014965b153b94388e0ac9babe52cab8b96ef6b27ce",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/Models.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/Models.java",
+        "sha256": "d4091ded5580dcbf9d3fb57c2c7c6081f1c1840909e999d393bbf1e5477751c2",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/types/HttpOptions.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/types/HttpOptions.java",
+        "sha256": "9da975691370d0c2fe9e86d604801f99cc4fae08a6860269695e66a364babe3a",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/types/HttpRetryOptions.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/types/HttpRetryOptions.java",
+        "sha256": "888d739d439efdea0168d28ef3aded52a77621faa164033c0209e39b9268a256",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/errors/GenAiIOException.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/errors/GenAiIOException.java",
+        "sha256": "3357bfaaf74d58d5d47041a243df7119e6426b745666213dadf172ec8eaee0a3",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "okhttp3/internal/connection/RealCall.kt",
+        "authority": "okhttp-4.12.0-sources.jar",
+        "sha256": "eb2395a4e2cfb0214149add9ca06e9740602dc6b5cf30c95e8eff2ba2c31659a"
+      },
+      {
+        "path": "okhttp3/OkHttpClient.kt",
+        "authority": "okhttp-4.12.0-sources.jar",
+        "sha256": "7c57469526804a4708f841ee010533f843740c0de5fdfb38414b4b5fb04f65bc"
+      },
+      {
+        "path": "okhttp3/internal/http/RetryAndFollowUpInterceptor.kt",
+        "authority": "okhttp-4.12.0-sources.jar",
+        "sha256": "ec792a887a6b65bec9930212e6462a34bf3ebb6fd70533f1eea5ecbf628ada81"
+      },
+      {
+        "path": "com/google/genai/Client.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/Client.java",
+        "sha256": "b371ade30e95584f5847a5562c74e64460f2022e0f32416af8728be600dcf8c1",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/AfcUtil.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/AfcUtil.java",
+        "sha256": "8924a1950b749cbc2c58d6da84fddeac1f3131ea1b2086687df4214c9d06a8ef",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/Transformers.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/Transformers.java",
+        "sha256": "009a3cda3d0907f091170569eb6a83b9c33f0aa22366678d0efa34661321d708",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/types/GenerateContentConfig.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/types/GenerateContentConfig.java",
+        "sha256": "649d3ffcef3efcd75a1d5394af356020402e3df6360670ef46026b06933fe9ff",
+        "releaseSourceEqualsTag": true
+      },
+      {
+        "path": "com/google/genai/types/EmbedContentConfig.java",
+        "url": "https://raw.githubusercontent.com/googleapis/java-genai/af291504959d6d644090ab70f01e6840a3614e79/src/main/java/com/google/genai/types/EmbedContentConfig.java",
+        "sha256": "cced5b514d2487a3d2df37d7fe69dc196500ce58c9c476f6f54d0680955b2a05",
+        "releaseSourceEqualsTag": true
+      }
+    ],
+    "cachedBinaryJavapConfirmsTimeoutAndRetryConstruction": true,
+    "transport": "OkHttp 4.12.0 declared by exact SDK POM and present in prior cached backend package; no fresh bound-main backend build claimed",
+    "timeoutUnit": "milliseconds",
+    "timeoutScopes": [
+      "Client.httpOptions",
+      "GenerateContentConfig.httpOptions",
+      "EmbedContentConfig.httpOptions"
+    ],
+    "requestOverridePrecedence": "Present request timeout overrides client timeout; absent request timeout retains client callTimeout. Clearing request timeout does not clear a client default. Zero means no call timeout.",
+    "defaultTimeoutsMs": {
+      "connect": 0,
+      "read": 0,
+      "write": 0,
+      "call": 0
+    },
+    "absentRetryOptionsStillRetry": true,
+    "defaultSdkAttempts": 5,
+    "defaultRetryStatuses": [
+      408,
+      429,
+      500,
+      502,
+      503,
+      504
+    ],
+    "defaultIOExceptionRetry": true,
+    "defaultDelaySeconds": {
+      "initial": 1,
+      "max": 60,
+      "expBase": 2,
+      "jitter": 1
+    },
+    "defaultLastRetriableStatusAlsoSleeps": true,
+    "defaultMaximumAllFiveStatusSleepMs": 62000,
+    "defaultMaximumBeforeFifthIOExceptionThrowSleepMs": 30000,
+    "callTimeoutCoversWholeOkHttpCallIncludingInnerRetriesAndBody": true,
+    "callTimeoutIsNotFiveIndependentTimeoutWindows": true,
+    "sdkRetrySleepNotThreadInterruptedByCallCancellation": true,
+    "serverTimeoutHeader": "X-Server-Timeout = ceil(timeoutMs/1000), but generated only in mergeHttpOptions when supplied headers Optional is present. Timeout-only custom options do NOT automatically add this header. Server enforcement not proven.",
+    "callTimeoutException": "GenAiIOException caused by java.io.InterruptedIOException(\"timeout\"); may nest socket timeout but need not. Plain InterruptedIOException is not recognized by current classifier/orchestrator.",
+    "cancellation": "OkHttp watchdog cancels call/exchange/socket, not arbitrary worker Thread. Credential refresh occurs before newCall.execute; DNS/noncooperative code/retry sleep are not hard thread cancellation guarantees.",
+    "lowerTransportRetries": "OkHttp retryOnConnectionFailure=true; its connection/follow-up behavior is distinct from the SDK five-attempt interceptor. Counts below are SDK proceed attempts, not exact wire calls.",
+    "automaticFunctionCalling": "Models.generateContent 7207-7233 returns one privateGenerateContent call with empty function map; production supplies no tools, so no AFC extra provider calls."
+  },
+  "callGraph": [
+    {
+      "stage": "architecture_facts",
+      "api": "generateContent",
+      "model": "configured generation model; default gemini-3.8-flash",
+      "maxInvocations": 1,
+      "timeoutTranslation": "Facts PROVIDER_TIMEOUT only when classifier recognizes cause; orchestrator wraps SocketTimeoutException/HttpTimeoutException, not plain InterruptedIOException.",
+      "sharedGenAiClient": true,
+      "currentCallTimeoutMs": 0,
+      "currentSdkMaxAttempts": 5,
+      "durableRetry": "Only cause-chain AnalysisProviderTimeoutException while no result, attemptCount < configured maxAttempts; 3 default, 10s delay. Plain SDK call-timeout cause is currently unrecognized.",
+      "onNonreturn": "No exception/transition; heartbeat may continue renewing RUNNING.",
+      "restEndpoint": ":generateContent"
+    },
+    {
+      "stage": "initial_query_embedding",
+      "api": "embedContent",
+      "model": "configured embedding model; retained repository overlay gemini-embedding-2",
+      "maxInvocations": 1,
+      "timeoutTranslation": "No adapter wrapping; orchestrator recognizes only SocketTimeoutException/HttpTimeoutException.",
+      "sharedGenAiClient": true,
+      "currentCallTimeoutMs": 0,
+      "currentSdkMaxAttempts": 5,
+      "durableRetry": "Only cause-chain AnalysisProviderTimeoutException while no result, attemptCount < configured maxAttempts; 3 default, 10s delay. Plain SDK call-timeout cause is currently unrecognized.",
+      "onNonreturn": "No exception/transition; heartbeat may continue renewing RUNNING.",
+      "restEndpoint": ":embedContent for gemini-embedding-2; :predict for gemini-embedding-001 fallback"
+    },
+    {
+      "stage": "normal_grounded_generation",
+      "api": "generateContent",
+      "model": "configured generation model",
+      "maxInvocations": 1,
+      "timeoutTranslation": "Classifier -> AnalysisProviderTimeoutException if recognized.",
+      "sharedGenAiClient": true,
+      "currentCallTimeoutMs": 0,
+      "currentSdkMaxAttempts": 5,
+      "durableRetry": "Only cause-chain AnalysisProviderTimeoutException while no result, attemptCount < configured maxAttempts; 3 default, 10s delay. Plain SDK call-timeout cause is currently unrecognized.",
+      "onNonreturn": "No exception/transition; heartbeat may continue renewing RUNNING.",
+      "restEndpoint": ":generateContent"
+    },
+    {
+      "stage": "MAX_TOKENS_compact_fallback",
+      "api": "generateContent",
+      "model": "configured generation model",
+      "maxInvocations": 1,
+      "condition": "First initial generation MAX_TOKENS only; never a transport retry.",
+      "timeoutTranslation": "Same as normal generation.",
+      "sharedGenAiClient": true,
+      "currentCallTimeoutMs": 0,
+      "currentSdkMaxAttempts": 5,
+      "durableRetry": "Only cause-chain AnalysisProviderTimeoutException while no result, attemptCount < configured maxAttempts; 3 default, 10s delay. Plain SDK call-timeout cause is currently unrecognized.",
+      "onNonreturn": "No exception/transition; heartbeat may continue renewing RUNNING.",
+      "restEndpoint": ":generateContent"
+    },
+    {
+      "stage": "closure_query_embedding",
+      "api": "embedContent",
+      "model": "configured embedding model",
+      "maxInvocations": 1,
+      "condition": "Usable architecture draft lacks generated-resource official evidence; retrieval not DISABLED.",
+      "timeoutTranslation": "Same as initial embedding.",
+      "sharedGenAiClient": true,
+      "currentCallTimeoutMs": 0,
+      "currentSdkMaxAttempts": 5,
+      "durableRetry": "Only cause-chain AnalysisProviderTimeoutException while no result, attemptCount < configured maxAttempts; 3 default, 10s delay. Plain SDK call-timeout cause is currently unrecognized.",
+      "onNonreturn": "No exception/transition; heartbeat may continue renewing RUNNING.",
+      "restEndpoint": ":embedContent for gemini-embedding-2; :predict for gemini-embedding-001 fallback"
+    },
+    {
+      "stage": "single_grounding_repair",
+      "api": "generateContent",
+      "model": "configured generation model",
+      "maxInvocations": 1,
+      "condition": "Only after the sole closure retrieval; no repair retry or second closure.",
+      "timeoutTranslation": "Same as normal generation.",
+      "sharedGenAiClient": true,
+      "currentCallTimeoutMs": 0,
+      "currentSdkMaxAttempts": 5,
+      "durableRetry": "Only cause-chain AnalysisProviderTimeoutException while no result, attemptCount < configured maxAttempts; 3 default, 10s delay. Plain SDK call-timeout cause is currently unrecognized.",
+      "onNonreturn": "No exception/transition; heartbeat may continue renewing RUNNING.",
+      "restEndpoint": ":generateContent"
+    }
+  ],
+  "maximumPath": {
+    "facts": 1,
+    "initialEmbedding": 1,
+    "initialGenerationsIncludingCompactFallback": 2,
+    "closureEmbedding": 1,
+    "repairGeneration": 1,
+    "totalGenAiLogicalCalls": 6,
+    "sdkProceedAttemptsPerAnalysisAttempt": 30,
+    "sdkProceedAttemptsForThreeDurableTimeoutAttempts": 90,
+    "notExactWireRpcOrCostCount": true,
+    "initialOpenSearchMaxRequests": 34,
+    "closureOpenSearchMaxRequests": 16,
+    "totalOpenSearchMaxRequests": 50,
+    "OpenSearchRequestTimeoutMs": 30000,
+    "terraformInitTimeoutMs": 60000,
+    "terraformValidateTimeoutMs": 20000,
+    "terraformMaximumTerminationWaitMsPerProcess": 2000,
+    "terraformNominalWaitEnvelopeMs": 84000
+  },
+  "currentJobTerminality": {
+    "providerWorkerSynchronous": true,
+    "independentHeartbeat": true,
+    "leaseDurationMs": 60000,
+    "heartbeatIntervalMs": 20000,
+    "leaseRenewsWithoutWorkerProgressOrAgeLimit": true,
+    "durableAttemptsDefault": 3,
+    "retryDelayMs": 10000,
+    "durableRetriesTimeoutOnly": true,
+    "maxAttemptsCheckedOnlyAfterReturningRetryableException": true,
+    "reclaimSQLHasNoMaxAttemptOrCreatedAtDeadline": true,
+    "acceptedJobDeadline": null,
+    "RUNNINGIndefiniteWithBlockedProviderAndHealthyHeartbeat": true,
+    "sourceProofNotLivePT2RootCauseAttribution": true,
+    "existingTestsDoNotProveSDKHangTermination": true,
+    "sourceStorageTimeoutNormalization": "Source GCS read occurs inside analyze; a nested standard SocketTimeoutException/HttpTimeoutException may be normalized as retryable provider timeout. Result finalization GCS writes are outside provider conversion and not retried.",
+    "missedSDKTimeoutTerminalQuality": "Facts/generation PROVIDER_ERROR; raw embedding IO can have empty reasons. No false claim that every SDK interruption is a timeout."
+  },
+  "decision": {
+    "gate": "PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION",
+    "selectedOption": null,
+    "numericImplementationAuthorized": false,
+    "candidateNumbersAreHeuristicsNotSLOOrPercentiles": true,
+    "numericBasis": {
+      "factMaximumCompletedStageMs": 183242,
+      "generationMaximumCompletedBroadStageMs": 88451,
+      "olderExactTextGenerationMs": 109773,
+      "maximumKnownOriginalCompositeRetrievalMs": 3227,
+      "maximumSummedBroadCompletedStagesMs": 211085,
+      "commonTolerantMs": 370000,
+      "tolerantGenerationMs": 220000,
+      "tolerantEmbeddingMs": 10000,
+      "roundingRationale": "Human-readable ceiling only after observed maxima multipliers; not independently selected round-number targets. Composite retrieval is only a loose upper envelope for its contained embedding, not a measured standalone embedding percentile."
+    },
+    "options": [
+      {
+        "id": "A",
+        "label": "tolerant common request budget, current durable timeout attempts",
+        "factTimeoutMs": 370000,
+        "generationAndRepairTimeoutMs": 370000,
+        "embeddingTimeoutMs": 370000,
+        "sdkAttempts": 1,
+        "sdkRetryHttpStatusCodes": [],
+        "applicationMaxAttempts": 3,
+        "retryDelayMs": 10000,
+        "maxGenAiLogicalCallsPerAttempt": 6,
+        "genAiNominalEnvelopePerAttemptMs": 2220000,
+        "allAttemptsGenAiEnvelopeWithRetryDelaysMs": 6680000,
+        "knownNonProviderNominalEnvelopePerAttemptMs": 1584000,
+        "allAttemptsKnownWorkEnvelopeMs": 11432000,
+        "proposedAcceptedJobCutoffMs": 1320000,
+        "jobCutoffBasis": "ceil(6 * 211085ms / 60000ms) * 60000ms",
+        "cutoffAnchor": "original persisted acceptedAt, includes PENDING queue and every retry, never resets",
+        "requestedTerminalUpperBound": "proposedAcceptedJobCutoffMs + Delta, conditional on bounded deadline inspection and available durable DB transition; Delta NOT_ESTABLISHED by this audit",
+        "clientOnlyAcceptedUpperBound": "UNESTABLISHED; queue/auth/storage/DB/local work and noncooperative thread termination are not bounded by HttpOptions.timeout",
+        "selected": false
+      },
+      {
+        "id": "B",
+        "label": "stage budgets, two durable timeout attempts",
+        "factTimeoutMs": 370000,
+        "generationAndRepairTimeoutMs": 220000,
+        "embeddingTimeoutMs": 10000,
+        "sdkAttempts": 1,
+        "sdkRetryHttpStatusCodes": [],
+        "applicationMaxAttempts": 2,
+        "retryDelayMs": 10000,
+        "maxGenAiLogicalCallsPerAttempt": 6,
+        "genAiNominalEnvelopePerAttemptMs": 1050000,
+        "allAttemptsGenAiEnvelopeWithRetryDelaysMs": 2110000,
+        "knownNonProviderNominalEnvelopePerAttemptMs": 1584000,
+        "allAttemptsKnownWorkEnvelopeMs": 5278000,
+        "proposedAcceptedJobCutoffMs": 900000,
+        "jobCutoffBasis": "ceil(4 * 211085ms / 60000ms) * 60000ms",
+        "cutoffAnchor": "original persisted acceptedAt, includes PENDING queue and every retry, never resets",
+        "requestedTerminalUpperBound": "proposedAcceptedJobCutoffMs + Delta, conditional on bounded deadline inspection and available durable DB transition; Delta NOT_ESTABLISHED by this audit",
+        "clientOnlyAcceptedUpperBound": "UNESTABLISHED; queue/auth/storage/DB/local work and noncooperative thread termination are not bounded by HttpOptions.timeout",
+        "selected": false
+      },
+      {
+        "id": "C",
+        "label": "tighter stage budgets, one durable attempt",
+        "factTimeoutMs": 230000,
+        "generationAndRepairTimeoutMs": 120000,
+        "embeddingTimeoutMs": 7000,
+        "sdkAttempts": 1,
+        "sdkRetryHttpStatusCodes": [],
+        "applicationMaxAttempts": 1,
+        "retryDelayMs": 10000,
+        "maxGenAiLogicalCallsPerAttempt": 6,
+        "genAiNominalEnvelopePerAttemptMs": 604000,
+        "allAttemptsGenAiEnvelopeWithRetryDelaysMs": 604000,
+        "knownNonProviderNominalEnvelopePerAttemptMs": 1584000,
+        "allAttemptsKnownWorkEnvelopeMs": 2188000,
+        "proposedAcceptedJobCutoffMs": 480000,
+        "jobCutoffBasis": "ceil(2 * 211085ms / 60000ms) * 60000ms",
+        "cutoffAnchor": "original persisted acceptedAt, includes PENDING queue and every retry, never resets",
+        "requestedTerminalUpperBound": "proposedAcceptedJobCutoffMs + Delta, conditional on bounded deadline inspection and available durable DB transition; Delta NOT_ESTABLISHED by this audit",
+        "clientOnlyAcceptedUpperBound": "UNESTABLISHED; queue/auth/storage/DB/local work and noncooperative thread termination are not bounded by HttpOptions.timeout",
+        "selected": false
+      },
+      {
+        "id": "D",
+        "label": "tolerant stage budgets, one durable attempt",
+        "factTimeoutMs": 370000,
+        "generationAndRepairTimeoutMs": 220000,
+        "embeddingTimeoutMs": 10000,
+        "sdkAttempts": 1,
+        "sdkRetryHttpStatusCodes": [],
+        "applicationMaxAttempts": 1,
+        "retryDelayMs": 10000,
+        "maxGenAiLogicalCallsPerAttempt": 6,
+        "genAiNominalEnvelopePerAttemptMs": 1050000,
+        "allAttemptsGenAiEnvelopeWithRetryDelaysMs": 1050000,
+        "knownNonProviderNominalEnvelopePerAttemptMs": 1584000,
+        "allAttemptsKnownWorkEnvelopeMs": 2634000,
+        "proposedAcceptedJobCutoffMs": 480000,
+        "jobCutoffBasis": "ceil(2 * 211085ms / 60000ms) * 60000ms",
+        "cutoffAnchor": "original persisted acceptedAt, includes PENDING queue and every retry, never resets",
+        "requestedTerminalUpperBound": "proposedAcceptedJobCutoffMs + Delta, conditional on bounded deadline inspection and available durable DB transition; Delta NOT_ESTABLISHED by this audit",
+        "clientOnlyAcceptedUpperBound": "UNESTABLISHED; queue/auth/storage/DB/local work and noncooperative thread termination are not bounded by HttpOptions.timeout",
+        "selected": false
+      }
+    ],
+    "recommendedOption": "D",
+    "recommendationIsApproval": false,
+    "sharedRequirements": [
+      "Keep existing MAX_TOKENS compact fallback and single closure/single repair unchanged.",
+      "Explicit SDK attempts=1 plus empty retryable HTTP statuses avoids the final-status sleep and does not add retries.",
+      "One accepted-age deadline covers queue/auth/GCS/DB/finalization/retries without claiming hard provider-thread cancellation.",
+      "Freeze deadline inspection/durable transition bound Delta and ownership/late-result behavior only after explicit decision; no numeric cutoff is implemented now.",
+      "No durable retry expansion to rate limits/5xx/content/format failures; timeout translation must distinguish real SDK call timeout from arbitrary interruption."
+    ]
+  },
+  "metadataToolObservation": {
+    "offlineDependencyTree": "FAILED_PLUGIN_NOT_CACHED (No plugin found for prefix dependency); not a product test or baseline failure",
+    "fallback": "Exact pinned POM/release artifacts, cached package inventory and javap, no fresh build asserted",
+    "backendTestExecutions": 0,
+    "MariaDbExecutions": 0,
+    "browserExecutions": 0,
+    "modelCalls": 0,
+    "cloudActions": 0,
+    "OpenSearchOperations": 0
+  }
+}

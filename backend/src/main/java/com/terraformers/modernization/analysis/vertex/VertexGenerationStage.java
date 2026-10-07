@@ -70,6 +70,7 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
 
     private GenerateContentConfig generationConfig(Map<String, Object> responseSchema) {
         var builder = GenerateContentConfig.builder()
+                .httpOptions(properties.generationHttpOptions())
                 .maxOutputTokens(properties.requireMaxOutputTokens())
                 .responseMimeType("application/json")
                 .responseJsonSchema(responseSchema);

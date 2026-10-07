@@ -87,6 +87,50 @@ class VertexGenerationStageTest {
     }
 
     @Test
+    void sdkPolicyExplicitlyUsesOneAttemptAndNoRetryableStatuses() {
+        var http = VertexRuntimeConfiguration.clientHttpOptions();
+        assertThat(http.apiVersion()).contains("v1");
+        var retry = http.retryOptions().orElseThrow();
+        assertThat(retry.attempts()).contains(1);
+        assertThat(retry.httpStatusCodes()).contains(List.of());
+    }
+
+    @Test
+    void requestBudgetsAreTypedPositiveAndCannotExceedApprovedCeilings() {
+        VertexRuntimeProperties p = new VertexRuntimeProperties();
+        assertThat(p.factsHttpOptions().timeout()).contains(370000);
+        assertThat(p.embeddingHttpOptions().timeout()).contains(10000);
+        p.setGenerationTimeout(java.time.Duration.ZERO);
+        assertThatThrownBy(p::generationHttpOptions).hasMessageContaining("between 1ms and 220s");
+        p.setFactsTimeout(java.time.Duration.ofSeconds(371));
+        assertThatThrownBy(p::factsHttpOptions).hasMessageContaining("370s");
+        p.setEmbeddingTimeout(java.time.Duration.ofSeconds(11));
+        assertThatThrownBy(p::embeddingHttpOptions).hasMessageContaining("10s");
+    }
+
+    @Test
+    void sdkTimeoutIsTranslatedWithoutGenerationOrRepairRetry() {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        VertexGenerationStage stage = new VertexGenerationStage(null, new VertexRuntimeProperties(),
+                new VertexPromptBuilder(), new VertexResponseParser(new ObjectMapper())) {
+            @Override com.google.genai.types.GenerateContentResponse request(com.google.genai.types.Content content,
+                    com.google.genai.types.GenerateContentConfig config) {
+                calls.incrementAndGet();
+                assertThat(config.httpOptions().orElseThrow().timeout()).contains(220000);
+                throw new com.google.genai.errors.GenAiIOException(new java.io.InterruptedIOException("timeout"));
+            }
+        };
+        assertThatThrownBy(() -> stage.generate(context(), source(), List.of(),
+                new AwsProviderSchemaEvidence(java.util.Map.of())))
+                .isInstanceOf(com.terraformers.modernization.analysis.AnalysisProviderTimeoutException.class);
+        assertThat(calls).hasValue(1);
+        assertThatThrownBy(() -> stage.repair(facts(), original(), List.of(),
+                new AwsProviderSchemaEvidence(java.util.Map.of())))
+                .isInstanceOf(com.terraformers.modernization.analysis.AnalysisProviderTimeoutException.class);
+        assertThat(calls).hasValue(2);
+    }
+
+    @Test
     void leavesThinkingUnsetByDefaultToPreserveModelDefault() {
         VertexRuntimeProperties properties = new VertexRuntimeProperties();
         VertexGenerationStage stage = stage(properties);
@@ -95,6 +139,7 @@ class VertexGenerationStageTest {
 
         assertThat(config.thinkingConfig()).isEmpty();
         assertThat(config.maxOutputTokens()).contains(8192);
+        assertThat(config.httpOptions().orElseThrow().timeout()).contains(220000);
     }
 
     @Test
@@ -152,6 +197,15 @@ class VertexGenerationStageTest {
     }
 
     @Test
+    void bothTruncationCallsReceiveTheGenerationBudget() {
+        RepairStage stage = new RepairStage("", FinishReason.Known.MAX_TOKENS);
+        assertThatThrownBy(() -> stage.generate(context(), source(), List.of(),
+                new AwsProviderSchemaEvidence(java.util.Map.of())))
+                .isInstanceOf(VertexOutputTruncatedException.class);
+        assertThat(stage.budgets).containsExactly(220000, 220000);
+    }
+
+    @Test
     void groundedGenerationRetriesExactlyOnceInCompactModeAfterTruncation() {
         RecordingStage stage = new RecordingStage(1);
 
@@ -198,6 +252,7 @@ class VertexGenerationStageTest {
         assertThat(stage.repair(facts(), original(), List.of(reference()),
                 new AwsProviderSchemaEvidence(java.util.Map.of()))).isEqualTo("corrected HCL");
         assertThat(stage.calls).isEqualTo(1);
+        assertThat(stage.budgets).containsExactly(220000);
         assertThat(stage.content.parts().orElseThrow()).hasSize(1);
         assertThat(stage.content.parts().orElseThrow().get(0).inlineData()).isEmpty();
         assertThat(stage.content.parts().orElseThrow().get(0).text()).get()
@@ -231,6 +286,7 @@ class VertexGenerationStageTest {
 
     private static final class RepairStage extends VertexGenerationStage {
         private int calls;
+        private final List<Integer> budgets = new java.util.ArrayList<>();
         private com.google.genai.types.Content content;
         private final String text;
         private final FinishReason.Known reason;
@@ -243,6 +299,7 @@ class VertexGenerationStageTest {
         com.google.genai.types.GenerateContentResponse request(com.google.genai.types.Content content,
                 com.google.genai.types.GenerateContentConfig config) {
             calls++;
+            budgets.add(config.httpOptions().orElseThrow().timeout().orElseThrow());
             this.content = content;
             return com.google.genai.types.GenerateContentResponse.builder().candidates(
                     com.google.genai.types.Candidate.builder().finishReason(reason).content(

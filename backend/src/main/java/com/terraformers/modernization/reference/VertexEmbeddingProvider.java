@@ -1,6 +1,8 @@
 package com.terraformers.modernization.reference;
 
 import com.google.genai.Client;
+import com.terraformers.modernization.analysis.AnalysisProviderTimeoutException;
+import com.terraformers.modernization.analysis.ProviderFailureClassifier;
 import com.google.genai.types.ContentEmbedding;
 import com.google.genai.types.EmbedContentConfig;
 import com.google.genai.types.EmbedContentResponse;
@@ -13,12 +15,22 @@ import org.springframework.stereotype.Component;
 @Lazy
 public class VertexEmbeddingProvider implements EmbeddingProvider {
 
-    private final Client client;
+    private final QueryEmbeddingClient client;
     private final VertexRuntimeProperties properties;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public VertexEmbeddingProvider(Client client, VertexRuntimeProperties properties) {
+        this((model, text, config) -> client.models.embedContent(model, text, config), properties);
+    }
+
+    VertexEmbeddingProvider(QueryEmbeddingClient client, VertexRuntimeProperties properties) {
         this.client = client;
         this.properties = properties;
+    }
+
+    @FunctionalInterface
+    interface QueryEmbeddingClient {
+        EmbedContentResponse embed(String model, String text, EmbedContentConfig config);
     }
 
     static boolean usesInlineSearchInstruction(String modelId) {
@@ -41,15 +53,18 @@ public class VertexEmbeddingProvider implements EmbeddingProvider {
         int expectedDimension = properties.requireEmbeddingDimension();
         String modelId = properties.requireEmbeddingModelId();
         EmbedContentConfig.Builder configBuilder = EmbedContentConfig.builder()
+                .httpOptions(properties.embeddingHttpOptions())
                 .outputDimensionality(expectedDimension);
         if (!usesInlineSearchInstruction(modelId)) {
             configBuilder.taskType("RETRIEVAL_QUERY");
         }
-        EmbedContentResponse response = client.models.embedContent(
-                modelId,
-                prepareQueryInput(modelId, text),
-                configBuilder.build()
-        );
+        EmbedContentResponse response;
+        try {
+            response = client.embed(modelId, prepareQueryInput(modelId, text), configBuilder.build());
+        } catch (RuntimeException exception) {
+            if (ProviderFailureClassifier.isTimeout(exception)) throw new AnalysisProviderTimeoutException(exception);
+            throw exception;
+        }
 
         List<ContentEmbedding> embeddings = response.embeddings()
                 .orElseThrow(() -> new IllegalStateException("Vertex embedding response has no embeddings"));

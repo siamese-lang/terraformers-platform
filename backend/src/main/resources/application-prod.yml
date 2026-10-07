@@ -74,7 +74,8 @@ terraformers:
     dispatch-batch-size: ${ANALYSIS_DISPATCH_BATCH_SIZE:4}
     lease-duration: ${ANALYSIS_LEASE_DURATION:60s}
     lease-renew-interval: ${ANALYSIS_LEASE_RENEW_INTERVAL:20s}
-    max-attempts: ${ANALYSIS_MAX_ATTEMPTS:3}
+    max-attempts: ${ANALYSIS_MAX_ATTEMPTS:1}
+    accepted-age-cutoff: ${ANALYSIS_ACCEPTED_AGE_CUTOFF:8m}
     retry-delay: ${ANALYSIS_RETRY_DELAY:10s}
     mode: integrated-java
     provider: ${ANALYSIS_PROVIDER:stub}

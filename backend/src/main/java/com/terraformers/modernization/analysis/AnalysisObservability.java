@@ -80,6 +80,18 @@ public class AnalysisObservability {
                 quality.reasons().stream().map(Enum::name).toList());
     }
 
+    public void terminalSweepFailures(String category, int count, EvidenceQualityAssessment quality) {
+        if (count <= 0) return;
+        jobs("failed").increment(count);
+        failures("terraformers.analysis.failures", category).increment(count);
+        Counter.builder("terraformers.analysis.quality.terminal")
+                .tag("contract", quality.contractVersion()).tag("technical", quality.technicalStatus().name())
+                .tag("knowledge", quality.knowledgeStatus().name()).tag("quality", quality.qualityStatus().name())
+                .tag("project_decision", quality.projectDecisionStatus().name())
+                .tag("runtime_boundary", quality.runtimeQualityBoundary().name())
+                .register(meterRegistry).increment(count);
+    }
+
     public void claimOutcome(String outcome) {
         Counter.builder("terraformers.analysis.claims")
                 .tag("outcome", outcome)
@@ -221,6 +233,7 @@ public class AnalysisObservability {
         if (exception instanceof TerraformValidationFailureException terraformFailure) {
             return "terraform_" + terraformFailure.category().name().toLowerCase(Locale.ROOT);
         }
+        if (exception instanceof AnalysisJobBudgetExceededException) return "accepted_age_cutoff";
         if (exception instanceof AnalysisResultFinalizationException) return "result_finalization";
         if (exception instanceof AnalysisProviderFailureException providerFailure) {
             return switch (providerFailure.reason()) {

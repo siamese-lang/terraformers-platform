@@ -31,13 +31,22 @@ public class AnalysisRuntimeProperties {
     private int dispatchBatchSize = 4;
     private Duration leaseDuration = Duration.ofSeconds(60);
     private Duration leaseRenewInterval = Duration.ofSeconds(20);
-    private int maxAttempts = 3;
+    public static final Duration ACCEPTED_AGE_CUTOFF = Duration.ofMinutes(8);
+    private Duration acceptedAgeCutoff = ACCEPTED_AGE_CUTOFF;
+    private int maxAttempts = 1;
     private Duration retryDelay = Duration.ofSeconds(10);
 
     @PostConstruct
     void validateDurableDispatch() {
         if (dispatchPollInterval == null || dispatchPollInterval.isZero() || dispatchPollInterval.isNegative()) {
             throw new IllegalStateException("terraformers.analysis.dispatch-poll-interval must be positive");
+        }
+        if (dispatchPollInterval.compareTo(Duration.ofSeconds(2)) > 0) {
+            throw new IllegalStateException("terraformers.analysis.dispatch-poll-interval must not exceed 2s");
+        }
+        if (acceptedAgeCutoff == null || acceptedAgeCutoff.isZero() || acceptedAgeCutoff.isNegative()
+                || acceptedAgeCutoff.compareTo(ACCEPTED_AGE_CUTOFF) > 0) {
+            throw new IllegalStateException("terraformers.analysis.accepted-age-cutoff must be positive and at most 8m");
         }
         if (dispatchBatchSize <= 0) {
             throw new IllegalStateException("terraformers.analysis.dispatch-batch-size must be positive");
@@ -51,8 +60,8 @@ public class AnalysisRuntimeProperties {
         if (leaseRenewInterval.compareTo(leaseDuration) >= 0) {
             throw new IllegalStateException("terraformers.analysis.lease-renew-interval must be shorter than lease-duration");
         }
-        if (maxAttempts < 1) {
-            throw new IllegalStateException("terraformers.analysis.max-attempts must be at least 1");
+        if (maxAttempts != 1) {
+            throw new IllegalStateException("terraformers.analysis.max-attempts must be 1 under policy D");
         }
         if (retryDelay == null || retryDelay.isZero() || retryDelay.isNegative()) {
             throw new IllegalStateException("terraformers.analysis.retry-delay must be positive");
@@ -191,6 +200,8 @@ public class AnalysisRuntimeProperties {
     public void setLeaseDuration(Duration leaseDuration) { this.leaseDuration = leaseDuration; }
     public Duration getLeaseRenewInterval() { return leaseRenewInterval; }
     public void setLeaseRenewInterval(Duration leaseRenewInterval) { this.leaseRenewInterval = leaseRenewInterval; }
+    public Duration getAcceptedAgeCutoff() { return acceptedAgeCutoff; }
+    public void setAcceptedAgeCutoff(Duration value) { acceptedAgeCutoff = value; }
     public int getMaxAttempts() { return maxAttempts; }
     public void setMaxAttempts(int maxAttempts) { this.maxAttempts = maxAttempts; }
     public Duration getRetryDelay() { return retryDelay; }

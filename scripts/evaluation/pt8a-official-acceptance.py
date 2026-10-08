@@ -147,53 +147,6 @@ def request_contract(request, source, image, attempt):
         raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT")
 
 
-def reviewed_pre_observation_readiness_failure(run, job, artifacts):
-    """Only the USER-reviewed, non-consuming path-contract failure; never retry authority.
-
-    GitHub run metadata lacks request mode. The pinned independent review supplies that
-    readiness-only fact; complete live step/artifact history must still corroborate it.
-    Unknown failures and changed source lineage remain indeterminate.
-    """
-    source = "a0d1d5e82dd872c20b92b46130a331a390efef6a"
-    expected_run = {"id": 37704835680, "head_sha": source, "event": "workflow_dispatch",
-                    "head_branch": "main", "path": ".github/workflows/gcp-target-runtime-dependencies.yml",
-                    "run_attempt": 1, "status": "completed", "conclusion": "failure"}
-    if any(run.get(key) != value for key, value in expected_run.items()):
-        return False
-    if (job.get("id") != 113076606857 or job.get("status") != "completed"
-            or job.get("conclusion") != "failure" or artifacts["total_count"] != 0):
-        return False
-    required_steps = {
-        "Validate frozen procedure and explicit live authority before cloud access": "success",
-        "Verify exact deployed release and existing runtime identity": "success",
-        "Rebuild expected corpus from pinned authority without embedding": "failure",
-        "Start owned validation pod with the already deployed immutable image": "skipped",
-        "Observe read-only exact readiness and at most one accepted product job": "skipped",
-        "Remove only the owned ephemeral validation pod": "skipped",
-    }
-    steps = job.get("steps", [])
-    if not isinstance(steps, list) or any(not isinstance(step, dict) for step in steps):
-        return False
-    numbers = []
-    for name, conclusion in required_steps.items():
-        matches = [s for s in steps if s.get("name") == name]
-        if (len(matches) != 1 or matches[0].get("status") != "completed"
-                or matches[0].get("conclusion") != conclusion or type(matches[0].get("number")) is not int):
-            return False
-        numbers.append(matches[0]["number"])
-    if numbers != sorted(set(numbers)) or [s.get("name") for s in steps if s.get("conclusion") == "failure"] != [
-            "Rebuild expected corpus from pinned authority without embedding"]:
-        return False
-    review = authority_comment(6049279548, "[PT8A_READINESS_FAILURE_REVIEW:v1]")
-    required_review = {"decision": "CHANGES_REQUIRED", "reviewed_source_sha": source,
-                       "run_id": "37704835680", "run_attempt": "1", "job_id": "113076606857",
-                       "failure_class": "PRE_OBSERVATION_READINESS_CORPUS_DIRECTORY_CONTRACT_MISMATCH",
-                       "artifact_count": "0", "official_case_consumed": "false",
-                       "readiness_product_observation_executed": "false", "model_inference_executed": "false",
-                       "official_input_fetches": "0", "official_input_uploads": "0", "rerun_authorized": "false"}
-    return all(review.get(key) == value for key, value in required_review.items())
-
-
 def ensure_latest_dispatch(request, source, current_run_id):
     """Existing serial workflow + authoritative history, not a new lock/queue service.
 
@@ -211,22 +164,16 @@ def ensure_latest_dispatch(request, source, current_run_id):
         raise ValueError("PT8A history inspection bound exhausted; no upload")
     for run in sorted(previous, key=lambda r: r["id"], reverse=True):
         jobs = github(f"actions/runs/{run['id']}/jobs?per_page=100")
-        if (type(jobs.get("total_count")) is not int or not isinstance(jobs.get("jobs"), list)
-                or jobs["total_count"] > 100 or jobs["total_count"] != len(jobs["jobs"])):
+        if jobs["total_count"] > 100:
             raise ValueError("job history inspection incomplete; no upload")
         candidates = [j for j in jobs["jobs"] if j["name"] == "pt8a-official-acceptance"]
         if len(candidates) != 1:
             raise ValueError("prior dispatch operation unproven; no upload")
-        if run["status"] != "completed" or run["run_attempt"] != 1:
-            raise ValueError("prior PT8A dispatch incomplete or rerun; no upload")
         if candidates[0]["conclusion"] == "skipped":
             continue
+        if run["status"] != "completed" or run["run_attempt"] != 1:
+            raise ValueError("prior PT8A dispatch incomplete or rerun; no upload")
         artifacts = github(f"actions/runs/{run['id']}/artifacts?per_page=100")
-        if (type(artifacts.get("total_count")) is not int or not isinstance(artifacts.get("artifacts"), list)
-                or artifacts["total_count"] > 100 or artifacts["total_count"] != len(artifacts["artifacts"])):
-            raise ValueError("artifact history inspection incomplete; no upload")
-        if request["mode"] == "readiness" and reviewed_pre_observation_readiness_failure(run, candidates[0], artifacts):
-            continue
         matches = [a for a in artifacts["artifacts"] if a["name"] == f"pt8a-official-{run['id']}"]
         if artifacts["total_count"] > 100 or len(matches) != 1:
             raise ValueError("prior PT8A evidence unavailable; no upload or resubmission")

@@ -1566,7 +1566,16 @@
         "officialCasesRemainNotRun": true,
         "procedureBytesChanged": false,
         "candidateBytesChanged": false,
-        "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/readiness-corpus-path-1/validation.json"
+        "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/readiness-corpus-path-1/validation.json",
+        "reviewFeedbackCorrection": {
+          "independentReviewCommentId": 6049545779,
+          "reviewedHeadSha": "7ae8f917679e264ee2e43ae94467ede2b3d446ec",
+          "resolution": "RESTORE_PREEXISTING_SAME_SOURCE_ONCE_ONLY_HISTORY_REMOVE_RUN_SPECIFIC_EXCEPTION_AND_TESTS",
+          "historicalFailureUse": "IMMUTABLE_DURABLE_EVIDENCE_ONLY",
+          "canonicalPathCorrectionUnchanged": true,
+          "repairAndCorrectionCountersUnchanged": true,
+          "newLiveExecutionAuthorized": false
+        }
       }
     }
   },

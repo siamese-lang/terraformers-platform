@@ -144,6 +144,14 @@ work_package:
     main_reads_at_correction_activation: 1
     historical_preparation_base_preserved: true
     independent_failure_review: 6049279548
+    review_feedback_correction:
+      independent_review: 6049545779
+      reviewed_head: 7ae8f917679e264ee2e43ae94467ede2b3d446ec
+      resolution: restore_preexisting_same_source_once_only_history_remove_run_specific_exception_and_tests
+      historical_failure_use: immutable_durable_evidence_only
+      canonical_path_correction_unchanged: true
+      repair_and_correction_counters_unchanged: true
+      new_live_execution_authorized: false
     failed_run: 37704835680
     failed_job: 113076606857
     failed_run_attempt: 1

@@ -4,6 +4,8 @@ Uploaded authority SHA-256 (original bytes): `20cdb58d29f8bb81bc71170e60a3dc7ff1
 
 The following request is preserved with newline normalization only. This repository correction grants no new live execution or merge authority.
 
+USER subsequently amended this same PR following [independent review 6049545779](https://github.com/siamese-lang/terraformers-platform/pull/258#issuecomment-6049545779): remove the historical run-specific history exception and its tests/completeness changes; restore the pre-existing same-source once-only history. The historical instructions in sections 4–5 below are superseded by that amendment. Keep the canonical corpus path and both path regressions, preserve failed evidence, run final-tree deterministic validation and normal PR CI once, then stop for independent review. No live action or new PR is authorized.
+
 USER explicitly approves:
 
 APPROVE_PT8A_READINESS_PREOBSERVATION_CORPUS_PATH_CORRECTION_ONLY

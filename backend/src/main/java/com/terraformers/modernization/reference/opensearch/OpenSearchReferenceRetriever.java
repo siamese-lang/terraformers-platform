@@ -81,6 +81,21 @@ public class OpenSearchReferenceRetriever {
         return search(vector, topK, resourceTypes, List.of());
     }
 
+    public List<ReferenceDocument> retrieveOfficialDocumentation(String resourceType) {
+        requireRuntimeConfig();
+        String body = queryBuilder.buildOfficialDocumentation(properties.getContentFieldName(),
+                properties.getCorpusVersion(), properties.getProviderVersion(), resourceType);
+        URI uri = OpenSearchEndpoint.searchUri(properties.getOpensearchEndpoint(), properties.getIndexName());
+        return responseParser.parse(transport.post(uri, body), properties.getContentFieldName()).stream()
+                .filter(ReferenceDocument::isOfficialProviderDocumentation)
+                .filter(document -> document.resourceTypes().contains(resourceType))
+                .filter(document -> properties.getCorpusVersion().equals(document.corpusVersion())
+                        && properties.getProviderVersion().equals(document.providerVersion()))
+                .filter(document -> document.content() != null && !document.content().isBlank()
+                        && document.sourcePath() != null && !document.sourcePath().isBlank())
+                .limit(1).toList();
+    }
+
     private List<ReferenceDocument> search(
             List<Float> vector, int topK, List<String> resourceTypes, List<String> authorities) {
         String body = queryBuilder.build(

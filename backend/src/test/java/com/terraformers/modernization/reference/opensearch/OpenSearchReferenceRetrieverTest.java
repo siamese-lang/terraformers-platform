@@ -327,6 +327,63 @@ class OpenSearchReferenceRetrieverTest {
         return document(id, 1, resource).replace("\"priority\":1", "\"authority\":\"PROVIDER_DOCUMENTATION\",\"documentType\":\"AWS_PROVIDER_DOC\",\"priority\":1");
     }
 
+    @Test
+    void finalOfficialLookupUsesExactMetadataAndOneDocumentPerTypeWithoutEmbeddingOrContextCap() {
+        List<String> types = java.util.stream.IntStream.rangeClosed(1, 20)
+                .mapToObj(index -> "aws_service_" + index).toList();
+        Fixture fixture = fixture(1, 1, types.stream()
+                .map(type -> response(versionedOfficialDocument(type, type))).toArray(String[]::new));
+        List<ReferenceDocument> documents = types.stream()
+                .flatMap(type -> fixture.retriever().retrieveOfficialDocumentation(type).stream()).toList();
+
+        assertThat(documents).extracting(ReferenceDocument::id).containsExactlyElementsOf(types);
+        verify(fixture.embedding(), never()).embed(any());
+        ArgumentCaptor<String> bodies = ArgumentCaptor.forClass(String.class);
+        verify(fixture.transport(), times(20)).post(eq(URI.create("https://search.example/references/_search")), bodies.capture());
+        for (int index = 0; index < types.size(); index++) {
+            JsonNode request = readTree(bodies.getAllValues().get(index));
+            assertThat(request.path("size").asInt()).isEqualTo(1);
+            assertThat(request.path("query").path("bool").path("filter").toString()).contains(
+                    "terraformers-reference-v2", "5.100.0", types.get(index),
+                    "PROVIDER_DOCUMENTATION", "AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE");
+            assertThat(request.toString()).doesNotContain("knn", "vector");
+            assertThat(request.path("_source").toString()).contains("content", "sourcePath", "resourceTypes");
+            assertThat(request.path("sort").toString()).contains("priority", "desc", "documentId", "asc");
+        }
+    }
+
+    @Test
+    void finalOfficialLookupRejectsWrongAuthorityTypeVersionResourceOrEmptySourceAndPropagatesFailure() {
+        String valid = versionedOfficialDocument("official", "aws_alpha");
+        for (String rejected : List.of(
+                valid.replace("PROVIDER_DOCUMENTATION", "PROVIDER_SCHEMA"),
+                valid.replace("AWS_PROVIDER_DOC", "AWS_PROVIDER_SCHEMA"),
+                valid.replace("5.100.0", "4.0.0"),
+                valid.replace("terraformers-reference-v2", "other-corpus"),
+                valid.replace("aws_alpha", "aws_beta"),
+                valid.replace("official.md", ""),
+                valid.replace("\"content\":\"content\"", "\"content\":\"\""))) {
+            Fixture fixture = fixture(1, response(rejected));
+            assertThat(fixture.retriever().retrieveOfficialDocumentation("aws_alpha")).isEmpty();
+            verify(fixture.embedding(), never()).embed(any());
+            verify(fixture.transport(), times(1)).post(any(), any());
+        }
+        Fixture missing = fixture(1, response());
+        assertThat(missing.retriever().retrieveOfficialDocumentation("aws_alpha")).isEmpty();
+        Fixture unavailable = fixture(1, response());
+        when(unavailable.transport().post(any(), any())).thenThrow(new IllegalStateException("unavailable"));
+        assertThatThrownBy(() -> unavailable.retriever().retrieveOfficialDocumentation("aws_alpha"))
+                .hasMessage("unavailable");
+        verify(unavailable.transport(), times(1)).post(any(), any());
+        verify(unavailable.embedding(), never()).embed(any());
+    }
+
+    private String versionedOfficialDocument(String id, String resource) {
+        return officialDocument(id, resource).replace("\"priority\":1", "\"priority\":1,"
+                + "\"sourcePath\":\"official.md\",\"providerVersion\":\"5.100.0\","
+                + "\"corpusVersion\":\"terraformers-reference-v2\"");
+    }
+
     private Fixture fixture(int limit, String... responses) {
         return fixture(limit, 16, responses);
     }

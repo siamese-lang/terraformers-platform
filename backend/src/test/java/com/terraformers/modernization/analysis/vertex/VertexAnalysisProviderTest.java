@@ -348,28 +348,94 @@ class VertexAnalysisProviderTest {
     }
 
     @Test
-    void newUnevidencedResourceAfterRepairRemainsDegradedWithoutThirdGeneration() {
+    void absentOrUnavailableOfficialDocumentAfterRepairRemainsDegradedWithoutAnotherModelCall() {
+        for (boolean unavailable : List.of(false, true)) {
+            String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
+            String repaired = first + "\nresource \"aws_security_group\" \"new\" {}";
+            ClosureFixture fixture = closureFixture(List.of(official("vpc", "aws_vpc")),
+                    List.of(official("subnet", "aws_subnet")), first, repaired);
+            if (unavailable) {
+                when(fixture.retriever().retrieveOfficialDocumentation("aws_security_group"))
+                        .thenThrow(new IllegalStateException("unavailable"));
+            }
+            var result = fixture.provider().analyze(context());
+            assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence())
+                    .containsExactly("aws_security_group");
+            assertThat(result.qualityAssessment().reasons()).contains(
+                    com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.GENERATED_RESOURCE_UNSUPPORTED_BY_EVIDENCE);
+            assertThat(result.qualityAssessment().technicalStatus())
+                    .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.TechnicalStatus.PASS);
+            assertThat(result.qualityAssessment().qualityStatus())
+                    .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.QualityStatus.DEGRADED);
+            assertThat(result.qualityAssessment().projectDecisionStatus())
+                    .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.ProjectDecisionStatus.UNKNOWN);
+            assertThat(result.warnings()).anyMatch(warning -> warning.contains("lack selected official documentation")
+                    && warning.contains("aws_security_group"));
+            verify(fixture.retriever(), times(2)).retrieve(any());
+            verify(fixture.retriever(), times(1)).retrieveOfficialDocumentation("aws_security_group");
+            verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+            verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
+            verify(fixture.inspector()).inspect(repaired);
+        }
+    }
+
+    @Test
+    void repairIntroducedSupportResourceGetsActualOfficialEvidenceWithoutAnotherModelCall() {
         String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
         String repaired = first + "\nresource \"aws_security_group\" \"new\" {}";
         ClosureFixture fixture = closureFixture(List.of(official("vpc", "aws_vpc")),
                 List.of(official("subnet", "aws_subnet")), first, repaired);
+        ReferenceDocument support = official("security-group", "aws_security_group");
+        when(fixture.retriever().retrieveOfficialDocumentation("aws_security_group")).thenReturn(List.of(support));
+
         var result = fixture.provider().analyze(context());
-        assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence())
-                .containsExactly("aws_security_group");
-        assertThat(result.qualityAssessment().reasons()).contains(
-                com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.GENERATED_RESOURCE_UNSUPPORTED_BY_EVIDENCE);
-        assertThat(result.qualityAssessment().technicalStatus())
-                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.TechnicalStatus.PASS);
+        assertThat(result.terraformCode()).isEqualTo(repaired);
+        assertThat(result.references()).containsExactly("vpc", "subnet", "security-group");
+        assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence()).isEmpty();
         assertThat(result.qualityAssessment().qualityStatus())
-                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.QualityStatus.DEGRADED);
-        assertThat(result.qualityAssessment().projectDecisionStatus())
-                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.ProjectDecisionStatus.UNKNOWN);
-        assertThat(result.warnings()).anyMatch(warning -> warning.contains("lack selected official documentation")
-                && warning.contains("aws_security_group"));
+                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.QualityStatus.UNKNOWN);
+        ArgumentCaptor<List<ReferenceDocument>> repairContext = ArgumentCaptor.forClass(List.class);
+        verify(fixture.stage(), times(1)).repair(any(), any(), repairContext.capture(), any());
+        assertThat(repairContext.getValue()).extracting(ReferenceDocument::id).containsExactly("vpc", "subnet");
+        ArgumentCaptor<EvidenceQualityAssessor.Input> quality = ArgumentCaptor.forClass(EvidenceQualityAssessor.Input.class);
+        verify(fixture.assessor()).assess(quality.capture());
+        assertThat(quality.getValue().selectedReferences()).contains(support);
+        verify(fixture.retriever(), times(1)).retrieveOfficialDocumentation("aws_security_group");
         verify(fixture.retriever(), times(2)).retrieve(any());
         verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
-        verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
         verify(fixture.inspector()).inspect(repaired);
+    }
+
+    @Test
+    void finalEvidenceCanCoverMoreThanSixteenTypesWhileRepairContextStaysBounded() {
+        List<String> types = List.of("aws_vpc", "aws_subnet", "aws_internet_gateway", "aws_nat_gateway",
+                "aws_eip", "aws_route_table", "aws_route_table_association", "aws_security_group",
+                "aws_security_group_rule", "aws_lb", "aws_lb_listener", "aws_lb_target_group",
+                "aws_launch_template", "aws_autoscaling_group", "aws_s3_bucket", "aws_s3_bucket_policy",
+                "aws_vpc_endpoint", "aws_iam_role", "aws_iam_role_policy", "aws_lambda_function");
+        String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
+        String repaired = types.stream().map(type -> "resource \"" + type + "\" \"main\" {}")
+                .collect(java.util.stream.Collectors.joining("\n"));
+        ClosureFixture fixture = closureFixture(List.of(official("aws_vpc", "aws_vpc")),
+                List.of(official("aws_subnet", "aws_subnet")), first, repaired);
+        fixture.properties().setOpensearchTopK(2);
+        fixture.properties().setOpensearchMaxEvidence(2);
+        for (String type : types) {
+            when(fixture.catalog().contains(type)).thenReturn(true);
+        }
+        for (String type : types.subList(2, types.size())) {
+            when(fixture.retriever().retrieveOfficialDocumentation(type)).thenReturn(List.of(official(type, type)));
+        }
+        var result = fixture.provider().analyze(context());
+        assertThat(result.references()).containsExactlyElementsOf(types);
+        assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence()).isEmpty();
+        ArgumentCaptor<List<ReferenceDocument>> repairContext = ArgumentCaptor.forClass(List.class);
+        verify(fixture.stage(), times(1)).repair(any(), any(), repairContext.capture(), any());
+        assertThat(repairContext.getValue()).hasSize(2);
+        verify(fixture.retriever(), times(18)).retrieveOfficialDocumentation(any());
+        verify(fixture.retriever(), times(2)).retrieve(any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        assertThat(result.terraformCode()).isEqualTo(repaired);
     }
 
     @Test
@@ -565,7 +631,7 @@ class VertexAnalysisProviderTest {
                 stage, retriever, properties, catalog, inspector));
         var provider = new VertexAnalysisProvider(reader, retriever, properties, facts,
                 new RetrievalQueryTextBuilder(), orchestrator, catalog, assessor, availableCoverage());
-        return new ClosureFixture(provider, retriever, stage, inspector, assessor, orchestrator, facts);
+        return new ClosureFixture(provider, retriever, stage, inspector, assessor, orchestrator, facts, catalog, properties);
     }
 
     private VertexGenerationStage respondingStage(GenerateContentResponse... responses) {
@@ -596,7 +662,8 @@ class VertexAnalysisProviderTest {
 
     private record ClosureFixture(VertexAnalysisProvider provider, ReferenceRetriever retriever,
             VertexGenerationStage stage, GeneratedTerraformContractInspector inspector, EvidenceQualityAssessor assessor,
-            VertexGroundedGenerationOrchestrator orchestrator, VertexArchitectureFactsExtractor facts) {}
+            VertexGroundedGenerationOrchestrator orchestrator, VertexArchitectureFactsExtractor facts,
+            AwsProviderSchemaCatalog catalog, AnalysisRuntimeProperties properties) {}
 
     private VertexAnalysisProvider provider(
             ReferenceRetriever retriever,

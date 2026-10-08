@@ -121,8 +121,8 @@ public class VertexPromptBuilder {
                   keep necessary unspecified endpoints as declared external inputs. Extracted facts are
                   partial: omission is not evidence of absence. Do not remove visible topology to reduce gaps.
                 - Correct HCL using supplied official provider documentation and exact AWS Provider 5.100.0 schema.
-                - Do not introduce unrelated architecture components or new AWS resource types beyond those
-                  supported by the supplied closure evidence and provider schema.
+                - Do not introduce unrelated architecture components. Preserve necessary implementation
+                  support resources and validate them against the provider schema.
                 - Module blocks are forbidden. Do not invent structurally invalid arguments or nested blocks.
                 - Satisfy required provider arguments and preserve argument/nested-block compatibility.
                 - For deployment-specific required values absent from the diagram/evidence, use editable
@@ -137,10 +137,11 @@ public class VertexPromptBuilder {
 
                 %s
                 Selected official primary-resource documentation covers these managed resource types: %s
-                Any newly introduced managed resource type requires both selected official documentation
-                and provider schema support. A schema-valid support resource is not automatically documented.
-                If evidence is missing, preserve an explicit reviewable input boundary; do not invent wiring
-                or omit required authorization to make a draft appear complete.
+                This list is a bounded documentation context, not an allowed-resource list. Do not remove
+                necessary support resources because their documentation is absent from this context.
+                Final resource types will be looked up separately in the official corpus; schema validity
+                alone is not documentary support. Preserve explicit deployment-specific input boundaries;
+                do not invent wiring or omit required authorization to make a draft appear complete.
 
                 Extracted image facts (advisory, not verified truth): %s
                 Prior generated summary (unverified): %s

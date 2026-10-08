@@ -30,12 +30,41 @@ CORRECTIVE_MODE = "corrective-readiness"
 CORRECTIVE_OPERATION = "pt8a-corrective-readiness"
 QUALIFIED_MODE = "qualified-case"
 QUALIFIED_OPERATION = "pt8a-qualified-case"
+DIAGNOSTIC_MODE = "diagnostic-case"
+DIAGNOSTIC_OPERATION = "pt8a-diagnostic-case"
+DIAGNOSTIC_PURPOSE = "PT8A_B_TO_E_DIAGNOSTIC_ONLY_ONCE"
+DIAGNOSTIC_CASES = CASES[1:]
+V3_SHA256 = "29e1b9915448a3d8fedffd2661cd95c7d4e0d314afcd88a16d84c3dca548c268"
+CASE_A_RUN, CASE_A_ARTIFACT, CASE_A_REVIEW = 37783345572, 11552729185, 6060977646
+CASE_A_SOURCE = "ba8eb15a37c02184d02da9f1731c15a802477ef9"
+CASE_A_DIGEST = "sha256:0ec69200a42fb34d6d345d21d14d93270419948cccf5a57c2e3e80636a07a7de"
+CORRECTION_BASE = "f08a4e8440e82806383a561a6e8f0e15e1d81b25"
+# Executable diagnostic contract, frozen by its canonical JSON hash in separate live authority.
+# Repository implementation/CI is not permission to execute it. v2/v3 remain immutable.
+DIAGNOSTIC_CONTRACT = {
+    "version": "pt8a-b-e-diagnostic-v1", "classification": "DIAGNOSTIC_ONLY",
+    "cases": DIAGNOSTIC_CASES, "candidateIdentity": IDENTITY,
+    "v2Sha256": V2_SHA256,
+    "v3Sha256": V3_SHA256, "correctionMergeSha": CORRECTION_BASE,
+    "caseA": {"runId": CASE_A_RUN, "artifactId": CASE_A_ARTIFACT, "digest": CASE_A_DIGEST,
+              "sourceSha": CASE_A_SOURCE, "reviewCommentId": CASE_A_REVIEW, "disposition": "REJECTED_NOT_PASS_CONSUMED"},
+    "dispatchAttemptsPerCaseAcrossSources": 1, "uploadsPerCase": 1,
+    "preflightFailureConsumesDispatch": True, "retryOrResubmission": False,
+    "predecessorReview": "ACKNOWLEDGED_DIAGNOSTIC_ONLY_VALID_PRODUCT_OBSERVATION",
+    "nonterminalCensorAmbiguousAcceptanceOrInfrastructureFailure": "BLOCK_NEXT_DIAGNOSTIC",
+    "acceptancePromotion": False, "admission": "READ_ONLY_RISK_QUALIFIED_RETAINED_V4",
+    "vectorContinuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN", "admissionEmbeddingRequests": 0, "indexWrites": 0,
+}
 # GitHub returns this unevaluated display name when the existing job's `if` is false.
 # It identifies a skipped job only; it is never an active operation identity.
 SKIPPED_PT8A_JOB_NAME = (
     "inputs.operation == 'pt8a-qualified-case' && format('pt8a-qualified-case/{0}', "
     "fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-corrective-readiness' "
     "&& 'pt8a-corrective-readiness' || 'pt8a-official-acceptance'"
+)
+SKIPPED_DIAGNOSTIC_JOB_NAME = (
+    "inputs.operation == 'pt8a-diagnostic-case' && format('pt8a-diagnostic-case/{0}', "
+    "fromJSON(inputs.pt8a_request).caseId) || " + SKIPPED_PT8A_JOB_NAME
 )
 CHAIN_DECISION = 6058612980
 RECOVERY_DECISION = 6057566013
@@ -234,13 +263,14 @@ def complete_dispatch_history(workflow):
 def pt8a_history_job(jobs):
     if jobs["total_count"] != len(jobs["jobs"]) or jobs["total_count"] > 100:
         raise ValueError("PT8A job history incomplete; no inference")
-    names = {CORRECTIVE_OPERATION, "pt8a-official-acceptance", SKIPPED_PT8A_JOB_NAME}
+    names = {CORRECTIVE_OPERATION, "pt8a-official-acceptance", SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME}
     names.update(QUALIFIED_OPERATION + "/" + case for case in CASES)
+    names.update(DIAGNOSTIC_OPERATION + "/" + case for case in DIAGNOSTIC_CASES)
     related = [j for j in jobs["jobs"] if j["name"] in names]
     if len(related) != 1:
         raise ValueError("prior dispatch operation unproven; no inference")
     job = related[0]
-    if job["name"] == SKIPPED_PT8A_JOB_NAME and (
+    if job["name"] in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME) and (
             job.get("status") != "completed" or job.get("conclusion") != "skipped"):
         raise ValueError("unevaluated PT8A job name does not prove skipped execution; no inference")
     return job
@@ -329,7 +359,7 @@ def corrective_origins(private):
 
 
 def risk_qualified_admission(client, manifest, schema, documents, checksum, receipt, binding, authority):
-    if (not authority or authority.get("purpose") != "PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE"
+    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE)
             or authority.get("vector_write_continuity") != "VECTOR_WRITE_CONTINUITY_UNPROVEN"
             or authority.get("accepted_residual_risk") != "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"):
         raise ValueError("explicit corrective live risk authority missing")
@@ -562,6 +592,210 @@ def qualified_predecessor(request, source, image, campaign, history, private):
     return successor_ledger
 
 
+def diagnostic_contract_sha256():
+    return sha(json.dumps(DIAGNOSTIC_CONTRACT, sort_keys=True, separators=(",", ":")).encode())
+
+
+def diagnostic_live_fields(source, image):
+    """A new exact live/cost authority; old readiness/A-E approvals cannot authorize diagnostics."""
+    return {"gate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE", "decision": "APPROVED",
+        "purpose": DIAGNOSTIC_PURPOSE, "reviewed_source_sha": source, "backend_image": image,
+        "candidate_identity": IDENTITY, "diagnostic_contract_sha256": diagnostic_contract_sha256(),
+        "frozen_v2_procedure_sha256": V2_SHA256, "frozen_v3_procedure_sha256": V3_SHA256,
+        "product_correction_merge_sha": CORRECTION_BASE, "official_cases": "B_TO_E_DIAGNOSTIC_ONLY_SEQUENTIAL",
+        "once_only": "ONE_DISPATCH_ATTEMPT_UPLOAD_PER_CASE_ACROSS_SOURCES_NO_RETRY",
+        "original_case_a_run_id": str(CASE_A_RUN), "original_case_a_artifact_id": str(CASE_A_ARTIFACT),
+        "original_case_a_artifact_digest": CASE_A_DIGEST, "original_case_a_review_id": str(CASE_A_REVIEW),
+        "original_case_a_source_sha": CASE_A_SOURCE, "original_case_a_disposition": "REJECTED_NOT_PASS_CONSUMED",
+        "original_clean_run_id": str(ORIGIN_CLEAN_RUN), "original_clean_artifact_id": str(ORIGIN_CLEAN_ARTIFACT),
+        "original_clean_artifact_digest": ORIGIN_CLEAN_DIGEST, "original_clean_source_sha": ORIGIN_SOURCE,
+        "origin_clean_approval_id": str(ORIGIN_APPROVAL), "corpus_checksum": CORPUS_CHECKSUM,
+        "index_uuid": ORIGIN_UUID, "nonvector_content_identity": ORIGIN_CONTENT,
+        "embedding_model": "gemini-embedding-2", "vector_dimension": "1536",
+        "vector_write_continuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+        "accepted_residual_risk": "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"}
+
+
+def diagnostic_request_contract(request, source, image, attempt):
+    allowed = {"mode", "caseId", "liveApprovalCommentId", "provenanceRunId", "provenanceArtifactId",
+               "priorRunId", "priorArtifactId", "priorReviewCommentId"}
+    if (set(request) != allowed or request.get("mode") != DIAGNOSTIC_MODE or request.get("caseId") not in DIAGNOSTIC_CASES
+            or str(attempt) != "1" or not re.fullmatch(r"[0-9a-f]{40}", source)
+            or not re.fullmatch(r"asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}", image)
+            or any(type(request[k]) is not int or request[k] <= 0 for k in allowed - {"mode", "caseId"})
+            or (request["provenanceRunId"], request["provenanceArtifactId"]) != (ORIGIN_CLEAN_RUN, ORIGIN_CLEAN_ARTIFACT)
+            or sha((ROOT / PROCEDURE).read_bytes()) != V2_SHA256
+            or sha((ROOT / CORRECTIVE_PROCEDURE).read_bytes()) != V3_SHA256):
+        raise ValueError("invalid diagnostic request/source/image/frozen procedure; no inference")
+    authority = authority_comment(request["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    if any(authority.get(k) != v for k, v in diagnostic_live_fields(source, image).items()):
+        raise ValueError("new B-E diagnostic live/risk authority missing or mismatched")
+    if github(f"compare/{CORRECTION_BASE}...{source}").get("status") not in ("ahead", "identical"):
+        raise ValueError("diagnostic source does not contain merged product correction")
+    if transport.current_main() != source:
+        raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT")
+    return authority
+
+
+def diagnostic_origin(private):
+    evidence, bound = bound_artifact(CASE_A_RUN, CASE_A_ARTIFACT,
+        ["inventory.json", "binding.json", "ledger.json", "observation/accepted.json", "observation/job.json"],
+        private, ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+    binding = evidence["binding.json"]
+    review = authority_comment(CASE_A_REVIEW, "[PRODUCT_TRUST_REVIEW:v1]")
+    expected = {"decision": "REJECTED", "reviewed_source_sha": CASE_A_SOURCE, "candidate_identity": IDENTITY,
+                "procedure_sha256": V3_SHA256, "case_id": CASES[0], "run_id": str(CASE_A_RUN),
+                "artifact_id": str(CASE_A_ARTIFACT), "artifact_digest": CASE_A_DIGEST}
+    rows, accepted, job = evidence["ledger.json"], evidence["observation/accepted.json"], evidence["observation/job.json"]
+    if (bound != {"runId": CASE_A_RUN, "artifactId": CASE_A_ARTIFACT, "digest": CASE_A_DIGEST,
+            "sourceSha": CASE_A_SOURCE, "conclusion": "failure"}
+            or any(review.get(k) != v for k, v in expected.items())
+            or any(binding.get(k) != v for k, v in {"sourceSha": CASE_A_SOURCE, "runId": CASE_A_RUN,
+                "candidateIdentity": IDENTITY, "procedureSha256": V3_SHA256, "mode": QUALIFIED_MODE, "caseId": CASES[0]}.items())
+            or tuple(r["caseId"] for r in rows) != CASES or rows[0].get("status") != "NOT_PASS"
+            or rows[0].get("consumed") is not True or rows[0].get("uploadAttempts") != 1
+            or accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True
+            or accepted.get("uploadAttempts") != 1 or accepted.get("jobId") != rows[0].get("jobId")
+            or job.get("id") != accepted.get("jobId") or job.get("status") != rows[0].get("terminalState")
+            or rows[1:] != [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in DIAGNOSTIC_CASES]):
+        raise ValueError("original rejected/consumed Case A or B-E NOT_RUN evidence changed")
+    return rows, bound
+
+
+def diagnostic_history(request, source, current_run_id):
+    rows = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
+    current = [r for r in rows if r["id"] == current_run_id]
+    if (len(current) != 1 or current[0]["head_sha"] != source or current[0]["run_attempt"] != 1
+            or not any(r["id"] == CASE_A_RUN and r["head_sha"] == CASE_A_SOURCE for r in rows)):
+        raise ValueError("diagnostic current/original Case A history missing")
+    index, predecessors = DIAGNOSTIC_CASES.index(request["caseId"]), {}
+    for run in rows:
+        if run["id"] <= ORIGIN_FAILED_RUN:
+            continue
+        job = pt8a_history_job(github(f"actions/runs/{run['id']}/jobs?per_page=100"))
+        if run["id"] == current_run_id:
+            if job["name"] != DIAGNOSTIC_OPERATION + "/" + request["caseId"] or job["conclusion"] == "skipped":
+                raise ValueError("current diagnostic operation/case mismatch")
+            continue
+        if job["conclusion"] == "skipped":
+            if job["name"].startswith((DIAGNOSTIC_OPERATION + "/", QUALIFIED_OPERATION + "/")):
+                raise ValueError("selected PT8A dispatch was skipped; no retry or diagnostic bypass")
+            continue
+        if job["name"] == QUALIFIED_OPERATION + "/" + CASES[0] and run["id"] == CASE_A_RUN:
+            continue
+        if job["name"] == CORRECTIVE_OPERATION and run["id"] < CASE_A_RUN:
+            continue
+        case = job["name"].removeprefix(DIAGNOSTIC_OPERATION + "/")
+        if case not in DIAGNOSTIC_CASES or DIAGNOSTIC_CASES.index(case) >= index:
+            raise ValueError("diagnostic duplicate/out-of-order/other PT8A attempt across sources; no retry")
+        if (case in predecessors or run["status"] != "completed" or run["run_attempt"] != 1
+                or run["conclusion"] not in ("success", "failure") or job["conclusion"] != run["conclusion"]):
+            raise ValueError("diagnostic predecessor incomplete/ambiguous/rerun")
+        artifacts = github(f"actions/runs/{run['id']}/artifacts?per_page=100")
+        matches = [a for a in artifacts["artifacts"] if a["name"] == f"pt8a-diagnostic-{run['id']}"]
+        if artifacts["total_count"] != len(artifacts["artifacts"]) or artifacts["total_count"] > 100 or len(matches) != 1:
+            raise ValueError("diagnostic artifact history incomplete")
+        predecessors[case] = {"runId": run["id"], "artifactId": matches[0]["id"], "digest": matches[0]["digest"],
+                              "sourceSha": run["head_sha"], "conclusion": run["conclusion"]}
+    expected = DIAGNOSTIC_CASES[:index]
+    ordered = [predecessors[c]["runId"] for c in expected if c in predecessors]
+    prior = predecessors[expected[-1]] if expected else {"runId": CASE_A_RUN, "artifactId": CASE_A_ARTIFACT}
+    if (set(predecessors) != set(expected) or ordered != sorted(ordered) or any(i <= CASE_A_RUN or i >= current_run_id for i in ordered)
+            or (request["priorRunId"], request["priorArtifactId"]) != (prior["runId"], prior["artifactId"])):
+        raise ValueError("missing/stale/nonsequential diagnostic predecessor")
+    writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
+    if (not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes)
+            or any(r["id"] > ORIGIN_CLEAN_RUN for r in writes)):
+        raise ValueError("known ingestion history missing/later write; no diagnostic reuse")
+    return {"allSourcesInspected": True, "predecessors": predecessors, "knownLaterIngestionDispatches": 0,
+            "completeAllWriterAuditAvailable": False, "vectorWriteContinuity": "UNPROVEN"}
+
+
+def diagnostic_predecessor(request, history, private):
+    origin, _ = diagnostic_origin(private)
+    reference = {"runId": request["priorRunId"], "artifactId": request["priorArtifactId"],
+                 "reviewCommentId": request["priorReviewCommentId"]}
+    ledger = None
+    for case in reversed(DIAGNOSTIC_CASES[:DIAGNOSTIC_CASES.index(request["caseId"])]):
+        expected = history["predecessors"][case]
+        if any(reference.get(k) != expected[k] for k in ("runId", "artifactId")):
+            raise ValueError("diagnostic predecessor link/history mismatch")
+        data, bound = bound_artifact(reference["runId"], reference["artifactId"],
+            ["inventory.json", "binding.json", "ledger.json", "diagnostic-chain.json", "diagnostic-disposition.json",
+             "release.json", "readiness.json", "post-admission.json", "input-identity.json",
+             "observation/accepted.json", "observation/job.json", "observation/presentation.json",
+             "observation/retrieval.json", "observation/cli.json", "observation/draft-identity.json"],
+            private, ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+        b = data["binding.json"]
+        if (bound != expected or any(b.get(k) != v for k, v in {"sourceSha": bound["sourceSha"], "runId": bound["runId"],
+                "mode": DIAGNOSTIC_MODE, "caseId": case, "candidateIdentity": IDENTITY,
+                "procedureSha256": diagnostic_contract_sha256(),
+                "diagnosticContractSha256": diagnostic_contract_sha256(), "classification": "DIAGNOSTIC_ONLY"}.items())):
+            raise ValueError("diagnostic predecessor binding mismatch")
+        approval = authority_comment(b["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+        if any(approval.get(k) != v for k, v in diagnostic_live_fields(bound["sourceSha"], b["image"]).items()):
+            raise ValueError("diagnostic predecessor original live authority mismatch")
+        corrective_release(data["release.json"], bound["sourceSha"], b["image"])
+        for snapshot in (data["readiness.json"], data["post-admission.json"]):
+            required = {"classification": "RISK_QUALIFIED_RETAINED_V4", "indexUuid": ORIGIN_UUID,
+                "liveContentIdentity": ORIGIN_CONTENT, "vectorDocumentsChecked": 5395, "vectorDimension": 1536,
+                "originSourceSha": ORIGIN_SOURCE, "originArtifactDigest": ORIGIN_CLEAN_DIGEST,
+                "vectorWriteContinuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN", "cryptographicVectorContinuityProven": False,
+                "embeddingRequests": 0, "indexWrites": 0}
+            if any(snapshot.get(k) != v for k, v in required.items()):
+                raise ValueError("diagnostic predecessor read-only admission mismatch")
+        rows = data["ledger.json"]
+        position = CASES.index(case)
+        record, accepted, job = rows[position], data["observation/accepted.json"], data["observation/job.json"]
+        if (tuple(r["caseId"] for r in rows) != CASES or rows[0] != origin[0]
+                or rows[position+1:] != origin[position+1:] or record.get("status") not in ("NOT_PASS", "REVIEW_PENDING")
+                or record.get("consumed") is not True or record.get("uploadAttempts") != 1
+                or record.get("terminalState") not in ("FAILED", "SUCCEEDED") or "censoredObservationMs" in record
+                or accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True or accepted.get("uploadAttempts") != 1
+                or record.get("jobId") != accepted.get("jobId") or job.get("id") != accepted.get("jobId")
+                or job.get("projectId") != accepted.get("projectId") or job.get("sourceFileId") != accepted.get("sourceFileId")
+                or job.get("status") != record.get("terminalState")
+                or data["input-identity.json"] != next(c for c in frozen_inputs() if c["caseId"] == case)
+                or any(data["diagnostic-disposition.json"].get(k) != v for k, v in {
+                    "classification": "DIAGNOSTIC_ONLY", "officialAcceptance": "NOT_ACCEPTANCE", "dispatchConsumed": True,
+                    "observedStatus": record["status"], "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION"}.items())):
+            raise ValueError("diagnostic predecessor incomplete/ambiguous or rewritten observation")
+        presentation, retrieved = data["observation/presentation.json"], data["observation/retrieval.json"]
+        if (presentation.get("projectId") != accepted.get("projectId")
+                or presentation.get("latestAnalysisJobId") != job["id"] or retrieved.get("jobId") != job["id"]):
+            raise ValueError("diagnostic owner/result/retrieval identity mismatch")
+        cli, draft = data["observation/cli.json"], data["observation/draft-identity.json"]
+        hcl = [e for e in data["inventory.json"]["files"] if e["path"] == "observation/main.tf"]
+        if draft.get("hclPresent") is True:
+            if (len(hcl) != 1 or cli.get("hclSha256") != hcl[0]["sha256"]
+                    or draft.get("hclSha256") != hcl[0]["sha256"]
+                    or cli.get("terraformVersion") != "1.8.5" or cli.get("providerVersion") != "5.100.0"
+                    or type(cli.get("initValidateExitCode")) is not int or cli.get("AWSPlanApply") is not False):
+                raise ValueError("diagnostic original CLI/draft identity missing")
+        elif (draft.get("hclPresent") is not False or hcl or cli != {"status": "NOT_RUN",
+                "reason": "BACKEND_FAILED" if job["status"] == "FAILED" and not job.get("resultObjectKey") else "NO_REVIEWABLE_DRAFT",
+                "AWSPlanApply": False}):
+            raise ValueError("diagnostic missing draft cannot fabricate CLI validity")
+        review = authority_comment(reference["reviewCommentId"], "[PT8A_DIAGNOSTIC_REVIEW:v1]")
+        required = {"decision": "ACKNOWLEDGED_DIAGNOSTIC_ONLY", "observation_class": "PRODUCT_OBSERVATION",
+            "infrastructure_auth_provenance": "VERIFIED", "official_acceptance": "NOT_ACCEPTANCE", "allow_next_diagnostic": "true",
+            "reviewed_source_sha": bound["sourceSha"], "backend_image": b["image"], "candidate_identity": IDENTITY,
+            "diagnostic_contract_sha256": diagnostic_contract_sha256(), "run_id": str(bound["runId"]),
+            "artifact_id": str(bound["artifactId"]), "artifact_digest": bound["digest"], "case_id": case,
+            "observed_status": record["status"], "vector_write_continuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN"}
+        if (any(review.get(k) != v for k, v in required.items())
+                or any(review.get("dimension_" + d) not in ("PASS", "FAIL", "PARTIAL", "UNKNOWN", "NOT_OBSERVED", "NOT_APPLICABLE") for d in SCORING)):
+            raise ValueError("authenticated diagnostic classification/review missing; no next case")
+        if ledger is None:
+            ledger = rows
+        elif ledger[:position+1] != rows[:position+1]:
+            raise ValueError("diagnostic ledger rewrote a previous FAIL/UNKNOWN observation")
+        reference = data["diagnostic-chain.json"]["prior"]
+    if reference != {"runId": CASE_A_RUN, "artifactId": CASE_A_ARTIFACT, "reviewCommentId": CASE_A_REVIEW}:
+        raise ValueError("diagnostic chain does not end at original rejected Case A")
+    return json.loads(json.dumps(ledger if ledger is not None else origin))
+
+
 def ensure_latest_dispatch(request, source, current_run_id):
     """Existing serial workflow + authoritative history, not a new lock/queue service.
 
@@ -761,20 +995,21 @@ def validate_draft(hcl, private, pod):
             "hclSha256": sha(hcl.encode()), "AWSPlanApply": False}
 
 
-def observe(client, fixture, directory, record, documents, pod, clock=time.monotonic, wait=time.sleep):
+def observe(client, fixture, directory, record, documents, pod, clock=time.monotonic, wait=time.sleep, *, diagnostic=False):
     record.update(status="SUBMISSION_STARTED", uploadAttempts=1)
     write(directory / "attempt.json", record)
     response = client.request("POST", "/api/upload", fixture.parent, "upload", fixture=fixture,
                               project_name="pt8a-" + os.environ["GITHUB_RUN_ID"])
     mark_upload(record, response)
     write(directory / "accepted.json", record)
-    started, terminal = clock(), None
+    started, terminal, last_job = clock(), None, None
     while clock() - started < 540:
         polled = client.request("GET", "/api/analysis/jobs/" + record["jobId"], fixture.parent, "poll-" + str(time.time_ns()))
         job = polled.get("json")
         if polled["httpStatus"] == 200 and isinstance(job, dict):
             if job.get("id") != record["jobId"] or job.get("projectId") != record["projectId"]:
                 raise ValueError("owner-scoped job readback identity mismatch")
+            last_job = job
             if job.get("status") in ("SUCCEEDED", "FAILED"):
                 terminal = job; break
         elif polled["httpStatus"] in (401, 403, 404):
@@ -782,6 +1017,10 @@ def observe(client, fixture, directory, record, documents, pod, clock=time.monot
         wait(5)
     if terminal is None:
         record.update(status="NOT_PASS", observation="TERMINAL_NOT_OBSERVED", censoredObservationMs=round((clock()-started)*1000))
+        if diagnostic and last_job is not None:
+            write(directory / "job.json", sanitized_job(last_job))
+            write(directory / "retrieval.json", retrieval_evidence(record["jobId"], record["acceptedAt"], documents))
+            write(directory / "cli.json", {"status": "NOT_RUN", "reason": "TERMINAL_NOT_OBSERVED", "AWSPlanApply": False})
         return
     write(directory / "job.json", sanitized_job(terminal))
     record.update(terminalState=terminal["status"], terminalAt=(terminal.get("timing") or {}).get("terminalAt"),
@@ -797,7 +1036,12 @@ def observe(client, fixture, directory, record, documents, pod, clock=time.monot
         raise ValueError("persisted project readback mismatch")
     write(directory / "presentation.json", {key: project["json"].get(key) for key in
           ("projectId", "analysisStatus", "latestAnalysisJobId", "quality", "analysisTiming", "sourceBinaryPersisted", "latestResultObjectKey")})
-    if terminal["status"] != "SUCCEEDED":
+    if terminal["status"] != "SUCCEEDED" and (not diagnostic or not terminal.get("resultObjectKey")):
+        if diagnostic:
+            if project["json"].get("latestResultObjectKey"):
+                raise ValueError("failed job has unbound persisted result; evidence incomplete")
+            write(directory / "draft-identity.json", {"hclPresent": False})
+            write(directory / "cli.json", {"status": "NOT_RUN", "reason": "BACKEND_FAILED", "AWSPlanApply": False})
         record["status"] = "NOT_PASS"; return
     draft = client.request("GET", f"/api/projects/{record['projectId']}/terraform/main.tf", fixture.parent, "draft")
     if (draft["httpStatus"] != 200 or not isinstance(draft["json"], dict)
@@ -806,12 +1050,17 @@ def observe(client, fixture, directory, record, documents, pod, clock=time.monot
         raise ValueError("persisted project/result readback mismatch")
     hcl = draft["json"].get("content")
     if not isinstance(hcl, str) or not hcl.strip():
+        if diagnostic:
+            write(directory / "draft-identity.json", {"hclPresent": False, "resultObjectKey": terminal.get("resultObjectKey")})
+            write(directory / "cli.json", {"status": "NOT_RUN", "reason": "NO_REVIEWABLE_DRAFT", "AWSPlanApply": False})
+            record["status"] = "NOT_PASS"; return
         raise ValueError("missing persisted Terraform draft")
-    write(directory / "draft-identity.json", {"hclSha256": sha(hcl.encode()), "resultObjectKey": terminal.get("resultObjectKey")})
+    write(directory / "draft-identity.json", {"hclSha256": sha(hcl.encode()), "resultObjectKey": terminal.get("resultObjectKey"),
+        **({"hclPresent": True} if diagnostic else {})})
     cli = validate_draft(hcl, fixture.parent, pod)
     write(directory / "cli.json", cli)
     (directory / "main.tf").write_text(hcl)
-    record["status"] = "REVIEW_PENDING" if (cli["initValidateExitCode"] == 0 and retrieved["officialHitCount"] > 0
+    record["status"] = "REVIEW_PENDING" if (terminal["status"] == "SUCCEEDED" and cli["initValidateExitCode"] == 0 and retrieved["officialHitCount"] > 0
         and quality.get("contractVersion") == "evidence-quality-v1" and quality.get("technicalStatus") == "PASS"
         and quality.get("knowledgeStatus") == "COMPLETE" and project["json"].get("quality") == quality
         and project["json"].get("analysisStatus") == terminal["status"]) else "NOT_PASS"
@@ -840,8 +1089,18 @@ def main():
     source, image = os.environ["GITHUB_SHA"], os.environ["BACKEND_IMAGE"]
     corrective = request.get("mode") == CORRECTIVE_MODE
     qualified = request.get("mode") == QUALIFIED_MODE
-    risk_path = corrective or qualified
-    if qualified:
+    diagnostic = request.get("mode") == DIAGNOSTIC_MODE
+    risk_path = corrective or qualified or diagnostic
+    if diagnostic:
+        if os.environ.get("OPERATION") != DIAGNOSTIC_OPERATION:
+            raise ValueError("diagnostic mode requires its separate workflow operation")
+        authority = diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+        history = diagnostic_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
+        if args.action == "preflight":
+            with tempfile.TemporaryDirectory(prefix="pt8a-diagnostic-") as directory:
+                corrective_origins(Path(directory))
+                diagnostic_predecessor(request, history, Path(directory))
+    elif qualified:
         if os.environ.get("OPERATION") != QUALIFIED_OPERATION:
             raise ValueError("qualified mode requires its distinct reviewed workflow operation")
         campaign, authority = qualified_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
@@ -859,7 +1118,7 @@ def main():
             with tempfile.TemporaryDirectory(prefix="pt8a-origin-") as directory:
                 corrective_origins(Path(directory))
     else:
-        if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION):
+        if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION, DIAGNOSTIC_OPERATION):
             raise ValueError("qualified/corrective operation cannot execute ordinary readiness or official cases")
         request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
         ensure_latest_dispatch(request, source, int(os.environ["GITHUB_RUN_ID"]))
@@ -868,18 +1127,28 @@ def main():
     output = args.output; output.mkdir(parents=True, exist_ok=False)
     release = json.loads((Path(os.environ["RUNNER_TEMP"]) / "pt8a-release.json").read_text())
     write(output / "release.json", release)
-    ledger = [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in CASES]
+    ledger = None if diagnostic else [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in CASES]
+    if diagnostic:
+        write(output / "diagnostic-contract.json", DIAGNOSTIC_CONTRACT)
+        write(output / "diagnostic-disposition.json", {"classification": "DIAGNOSTIC_ONLY",
+            "officialAcceptance": "NOT_ACCEPTANCE", "evidenceValidity": "INCOMPLETE", "dispatchConsumed": True})
     try:
         with tempfile.TemporaryDirectory(prefix="pt8a-private-") as temporary:
             private = Path(temporary)
             if risk_path:
+                if diagnostic:
+                    ledger = diagnostic_predecessor(request, history, private)
+                    original_ledger = json.loads(json.dumps(ledger))
                 corrective_release(release, source, image)
                 origin_receipt, binding, failed_binding = corrective_origins(private)
                 # Store original identities separately; never issue a new ingestion receipt.
                 write(output / "origin-bindings.json", {"clean": binding, "failed": failed_binding,
                     "originApprovalCommentId": ORIGIN_APPROVAL, "originalFailedJobConsumed": True})
                 write(output / "known-writer-history.json", history)
-                if qualified:
+                if diagnostic:
+                    write(output / "diagnostic-chain.json", {"prior": {"runId": request["priorRunId"],
+                        "artifactId": request["priorArtifactId"], "reviewCommentId": request["priorReviewCommentId"]}})
+                elif qualified:
                     ledger = qualified_predecessor(request, source, image, campaign, history, private)
                     write(output / "qualified-chain.json", {
                         "campaignApprovalCommentId": request["liveApprovalCommentId"],
@@ -907,11 +1176,15 @@ def main():
             if readiness["classification"] != ("RISK_QUALIFIED_RETAINED_V4" if risk_path else "EXACT_REUSABLE_COMPLETED_V4"):
                 raise ValueError("readiness does not authorize case A; no automatic ingestion")
             write(output / "binding.json", {"sourceSha": source, "image": image, "candidateIdentity": IDENTITY,
-                "procedureSha256": sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
+                "procedureSha256": diagnostic_contract_sha256() if diagnostic else sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
                 "mode": request["mode"], "caseId": request.get("caseId"),
-                "liveApprovalCommentId": request["liveApprovalCommentId"], "runId": int(os.environ["GITHUB_RUN_ID"])})
-            if qualified:
+                "liveApprovalCommentId": request["liveApprovalCommentId"], "runId": int(os.environ["GITHUB_RUN_ID"]),
+                **({"classification": "DIAGNOSTIC_ONLY", "diagnosticContractSha256": diagnostic_contract_sha256(),
+                    "frozenV2Sha256": V2_SHA256, "frozenV3Sha256": V3_SHA256} if diagnostic else {})})
+            if qualified or diagnostic:
                 record = ledger[CASES.index(request["caseId"])]
+                if diagnostic:
+                    record.update(classification="DIAGNOSTIC_ONLY", dispatchConsumed=True)
                 case = next(c for c in frozen_inputs() if c["caseId"] == request["caseId"])
                 fixture = acquire(case, private)
                 write(output / "input-identity.json", case)
@@ -947,7 +1220,12 @@ def main():
                 private_fixture = private / "input.png"; private_fixture.write_bytes(fixture.read_bytes()); fixture = private_fixture
             if transport.current_main() != source:
                 raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT before inference")
-            if qualified:
+            if diagnostic:
+                authority = diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                history = diagnostic_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
+                if diagnostic_predecessor(request, history, private) != original_ledger:
+                    raise ValueError("diagnostic predecessor changed before upload")
+            elif qualified:
                 campaign, authority = qualified_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                 history = qualified_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
                 if qualified_predecessor(request, source, image, campaign, history, private) != ledger:
@@ -958,15 +1236,24 @@ def main():
             subprocess.run(["bash", "scripts/smoke/ephemeral-jwks-fixture.sh", "prepare"], check=True)
             client = transport.CurlClient(Path(os.environ["RUNNER_TEMP"]) / "case-c-access.token")
             try:
-                observe(client, fixture, output / "observation", record, documents, "terraformers-pt8a-validation")
+                observe(client, fixture, output / "observation", record, documents, "terraformers-pt8a-validation",
+                        **({"diagnostic": True} if diagnostic else {}))
             finally:
                 client.close()
-            if risk_path and record["status"] == "REVIEW_PENDING":
+            if risk_path and (record["status"] == "REVIEW_PENDING" or diagnostic):
                 # Recheck after the one job, without any new upload or embedding request.
                 post = risk_qualified_admission(rag.JsonHttpClient("http://127.0.0.1:19200"),
                     manifest, schema, documents, checksum, origin_receipt, binding, authority)
                 write(output / "post-admission.json", post)
-                if qualified:
+                if diagnostic:
+                    write(output / "post-known-writer-history.json", diagnostic_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
+                    diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                    complete = (record.get("consumed") is True and record.get("uploadAttempts") == 1
+                        and record.get("terminalState") in ("FAILED", "SUCCEEDED") and "censoredObservationMs" not in record)
+                    write(output / "diagnostic-disposition.json", {"classification": "DIAGNOSTIC_ONLY",
+                        "officialAcceptance": "NOT_ACCEPTANCE", "observedStatus": record["status"], "dispatchConsumed": True,
+                        "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION" if complete else "INCOMPLETE"})
+                elif qualified:
                     write(output / "post-known-writer-history.json", qualified_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
                     qualified_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                 else:
@@ -980,10 +1267,13 @@ def main():
             if record["status"] == "NOT_PASS":
                 raise ValueError("material technical/product failure; preserve later cases NOT_RUN")
     except Exception as error:
-        write(output / "error.json", {"class": type(error).__name__, "reason": str(error)[:300]})
+        write(output / "error.json", {"class": type(error).__name__, "reason": str(error)[:300],
+            **({"classification": "DIAGNOSTIC_ONLY", "officialAcceptance": "NOT_ACCEPTANCE",
+                "failureClassification": "INDEPENDENT_EVIDENCE_CLASSIFICATION_REQUIRED"} if diagnostic else {})})
         raise
     finally:
-        write(output / "ledger.json", ledger)
+        if ledger is not None:
+            write(output / "ledger.json", ledger)
         seal(output)
 
 

@@ -784,7 +784,335 @@ class QualifiedCaseChainContracts(unittest.TestCase):
                 self.assertEqual(status=='NOT_PASS',(out/'error.json').exists())
 
 
+class DiagnosticContinuationContracts(unittest.TestCase):
+    def setUp(self):
+        # Reuse the existing authenticated-chain fixtures; no image/model/cloud access.
+        self.base = QualifiedCaseChainContracts(); self.base.setUp()
+        self.addCleanup(patch.stopall)
+        self.artifacts, self.bindings, self.reviews = {}, {}, {}
+        original = copy.deepcopy(self.base.artifacts[self.base.reference(0)["runId"]])
+        original["ledger.json"][0]["status"] = "NOT_PASS"
+        original["binding.json"].update(sourceSha=pt8a.CASE_A_SOURCE, runId=pt8a.CASE_A_RUN)
+        self.artifacts[pt8a.CASE_A_RUN] = original
+        self.bindings[pt8a.CASE_A_RUN] = {"runId": pt8a.CASE_A_RUN, "artifactId": pt8a.CASE_A_ARTIFACT,
+            "digest": pt8a.CASE_A_DIGEST, "sourceSha": pt8a.CASE_A_SOURCE, "conclusion": "failure"}
+        self.reviews[pt8a.CASE_A_REVIEW] = {"decision": "REJECTED", "reviewed_source_sha": pt8a.CASE_A_SOURCE,
+            "candidate_identity": pt8a.IDENTITY, "procedure_sha256": pt8a.V3_SHA256, "case_id": pt8a.CASES[0],
+            "run_id": str(pt8a.CASE_A_RUN), "artifact_id": str(pt8a.CASE_A_ARTIFACT), "artifact_digest": pt8a.CASE_A_DIGEST}
+        self.live = pt8a.diagnostic_live_fields(SOURCE, IMAGE)
+        for index in range(1, 5):
+            data = copy.deepcopy(self.base.artifacts[self.base.reference(index)["runId"]])
+            ref = self.reference(index)
+            data["binding.json"].update(mode=pt8a.DIAGNOSTIC_MODE, runId=ref["runId"], liveApprovalCommentId=800,
+                procedureSha256=pt8a.diagnostic_contract_sha256(), diagnosticContractSha256=pt8a.diagnostic_contract_sha256(),
+                classification="DIAGNOSTIC_ONLY")
+            rows = copy.deepcopy(original["ledger.json"])
+            for previous in range(1, index + 1):
+                rows[previous] = self.base.record(previous) | {"status": "NOT_PASS", "classification": "DIAGNOSTIC_ONLY", "dispatchConsumed": True}
+            data["ledger.json"] = rows
+            data["diagnostic-chain.json"] = {"prior": self.reference(index - 1)}
+            data["diagnostic-disposition.json"] = {"classification": "DIAGNOSTIC_ONLY", "officialAcceptance": "NOT_ACCEPTANCE",
+                "observedStatus": "NOT_PASS", "dispatchConsumed": True, "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION"}
+            quality = {"technicalStatus": "UNKNOWN", "knowledgeStatus": "DEGRADED"}
+            data["observation/job.json"]["quality"] = quality.copy()
+            data["observation/presentation.json"]["quality"] = quality.copy()
+            data["observation/cli.json"]["initValidateExitCode"] = 1
+            data["observation/draft-identity.json"]["hclPresent"] = True
+            self.bindings[ref["runId"]] = {"runId": ref["runId"], "artifactId": ref["artifactId"],
+                "digest": "sha256:" + pt8a.sha(str(ref).encode()), "sourceSha": SOURCE, "conclusion": "failure"}
+            bound = self.bindings[ref["runId"]]
+            self.reviews[ref["reviewCommentId"]] = {"decision": "ACKNOWLEDGED_DIAGNOSTIC_ONLY", "observation_class": "PRODUCT_OBSERVATION",
+                "infrastructure_auth_provenance": "VERIFIED", "official_acceptance": "NOT_ACCEPTANCE", "allow_next_diagnostic": "true",
+                "reviewed_source_sha": SOURCE, "backend_image": IMAGE, "candidate_identity": pt8a.IDENTITY,
+                "diagnostic_contract_sha256": pt8a.diagnostic_contract_sha256(), "run_id": str(bound["runId"]),
+                "artifact_id": str(bound["artifactId"]), "artifact_digest": bound["digest"], "case_id": pt8a.CASES[index],
+                "observed_status": "NOT_PASS", "vector_write_continuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+                **{"dimension_" + d: "FAIL" if d == "directed_relationships" else "UNKNOWN" for d in pt8a.SCORING}}
+            self.artifacts[ref["runId"]] = data
+
+    def reference(self, index):
+        return {"runId": pt8a.CASE_A_RUN, "artifactId": pt8a.CASE_A_ARTIFACT, "reviewCommentId": pt8a.CASE_A_REVIEW} if index == 0 else {
+            "runId": pt8a.CASE_A_RUN + 100 * index, "artifactId": 400 + index, "reviewCommentId": 500 + index}
+
+    def request(self, index):
+        prior = self.reference(index - 1)
+        return {"mode": pt8a.DIAGNOSTIC_MODE, "caseId": pt8a.CASES[index], "liveApprovalCommentId": 800,
+            "provenanceRunId": pt8a.ORIGIN_CLEAN_RUN, "provenanceArtifactId": pt8a.ORIGIN_CLEAN_ARTIFACT,
+            "priorRunId": prior["runId"], "priorArtifactId": prior["artifactId"], "priorReviewCommentId": prior["reviewCommentId"]}
+
+    def authority(self, comment, marker):
+        self.assertEqual("[HUMAN_GATE_APPROVAL:v1]" if comment == 800 else
+            "[PRODUCT_TRUST_REVIEW:v1]" if comment == pt8a.CASE_A_REVIEW else "[PT8A_DIAGNOSTIC_REVIEW:v1]", marker)
+        return self.live if comment == 800 else self.reviews[comment]
+
+    def download(self, run, artifact, names, private, workflow, **kwargs):
+        self.assertTrue(kwargs["verify_inventory"])
+        self.assertEqual(self.bindings[run]["artifactId"], artifact)
+        return self.artifacts[run], self.bindings[run]
+
+    def histories(self, index):
+        self.runtime = [{"id": pt8a.ORIGIN_FAILED_RUN, "head_sha": pt8a.ORIGIN_SOURCE}]
+        self.jobs, self.archive_rows = {}, {}
+        for stage in range(index + 1):
+            ref = self.reference(stage); current = stage == index
+            self.runtime.append({"id": ref["runId"], "head_sha": SOURCE if stage else pt8a.CASE_A_SOURCE, "run_attempt": 1,
+                "status": "in_progress" if current else "completed", "conclusion": None if current else "failure"})
+            self.jobs[ref["runId"]] = {"total_count": 1, "jobs": [{"name": (pt8a.DIAGNOSTIC_OPERATION if stage else pt8a.QUALIFIED_OPERATION)
+                + "/" + pt8a.CASES[stage], "status": "in_progress" if current else "completed", "conclusion": None if current else "failure"}]}
+            self.archive_rows[ref["runId"]] = {"total_count": 1, "artifacts": [{"id": ref["artifactId"],
+                "name": "pt8a-diagnostic-" + str(ref["runId"]), "digest": self.bindings[ref["runId"]]["digest"]}]}
+        self.writes = [{"id": pt8a.ORIGIN_CLEAN_RUN, "head_sha": pt8a.ORIGIN_SOURCE}]
+        return self.reference(index)["runId"]
+
+    def api(self, path):
+        self.assertNotIn("head_sha=", path)
+        if path.startswith("compare/"): return {"status": "ahead"}
+        if "gcp-target-runtime-dependencies.yml/runs?" in path: return {"total_count": len(self.runtime), "workflow_runs": self.runtime}
+        if "gcp-target-corpus-ingestion.yml/runs?" in path: return {"total_count": len(self.writes), "workflow_runs": self.writes}
+        run = int(path.split("/")[2])
+        return self.jobs[run] if "/jobs?" in path else self.archive_rows[run]
+
+    def chain(self, index):
+        current = self.histories(index)
+        with tempfile.TemporaryDirectory() as d, patch.object(pt8a, "github", side_effect=self.api), \
+             patch.object(pt8a, "authority_comment", side_effect=self.authority), \
+             patch.object(pt8a, "bound_artifact", side_effect=self.download), \
+             patch.object(pt8a.transport, "current_main", return_value=SOURCE):
+            request = self.request(index)
+            pt8a.diagnostic_request_contract(request, SOURCE, IMAGE, 1)
+            history = pt8a.diagnostic_history(request, SOURCE, current)
+            return pt8a.diagnostic_predecessor(request, history, Path(d))
+
+    def test_rejected_a_is_preserved_and_only_new_exact_live_authority_permits_b(self):
+        rows = self.chain(1)
+        self.assertEqual(self.artifacts[pt8a.CASE_A_RUN]["ledger.json"], rows)
+        self.assertEqual("NOT_PASS", rows[0]["status"]); self.assertTrue(rows[0]["consumed"])
+        with patch.object(pt8a, "authority_comment", side_effect=self.authority), \
+             patch.object(pt8a, "github", side_effect=self.api), patch.object(pt8a.transport, "current_main", return_value=SOURCE):
+            for field in self.live:
+                saved = self.live; self.live = saved | {field: "wrong"}
+                with self.subTest(field=field), self.assertRaises(ValueError):
+                    pt8a.diagnostic_request_contract(self.request(1), SOURCE, IMAGE, 1)
+                self.live = saved
+            for altered in (self.request(1) | {"caseId": pt8a.CASES[0]}, self.request(1) | {"mode": pt8a.QUALIFIED_MODE}):
+                with self.assertRaises(ValueError): pt8a.diagnostic_request_contract(altered, SOURCE, IMAGE, 1)
+            with self.assertRaises(ValueError): pt8a.diagnostic_request_contract(self.request(1), SOURCE, IMAGE, 2)
+        # The original acceptance helper still requires A PASS; diagnostic reviews cannot change it.
+        with self.assertRaises(ValueError): pt8a.next_case(rows, pt8a.CASES[1], {"decision": "ACCEPTED"})
+        self.base.artifacts[self.base.reference(0)["runId"]]["ledger.json"][0]["status"] = "NOT_PASS"
+        with self.assertRaises(ValueError): self.base.chain(1)
+        self.artifacts[pt8a.CASE_A_RUN]["ledger.json"][0]["status"] = "PASS"
+        with self.assertRaises(ValueError): self.chain(1)
+
+    def test_negative_product_observations_require_exact_independent_review_without_pass_promotion(self):
+        for index in range(2, 5):
+            rows = self.chain(index)
+            self.assertEqual(["NOT_PASS"] * index + ["NOT_RUN"] * (5-index), [r["status"] for r in rows])
+            self.assertEqual("UNKNOWN", self.artifacts[self.reference(index-1)["runId"]]["observation/job.json"]["quality"]["technicalStatus"])
+        prior = self.reference(1); saved = copy.deepcopy(self.reviews[prior["reviewCommentId"]])
+        for changed in ({"decision": "ACCEPTED"}, {"official_acceptance": "PASS"}, {"observation_class": "INFRASTRUCTURE_FAILURE"},
+                        {"infrastructure_auth_provenance": "UNKNOWN"}, {"allow_next_diagnostic": "false"}, {"artifact_digest": "wrong"},
+                        {"dimension_directed_relationships": None}, {"observed_status": "REVIEW_PENDING"}):
+            self.reviews[prior["reviewCommentId"]] = saved | changed
+            with self.subTest(changed=changed), self.assertRaises(ValueError): self.chain(2)
+        self.reviews[prior["reviewCommentId"]] = saved
+        before = copy.deepcopy(self.artifacts[prior["runId"]])
+        for path, changed in (("observation/accepted.json", {"status": "INDETERMINATE_ACCEPTANCE"}),
+                              ("diagnostic-disposition.json", {"evidenceValidity": "INCOMPLETE"}),
+                              ("observation/draft-identity.json", {"hclPresent": False}),
+                              ("post-admission.json", {"indexWrites": 1}), ("binding.json", {"sourceSha": "c"*40})):
+            self.artifacts[prior["runId"]][path].update(changed)
+            with self.subTest(path=path), self.assertRaises(ValueError): self.chain(2)
+            self.artifacts[prior["runId"]] = copy.deepcopy(before)
+        self.artifacts[prior["runId"]]["ledger.json"][1]["censoredObservationMs"] = 540000
+        with self.assertRaises(ValueError): self.chain(2)
+
+    def test_all_source_duplicates_out_of_order_preflight_failures_and_incomplete_history_block(self):
+        for previous_case in (pt8a.CASES[1], pt8a.CASES[3]):
+            current = self.histories(1); extra = current - 1
+            self.runtime.append({"id": extra, "head_sha": "c"*40, "run_attempt": 1, "status": "completed", "conclusion": "failure"})
+            self.jobs[extra] = {"total_count": 1, "jobs": [{"name": pt8a.DIAGNOSTIC_OPERATION + "/" + previous_case, "conclusion": "failure"}]}
+            with patch.object(pt8a, "github", side_effect=self.api), self.assertRaises(ValueError):
+                pt8a.diagnostic_history(self.request(1), SOURCE, current)
+            self.jobs[extra]["jobs"][0]["conclusion"] = "skipped"
+            with patch.object(pt8a, "github", side_effect=self.api), self.assertRaises(ValueError):
+                pt8a.diagnostic_history(self.request(1), SOURCE, current)
+        current = self.histories(2)
+        for run, jobs in ROLLOUT_JOB_FIXTURES.items():
+            self.runtime.append({"id": run, "head_sha": "c"*40}); self.jobs[run] = copy.deepcopy(jobs)
+        with patch.object(pt8a, "github", side_effect=self.api):
+            self.assertTrue(pt8a.diagnostic_history(self.request(2), SOURCE, current)["allSourcesInspected"])
+            self.archive_rows[self.reference(1)["runId"]]["artifacts"] = []
+            with self.assertRaises(ValueError): pt8a.diagnostic_history(self.request(2), SOURCE, current)
+        current = self.histories(1); self.jobs[current]["total_count"] = 2
+        with patch.object(pt8a, "github", side_effect=self.api), self.assertRaises(ValueError):
+            pt8a.diagnostic_history(self.request(1), SOURCE, current)
+
+    def test_predecessor_keeps_its_original_source_and_live_approval_across_revisions(self):
+        previous_source = "c"*40; ref = self.reference(1); data = self.artifacts[ref["runId"]]
+        data["binding.json"].update(sourceSha=previous_source, liveApprovalCommentId=801)
+        self.bindings[ref["runId"]]["sourceSha"] = previous_source
+        data["release.json"].update(sourceSha=previous_source,
+            deployedRuntimeIdentity=data["release.json"]["deployedRuntimeIdentity"].replace(SOURCE, previous_source))
+        self.reviews[ref["reviewCommentId"]]["reviewed_source_sha"] = previous_source
+        current = self.histories(2)
+        next(r for r in self.runtime if r["id"] == ref["runId"])["head_sha"] = previous_source
+        authority = lambda comment, marker: pt8a.diagnostic_live_fields(previous_source, IMAGE) if comment == 801 else self.authority(comment, marker)
+        with tempfile.TemporaryDirectory() as d, patch.object(pt8a, "github", side_effect=self.api), \
+             patch.object(pt8a, "bound_artifact", side_effect=self.download), patch.object(pt8a, "authority_comment", side_effect=authority):
+            history = pt8a.diagnostic_history(self.request(2), SOURCE, current)
+            self.assertEqual("NOT_PASS", pt8a.diagnostic_predecessor(self.request(2), history, Path(d))[1]["status"])
+            data["binding.json"]["liveApprovalCommentId"] = 800
+            with self.assertRaises(ValueError): pt8a.diagnostic_predecessor(self.request(2), history, Path(d))
+
+    def test_terminal_provider_failure_can_be_acknowledged_but_cannot_hide_cli_for_an_existing_draft(self):
+        data = self.artifacts[self.reference(1)["runId"]]
+        data["ledger.json"][1]["terminalState"] = "FAILED"
+        data["observation/job.json"].update(status="FAILED", resultObjectKey=None, failureReason="PROVIDER_OUTPUT_TRUNCATED")
+        data["observation/presentation.json"].update(analysisStatus="FAILED", latestResultObjectKey=None)
+        data["observation/draft-identity.json"] = {"hclPresent": False}
+        data["observation/cli.json"] = {"status": "NOT_RUN", "reason": "BACKEND_FAILED", "AWSPlanApply": False}
+        data["inventory.json"]["files"] = []
+        rows = self.chain(2)
+        self.assertEqual("NOT_PASS", rows[1]["status"]); self.assertEqual("FAILED", rows[1]["terminalState"])
+        data["inventory.json"]["files"] = [{"path": "observation/main.tf", "sha256": "unvalidated"}]
+        with self.assertRaises(ValueError): self.chain(2)
+
+    def test_preflight_blocks_mixed_modes_and_unreviewed_diagnostic_before_cloud(self):
+        with tempfile.TemporaryDirectory() as d, ExitStack() as stack:
+            request_file = Path(d)/"request.json"; request_file.write_text(json.dumps(self.request(2)))
+            stack.enter_context(patch.object(sys, "argv", ["pt8a", "preflight", "--request-file", str(request_file)]))
+            stack.enter_context(patch.dict(os.environ, {"GITHUB_SHA": SOURCE, "BACKEND_IMAGE": IMAGE,
+                "GITHUB_RUN_ATTEMPT": "1", "GITHUB_RUN_ID": str(self.histories(2)), "OPERATION": pt8a.DIAGNOSTIC_OPERATION}))
+            stack.enter_context(patch.object(pt8a, "github", side_effect=self.api))
+            stack.enter_context(patch.object(pt8a, "authority_comment", side_effect=self.authority))
+            stack.enter_context(patch.object(pt8a, "bound_artifact", side_effect=self.download))
+            stack.enter_context(patch.object(pt8a, "corrective_origins"))
+            stack.enter_context(patch.object(pt8a.transport, "current_main", return_value=SOURCE))
+            observe = stack.enter_context(patch.object(pt8a, "observe"))
+            cloud = stack.enter_context(patch.object(pt8a.subprocess, "run"))
+            self.reviews[self.reference(1)["reviewCommentId"]]["decision"] = "PENDING"
+            with self.assertRaises(ValueError): pt8a.main()
+            with patch.dict(os.environ, {"OPERATION": pt8a.QUALIFIED_OPERATION}), self.assertRaises(ValueError): pt8a.main()
+            request_file.write_text(json.dumps(self.base.make_request(1)))
+            with self.assertRaises(ValueError): pt8a.main()
+            observe.assert_not_called(); cloud.assert_not_called()
+
+    def test_new_authority_reuses_read_only_admission_with_unproven_vector_continuity(self):
+        snapshot = self.base.snapshot | {"classification": "EXACT_REUSABLE_COMPLETED_V4"}
+        with patch.object(pt8a.rag, "verify_exact_v4", return_value=snapshot) as verify:
+            result = pt8a.risk_qualified_admission(None, {}, {}, [], pt8a.CORPUS_CHECKSUM,
+                self.base.origin.clean["receipt.json"], self.base.origin.clean_binding, self.live)
+        self.assertTrue(verify.call_args.kwargs["inspect_vectors"])
+        self.assertEqual(0, result["embeddingRequests"]); self.assertEqual(0, result["indexWrites"])
+        self.assertFalse(result["cryptographicVectorContinuityProven"])
+
+    def test_diagnostic_main_preserves_failure_runs_one_observation_and_rechecks_admission(self):
+        for index in (1, 4):
+            with self.subTest(case=index), tempfile.TemporaryDirectory() as d, ExitStack() as stack:
+                root = Path(d); request_file = root / "request.json"; output = root / "evidence"
+                request_file.write_text(json.dumps(self.request(index)))
+                (root / "coverage-report.json").write_text("{}")
+                (root / "pt8a-release.json").write_text(json.dumps(self.base.release))
+                stack.enter_context(patch.dict(os.environ, {"GITHUB_SHA": SOURCE, "BACKEND_IMAGE": IMAGE,
+                    "GITHUB_RUN_ATTEMPT": "1", "GITHUB_RUN_ID": str(self.histories(index)),
+                    "OPERATION": pt8a.DIAGNOSTIC_OPERATION, "RUNNER_TEMP": d}))
+                stack.enter_context(patch.object(sys, "argv", ["pt8a", "run", "--request-file", str(request_file), "--corpus", d, "--output", str(output)]))
+                stack.enter_context(patch.object(pt8a, "github", side_effect=self.api))
+                stack.enter_context(patch.object(pt8a, "authority_comment", side_effect=self.authority))
+                stack.enter_context(patch.object(pt8a, "bound_artifact", side_effect=self.download))
+                stack.enter_context(patch.object(pt8a.transport, "current_main", return_value=SOURCE))
+                stack.enter_context(patch.object(pt8a, "corrective_origins", return_value=(self.base.origin.clean["receipt.json"],
+                    self.base.origin.clean_binding, self.base.origin.failed_binding)))
+                stack.enter_context(patch.object(pt8a.rag, "load_corpus", return_value=({}, {}, [], pt8a.CORPUS_CHECKSUM)))
+                stack.enter_context(patch.object(pt8a.rag, "validate_pt8a_clean_corpus"))
+                scans = stack.enter_context(patch.object(pt8a, "risk_qualified_admission", return_value=self.base.snapshot.copy()))
+                stack.enter_context(patch.object(pt8a.subprocess, "run"))
+                stack.enter_context(patch.object(pt8a.transport, "CurlClient"))
+                def acquire(case, private):
+                    self.assertEqual(self.base.inputs[index], case)
+                    fixture = private / "input.png"; fixture.write_bytes(b"synthetic-test-only"); return fixture
+                fetch = stack.enter_context(patch.object(pt8a, "acquire", side_effect=acquire))
+                def observed(client, fixture, directory, record, documents, pod, **kwargs):
+                    self.assertEqual({"diagnostic": True}, kwargs)
+                    record.update(self.artifacts[self.reference(index)["runId"]]["ledger.json"][index])
+                observation = stack.enter_context(patch.object(pt8a, "observe", side_effect=observed))
+                with self.assertRaisesRegex(ValueError, "material technical/product failure"): pt8a.main()
+                observation.assert_called_once(); fetch.assert_called_once(); self.assertEqual(2, scans.call_count)
+                rows = json.loads((output / "ledger.json").read_text())
+                self.assertEqual(["NOT_PASS"]*(index+1)+["NOT_RUN"]*(4-index), [r["status"] for r in rows])
+                self.assertEqual(self.artifacts[pt8a.CASE_A_RUN]["ledger.json"][0], rows[0])
+                self.assertEqual("DIAGNOSTIC_ONLY", json.loads((output / "binding.json").read_text())["classification"])
+                self.assertEqual("NOT_ACCEPTANCE", json.loads((output / "diagnostic-disposition.json").read_text())["officialAcceptance"])
+                self.assertTrue((output / "error.json").is_file()); self.assertTrue((output / "inventory.json").is_file())
+
+    def test_diagnostic_workflow_is_gated_before_wif_and_keeps_distinct_artifact_and_no_new_workflow(self):
+        workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
+        job = workflow["jobs"]["pt8a-official-acceptance"]
+        self.assertEqual(pt8a.SKIPPED_DIAGNOSTIC_JOB_NAME, job["name"][4:-3])
+        steps = job["steps"]; gate = next(i for i,s in enumerate(steps) if "preflight --request-file" in s.get("run", ""))
+        wif = next(i for i,s in enumerate(steps) if s.get("uses") == "google-github-actions/auth@v3")
+        self.assertLess(gate, wif); self.assertIn("RUN_REVIEWED_PT8A_B_TO_E_DIAGNOSTIC_ONLY", steps[gate]["run"])
+        artifact = next(s for s in steps if s.get("id") == "pt8a-artifact")
+        self.assertIn("pt8a-diagnostic", artifact["with"]["name"]); self.assertEqual("always()", artifact["if"])
+        for step in steps:
+            if "run" in step:
+                parsed = subprocess.run(["bash", "-n"], input=step["run"], text=True, capture_output=True)
+                self.assertEqual(0, parsed.returncode, parsed.stderr)
+
+
 class ArtifactAndObservationContracts(unittest.TestCase):
+    def test_diagnostic_censor_keeps_partial_job_and_retrieval_without_late_observation_or_retry(self):
+        calls = []
+        class Client:
+            def request(inner, method, path, *args, **kwargs):
+                calls.append((method, path))
+                return accepted() if method == "POST" else {"httpStatus": 200, "json": {"id": "job-1", "projectId": 1, "status": "RUNNING"}}
+        with tempfile.TemporaryDirectory() as d, patch.dict(os.environ, {"GITHUB_RUN_ID": "1"}), \
+             patch.object(pt8a, "retrieval_evidence", return_value={"jobId": "job-1", "events": []}):
+            ticks = iter([0, 0, 541, 541]); out = Path(d)/"observation"; record = ledger()[1]
+            pt8a.observe(Client(), Path(d)/"input.png", out, record, [], "unused", clock=lambda: next(ticks), wait=lambda _:None, diagnostic=True)
+            self.assertEqual(["POST", "GET"], [m for m,p in calls]); self.assertEqual(541000, record["censoredObservationMs"])
+            self.assertNotIn("acceptedToTerminalMs", record)
+            self.assertEqual("RUNNING", json.loads((out/"job.json").read_text())["status"])
+            self.assertEqual("NOT_RUN", json.loads((out/"cli.json").read_text())["status"])
+            self.assertTrue((out/"retrieval.json").exists())
+
+    def test_diagnostic_one_upload_keeps_provider_failure_unknown_empty_and_invalid_draft(self):
+        for outcome in ("provider-timeout", "empty", "invalid"):
+            with self.subTest(outcome=outcome), tempfile.TemporaryDirectory() as d, ExitStack() as stack:
+                failed = outcome == "provider-timeout"
+                job = {"id": "job-1", "projectId": 1, "sourceFileId": 2, "status": "FAILED" if failed else "SUCCEEDED",
+                    "resultObjectKey": None if failed else "result.tf", "failureReason": "PROVIDER_TIMEOUT" if failed else None,
+                    "quality": {"technicalStatus": "UNKNOWN", "knowledgeStatus": "DEGRADED"}}
+                calls = []
+                class Client:
+                    def request(inner, method, path, *args, **kwargs):
+                        calls.append((method, path))
+                        if method == "POST": return accepted()
+                        if "/analysis/jobs/" in path: return {"httpStatus": 200, "json": job}
+                        if path.endswith("main.tf"): return {"httpStatus": 200, "json": {
+                            "latestAnalysisJobId": "job-1", "latestResultObjectKey": "result.tf", "content": "" if outcome == "empty" else "invalid Terraform"}}
+                        return {"httpStatus": 200, "json": {"projectId": 1, "latestAnalysisJobId": "job-1",
+                            "analysisStatus": job["status"], "latestResultObjectKey": job["resultObjectKey"], "quality": job["quality"]}}
+                stack.enter_context(patch.dict(os.environ, {"GITHUB_RUN_ID": "1"}))
+                stack.enter_context(patch.object(pt8a, "retrieval_evidence", return_value={"jobId": "job-1", "officialHitCount": 0, "events": [], "providerCalls": []}))
+                commands = stack.enter_context(patch.object(pt8a.subprocess, "run", side_effect=[subprocess.CompletedProcess([], 0),
+                    subprocess.CompletedProcess([], 0, "init", ""), subprocess.CompletedProcess([], 1, "", "invalid Terraform")]))
+                record = {"caseId": pt8a.CASES[1], "status": "NOT_RUN", "consumed": False}; out = Path(d) / "observation"
+                pt8a.observe(Client(), Path(d)/"input.png", out, record, [], "owned-pod", diagnostic=True)
+                self.assertEqual(1, sum(m == "POST" for m,p in calls)); self.assertEqual("NOT_PASS", record["status"])
+                self.assertEqual(job["quality"], json.loads((out / "job.json").read_text())["quality"])
+                cli = json.loads((out / "cli.json").read_text())
+                if outcome == "invalid":
+                    self.assertEqual(1, cli["initValidateExitCode"])
+                    self.assertIn("validate", commands.call_args_list[-1].args[0])
+                    self.assertEqual("invalid Terraform", (out / "main.tf").read_text())
+                else:
+                    commands.assert_not_called(); self.assertEqual("NOT_RUN", cli["status"])
+                    self.assertFalse((out / "main.tf").exists())
+                self.assertFalse(cli["AWSPlanApply"])
+
     def test_inventory_verifies_unselected_hcl_and_rejects_unlisted_or_duplicate_members(self):
         for defect in (None, "hcl_hash", "unlisted", "duplicate"):
             receipt, hcl = b'{}', b'terraform {}'

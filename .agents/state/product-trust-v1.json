@@ -37,11 +37,11 @@
     "USER-authorized governance-only correction for review 6031593870 preserves accepted PT-6R1 code, all evidence, the bound execution base and repair/correction counters. PT-6R1 acceptance and USER merge lead to HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT, not automatic PT-6R2 activation. A subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged evidence-validity amendment must release the pause; its content/version/base are not selected here.",
     "PR #252 latest independent review 6031698220 accepted tree c9792b42b4a6a9b8529a904d240c5bccf5d08d10 at head 2b63e79; merge-policy-only empty head 25336fa preserves that tree. USER merged as 38f995b. PT-6R1 is COMPLETE without new database/behavioral measurements or counter changes. USER authorizes this substantive v4 evidence-validity preparation only. Historical reference-derived truth remains frozen but controlled regression; five exact official candidates require new human freeze. PT-6R2 stays unauthorized until amendment review, explicit USER approval, independent acceptance and USER merge. No future base, live/model/cloud action or self-acceptance is inferred.",
     "USER-authorized bounded correction for PR #253 review 6032307527 separates all five cases into image_observable_truth, documentation_context and conditional draft_technical_closure. Official image/source provenance is unchanged; exact pre-freeze candidate identity fad3627 and both pinned files are archived. New revision 2 remains unapproved, unexecuted and model count 0. V4 autonomous repair remains 1; human corrective iteration 1 is recorded separately. Base, accepted structural DAG, PT-6R1 completion and historical evidence/counters remain unchanged; no live/model/PT-6R2 authority.",
-    "PR #253 review 6032563396 accepted immutable AWS candidate revision 2; USER merged as 406981a8c629a02503f5660453dcc7921b8d5177 and approval 6032637762 externally freezes identity 3e105771\u2026 without changing candidate bytes. Exactly PT-6R2 audit activates on that once-read main. SDK 1.72.0 defaults five attempts and removes transport timeouts; synchronous worker plus independent heartbeat has no accepted-age terminal cutoff. Four options are recommendations only. Stop at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION; no production implementation, model/cloud/OpenSearch/database/browser action or PT-7 authority. Historical evidence/counters stay exact; transient PR/branch fields stay null.",
+    "PR #253 review 6032563396 accepted immutable AWS candidate revision 2; USER merged as 406981a8c629a02503f5660453dcc7921b8d5177 and approval 6032637762 externally freezes identity 3e105771… without changing candidate bytes. Exactly PT-6R2 audit activates on that once-read main. SDK 1.72.0 defaults five attempts and removes transport timeouts; synchronous worker plus independent heartbeat has no accepted-age terminal cutoff. Four options are recommendations only. Stop at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION; no production implementation, model/cloud/OpenSearch/database/browser action or PT-7 authority. Historical evidence/counters stay exact; transient PR/branch fields stay null.",
     "Explicit USER policy D approval selects facts 370s, generation/compact/repair 220s, embeddings 10s, SDK attempts 1 / no retryable statuses, durable attempts 1 and original accepted-age cutoff 8 minutes. One existing H2 state-service run (5 existing tests plus 1 temporary lock diagnostic) confirms terminal SQL waits on the external-I/O finalization row lock. Stop at the USER-declared PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION before redesigning finalization or weakening cutoff; no production configuration/implementation or live action occurred. Temporary test bytes restored. Historical audit/evidence/counters remain unchanged; diagnostic is not a PT-6R1 measurement or PT-6R2 acceptance.",
     "USER explicitly authorizes narrow PT6R2 finalization fencing following independent scope review 6036430154 at c516288. Candidate code implements policy D, external write outside finalization transaction, post-write/post-commit fencing, accepted-age sweep and one durable claim. Compile/test-compile pass. First focused 130 tests: 1 failure / 6 errors; one test-only repair rerun 11 tests: 2 failures / 0 errors. Two legacy assertions were missed; no second repair or full suite is run. Stop HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED on the same Work Package/PR. No acceptance, deployment, live/model/database remeasurement, PT7 or counter reset; immutable historical evidence and frozen bytes stay exact.",
     "USER explicitly authorizes one test-contract-only human correction following review 6037186101 at 2ac19e2. Exactly three legacy regression files align with existing finalization order / attempts=1; production bytes and PT6R1 identity scenario/counters remain unchanged. One local focused invocation passes 11/0/0/0; one offline clean package passes 576/0/0/4 (MariaDB skipped locally). Prior failed validation evidence is immutable. Autonomous repairs stay 1; human corrective iterations become 1. Return to PT6R2 implementation complete / independent acceptance pending. Exact corrective-head automatic Backend Local Verification is GitHub-authoritative regression only, not a PT6R1 before/after measurement. No manual DB/model/cloud/OpenSearch/browser/dispatch, PT7, self-acceptance or merge authority.",
-    "PR #254 independent review 6037528315 accepted head 987ec944; USER merged as 6228d69b. PT6R2 COMPLETE is reconciled inside this substantive PT7 PR with original base/evidence/auto repair 1/human correction 1 and conditional \u0394 limits preserved. Explicit USER PT7 request binds that main once. Existing backend workflow gets separate backend/image scope and one always-present backend-required-verification; actual ruleset is read-only and still Terraform-only. Stop after exact-head normal CI at PT7_REQUIRED_CHECK_RULESET_CHANGE, then require explicit ruleset authority, independent phase acceptance and USER merge. No live/model/cloud/OpenSearch/runtime operation, PT8A execution, new workflow or transient PR lifecycle state.",
+    "PR #254 independent review 6037528315 accepted head 987ec944; USER merged as 6228d69b. PT6R2 COMPLETE is reconciled inside this substantive PT7 PR with original base/evidence/auto repair 1/human correction 1 and conditional Δ limits preserved. Explicit USER PT7 request binds that main once. Existing backend workflow gets separate backend/image scope and one always-present backend-required-verification; actual ruleset is read-only and still Terraform-only. Stop after exact-head normal CI at PT7_REQUIRED_CHECK_RULESET_CHANGE, then require explicit ruleset authority, independent phase acceptance and USER merge. No live/model/cloud/OpenSearch/runtime operation, PT8A execution, new workflow or transient PR lifecycle state.",
     "PR #255 review 6038261202 accepted head b8645e56; USER merged as 2bdb73d2. Authorized administrator added only backend-required-verification/15368, preserving Terraform/15368 and other ruleset settings. PT7 COMPLETE reconciles in this substantive PT8A preparation PR. Explicit USER preparation binds main once and freezes one-case-per-dispatch/independent review plus exact v4 IDs/non-vector source and clean model-lineage readiness. Historical corrected ingestion 37344219922/artifact 11359644809 lacks retained UUID/fresh-vs-skipped lineage: MODEL_PROVENANCE_UNPROVEN, not live current-index proof. All frozen bytes and historical evidence/counters stay exact. Model/input/live counts remain zero; live source/digest null. Stop FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE; no automatic ingestion, dispatch, acceptance, merge, PT8B or teardown; GitHub owns transient lifecycle.",
     "Review 6039675842 sole lineage blocker: USER authorizes one repository-only clean-v4 correction. Human correction 1 is separate from preserved autonomous repair 1. Procedure v1 bytes/hash are superseded, v2 frozen before outcomes. Existing workflow clean mode pins historical source/checksum, requires exact live authority, full non-vector/UUID admission and all-5395 vector overwrites, then completed receipt before first readiness. No live/cloud/model/image activity; independent acceptance pending."
   ],
@@ -69,10 +69,9 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "PT8A repository preparation requires independent review and USER merge; CI green is not acceptance.",
-    "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE is not approved for this prepared procedure/source/image. No live source or image is predicted.",
-    "Historical lineage remains MODEL_PROVENANCE_UNPROVEN. Clean-v4 repository correction pending independent re-review; later explicit live authority must complete exact all-5395 reembedding before first readiness dispatch. No live measurement or automatic rerun authorized.",
-    "Clean-v4 correction deterministic behavior tests pass; two one-off metadata invocations failed (self-output parse, untouched historical CRLF/LF mismatch). Failures preserved; no rerun or extra repair. Independent re-review must assess these limitations; CI does not self-accept."
+    "Substantive repair/recovery correction requires independent acceptance and USER merge; CI is not acceptance.",
+    "Cross-source clean-v4 reuse is BLOCKED_VECTOR_WRITE_CONTINUITY_UNPROVEN: original clean artifact has no vector checkpoint/watermark or complete all-writer audit. Existing executable same-source receipt/history guards remain unchanged.",
+    "Proposed corrective recovery procedure v3 is not approved or executable. Its exact independent acceptance/USER approval plus new actual source/image-bound live authority are required; original consumed readiness failure is not erased. No live operation or reembedding authorized by this correction."
   ],
   "evidenceDocument": "docs/evaluation/product-trust-pt-7-ci-delivery-handoff.md",
   "validation": {
@@ -151,7 +150,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "6228d69b1da604e816b3e0a826563d79b8bcd844",
+  "lastObservedMainSha": "70373842629fdd569815780e52dc5f0353b97880",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -1088,7 +1087,7 @@
         "acceptedJobTerminalStatus": "SUCCEEDED",
         "acceptedToTerminalMs": 6642,
         "qualitySnapshot": null,
-        "qualityUi": "\ud3c9\uac00 \uae30\ub85d \uc5c6\uc74c; editable/reference draft and conditional limits visible",
+        "qualityUi": "평가 기록 없음; editable/reference draft and conditional limits visible",
         "realValidator": "TerraformCliValidator",
         "realCommandExecutor": "ProcessCommandExecutor",
         "terraformVersion": "1.8.5",
@@ -1193,7 +1192,7 @@
       "additionalBeforeStateExecutionLimit": 1,
       "additionalBeforeStateExecutionsUsed": 1,
       "humanCorrectiveIteration1": {
-        "authority": "USER explicit reply: \ucd94\uac00 before-state 1\ud68c \uc2b9\uc778",
+        "authority": "USER explicit reply: 추가 before-state 1회 승인",
         "scope": "One additional real-MariaDB before-state only; conditional minimum product correction and one after-state remain under original authority.",
         "maximumAdditionalBeforeExecutions": 1,
         "additionalBeforeExecutionsUsed": 1,
@@ -1410,10 +1409,10 @@
       "mainReadsAtActivation": 1,
       "status": "HUMAN_REQUIRED",
       "humanGate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
-      "currentStep": "READINESS_CORPUS_PATH_CORRECTION_PENDING_INDEPENDENT_REVIEW_NO_NEW_LIVE_AUTHORITY",
+      "currentStep": "REPAIR_BUDGET_RECOVERY_CORRECTION_INDEPENDENT_REVIEW_PENDING_CROSS_SOURCE_REUSE_BLOCKED",
       "preparationAuthorized": true,
       "executionAuthorized": false,
-      "executionStarted": false,
+      "executionStarted": true,
       "phaseComplete": false,
       "independentAcceptance": "PENDING",
       "liveReviewedSourceSha": null,
@@ -1436,7 +1435,7 @@
       "onlyReusableClass": "EXACT_REUSABLE_COMPLETED_V4",
       "autoRepairLimit": 1,
       "autoRepairsUsed": 1,
-      "humanAuthorizedCorrectiveIterations": 3,
+      "humanAuthorizedCorrectiveIterations": 4,
       "modelUnderTestRunCount": 0,
       "officialInputFetches": 0,
       "officialInputUploads": 0,
@@ -1487,8 +1486,8 @@
         "correction": "Remove nonexistent v4 unittest module; run existing corpus/CI tests once, and compile the actual v4 builder. No application/code change or live action."
       },
       "procedureSha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
-      "validationEvidence": "docs/evidence/product-trust-pt-8a/validation.json",
-      "localDeterministicValidation": "PASS_25_RAG_17_OBSERVER_40_EXISTING_CORPUS_CI_STATIC_METADATA_WITH_ONE_PRESERVED_INVOCATION_ERROR_AND_ONE_BOUNDED_CORRECTION",
+      "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/validation.json",
+      "localDeterministicValidation": "PASS_FOCUSED_BACKEND_77_FULL_BACKEND_580_WITH_4_EXPECTED_MARIADB_SKIPS_OBSERVER_RAG_64_THEN_FINAL_OBSERVER_22_METADATA_SCOPE_FROZEN_GUARDS_DIFF_CHECK_WITH_PRESERVED_INVOCATION_ERROR",
       "supersededProcedures": [
         {
           "version": "pt8a-official-acceptance-v1",
@@ -1576,6 +1575,62 @@
           "repairAndCorrectionCountersUnchanged": true,
           "newLiveExecutionAuthorized": false
         }
+      },
+      "counterScope": "Existing preparation action counters describe repository preparation, not later live readiness; official model-under-test count remains zero. Authoritative historical live observations are recorded separately below.",
+      "observedReadiness": {
+        "runId": 37744660097,
+        "runAttempt": 1,
+        "sourceSha": "70373842629fdd569815780e52dc5f0353b97880",
+        "analysisJobId": "a93a7dcf-c40b-43f4-b55b-357c914a72f3",
+        "accepted": true,
+        "consumed": true,
+        "status": "FAILED",
+        "reason": "PROVIDER_OUTPUT_TRUNCATED",
+        "readinessEstablished": false,
+        "officialCasesExecuted": 0,
+        "totalProviderCalls": "NOT_FULLY_CAPTURED",
+        "disposition": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/failure-disposition.json",
+        "originCleanRunId": 37710171426,
+        "originCleanArtifactId": 11522067032,
+        "originCleanSourceSha": "70373842629fdd569815780e52dc5f0353b97880",
+        "originalEvidenceImmutable": true
+      },
+      "repairBudgetRecoveryCorrection": {
+        "iteration": 4,
+        "authorization": "USER_PT8A_BOUNDED_PRODUCT_AND_RECOVERY_CORRECTION",
+        "authorityEvidence": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/approved-correction.md",
+        "correctionExecutionBaseSha": "70373842629fdd569815780e52dc5f0353b97880",
+        "mainReadsAtCorrectionActivation": 1,
+        "historicalPreparationBasePreserved": true,
+        "independentForensicAddendumCommentId": 6056738716,
+        "status": "IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING",
+        "autoRepairsUsedUnchanged": 1,
+        "autonomousRepairConsumed": false,
+        "autonomousRepairCounterReset": false,
+        "repairPolicy": {
+          "maxOutputTokens": 16384,
+          "thinkingLevel": "LOW",
+          "attempts": 1,
+          "requestTimeoutSecondsUnchanged": 220,
+          "initialCompactFallbackUnchanged": true,
+          "singleClosureRepairCycleUnchanged": true
+        },
+        "observerCorrection": "RECOGNIZE_ACTUAL_UPPERCASE_VERTEX_WITH_EXISTING_ID_INDEX_SOURCE_PROVENANCE_CHECKS",
+        "crossSourceReuseEstablished": false,
+        "crossSourceReuseDisposition": "BLOCKED_VECTOR_WRITE_CONTINUITY_UNPROVEN",
+        "provenanceAudit": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/provenance-audit.json",
+        "proposedProcedurePath": "docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md",
+        "proposedProcedureVersion": "pt8a-corrective-recovery-v3",
+        "proposedProcedureSha256": "b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d",
+        "proposedProcedureStatus": "PROPOSED_NOT_APPROVED_NOT_EXECUTABLE",
+        "frozenV2BytesChanged": false,
+        "candidateTruthBytesChanged": false,
+        "newLiveExecutionAuthorized": false,
+        "correctionLiveActions": 0,
+        "correctionModelCalls": 0,
+        "officialCasesRemainNotRun": true,
+        "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/validation.json",
+        "deterministicValidation": "PASS_FOCUSED_BACKEND_77_FULL_BACKEND_580_WITH_4_EXPECTED_MARIADB_SKIPS_OBSERVER_RAG_64_THEN_FINAL_OBSERVER_22_METADATA_SCOPE_FROZEN_GUARDS_DIFF_CHECK_WITH_PRESERVED_INVOCATION_ERROR"
       }
     }
   },
@@ -1588,9 +1643,10 @@
     "repetitiveContinuePromptsRequired": false,
     "pausedAtHumanGate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
     "resumeRequires": [
-      "PT8A_preparation_independent_acceptance_and_USER_merge",
-      "separate_explicit_FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
-      "later_exact_source_image_deployed_v4_content_model_provenance_correlated_retrieval_readiness"
+      "repair_recovery_correction_independent_acceptance_and_USER_merge",
+      "proposed_v3_amendment_independent_review_and_explicit_USER_approval",
+      "independently_proven_vector_write_continuity_and_exact_read_only_admission",
+      "new_exact_source_image_candidate_procedure_bound_live_authority_for_one_corrective_readiness"
     ]
   },
   "programAmendments": [

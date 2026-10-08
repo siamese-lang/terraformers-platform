@@ -20,10 +20,13 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @Lazy
 public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtractor {
+    private static final Logger log = LoggerFactory.getLogger(VertexArchitectureFactsExtractor.class);
 
     public static final int MAX_FACT_TOKENS = 800;
     public static final int MAX_FACT_LIST_ITEMS = 8;
@@ -54,7 +57,10 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
             GenerateContentResponse response = client.models.generateContent(modelId, content, config);
             FinishReason.Known finish = response.finishReason() == null
                     ? FinishReason.Known.FINISH_REASON_UNSPECIFIED : response.finishReason().knownEnum();
-            return new VertexFactsResponse(response.text(), finish);
+            return new VertexFactsResponse(response.text(), finish,
+                    response.usageMetadata().flatMap(value -> value.candidatesTokenCount()).orElse(null),
+                    response.usageMetadata().flatMap(value -> value.thoughtsTokenCount()).orElse(null),
+                    response.usageMetadata().flatMap(value -> value.totalTokenCount()).orElse(null));
         }, objectMapper, properties);
     }
 
@@ -90,12 +96,19 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
                     config
             );
         } catch (RuntimeException exception) {
+            log.warn("Vertex provider call stage=facts outcome=failure finishReason=UNAVAILABLE "
+                    + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={}",
+                    safeErrorType(exception));
             throw providerFailure(exception);
         }
         if (response == null) {
             throw ArchitectureFactsExtractionException.response(
                     ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE, null);
         }
+        log.info("Vertex provider call stage=facts outcome=received finishReason={} "
+                        + "outputTokens={} thinkingTokens={} totalTokens={} maxOutputTokens={}",
+                response.finishReason(), response.outputTokens(), response.thinkingTokens(),
+                response.totalTokens(), MAX_FACT_TOKENS);
         if (response.finishReason() == FinishReason.Known.MAX_TOKENS) {
             throw ArchitectureFactsExtractionException.response(
                     ArchitectureFactsExtractionException.Reason.RESPONSE_TRUNCATED, null);
@@ -223,6 +236,10 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
         VertexFactsResponse generate(String modelId, Content content, GenerateContentConfig config);
     }
 
-    record VertexFactsResponse(String text, FinishReason.Known finishReason) {
+    record VertexFactsResponse(String text, FinishReason.Known finishReason,
+            Integer outputTokens, Integer thinkingTokens, Integer totalTokens) {
+        VertexFactsResponse(String text, FinishReason.Known finishReason) {
+            this(text, finishReason, null, null, null);
+        }
     }
 }

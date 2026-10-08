@@ -61,6 +61,8 @@ class VertexPromptBuilderTest {
                 "new AWS resource types", "closure evidence and provider schema", "Module blocks are forbidden",
                 "required provider arguments", "nested-block compatibility", "variable/reference placeholders",
                 "not a new image analysis", "PROJECT_DECISION");
+        assertThat(prompt).contains("complete HCL once", "no explanations or comments",
+                "never required arguments", "wiring or authorization", "Do not use ellipses");
         assertThat(builder.repairResponseJsonSchema().get("required")).isEqualTo(List.of("terraformCode"));
     }
 

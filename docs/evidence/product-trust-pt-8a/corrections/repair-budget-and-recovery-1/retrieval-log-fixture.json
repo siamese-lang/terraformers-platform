@@ -1,0 +1,11 @@
+{
+  "recordType": "USER_SUPPLIED_SANITIZED_JOB_CORRELATED_LOGS_NOT_REEXECUTION",
+  "runId": 37744660097,
+  "jobId": "a93a7dcf-c40b-43f4-b55b-357c914a72f3",
+  "sourceSha": "70373842629fdd569815780e52dc5f0353b97880",
+  "expectedHitCounts": [8, 7],
+  "lines": [
+    "2026-10-08T07:40:43.941Z INFO [analysis-job-1] c.t.m.r.RetrievalModeReferenceRetriever trace_id= span_id= analysisJobId=a93a7dcf-c40b-43f4-b55b-357c914a72f3 source_revision=70373842629fdd569815780e52dc5f0353b97880 - reference retrieval outcome=success mode=REQUIRED embeddingProvider=VERTEX index=terraformers-reference-v4 topK=8 hitCount=8 documentIds=[tfaws-5.100.0-aws_vpc_endpoint-example-5-gateway-load-balancer-endpoint-type, tfaws-5.100.0-aws_autoscaling_group-example-10-auto-scaling-group-with-traffic-sources, tfaws-5.100.0-aws_instance-overview, tfaws-5.100.0-aws_subnet-overview, tfaws-5.100.0-aws_nat_gateway-example-1-public-nat, tfaws-5.100.0-aws_internet_gateway-overview, tfaws-5.100.0-aws_lb-example-1-application-load-balancer, tfaws-5.100.0-aws_vpc-overview] elapsedMs=1811",
+    "2026-10-08T07:41:09.769Z INFO [analysis-job-1] c.t.m.r.RetrievalModeReferenceRetriever trace_id= span_id= analysisJobId=a93a7dcf-c40b-43f4-b55b-357c914a72f3 source_revision=70373842629fdd569815780e52dc5f0353b97880 - reference retrieval outcome=success mode=REQUIRED embeddingProvider=VERTEX index=terraformers-reference-v4 topK=8 hitCount=7 documentIds=[tfaws-5.100.0-aws_eip-overview, tfaws-5.100.0-aws_route_table-example-3-first-adopt-an-existing-aws-created-route, tfaws-5.100.0-aws_route_table_association-overview, tfaws-5.100.0-aws_security_group-overview, tfaws-5.100.0-aws_lb_target_group-example-2-ip-target-group, tfaws-5.100.0-aws_lb_listener-example-7-gateway-load-balancer-listener, tfaws-5.100.0-aws_launch_template-overview] elapsedMs=807"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "recordType": "PRESERVED_CONSUMED_READINESS_PRODUCT_FAILURE_WITH_SEPARATE_FORENSIC_ADDENDUM",
+  "runId": 37744660097,
+  "runAttempt": 1,
+  "jobId": 113203191636,
+  "analysisJobId": "a93a7dcf-c40b-43f4-b55b-357c914a72f3",
+  "sourceSha": "70373842629fdd569815780e52dc5f0353b97880",
+  "artifactId": 11534783753,
+  "artifactDigest": "sha256:94ab23e3ace045d54b9b854a9a41be22447cf674b58c72ccf7ac3ba17976e21d",
+  "originalIndependentFailureReviewCommentId": 6055241032,
+  "independentForensicAddendumCommentId": 6056738716,
+  "accepted": true,
+  "consumed": true,
+  "status": "FAILED",
+  "reason": "PROVIDER_OUTPUT_TRUNCATED",
+  "causalStage": "repair_after_generated_resource_evidence_closure",
+  "acceptedToTerminalMs": 86959,
+  "originalArtifactRetrievalEvents": 0,
+  "originalArtifactEmptyRetrievalDisposition": "OBSERVER_UPPERCASE_PROVIDER_PARSER_FAILURE_NOT_ABSENCE_OF_BACKEND_RETRIEVAL",
+  "separateUserSuppliedSanitizedLogHitCounts": [
+    8,
+    7
+  ],
+  "rawTokenUsageAndRepairPayload": "NOT_CAPTURED_IN_PRIOR_EVIDENCE",
+  "officialCases": {
+    "A": "NOT_RUN",
+    "B": "NOT_RUN",
+    "C": "NOT_RUN",
+    "D": "NOT_RUN",
+    "E": "NOT_RUN"
+  },
+  "officialUploads": 0,
+  "failureReclassifiedAsPass": false,
+  "failureReclassifiedAsPreObservation": false,
+  "rerunAuthorized": false
+}

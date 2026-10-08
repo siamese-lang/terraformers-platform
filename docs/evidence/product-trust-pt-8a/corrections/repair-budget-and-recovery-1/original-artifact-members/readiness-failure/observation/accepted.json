@@ -1,0 +1,10 @@
+{
+  "caseId": "readiness-only",
+  "status": "ACCEPTED",
+  "consumed": true,
+  "uploadAttempts": 1,
+  "jobId": "a93a7dcf-c40b-43f4-b55b-357c914a72f3",
+  "projectId": 7,
+  "sourceFileId": 10,
+  "acceptedAt": "2026-10-08T07:40:26.993958286Z"
+}

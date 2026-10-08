@@ -18,6 +18,25 @@ class VertexArchitectureFactsExtractorTest {
     private static final String SECRET_PAYLOAD = "Bearer secret-token prompt-and-image-base64";
 
     @Test
+    void factTelemetryRecordsFinishAndUsageWithoutResponseOrImage() {
+        var logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(VertexArchitectureFactsExtractor.class);
+        var appender = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        appender.start(); logger.addAppender(appender);
+        try {
+            failure(extractor((model, content, config) -> new VertexArchitectureFactsExtractor.VertexFactsResponse(
+                    SECRET_PAYLOAD, FinishReason.Known.MAX_TOKENS, 800, 17, 817)));
+            failure(extractor((model, content, config) -> { throw new IllegalStateException(SECRET_PAYLOAD); }));
+            String messages = appender.list.stream().map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(messages).contains("stage=facts", "finishReason=MAX_TOKENS", "outputTokens=800",
+                    "thinkingTokens=17", "totalTokens=817", "maxOutputTokens=800", "finishReason=UNAVAILABLE")
+                    .doesNotContain(SECRET_PAYLOAD, "safe-image-fixture", VertexArchitectureFactsExtractor.FACTS_PROMPT);
+        } finally {
+            logger.detachAppender(appender); appender.stop();
+        }
+    }
+
+    @Test
     void usesLowThinkingWithinTheExistingFactTokenBound() {
         VertexArchitectureFactsExtractor extractor = extractor((modelId, content, config) -> {
             assertThat(config.maxOutputTokens()).contains(800);

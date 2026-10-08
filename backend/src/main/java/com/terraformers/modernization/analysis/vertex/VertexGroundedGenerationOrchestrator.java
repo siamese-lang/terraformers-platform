@@ -24,11 +24,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The single bounded generation/closure path used by production and broad-v4 evaluation. */
 @Component
 @Lazy
 public class VertexGroundedGenerationOrchestrator {
+    private static final Logger log = LoggerFactory.getLogger(VertexGroundedGenerationOrchestrator.class);
     private static final Pattern REFERENCE_AWS_RESOURCE = Pattern.compile(
             "(?m)^\\s*resource\\s+\"(aws_[a-z0-9_]+)\"\\s+\"[^\"]+\"\\s*\\{");
 
@@ -78,7 +81,18 @@ public class VertexGroundedGenerationOrchestrator {
             outcome = new Outcome(generated, initial, new ClosureRetrieval(query, List.of()), initial,
                     false, generated.terraformCode(), missing);
             evidenceObserver.accept(outcome);
-            List<ReferenceDocument> closure = referenceRetriever.retrieve(query);
+            List<ReferenceDocument> closure;
+            long closureStarted = System.nanoTime();
+            try {
+                closure = referenceRetriever.retrieve(query);
+            } catch (RuntimeException failure) {
+                log.warn("Vertex grounding stage=closure outcome=failure finishReason=NOT_APPLICABLE "
+                        + "outputTokens=NOT_APPLICABLE errorClass={}", failure.getClass().getSimpleName());
+                throw failure;
+            }
+            log.info("Vertex grounding stage=closure outcome=success finishReason=NOT_APPLICABLE "
+                            + "outputTokens=NOT_APPLICABLE hitCount={} elapsedMs={}",
+                    closure.size(), (System.nanoTime() - closureStarted) / 1_000_000);
             outcome = new Outcome(generated, initial, new ClosureRetrieval(query, closure), initial,
                     false, generated.terraformCode(), missing);
             evidenceObserver.accept(outcome);

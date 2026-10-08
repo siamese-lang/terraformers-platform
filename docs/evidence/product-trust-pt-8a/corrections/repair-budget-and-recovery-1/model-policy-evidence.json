@@ -1,0 +1,52 @@
+{
+  "recordType": "OFFICIAL_PUBLIC_STATIC_DOCUMENTATION_AND_REPOSITORY_CONFIGURATION_NOT_MODEL_CALL",
+  "modelId": "gemini-3.8-flash",
+  "sdkVersionUnchanged": "1.72.0",
+  "initialMaxOutputTokensUnchanged": 8192,
+  "factsMaxOutputTokensUnchanged": 800,
+  "initialThinkingOverrideUnchanged": null,
+  "repairMaxOutputTokens": 16384,
+  "repairThinkingLevel": "LOW",
+  "repairProviderAttempts": 1,
+  "initialMaxTokensCompactFallbackPreserved": true,
+  "singleEvidenceClosureRepairPreserved": true,
+  "requestTimeoutSecondsUnchanged": {
+    "facts": 370,
+    "initialGenerationCompactRepair": 220,
+    "embedding": 10
+  },
+  "durableAttemptsUnchanged": 1,
+  "acceptedAgeCutoffMinutesUnchanged": 8,
+  "officialModelMaximumOutputTokens": 65536,
+  "officialModelThinkingLevels": [
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+  ],
+  "officialModelDefaultThinkingLevel": "MEDIUM",
+  "thinkingBudgetUsed": false,
+  "documents": [
+    {
+      "requestedUrl": "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/3-8-flash",
+      "resolvedUrl": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash",
+      "downloadedHtmlSha256": "90c7afe3b74587b4456beeaf2f133a1360a6cbbbe5915449f367351373ad7dbc",
+      "boundedExcerpts": [
+        "Model ID gemini-3.8-flash",
+        "Maximum output tokens 65,536"
+      ]
+    },
+    {
+      "requestedUrl": "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/thinking",
+      "resolvedUrl": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/thinking",
+      "downloadedHtmlSha256": "ce0e3e259acfcd8d759071174b329d6e8d4ce84049cacdfcb3eb4f46f20765be",
+      "boundedExcerpts": [
+        "LOW, MEDIUM (default), HIGH",
+        "For Gemini 3 and later models, thinking_budget is deprecated; use thinking_level."
+      ]
+    }
+  ],
+  "observedFailureFinishReason": "MAX_TOKENS",
+  "observedFailureOutputThinkingCounts": "UNKNOWN_IN_PRIOR_EVIDENCE",
+  "observedLiveFixEffectiveness": "NOT_MEASURED",
+  "limitation": "Repair requires complete HCL after expanded closure context; budget/thinking contribution cannot be separated from prior missing usage. 16,384/LOW is a bounded preventive policy, not a guaranteed live success."
+}

@@ -12,6 +12,32 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
+- Current task: **PT-8A bounded repair-truncation/product recovery correction**, repository-only,
+  activated once at `70373842629fdd569815780e52dc5f0353b97880`. Original preparation base below
+  is preserved; no refresh/rebase/rebind. This directly advances AI/RAG reliability and the
+  deployed Case A evidence chain, not a new evaluation framework.
+- Readiness run **37744660097**, job `a93a7dcf-c40b-43f4-b55b-357c914a72f3`, is FAILED,
+  ACCEPTED and consumed. [Forensic addendum 6056738716](https://github.com/siamese-lang/terraformers-platform/pull/258#issuecomment-6056738716)
+  locates MAX_TOKENS in the single repair after successful facts, generation and retrieval 8/7.
+  Original parser-empty artifact remains unchanged; actual sanitized logs are separate evidence.
+- Repair alone uses bounded 16,384 output tokens / LOW thinking and compact complete HCL.
+  Initial 8,192 / MAX_TOKENS compact fallback, facts 800, single closure/repair, Option D,
+  schema/CLI/quality validation remain intact. Safe telemetry records stage/finish/token counts.
+- [Correction evidence](evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/assessment.md)
+  binds immutable clean run **37710171426 / artifact 11522067032**, source 70373842. No vector
+  checkpoint/watermark or all-writer audit exists in supplied artifacts:
+  **cross-source reuse BLOCKED: VECTOR_WRITE_CONTINUITY_UNPROVEN**. Source/once-only executable
+  guards remain unchanged; no automatic reembedding or historical receipt relabel.
+- [Proposed v3 recovery contract](evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md)
+  preserves frozen v2 bytes, consumed failure and all official A–E NOT_RUN. It is not approved or
+  executable. Gate: **independent correction review / USER merge**, followed by amendment review,
+  explicit USER approval, continuity evidence and exact future live authority. Existing
+  **HUMAN_REQUIRED: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE** remains in force.
+  No live/model/cloud/dispatch action occurred in this correction. Human iteration 4 is separate;
+  auto repair remains 1/1. Existing preparation counters below are historical, not live totals.
+
+### Historical PT-8A preparation checkpoint (preserved)
+
 - Mode: **Approved Product Trust v4 / PT-7 COMPLETE / PT-8A repository preparation only**.
 - Gate: **HUMAN_REQUIRED: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE**.
   Preparation independent review/USER merge and separate live/model/cost approval remain required.

@@ -1,0 +1,9 @@
+{
+  "result": "INVOCATION_ERROR_BEFORE_COMPLETION",
+  "exception": "KeyError: preauthWorkflowSyntaxCorrection",
+  "reason": "One-off check used wrong field capitalization; actual existing field is preAuthWorkflowSyntaxCorrection. Dependency read also found guessed executor path absent; actual existing source paths selected before corrected invocation.",
+  "repositoryCorrection": "NONE",
+  "productBehaviorFailure": "NOT_OBSERVED",
+  "failedInvocationPreserved": true,
+  "autonomousRepairCounterReset": false
+}

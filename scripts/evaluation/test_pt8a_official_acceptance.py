@@ -5,12 +5,15 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
+import yaml
 
 SPEC = importlib.util.spec_from_file_location("pt8a", Path(__file__).with_name("pt8a-official-acceptance.py"))
 pt8a = importlib.util.module_from_spec(SPEC)
@@ -183,7 +186,180 @@ class OnceOnlyAndReviewContracts(unittest.TestCase):
         with self.assertRaises(ValueError): self.history(request, conclusion="skipped")
 
 
+class PreObservationReadinessHistoryContracts(unittest.TestCase):
+    def setUp(self):
+        self.source = "a0d1d5e82dd872c20b92b46130a331a390efef6a"
+        self.run = {"id": 37704835680, "head_sha": self.source, "event": "workflow_dispatch",
+                    "head_branch": "main", "path": ".github/workflows/gcp-target-runtime-dependencies.yml",
+                    "run_attempt": 1, "status": "completed", "conclusion": "failure"}
+        names = ["Validate frozen procedure and explicit live authority before cloud access",
+                 "Verify exact deployed release and existing runtime identity",
+                 "Rebuild expected corpus from pinned authority without embedding",
+                 "Start owned validation pod with the already deployed immutable image",
+                 "Observe read-only exact readiness and at most one accepted product job",
+                 "Remove only the owned ephemeral validation pod"]
+        self.jobs = {"total_count": 1, "jobs": [{"id": 113076606857, "name": "pt8a-official-acceptance",
+                     "status": "completed", "conclusion": "failure", "steps": [
+                         {"name": name, "number": i + 1, "status": "completed", "conclusion": conclusion}
+                         for i, (name, conclusion) in enumerate(zip(names, ["success", "success", "failure", "skipped", "skipped", "skipped"]))]}]}
+        self.artifacts = {"total_count": 0, "artifacts": []}
+        review = {"decision": "CHANGES_REQUIRED", "reviewed_source_sha": self.source,
+                  "run_id": "37704835680", "run_attempt": "1", "job_id": "113076606857",
+                  "failure_class": "PRE_OBSERVATION_READINESS_CORPUS_DIRECTORY_CONTRACT_MISMATCH",
+                  "artifact_count": "0", "official_case_consumed": "false",
+                  "readiness_product_observation_executed": "false", "model_inference_executed": "false",
+                  "official_input_fetches": "0", "official_input_uploads": "0", "rerun_authorized": "false"}
+        self.comment = {"user": {"login": "siamese-lang"}, "body": "[PT8A_READINESS_FAILURE_REVIEW:v1]\n" +
+                        "".join(f"{key}: {value}\n" for key, value in review.items())}
+
+    def history(self, request=None, earlier_consuming_run=False):
+        def response(path):
+            if "/runs?" in path:
+                runs = [self.run]
+                if earlier_consuming_run:
+                    runs.append(self.run | {"id": 100, "conclusion": "success"})
+                return {"workflow_runs": runs}
+            if "actions/runs/100/jobs?" in path:
+                return {"total_count": 1, "jobs": [{"name": "pt8a-official-acceptance", "conclusion": "success"}]}
+            if "actions/runs/100/artifacts?" in path:
+                return {"total_count": 1, "artifacts": [{"name": "pt8a-official-100", "id": 200}]}
+            if "/jobs?" in path: return self.jobs
+            if "/artifacts?" in path: return self.artifacts
+            if path == "issues/comments/6049279548": return self.comment
+            raise AssertionError(path)
+        with patch.object(pt8a, "github", side_effect=response):
+            pt8a.ensure_latest_dispatch(request or {"mode": "readiness"}, self.source, 37704835681)
+
+    def test_reviewed_pre_observation_failure_is_non_consuming_for_readiness_only(self):
+        self.history()
+        with self.assertRaises(ValueError):
+            self.history({"mode": "case", "priorRunId": self.run["id"], "priorArtifactId": 200})
+        with self.assertRaisesRegex(ValueError, "stale prior artifact"):
+            self.history(earlier_consuming_run=True)
+
+    def test_started_or_ambiguous_pod_observation_and_other_failure_are_not_ignored(self):
+        original = copy.deepcopy(self.jobs)
+        for index in (2, 3, 4):
+            for change in ({"conclusion": "success"}, {"conclusion": "failure"},
+                           {"status": "in_progress", "conclusion": None}, {"number": None}, {"number": 10}):
+                if all(original["jobs"][0]["steps"][index].get(key) == value for key, value in change.items()):
+                    continue  # Rebuild failure is the positive baseline, not a negative mutation.
+                with self.subTest(index=index, change=change), self.assertRaises(ValueError):
+                    self.jobs = copy.deepcopy(original)
+                    self.jobs["jobs"][0]["steps"][index].update(change)
+                    self.history()
+        for index in (3, 4):
+            with self.subTest(missing=index), self.assertRaises(ValueError):
+                self.jobs = copy.deepcopy(original)
+                self.jobs["jobs"][0]["steps"].pop(index)
+                self.history()
+        self.jobs = copy.deepcopy(original)
+        self.jobs["jobs"][0]["steps"].append(copy.deepcopy(self.jobs["jobs"][0]["steps"][4]))
+        with self.assertRaises(ValueError): self.history()
+
+    def test_run_lineage_attempt_completion_and_job_identity_fail_closed(self):
+        original = self.run.copy()
+        for change in ({"run_attempt": 2}, {"status": "in_progress"}, {"conclusion": "success"},
+                       {"event": "pull_request"}, {"head_branch": "other"}, {"path": "other.yml"}, {"id": 37704835679}):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.run = original | change
+                self.history()
+        self.run = original | {"head_sha": SOURCE}
+        with patch.object(pt8a, "authority_comment") as review:
+            self.assertFalse(pt8a.reviewed_pre_observation_readiness_failure(self.run, self.jobs["jobs"][0], self.artifacts))
+            review.assert_not_called()
+        self.run = original
+        original_job = copy.deepcopy(self.jobs["jobs"][0])
+        for change in ({"id": 1}, {"status": "in_progress"}, {"conclusion": "cancelled"}):
+            with self.subTest(job=change), self.assertRaises(ValueError):
+                self.jobs["jobs"][0] = original_job | change
+                self.history()
+
+    def test_complete_job_and_artifact_history_is_mandatory(self):
+        original = copy.deepcopy(self.jobs)
+        for jobs in ({}, {"total_count": 101, "jobs": original["jobs"]},
+                     {"total_count": 2, "jobs": original["jobs"]}, {"total_count": 0, "jobs": []},
+                     {"total_count": 2, "jobs": original["jobs"] * 2},
+                     {"total_count": 1, "jobs": [{"name": "unknown"}]}):
+            with self.subTest(jobs=jobs), self.assertRaises(ValueError):
+                self.jobs = jobs
+                self.history()
+        self.jobs = original
+        for artifacts in ({}, {"total_count": 1, "artifacts": []},
+                          {"total_count": 0, "artifacts": [{"name": "unexpected"}]},
+                          {"total_count": 101, "artifacts": []},
+                          {"total_count": 1, "artifacts": [{"name": "unrelated"}]}):
+            with self.subTest(artifacts=artifacts), self.assertRaises(ValueError):
+                self.artifacts = artifacts
+                self.history()
+
+    def test_independent_non_consumption_review_must_still_match(self):
+        original = copy.deepcopy(self.comment)
+        for old, new in ((self.source, SOURCE), ("artifact_count: 0", "artifact_count: 1"),
+                         ("model_inference_executed: false", "model_inference_executed: true"),
+                         ("readiness_product_observation_executed: false", "readiness_product_observation_executed: true"),
+                         ("[PT8A_READINESS_FAILURE_REVIEW:v1]", "[OTHER]")):
+            with self.subTest(field=old), self.assertRaises(ValueError):
+                self.comment = copy.deepcopy(original)
+                self.comment["body"] = self.comment["body"].replace(old, new)
+                self.history()
+        self.comment = original | {"user": {"login": "other"}}
+        with self.assertRaises(ValueError): self.history()
+
+
 class ArtifactAndObservationContracts(unittest.TestCase):
+    def test_actual_readiness_shell_blocks_share_canonical_corpus_path(self):
+        workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
+        steps = workflow["jobs"]["pt8a-official-acceptance"]["steps"]
+        rebuild = next(s["run"] for s in steps if s.get("name") == "Rebuild expected corpus from pinned authority without embedding")
+        observe = next(s["run"] for s in steps if s.get("name") == "Observe read-only exact readiness and at most one accepted product job")
+        real_bash = shutil.which("bash")
+        # Execute the extracted workflow, replacing external commands only. No network,
+        # cloud, JWKS or observer operation occurs; argument/path propagation is real Bash.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); runner = root / "runner temp"; runner.mkdir()
+            bins = root / "bin"; bins.mkdir(); calls = root / "calls.jsonl"; github_env = root / "github.env"
+            stub = "#!" + sys.executable + "\n" + '''import json, os, sys
+from pathlib import Path
+name = Path(sys.argv[0]).name
+args = sys.argv[1:]
+with open(os.environ["PT8A_TEST_CALLS"], "a") as stream:
+    stream.write(json.dumps([name, args]) + "\\n")
+def option(flag): return Path(args[args.index(flag) + 1])
+if name == "git" and "rev-parse" in args:
+    print("f7a3b98da589ab1d52756b0dcee0dbf2de83d635")
+elif name == "python3":
+    if args[0] == "scripts/rag/build-corpus-v4.py":
+        output = option("--output-dir"); output.mkdir(parents=True)
+        (output / "coverage-report.json").write_text("{}")
+    elif args[0] == "scripts/checks/rag-corpus-contract-verification.py":
+        assert option("--corpus-dir").is_dir()
+        option("--summary-json").write_text("{}")
+    elif args[0] == "scripts/evaluation/pt8a-official-acceptance.py":
+        assert option("--corpus").is_dir()
+    else: raise AssertionError(args)
+elif name == "jq":
+    json.loads(Path(args[-1]).read_text())
+'''
+            for command in ("git", "kubectl", "python3", "jq", "curl", "bash"):
+                path = bins / command; path.write_text(stub); path.chmod(0o755)
+            env = os.environ | {"PATH": str(bins) + os.pathsep + os.environ["PATH"], "RUNNER_TEMP": str(runner),
+                                "GITHUB_ENV": str(github_env), "NAMESPACE": "unused", "PT8A_TEST_CALLS": str(calls)}
+            for block in (rebuild, observe):
+                subprocess.run([real_bash, "-n"], input=block, text=True, check=True, capture_output=True)
+            subprocess.run([real_bash, "-c", rebuild], env=env, check=True, capture_output=True, text=True)
+            env.update(line.split("=", 1) for line in github_env.read_text().splitlines())
+            subprocess.run([real_bash, "-c", observe], env=env, check=True, capture_output=True, text=True)
+            recorded = [json.loads(line) for line in calls.read_text().splitlines()]
+            paths = []
+            for command, args in recorded:
+                for flag in ("--output-dir", "--corpus-dir", "--corpus"):
+                    if command == "python3" and flag in args: paths.append(Path(args[args.index(flag) + 1]))
+            coverage = [Path(args[-1]).parent for command, args in recorded
+                        if command == "jq" and Path(args[-1]).name == "coverage-report.json"]
+            self.assertEqual([runner / "v4"] * 3, paths)
+            self.assertEqual([runner / "v4"], coverage)
+            self.assertEqual(str(runner / "v4"), env["PT8A_EXPECTED_CORPUS_DIR"])
     def test_artifact_bound_to_exact_run_source_workflow_and_archive_digest(self):
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w") as z: z.writestr("receipt.json", '{"outcome":"ingested"}')

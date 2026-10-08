@@ -121,7 +121,7 @@ work_package:
   auto_repair_limit: 1
   auto_repairs_used: 1
   bounded_repair: validation_module_selection_only_failed_log_preserved_no_production_change
-  human_corrective_iterations: 2
+  human_corrective_iterations: 3
   preauth_workflow_syntax_correction:
     authority: APPROVE_PT8A_CLEAN_V4_PREAUTH_WORKFLOW_SYNTAX_CORRECTION_ONLY
     authority_evidence: docs/evidence/product-trust-pt-8a/corrections/preauth-workflow-syntax-1/approved-correction.md
@@ -137,6 +137,32 @@ work_package:
     new_live_execution_authorized: false
     clean_v4_complete: false
     clean_v4_lineage: MODEL_PROVENANCE_UNPROVEN
+  readiness_corpus_path_correction:
+    authority: APPROVE_PT8A_READINESS_PREOBSERVATION_CORPUS_PATH_CORRECTION_ONLY
+    authority_evidence: docs/evidence/product-trust-pt-8a/corrections/readiness-corpus-path-1/approved-correction.md
+    correction_execution_base_sha: a0d1d5e82dd872c20b92b46130a331a390efef6a
+    main_reads_at_correction_activation: 1
+    historical_preparation_base_preserved: true
+    independent_failure_review: 6049279548
+    failed_run: 37704835680
+    failed_job: 113076606857
+    failed_run_attempt: 1
+    failed_run_immutable: true
+    failure_class: PRE_OBSERVATION_READINESS_CORPUS_DIRECTORY_CONTRACT_MISMATCH
+    failure_disposition: docs/evidence/product-trust-pt-8a/corrections/readiness-corpus-path-1/failure-disposition.json
+    historical_clean_v4_evidence: docs/evidence/product-trust-pt-8a/corrections/readiness-corpus-path-1/historical-clean-v4.json
+    historical_clean_v4_run: 37669558088
+    historical_clean_v4_artifact: 11504143498
+    historical_clean_v4_source: a0d1d5e82dd872c20b92b46130a331a390efef6a
+    historical_clean_v4_complete: true
+    new_source_equivalence_established: false
+    validation_evidence: docs/evidence/product-trust-pt-8a/corrections/readiness-corpus-path-1/validation.json
+    autonomous_repair_consumed: false
+    autonomous_repair_counter_reset: false
+    new_live_execution_authorized: false
+    readiness_pass_established: false
+    official_cases: NOT_RUN
+    independent_acceptance_and_USER_merge_required: true
   stop_on:
     - FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
     - MAIN_DRIFT

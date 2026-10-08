@@ -12,6 +12,35 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
+- Current task: **PT-8A risk-qualified retained-v4 recovery implementation**, repository-only,
+  bound once to `9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447`. [USER decision 6057566013](https://github.com/siamese-lang/terraformers-platform/pull/259#issuecomment-6057566013)
+  explicitly accepts the design residual **VECTOR_WRITE_CONTINUITY_UNPROVEN**, not live action
+  or cryptographically proven continuity. This advances AI/RAG evidence validity and the existing
+  Case A retained-runtime chain without source-driven 5,395-document reembedding.
+- [PR #259 review 6057416148](https://github.com/siamese-lang/terraformers-platform/pull/259#issuecomment-6057416148)
+  accepted head `abeb8616bb1241f166dd0b913ce7e48233e46672` for repository merge; USER merged as
+  the bound base. Repair/observer/telemetry implementation is preserved; live effectiveness is unmeasured.
+- [Implemented v3 contract](evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md)
+  and existing runtime workflow add only **pt8a-corrective-readiness**. Independent acceptance/USER
+  merge and a new exact source/image/v3+v2/candidate/origin/risk/once-only live approval are required.
+  Decision 6057566013 cannot authorize live execution. Existing strict v2 readiness/case remains unchanged.
+- Admission checks authenticated clean/failure artifacts and original approvals, full checksum/mapping/
+  IDs/non-vector bodies/UUID, every finite 1536-dimensional vector and actual runtime identity, with
+  no admission embedding or index write. Complete known GitHub history spans all sources; prior
+  corrective/post-origin observations, missing history or later ingestion stop automatic admission.
+  Result class is **RISK_QUALIFIED_RETAINED_V4**, never EXACT_VECTOR_CONTINUITY.
+- Original clean run/artifact **37710171426/11522067032**, origin source 70373842 and approval
+  6049866256 remain unchanged. Failure **37744660097/11534783753** remains FAILED/ACCEPTED/consumed.
+  No full writer audit exists; unobserved vector-only writes cannot be excluded even after snapshots.
+- No qualified live admission has occurred. A–E remain NOT_RUN, and strict v2 rejects a v3 corrective
+  artifact for Case A; future case-entry compatibility needs separate review/USER authority. PT-8B/
+  teardown remain unauthorized. Human implementation iteration 5 is separate; auto repair stays 1/1.
+  [Implementation evidence](evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/implementation.md)
+  records validation. Stop at independent review/USER merge, then
+  **HUMAN_REQUIRED: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE**. No live actions in this task.
+
+### Historical repair correction checkpoint (accepted for repository merge)
+
 - Current task: **PT-8A bounded repair-truncation/product recovery correction**, repository-only,
   activated once at `70373842629fdd569815780e52dc5f0353b97880`. Original preparation base below
   is preserved; no refresh/rebase/rebind. This directly advances AI/RAG reliability and the

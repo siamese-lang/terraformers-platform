@@ -1,0 +1,92 @@
+{
+  "disposition": "IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE_PENDING",
+  "executionBaseSha": "9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447",
+  "decisionCommentId": 6057566013,
+  "authorityScope": "REPOSITORY_ONLY_NOT_LIVE",
+  "commands": [
+    {
+      "command": "python3 -m py_compile scripts/evaluation/pt8a-official-acceptance.py scripts/evaluation/test_pt8a_official_acceptance.py scripts/rag/ingest-gcp-target-corpus.py tests/rag/test_ingest_gcp_target_corpus.py",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "python3 -m unittest -v scripts/evaluation/test_pt8a_official_acceptance.py tests/rag/test_ingest_gcp_target_corpus.py tests/rag/test_build_corpus_v2.py",
+      "result": "PASS",
+      "tests": 75,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 33.432,
+      "exitCode": 0,
+      "log": "python-validation.txt",
+      "logSha256": "75fa9d5d1aff90ab405d7fd7a820b3e22c8247960744943b124152bac186f3c8",
+      "executionCycles": 1
+    },
+    {
+      "command": "python3 -m unittest -v tests/ci/test_ci_changed_scope.py",
+      "result": "PASS",
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 0.373,
+      "exitCode": 0,
+      "log": "policy-tests.txt",
+      "logSha256": "ad1a1a6169cd4273f8b595c99c36e4f8054053a41c743f5ad3b6e001d42224f7",
+      "executionCycles": 1
+    },
+    {
+      "command": "python3 scripts/checks/ci_changed_scope.py --verify-workflow-policy",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "python3 scripts/checks/case_c_architecture_ledger.py --check",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "repository-only YAML/JSON, Program/state/WP, AST and frozen blob readback; seven relevant workflow Bash blocks with bash -n",
+      "result": "PASS",
+      "report": "metadata-validation.json"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS",
+      "exitCode": 0
+    }
+  ],
+  "frozenV2Sha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+  "newV3Sha256": "fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18",
+  "supersededV3ProposalSha256": "b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d",
+  "defaultStrictV2Unchanged": true,
+  "productionBackendFilesChanged": false,
+  "frozenCorpusCandidateTruthAndHistoricalEvidenceChanged": false,
+  "admissionClassification": "RISK_QUALIFIED_RETAINED_V4_CONDITIONAL_FUTURE_ONLY",
+  "vectorWriteContinuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+  "acceptedDesignResidualRisk": "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED",
+  "cryptographicVectorContinuityProven": false,
+  "currentLiveQualifiedAdmissionObserved": false,
+  "liveActions": 0,
+  "modelEmbeddingRequests": 0,
+  "openSearchQueries": 0,
+  "indexWrites": 0,
+  "correctiveDispatches": 0,
+  "readinessUploads": 0,
+  "officialInputFetches": 0,
+  "officialInputUploads": 0,
+  "localBackendDatabaseBrowserExecutions": 0,
+  "deterministicTestsUseLocalFakes": true,
+  "testFakeCleanEmbeddingCallsAreNotLiveCalls": true,
+  "officialCases": "A_TO_E_NOT_RUN",
+  "v3OfficialCaseExecutionEnabled": false,
+  "caseACompatibilityBoundary": "STRICT_V2_REJECTS_V3_ARTIFACT_FUTURE_SEPARATELY_REVIEWED_USER_AUTHORIZED_CONTRACT_REQUIRED",
+  "autoRepairsUsed": 1,
+  "autoRepairLimit": 1,
+  "humanAuthorizedImplementationIteration": 5,
+  "localRegressionFailures": 0,
+  "preservedMetadataFormattingInvocationErrors": 3,
+  "metadataFormattingInvocationFailure": "metadata-invocation-failure.json",
+  "manualWorkflowReruns": 0,
+  "normalPrCi": "PENDING_GITHUB_OWNS_TRANSIENT_EXACT_HEAD_RESULT",
+  "normalPrCiIsIndependentAcceptance": false,
+  "nextGate": "INDEPENDENT_ACCEPTANCE_AND_USER_MERGE_THEN_SEPARATE_FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE"
+}

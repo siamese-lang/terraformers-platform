@@ -316,7 +316,8 @@ def index_uuid(client: JsonHttpClient, index: str) -> str | None:
 
 def verify_exact_v4(client: JsonHttpClient, manifest: dict[str, object], schema: dict[str, object],
                     documents: list[dict[str, object]], checksum: str,
-                    provenance: dict[str, object] | None = None) -> dict[str, object]:
+                    provenance: dict[str, object] | None = None, *,
+                    inspect_vectors: bool = False) -> dict[str, object]:
     """Read-only snapshot: full ID universe/source equality plus independently bound model lineage.
 
     `provenance` must come from the authenticated GitHub artifact binding at the caller. This
@@ -330,6 +331,9 @@ def verify_exact_v4(client: JsonHttpClient, manifest: dict[str, object], schema:
     summary: dict[str, object] = {"indexName": index, "expectedCount": len(documents),
         "expectedContentIdentity": expected_hash, "expectedChecksum": checksum,
         "snapshotOnly": True, "embeddingRequests": 0}
+    if inspect_vectors:
+        summary.update(vectorDocumentsChecked=0, vectorDimension=1536,
+                       vectorContinuity="UNPROVEN", vectorValuesPersisted=False)
 
     def result(classification: str, reason: str, **details: object) -> dict[str, object]:
         return {**summary, **details, "classification": classification, "reason": reason}
@@ -375,7 +379,7 @@ def verify_exact_v4(client: JsonHttpClient, manifest: dict[str, object], schema:
     try:
         _, page = client.request("POST", f"/{index}/_search?scroll=1m", {
             "size": 500, "sort": ["_doc"], "track_total_hits": True,
-            "query": {"match_all": {}}, "_source": {"excludes": [vector]}})
+            "query": {"match_all": {}}, "_source": True if inspect_vectors else {"excludes": [vector]}})
         scroll_id = page.get("_scroll_id")
         if page.get("hits", {}).get("total") != {"value": count.get("count"), "relation": "eq"}:
             return result("PARTIAL_INDEX", "snapshot_total_not_exact")
@@ -390,8 +394,17 @@ def verify_exact_v4(client: JsonHttpClient, manifest: dict[str, object], schema:
                 source = hit.get("_source")
                 doc_id = hit.get("_id")
                 if (not isinstance(doc_id, str) or not doc_id or not isinstance(source, dict) or source.get("documentId") != doc_id
-                        or doc_id in live or vector in source):
+                        or doc_id in live or (not inspect_vectors and vector in source)):
                     return result("STALE_OR_MIXED_MODEL_SPACE", "duplicate_id_or_source_identity_mismatch")
+                if inspect_vectors:
+                    try:
+                        validate_embedding({"embedding": {"values": source.get(vector)}}, 1536)
+                    except (RuntimeError, OverflowError):
+                        return result("WRONG_MODEL_OR_DIMENSION", "invalid_retained_vector_shape",
+                                      invalidVectorId=doc_id)
+                    summary["vectorDocumentsChecked"] += 1
+                    # Inspect in memory only; strip before retaining the non-vector snapshot.
+                    source = {key: value for key, value in source.items() if key != vector}
                 live[doc_id] = source
             # Bound malformed/non-terminating snapshots; no unbounded corpus-body collection.
             if len(live) > max(5395, int(count.get("count", 0))) or not scroll_id:

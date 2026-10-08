@@ -1,0 +1,37 @@
+{
+  "purpose": "PRESERVED_TEMPORARY_METADATA_CHECK_INVOCATION_ERRORS_NOT_PRODUCT_FAILURES",
+  "failures": [
+    {
+      "stage": "evidence-record-formatting",
+      "result": "FAILED_INVOCATION_BEFORE_ANY_WRITE",
+      "reason": "KeyError: 'phases'",
+      "cause": "one-off evidence formatter used phases instead of existing phaseExecution key",
+      "resolution": "read actual state schema; correct temporary formatter only",
+      "productionOrTestCodeChanged": false,
+      "behavioralValidationRepeated": false,
+      "productAcceptanceMeasurement": false,
+      "repairCountersChanged": false
+    },
+    {
+      "stage": "final-metadata-workflow-step-comparison",
+      "result": "FAILED_CHECKER_ASSERTION_BEFORE_ANY_WRITE",
+      "reason": "temporary checker sliced steps from index 1, which still includes the authorized changed preflight step",
+      "resolution": "compare by the actual preflight step name; all other steps must remain equal",
+      "repositoryImplementationOrTestsChanged": false,
+      "behavioralValidationRepeated": false,
+      "productAcceptanceMeasurement": false,
+      "repairCountersChanged": false
+    },
+    {
+      "stage": "expanded-historical-file-readback",
+      "result": "CHECKER_RAW_BYTES_ASSERTION_EXISTING_CHECKOUT_EOL_CONVERSION",
+      "path": "docs/evidence/product-trust-pt-8a/approved-request.md",
+      "reason": "existing CRLF checkout versus LF Git blob; git hash-object equals authoritative base blob and git diff is empty",
+      "resolution": "record checkout conversion separately; require exact authoritative Git blob and normalized content; original receipt/procedure/candidate checks remain raw-byte checks",
+      "historicalRepositoryFileChanged": false,
+      "behavioralValidationRepeated": false,
+      "productAcceptanceMeasurement": false,
+      "repairCountersChanged": false
+    }
+  ]
+}

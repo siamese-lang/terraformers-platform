@@ -1,0 +1,140 @@
+test_actual_readiness_shell_blocks_share_canonical_corpus_path (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_actual_readiness_shell_blocks_share_canonical_corpus_path) ... ok
+test_artifact_bound_to_exact_run_source_workflow_and_archive_digest (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_artifact_bound_to_exact_run_source_workflow_and_archive_digest) ... ok
+test_artifact_redaction_inventory_and_workflow_gate_contract (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_artifact_redaction_inventory_and_workflow_gate_contract) ... ok
+test_censored_observation_not_replaced_with_later_terminal_or_retry (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_censored_observation_not_replaced_with_later_terminal_or_retry) ... ok
+test_correlated_retrieval_provenance_and_stage_limits_no_raw_logs (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_correlated_retrieval_provenance_and_stage_limits_no_raw_logs) ... ok
+test_failed_job_observation_uses_one_upload_preserves_failure_and_no_later_cases (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_failed_job_observation_uses_one_upload_preserves_failure_and_no_later_cases) ... ok
+test_observed_uppercase_vertex_initial_and_closure_logs_keep_exact_identity_checks (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_observed_uppercase_vertex_initial_and_closure_logs_keep_exact_identity_checks) ... ok
+test_original_selected_inventory_hashes_must_match_even_a_valid_archive_digest (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_original_selected_inventory_hashes_must_match_even_a_valid_archive_digest) ... ok
+test_real_cli_commands_no_stub_no_plan_apply_and_secret_hcl_rejected (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_real_cli_commands_no_stub_no_plan_apply_and_secret_hcl_rejected) ... ok
+test_safe_provider_and_closure_metadata_retained_without_payload_or_invented_usage (scripts.evaluation.test_pt8a_official_acceptance.ArtifactAndObservationContracts.test_safe_provider_and_closure_metadata_retained_without_payload_or_invented_usage) ... ok
+test_exact_hash_size_media_dimensions_fail_closed (scripts.evaluation.test_pt8a_official_acceptance.InputAndRequestContracts.test_exact_hash_size_media_dimensions_fail_closed) ... ok
+test_frozen_parser_has_only_acquisition_fields_no_truth (scripts.evaluation.test_pt8a_official_acceptance.InputAndRequestContracts.test_frozen_parser_has_only_acquisition_fields_no_truth) ... ok
+test_host_redirect_and_http_identity_fail_before_upload (scripts.evaluation.test_pt8a_official_acceptance.InputAndRequestContracts.test_host_redirect_and_http_identity_fail_before_upload) ... ok
+test_readiness_requires_clean_receipt_at_same_source_and_live_approval (scripts.evaluation.test_pt8a_official_acceptance.InputAndRequestContracts.test_readiness_requires_clean_receipt_at_same_source_and_live_approval) ... ok
+test_real_transport_upload_contains_only_file_and_neutral_name_no_retry (scripts.evaluation.test_pt8a_official_acceptance.InputAndRequestContracts.test_real_transport_upload_contains_only_file_and_neutral_name_no_retry) ... ok
+test_rerun_truth_payload_unbound_gate_and_main_drift_rejected (scripts.evaluation.test_pt8a_official_acceptance.InputAndRequestContracts.test_rerun_truth_payload_unbound_gate_and_main_drift_rejected) ... ok
+test_structured_authority_parser_keeps_sha256_and_dimension_keys (scripts.evaluation.test_pt8a_official_acceptance.InputAndRequestContracts.test_structured_authority_parser_keeps_sha256_and_dimension_keys) ... ok
+test_accepted_consumes_case_and_second_submission_cannot_start (scripts.evaluation.test_pt8a_official_acceptance.OnceOnlyAndReviewContracts.test_accepted_consumes_case_and_second_submission_cannot_start) ... ok
+test_definite_preacceptance_rejection_not_consumed_and_ambiguous_acceptance_never_resubmitted (scripts.evaluation.test_pt8a_official_acceptance.OnceOnlyAndReviewContracts.test_definite_preacceptance_rejection_not_consumed_and_ambiguous_acceptance_never_resubmitted) ... ok
+test_latest_history_prevents_old_readiness_reset_and_missing_evidence_resubmission (scripts.evaluation.test_pt8a_official_acceptance.OnceOnlyAndReviewContracts.test_latest_history_prevents_old_readiness_reset_and_missing_evidence_resubmission) ... ok
+test_malformed_accepted_identity_and_timestamp_are_indeterminate (scripts.evaluation.test_pt8a_official_acceptance.OnceOnlyAndReviewContracts.test_malformed_accepted_identity_and_timestamp_are_indeterminate) ... ok
+test_material_failure_or_unreviewed_prior_leaves_later_not_run (scripts.evaluation.test_pt8a_official_acceptance.OnceOnlyAndReviewContracts.test_material_failure_or_unreviewed_prior_leaves_later_not_run) ... ok
+test_review_must_bind_source_case_artifact_and_all_ten_dimensions (scripts.evaluation.test_pt8a_official_acceptance.OnceOnlyAndReviewContracts.test_review_must_bind_source_case_artifact_and_all_ten_dimensions) ... ok
+test_corrective_cli_preflight_rejects_case_or_wrong_operation_before_any_cloud_or_upload (scripts.evaluation.test_pt8a_official_acceptance.RiskQualifiedCorrectiveContracts.test_corrective_cli_preflight_rejects_case_or_wrong_operation_before_any_cloud_or_upload) ... ok
+test_corrective_cli_runs_only_one_existing_observation_and_keeps_official_ledger_not_run (scripts.evaluation.test_pt8a_official_acceptance.RiskQualifiedCorrectiveContracts.test_corrective_cli_runs_only_one_existing_observation_and_keeps_official_ledger_not_run) ... ok
+test_history_does_not_reset_with_source_and_incomplete_or_known_writer_history_stops (scripts.evaluation.test_pt8a_official_acceptance.RiskQualifiedCorrectiveContracts.test_history_does_not_reset_with_source_and_incomplete_or_known_writer_history_stops) ... ok
+test_original_receipt_and_consumed_failure_bindings_preserved_relabel_or_tamper_rejected (scripts.evaluation.test_pt8a_official_acceptance.RiskQualifiedCorrectiveContracts.test_original_receipt_and_consumed_failure_bindings_preserved_relabel_or_tamper_rejected) ... ok
+test_qualified_read_only_admission_is_not_exact_vector_continuity (scripts.evaluation.test_pt8a_official_acceptance.RiskQualifiedCorrectiveContracts.test_qualified_read_only_admission_is_not_exact_vector_continuity) ... ok
+test_runtime_release_source_digest_model_index_readback_must_match (scripts.evaluation.test_pt8a_official_acceptance.RiskQualifiedCorrectiveContracts.test_runtime_release_source_digest_model_index_readback_must_match) ... ok
+test_separate_exact_live_authority_and_explicit_risk_required_no_official_case_payload (scripts.evaluation.test_pt8a_official_acceptance.RiskQualifiedCorrectiveContracts.test_separate_exact_live_authority_and_explicit_risk_required_no_official_case_payload) ... ok
+test_exact_universe_all_source_fields_and_model_receipt_pass_without_embeddings (tests.rag.test_ingest_gcp_target_corpus.ExactV4ReadinessTests.test_exact_universe_all_source_fields_and_model_receipt_pass_without_embeddings) ... ok
+test_missing_index_and_duplicate_identity_fail (tests.rag.test_ingest_gcp_target_corpus.ExactV4ReadinessTests.test_missing_index_and_duplicate_identity_fail) ... ok
+test_missing_or_historical_partial_model_provenance_never_reusable (tests.rag.test_ingest_gcp_target_corpus.ExactV4ReadinessTests.test_missing_or_historical_partial_model_provenance_never_reusable) ... ok
+test_missing_wrong_dimension_boolean_nonfinite_or_string_vector_fails_at_any_document (tests.rag.test_ingest_gcp_target_corpus.ExactV4ReadinessTests.test_missing_wrong_dimension_boolean_nonfinite_or_string_vector_fails_at_any_document) ... ok
+test_one_missing_one_unexpected_even_at_equal_total_fails (tests.rag.test_ingest_gcp_target_corpus.ExactV4ReadinessTests.test_one_missing_one_unexpected_even_at_equal_total_fails) ... ok
+test_optional_all_vector_shape_inspection_is_read_only_and_never_persists_vectors (tests.rag.test_ingest_gcp_target_corpus.ExactV4ReadinessTests.test_optional_all_vector_shape_inspection_is_read_only_and_never_persists_vectors) ... ok
+test_same_ids_and_count_but_changed_content_or_metadata_fail (tests.rag.test_ingest_gcp_target_corpus.ExactV4ReadinessTests.test_same_ids_and_count_but_changed_content_or_metadata_fail) ... ok
+test_wrong_dimension_method_and_checksum_fail (tests.rag.test_ingest_gcp_target_corpus.ExactV4ReadinessTests.test_wrong_dimension_method_and_checksum_fail) ... ok
+RAG corpus contract passed: corpusVersion=terraformers-reference-v3 documents=128 chunks=128 sources=94 sha256=df8c198f0648827d754e1ef92ff4c07b1397e7dd36a06487eebfee1443ce892f
+test_embedding2_global_endpoint_uses_aiplatform_global_host (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_embedding2_global_endpoint_uses_aiplatform_global_host) ... ok
+test_embedding2_us_multiregion_endpoint_uses_rep_host (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_embedding2_us_multiregion_endpoint_uses_rep_host) ... ok
+test_existing_vector_method_contract_mismatch_fails (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_existing_vector_method_contract_mismatch_fails) ... ok
+test_final_count_above_or_below_manifest_count_fails (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_final_count_above_or_below_manifest_count_fails) ... ok
+test_incompatible_existing_mapping_fails (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_incompatible_existing_mapping_fails) ... ok
+test_malformed_nonfinite_and_wrong_dimension_embeddings_fail (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_malformed_nonfinite_and_wrong_dimension_embeddings_fail) ... ok
+test_new_index_uses_committed_schema_and_preserves_id_and_metadata (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_new_index_uses_committed_schema_and_preserves_id_and_metadata) ... {"checked": 1, "indexed_this_run": 1, "total": 1}
+ok
+test_representative_knn_hit_is_required (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_representative_knn_hit_is_required) ... {"checked": 1, "indexed_this_run": 1, "total": 1}
+ok
+test_rerun_does_not_duplicate_documents (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_rerun_does_not_duplicate_documents) ... {"checked": 1, "indexed_this_run": 0, "total": 1}
+ok
+test_same_version_checksum_mismatch_fails (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_same_version_checksum_mismatch_fails) ... ok
+test_sanitized_google_error_keeps_quota_signal (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_sanitized_google_error_keeps_quota_signal) ... ok
+test_unknown_corpus_version_fails_closed (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_unknown_corpus_version_fails_closed) ... ok
+test_v3_contract_is_loaded_from_manifest (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_v3_contract_is_loaded_from_manifest) ... ok
+test_v3_vertex_request_preserves_document_semantics_and_1024_dimensions (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_v3_vertex_request_preserves_document_semantics_and_1024_dimensions) ... ok
+test_v4_ingest_uses_v4_index_and_manifest_document_count (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_v4_ingest_uses_v4_index_and_manifest_document_count) ... {"checked": 1, "indexed_this_run": 1, "total": 1}
+ok
+test_v4_manifest_contract_is_supported_with_exact_broad_count (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_v4_manifest_contract_is_supported_with_exact_broad_count) ... ok
+test_v4_vertex_request_uses_embedding2_inline_document_semantics_and_1536_dimensions (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_v4_vertex_request_uses_embedding2_inline_document_semantics_and_1536_dimensions) ... ok
+test_vertex_does_not_retry_nontransient_http_error (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_vertex_does_not_retry_nontransient_http_error) ... ok
+test_vertex_retries_transient_429_with_bounded_backoff (tests.rag.test_ingest_gcp_target_corpus.GcpTargetCorpusIngestionTests.test_vertex_retries_transient_429_with_bounded_backoff) ... ok
+test_clean_overwrites_every_existing_id_once_and_receipt_is_exact_reusable (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_clean_overwrites_every_existing_id_once_and_receipt_is_exact_reusable) ... ok
+test_existing_workflow_rejects_old_token_and_v3_clean_before_cloud_auth (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_existing_workflow_rejects_old_token_and_v3_clean_before_cloud_auth) ... ok
+test_missing_wrong_or_unbound_live_authority_stops_before_any_index_read_or_embedding (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_missing_wrong_or_unbound_live_authority_stops_before_any_index_read_or_embedding) ... ok
+test_non_vector_change_after_overwrite_never_emits_completed_receipt (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_non_vector_change_after_overwrite_never_emits_completed_receipt) ... ok
+test_non_vector_or_id_universe_mismatch_never_overwrites (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_non_vector_or_id_universe_mismatch_never_overwrites) ... ok
+test_ordinary_v4_rerun_keeps_existing_id_skips (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_ordinary_v4_rerun_keeps_existing_id_skips) ... {"checked": 100, "indexed_this_run": 0, "total": 5395}
+{"checked": 200, "indexed_this_run": 0, "total": 5395}
+{"checked": 300, "indexed_this_run": 0, "total": 5395}
+{"checked": 400, "indexed_this_run": 0, "total": 5395}
+{"checked": 500, "indexed_this_run": 0, "total": 5395}
+{"checked": 600, "indexed_this_run": 0, "total": 5395}
+{"checked": 700, "indexed_this_run": 0, "total": 5395}
+{"checked": 800, "indexed_this_run": 0, "total": 5395}
+{"checked": 900, "indexed_this_run": 0, "total": 5395}
+{"checked": 1000, "indexed_this_run": 0, "total": 5395}
+{"checked": 1100, "indexed_this_run": 0, "total": 5395}
+{"checked": 1200, "indexed_this_run": 0, "total": 5395}
+{"checked": 1300, "indexed_this_run": 0, "total": 5395}
+{"checked": 1400, "indexed_this_run": 0, "total": 5395}
+{"checked": 1500, "indexed_this_run": 0, "total": 5395}
+{"checked": 1600, "indexed_this_run": 0, "total": 5395}
+{"checked": 1700, "indexed_this_run": 0, "total": 5395}
+{"checked": 1800, "indexed_this_run": 0, "total": 5395}
+{"checked": 1900, "indexed_this_run": 0, "total": 5395}
+{"checked": 2000, "indexed_this_run": 0, "total": 5395}
+{"checked": 2100, "indexed_this_run": 0, "total": 5395}
+{"checked": 2200, "indexed_this_run": 0, "total": 5395}
+{"checked": 2300, "indexed_this_run": 0, "total": 5395}
+{"checked": 2400, "indexed_this_run": 0, "total": 5395}
+{"checked": 2500, "indexed_this_run": 0, "total": 5395}
+{"checked": 2600, "indexed_this_run": 0, "total": 5395}
+{"checked": 2700, "indexed_this_run": 0, "total": 5395}
+{"checked": 2800, "indexed_this_run": 0, "total": 5395}
+{"checked": 2900, "indexed_this_run": 0, "total": 5395}
+{"checked": 3000, "indexed_this_run": 0, "total": 5395}
+{"checked": 3100, "indexed_this_run": 0, "total": 5395}
+{"checked": 3200, "indexed_this_run": 0, "total": 5395}
+{"checked": 3300, "indexed_this_run": 0, "total": 5395}
+{"checked": 3400, "indexed_this_run": 0, "total": 5395}
+{"checked": 3500, "indexed_this_run": 0, "total": 5395}
+{"checked": 3600, "indexed_this_run": 0, "total": 5395}
+{"checked": 3700, "indexed_this_run": 0, "total": 5395}
+{"checked": 3800, "indexed_this_run": 0, "total": 5395}
+{"checked": 3900, "indexed_this_run": 0, "total": 5395}
+{"checked": 4000, "indexed_this_run": 0, "total": 5395}
+{"checked": 4100, "indexed_this_run": 0, "total": 5395}
+{"checked": 4200, "indexed_this_run": 0, "total": 5395}
+{"checked": 4300, "indexed_this_run": 0, "total": 5395}
+{"checked": 4400, "indexed_this_run": 0, "total": 5395}
+{"checked": 4500, "indexed_this_run": 0, "total": 5395}
+{"checked": 4600, "indexed_this_run": 0, "total": 5395}
+{"checked": 4700, "indexed_this_run": 0, "total": 5395}
+{"checked": 4800, "indexed_this_run": 0, "total": 5395}
+{"checked": 4900, "indexed_this_run": 0, "total": 5395}
+{"checked": 5000, "indexed_this_run": 0, "total": 5395}
+{"checked": 5100, "indexed_this_run": 0, "total": 5395}
+{"checked": 5200, "indexed_this_run": 0, "total": 5395}
+{"checked": 5300, "indexed_this_run": 0, "total": 5395}
+{"checked": 5395, "indexed_this_run": 0, "total": 5395}
+ok
+test_partial_embedding_failure_preserves_non_reusable_receipt_without_retry (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_partial_embedding_failure_preserves_non_reusable_receipt_without_retry) ... ok
+test_uuid_change_after_overwrite_never_emits_completed_receipt (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_uuid_change_after_overwrite_never_emits_completed_receipt) ... ok
+test_v3_historical_source_checksum_or_coverage_mismatch_fails_before_embedding (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_v3_historical_source_checksum_or_coverage_mismatch_fails_before_embedding) ... RAG corpus contract passed: corpusVersion=terraformers-reference-v3 documents=128 chunks=128 sources=94 sha256=df8c198f0648827d754e1ef92ff4c07b1397e7dd36a06487eebfee1443ce892f
+ok
+test_wrong_mapping_or_model_cannot_overwrite (tests.rag.test_ingest_gcp_target_corpus.Pt8aCleanV4Tests.test_wrong_mapping_or_model_cannot_overwrite) ... ok
+test_generates_schema_and_high_priority_project_documents (tests.rag.test_build_corpus_v2.BuildCorpusV2Tests.test_generates_schema_and_high_priority_project_documents) ... ok
+test_preserves_complete_hcl_blocks_and_tags_risky_examples (tests.rag.test_build_corpus_v2.BuildCorpusV2Tests.test_preserves_complete_hcl_blocks_and_tags_risky_examples) ... ok
+test_written_v2_corpus_passes_contract_validator (tests.rag.test_build_corpus_v2.BuildCorpusV2Tests.test_written_v2_corpus_passes_contract_validator) ... ok
+test_v4_all_documented_mode_is_schema_intersection_not_allowlist (tests.rag.test_build_corpus_v2.BuildCorpusV4Tests.test_v4_all_documented_mode_is_schema_intersection_not_allowlist) ... ok
+test_v4_builds_resource_absent_from_v3_without_source_allowlist (tests.rag.test_build_corpus_v2.BuildCorpusV4Tests.test_v4_builds_resource_absent_from_v3_without_source_allowlist) ... ok
+test_v4_directory_contract_accepts_canonical_path_and_rejects_expected_v4 (tests.rag.test_build_corpus_v2.BuildCorpusV4Tests.test_v4_directory_contract_accepts_canonical_path_and_rejects_expected_v4) ... ok
+test_v4_does_not_count_unparsed_official_file_as_indexed_evidence (tests.rag.test_build_corpus_v2.BuildCorpusV4Tests.test_v4_does_not_count_unparsed_official_file_as_indexed_evidence) ... ok
+test_v4_reports_schema_resource_without_official_doc_as_knowledge_gap (tests.rag.test_build_corpus_v2.BuildCorpusV4Tests.test_v4_reports_schema_resource_without_official_doc_as_knowledge_gap) ... ok
+
+----------------------------------------------------------------------
+Ran 75 tests in 33.432s
+
+OK

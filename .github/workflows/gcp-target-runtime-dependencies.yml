@@ -19,6 +19,7 @@ on:
           - backend-live-validation-c2-stability
           - a7-7-broad-v4-live-proof
           - pt8a-official-acceptance
+          - pt8a-corrective-readiness
           - capacity-baseline
           - runtime-live-acceptance
       expected_sha:
@@ -3163,7 +3164,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   pt8a-official-acceptance:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.operation == 'pt8a-official-acceptance'
+    name: ${{ inputs.operation == 'pt8a-corrective-readiness' && 'pt8a-corrective-readiness' || 'pt8a-official-acceptance' }}
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && (inputs.operation == 'pt8a-official-acceptance' || inputs.operation == 'pt8a-corrective-readiness')
     runs-on: ubuntu-latest
     environment: gcp-target-apply
     timeout-minutes: 35
@@ -3171,7 +3173,7 @@ jobs:
       NAMESPACE: terraformers-target
       BACKEND_IMAGE: ${{ inputs.backend_image }}
       BACKEND_SOURCE_SHA: ${{ inputs.backend_source_sha }}
-      OPERATION: pt8a-official-acceptance
+      OPERATION: ${{ inputs.operation }}
       ISSUER_URI: https://identity.example.test/case-c
       CLIENT_ID: case-c-runtime-client
       CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
@@ -3188,7 +3190,11 @@ jobs:
           [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
           [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_RUN_ATTEMPT" == 1 ]]
           [[ "$EXPECTED_SHA" == "$GITHUB_SHA" && "$BACKEND_SOURCE_SHA" == "$GITHUB_SHA" ]]
-          [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_OFFICIAL_ACCEPTANCE_V1 ]]
+          if [[ "$OPERATION" == pt8a-corrective-readiness ]]; then
+            [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_V3 ]]
+          else
+            [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_OFFICIAL_ACCEPTANCE_V1 ]]
+          fi
           printf '%s' "$PT8A_REQUEST" > "$RUNNER_TEMP/pt8a-request.json"
           python3 scripts/evaluation/pt8a-official-acceptance.py preflight --request-file "$RUNNER_TEMP/pt8a-request.json"
 

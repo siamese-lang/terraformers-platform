@@ -20,6 +20,7 @@ on:
           - a7-7-broad-v4-live-proof
           - pt8a-official-acceptance
           - pt8a-corrective-readiness
+          - pt8a-qualified-case
           - capacity-baseline
           - runtime-live-acceptance
       expected_sha:
@@ -3164,8 +3165,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   pt8a-official-acceptance:
-    name: ${{ inputs.operation == 'pt8a-corrective-readiness' && 'pt8a-corrective-readiness' || 'pt8a-official-acceptance' }}
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && (inputs.operation == 'pt8a-official-acceptance' || inputs.operation == 'pt8a-corrective-readiness')
+    name: ${{ inputs.operation == 'pt8a-qualified-case' && format('pt8a-qualified-case/{0}', fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-corrective-readiness' && 'pt8a-corrective-readiness' || 'pt8a-official-acceptance' }}
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && (inputs.operation == 'pt8a-official-acceptance' || inputs.operation == 'pt8a-corrective-readiness' || inputs.operation == 'pt8a-qualified-case')
     runs-on: ubuntu-latest
     environment: gcp-target-apply
     timeout-minutes: 35
@@ -3190,7 +3191,9 @@ jobs:
           [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
           [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_RUN_ATTEMPT" == 1 ]]
           [[ "$EXPECTED_SHA" == "$GITHUB_SHA" && "$BACKEND_SOURCE_SHA" == "$GITHUB_SHA" ]]
-          if [[ "$OPERATION" == pt8a-corrective-readiness ]]; then
+          if [[ "$OPERATION" == pt8a-qualified-case ]]; then
+            [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_V3_QUALIFIED_OFFICIAL_CASE ]]
+          elif [[ "$OPERATION" == pt8a-corrective-readiness ]]; then
             [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_V3 ]]
           else
             [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_OFFICIAL_ACCEPTANCE_V1 ]]

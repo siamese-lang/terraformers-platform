@@ -1,0 +1,97 @@
+{
+  "disposition": "IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_USER_MERGE_PENDING",
+  "executionBaseSha": "c9caeafd900b8310eae8ead467b20f8e358599db",
+  "authorityCommentId": 6058612980,
+  "authorityScope": "REPOSITORY_ONLY_NOT_LIVE",
+  "commands": [
+    {
+      "command": "python3 -m py_compile scripts/evaluation/pt8a-official-acceptance.py scripts/evaluation/test_pt8a_official_acceptance.py",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "python3 -m unittest -v scripts/evaluation/test_pt8a_official_acceptance.py tests/rag/test_ingest_gcp_target_corpus.py tests/rag/test_build_corpus_v2.py",
+      "result": "PASS",
+      "tests": 83,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 39.384,
+      "cycles": 1,
+      "exitCode": 0,
+      "localLogSha256": "8453483e2b9e1dc06ca433889dad7bf628c1b37fca895f9c100dc42ccb74651e"
+    },
+    {
+      "command": "python3 -m unittest -v tests/ci/test_ci_changed_scope.py",
+      "result": "PASS",
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 0.45,
+      "cycles": 1,
+      "exitCode": 0
+    },
+    {
+      "command": "python3 scripts/checks/ci_changed_scope.py --verify-workflow-policy",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "python3 scripts/checks/case_c_architecture_ledger.py --check",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "python3 scripts/evaluation/pt8a-official-acceptance.py verify",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "repository-only final YAML/JSON/state/WP/Program/AST/frozen/scope readback and bash -n of seven relevant workflow shell blocks",
+      "result": "PASS",
+      "report": "metadata-validation.json"
+    },
+    {
+      "command": "authenticated original failure archive digest + all inventory members readback",
+      "result": "PASS",
+      "members": 11,
+      "report": "original-archive-inventory-readback.json",
+      "GcpOrModelCalls": 0
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS",
+      "exitCode": 0
+    }
+  ],
+  "amendedV3Sha256": "29e1b9915448a3d8fedffd2661cd95c7d4e0d314afcd88a16d84c3dca548c268",
+  "preChainV3Sha256": "fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18",
+  "frozenV2Sha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+  "strictV2AndCorrectiveGuardsPreserved": true,
+  "chainProof": "SYNTHETIC_ACCEPTED_READINESS_A_B_C_D_E_ELIGIBLE_IN_ORDER_REJECTS_FAILED_UNREVIEWED_TAMPERED_CENSORED_DUPLICATE_SOURCE_DRIFT",
+  "liveQualifiedChainObserved": false,
+  "officialCases": "A_TO_E_NOT_RUN",
+  "currentCaseNeverSelfAccepted": true,
+  "futureCampaignSeparateFromReadinessAuthority": true,
+  "cryptographicVectorContinuityProven": false,
+  "vectorWriteContinuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+  "originalFailure": "FAILED_ACCEPTED_CONSUMED_UNCHANGED",
+  "productBackendOrCorpusVerifierCodeChanged": false,
+  "frozenCandidateTruthAndHistoricalEvidenceChanged": false,
+  "imageFetches": 0,
+  "modelEmbeddingRequests": 0,
+  "liveGcpOpenSearchOperations": 0,
+  "workflowDispatches": 0,
+  "imagePublicationRolloutOperations": 0,
+  "terraformIAMIndexMutationOperations": 0,
+  "localBackendDatabaseBrowserExecutions": 0,
+  "merges": 0,
+  "autoRepairsUsed": 1,
+  "autoRepairCounterReset": false,
+  "humanAuthorizedImplementationIteration": 6,
+  "regressionFailures": 0,
+  "preservedMetadataCheckerInvocationFailures": 1,
+  "metadataCheckerInvocationFailure": "metadata-invocation-failure.json",
+  "manualWorkflowReruns": 0,
+  "normalPrCi": "PENDING_GITHUB_OWNS_TRANSIENT_EXACT_HEAD_RESULT",
+  "nextGate": "INDEPENDENT_ACCEPTANCE_USER_MERGE_BEFORE_RELEASE_OR_LIVE_THEN_SEPARATE_EXACT_BOUND_LIVE_GATES"
+}

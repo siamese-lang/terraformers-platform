@@ -1,21 +1,12 @@
 # PT-8A corrective recovery procedure v3 — risk-qualified retained v4
 
-Status: **QUALIFIED CASE CHAIN IMPLEMENTATION / INDEPENDENT ACCEPTANCE AND USER MERGE
-PENDING; LIVE EXECUTION UNAUTHORIZED**. The current repository-only execution base is
-`c9caeafd900b8310eae8ead467b20f8e358599db`, read once, under
-[USER chain decision 6058612980](https://github.com/siamese-lang/terraformers-platform/pull/260#issuecomment-6058612980).
-[PR #260 review 6058552816](https://github.com/siamese-lang/terraformers-platform/pull/260#issuecomment-6058552816)
-accepted the prior risk-qualified recovery for repository merge with the explicit
-Case-A continuation blocker. USER merged it at this base. The recovery implementation
-and [original risk decision 6057566013](https://github.com/siamese-lang/terraformers-platform/pull/259#issuecomment-6057566013)
-remain preserved. Neither repository decision approves live/model/cost action or merge.
-
-The pre-chain v3 bytes, SHA256
-`fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18`, are preserved at
-[pre-chain-v3-procedure.md](../evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/pre-chain-v3-procedure.md).
-Compute the revised v3 SHA256 from the complete final bytes before any new release,
-corrective readiness or official case. Do not predict a merge SHA/image or consume
-corrective readiness under the superseded procedure and then change source for case entry.
+Status: **REPOSITORY IMPLEMENTATION / INDEPENDENT ACCEPTANCE AND USER MERGE PENDING;
+LIVE EXECUTION UNAUTHORIZED**. USER design decision
+[6057566013](https://github.com/siamese-lang/terraformers-platform/pull/259#issuecomment-6057566013)
+authorizes this repository-only implementation at base
+`9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447`. It does not approve a future live source,
+image or this final procedure hash. Compute SHA256 from these complete bytes for
+independent acceptance and the later live approval; do not predict a merge SHA/digest.
 
 The previous unapproved v3 proposal, SHA256
 `b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d`, is preserved at
@@ -189,112 +180,10 @@ Independent review must bind the exact v3/current release, qualified admission,
 accepted residual risk, origins, run/artifact/digest and unchanged frozen readiness
 requirements before any next action.
 
-## Qualified corrective-readiness → A → B → C → D → E
-
-Strict v2 Case A still rejects a v3 corrective artifact. The separate **qualified-case**
-mode carries the risk-qualified provenance rather than relabeling it as v2 or relaxing
-v2 source/receipt/history guards. Only the existing observer and runtime workflow are
-extended; the corpus verifier, product code, candidate, scoring dimensions and inputs
-are unchanged. No new evaluator, model judge, dataset, workflow or orchestration service.
-
-The first new immutable backend release, rollout and corrective-readiness must follow
-independent acceptance and USER merge of this complete chain contract. Readiness live
-approval binds the final v3 bytes and actual final source/image. A successful observation
-is still REVIEW_PENDING. Case A requires a completed, authenticated attempt-1 successful
-corrective-readiness run/artifact with exact archive digest and full member inventory,
-RISK_QUALIFIED_RETAINED_V4, correlatedBackendRetrieval=true, post-admission and origin
-bindings, terminal SUCCEEDED/accepted-once job, actual CLI PASS, official retrieval and
-consistent persisted quality/trust. FAILED/consumed original readiness remains unchanged.
-
-A repository USER independent `[PRODUCT_TRUST_REVIEW:v1]` must bind that exact current
-source, candidate, revised-v3 hash, run/artifact/digest and `case_id: readiness-only`.
-It requires `decision: ACCEPTED`, `dimension_readiness: PASS`, `material_defect: false`,
-`false_trusted_success: 0`, plus these explicit risk/origin fields:
-
-- `admission_class: RISK_QUALIFIED_RETAINED_V4`;
-- `vector_write_continuity: VECTOR_WRITE_CONTINUITY_UNPROVEN`;
-- `accepted_residual_risk: INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED`;
-- `origin_clean_artifact_digest` and `origin_clean_source_sha` from the immutable origins above;
-- `failed_readiness_artifact_digest` from the immutable consumed failure above;
-- `original_failure_consumed: true`.
-
-Review acceptance does not authorize cases. After readiness review, a **separate**
-repository USER `[HUMAN_GATE_APPROVAL:v1]` may approve one sequential A–E campaign,
-gate FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE, decision APPROVED, purpose
-**PT8A_V3_QUALIFIED_OFFICIAL_A_TO_E_SEQUENTIAL_CAMPAIGN**. Exact fields are enumerated
-by `qualified_live_fields(request, actual_source, actual_image, actual_readiness_digest)`:
-all current source/image/v3+v2/candidate/corpus/origin/risk bindings from the readiness
-contract, `case_chain_decision_id: 6058612980`, actual corrective-readiness run/artifact/
-digest/review/live-approval IDs, `official_cases: A_TO_E_SEQUENTIAL_INDEPENDENT_REVIEW_EACH`,
-and `once_only: ONE_DISPATCH_ATTEMPT_UPLOAD_PER_CASE_ACROSS_SOURCES_NO_RETRY`.
-The readiness-specific approval is separately authenticated again and cannot itself
-grant case execution. Original approval 6049866256 cannot grant either new live path.
-No such future campaign approval, source, image, run or review is predicted here.
-
-Use the same protected runtime workflow with `operation: pt8a-qualified-case`,
-`confirmation: RUN_REVIEWED_PT8A_V3_QUALIFIED_OFFICIAL_CASE`, exact current source/image
-inputs and `pt8a_request`. Its exact request keys are:
-
-| Key | Binding |
-| --- | --- |
-| mode / caseId | qualified-case / one frozen aws-official-a through aws-official-e |
-| liveApprovalCommentId | the separate A–E campaign approval |
-| provenanceRunId / provenanceArtifactId | unchanged clean origin 37710171426 / 11522067032 |
-| readinessRunId / readinessArtifactId / readinessReviewCommentId / readinessLiveApprovalCommentId | the campaign-bound completed corrective-readiness artifact and independent review/authority |
-| priorRunId / priorArtifactId / priorReviewCommentId | readiness for A; immediately preceding official case for B–E |
-
-Unknown keys, a sixth case, input/truth overrides, attempt >1, mode/operation/confirmation
-mixing or readiness/repository-only authority substituted for campaign authority fails
-before cloud access or acquisition. The distinct job display name
-**pt8a-qualified-case/<frozen case ID>** identifies the case even if preflight fails.
-Invalid JSON preventing a job identity or any ambiguous history stops subsequent
-admission; it is never permission to retry.
-
-### Global dispatch and complete predecessor chain
-
-The authenticated original consumed failure's all-NOT_RUN official ledger anchors the
-pre-recovery case capability. Enumerate complete bounded main dispatch history across
-all source SHAs, with the same ten-page limit and completeness checks. Inspect every
-post-origin runtime dispatch, including the current job's exact case label. A previous
-non-skipped dispatch of the current case consumes its capability even on preflight
-failure, cancellation, missing artifact, unknown POST acceptance or another source.
-Future/out-of-order cases, another corrective attempt, post-origin ordinary v2 PT-8A
-observation, unknown operations or incomplete jobs/artifacts fail closed. Unrelated
-runtime operations with the PT-8A job demonstrably skipped are not samples. All known
-ingestion dispatch history must still show the unchanged original clean run and no
-later known ingestion; direct/external vector writers remain the explicitly unproven gap.
-Do not prequeue later cases before their independent reviews.
-
-For current case X, history must contain exactly one completed attempt-1 same-source
-corrective readiness, and exactly one completed same-source qualified dispatch for each
-case before X in increasing order. Latest predecessor must match the request. Full
-archive digest/inventory checks authenticate the readiness and every earlier case,
-including the HCL member, without trusting an older ledger alone. B–E artifacts carry
-`qualified-chain.json` links. Follow at most the five predecessors back to the campaign's
-exact readiness. Re-authenticate each independent review and compare individual previous
-observations; a copied PASS cannot change their job IDs, results or timing. Missing,
-expired, stale, failed, censored or ambiguous evidence stops without reupload.
-
-Each previous case must be REVIEW_PENDING in its original artifact, have all ten
-unchanged scoring dimensions PASS in an exact independent review, no material defect
-and false_trusted_success=0, plus the risk/origin fields required above. Reuse
-`reviewed_prior()` and `next_case()`; only independently accepted previous rows become
-PASS in the successor ledger. A case never marks its own output PASS. Even E ends
-REVIEW_PENDING until its actual evidence receives independent final acceptance.
-
-Before cloud access, before the one upload and after successful observation, recheck
-campaign/readiness authority and complete global history. Before and after each successful
-case, run the existing exact read-only risk-qualified admission with the authenticated
-readiness risk authority. Preserve source/image/model/index identity and both original
-artifacts; vector admission makes zero model/embedding calls or index writes. The one
-case's normal product inference/query-embedding/repair calls require campaign authority.
-Input acquisition uses only the frozen image URL/hash/size/type/dimensions; truth and
-expected answers never enter the production request or corpus.
-
-Failure/truncation/timeout/censor/ambiguous acceptance, pre/post-admission mismatch or
-review rejection preserves the natural evidence and blocks later cases. No rerun,
-resubmission, re-embedding, new source reset or automatic repair is authorized. This
-repository task executes zero official inputs and does not self-accept product quality.
-A–E remain NOT_RUN; PT-8B/teardown/AWS plan/apply and new IAM/security/cost scope remain
-unauthorized. Stop for independent acceptance and USER merge, followed by separate
-publication/rollout/readiness live gates and then the readiness-bound campaign gate.
+**Case-A compatibility boundary:** strict v2 case entry intentionally rejects a v3
+corrective artifact (procedure/mode/live approval mismatch and old-source clean receipt).
+It must not be relabeled as v2 or passed through a generic exception. This implementation
+adds no v3 official-case mode or official-case authority. A later separately reviewed,
+USER-authorized case-entry compatibility contract must carry the qualified provenance
+and independent readiness review rather than silently promoting it to strict continuity.
+Cases A–E stay NOT_RUN here; no PT-8B, teardown, AWS plan/apply or new security/cost scope.

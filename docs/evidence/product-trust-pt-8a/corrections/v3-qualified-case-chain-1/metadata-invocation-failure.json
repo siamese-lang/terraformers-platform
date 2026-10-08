@@ -1,0 +1,11 @@
+{
+  "stage": "temporary_final_metadata_checker_evidence_link_check",
+  "result": "FAILED_INVOCATION_BEFORE_RESULT_OR_STATE_WRITES",
+  "reason": "checked implementation.md link to validation.json before formatter generated that record",
+  "correction": "create pending JSON records before checks; replace only after actual checks pass; historical snapshot links resolve in their original document context",
+  "productionOrTestCodeChanged": false,
+  "behavioralRegressionRerun": false,
+  "productAcceptanceMeasurement": false,
+  "originalSnapshotBytesChanged": false,
+  "repairCountersChanged": false
+}

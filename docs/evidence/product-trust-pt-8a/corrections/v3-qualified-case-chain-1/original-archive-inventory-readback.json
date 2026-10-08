@@ -1,0 +1,14 @@
+{
+  "result": "PASS",
+  "source": "AUTHENTICATED_ORIGINAL_GITHUB_ARCHIVE_READ_ONLY_NOT_LIVE_GCP",
+  "binding": {
+    "runId": 37744660097,
+    "artifactId": 11534783753,
+    "digest": "sha256:94ab23e3ace045d54b9b854a9a41be22447cf674b58c72ccf7ac3ba17976e21d",
+    "sourceSha": "70373842629fdd569815780e52dc5f0353b97880",
+    "conclusion": "failure"
+  },
+  "inventoryMembersVerified": 11,
+  "originalFailurePreserved": true,
+  "cloudModelOperations": 0
+}

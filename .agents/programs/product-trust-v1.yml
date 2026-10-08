@@ -583,7 +583,9 @@ program:
           decision_comment: 6057566013
           implementation_base: 9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447
           procedure: docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md
-          procedure_sha256: fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18
+          procedure_sha256: 29e1b9915448a3d8fedffd2661cd95c7d4e0d314afcd88a16d84c3dca548c268
+          pre_chain_procedure_sha256: fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18
+          pre_chain_procedure: docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/pre-chain-v3-procedure.md
           default_v2_checks: unchanged_no_generic_retry_or_source_exception
           operation: pt8a-corrective-readiness
           conditional_class: RISK_QUALIFIED_RETAINED_V4
@@ -599,9 +601,24 @@ program:
           dispatch_attempt_upload_limits: 1_1_1_global_across_sources
           prior_corrective_or_post_origin_observation_or_unknown_history: STOP
           known_later_ingestion_dispatch: STOP_for_independent_writer_history_review
-          case_entry: no_v3_official_mode_strict_v2_rejects_v3_artifact_future_separate_contract_required
+          case_entry: separate_v3_qualified_mode_under_separate_campaign_live_authority_and_independent_review
           independent_implementation_acceptance_USER_merge_and_new_exact_live_risk_approval: required
           current_live_execution_authorized: false
+          qualified_case_chain:
+            decision_comment: 6058612980
+            implementation_base: c9caeafd900b8310eae8ead467b20f8e358599db
+            operation: pt8a-qualified-case
+            mode: qualified-case
+            separate_campaign_authority: PT8A_V3_QUALIFIED_OFFICIAL_A_TO_E_SEQUENTIAL_CAMPAIGN
+            approval_binding: actual_source_image_v3_v2_candidate_clean_failed_corrective_readiness_artifact_review_risk_and_case_scope
+            dispatch_attempt_upload_limits: 1_1_1_each_case_across_sources_no_retry_even_preflight_failure
+            predecessor: complete_authenticated_archive_inventory_review_chain_readiness_A_B_C_D_then_current_case
+            acceptance: readiness_PASS_then_each_previous_case_all_ten_dimensions_PASS_material_defect_false_false_trusted_success_0
+            original_failure_and_origin_source: immutable_no_relabel
+            read_only_admission: existing_exact_full_content_UUID_all_vector_scan_before_and_after_success
+            own_result: REVIEW_PENDING_never_self_accepted_including_E
+            default_strict_v2: unchanged
+            case_execution_currently_authorized: false
         exact_retained_index: mandatory_one_clean_reembedding_for_known_unproven_lineage_then_reuse_completed_exact_receipt
         clean_mode: pt8a-clean-v4_in_existing_gcp_target_corpus_ingestion_workflow
         clean_project_source: 1ae69d589ac3965733818819792d98c5638e0ae5

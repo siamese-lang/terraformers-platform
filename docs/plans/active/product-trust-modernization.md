@@ -2,6 +2,24 @@
 
 ## Status
 
+Current: **PT-8A v3-qualified official-case chain, repository implementation pending independent acceptance**.
+Bound base `c9caeafd900b8310eae8ead467b20f8e358599db`; [USER decision 6058612980](https://github.com/siamese-lang/terraformers-platform/pull/260#issuecomment-6058612980).
+PR #260 recovery is independently accepted/USER-merged with the separately authorized case-entry
+blocker. This implementation settles the complete readiness → A → B → C → D → E connection before
+any new release/rollout or the sole corrective-readiness dispatch. Existing observer and workflow
+support a distinct qualified-case mode, exact future campaign approval and complete authenticated
+predecessor artifacts/inventories/reviews, using unchanged next_case/reviewed_prior and frozen truth.
+Each case has one dispatch/attempt/upload across sources; prior failure, missing/unknown history
+or unaccepted predecessor stops. Results remain REVIEW_PENDING, including E. Strict v2 and original
+clean/failed evidence remain unchanged. The amended v3 preserves pre-chain fc9f0dc9 bytes; risk-qualified
+continuity remains UNPROVEN. [Procedure](../../evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md),
+[evidence](../../evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/implementation.md).
+No actual live/model/cost approval, source/image prediction or official input action; A–E NOT_RUN.
+Stop at independent acceptance and USER merge, followed by separately bound release/readiness live
+authority and accepted-readiness-bound A–E campaign authority. Human iteration 6; auto repair 1/1.
+
+### Historical risk-qualified recovery checkpoint (accepted for repository merge)
+
 Current: **PT-8A risk-qualified retained-v4 recovery implementation, independent acceptance pending**.
 Bound base `9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447`; [USER design decision 6057566013](https://github.com/siamese-lang/terraformers-platform/pull/259#issuecomment-6057566013)
 accepts `VECTOR_WRITE_CONTINUITY_UNPROVEN` as a design residual, without live authority.

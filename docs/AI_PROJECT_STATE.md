@@ -12,6 +12,33 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
+- Current task: **PT-8A v3-qualified official-case chain**, repository-only, bound once to
+  `c9caeafd900b8310eae8ead467b20f8e358599db` under [USER decision 6058612980](https://github.com/siamese-lang/terraformers-platform/pull/260#issuecomment-6058612980).
+  This closes the source/procedure connection blocker before any new backend release or sole
+  corrective-readiness observation; it advances the existing AI/RAG product-evidence Case A.
+- [PR #260 independent review 6058552816](https://github.com/siamese-lang/terraformers-platform/pull/260#issuecomment-6058552816)
+  accepted recovery implementation with the explicit Case-A continuation blocker; USER merged it
+  at the bound base. Accepted backend correction and read-only corpus/vector admission are unchanged.
+- Existing observer/workflow add **qualified-case / pt8a-qualified-case**, separate from strict v2
+  readiness/case and v3 corrective-readiness. A separate future A–E campaign approval must bind the
+  actual final source/image/procedure/candidate/origins and accepted corrective-readiness artifact,
+  digest, independent review and readiness live authority. Repository decision is not live authority.
+- Case A requires accepted readiness; B–E require authenticated prior case artifacts and independent
+  all-ten-dimension PASS reviews. The bounded chain verifies every predecessor back to readiness,
+  original origins and each individual observation. Complete cross-source history prevents another
+  dispatch of a case, including after preflight failure. Current results remain REVIEW_PENDING.
+- [Amended v3 procedure](evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md) preserves
+  [pre-chain fc9f0dc9 bytes](evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/pre-chain-v3-procedure.md).
+  Frozen v2/candidate/truth and original FAILED/ACCEPTED/consumed readiness remain unchanged.
+  VECTOR_WRITE_CONTINUITY_UNPROVEN is never promoted to cryptographic continuity.
+- No new publication, rollout, GCP/OpenSearch/model/embedding or official input action occurred.
+  A–E remain NOT_RUN; human iteration 6 is separate and auto repair remains 1/1. Durable PR/branch
+  fields stay null. [Evidence](evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/implementation.md).
+  Stop for independent acceptance and USER merge before any new live checkpoint; then require
+  **HUMAN_REQUIRED: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE** under the revised bindings.
+
+### Historical risk-qualified recovery checkpoint (accepted for repository merge)
+
 - Current task: **PT-8A risk-qualified retained-v4 recovery implementation**, repository-only,
   bound once to `9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447`. [USER decision 6057566013](https://github.com/siamese-lang/terraformers-platform/pull/259#issuecomment-6057566013)
   explicitly accepts the design residual **VECTOR_WRITE_CONTINUITY_UNPROVEN**, not live action

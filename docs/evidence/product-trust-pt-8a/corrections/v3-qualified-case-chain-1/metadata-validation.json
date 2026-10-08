@@ -1,0 +1,89 @@
+{
+  "result": "PASS",
+  "executionBaseSha": "c9caeafd900b8310eae8ead467b20f8e358599db",
+  "programStateWorkPackageConsistency": "PASS",
+  "historicalCountersAndOtherPhases": "PASS",
+  "strictV2AndPriorCorrectiveFunctionsAstUnchanged": [
+    "module",
+    "sha",
+    "write",
+    "frozen_inputs",
+    "NoRedirect",
+    "image_host",
+    "verify_image",
+    "acquire",
+    "fields",
+    "github",
+    "authority_comment",
+    "request_contract",
+    "corrective_live_fields",
+    "corrective_request_contract",
+    "complete_dispatch_history",
+    "corrective_history",
+    "corrective_origins",
+    "risk_qualified_admission",
+    "corrective_release",
+    "ensure_latest_dispatch",
+    "require_clean_receipt",
+    "next_case",
+    "reviewed_prior",
+    "mark_upload",
+    "sanitized_job",
+    "retrieval_evidence",
+    "validate_draft",
+    "observe",
+    "seal"
+  ],
+  "onlyExistingObserverFunctionsChanged": [
+    "bound_artifact_optional_inventory_verification",
+    "main_explicit_mode_routing"
+  ],
+  "frozenReadback": {
+    "result": "PASS",
+    "historicalFilesChecked": 473,
+    "unchangedGitBlobsWithExistingCheckoutEolConversion": [
+      "docs/evidence/product-trust-pt-8a/approved-request.md"
+    ],
+    "backendCorpusCandidateTruthOriginalEvidenceAndRagVerifierUnchanged": true,
+    "v2Sha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+    "preChainV3Sha256": "fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18",
+    "amendedV3Sha256": "29e1b9915448a3d8fedffd2661cd95c7d4e0d314afcd88a16d84c3dca548c268"
+  },
+  "workflow": {
+    "yamlParse": "PASS",
+    "bashSyntax": "PASS",
+    "bashBlocks": [
+      "Validate frozen procedure and explicit live authority before cloud access",
+      "Verify exact deployed release and existing runtime identity",
+      "Rebuild expected corpus from pinned authority without embedding",
+      "Start owned validation pod with the already deployed immutable image",
+      "Observe read-only exact readiness and at most one accepted product job",
+      "Bind artifact for post-inference independent review",
+      "Remove only the owned ephemeral validation pod"
+    ],
+    "permissionsConcurrencyOtherJobsWifReleaseCorpusPodJwksAndCleanupStepsUnchanged": true,
+    "qualifiedCaseLabelAndConfirmation": "PASS"
+  },
+  "scope": "PASS",
+  "changedFiles": [
+    ".agents/programs/product-trust-v1.yml",
+    ".agents/state/product-trust-v1.json",
+    ".agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml",
+    ".github/workflows/gcp-target-runtime-dependencies.yml",
+    "docs/AI_PROJECT_STATE.md",
+    "docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md",
+    "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/decision-comment.json",
+    "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/implementation.md",
+    "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/inventory.json",
+    "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/metadata-invocation-failure.json",
+    "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/metadata-validation.json",
+    "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/original-archive-inventory-readback.json",
+    "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/pre-chain-v3-procedure.md",
+    "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/validation.json",
+    "docs/plans/active/product-trust-modernization.md",
+    "scripts/evaluation/pt8a-official-acceptance.py",
+    "scripts/evaluation/test_pt8a_official_acceptance.py"
+  ],
+  "evidenceRelativeLinks": "PASS",
+  "diffCheck": "PASS"
+}

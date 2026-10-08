@@ -77,6 +77,25 @@ class RetrievalModeReferenceRetrieverTest {
         return new RetrievalModeReferenceRetriever(vector, properties);
     }
 
+    @Test
+    void finalDocumentationUsesExistingAvailabilityBoundaryAndNeverSemanticRetrieval() {
+        OpenSearchReferenceRetriever vector = mock(OpenSearchReferenceRetriever.class);
+        ReferenceDocument document = new ReferenceDocument("official", "title", "content", 1.0);
+        when(vector.retrieveOfficialDocumentation("aws_vpc")).thenReturn(List.of(document));
+        assertThat(retriever(vector, properties(RetrievalMode.REQUIRED)).retrieveOfficialDocumentation("aws_vpc"))
+                .containsExactly(document);
+        verify(vector).retrieveOfficialDocumentation("aws_vpc");
+        verify(vector, never()).retrieve(any());
+        assertThat(retriever(vector, properties(RetrievalMode.DISABLED)).retrieveOfficialDocumentation("aws_subnet"))
+                .isEmpty();
+        verify(vector, never()).retrieveOfficialDocumentation("aws_subnet");
+        when(vector.retrieveOfficialDocumentation("aws_vpc")).thenThrow(new IllegalStateException("unavailable"));
+        assertThatThrownBy(() -> retriever(vector, properties(RetrievalMode.REQUIRED))
+                .retrieveOfficialDocumentation("aws_vpc")).hasMessage("unavailable");
+        assertThat(retriever(vector, properties(RetrievalMode.OPTIONAL)).retrieveOfficialDocumentation("aws_vpc"))
+                .isEmpty();
+    }
+
     private AnalysisRuntimeProperties properties(RetrievalMode mode) {
         AnalysisRuntimeProperties properties = new AnalysisRuntimeProperties();
         properties.setRetrievalMode(mode);

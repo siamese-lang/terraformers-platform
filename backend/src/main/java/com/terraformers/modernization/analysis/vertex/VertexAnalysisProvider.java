@@ -24,6 +24,7 @@ import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectReader;
 import com.terraformers.modernization.storage.ObjectReference;
 import java.util.List;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -113,16 +114,43 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         List<ReferenceDocument> references = outcome.finalReferences();
         String terraform = outcome.finalTerraform();
         EvidenceQualityAssessment quality = assess(retrieval, references, terraform);
+        List<String> warnings = new ArrayList<>(generated.warnings());
+        if (quality != null) {
+            List<String> extractedUnknown = quality.extractedResourceTypes().stream()
+                    .filter(type -> !schemaCatalog.contains(type)).toList();
+            log.info("Vertex evidence quality technicalStatus={} knowledgeStatus={} qualityStatus={} "
+                            + "projectDecisionStatus={} extractedUnknownToProvider={} generatedAbsentFromProvider={} "
+                            + "generatedWithoutSelectedEvidence={}",
+                    quality.technicalStatus(), quality.knowledgeStatus(), quality.qualityStatus(),
+                    quality.projectDecisionStatus(), safeResourceTypes(extractedUnknown),
+                    safeResourceTypes(quality.generatedResourcesAbsentFromProviderSchema()),
+                    safeResourceTypes(quality.generatedResourcesWithoutSelectedEvidence()));
+            if (!extractedUnknown.isEmpty()) {
+                warnings.add("Image resource candidates not recognized by the provider: "
+                        + safeResourceTypes(extractedUnknown) + ". Generated Terraform validation is a separate check.");
+            }
+            if (!quality.generatedResourcesWithoutSelectedEvidence().isEmpty()) {
+                warnings.add("Generated Terraform types lack selected official documentation metadata: "
+                        + safeResourceTypes(quality.generatedResourcesWithoutSelectedEvidence())
+                        + ". Provider-valid implementation support still requires evidence review.");
+            }
+        }
         return new AnalysisResult(
                 generated.provider(),
                 terraform,
                 generated.summary(),
                 generated.components(),
                 generated.relationships(),
-                generated.warnings(),
+                warnings,
                 references.stream().map(ReferenceDocument::id).toList(),
                 quality
         );
+    }
+
+    private List<String> safeResourceTypes(List<String> types) {
+        // Type identifiers only, never source images, model prose, HCL, values or error messages.
+        return types.stream().filter(type -> type.matches("aws_[a-z0-9_]{1,80}"))
+                .distinct().limit(64).toList();
     }
 
     private EvidenceQualityAssessment assess(RetrievalOutcome retrieval,

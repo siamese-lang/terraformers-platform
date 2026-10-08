@@ -116,7 +116,7 @@ class ProductionEquivalentClosureEvaluationTest {
     }
 
     @Test
-    void resourceIntroducedByRepairRemainsUnsupportedWithoutAnotherClosureOrRepair() {
+    void resourceIntroducedByRepairRemainsUnsupportedWhenFinalOfficialLookupIsEmpty() {
         String finalTerraform = REPAIRED + "\nresource \"aws_security_group\" \"new\" {}";
         Fixture fixture = fixture(List.of(bucket, decision), List.of(instance), FIRST, finalTerraform);
         EvaluationTrace trace = fixture.runner().run(dataset(positive()), "remaining-gap").traces().get(0);
@@ -127,8 +127,31 @@ class ProductionEquivalentClosureEvaluationTest {
                 .generatedResourceOfficialEvidenceCoverage().missing()).containsExactly("aws_security_group");
         assertThat(new CaseAQualityCalibrationScorer().score(positive(), trace).labeledQualitySuccess()).isFalse();
         verify(fixture.retriever(), times(2)).retrieve(any());
+        verify(fixture.retriever(), times(1)).retrieveOfficialDocumentation("aws_security_group");
         verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
         verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
+        verify(fixture.cli()).validate(finalTerraform);
+    }
+
+    @Test
+    void finalDocumentBindingReachesSharedTraceAndCoverageWithoutChangingModelHandoffOrCli() {
+        String finalTerraform = REPAIRED + "\nresource \"aws_security_group\" \"new\" {}";
+        Fixture fixture = fixture(List.of(bucket, decision), List.of(instance), FIRST, finalTerraform);
+        when(fixture.retriever().retrieveOfficialDocumentation("aws_security_group"))
+                .thenReturn(List.of(official("support", "aws_security_group")));
+        EvaluationTrace trace = fixture.runner().run(dataset(positive()), "final-evidence").traces().get(0);
+
+        assertThat(trace.generation().evidence().groundingClosure().finalGeneratedResourceEvidenceGaps()).isEmpty();
+        assertThat(trace.generation().evidence().groundingClosure().finalSelectedReferences())
+                .extracting(EvaluationTrace.ReferenceHit::documentId).containsExactly("bucket", "decision", "instance", "support");
+        var score = new RetrievalGroundingScorer().score(positive(), trace);
+        assertThat(score.generatedResourceOfficialEvidenceCoverage().matched()).isEqualTo(3);
+        assertThat(score.retrievalToGenerationHandoffComplete()).isTrue();
+        assertThat(trace.generation().evidence().suppliedReferenceIds()).containsExactly("bucket", "decision");
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
+        verify(fixture.retriever(), times(2)).retrieve(any());
+        verify(fixture.retriever(), times(1)).retrieveOfficialDocumentation("aws_security_group");
         verify(fixture.cli()).validate(finalTerraform);
     }
 

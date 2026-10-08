@@ -54,4 +54,29 @@ public class RetrievalModeReferenceRetriever implements ReferenceRetriever {
     private long elapsedMillis(long started) {
         return (System.nanoTime() - started) / 1_000_000;
     }
+
+    @Override
+    public List<ReferenceDocument> retrieveOfficialDocumentation(String resourceType) {
+        RetrievalMode mode = properties.getRetrievalMode();
+        if (mode == null) {
+            throw new IllegalStateException("terraformers.analysis.retrieval-mode must be set");
+        }
+        if (mode == RetrievalMode.DISABLED) return List.of();
+        long started = System.nanoTime();
+        try {
+            List<ReferenceDocument> documents = vectorRetriever.retrieveOfficialDocumentation(resourceType);
+            log.info("reference retrieval outcome={} mode={} embeddingProvider={} index={} topK=1 hitCount={} "
+                            + "documentIds={} elapsedMs={} kind=official_documentation resourceType={}",
+                    documents.isEmpty() ? "empty" : "success", mode, properties.resolvedEmbeddingProvider(),
+                    properties.getIndexName(), documents.size(), documents.stream().map(ReferenceDocument::id).toList(),
+                    elapsedMillis(started), resourceType);
+            return documents;
+        } catch (RuntimeException exception) {
+            log.warn("reference retrieval outcome=failure mode={} kind=official_documentation resourceType={} "
+                            + "errorClass={} elapsedMs={}",
+                    mode, resourceType, exception.getClass().getName(), elapsedMillis(started));
+            if (mode == RetrievalMode.REQUIRED) throw exception;
+            return List.of();
+        }
+    }
 }

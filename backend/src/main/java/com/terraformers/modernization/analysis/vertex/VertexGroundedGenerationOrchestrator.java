@@ -17,6 +17,8 @@ import com.terraformers.modernization.reference.RetrievalMode;
 import com.terraformers.modernization.reference.opensearch.ReferenceEvidenceSelector;
 import com.terraformers.modernization.storage.ObjectContent;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -91,8 +93,8 @@ public class VertexGroundedGenerationOrchestrator {
                 throw failure;
             }
             log.info("Vertex grounding stage=closure outcome=success finishReason=NOT_APPLICABLE "
-                            + "outputTokens=NOT_APPLICABLE hitCount={} elapsedMs={}",
-                    closure.size(), (System.nanoTime() - closureStarted) / 1_000_000);
+                            + "outputTokens=NOT_APPLICABLE hitCount={} elapsedMs={} requestedResourceTypes={}",
+                    closure.size(), (System.nanoTime() - closureStarted) / 1_000_000, query.resourceTypes());
             outcome = new Outcome(generated, initial, new ClosureRetrieval(query, closure), initial,
                     false, generated.terraformCode(), missing);
             evidenceObserver.accept(outcome);
@@ -111,15 +113,43 @@ public class VertexGroundedGenerationOrchestrator {
                     true, repaired, List.of());
             evidenceObserver.accept(outcome);
         }
-        // Remaining gaps are recorded, never followed by another closure or repair.
+        // No second generation/repair cycle. Bind documentation only after validating the final resource types.
         contractInspector.inspect(outcome.finalTerraform());
         List<String> finalTypes = contractInspector.resourceTypes(outcome.finalTerraform()).stream()
                 .filter(schemaCatalog::contains).toList();
-        outcome = new Outcome(generated, initial, outcome.closureRetrieval(), outcome.finalReferences(),
+        List<ReferenceDocument> finalReferences = bindFinalDocumentation(finalTypes, outcome.finalReferences());
+        outcome = new Outcome(generated, initial, outcome.closureRetrieval(), finalReferences,
                 outcome.repairAttempted(), outcome.finalTerraform(),
-                missingOfficialEvidence(finalTypes, outcome.finalReferences()));
+                missingOfficialEvidence(finalTypes, finalReferences));
+        log.info("Vertex grounding stage=final_evidence outcome=assessed repairAttempted={} "
+                        + "firstGeneratedTypes={} finalGeneratedTypes={} repairIntroducedTypes={} finalEvidenceGaps={}",
+                outcome.repairAttempted(), generatedTypes.stream().limit(64).toList(), finalTypes.stream().limit(64).toList(),
+                finalTypes.stream().filter(type -> !generatedTypes.contains(type)).limit(64).toList(),
+                outcome.finalGeneratedResourceEvidenceGaps().stream().limit(64).toList());
         evidenceObserver.accept(outcome);
         return outcome;
+    }
+
+    private List<ReferenceDocument> bindFinalDocumentation(List<String> finalTypes, List<ReferenceDocument> selected) {
+        if (properties.getRetrievalMode() == RetrievalMode.DISABLED) return selected;
+        Map<String, ReferenceDocument> evidence = new LinkedHashMap<>();
+        selected.forEach(document -> evidence.putIfAbsent(document.id(), document));
+        // At most one read-only lookup and one document per missing final type. These documents are
+        // quality/result evidence, never supplied to another model call or capped by its context budget.
+        for (String type : missingOfficialEvidence(finalTypes, selected)) {
+            try {
+                referenceRetriever.retrieveOfficialDocumentation(type).stream()
+                        .filter(ReferenceDocument::isOfficialProviderDocumentation)
+                        .filter(document -> document.resourceTypes().contains(type))
+                        .limit(1).forEach(document -> evidence.putIfAbsent(document.id(), document));
+            } catch (RuntimeException failure) {
+                // Required initial grounding still fails closed. Unavailable final documentary support
+                // remains an explicit quality gap rather than erasing an otherwise valid editable draft.
+                log.warn("Vertex grounding stage=final_evidence outcome=unavailable resourceType={} errorClass={}",
+                        type, failure.getClass().getSimpleName());
+            }
+        }
+        return List.copyOf(evidence.values());
     }
 
     private List<String> missingOfficialEvidence(List<String> generatedTypes, List<ReferenceDocument> references) {

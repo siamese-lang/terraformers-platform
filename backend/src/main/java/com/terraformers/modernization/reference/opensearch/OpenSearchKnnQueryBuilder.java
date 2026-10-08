@@ -139,6 +139,33 @@ public class OpenSearchKnnQueryBuilder {
                         .toList();
     }
 
+    /** One actual official document for one exact metadata type; no vector/model request. */
+    public String buildOfficialDocumentation(String contentFieldName, String corpusVersion,
+            String providerVersion, String resourceType) {
+        if (contentFieldName == null || contentFieldName.isBlank()
+                || corpusVersion == null || corpusVersion.isBlank()
+                || providerVersion == null || providerVersion.isBlank()
+                || resourceType == null || !resourceType.matches("aws_[a-z0-9_]+")) {
+            throw new IllegalArgumentException("official documentation lookup requires exact resource and version metadata");
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("size", 1);
+        body.put("_source", List.of("documentId", "id", "title", contentFieldName, "documentType",
+                "resourceTypes", "sourcePath", "providerVersion", "corpusVersion", "authority", "priority", "riskTags"));
+        body.put("query", Map.of("bool", Map.of("filter", List.of(
+                Map.of("term", Map.of("corpusVersion", corpusVersion)),
+                Map.of("term", Map.of("providerVersion", providerVersion)),
+                Map.of("term", Map.of("resourceTypes", resourceType)),
+                Map.of("term", Map.of("authority", "PROVIDER_DOCUMENTATION")),
+                Map.of("terms", Map.of("documentType", List.of("AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE")))))));
+        body.put("sort", List.of(Map.of("priority", "desc"), Map.of("documentId", "asc")));
+        try {
+            return objectMapper.writeValueAsString(body);
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("failed to build official documentation lookup", exception);
+        }
+    }
+
     private void addTermFilter(List<Map<String, Object>> filters, String field, String value) {
         if (value != null && !value.isBlank()) {
             filters.add(Map.of("term", Map.of(field, value.strip())));

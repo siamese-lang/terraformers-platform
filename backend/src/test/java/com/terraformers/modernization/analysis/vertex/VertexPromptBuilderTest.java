@@ -28,6 +28,10 @@ class VertexPromptBuilderTest {
                         "previous Terraform draft was rejected",
                         "without literal credentials",
                         "Do not include secrets, account IDs, access keys, static credentials");
+        assertThat(prompt).contains("image-observed intent only", "not evidence of an image connection",
+                "declared external input", "Preserve every visible directed relationship",
+                "without fabricated defaults", "dummy local artifact paths", "actionable descriptions",
+                "us-east-1", "API's actual region", "Record implementation assumptions");
     }
 
     @Test
@@ -58,11 +62,16 @@ class VertexPromptBuilderTest {
         String prompt = builder.buildRepair(facts, original, List.of(reference), schema);
         assertThat(prompt).contains(original.terraformCode(), "API architecture", "VPC -> API",
                 "PROVIDER_DOCUMENTATION", "AWS_PROVIDER_DOC", "EC2 documentation content", schema.promptText(),
-                "new AWS resource types", "closure evidence and provider schema", "Module blocks are forbidden",
+                "Preserve necessary implementation", "validate them against the provider schema", "Module blocks are forbidden",
                 "required provider arguments", "nested-block compatibility", "variable/reference placeholders",
                 "not a new image analysis", "PROJECT_DECISION");
         assertThat(prompt).contains("complete HCL once", "no explanations or comments",
                 "never required arguments", "wiring or authorization", "Do not use ellipses");
+        assertThat(prompt).contains("Prior generated relationships (unverified)",
+                "omission is not evidence of absence", "shared support", "IAM role",
+                "resourceTypes=[aws_instance]", "documentation covers these managed resource types: [aws_instance]",
+                "not an allowed-resource list", "Final resource types will be looked up separately",
+                "without fabricated defaults", "CloudFront ACM certificates require us-east-1");
         assertThat(builder.repairResponseJsonSchema().get("required")).isEqualTo(List.of("terraformCode"));
     }
 

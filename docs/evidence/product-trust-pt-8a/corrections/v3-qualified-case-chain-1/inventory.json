@@ -1,0 +1,40 @@
+{
+  "purpose": "REPOSITORY_ONLY_IMPLEMENTATION_EVIDENCE_NOT_PRODUCT_OBSERVATIONS",
+  "files": [
+    {
+      "path": "decision-comment.json",
+      "sha256": "f7376689ff3645591d0bc6ef4f16cce7f75b16bb63cee5d87695fda715e8622a",
+      "sizeBytes": 4732
+    },
+    {
+      "path": "implementation.md",
+      "sha256": "e35f2070545981ff8abb6e159f31d624157400feb26501eaacdad7bf495800cc",
+      "sizeBytes": 8127
+    },
+    {
+      "path": "metadata-invocation-failure.json",
+      "sha256": "81f64c575aff2758cf3c0c5a53d60e6f58bbbeae8330f03b4709eec32f2b02f7",
+      "sizeBytes": 601
+    },
+    {
+      "path": "metadata-validation.json",
+      "sha256": "1b921d4d5b4b651bf36c79cc9115413474b5998fb7b754640d962c7cb33f410a",
+      "sizeBytes": 3746
+    },
+    {
+      "path": "original-archive-inventory-readback.json",
+      "sha256": "186222651a849c48a06a0d376173d4d11287867fe89a7a0a89f8536ea80a48e3",
+      "sizeBytes": 453
+    },
+    {
+      "path": "pre-chain-v3-procedure.md",
+      "sha256": "fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18",
+      "sizeBytes": 12402
+    },
+    {
+      "path": "validation.json",
+      "sha256": "5583429c2637a61fe798d69e3f6c8865217fa9fb1db2e86e3513b90f1b03a52c",
+      "sizeBytes": 3745
+    }
+  ]
+}

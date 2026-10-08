@@ -69,10 +69,10 @@
     "truthFreezeApprovalUrl": "https://github.com/siamese-lang/terraformers-platform/pull/241#issuecomment-6015857324"
   },
   "blockers": [
-    "Risk-qualified recovery implementation requires independent acceptance and USER merge; no CI-based acceptance.",
-    "Repository-only decision 6057566013 is not live authority. Future corrective readiness requires new exact actual source/image/v3+v2/candidate/origin/risk/once-only live approval.",
-    "VECTOR_WRITE_CONTINUITY_UNPROVEN remains an expressly accepted design residual, not cryptographic continuity or a current live admission. Read-only exact content/UUID/all-vector shape and known history must pass before any future upload.",
-    "Strict v2 case entry rejects v3 corrective readiness; no official-case compatibility mode or execution authority is added in this Work Package."
+    "V3-qualified official-case chain implementation requires independent acceptance and USER merge before publication, rollout or corrective readiness; CI is not acceptance.",
+    "Decision 6058612980 is repository-only. Corrective readiness requires its separate exact final-source/image/procedure/candidate/origin/risk approval.",
+    "Official A-E requires a distinct readiness-artifact/review-bound sequential campaign live/model/cost approval and independent acceptance of every predecessor.",
+    "VECTOR_WRITE_CONTINUITY_UNPROVEN remains explicit; missing or mismatched provenance, full content/vector admission or all-source once-only history stops without retry."
   ],
   "evidenceDocument": "docs/evaluation/product-trust-pt-7-ci-delivery-handoff.md",
   "validation": {
@@ -151,7 +151,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447",
+  "lastObservedMainSha": "c9caeafd900b8310eae8ead467b20f8e358599db",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -1410,7 +1410,7 @@
       "mainReadsAtActivation": 1,
       "status": "HUMAN_REQUIRED",
       "humanGate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
-      "currentStep": "RISK_QUALIFIED_RECOVERY_IMPLEMENTATION_INDEPENDENT_ACCEPTANCE_USER_MERGE_PENDING_NO_LIVE_AUTHORITY",
+      "currentStep": "V3_QUALIFIED_OFFICIAL_CASE_CHAIN_IMPLEMENTATION_INDEPENDENT_ACCEPTANCE_USER_MERGE_PENDING_NO_LIVE_AUTHORITY",
       "preparationAuthorized": true,
       "executionAuthorized": false,
       "executionStarted": true,
@@ -1437,7 +1437,7 @@
       "onlyReusableClass": "EXACT_REUSABLE_COMPLETED_V4",
       "autoRepairLimit": 1,
       "autoRepairsUsed": 1,
-      "humanAuthorizedCorrectiveIterations": 5,
+      "humanAuthorizedCorrectiveIterations": 6,
       "modelUnderTestRunCount": 0,
       "officialInputFetches": 0,
       "officialInputUploads": 0,
@@ -1488,8 +1488,8 @@
         "correction": "Remove nonexistent v4 unittest module; run existing corpus/CI tests once, and compile the actual v4 builder. No application/code change or live action."
       },
       "procedureSha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
-      "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/validation.json",
-      "localDeterministicValidation": "PASS_PYTHON_75_CI_POLICY_23_WORKFLOW_POLICY_LEDGER_YAML_JSON_7_BASH_BLOCKS_429_FROZEN_FILES_AST_BOUNDARIES_SCOPE_DIFF_CHECK",
+      "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/validation.json",
+      "localDeterministicValidation": "PASS_PYTHON_83_CI_POLICY_23_METADATA_YAML_JSON_7_BASH_BLOCKS_AST_FROZEN_SCOPE_DIFF_CHECK_ORIGINAL_ARCHIVE_11_MEMBERS",
       "supersededProcedures": [
         {
           "version": "pt8a-official-acceptance-v1",
@@ -1653,14 +1653,14 @@
         "correctionExecutionBaseSha": "9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447",
         "mainReadsAtActivation": 1,
         "historicalPreparationAndCorrectionBasesPreserved": true,
-        "status": "IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING",
+        "status": "ACCEPTED_REPOSITORY_ONLY_USER_MERGED_WITH_CASE_A_CONTINUATION_BLOCKER",
         "designAuthority": "RISK_QUALIFIED_CROSS_SOURCE_CLEAN_V4_REUSE",
         "designApprovedForRepositoryOnly": true,
         "liveExecutionAuthorized": false,
         "liveApprovalCommentId": null,
         "liveReviewedSourceSha": null,
         "liveImageDigest": null,
-        "procedurePath": "docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md",
+        "procedurePath": "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/pre-chain-v3-procedure.md",
         "procedureVersion": "pt8a-corrective-recovery-v3",
         "procedureSha256": "fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18",
         "supersededUnapprovedV3ProposalSha256": "b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d",
@@ -1694,7 +1694,60 @@
         "implementationLiveActions": 0,
         "implementationModelEmbeddingRequests": 0,
         "implementationIndexWrites": 0,
-        "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/validation.json"
+        "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/validation.json",
+        "procedurePathAtReview": "docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md",
+        "independentDisposition": {
+          "reviewCommentId": 6058552816,
+          "reviewedHeadSha": "800f31356db12a8a546a30c8042b0a1a8b4133e0",
+          "disposition": "ACCEPTED_REPOSITORY_ONLY_WITH_CASE_A_CONTINUATION_BLOCKER",
+          "USERMerged": true,
+          "mergedMainSha": "c9caeafd900b8310eae8ead467b20f8e358599db",
+          "liveRecoveryExecuted": false
+        },
+        "caseACompatibilityBoundaryScope": "HISTORICAL_PR260_PRE_CHAIN_IMPLEMENTATION; ADDRESSED_BY_SEPARATELY_APPROVED_ITERATION_6_PENDING_ACCEPTANCE"
+      },
+      "v3QualifiedCaseChainImplementation": {
+        "iteration": 6,
+        "authorizationCommentId": 6058612980,
+        "authorityEvidence": "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/decision-comment.json",
+        "correctionExecutionBaseSha": "c9caeafd900b8310eae8ead467b20f8e358599db",
+        "mainReadsAtActivation": 1,
+        "status": "IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING",
+        "procedurePath": "docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md",
+        "procedureSha256": "29e1b9915448a3d8fedffd2661cd95c7d4e0d314afcd88a16d84c3dca548c268",
+        "preChainProcedurePath": "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/pre-chain-v3-procedure.md",
+        "preChainProcedureSha256": "fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18",
+        "frozenV2Sha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+        "defaultStrictV2BehaviorChanged": false,
+        "operation": "pt8a-qualified-case",
+        "mode": "qualified-case",
+        "repositoryCaseEntryImplemented": true,
+        "caseEntryIndependentlyAccepted": false,
+        "liveExecutionAuthorized": false,
+        "liveCampaignApprovalCommentId": null,
+        "liveReviewedSourceSha": null,
+        "liveImageDigest": null,
+        "futureCampaignAuthority": "PT8A_V3_QUALIFIED_OFFICIAL_A_TO_E_SEQUENTIAL_CAMPAIGN",
+        "readinessAuthorityAlsoAuthorizesOfficialCases": false,
+        "predecessorChain": "AUTHENTICATED_CORRECTIVE_READINESS_THEN_A_B_C_D_E_INDEPENDENT_REVIEW_EACH_STAGE",
+        "crossSourceDispatchLimitPerCase": 1,
+        "runAttemptLimit": 1,
+        "uploadLimitPerCase": 1,
+        "correctiveReadinessGlobalLimitPreserved": 1,
+        "ownCaseResult": "REVIEW_PENDING_UNTIL_INDEPENDENT_ACCEPTANCE_INCLUDING_E",
+        "originalCleanReceiptRelabeled": false,
+        "originalFailedReadinessDisposition": "FAILED_ACCEPTED_CONSUMED",
+        "vectorWriteContinuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+        "cryptographicVectorContinuityProven": false,
+        "currentLiveQualifiedAdmissionObserved": false,
+        "implementationLiveActions": 0,
+        "implementationModelEmbeddingRequests": 0,
+        "officialInputFetches": 0,
+        "officialInputUploads": 0,
+        "casesRemainNotRun": true,
+        "autoRepairsUsedPreserved": 1,
+        "autonomousRepairCounterReset": false,
+        "validationEvidence": "docs/evidence/product-trust-pt-8a/corrections/v3-qualified-case-chain-1/validation.json"
       }
     }
   },
@@ -1707,10 +1760,10 @@
     "repetitiveContinuePromptsRequired": false,
     "pausedAtHumanGate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
     "resumeRequires": [
-      "risk_qualified_recovery_implementation_independent_acceptance_and_USER_merge",
-      "separate_exact_actual_source_immutable_image_v3_v2_candidate_origins_risk_once_only_live_approval",
-      "fail_closed_global_once_only_history_and_original_artifact_binding_before_cloud",
-      "read_only_exact_content_UUID_all_vector_shape_runtime_admission_then_one_corrective_job_independent_review"
+      "v3_qualified_case_chain_independent_acceptance_and_USER_merge_before_any_new_backend_release_or_readiness",
+      "separate_exact_final_source_image_amended_v3_frozen_v2_candidate_origins_risk_once_only_corrective_readiness_live_approval",
+      "accepted_corrective_readiness_and_distinct_bound_A_to_E_campaign_live_approval",
+      "complete_authenticated_predecessor_chain_each_independent_review_PASS_all_source_once_only_history_read_only_admission"
     ]
   },
   "programAmendments": [

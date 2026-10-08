@@ -28,6 +28,9 @@ CORRECTIVE_PROCEDURE = "docs/evaluation/product-trust-pt-8a-corrective-recovery-
 V2_SHA256 = "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823"
 CORRECTIVE_MODE = "corrective-readiness"
 CORRECTIVE_OPERATION = "pt8a-corrective-readiness"
+QUALIFIED_MODE = "qualified-case"
+QUALIFIED_OPERATION = "pt8a-qualified-case"
+CHAIN_DECISION = 6058612980
 RECOVERY_DECISION = 6057566013
 ORIGIN_SOURCE = "70373842629fdd569815780e52dc5f0353b97880"
 ORIGIN_IMAGE = "asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:6883a720b330a1ee0e2802fd7b62e377f3c014adc865bfca2c5ab127b68b35c8"
@@ -342,6 +345,213 @@ def corrective_release(release, source, image):
         raise ValueError("corrective deployed source/image/model/index/runtime identity mismatch")
 
 
+def qualified_live_fields(request, source, image, readiness_digest):
+    """One separately approved A-E campaign; its readiness authority cannot authorize cases."""
+    return {**corrective_live_fields(source, image),
+        "purpose": "PT8A_V3_QUALIFIED_OFFICIAL_A_TO_E_SEQUENTIAL_CAMPAIGN",
+        "case_chain_decision_id": str(CHAIN_DECISION), "official_cases": "A_TO_E_SEQUENTIAL_INDEPENDENT_REVIEW_EACH",
+        "once_only": "ONE_DISPATCH_ATTEMPT_UPLOAD_PER_CASE_ACROSS_SOURCES_NO_RETRY",
+        "corrective_readiness_run_id": str(request["readinessRunId"]),
+        "corrective_readiness_artifact_id": str(request["readinessArtifactId"]),
+        "corrective_readiness_artifact_digest": readiness_digest,
+        "corrective_readiness_review_id": str(request["readinessReviewCommentId"]),
+        "corrective_readiness_live_approval_id": str(request["readinessLiveApprovalCommentId"])}
+
+
+def qualified_request_contract(request, source, image, attempt):
+    allowed = {"mode", "caseId", "liveApprovalCommentId", "provenanceRunId", "provenanceArtifactId",
+        "readinessRunId", "readinessArtifactId", "readinessReviewCommentId", "readinessLiveApprovalCommentId",
+        "priorRunId", "priorArtifactId", "priorReviewCommentId"}
+    if (set(request) != allowed or request.get("mode") != QUALIFIED_MODE or request.get("caseId") not in CASES
+            or any(type(request[k]) is not int or request[k] <= 0 for k in allowed - {"mode", "caseId"})):
+        raise ValueError("invalid qualified case request; no case or inference")
+    decision = authority_comment(CHAIN_DECISION, "[PT8A_V3_QUALIFIED_OFFICIAL_CASE_CHAIN_DECISION:v1]")
+    expected = {"decision": "APPROVED_REPOSITORY_ONLY_IMPLEMENTATION",
+        "reviewed_execution_base_sha": "c9caeafd900b8310eae8ead467b20f8e358599db", "candidate_identity": IDENTITY,
+        "frozen_v2_sha256": V2_SHA256, "strict_v2_mode": "UNCHANGED", "case_dispatch_budget": "ONE_EACH_NO_RETRY",
+        "independent_review_each_stage": "REQUIRED", "approved_action_scope": "REPOSITORY_ONLY"}
+    if any(decision.get(k) != v for k, v in expected.items()):
+        raise ValueError("repository qualified-case design authority missing or changed")
+    readiness_authority = corrective_request_contract({"mode": CORRECTIVE_MODE,
+        "liveApprovalCommentId": request["readinessLiveApprovalCommentId"],
+        "provenanceRunId": request["provenanceRunId"], "provenanceArtifactId": request["provenanceArtifactId"]},
+        source, image, attempt)
+    campaign = authority_comment(request["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    digest = campaign.get("corrective_readiness_artifact_digest", "")
+    if (not re.fullmatch(r"sha256:[0-9a-f]{64}", digest)
+            or any(campaign.get(k) != v for k, v in qualified_live_fields(request, source, image, digest).items())):
+        raise ValueError("separate A-E campaign live/risk authority does not bind qualified readiness/source/image/procedure")
+    return campaign, readiness_authority
+
+
+def qualified_history(request, source, current_run_id):
+    """The immutable consumed failure/all-NOT_RUN ledger anchors the global case capability."""
+    rows = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
+    current = [r for r in rows if r["id"] == current_run_id]
+    if (len(current) != 1 or current[0]["head_sha"] != source or current[0]["run_attempt"] != 1
+            or not any(r["id"] == ORIGIN_FAILED_RUN and r["head_sha"] == ORIGIN_SOURCE for r in rows)):
+        raise ValueError("qualified current/origin history binding missing")
+    index = CASES.index(request["caseId"])
+    predecessors = {}
+    for run in rows:
+        if run["id"] < ORIGIN_FAILED_RUN or run["id"] == ORIGIN_FAILED_RUN:
+            continue
+        jobs = github(f"actions/runs/{run['id']}/jobs?per_page=100")
+        if jobs["total_count"] != len(jobs["jobs"]) or jobs["total_count"] > 100:
+            raise ValueError("qualified job history incomplete; no upload")
+        related = [j for j in jobs["jobs"] if j["name"] in (CORRECTIVE_OPERATION, "pt8a-official-acceptance")
+                   or j["name"].startswith(QUALIFIED_OPERATION + "/")]
+        if len(related) != 1:
+            raise ValueError("qualified prior dispatch operation unproven; no upload")
+        job = related[0]
+        if run["id"] == current_run_id:
+            if job["name"] != QUALIFIED_OPERATION + "/" + request["caseId"] or job["conclusion"] == "skipped":
+                raise ValueError("current qualified dispatch case identity mismatch")
+            continue
+        if job["conclusion"] == "skipped":
+            continue
+        name = job["name"]
+        case = "readiness-only" if name == CORRECTIVE_OPERATION else name.removeprefix(QUALIFIED_OPERATION + "/")
+        if case != "readiness-only" and (case not in CASES or CASES.index(case) >= index):
+            raise ValueError("case already dispatched/unknown/out of order across sources; no retry")
+        if (case in predecessors or run["status"] != "completed" or run["conclusion"] != "success"
+                or run["run_attempt"] != 1 or run["head_sha"] != source or job["conclusion"] != "success"):
+            raise ValueError("qualified predecessor failed/duplicate/incomplete/rerun/source mismatch")
+        artifacts = github(f"actions/runs/{run['id']}/artifacts?per_page=100")
+        matches = [a for a in artifacts["artifacts"] if a["name"] == f"pt8a-official-{run['id']}"]
+        if artifacts["total_count"] != len(artifacts["artifacts"]) or artifacts["total_count"] > 100 or len(matches) != 1:
+            raise ValueError("qualified predecessor artifact history incomplete")
+        predecessors[case] = {"runId": run["id"], "artifactId": matches[0]["id"], "digest": matches[0]["digest"]}
+    expected = ["readiness-only", *CASES[:index]]
+    ordered = [predecessors[c] for c in expected if c in predecessors]
+    if (set(predecessors) != set(expected) or any(a["runId"] >= b["runId"] for a, b in zip(ordered, ordered[1:]))
+            or ordered[-1]["runId"] >= current_run_id
+            or (ordered[0]["runId"], ordered[0]["artifactId"]) != (request["readinessRunId"], request["readinessArtifactId"])
+            or (ordered[-1]["runId"], ordered[-1]["artifactId"]) != (request["priorRunId"], request["priorArtifactId"])):
+        raise ValueError("missing/stale/nonsequential qualified predecessor history")
+    writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
+    if (not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes)
+            or any(r["id"] > ORIGIN_CLEAN_RUN for r in writes)):
+        raise ValueError("known ingestion history missing or later writer requires review")
+    return {"allSourcesInspected": True, "predecessors": predecessors, "knownLaterIngestionDispatches": 0,
+        "completeAllWriterAuditAvailable": False, "vectorWriteContinuity": "UNPROVEN",
+        "unobservedVectorOnlyWritesCannotBeExcluded": True}
+
+
+def qualified_predecessor(request, source, image, campaign, history, private):
+    """Authenticate the complete bounded predecessor chain, reusing v2 review/ledger primitives."""
+    index = CASES.index(request["caseId"])
+    reference = {"runId": request["priorRunId"], "artifactId": request["priorArtifactId"],
+                 "reviewCommentId": request["priorReviewCommentId"]}
+    successor_ledger = None
+    for case in reversed(["readiness-only", *CASES[:index]]):
+        expected_ref = history["predecessors"][case]
+        if any(reference.get(k) != expected_ref[k] for k in ("runId", "artifactId")):
+            raise ValueError("qualified predecessor link disagrees with all-source history")
+        readiness = case == "readiness-only"
+        names = ["inventory.json", "binding.json", "ledger.json", "readiness.json", "post-admission.json",
+            "origin-bindings.json", "release.json", "observation/accepted.json", "observation/job.json",
+            "observation/cli.json", "observation/retrieval.json", "observation/presentation.json", "observation/draft-identity.json"]
+        names += ["readiness-job.json"] if readiness else ["qualified-chain.json", "input-identity.json"]
+        evidence, bound = bound_artifact(reference["runId"], reference["artifactId"], names, private,
+            ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+        if (bound != {**expected_ref, "sourceSha": source, "conclusion": "success"}
+                or any(evidence["binding.json"].get(k) != v for k, v in {"sourceSha": source, "image": image,
+                    "candidateIdentity": IDENTITY, "procedureSha256": sha((ROOT / CORRECTIVE_PROCEDURE).read_bytes()),
+                    "runId": reference["runId"], "mode": CORRECTIVE_MODE if readiness else QUALIFIED_MODE,
+                    "caseId": None if readiness else case,
+                    "liveApprovalCommentId": request["readinessLiveApprovalCommentId"] if readiness else request["liveApprovalCommentId"]}.items())):
+            raise ValueError("qualified predecessor artifact/source/image/procedure/campaign mismatch")
+        if readiness and (reference != {"runId": request["readinessRunId"], "artifactId": request["readinessArtifactId"],
+                "reviewCommentId": request["readinessReviewCommentId"]}
+                or bound["digest"] != campaign["corrective_readiness_artifact_digest"]):
+            raise ValueError("qualified campaign readiness digest/review mismatch")
+        if any(e.get("path") == "error.json" for e in evidence["inventory.json"]["files"]):
+            raise ValueError("qualified predecessor has preserved failure evidence")
+        corrective_release(evidence["release.json"], source, image)
+        for snapshot in (evidence["readiness.json"], evidence["post-admission.json"]):
+            required = {"classification": "RISK_QUALIFIED_RETAINED_V4", "indexUuid": ORIGIN_UUID,
+                "liveContentIdentity": ORIGIN_CONTENT, "vectorDocumentsChecked": 5395, "vectorDimension": 1536,
+                "originSourceSha": ORIGIN_SOURCE, "originApprovalCommentId": ORIGIN_APPROVAL,
+                "originArtifactDigest": ORIGIN_CLEAN_DIGEST, "vectorWriteContinuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+                "cryptographicVectorContinuityProven": False, "embeddingRequests": 0, "indexWrites": 0}
+            if any(snapshot.get(k) != v for k, v in required.items()):
+                raise ValueError("qualified predecessor admission risk/content/UUID/vector evidence mismatch")
+        if evidence["readiness.json"].get("correlatedBackendRetrieval") is not True:
+            raise ValueError("qualified predecessor correlated backend retrieval missing")
+        origins = evidence["origin-bindings.json"]
+        for key, values in {"clean": {"runId": ORIGIN_CLEAN_RUN, "artifactId": ORIGIN_CLEAN_ARTIFACT,
+                "digest": ORIGIN_CLEAN_DIGEST, "sourceSha": ORIGIN_SOURCE, "conclusion": "success"},
+                "failed": {"runId": ORIGIN_FAILED_RUN, "artifactId": ORIGIN_FAILED_ARTIFACT,
+                "digest": ORIGIN_FAILED_DIGEST, "sourceSha": ORIGIN_SOURCE, "conclusion": "failure"}}.items():
+            if origins.get(key) != values:
+                raise ValueError("qualified predecessor relabeled/missing immutable origins")
+        accepted, job, presentation = (evidence[n] for n in
+            ("observation/accepted.json", "observation/job.json", "observation/presentation.json"))
+        quality = job.get("quality") or {}
+        cli, retrieval = evidence["observation/cli.json"], evidence["observation/retrieval.json"]
+        if (accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True or accepted.get("uploadAttempts") != 1
+                or not accepted.get("jobId") or accepted["jobId"] != job.get("id") or job.get("status") != "SUCCEEDED"
+                or job.get("projectId") != accepted.get("projectId") or job.get("sourceFileId") != accepted.get("sourceFileId")
+                or not job.get("resultObjectKey") or not job.get("resultFileId")
+                or any(quality.get(k) != v for k, v in {"contractVersion": "evidence-quality-v1", "technicalStatus": "PASS", "knowledgeStatus": "COMPLETE"}.items())
+                or any(presentation.get(k) != v for k, v in {"projectId": job.get("projectId"), "analysisStatus": "SUCCEEDED",
+                    "latestAnalysisJobId": job["id"], "quality": quality, "latestResultObjectKey": job.get("resultObjectKey")}.items())
+                or any(cli.get(k) != v for k, v in {"terraformVersion": "1.8.5", "providerVersion": "5.100.0", "initValidateExitCode": 0, "AWSPlanApply": False}.items())
+                or retrieval.get("jobId") != job["id"] or not isinstance(retrieval.get("officialHitCount"), int) or retrieval["officialHitCount"] <= 0):
+            raise ValueError("qualified predecessor accepted/terminal/CLI/retrieval/persisted trust evidence invalid")
+        hcl = evidence["observation/draft-identity.json"]
+        hcl_entries = [e for e in evidence["inventory.json"]["files"] if e.get("path") == "observation/main.tf"]
+        if (len(hcl_entries) != 1 or hcl_entries[0]["sha256"] != hcl.get("hclSha256")
+                or cli.get("hclSha256") != hcl.get("hclSha256") or hcl.get("resultObjectKey") != job.get("resultObjectKey")):
+            raise ValueError("qualified predecessor draft/CLI/inventory identity mismatch")
+        previous = evidence["ledger.json"]
+        if tuple(r["caseId"] for r in previous) != CASES:
+            raise ValueError("qualified predecessor case ledger order mismatch")
+        if readiness:
+            record = evidence["readiness-job.json"]
+            if previous != [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in CASES]:
+                raise ValueError("qualified readiness official ledger not all NOT_RUN")
+        else:
+            position = CASES.index(case)
+            if [r["status"] for r in previous] != ["PASS"] * position + ["REVIEW_PENDING"] + ["NOT_RUN"] * (4 - position):
+                raise ValueError("qualified case ledger failed/unreviewed/nonsequential")
+            if evidence["input-identity.json"] != next(c for c in frozen_inputs() if c["caseId"] == case):
+                raise ValueError("qualified predecessor frozen input identity mismatch")
+            record = previous[position]
+        if (record.get("status") != "REVIEW_PENDING" or record.get("terminalState") != "SUCCEEDED"
+                or record.get("jobId") != job["id"] or record.get("consumed") is not True or record.get("uploadAttempts") != 1
+                or "censoredObservationMs" in record or "observation" in record):
+            raise ValueError("qualified predecessor failed/censored/ambiguous/unreviewed observation")
+        review = authority_comment(reference["reviewCommentId"], "[PRODUCT_TRUST_REVIEW:v1]")
+        reviewed_prior(review, evidence["binding.json"], reference["runId"], reference["artifactId"], bound["digest"], case)
+        if (review.get("decision") != "ACCEPTED" or review.get("material_defect") != "false" or review.get("false_trusted_success") != "0"
+                or any(review.get(k) != v for k, v in {"admission_class": "RISK_QUALIFIED_RETAINED_V4",
+                    "vector_write_continuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+                    "accepted_residual_risk": "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED",
+                    "origin_clean_artifact_digest": ORIGIN_CLEAN_DIGEST, "origin_clean_source_sha": ORIGIN_SOURCE,
+                    "failed_readiness_artifact_digest": ORIGIN_FAILED_DIGEST, "original_failure_consumed": "true"}.items())):
+            raise ValueError("qualified predecessor independent PASS/risk review missing")
+        if successor_ledger is None:
+            successor_ledger = copy_ledger = json.loads(json.dumps(previous))
+            if not readiness:
+                copy_ledger[CASES.index(case)]["status"] = "PASS"
+            next_case(copy_ledger, request["caseId"], review)
+        elif not readiness:
+            original = json.loads(json.dumps(previous[:CASES.index(case) + 1]))
+            original[-1]["status"] = "PASS"
+            if successor_ledger[:len(original)] != original:
+                raise ValueError("qualified ledger rewrote an earlier individual observation")
+        if not readiness:
+            chain = evidence["qualified-chain.json"]
+            if any(chain.get(k) != v for k, v in {"campaignApprovalCommentId": request["liveApprovalCommentId"],
+                    "readinessRunId": request["readinessRunId"], "readinessArtifactId": request["readinessArtifactId"],
+                    "readinessReviewCommentId": request["readinessReviewCommentId"]}.items()):
+                raise ValueError("qualified campaign/readiness chain link mismatch")
+            reference = chain["prior"]
+    return successor_ledger
+
+
 def ensure_latest_dispatch(request, source, current_run_id):
     """Existing serial workflow + authoritative history, not a new lock/queue service.
 
@@ -403,12 +613,16 @@ def bound_artifact(run_id, artifact_id, names, directory, workflow, *, verify_in
             result[name] = json.loads(zipped.read(member))
         if verify_inventory:
             entries = result["inventory.json"]["files"]
-            for name in names:
-                if name == "inventory.json":
-                    continue
-                matches = [e for e in entries if e.get("path") == name]
+            paths = [e["path"] for e in entries]
+            if (len(paths) > 64 or len(set(paths)) != len(paths)
+                    or set(zipped.namelist()) != set(paths) | {"inventory.json"}):
+                raise ValueError("original artifact inventory/archive membership mismatch")
+            for entry in entries:
+                name = entry["path"]
+                if Path(name).is_absolute() or ".." in Path(name).parts or zipped.getinfo(name).file_size > 2_000_000:
+                    raise ValueError("bounded artifact inventory member invalid")
                 data = zipped.read(name)
-                if len(matches) != 1 or matches[0].get("sha256") != sha(data) or matches[0].get("sizeBytes") != len(data):
+                if entry.get("sha256") != sha(data) or entry.get("sizeBytes") != len(data):
                     raise ValueError("original artifact inventory/member hash mismatch")
     return result, {"runId": run_id, "artifactId": artifact_id, "digest": artifact["digest"],
                     "sourceSha": run["head_sha"], "conclusion": run["conclusion"]}
@@ -615,7 +829,18 @@ def main():
     request = json.loads(args.request_file.read_text())
     source, image = os.environ["GITHUB_SHA"], os.environ["BACKEND_IMAGE"]
     corrective = request.get("mode") == CORRECTIVE_MODE
-    if corrective:
+    qualified = request.get("mode") == QUALIFIED_MODE
+    risk_path = corrective or qualified
+    if qualified:
+        if os.environ.get("OPERATION") != QUALIFIED_OPERATION:
+            raise ValueError("qualified mode requires its distinct reviewed workflow operation")
+        campaign, authority = qualified_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+        history = qualified_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
+        if args.action == "preflight":
+            with tempfile.TemporaryDirectory(prefix="pt8a-chain-") as directory:
+                corrective_origins(Path(directory))
+                qualified_predecessor(request, source, image, campaign, history, Path(directory))
+    elif corrective:
         if os.environ.get("OPERATION") != CORRECTIVE_OPERATION:
             raise ValueError("corrective mode requires its distinct reviewed workflow operation")
         authority = corrective_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
@@ -624,8 +849,8 @@ def main():
             with tempfile.TemporaryDirectory(prefix="pt8a-origin-") as directory:
                 corrective_origins(Path(directory))
     else:
-        if os.environ.get("OPERATION") == CORRECTIVE_OPERATION:
-            raise ValueError("corrective operation cannot execute ordinary readiness or official cases")
+        if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION):
+            raise ValueError("qualified/corrective operation cannot execute ordinary readiness or official cases")
         request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
         ensure_latest_dispatch(request, source, int(os.environ["GITHUB_RUN_ID"]))
     if args.action == "preflight":
@@ -637,13 +862,21 @@ def main():
     try:
         with tempfile.TemporaryDirectory(prefix="pt8a-private-") as temporary:
             private = Path(temporary)
-            if corrective:
+            if risk_path:
                 corrective_release(release, source, image)
                 origin_receipt, binding, failed_binding = corrective_origins(private)
                 # Store original identities separately; never issue a new ingestion receipt.
                 write(output / "origin-bindings.json", {"clean": binding, "failed": failed_binding,
                     "originApprovalCommentId": ORIGIN_APPROVAL, "originalFailedJobConsumed": True})
                 write(output / "known-writer-history.json", history)
+                if qualified:
+                    ledger = qualified_predecessor(request, source, image, campaign, history, private)
+                    write(output / "qualified-chain.json", {
+                        "campaignApprovalCommentId": request["liveApprovalCommentId"],
+                        "readinessRunId": request["readinessRunId"], "readinessArtifactId": request["readinessArtifactId"],
+                        "readinessReviewCommentId": request["readinessReviewCommentId"],
+                        "prior": {"runId": request["priorRunId"], "artifactId": request["priorArtifactId"],
+                            "reviewCommentId": request["priorReviewCommentId"]}})
             else:
                 receipt, binding = bound_artifact(request["provenanceRunId"], request["provenanceArtifactId"],
                     ["receipt.json"], private, ".github/workflows/gcp-target-corpus-ingestion.yml")
@@ -651,7 +884,7 @@ def main():
             manifest, schema, documents, checksum = rag.load_corpus(args.corpus)
             if checksum != CORPUS_CHECKSUM:
                 raise ValueError("rebuilt expected corpus checksum differs; do not tune authority")
-            if corrective:
+            if risk_path:
                 rag.validate_pt8a_clean_corpus(manifest, documents, checksum,
                     json.loads((args.corpus / "coverage-report.json").read_text()))
                 readiness = risk_qualified_admission(rag.JsonHttpClient("http://127.0.0.1:19200"),
@@ -661,13 +894,18 @@ def main():
                 readiness = rag.verify_exact_v4(rag.JsonHttpClient("http://127.0.0.1:19200"), manifest, schema,
                     documents, checksum, {**binding, "githubArtifactBindingVerified": True, "receipt": receipt["receipt.json"]})
             write(output / "readiness.json", readiness)
-            if readiness["classification"] != ("RISK_QUALIFIED_RETAINED_V4" if corrective else "EXACT_REUSABLE_COMPLETED_V4"):
+            if readiness["classification"] != ("RISK_QUALIFIED_RETAINED_V4" if risk_path else "EXACT_REUSABLE_COMPLETED_V4"):
                 raise ValueError("readiness does not authorize case A; no automatic ingestion")
             write(output / "binding.json", {"sourceSha": source, "image": image, "candidateIdentity": IDENTITY,
-                "procedureSha256": sha((ROOT / (CORRECTIVE_PROCEDURE if corrective else PROCEDURE)).read_bytes()),
+                "procedureSha256": sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
                 "mode": request["mode"], "caseId": request.get("caseId"),
                 "liveApprovalCommentId": request["liveApprovalCommentId"], "runId": int(os.environ["GITHUB_RUN_ID"])})
-            if request["mode"] == "case":
+            if qualified:
+                record = ledger[CASES.index(request["caseId"])]
+                case = next(c for c in frozen_inputs() if c["caseId"] == request["caseId"])
+                fixture = acquire(case, private)
+                write(output / "input-identity.json", case)
+            elif request["mode"] == "case":
                 prior, prior_binding = bound_artifact(request["priorRunId"], request["priorArtifactId"],
                     ["ledger.json", "binding.json", "readiness.json"], private, ".github/workflows/gcp-target-runtime-dependencies.yml")
                 ledger = prior["ledger.json"]
@@ -699,7 +937,12 @@ def main():
                 private_fixture = private / "input.png"; private_fixture.write_bytes(fixture.read_bytes()); fixture = private_fixture
             if transport.current_main() != source:
                 raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT before inference")
-            if corrective:
+            if qualified:
+                campaign, authority = qualified_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                history = qualified_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
+                if qualified_predecessor(request, source, image, campaign, history, private) != ledger:
+                    raise ValueError("qualified predecessor changed before upload")
+            elif corrective:
                 corrective_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                 corrective_history(source, int(os.environ["GITHUB_RUN_ID"]))
             subprocess.run(["bash", "scripts/smoke/ephemeral-jwks-fixture.sh", "prepare"], check=True)
@@ -708,17 +951,22 @@ def main():
                 observe(client, fixture, output / "observation", record, documents, "terraformers-pt8a-validation")
             finally:
                 client.close()
-            if corrective and record["status"] == "REVIEW_PENDING":
+            if risk_path and record["status"] == "REVIEW_PENDING":
                 # Recheck after the one job, without any new upload or embedding request.
                 post = risk_qualified_admission(rag.JsonHttpClient("http://127.0.0.1:19200"),
                     manifest, schema, documents, checksum, origin_receipt, binding, authority)
                 write(output / "post-admission.json", post)
-                write(output / "post-known-writer-history.json", corrective_history(source, int(os.environ["GITHUB_RUN_ID"])))
-                corrective_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
-            if request["mode"] in ("readiness", CORRECTIVE_MODE):
+                if qualified:
+                    write(output / "post-known-writer-history.json", qualified_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
+                    qualified_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                else:
+                    write(output / "post-known-writer-history.json", corrective_history(source, int(os.environ["GITHUB_RUN_ID"])))
+                    corrective_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+            if request["mode"] in ("readiness", CORRECTIVE_MODE, QUALIFIED_MODE):
                 readiness["correlatedBackendRetrieval"] = record["status"] == "REVIEW_PENDING"
                 write(output / "readiness.json", readiness)
-                write(output / "readiness-job.json", record)
+                if not qualified:
+                    write(output / "readiness-job.json", record)
             if record["status"] == "NOT_PASS":
                 raise ValueError("material technical/product failure; preserve later cases NOT_RUN")
     except Exception as error:

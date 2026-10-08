@@ -52,6 +52,10 @@ class VertexArchitectureFactsExtractorTest {
                     .contains("empty", "resourceTypes")
                     .contains("components and relationships to at most 8")
                     .contains("resourceTypes to at most 16");
+            assertThat(content.parts().orElseThrow().stream().flatMap(part -> part.text().stream())
+                    .collect(java.util.stream.Collectors.joining("\n")))
+                    .contains("do not infer undrawn connections", "advisory mappings of visible service intent",
+                            "not a list of implementation support resources");
             return response("""
                     {"summary":"Three tier","components":["ALB","API"],
                      "relationships":["ALB -> API"],"resourceTypes":["aws_lb"]}

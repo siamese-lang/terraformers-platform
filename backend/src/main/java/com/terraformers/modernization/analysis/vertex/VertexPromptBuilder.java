@@ -12,6 +12,25 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class VertexPromptBuilder {
+    private static final String DRAFT_BOUNDARIES = """
+            Image facts and implementation boundaries:
+            - Summary, components and relationships describe image-observed intent only. Provider examples
+              and PROJECT_DECISION text are not evidence of an image connection or additional service.
+            - Do not connect depicted services merely because they commonly appear together in examples.
+              For an undrawn required endpoint/origin, use a declared external input rather than inventing
+              a connection to another depicted service. Preserve every visible directed relationship.
+            - Include implementation support wiring and authorization for the relationships actually chosen;
+              such support resources are not additional image-observed components or relationships.
+            - PROJECT_DECISION applicability requires its architectural context, not just a shared support
+              resource such as an IAM role. Do not import unrelated platform constraints.
+            - Missing personalized domain, hosted zone, certificate, region, account and code artifact values
+              must be declared inputs/references with actionable descriptions, without fabricated defaults
+              or dummy local artifact paths. Editable inputs are valid; claim neither asset existence nor deployment.
+            - Keep region-dependent resources and endpoints coherent with their provider configuration.
+              CloudFront ACM certificates require us-east-1; regional API Gateway certificates and origins
+              must match the API's actual region. Use separate provider aliases or declared external
+              certificates when necessary, not an undeclared region embedded in an endpoint string.
+            """;
 
     public String build(ObjectContent source, List<ReferenceDocument> references, boolean compact) {
         return build(source, references, new AwsProviderSchemaEvidence(Map.of()), compact);
@@ -41,6 +60,10 @@ public class VertexPromptBuilder {
                 - Provider examples demonstrate syntax only; do not copy settings marked by riskTags without adapting them to project constraints.
 
                 %s
+                - Record implementation assumptions and unresolved personalized inputs in warnings;
+                  never report them as observed image relationships.
+
+                %s
 
                 Object metadata:
                 - contentType: %s
@@ -52,6 +75,7 @@ public class VertexPromptBuilder {
                 Request-relevant AWS Provider 5.100.0 schema context:
                 %s
                 """.formatted(
+                DRAFT_BOUNDARIES,
                 compact
                         ? "Compact mode: minimize prose and Terraform while preserving only core components, relationships, and resources."
                         : "Standard mode: keep analysis and Terraform concise and avoid equivalent repeated detail.",
@@ -91,7 +115,11 @@ public class VertexPromptBuilder {
         return """
                 Correct only the prior Terraform draft. Return one JSON object containing terraformCode.
                 This is a Terraform grounding repair, not a new image analysis or classification.
-                - Preserve the original architecture intent, components, and relationships.
+                - Preserve image-observed architecture intent, components, and relationships.
+                  Prior generated analysis is an unverified interpretation, not additional image evidence.
+                  Do not preserve an inferred connection merely to retain prior prose or match an example;
+                  keep necessary unspecified endpoints as declared external inputs. Extracted facts are
+                  partial: omission is not evidence of absence. Do not remove visible topology to reduce gaps.
                 - Correct HCL using supplied official provider documentation and exact AWS Provider 5.100.0 schema.
                 - Do not introduce unrelated architecture components or new AWS resource types beyond those
                   supported by the supplied closure evidence and provider schema.
@@ -107,10 +135,17 @@ public class VertexPromptBuilder {
                   nested blocks, architecture relationships, resource references, wiring or authorization.
                   Do not use ellipses, abbreviated resources, omitted sections or truncated placeholders.
 
-                Original architecture facts: %s
-                Original summary: %s
-                Original components: %s
-                Original relationships: %s
+                %s
+                Selected official primary-resource documentation covers these managed resource types: %s
+                Any newly introduced managed resource type requires both selected official documentation
+                and provider schema support. A schema-valid support resource is not automatically documented.
+                If evidence is missing, preserve an explicit reviewable input boundary; do not invent wiring
+                or omit required authorization to make a draft appear complete.
+
+                Extracted image facts (advisory, not verified truth): %s
+                Prior generated summary (unverified): %s
+                Prior generated components (unverified): %s
+                Prior generated relationships (unverified): %s
 
                 Prior Terraform draft:
                 %s
@@ -120,7 +155,10 @@ public class VertexPromptBuilder {
 
                 Expanded exact AWS Provider 5.100.0 schema evidence:
                 %s
-                """.formatted(facts, original.summary(), original.components(), original.relationships(),
+                """.formatted(DRAFT_BOUNDARIES, references.stream()
+                        .filter(ReferenceDocument::isOfficialProviderDocumentation)
+                        .flatMap(reference -> reference.resourceTypes().stream()).distinct().sorted().toList(),
+                facts, original.summary(), original.components(), original.relationships(),
                 original.terraformCode(), evidence.isBlank() ? "- none" : evidence, schemaEvidence.promptText());
     }
 
@@ -133,10 +171,11 @@ public class VertexPromptBuilder {
         String authority = blankTo(reference.authority(), "REFERENCE");
         String source = blankTo(reference.sourcePath(), reference.id());
         String risks = reference.riskTags().isEmpty() ? "none" : String.join(",", reference.riskTags());
-        return "- id=%s; authority=%s; type=%s; source=%s; riskTags=%s; title=%s:\n%s".formatted(
+        return "- id=%s; authority=%s; type=%s; resourceTypes=%s; source=%s; riskTags=%s; title=%s:\n%s".formatted(
                 reference.id(),
                 authority,
                 blankTo(reference.documentType(), ""),
+                reference.resourceTypes(),
                 source,
                 risks,
                 reference.title(),

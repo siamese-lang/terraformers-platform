@@ -358,6 +358,14 @@ class VertexAnalysisProviderTest {
                 .containsExactly("aws_security_group");
         assertThat(result.qualityAssessment().reasons()).contains(
                 com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.GENERATED_RESOURCE_UNSUPPORTED_BY_EVIDENCE);
+        assertThat(result.qualityAssessment().technicalStatus())
+                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.TechnicalStatus.PASS);
+        assertThat(result.qualityAssessment().qualityStatus())
+                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.QualityStatus.DEGRADED);
+        assertThat(result.qualityAssessment().projectDecisionStatus())
+                .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.ProjectDecisionStatus.UNKNOWN);
+        assertThat(result.warnings()).anyMatch(warning -> warning.contains("lack selected official documentation")
+                && warning.contains("aws_security_group"));
         verify(fixture.retriever(), times(2)).retrieve(any());
         verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
         verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
@@ -380,8 +388,50 @@ class VertexAnalysisProviderTest {
             String messages = appender.list.stream().map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
                     .collect(java.util.stream.Collectors.joining("\n"));
             assertThat(messages).contains("stage=closure outcome=success", "hitCount=1", "elapsedMs=",
-                    "stage=closure outcome=failure", "finishReason=NOT_APPLICABLE", "outputTokens=NOT_APPLICABLE")
+                    "stage=closure outcome=failure", "finishReason=NOT_APPLICABLE", "outputTokens=NOT_APPLICABLE",
+                    "requestedResourceTypes=[aws_subnet]", "stage=final_evidence", "finalEvidenceGaps=[]")
                     .doesNotContain("SENTINEL_CLOSURE_PAYLOAD", draft);
+        } finally {
+            logger.detachAppender(appender); appender.stop();
+        }
+    }
+
+    @Test
+    void unknownExtractedTypeIsNotMisreportedAsInvalidGeneratedHclOrPromotedToTrustedPass() {
+        var fixture = closureFixture(List.of(official("vpc", "aws_vpc")), List.of(),
+                safeGeneration().terraformCode(), null);
+        when(fixture.facts().extract(any())).thenReturn(new ArchitectureRetrievalFacts(
+                "SENTINEL_PRIVATE_FACT", List.of("SENTINEL_COMPONENT"), List.of("SENTINEL_RELATIONSHIP"),
+                List.of("aws_vpc", "aws_unrecognized_candidate")));
+        var logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(VertexAnalysisProvider.class);
+        var appender = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        appender.start(); logger.addAppender(appender);
+        try {
+            var result = fixture.provider().analyze(context());
+            var quality = result.qualityAssessment();
+            assertThat(quality.technicalStatus())
+                    .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.TechnicalStatus.PASS);
+            assertThat(quality.knowledgeStatus())
+                    .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.KnowledgeStatus.UNKNOWN);
+            assertThat(quality.projectDecisionStatus())
+                    .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.ProjectDecisionStatus.UNKNOWN);
+            assertThat(quality.qualityStatus())
+                    .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.QualityStatus.UNKNOWN);
+            assertThat(quality.reasons()).contains(
+                    com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.RESOURCE_UNKNOWN_TO_PROVIDER);
+            assertThat(quality.generatedResourcesAbsentFromProviderSchema()).isEmpty();
+            assertThat(quality.extractedResourceTypes()).contains("aws_unrecognized_candidate");
+            assertThat(result.warnings()).anyMatch(warning -> warning.contains("aws_unrecognized_candidate")
+                    && warning.contains("separate check"));
+            String messages = appender.list.stream().map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(messages).contains("extractedUnknownToProvider=[aws_unrecognized_candidate]",
+                    "generatedAbsentFromProvider=[]", "projectDecisionStatus=UNKNOWN")
+                    .doesNotContain("SENTINEL_PRIVATE_FACT", "SENTINEL_COMPONENT", "SENTINEL_RELATIONSHIP",
+                            safeGeneration().terraformCode());
+            verify(fixture.inspector()).inspect(safeGeneration().terraformCode());
+            verify(fixture.retriever(), times(1)).retrieve(any());
+            verify(fixture.stage(), org.mockito.Mockito.never()).repair(any(), any(), any(), any());
         } finally {
             logger.detachAppender(appender); appender.stop();
         }
@@ -515,7 +565,7 @@ class VertexAnalysisProviderTest {
                 stage, retriever, properties, catalog, inspector));
         var provider = new VertexAnalysisProvider(reader, retriever, properties, facts,
                 new RetrievalQueryTextBuilder(), orchestrator, catalog, assessor, availableCoverage());
-        return new ClosureFixture(provider, retriever, stage, inspector, assessor, orchestrator);
+        return new ClosureFixture(provider, retriever, stage, inspector, assessor, orchestrator, facts);
     }
 
     private VertexGenerationStage respondingStage(GenerateContentResponse... responses) {
@@ -546,7 +596,7 @@ class VertexAnalysisProviderTest {
 
     private record ClosureFixture(VertexAnalysisProvider provider, ReferenceRetriever retriever,
             VertexGenerationStage stage, GeneratedTerraformContractInspector inspector, EvidenceQualityAssessor assessor,
-            VertexGroundedGenerationOrchestrator orchestrator) {}
+            VertexGroundedGenerationOrchestrator orchestrator, VertexArchitectureFactsExtractor facts) {}
 
     private VertexAnalysisProvider provider(
             ReferenceRetriever retriever,

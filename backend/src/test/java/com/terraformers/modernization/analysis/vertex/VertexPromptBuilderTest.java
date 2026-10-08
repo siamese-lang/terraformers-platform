@@ -28,6 +28,10 @@ class VertexPromptBuilderTest {
                         "previous Terraform draft was rejected",
                         "without literal credentials",
                         "Do not include secrets, account IDs, access keys, static credentials");
+        assertThat(prompt).contains("image-observed intent only", "not evidence of an image connection",
+                "declared external input", "Preserve every visible directed relationship",
+                "without fabricated defaults", "dummy local artifact paths", "actionable descriptions",
+                "us-east-1", "API's actual region", "Record implementation assumptions");
     }
 
     @Test
@@ -63,6 +67,11 @@ class VertexPromptBuilderTest {
                 "not a new image analysis", "PROJECT_DECISION");
         assertThat(prompt).contains("complete HCL once", "no explanations or comments",
                 "never required arguments", "wiring or authorization", "Do not use ellipses");
+        assertThat(prompt).contains("Prior generated relationships (unverified)",
+                "omission is not evidence of absence", "shared support", "IAM role",
+                "resourceTypes=[aws_instance]", "documentation covers these managed resource types: [aws_instance]",
+                "both selected official documentation", "not automatically documented",
+                "without fabricated defaults", "CloudFront ACM certificates require us-east-1");
         assertThat(builder.repairResponseJsonSchema().get("required")).isEqualTo(List.of("terraformCode"));
     }
 

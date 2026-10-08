@@ -91,8 +91,8 @@ public class VertexGroundedGenerationOrchestrator {
                 throw failure;
             }
             log.info("Vertex grounding stage=closure outcome=success finishReason=NOT_APPLICABLE "
-                            + "outputTokens=NOT_APPLICABLE hitCount={} elapsedMs={}",
-                    closure.size(), (System.nanoTime() - closureStarted) / 1_000_000);
+                            + "outputTokens=NOT_APPLICABLE hitCount={} elapsedMs={} requestedResourceTypes={}",
+                    closure.size(), (System.nanoTime() - closureStarted) / 1_000_000, query.resourceTypes());
             outcome = new Outcome(generated, initial, new ClosureRetrieval(query, closure), initial,
                     false, generated.terraformCode(), missing);
             evidenceObserver.accept(outcome);
@@ -118,6 +118,11 @@ public class VertexGroundedGenerationOrchestrator {
         outcome = new Outcome(generated, initial, outcome.closureRetrieval(), outcome.finalReferences(),
                 outcome.repairAttempted(), outcome.finalTerraform(),
                 missingOfficialEvidence(finalTypes, outcome.finalReferences()));
+        log.info("Vertex grounding stage=final_evidence outcome=assessed repairAttempted={} "
+                        + "firstGeneratedTypes={} finalGeneratedTypes={} repairIntroducedTypes={} finalEvidenceGaps={}",
+                outcome.repairAttempted(), generatedTypes.stream().limit(64).toList(), finalTypes.stream().limit(64).toList(),
+                finalTypes.stream().filter(type -> !generatedTypes.contains(type)).limit(64).toList(),
+                outcome.finalGeneratedResourceEvidenceGaps().stream().limit(64).toList());
         evidenceObserver.accept(outcome);
         return outcome;
     }

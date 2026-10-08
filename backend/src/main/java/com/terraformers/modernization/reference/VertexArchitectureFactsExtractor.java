@@ -41,6 +41,9 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
             If a Terraform AWS provider resource type cannot be identified confidently, omit it; use an empty
             resourceTypes array when none can be identified confidently.
             Describe architecture facts only; never generate Terraform, Markdown, or explanatory prose.
+            Components and relationships must be visible in the image; do not infer undrawn connections
+            from common AWS implementations. resourceTypes are advisory mappings of visible service intent,
+            not a list of implementation support resources or proof of provider validity.
             """;
 
     private final VertexFactsClient factsClient;

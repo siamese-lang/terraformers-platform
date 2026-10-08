@@ -24,6 +24,36 @@ SOURCE = "a" * 40
 IMAGE = "asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:" + "b" * 64
 
 
+# Read-only GitHub jobs API projections from the two real rollout runs at source
+# 1ceb3e40fb98004f58dc52c1f00993495489b1a4; no PT8A job executed in either.
+ROLLOUT_JOB_FIXTURES = {
+    37774612011: {"total_count": 10, "jobs": [
+        {'id': 113302233161, 'name': 'backend-revision-rollout', 'status': 'completed', 'conclusion': 'failure'},
+        {'id': 113302234183, 'name': 'backend-live-validation', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113302234503, 'name': 'backend-deployment', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113302234522, 'name': "inputs.operation == 'pt8a-qualified-case' && format('pt8a-qualified-case/{0}', fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-corrective-readiness' && 'pt8a-corrective-readiness' || 'pt8a-official-acceptance'", 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113302235153, 'name': 'terraform-preflight', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113302235172, 'name': 'kubernetes-prerequisites', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113302235180, 'name': 'backend-replacement-durability', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113302235187, 'name': 'capacity-baseline', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113302235537, 'name': 'terraform-apply', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113302281476, 'name': 'runtime-live-acceptance', 'status': 'completed', 'conclusion': 'skipped'},
+    ]},
+    37775050213: {"total_count": 10, "jobs": [
+        {'id': 113303685557, 'name': 'backend-revision-rollout', 'status': 'completed', 'conclusion': 'success'},
+        {'id': 113303686738, 'name': 'capacity-baseline', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113303686774, 'name': 'backend-deployment', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113303686944, 'name': 'terraform-preflight', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113303686991, 'name': 'kubernetes-prerequisites', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113303687109, 'name': 'backend-replacement-durability', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113303687219, 'name': 'runtime-live-acceptance', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113303687438, 'name': "inputs.operation == 'pt8a-qualified-case' && format('pt8a-qualified-case/{0}', fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-corrective-readiness' && 'pt8a-corrective-readiness' || 'pt8a-official-acceptance'", 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113303687538, 'name': 'backend-live-validation', 'status': 'completed', 'conclusion': 'skipped'},
+        {'id': 113303687629, 'name': 'terraform-apply', 'status': 'completed', 'conclusion': 'skipped'},
+    ]},
+}
+
+
 def ledger():
     return [{"caseId": c, "status": "NOT_RUN", "consumed": False} for c in pt8a.CASES]
 
@@ -634,6 +664,69 @@ class QualifiedCaseChainContracts(unittest.TestCase):
         current=self.histories(0);self.writes.append({'id':pt8a.ORIGIN_CLEAN_RUN+1,'head_sha':'c'*40})
         with patch.object(pt8a,"github",side_effect=self.api),self.assertRaisesRegex(ValueError,"writer"):
             pt8a.qualified_history(self.request,SOURCE,current)
+
+    def test_real_rollout_skips_admitted_but_unknown_or_consumed_history_still_blocks(self):
+        current = self.histories(0)
+        for run_id, jobs in ROLLOUT_JOB_FIXTURES.items():
+            self.runtime.append({"id": run_id, "head_sha": "1ceb3e40fb98004f58dc52c1f00993495489b1a4",
+                "run_attempt": 1, "status": "completed", "conclusion": jobs["jobs"][0]["conclusion"]})
+            self.job_rows[run_id] = copy.deepcopy(jobs)
+
+        def check_both_histories(expect_error=False):
+            calls = [lambda: pt8a.qualified_history(self.request, SOURCE, current),
+                     lambda: pt8a.corrective_history(SOURCE, current)]
+            for index, call in enumerate(calls):
+                # Corrective readiness has no predecessor; case A has the accepted readiness.
+                saved = self.runtime
+                if index == 1:
+                    self.runtime = [r for r in saved if r["id"] != self.ready_id]
+                try:
+                    if expect_error:
+                        with self.assertRaises((ValueError, RuntimeError)):
+                            call()
+                    else:
+                        history = call()
+                        self.assertTrue(history["allSourcesInspected"])
+                        if index == 0:
+                            self.assertEqual({"readiness-only"}, set(history["predecessors"]))
+                finally:
+                    self.runtime = saved
+
+        with patch.object(pt8a, "github", side_effect=self.api):
+            check_both_histories()
+            for run_id, original in ROLLOUT_JOB_FIXTURES.items():
+                skipped = next(i for i, j in enumerate(original["jobs"]) if j["id"] in
+                               (113302234522, 113303687438))
+                # Neither raw expressions nor known operations may hide a consumed failure.
+                for changed in ({"conclusion": "failure"}, {"conclusion": None},
+                                {"status": "in_progress"}, {"name": "unknown operation"},
+                                {"name": pt8a.QUALIFIED_OPERATION + "/unknown-case"},
+                                {"name": "prefix " + original["jobs"][skipped]["name"]},
+                                *({"name": name, "conclusion": "failure"} for name in
+                                  (pt8a.CORRECTIVE_OPERATION, "pt8a-official-acceptance",
+                                   pt8a.QUALIFIED_OPERATION + "/" + pt8a.CASES[0]))):
+                    with self.subTest(run=run_id, changed=changed):
+                        self.job_rows[run_id]["jobs"][skipped].update(changed)
+                        check_both_histories(expect_error=True)
+                        self.job_rows[run_id] = copy.deepcopy(original)
+                for defect in ("missing", "extra", "incomplete"):
+                    with self.subTest(run=run_id, defect=defect):
+                        jobs = self.job_rows[run_id]
+                        if defect == "missing":
+                            jobs["jobs"].pop(skipped); jobs["total_count"] -= 1
+                        elif defect == "extra":
+                            jobs["jobs"].append({"name": pt8a.CORRECTIVE_OPERATION, "conclusion": "skipped"})
+                            jobs["total_count"] += 1
+                        else:
+                            jobs["total_count"] += 1
+                        check_both_histories(expect_error=True)
+                        self.job_rows[run_id] = copy.deepcopy(original)
+            # A current qualified job must still have its evaluated per-case identity.
+            self.job_rows[current] = copy.deepcopy(ROLLOUT_JOB_FIXTURES[37775050213])
+            with self.assertRaisesRegex(ValueError, "current qualified"):
+                pt8a.qualified_history(self.request, SOURCE, current)
+        with patch.object(pt8a, "github", side_effect=RuntimeError("history unavailable")):
+            check_both_histories(expect_error=True)
 
     def test_qualified_cli_preflight_checks_chain_before_cloud_and_operation_modes_do_not_mix(self):
         with tempfile.TemporaryDirectory() as d,ExitStack() as stack:

@@ -30,6 +30,13 @@ CORRECTIVE_MODE = "corrective-readiness"
 CORRECTIVE_OPERATION = "pt8a-corrective-readiness"
 QUALIFIED_MODE = "qualified-case"
 QUALIFIED_OPERATION = "pt8a-qualified-case"
+# GitHub returns this unevaluated display name when the existing job's `if` is false.
+# It identifies a skipped job only; it is never an active operation identity.
+SKIPPED_PT8A_JOB_NAME = (
+    "inputs.operation == 'pt8a-qualified-case' && format('pt8a-qualified-case/{0}', "
+    "fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-corrective-readiness' "
+    "&& 'pt8a-corrective-readiness' || 'pt8a-official-acceptance'"
+)
 CHAIN_DECISION = 6058612980
 RECOVERY_DECISION = 6057566013
 ORIGIN_SOURCE = "70373842629fdd569815780e52dc5f0353b97880"
@@ -224,6 +231,21 @@ def complete_dispatch_history(workflow):
     raise ValueError("corrective history inspection bound exhausted; no inference")
 
 
+def pt8a_history_job(jobs):
+    if jobs["total_count"] != len(jobs["jobs"]) or jobs["total_count"] > 100:
+        raise ValueError("PT8A job history incomplete; no inference")
+    names = {CORRECTIVE_OPERATION, "pt8a-official-acceptance", SKIPPED_PT8A_JOB_NAME}
+    names.update(QUALIFIED_OPERATION + "/" + case for case in CASES)
+    related = [j for j in jobs["jobs"] if j["name"] in names]
+    if len(related) != 1:
+        raise ValueError("prior dispatch operation unproven; no inference")
+    job = related[0]
+    if job["name"] == SKIPPED_PT8A_JOB_NAME and (
+            job.get("status") != "completed" or job.get("conclusion") != "skipped"):
+        raise ValueError("unevaluated PT8A job name does not prove skipped execution; no inference")
+    return job
+
+
 def corrective_history(source, current_run_id):
     rows = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
     current = [r for r in rows if r["id"] == current_run_id]
@@ -233,13 +255,8 @@ def corrective_history(source, current_run_id):
     for run in rows:
         if run["id"] == current_run_id or run["id"] <= ORIGIN_FAILED_RUN:
             continue
-        jobs = github(f"actions/runs/{run['id']}/jobs?per_page=100")
-        if jobs["total_count"] != len(jobs["jobs"]) or jobs["total_count"] > 100:
-            raise ValueError("corrective job history incomplete; no inference")
-        related = [j for j in jobs["jobs"] if j["name"] in (CORRECTIVE_OPERATION, "pt8a-official-acceptance")]
-        if len(related) != 1:
-            raise ValueError("prior dispatch operation unproven; no corrective inference")
-        if related[0]["conclusion"] != "skipped":
+        job = pt8a_history_job(github(f"actions/runs/{run['id']}/jobs?per_page=100"))
+        if job["conclusion"] != "skipped":
             # Any post-origin corrective dispatch consumes the capability even before upload.
             # A later ordinary observation also prevents using this as a result-driven retry.
             raise ValueError("prior corrective/PT8A dispatch across sources already exists; no retry")
@@ -396,14 +413,7 @@ def qualified_history(request, source, current_run_id):
     for run in rows:
         if run["id"] < ORIGIN_FAILED_RUN or run["id"] == ORIGIN_FAILED_RUN:
             continue
-        jobs = github(f"actions/runs/{run['id']}/jobs?per_page=100")
-        if jobs["total_count"] != len(jobs["jobs"]) or jobs["total_count"] > 100:
-            raise ValueError("qualified job history incomplete; no upload")
-        related = [j for j in jobs["jobs"] if j["name"] in (CORRECTIVE_OPERATION, "pt8a-official-acceptance")
-                   or j["name"].startswith(QUALIFIED_OPERATION + "/")]
-        if len(related) != 1:
-            raise ValueError("qualified prior dispatch operation unproven; no upload")
-        job = related[0]
+        job = pt8a_history_job(github(f"actions/runs/{run['id']}/jobs?per_page=100"))
         if run["id"] == current_run_id:
             if job["name"] != QUALIFIED_OPERATION + "/" + request["caseId"] or job["conclusion"] == "skipped":
                 raise ValueError("current qualified dispatch case identity mismatch")

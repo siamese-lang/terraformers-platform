@@ -3233,6 +3233,7 @@ jobs:
       - name: Rebuild expected corpus from pinned authority without embedding
         run: |
           set -euo pipefail
+          PT8A_EXPECTED_CORPUS_DIR="$RUNNER_TEMP/v4"
           provider_commit=f7a3b98da589ab1d52756b0dcee0dbf2de83d635
           provider_dir="$RUNNER_TEMP/provider-source"
           kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend -- cat /opt/terraform-provider-schema/aws-5.100.0.json > "$RUNNER_TEMP/provider-schema.json"
@@ -3241,10 +3242,11 @@ jobs:
           git -C "$provider_dir" fetch -q --depth=1 origin "$provider_commit"
           git -C "$provider_dir" checkout -q --detach FETCH_HEAD
           [[ "$(git -C "$provider_dir" rev-parse HEAD)" == "$provider_commit" ]]
-          python3 scripts/rag/build-corpus-v4.py --provider-source-dir "$provider_dir" --provider-schema-json "$RUNNER_TEMP/provider-schema.json" --provider-source-commit "$provider_commit" --project-source-commit 1ae69d589ac3965733818819792d98c5638e0ae5 --output-dir "$RUNNER_TEMP/expected-v4" --all-documented-resources
-          python3 scripts/checks/rag-corpus-contract-verification.py --corpus-dir "$RUNNER_TEMP/expected-v4" --summary-json "$RUNNER_TEMP/expected-contract.json"
+          python3 scripts/rag/build-corpus-v4.py --provider-source-dir "$provider_dir" --provider-schema-json "$RUNNER_TEMP/provider-schema.json" --provider-source-commit "$provider_commit" --project-source-commit 1ae69d589ac3965733818819792d98c5638e0ae5 --output-dir "$PT8A_EXPECTED_CORPUS_DIR" --all-documented-resources
+          python3 scripts/checks/rag-corpus-contract-verification.py --corpus-dir "$PT8A_EXPECTED_CORPUS_DIR" --summary-json "$RUNNER_TEMP/expected-contract.json"
           jq -e '.sha256 == "da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a" and .documentCount == 5395' "$RUNNER_TEMP/expected-contract.json"
-          jq -e '.providerSchemaResourceCount == 1526 and .officialDocumentationResourceCount == 1514 and .selectedResourceCount == 1514 and .selectedOfficialEvidenceResourceCount == 1514 and (.selectedOfficialEvidenceExtractionGapResourceTypes | length) == 0 and .providerDocumentChunkCount == 5387 and .projectDecisionCount == 8' "$RUNNER_TEMP/expected-v4/coverage-report.json"
+          jq -e '.providerSchemaResourceCount == 1526 and .officialDocumentationResourceCount == 1514 and .selectedResourceCount == 1514 and .selectedOfficialEvidenceResourceCount == 1514 and (.selectedOfficialEvidenceExtractionGapResourceTypes | length) == 0 and .providerDocumentChunkCount == 5387 and .projectDecisionCount == 8' "$PT8A_EXPECTED_CORPUS_DIR/coverage-report.json"
+          printf 'PT8A_EXPECTED_CORPUS_DIR=%s\n' "$PT8A_EXPECTED_CORPUS_DIR" >> "$GITHUB_ENV"
 
       - name: Start owned validation pod with the already deployed immutable image
         id: pt8a-pod
@@ -3281,7 +3283,7 @@ jobs:
             sleep 2
           done
           [[ "$ready" == true ]]
-          python3 scripts/evaluation/pt8a-official-acceptance.py run --request-file "$RUNNER_TEMP/pt8a-request.json" --corpus "$RUNNER_TEMP/expected-v4" --output "$RUNNER_TEMP/pt8a-evidence"
+          python3 scripts/evaluation/pt8a-official-acceptance.py run --request-file "$RUNNER_TEMP/pt8a-request.json" --corpus "$PT8A_EXPECTED_CORPUS_DIR" --output "$RUNNER_TEMP/pt8a-evidence"
 
       - name: Preserve bounded evidence on every observation outcome
         id: pt8a-artifact

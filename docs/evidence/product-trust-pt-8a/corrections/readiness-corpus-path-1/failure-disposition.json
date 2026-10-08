@@ -1,0 +1,205 @@
+{
+  "recordType": "IMMUTABLE_PRE_OBSERVATION_NON_CONSUMING_READINESS_FAILURE_NOT_PRODUCT_EVIDENCE",
+  "authority": "APPROVE_PT8A_READINESS_PREOBSERVATION_CORPUS_PATH_CORRECTION_ONLY",
+  "workflow": ".github/workflows/gcp-target-runtime-dependencies.yml",
+  "operation": "pt8a-official-acceptance",
+  "mode": "readiness",
+  "run": {
+    "id": 37704835680,
+    "html_url": "https://github.com/siamese-lang/terraformers-platform/actions/runs/37704835680",
+    "head_sha": "a0d1d5e82dd872c20b92b46130a331a390efef6a",
+    "head_branch": "main",
+    "event": "workflow_dispatch",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "failure",
+    "created_at": "2026-10-07T23:53:58Z",
+    "updated_at": "2026-10-07T23:55:24Z"
+  },
+  "job": {
+    "id": 113076606857,
+    "name": "pt8a-official-acceptance",
+    "status": "completed",
+    "conclusion": "failure",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-07T23:54:15Z",
+        "completed_at": "2026-10-07T23:54:17Z"
+      },
+      {
+        "name": "Run actions/checkout@v5",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-07T23:54:17Z",
+        "completed_at": "2026-10-07T23:54:18Z"
+      },
+      {
+        "name": "Validate frozen procedure and explicit live authority before cloud access",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-07T23:54:18Z",
+        "completed_at": "2026-10-07T23:54:20Z"
+      },
+      {
+        "name": "Run google-github-actions/auth@v3",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-07T23:54:20Z",
+        "completed_at": "2026-10-07T23:54:20Z"
+      },
+      {
+        "name": "Run google-github-actions/setup-gcloud@v3",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-07T23:54:20Z",
+        "completed_at": "2026-10-07T23:54:49Z"
+      },
+      {
+        "name": "Run google-github-actions/get-gke-credentials@v3",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-10-07T23:54:49Z",
+        "completed_at": "2026-10-07T23:54:51Z"
+      },
+      {
+        "name": "Verify exact deployed release and existing runtime identity",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7,
+        "started_at": "2026-10-07T23:54:51Z",
+        "completed_at": "2026-10-07T23:55:03Z"
+      },
+      {
+        "name": "Rebuild expected corpus from pinned authority without embedding",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 8,
+        "started_at": "2026-10-07T23:55:03Z",
+        "completed_at": "2026-10-07T23:55:18Z"
+      },
+      {
+        "name": "Start owned validation pod with the already deployed immutable image",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 9,
+        "started_at": "2026-10-07T23:55:18Z",
+        "completed_at": "2026-10-07T23:55:18Z"
+      },
+      {
+        "name": "Observe read-only exact readiness and at most one accepted product job",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 10,
+        "started_at": "2026-10-07T23:55:18Z",
+        "completed_at": "2026-10-07T23:55:18Z"
+      },
+      {
+        "name": "Preserve bounded evidence on every observation outcome",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11,
+        "started_at": "2026-10-07T23:55:18Z",
+        "completed_at": "2026-10-07T23:55:18Z"
+      },
+      {
+        "name": "Bind artifact for post-inference independent review",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12,
+        "started_at": "2026-10-07T23:55:18Z",
+        "completed_at": "2026-10-07T23:55:18Z"
+      },
+      {
+        "name": "Remove only the owned ephemeral validation pod",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 13,
+        "started_at": "2026-10-07T23:55:18Z",
+        "completed_at": "2026-10-07T23:55:18Z"
+      },
+      {
+        "name": "Post Run google-github-actions/auth@v3",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 25,
+        "started_at": "2026-10-07T23:55:18Z",
+        "completed_at": "2026-10-07T23:55:19Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v5",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 26,
+        "started_at": "2026-10-07T23:55:19Z",
+        "completed_at": "2026-10-07T23:55:19Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 27,
+        "started_at": "2026-10-07T23:55:19Z",
+        "completed_at": "2026-10-07T23:55:19Z"
+      }
+    ]
+  },
+  "jobHistoryTotalCount": 10,
+  "pt8aJobCount": 1,
+  "artifactHistory": {
+    "total_count": 0,
+    "artifacts": []
+  },
+  "failureClass": "PRE_OBSERVATION_READINESS_CORPUS_DIRECTORY_CONTRACT_MISMATCH",
+  "failingStep": "Rebuild expected corpus from pinned authority without embedding",
+  "exactObservedError": "RAG corpus contract failure: corpus directory name must match manifest corpusVersion",
+  "observedBuild": {
+    "corpusVersion": "terraformers-reference-v4",
+    "documentCount": 5395,
+    "selectedResourceCount": 1514,
+    "directory": "$RUNNER_TEMP/expected-v4"
+  },
+  "observedLogLines": [
+    "pt8a-official-acceptance\tRebuild expected corpus from pinned authority without embedding\t2026-10-07T23:55:18.6996463Z {\"corpusVersion\": \"terraformers-reference-v4\", \"documentCount\": 5395, \"missingOfficialDocumentationCount\": 0, \"newResourceCountComparedWithV3\": 1484, \"officialEvidenceExtractionGapCount\": 0, \"output\": \"/home/runner/work/_temp/expected-v4\", \"selectedResourceCount\": 1514}",
+    "pt8a-official-acceptance\tRebuild expected corpus from pinned authority without embedding\t2026-10-07T23:55:18.7462806Z RAG corpus contract failure: corpus directory name must match manifest corpusVersion"
+  ],
+  "preflight": "PASS",
+  "wifGcpAuth": "PASS",
+  "deployedReleaseRuntimeIdentity": "PASS",
+  "validationPod": "NOT_RUN",
+  "productObservation": "NOT_RUN",
+  "jwksPrepare": "NOT_RUN",
+  "officialInputFetches": 0,
+  "officialInputUploads": 0,
+  "productAcceptedJobs": 0,
+  "modelInference": 0,
+  "artifactCount": 0,
+  "rerunRetryCount": 0,
+  "officialCases": {
+    "aws-official-a": "NOT_RUN",
+    "aws-official-b": "NOT_RUN",
+    "aws-official-c": "NOT_RUN",
+    "aws-official-d": "NOT_RUN",
+    "aws-official-e": "NOT_RUN"
+  },
+  "readinessClassification": null,
+  "productQualityFailure": false,
+  "runImmutable": true,
+  "independentReview": {
+    "id": 6049279548,
+    "html_url": "https://github.com/siamese-lang/terraformers-platform/pull/257#issuecomment-6049279548",
+    "created_at": "2026-10-07T23:59:28Z",
+    "updated_at": "2026-10-07T23:59:28Z",
+    "body": "[PT8A_READINESS_FAILURE_REVIEW:v1]\ndecision: CHANGES_REQUIRED\nreviewed_source_sha: a0d1d5e82dd872c20b92b46130a331a390efef6a\nrun_id: 37704835680\nrun_attempt: 1\njob_id: 113076606857\nfailure_class: PRE_OBSERVATION_READINESS_CORPUS_DIRECTORY_CONTRACT_MISMATCH\nartifact_count: 0\nofficial_case_consumed: false\nreadiness_product_observation_executed: false\nmodel_inference_executed: false\nofficial_input_fetches: 0\nofficial_input_uploads: 0\nmaterial_product_defect_observed: false\nrerun_authorized: false\ncorrection_required: true\n\nIndependent findings:\n- Preflight, WIF/GCP auth, exact deployed release/runtime identity verification all passed.\n- Failure occurred in 'Rebuild expected corpus from pinned authority without embedding'.\n- build-corpus-v4.py wrote the exact 5,395-document v4 corpus to $RUNNER_TEMP/expected-v4.\n- rag-corpus-contract-verification.py rejects that directory because its contract requires basename v4 for manifest corpusVersion terraformers-reference-v4.\n- The workflow consistently passes $RUNNER_TEMP/expected-v4 to build, contract verification, coverage readback, and the later observer; therefore this is a repository workflow path-contract defect, not corpus/model/OpenSearch/product failure.\n- 'Start owned validation pod...' and 'Observe read-only exact readiness and at most one accepted product job' were skipped.\n- No validation pod, JWKS fixture, product upload/POST, representative readiness job, official AWS case, or model inference was executed.\n- upload-artifact ran with an absent evidence directory and uploaded no artifact.\n- Current main still equals the reviewed source.\n- Existing PT-8A Work Package auto repair is already exhausted; this is a changed failure class and requires explicit USER human corrective authority before repository modification.\n\nRequired correction boundary:\n1) use a v4-named temporary corpus directory consistently in the PT-8A readiness workflow;\n2) add deterministic regression coverage tying the workflow path basename to rag-corpus-contract-verification.py's v4 directory contract;\n3) preserve this run as pre-observation non-consuming failed evidence;\n4) do not change frozen candidate, procedure v2 bytes/hash, clean-v4 ingestion semantics, model/corpus identities, or product scoring;\n5) repository-only PR and normal CI; no workflow dispatch/rerun/live action.\n\nThis review does not authorize a rerun of 37704835680 or any replacement readiness dispatch."
+  },
+  "reviewAuthor": "siamese-lang",
+  "futureDispatchAuthorizedByThisCorrection": false
+}

@@ -5,12 +5,15 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
+import yaml
 
 SPEC = importlib.util.spec_from_file_location("pt8a", Path(__file__).with_name("pt8a-official-acceptance.py"))
 pt8a = importlib.util.module_from_spec(SPEC)
@@ -184,6 +187,58 @@ class OnceOnlyAndReviewContracts(unittest.TestCase):
 
 
 class ArtifactAndObservationContracts(unittest.TestCase):
+    def test_actual_readiness_shell_blocks_share_canonical_corpus_path(self):
+        workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
+        steps = workflow["jobs"]["pt8a-official-acceptance"]["steps"]
+        rebuild = next(s["run"] for s in steps if s.get("name") == "Rebuild expected corpus from pinned authority without embedding")
+        observe = next(s["run"] for s in steps if s.get("name") == "Observe read-only exact readiness and at most one accepted product job")
+        real_bash = shutil.which("bash")
+        # Execute the extracted workflow, replacing external commands only. No network,
+        # cloud, JWKS or observer operation occurs; argument/path propagation is real Bash.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); runner = root / "runner temp"; runner.mkdir()
+            bins = root / "bin"; bins.mkdir(); calls = root / "calls.jsonl"; github_env = root / "github.env"
+            stub = "#!" + sys.executable + "\n" + '''import json, os, sys
+from pathlib import Path
+name = Path(sys.argv[0]).name
+args = sys.argv[1:]
+with open(os.environ["PT8A_TEST_CALLS"], "a") as stream:
+    stream.write(json.dumps([name, args]) + "\\n")
+def option(flag): return Path(args[args.index(flag) + 1])
+if name == "git" and "rev-parse" in args:
+    print("f7a3b98da589ab1d52756b0dcee0dbf2de83d635")
+elif name == "python3":
+    if args[0] == "scripts/rag/build-corpus-v4.py":
+        output = option("--output-dir"); output.mkdir(parents=True)
+        (output / "coverage-report.json").write_text("{}")
+    elif args[0] == "scripts/checks/rag-corpus-contract-verification.py":
+        assert option("--corpus-dir").is_dir()
+        option("--summary-json").write_text("{}")
+    elif args[0] == "scripts/evaluation/pt8a-official-acceptance.py":
+        assert option("--corpus").is_dir()
+    else: raise AssertionError(args)
+elif name == "jq":
+    json.loads(Path(args[-1]).read_text())
+'''
+            for command in ("git", "kubectl", "python3", "jq", "curl", "bash"):
+                path = bins / command; path.write_text(stub); path.chmod(0o755)
+            env = os.environ | {"PATH": str(bins) + os.pathsep + os.environ["PATH"], "RUNNER_TEMP": str(runner),
+                                "GITHUB_ENV": str(github_env), "NAMESPACE": "unused", "PT8A_TEST_CALLS": str(calls)}
+            for block in (rebuild, observe):
+                subprocess.run([real_bash, "-n"], input=block, text=True, check=True, capture_output=True)
+            subprocess.run([real_bash, "-c", rebuild], env=env, check=True, capture_output=True, text=True)
+            env.update(line.split("=", 1) for line in github_env.read_text().splitlines())
+            subprocess.run([real_bash, "-c", observe], env=env, check=True, capture_output=True, text=True)
+            recorded = [json.loads(line) for line in calls.read_text().splitlines()]
+            paths = []
+            for command, args in recorded:
+                for flag in ("--output-dir", "--corpus-dir", "--corpus"):
+                    if command == "python3" and flag in args: paths.append(Path(args[args.index(flag) + 1]))
+            coverage = [Path(args[-1]).parent for command, args in recorded
+                        if command == "jq" and Path(args[-1]).name == "coverage-report.json"]
+            self.assertEqual([runner / "v4"] * 3, paths)
+            self.assertEqual([runner / "v4"], coverage)
+            self.assertEqual(str(runner / "v4"), env["PT8A_EXPECTED_CORPUS_DIR"])
     def test_artifact_bound_to_exact_run_source_workflow_and_archive_digest(self):
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w") as z: z.writestr("receipt.json", '{"outcome":"ingested"}')

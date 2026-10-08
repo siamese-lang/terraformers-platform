@@ -1,0 +1,73 @@
+{
+  "recordType": "HISTORICAL_EXACT_SOURCE_CLEAN_V4_RECEIPT_NOT_NEW_SOURCE_READINESS",
+  "run": {
+    "id": 37669558088,
+    "html_url": "https://github.com/siamese-lang/terraformers-platform/actions/runs/37669558088",
+    "head_sha": "a0d1d5e82dd872c20b92b46130a331a390efef6a",
+    "head_branch": "main",
+    "event": "workflow_dispatch",
+    "path": ".github/workflows/gcp-target-corpus-ingestion.yml",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "artifact": {
+    "id": 11504143498,
+    "name": "gcp-corpus-ingestion-37669558088",
+    "digest": "sha256:ff35aa09327926a01c6f72cf69e1215c0fc1eb83214cfa9d978abe2f2c55a72f",
+    "expired": false,
+    "workflow_run": {
+      "id": 37669558088,
+      "repository_id": 1374031315,
+      "head_repository_id": 1374031315,
+      "head_branch": "main",
+      "head_sha": "a0d1d5e82dd872c20b92b46130a331a390efef6a"
+    }
+  },
+  "downloadedArchiveSha256": "ff35aa09327926a01c6f72cf69e1215c0fc1eb83214cfa9d978abe2f2c55a72f",
+  "archiveDigestVerified": true,
+  "receipt": {
+    "candidate_identity": "3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757",
+    "checksum": "da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a",
+    "corpus_version": "terraformers-reference-v4",
+    "document_count": 5395,
+    "elapsed_seconds": 719.846,
+    "embedded_this_run": 5395,
+    "embedding_model_id": "gemini-embedding-2",
+    "index_name": "terraformers-reference-v4",
+    "index_uuid": "L8KKBHT1Qri3E2VVw7As2g",
+    "index_uuid_after": "L8KKBHT1Qri3E2VVw7As2g",
+    "index_uuid_before": "L8KKBHT1Qri3E2VVw7As2g",
+    "ingestion_mode": "pt8a-clean-v4",
+    "live_approval_comment_id": 6044540736,
+    "non_vector_content_identity": "0bfa3e679a331f9680c9fee682f7f4d27bb2de1929a20df3b859a22036f878bb",
+    "outcome": "ingested",
+    "post_content_identity": "0bfa3e679a331f9680c9fee682f7f4d27bb2de1929a20df3b859a22036f878bb",
+    "pre_content_identity": "0bfa3e679a331f9680c9fee682f7f4d27bb2de1929a20df3b859a22036f878bb",
+    "procedure_sha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+    "project_decision_source": "1ae69d589ac3965733818819792d98c5638e0ae5",
+    "provider_source": "f7a3b98da589ab1d52756b0dcee0dbf2de83d635",
+    "representative_hit_ids": [
+      "tfaws-5.100.0-aws_accessanalyzer_archive_rule-example-1-basic-usage",
+      "tfaws-5.100.0-aws_inspector2_filter-example-1-basic-usage",
+      "tfaws-5.100.0-aws_rbin_rule-example-1-basic-usage"
+    ],
+    "reviewed_source_sha": "a0d1d5e82dd872c20b92b46130a331a390efef6a",
+    "skipped_existing": 0,
+    "vector_dimension": 1536
+  },
+  "artifactBinding": {
+    "sourceSha": "a0d1d5e82dd872c20b92b46130a331a390efef6a",
+    "runId": "37669558088",
+    "runAttempt": "1",
+    "mode": "pt8a-clean-v4",
+    "liveApprovalCommentId": "6044540736",
+    "status": "success",
+    "procedureSha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+    "receiptAvailable": true
+  },
+  "historicalSourceSha": "a0d1d5e82dd872c20b92b46130a331a390efef6a",
+  "newSourceEquivalenceEstablished": false,
+  "readinessPassEstablished": false,
+  "correctionPerformsNoEmbeddingOrIndexAccess": true
+}

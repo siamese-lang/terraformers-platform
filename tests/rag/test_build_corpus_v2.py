@@ -374,6 +374,18 @@ or Terraform/HCL example.
             all_documented_resources=False,
         )
 
+    def test_v4_directory_contract_accepts_canonical_path_and_rejects_expected_v4(self):
+        output = self.workspace / "v4"
+        build_v4.build(self.args(output, ["aws_lambda_function"]))
+        command = [sys.executable, str(ROOT / "scripts/checks/rag-corpus-contract-verification.py"), "--corpus-dir"]
+        valid = subprocess.run(command + [str(output)], capture_output=True, text=True)
+        self.assertEqual(0, valid.returncode, valid.stdout + valid.stderr)
+        invalid_path = output.with_name("expected-v4")
+        output.rename(invalid_path)
+        invalid = subprocess.run(command + [str(invalid_path)], capture_output=True, text=True)
+        self.assertNotEqual(0, invalid.returncode)
+        self.assertIn("corpus directory name must match manifest corpusVersion", invalid.stderr)
+
     def test_v4_builds_resource_absent_from_v3_without_source_allowlist(self):
         output = self.workspace / "v4"
         summary = build_v4.build(self.args(output, ["aws_lambda_function"]))

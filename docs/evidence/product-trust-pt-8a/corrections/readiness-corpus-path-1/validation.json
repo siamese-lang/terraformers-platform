@@ -1,0 +1,118 @@
+{
+  "recordType": "FINAL_TREE_DETERMINISTIC_PATH_CORRECTION_VALIDATION_NOT_LIVE_ACCEPTANCE",
+  "correctionExecutionBaseSha": "a0d1d5e82dd872c20b92b46130a331a390efef6a",
+  "independentReviewCommentId": 6049545779,
+  "reviewedHeadSha": "7ae8f917679e264ee2e43ae94467ede2b3d446ec",
+  "reviewResolution": "Remove run-specific history exception and exception-only tests; restore observer exactly to execution base; retain canonical v4 path and both regressions.",
+  "finalTreeTests": {
+    "command": "python3 -m unittest -v scripts/evaluation/test_pt8a_official_acceptance.py tests/rag/test_build_corpus_v2.py tests/rag/test_ingest_gcp_target_corpus.py",
+    "exitCode": 0,
+    "tests": 63,
+    "failures": 0,
+    "errors": 0,
+    "logSha256": "aaf50face0236c84894ca2944edb7d1a2e5fd67c7ce7e1a05f5ce2423685ccfc",
+    "workflowPathRegression": "PASS_REAL_EXTRACTED_YAML_BASH_WITH_EXTERNAL_COMMAND_STUBS",
+    "localCorpusCheckerRegression": "PASS_V4_ACCEPTS_IDENTICAL_EXPECTED_V4_REJECTS",
+    "existingSameSourceOnceOnlyHistoryTests": "PASS",
+    "existingObserverAndRagTests": "PASS",
+    "networkProviderFetches": 0,
+    "liveActions": 0
+  },
+  "metadataChecks": {
+    "yamlJsonParse": "PASS",
+    "pt8aWorkflowBashSyntax": [
+      {
+        "step": "Validate frozen procedure and explicit live authority before cloud access",
+        "exitCode": 0
+      },
+      {
+        "step": "Verify exact deployed release and existing runtime identity",
+        "exitCode": 0
+      },
+      {
+        "step": "Rebuild expected corpus from pinned authority without embedding",
+        "exitCode": 0
+      },
+      {
+        "step": "Start owned validation pod with the already deployed immutable image",
+        "exitCode": 0
+      },
+      {
+        "step": "Observe read-only exact readiness and at most one accepted product job",
+        "exitCode": 0
+      },
+      {
+        "step": "Bind artifact for post-inference independent review",
+        "exitCode": 0
+      },
+      {
+        "step": "Remove only the owned ephemeral validation pod",
+        "exitCode": 0
+      }
+    ],
+    "observerByteIdenticalToExecutionBase": true,
+    "observerSha256": "488774f9bc1b98956fc7c45806ef40d51bc0c1dc8bcfe69b7a74931fc353bd72",
+    "canonicalWorkflowByteIdenticalToReviewedHead": true,
+    "realCheckerRegressionByteIdenticalToReviewedHead": true,
+    "exceptionOnlyTestClassRemovedAndOtherTestsUnchanged": true,
+    "governanceChangeOnlyReviewFeedbackBookkeeping": true,
+    "repairAndCorrectionCountersUnchanged": true,
+    "naturalFailureAndHistoricalCleanEvidenceByteIdenticalToReviewedHead": true,
+    "frozenFilesCompared": 8,
+    "procedureSha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+    "allowedScope": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "sameSourceHistory": {
+    "observerByteIdenticalToExecutionBase": true,
+    "queryAndFilter": "Existing head_sha={source} query and r[head_sha] == source filter unchanged.",
+    "runSpecificException": false,
+    "genericFailedReadinessRetryException": false,
+    "extraJobArtifactCompletenessChanges": false,
+    "historicalFailureUse": "DURABLE_EVIDENCE_ONLY_NO_EXECUTABLE_EXCEPTION",
+    "postMergeLineage": "The merge advances main away from the failed historical source; that old run is outside new-source history. This does not authorize execution or establish new-source receipt equivalence."
+  },
+  "supersededValidation": {
+    "headSha": "7ae8f917679e264ee2e43ae94467ede2b3d446ec",
+    "disposition": "Historical validation only; run-specific exception and its tests removed following independent review. No active acceptance claim derives from those tests.",
+    "preservedInitialValidation": {
+      "command": "python3 -m unittest -v scripts/evaluation/test_pt8a_official_acceptance.py tests/rag/test_build_corpus_v2.py tests/rag/test_ingest_gcp_target_corpus.py",
+      "exitCode": 1,
+      "tests": 68,
+      "passingTests": 67,
+      "failures": 1,
+      "errors": 0,
+      "logSha256": "73f9193764169383d3c0cea504bd530a206f9a29ba4b4f0bfdaad10cedd8d76a",
+      "failureExcerpt": "FAIL: test_started_or_ambiguous_pod_observation_and_other_failure_are_not_ignored (scripts.evaluation.test_pt8a_official_acceptance.PreObservationReadinessHistoryContracts.test_started_or_ambiguous_pod_observation_and_other_failure_are_not_ignored) (index=2, change={'conclusion': 'failure'})\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/workspace/pt8a-readiness-preobservation-corpus-path-correction/scripts/evaluation/test_pt8a_official_acceptance.py\", line 245, in test_started_or_ambiguous_pod_observation_and_other_failure_are_not_ignored\n    with self.subTest(index=index, change=change), self.assertRaises(ValueError):\n                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 68 tests in 10.446s\n\nFAILED (failures=1)\n",
+      "failureClass": "NEW_NEGATIVE_TEST_FIXTURE_ASSERTED_REJECTION_OF_UNCHANGED_VALID_REBUILD_FAILURE"
+    },
+    "preservedTestFixtureCorrection": {
+      "change": "Skip a negative mutation when it is identical to the positive baseline. Rebuild conclusion=failure is required by the reviewed non-consuming failure.",
+      "productionOrWorkflowCodeChangedAfterInitialTests": false,
+      "focusedCommand": "python3 -m unittest -v scripts.evaluation.test_pt8a_official_acceptance.PreObservationReadinessHistoryContracts.test_started_or_ambiguous_pod_observation_and_other_failure_are_not_ignored",
+      "exitCode": 0,
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "output": "test_started_or_ambiguous_pod_observation_and_other_failure_are_not_ignored (scripts.evaluation.test_pt8a_official_acceptance.PreObservationReadinessHistoryContracts.test_started_or_ambiguous_pod_observation_and_other_failure_are_not_ignored) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.008s\n\nOK\n",
+      "other67PassingTestsNotRepeated": true,
+      "fullFinalTreeLocalSuiteRerun": false
+    }
+  },
+  "governance": {
+    "humanCorrectiveIteration": 3,
+    "autoRepairsUsedUnchanged": 1,
+    "historicalPreparationBaseUnchanged": "2bdb73d20486262856bfa6b680b7bf221fa23ca0",
+    "currentPrOrBranchRecordedInDurableState": false
+  },
+  "failedRunPreserved": 37704835680,
+  "failedRunUse": "IMMUTABLE_PRE_OBSERVATION_NON_CONSUMING_FAILURE_ONLY",
+  "historicalCleanRunPreserved": 37669558088,
+  "readinessPassEstablished": false,
+  "officialCases": "NOT_RUN",
+  "correctionLiveActions": 0,
+  "normalPrCi": "Normal exact-head pull_request workflows once after push; GitHub is authoritative. No manual dispatch/rerun; CI is regression evidence only.",
+  "independentAcceptance": "PENDING",
+  "mergeAuthority": false,
+  "newLiveExecutionAuthorized": false
+}

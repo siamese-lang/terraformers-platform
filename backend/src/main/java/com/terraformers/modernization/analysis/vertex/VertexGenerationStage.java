@@ -7,6 +7,7 @@ import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
 import com.google.genai.types.ThinkingConfig;
+import com.google.genai.types.ThinkingLevel;
 import com.terraformers.modernization.analysis.AnalysisGenerationResult;
 import com.terraformers.modernization.analysis.AnalysisGenerationStage;
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
@@ -23,10 +24,16 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @Lazy
 public class VertexGenerationStage implements AnalysisGenerationStage {
+    private static final Logger log = LoggerFactory.getLogger(VertexGenerationStage.class);
+    // Repair regenerates the complete HCL, after closure has expanded official evidence.
+    // Gemini 3.8 Flash supports 65,536 output tokens; keep this request bounded below it.
+    public static final int REPAIR_MAX_OUTPUT_TOKENS = 16_384;
 
     private final Client client;
     private final VertexRuntimeProperties properties;
@@ -79,12 +86,22 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
         return builder.build();
     }
 
+    GenerateContentConfig repairConfig() {
+        return GenerateContentConfig.builder()
+                .httpOptions(properties.generationHttpOptions())
+                .maxOutputTokens(REPAIR_MAX_OUTPUT_TOKENS)
+                .thinkingConfig(ThinkingConfig.builder().thinkingLevel(ThinkingLevel.Known.LOW))
+                .responseMimeType("application/json")
+                .responseJsonSchema(promptBuilder.repairResponseJsonSchema())
+                .build();
+    }
+
     public String repair(ArchitectureRetrievalFacts facts, AnalysisGenerationResult original,
             List<ReferenceDocument> references, AwsProviderSchemaEvidence schemaEvidence) {
         Content content = Content.fromParts(Part.fromText(
                 promptBuilder.buildRepair(facts, original, references, schemaEvidence)));
         GenerateContentResponse response = completedResponse(content,
-                generationConfig(promptBuilder.repairResponseJsonSchema()));
+                repairConfig(), "repair", false);
         return responseParser.parseTerraformRepair(requireResponseText(response.text()));
     }
 
@@ -103,7 +120,7 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                 Part.fromText(promptBuilder.build(source, references, schemaEvidence, compact))
         );
 
-        GenerateContentResponse response = completedResponse(content, config);
+        GenerateContentResponse response = completedResponse(content, config, "initial_generation", compact);
         Integer outputTokens = response.usageMetadata()
                 .flatMap(metadata -> metadata.candidatesTokenCount()).orElse(null);
         FinishReason finishReason = response.finishReason();
@@ -120,12 +137,17 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
         }
     }
 
-    private GenerateContentResponse completedResponse(Content content, GenerateContentConfig config) {
+    private GenerateContentResponse completedResponse(Content content, GenerateContentConfig config,
+            String stage, boolean compact) {
         GenerateContentResponse response;
         try {
             response = request(content, config);
         } catch (RuntimeException exception) {
-            throw providerCallFailure(exception);
+            RuntimeException failure = providerCallFailure(exception);
+            log.warn("Vertex provider call stage={} compact={} outcome=failure finishReason=UNAVAILABLE "
+                            + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={}",
+                    stage, compact, failure.getClass().getSimpleName());
+            throw failure;
         }
         Integer outputTokens = response.usageMetadata()
                 .flatMap(metadata -> metadata.candidatesTokenCount())
@@ -134,6 +156,13 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
         FinishReason.Known known = finishReason == null
                 ? FinishReason.Known.FINISH_REASON_UNSPECIFIED
                 : finishReason.knownEnum();
+
+        log.info("Vertex provider call stage={} compact={} outcome=received finishReason={} "
+                        + "outputTokens={} thinkingTokens={} totalTokens={} maxOutputTokens={}",
+                stage, compact, known.name(), outputTokens,
+                response.usageMetadata().flatMap(metadata -> metadata.thoughtsTokenCount()).orElse(null),
+                response.usageMetadata().flatMap(metadata -> metadata.totalTokenCount()).orElse(null),
+                config.maxOutputTokens().orElse(null));
 
         requireNormalCompletion(known, finishReason, outputTokens);
         return response;

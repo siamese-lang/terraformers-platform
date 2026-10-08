@@ -253,6 +253,12 @@ class VertexGenerationStageTest {
                 new AwsProviderSchemaEvidence(java.util.Map.of()))).isEqualTo("corrected HCL");
         assertThat(stage.calls).isEqualTo(1);
         assertThat(stage.budgets).containsExactly(220000);
+        assertThat(stage.config.maxOutputTokens()).contains(16_384);
+        assertThat(stage.config.responseJsonSchema()).contains(new VertexPromptBuilder().repairResponseJsonSchema());
+        assertThat(stage.config.thinkingConfig().orElseThrow().thinkingLevel().orElseThrow().knownEnum())
+                .isEqualTo(ThinkingLevel.Known.LOW);
+        assertThat(stage.generationConfig().maxOutputTokens()).contains(8192);
+        assertThat(stage.generationConfig().thinkingConfig()).isEmpty();
         assertThat(stage.content.parts().orElseThrow()).hasSize(1);
         assertThat(stage.content.parts().orElseThrow().get(0).inlineData()).isEmpty();
         assertThat(stage.content.parts().orElseThrow().get(0).text()).get()
@@ -261,16 +267,61 @@ class VertexGenerationStageTest {
 
     @Test
     void repairTruncationMalformedResponseAndReclassificationNeverRetry() {
-        RepairStage truncated = new RepairStage("", FinishReason.Known.MAX_TOKENS);
+        RepairStage truncated = new RepairStage("{\"terraformCode\":\"apparently complete HCL\"}", FinishReason.Known.MAX_TOKENS);
         assertThatThrownBy(() -> truncated.repair(facts(), original(), List.of(),
                 new AwsProviderSchemaEvidence(java.util.Map.of()))).isInstanceOf(VertexOutputTruncatedException.class);
         assertThat(truncated.calls).isEqualTo(1);
-        for (String invalid : List.of("not-json", "{\"terraformCode\":\"\"}",
+        for (String invalid : List.of("not-json", "{}", "{\"terraformCode\":\"\"}",
                 "{\"terraformCode\":\"HCL\",\"inputType\":\"AMBIGUOUS\"}")) {
             RepairStage stage = new RepairStage(invalid, FinishReason.Known.STOP);
             assertThatThrownBy(() -> stage.repair(facts(), original(), List.of(),
                     new AwsProviderSchemaEvidence(java.util.Map.of()))).isInstanceOf(VertexResponseFormatException.class);
             assertThat(stage.calls).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void repairProviderFailuresRemainSingleAttemptAndKeepTypedReasons() {
+        var rateLimited = org.mockito.Mockito.mock(com.google.genai.errors.ClientException.class);
+        org.mockito.Mockito.when(rateLimited.code()).thenReturn(429);
+        for (RuntimeException failure : List.of(rateLimited, new IllegalStateException("SENTINEL_SECRET_PAYLOAD"))) {
+            var calls = new java.util.concurrent.atomic.AtomicInteger();
+            var stage = new VertexGenerationStage(null, new VertexRuntimeProperties(), new VertexPromptBuilder(),
+                    new VertexResponseParser(new ObjectMapper())) {
+                @Override com.google.genai.types.GenerateContentResponse request(com.google.genai.types.Content content,
+                        com.google.genai.types.GenerateContentConfig config) {
+                    calls.incrementAndGet();
+                    throw failure;
+                }
+            };
+            assertThatThrownBy(() -> stage.repair(facts(), original(), List.of(), new AwsProviderSchemaEvidence(java.util.Map.of())))
+                    .isInstanceOfSatisfying(AnalysisProviderFailureException.class, result -> assertThat(result.reason())
+                            .isEqualTo(failure == rateLimited ? AnalysisProviderFailureReason.RATE_LIMITED
+                                    : AnalysisProviderFailureReason.PROVIDER_ERROR));
+            assertThat(calls).hasValue(1);
+        }
+    }
+
+    @Test
+    void providerTelemetryDistinguishesInitialCompactAndRepairWithoutResponseOrPrompt() {
+        var logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(VertexGenerationStage.class);
+        var appender = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        appender.start(); logger.addAppender(appender);
+        try {
+            var stage = new RepairStage("SENTINEL_RESPONSE_SECRET", FinishReason.Known.MAX_TOKENS);
+            assertThatThrownBy(() -> stage.generate(context(), source(), List.of()))
+                    .isInstanceOf(VertexOutputTruncatedException.class);
+            assertThatThrownBy(() -> stage.repair(facts(), original(), List.of(), new AwsProviderSchemaEvidence(java.util.Map.of())))
+                    .isInstanceOf(VertexOutputTruncatedException.class);
+            assertThat(appender.list).hasSize(3);
+            String messages = appender.list.stream().map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(messages).contains("stage=initial_generation compact=false", "stage=initial_generation compact=true",
+                    "stage=repair compact=false", "finishReason=MAX_TOKENS", "maxOutputTokens=8192", "maxOutputTokens=16384",
+                    "outputTokens=123", "thinkingTokens=45", "totalTokens=168")
+                    .doesNotContain("SENTINEL_RESPONSE_SECRET", "Prior Terraform draft", original().terraformCode());
+        } finally {
+            logger.detachAppender(appender); appender.stop();
         }
     }
 
@@ -288,6 +339,7 @@ class VertexGenerationStageTest {
         private int calls;
         private final List<Integer> budgets = new java.util.ArrayList<>();
         private com.google.genai.types.Content content;
+        private com.google.genai.types.GenerateContentConfig config;
         private final String text;
         private final FinishReason.Known reason;
         private RepairStage(String text, FinishReason.Known reason) {
@@ -301,9 +353,12 @@ class VertexGenerationStageTest {
             calls++;
             budgets.add(config.httpOptions().orElseThrow().timeout().orElseThrow());
             this.content = content;
+            this.config = config;
             return com.google.genai.types.GenerateContentResponse.builder().candidates(
                     com.google.genai.types.Candidate.builder().finishReason(reason).content(
                             com.google.genai.types.Content.fromParts(com.google.genai.types.Part.fromText(text))))
+                    .usageMetadata(com.google.genai.types.GenerateContentResponseUsageMetadata.builder()
+                            .candidatesTokenCount(123).thoughtsTokenCount(45).totalTokenCount(168))
                     .build();
         }
     }

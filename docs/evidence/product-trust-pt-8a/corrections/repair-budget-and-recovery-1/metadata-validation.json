@@ -1,0 +1,260 @@
+{
+  "metadataProgramStateWorkPackageConsistency": "PASS",
+  "allObserverFunctionsExceptRetrievalEvidenceUnchanged": "PASS",
+  "workflowYamlAndRelevantShellSyntax": {
+    "result": "PASS",
+    "blocks": [
+      {
+        "workflow": ".github/workflows/gcp-target-runtime-dependencies.yml",
+        "job": "pt8a-official-acceptance",
+        "step": "Validate frozen procedure and explicit live authority before cloud access"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-runtime-dependencies.yml",
+        "job": "pt8a-official-acceptance",
+        "step": "Verify exact deployed release and existing runtime identity"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-runtime-dependencies.yml",
+        "job": "pt8a-official-acceptance",
+        "step": "Rebuild expected corpus from pinned authority without embedding"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-runtime-dependencies.yml",
+        "job": "pt8a-official-acceptance",
+        "step": "Start owned validation pod with the already deployed immutable image"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-runtime-dependencies.yml",
+        "job": "pt8a-official-acceptance",
+        "step": "Observe read-only exact readiness and at most one accepted product job"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-runtime-dependencies.yml",
+        "job": "pt8a-official-acceptance",
+        "step": "Bind artifact for post-inference independent review"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-runtime-dependencies.yml",
+        "job": "pt8a-official-acceptance",
+        "step": "Remove only the owned ephemeral validation pod"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Validate trusted ingestion request"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Verify committed v3 contract"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Verify GKE and OpenSearch live substrate"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Verify bounded Kubernetes permissions"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Verify backend Workload Identity IAM bindings"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Apply only the backend Kubernetes ServiceAccount"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Verify OpenSearch readiness before ingestion"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Build exact broad v4 corpus from pinned authority"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Start ephemeral Workload Identity ingestion pod"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Transfer exact ingestion bundle"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Install isolated ingestion dependencies"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Ingest selected immutable corpus"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Verify ingestion receipt"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Prepare bounded ingestion evidence"
+      },
+      {
+        "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "job": "ingest",
+        "step": "Delete ephemeral ingestion pod"
+      }
+    ]
+  },
+  "frozenBlobHashReadback": {
+    "result": "PASS",
+    "files": [
+      {
+        "path": "docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md",
+        "gitBlobAtBase": "5119738469b6fb278462faef5e949a5245d61669",
+        "sha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+        "unchanged": true
+      },
+      {
+        "path": "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+        "gitBlobAtBase": "7aab674710dbe2ce337b99062848c0bbe1c4eaf5",
+        "sha256": "8828de056a9b2b121e8bf560bd1766b3ddc465770984317b67af3eb8001a6d45",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/rag/ingest-gcp-target-corpus.py",
+        "gitBlobAtBase": "b6d5044cce8dd9c304c28735fdda7aa332609064",
+        "sha256": "1e49de471c79592b1805b87bd4f1485d2a20401c9eab60724a561ea02e211133",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/checks/rag-corpus-contract-verification.py",
+        "gitBlobAtBase": "895ce8c9005ea9171cc139c4112d840c8d191a25",
+        "sha256": "9b79bd7edd2f03a38f27ee8e985fbb1e0386511dde8521b909a4052128223ed5",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/rag/build-corpus-v4.py",
+        "gitBlobAtBase": "39b588499153634be9b153347b6f4f950c4c6be4",
+        "sha256": "2948b503096b11a9af8bc77a775a7ff236a6b9dcf2b4307b990e69756f56f9cc",
+        "unchanged": true
+      },
+      {
+        "path": "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexRuntimeProperties.java",
+        "gitBlobAtBase": "d75e383113d685c3960ed04839f30843bc4a571b",
+        "sha256": "e1c6b593e78dec138d1d00fada085ebfec65f62ddbf7e7e44ff408505eb6d1b5",
+        "unchanged": true
+      },
+      {
+        "path": "backend/src/main/java/com/terraformers/modernization/analysis/AnalysisJobStateService.java",
+        "gitBlobAtBase": "1b2d8975eb158c376748e4f973b281ceb632698b",
+        "sha256": "440ef2c38a6dd0eb41167896759700e7f423edaa3cefb35bb4133cae903ed3c7",
+        "unchanged": true
+      },
+      {
+        "path": ".agents/programs/product-trust-v1.yml",
+        "gitBlobAtBase": "7763d1725a474ab1d4d7e691c7390b994e65b516",
+        "sha256": "fd45584d485a14a76fbdf2e1f57091de3a473fe789b6b32a055b53418fe5f0ce",
+        "unchanged": true
+      },
+      {
+        "path": ".github/workflows/gcp-target-runtime-dependencies.yml",
+        "gitBlobAtBase": "940e4e566dd0669c45929d9b8615cf42f9d206ba",
+        "sha256": "9db28dad22dcb5c1505e5825ec5dfde11f53ee5aedc3f00de959f56601a75b72",
+        "unchanged": true
+      },
+      {
+        "path": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "gitBlobAtBase": "ef985e342de7a7c698547b0d7038a16f174d45de",
+        "sha256": "8871846ab62eedfa44be4c69fa94827d4cc82889b241a2b0add6ece4736d62c6",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation/terraformers-realistic-v1/fixtures/pt1-05-private-web-fleet.png",
+        "gitBlobAtBase": "050e578aae1679707d439b9778ac6041d9ce99a8",
+        "sha256": "4de17a100ac94ea9cd4c61be505fad45cc99dd3cb066fb484b7cbc2f5b50be32",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation/terraformers-aws-official-v1/candidate-identity.json",
+        "gitBlobAtBase": "ee967fe53e0af39fe35e6cef565cfe57dc708cf4",
+        "sha256": "6ce1bdb73da3d19a6a578d990924cbf0a95975c2d498be3a38e48700bd4a7dfe",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation/terraformers-aws-official-v1/candidate-manifest.json",
+        "gitBlobAtBase": "21f6d904fcdb91ca969bba9e4d2b2bc59b2b01c9",
+        "sha256": "b44908f3ecc926a623646ba10d5a6f2cd67bace781c8ce55f7468d5417c566f0",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation/terraformers-aws-official-v1/superseded/candidate-01-identity.json",
+        "gitBlobAtBase": "c35813ad94ab231a5d6e3eb801ad4f7d6fad4527",
+        "sha256": "6fff6f38823611c58820f262be311834b8b4c858583a9a2d9f5099c243a25c89",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation/terraformers-aws-official-v1/superseded/candidate-01-manifest.json",
+        "gitBlobAtBase": "fe27c4af5b4b3a3fde0da038a637f72656896f64",
+        "sha256": "e59d5ca412e4c1b9d175573935e38da98602d5ac224da466ee5f36294fee8499",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation/terraformers-aws-official-v1/superseded/candidate-01-truth-review.md",
+        "gitBlobAtBase": "070653601ccfb87419d3769bebf5be9c09b97b1a",
+        "sha256": "5c6aa2b449e934b4ad4b40b2624d5dfcabaeb0aed42572dd4ba1145486b54349",
+        "unchanged": true
+      }
+    ]
+  },
+  "allowedScope": {
+    "result": "PASS",
+    "changedFiles": [
+      ".agents/state/product-trust-v1.json",
+      ".agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml",
+      "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGroundedGenerationOrchestrator.java",
+      "backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilder.java",
+      "backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java",
+      "backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilderTest.java",
+      "backend/src/test/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractorTest.java",
+      "docs/AI_PROJECT_STATE.md",
+      "docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/approved-correction.md",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/artifact-bindings.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/assessment.md",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/failure-disposition.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/inventory.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/metadata-invocation-failure.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/metadata-validation.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/model-policy-evidence.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/clean-v4/clean-run-binding.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/clean-v4/contract.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/clean-v4/receipt.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/error.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/observation/accepted.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/observation/job.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/observation/retrieval.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/provenance-audit.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/retrieval-log-fixture.json",
+      "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/validation.json",
+      "docs/plans/active/product-trust-modernization.md",
+      "scripts/evaluation/pt8a-official-acceptance.py",
+      "scripts/evaluation/test_pt8a_official_acceptance.py"
+    ]
+  },
+  "gitDiffCheck": "PASS",
+  "liveExecution": "NONE"
+}

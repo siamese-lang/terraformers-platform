@@ -121,7 +121,7 @@ work_package:
   auto_repair_limit: 1
   auto_repairs_used: 1
   bounded_repair: validation_module_selection_only_failed_log_preserved_no_production_change
-  human_corrective_iterations: 3
+  human_corrective_iterations: 4
   preauth_workflow_syntax_correction:
     authority: APPROVE_PT8A_CLEAN_V4_PREAUTH_WORKFLOW_SYNTAX_CORRECTION_ONLY
     authority_evidence: docs/evidence/product-trust-pt-8a/corrections/preauth-workflow-syntax-1/approved-correction.md
@@ -171,6 +171,48 @@ work_package:
     readiness_pass_established: false
     official_cases: NOT_RUN
     independent_acceptance_and_USER_merge_required: true
+  bounded_product_recovery_correction:
+    authority: USER_PT8A_BOUNDED_PRODUCT_AND_RECOVERY_CORRECTION
+    authority_evidence: docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/approved-correction.md
+    iteration: 4
+    correction_execution_base_sha: 70373842629fdd569815780e52dc5f0353b97880
+    main_reads_at_correction_activation: 1
+    historical_preparation_base_preserved: true
+    narrow_override_of_original_production_prohibition: repair_only_output_budget_compaction_and_safe_stage_telemetry
+    additional_allowed_paths:
+      - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java
+      - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilder.java
+      - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGroundedGenerationOrchestrator.java
+      - backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java
+      - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStageTest.java
+      - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexPromptBuilderTest.java
+      - backend/src/test/java/com/terraformers/modernization/analysis/vertex/VertexAnalysisProviderTest.java
+      - backend/src/test/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractorTest.java
+      - docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md
+    failed_run: 37744660097
+    failed_run_attempt: 1
+    accepted_consumed_job: a93a7dcf-c40b-43f4-b55b-357c914a72f3
+    forensic_addendum_comment: 6056738716
+    historical_clean_run: 37710171426
+    historical_clean_artifact: 11522067032
+    historical_clean_source: 70373842629fdd569815780e52dc5f0353b97880
+    failure_disposition: docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/failure-disposition.json
+    repair_policy: complete_HCL_once_max_output_16384_thinking_LOW_no_retry
+    preserved: facts_800_initial_8192_MAX_TOKENS_compact_single_closure_repair_Option_D_schema_CLI_quality
+    observer_correction: uppercase_VERTEX_actual_logs_existing_ID_index_source_checks_preserved
+    cross_source_reuse: BLOCKED_VECTOR_WRITE_CONTINUITY_UNPROVEN
+    executable_receipt_and_history_guards: unchanged_no_source_or_failure_exception
+    proposed_recovery_procedure: docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md
+    proposed_recovery_procedure_sha256: b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d
+    proposed_recovery_procedure_status: PROPOSED_NOT_APPROVED_NOT_EXECUTABLE
+    frozen_v2_and_candidate_bytes: unchanged
+    auto_repairs_used_preserved: 1
+    autonomous_repair_counter_reset: false
+    correction_live_actions: 0
+    new_live_execution_authorized: false
+    official_cases: NOT_RUN
+    validation_evidence: docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/validation.json
+    stop_at: independent_review_USER_merge_then_proposed_amendment_and_new_live_authority_gates
   stop_on:
     - FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
     - MAIN_DRIFT

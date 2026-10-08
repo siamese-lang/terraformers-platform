@@ -102,6 +102,10 @@ public class VertexPromptBuilder {
                 - Preserve applicable PROJECT_DECISION constraints. Examples demonstrate syntax only;
                   adapt settings marked by riskTags to project constraints.
                 - Return a corrected Terraform draft, not a fresh unrelated architecture interpretation.
+                - Return the complete HCL once in terraformCode, with no explanations or comments.
+                  Omit redundant prose and unnecessary optional defaults, never required arguments,
+                  nested blocks, architecture relationships, resource references, wiring or authorization.
+                  Do not use ellipses, abbreviated resources, omitted sections or truncated placeholders.
 
                 Original architecture facts: %s
                 Original summary: %s

@@ -1,0 +1,14 @@
+{
+  "jobId": "a93a7dcf-c40b-43f4-b55b-357c914a72f3",
+  "events": [],
+  "officialHitCount": 0,
+  "stages": [
+    {
+      "outcome": "failure",
+      "stage": "analysis_execution",
+      "elapsedMs": 86777
+    }
+  ],
+  "generatedClosureTrace": "NOT_EXPOSED_BY_CURRENT_RUNTIME",
+  "rawVisionFacts": "NOT_EXPOSED_BY_CURRENT_RUNTIME"
+}

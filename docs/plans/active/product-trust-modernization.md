@@ -2,6 +2,22 @@
 
 ## Status
 
+Current: **PT-8A bounded product/recovery correction, independent acceptance pending**.
+Correction base `70373842629fdd569815780e52dc5f0353b97880` is separate from the preserved
+preparation base below. Readiness **37744660097** remains FAILED/ACCEPTED/consumed;
+forensic addendum 6056738716 identifies single repair MAX_TOKENS after retrieval 8/7.
+Repair-specific 16,384/LOW/compact complete HCL and safe telemetry preserve initial fallback,
+single closure/repair, required wiring, strict quality and Option D. Observer recognizes VERTEX.
+[Evidence](../../evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/assessment.md)
+records authentic clean origin 37710171426/artifact 11522067032. Cross-source reuse is
+**BLOCKED_VECTOR_WRITE_CONTINUITY_UNPROVEN**, with no executable bypass or automatic reembedding.
+[Proposed recovery v3](../../evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md)
+needs independent review/explicit USER approval and future exact live authority; v2/candidate
+remain unchanged, A–E NOT_RUN. No live action or phase progression is authorized here.
+Human correction 4 does not reset autonomous repair 1/1. Stop at independent review/USER merge.
+
+### Historical PT-8A preparation checkpoint (preserved)
+
 **Approved Product Trust v4 / PT-7 COMPLETE / PT-8A repository preparation only**
 
 [PR #255 independent review 6038261202](https://github.com/siamese-lang/terraformers-platform/pull/255#issuecomment-6038261202)

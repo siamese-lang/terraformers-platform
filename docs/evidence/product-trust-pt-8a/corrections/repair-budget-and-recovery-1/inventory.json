@@ -1,0 +1,92 @@
+{
+  "recordType": "CORRECTION_EVIDENCE_INVENTORY",
+  "rawPromptsImagesModelPayloadsSecretsVectorsStored": false,
+  "originalArtifactSelectedMembersPreserved": true,
+  "files": [
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/approved-correction.md",
+      "sha256": "ca1611e6c70a375058dcec3c3a8f624df0fb92f5381849c47a48a564ef92baa3",
+      "bytes": 2291
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/artifact-bindings.json",
+      "sha256": "06e807f1db2fa554c1401343895a44d4f707bc20c4d6487a6b613f7d4c87d41e",
+      "bytes": 3723
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/assessment.md",
+      "sha256": "6ef18dd3a0407f72f89943ac7a76e7da62220777de4fd7e7c29577f2973a1623",
+      "bytes": 7559
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/failure-disposition.json",
+      "sha256": "206029c8a92618ee839cc8abdc79effb0f0f70bd99f1b57958b35f166ed5e82a",
+      "bytes": 1292
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/metadata-invocation-failure.json",
+      "sha256": "4242aa29d6aae69c603f6e0645b582f5c4f15449f727330d518be1a293f20389",
+      "bytes": 513
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/metadata-validation.json",
+      "sha256": "d309525e83b959336209664bc545a3584d891d2743af00a9ffc3026f75c49aaa",
+      "bytes": 12486
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/model-policy-evidence.json",
+      "sha256": "74c6502d7fa9c6680740d60396d3f01813347b6995fe15779cf0e72287818cbd",
+      "bytes": 2226
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/clean-v4/clean-run-binding.json",
+      "sha256": "85afa706e349980393846f66a3cda65f20ea17587f4bb978e89cb3e8b61aff36",
+      "bytes": 317
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/clean-v4/contract.json",
+      "sha256": "a7f9b5b6c44a52821c4e488b812aa4c2c554ccfce0d2e2443c01536ea4e2aa8f",
+      "bytes": 189
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/clean-v4/receipt.json",
+      "sha256": "c1fb02fc5f19212e06b8a1429fd4c9856d95d3603f7a4edef0c703690ad54a53",
+      "bytes": 1435
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/error.json",
+      "sha256": "51bb0b49e9eee7a95ff86f821b0bdcb3bf79c2f28e01717cc810dd9ec762eed6",
+      "bytes": 108
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/observation/accepted.json",
+      "sha256": "66410d63e96e8bbf1d4a6c694ebd006e243e2db69b800d6e40afce76387cbd54",
+      "bytes": 241
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/observation/job.json",
+      "sha256": "9f9e8875435cb2cf6d92afdd209588c2f2b032bac96521bd47a442d86ab63d5e",
+      "bytes": 1421
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/observation/retrieval.json",
+      "sha256": "6a288408111619dd9c837fa5863f918ded60bf41d087114d5133ef7ce4def454",
+      "bytes": 331
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/provenance-audit.json",
+      "sha256": "b68205d2252feb9eecb4226d1842e459212114382dc3550a5f49812523999f61",
+      "bytes": 2014
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/retrieval-log-fixture.json",
+      "sha256": "5684f4b72aa233725fce3f28f6621801e5004a8627ab891c50fe6036f0e9a5d8",
+      "bytes": 1827
+    },
+    {
+      "path": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/validation.json",
+      "sha256": "0d98af9021c0ff16e2b3208a8712fa924468febc49f3549d152d9113e809b24e",
+      "bytes": 3645
+    }
+  ]
+}

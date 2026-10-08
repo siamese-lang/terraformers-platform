@@ -5,6 +5,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import struct
 import subprocess
@@ -187,6 +188,62 @@ class OnceOnlyAndReviewContracts(unittest.TestCase):
 
 
 class ArtifactAndObservationContracts(unittest.TestCase):
+    def test_safe_provider_and_closure_metadata_retained_without_payload_or_invented_usage(self):
+        raw = {"lines": [
+            "Vertex provider call stage=facts outcome=received finishReason=STOP outputTokens=400 thinkingTokens=20 totalTokens=420 maxOutputTokens=800",
+            "Vertex provider call stage=initial_generation compact=false outcome=received finishReason=MAX_TOKENS outputTokens=8000 thinkingTokens=192 totalTokens=8192 maxOutputTokens=8192",
+            "Vertex provider call stage=initial_generation compact=true outcome=received finishReason=STOP outputTokens=7000 thinkingTokens=100 totalTokens=7100 maxOutputTokens=8192",
+            "Vertex grounding stage=closure outcome=success finishReason=NOT_APPLICABLE outputTokens=NOT_APPLICABLE hitCount=7 elapsedMs=807",
+            "Vertex provider call stage=repair compact=false outcome=received finishReason=MAX_TOKENS outputTokens=15000 thinkingTokens=1384 totalTokens=16384 maxOutputTokens=16384",
+            "Vertex provider call stage=repair compact=false outcome=failure finishReason=UNAVAILABLE outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass=AnalysisProviderFailureException secret=DO_NOT_PUBLISH",
+            "Vertex grounding stage=closure outcome=failure finishReason=NOT_APPLICABLE outputTokens=NOT_APPLICABLE errorClass=RuntimeException raw=DO_NOT_PUBLISH",
+            "prompt=DO_NOT_PUBLISH model response=DO_NOT_PUBLISH",
+        ]}
+        with patch.object(pt8a.transport, "collect_logs", return_value=raw):
+            result = pt8a.retrieval_evidence("job", "time", [])
+        self.assertEqual(["facts", "initial_generation", "initial_generation", "repair", "repair"],
+                         [call["stage"] for call in result["providerCalls"]])
+        self.assertEqual([None, False, True, False, False], [call["compact"] for call in result["providerCalls"]])
+        self.assertEqual(15000, result["providerCalls"][3]["outputTokens"])
+        self.assertEqual(1384, result["providerCalls"][3]["thinkingTokens"])
+        self.assertEqual(16384, result["providerCalls"][3]["totalTokens"])
+        self.assertEqual("MAX_TOKENS", result["providerCalls"][3]["finishReason"])
+        self.assertIsNone(result["providerCalls"][4]["outputTokens"])
+        self.assertEqual([{"stage": "closure", "outcome": "success", "hitCount": 7, "elapsedMs": 807},
+                          {"stage": "closure", "outcome": "failure", "hitCount": None, "elapsedMs": None}],
+                         result["groundingStages"])
+        self.assertEqual(0, result["officialHitCount"])
+        self.assertNotIn("DO_NOT_PUBLISH", json.dumps(result))
+
+    def test_observed_uppercase_vertex_initial_and_closure_logs_keep_exact_identity_checks(self):
+        fixture = json.loads((pt8a.ROOT / "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/retrieval-log-fixture.json").read_text())
+        ids = [value.strip() for line in fixture["lines"]
+               for value in re.search(r"documentIds=\[([^\]]*)\]", line)[1].split(",")]
+        # Synthetic catalog metadata for the actual observed IDs. This tests parser and
+        # provenance accounting; it does not substitute for a live exact corpus snapshot.
+        documents = [{"documentId": doc_id, "authority": "PROVIDER_DOCUMENTATION",
+                      "documentType": "AWS_PROVIDER_EXAMPLE" if "-example-" in doc_id else "AWS_PROVIDER_DOC",
+                      "sourceCommit": "f7a3b98da589ab1d52756b0dcee0dbf2de83d635"} for doc_id in ids]
+        raw = {"lines": fixture["lines"]}
+        with patch.object(pt8a.transport, "collect_logs", return_value=raw) as collect:
+            evidence = pt8a.retrieval_evidence(fixture["jobId"], "2026-10-08T07:40:26.993958Z", documents)
+        collect.assert_called_once_with(fixture["jobId"], "2026-10-08T07:40:26.993958Z")
+        self.assertEqual([8, 7], [event["hitCount"] for event in evidence["events"]])
+        self.assertEqual([1811, 807], [event["elapsedMs"] for event in evidence["events"]])
+        self.assertEqual(15, evidence["officialHitCount"])
+        self.assertEqual(ids, [doc["documentId"] for event in evidence["events"] for doc in event["documents"]])
+        self.assertNotIn("lines", evidence)
+        for replacement in ("index=wrong", "hitCount=9", "documentIds=[unknown-id,"):
+            changed = [fixture["lines"][0].replace("index=terraformers-reference-v4", replacement)
+                       if replacement.startswith("index") else fixture["lines"][0].replace(
+                           "hitCount=8" if replacement.startswith("hitCount") else "documentIds=[", replacement)]
+            with self.subTest(replacement=replacement), patch.object(pt8a.transport, "collect_logs", return_value={"lines": changed}), self.assertRaises(ValueError):
+                pt8a.retrieval_evidence(fixture["jobId"], "time", documents)
+        for raw in ({"lines": []}, {"lines": fixture["lines"]}):
+            wrong_source = [doc | {"sourceCommit": "unproven"} for doc in documents]
+            with patch.object(pt8a.transport, "collect_logs", return_value=raw):
+                self.assertEqual(0, pt8a.retrieval_evidence(fixture["jobId"], "time", wrong_source)["officialHitCount"])
+
     def test_actual_readiness_shell_blocks_share_canonical_corpus_path(self):
         workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
         steps = workflow["jobs"]["pt8a-official-acceptance"]["steps"]

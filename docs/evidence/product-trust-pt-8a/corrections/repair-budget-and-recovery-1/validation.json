@@ -1,0 +1,89 @@
+{
+  "recordType": "BOUNDED_REPOSITORY_ONLY_DETERMINISTIC_VALIDATION_NOT_LIVE_ACCEPTANCE",
+  "executionBaseSha": "70373842629fdd569815780e52dc5f0353b97880",
+  "result": "PASS_WITH_ONE_PRESERVED_METADATA_CHECK_INVOCATION_ERROR",
+  "focusedBackend": {
+    "command": "mvn -o -Dtest=VertexGenerationStageTest,VertexPromptBuilderTest,VertexAnalysisProviderTest,VertexArchitectureFactsExtractorTest,VertexResponseParserTest,TerraformCliValidatorTest,EvidenceQualityAssessorTest test",
+    "cwd": "backend",
+    "executions": 1,
+    "tests": 77,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "result": "BUILD SUCCESS",
+    "log": {
+      "localLogName": "focused-backend.txt",
+      "sha256": "7043af9081418440afd487fcf13c59e8023e1acc807284b4df333eb27958750d",
+      "rawLogCommitted": false
+    }
+  },
+  "fullBackend": {
+    "command": "mvn -o package",
+    "cwd": "backend",
+    "executions": 1,
+    "tests": 580,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 4,
+    "skipClass": "MariaDbRepositorySmokeTest",
+    "skipReason": "SPRING_DATASOURCE_URL absent; no manual MariaDB started",
+    "exitCode": 0,
+    "result": "BUILD SUCCESS; executable Spring Boot JAR packaged",
+    "log": {
+      "localLogName": "full-backend.txt",
+      "sha256": "1e8660d007d18ba16f009448f1983d20eba644ff5de89b4b76ebd9abb2e174cd",
+      "rawLogCommitted": false
+    }
+  },
+  "observerAndRagBeforeFinalMetadataCapture": {
+    "command": "python3 -m unittest -v scripts/evaluation/test_pt8a_official_acceptance.py tests/rag/test_ingest_gcp_target_corpus.py tests/rag/test_build_corpus_v2.py",
+    "executions": 1,
+    "tests": 64,
+    "failures": 0,
+    "errors": 0,
+    "exitCode": 0,
+    "log": {
+      "localLogName": "focused-observer-rag.txt",
+      "sha256": "abc96201132b92aeb211049b4b005004228acdd308d6869f57164ab1d8667521",
+      "rawLogCommitted": false
+    }
+  },
+  "finalObserverAfterSafeMetadataCaptureChange": {
+    "command": "python3 -m unittest -v scripts/evaluation/test_pt8a_official_acceptance.py",
+    "executions": 1,
+    "tests": 22,
+    "failures": 0,
+    "errors": 0,
+    "exitCode": 0,
+    "result": "PASS; targeted revalidation justified by added safe metadata capture, no prior test failure repair",
+    "log": {
+      "localLogName": "final-observer.txt",
+      "sha256": "dd5b6e830dcc2ce1a2d76366e2c46f7e99a129881bd86f490cae242779463bec",
+      "rawLogCommitted": false
+    }
+  },
+  "metadataConsistency": "metadata-validation.json",
+  "metadataInvocationFailure": {
+    "evidence": "metadata-invocation-failure.json",
+    "result": "INITIAL_ONE_OFF_INVOCATION_ERROR_FIELD_CAPITALIZATION; dependency path corrected before final check",
+    "repositoryOrProductCorrection": "NONE",
+    "correctedInvocationExecutions": 1,
+    "correctedResult": "PASS",
+    "counterReset": false
+  },
+  "caseCArchitectureLedgerCheck": "PASS",
+  "automaticPrWorkflowPolicyCheck": "PASS",
+  "frozenV2ProcedureSha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+  "proposedV3ProcedureSha256": "b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d",
+  "currentCrossSourceReuseDisposition": "BLOCKED_VECTOR_WRITE_CONTINUITY_UNPROVEN",
+  "normalAutomaticCI": "Exact final PR head normal pull_request workflows only; GitHub is authoritative. No manual dispatch/rerun. CI is not acceptance.",
+  "localTools": "Existing cached Temurin 17.0.18+8 / Maven 3.9.9 / Python; Maven offline",
+  "liveModelCalls": 0,
+  "liveCloudActions": 0,
+  "workflowDispatches": 0,
+  "officialInputFetchUploads": 0,
+  "manualDatabaseOrBrowserMeasurements": 0,
+  "selfAcceptance": false,
+  "mergeAuthorized": false
+}

@@ -1,0 +1,36 @@
+{
+  "id": "a93a7dcf-c40b-43f4-b55b-357c914a72f3",
+  "projectId": 7,
+  "sourceFileId": 10,
+  "resultFileId": null,
+  "sourceBucket": "terraformers-runtime-objects-21647422237",
+  "sourceKey": "browser-uploads/7/2026/10/08/1791445225240-input.png",
+  "resultObjectKey": null,
+  "correlationId": "upload-d1b4468f-21fe-4be1-968f-c1410f47eb6a",
+  "status": "FAILED",
+  "analysisMode": "INTEGRATED_JAVA",
+  "provider": null,
+  "detectedComponents": [],
+  "detectedRelationships": [],
+  "quality": {
+    "contractVersion": "evidence-quality-v1",
+    "technicalStatus": "FAIL",
+    "knowledgeStatus": "UNKNOWN",
+    "qualityStatus": "UNKNOWN",
+    "projectDecisionStatus": "UNKNOWN",
+    "runtimeQualityBoundary": "CONDITIONAL_ON_EXTRACTED_FACTS",
+    "reasons": [
+      "PROVIDER_OUTPUT_TRUNCATED"
+    ]
+  },
+  "timing": {
+    "acceptedAt": "2026-10-08T07:40:26.993958Z",
+    "terminalAt": "2026-10-08T07:41:53.953032Z",
+    "acceptedToTerminalMs": 86959
+  },
+  "failureReason": "\uc544\ud0a4\ud14d\ucc98\uac00 \ubcf5\uc7a1\ud574 AI \ucd9c\ub825 \ud55c\ub3c4\ub97c \ucd08\uacfc\ud588\uc2b5\ub2c8\ub2e4. \ud575\uc2ec \uad6c\uc131\ub9cc \ub0a8\uae30\uac70\ub098 \uc774\ubbf8\uc9c0\ub97c \uc5ec\ub7ec \uc7a5\uc73c\ub85c \ub098\ub204\uc5b4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.",
+  "warnings": [],
+  "analysisSummary": null,
+  "createdAt": "2026-10-08T07:40:26.993958Z",
+  "updatedAt": "2026-10-08T07:41:53.953032Z"
+}

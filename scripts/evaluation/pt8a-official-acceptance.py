@@ -275,9 +275,9 @@ def sanitized_job(job):
 
 def retrieval_evidence(job_id, since, expected_documents):
     raw = transport.collect_logs(job_id, since)
-    events, stages = [], []
+    events, stages, provider_calls, grounding_stages = [], [], [], []
     expected = {doc["documentId"]: doc for doc in expected_documents}
-    pattern = r"reference retrieval outcome=success mode=REQUIRED embeddingProvider=vertex index=(\S+).*?hitCount=(\d+) documentIds=\[([^\]]*)\].*?elapsedMs=(\d+)"
+    pattern = r"reference retrieval outcome=success mode=REQUIRED embeddingProvider=(?:VERTEX|vertex) index=(\S+).*?hitCount=(\d+) documentIds=\[([^\]]*)\].*?elapsedMs=(\d+)"
     for line in raw["lines"]:
         match = re.search(pattern, line)
         if match:
@@ -290,11 +290,31 @@ def retrieval_evidence(job_id, since, expected_documents):
         match = re.search(r"analysis stage outcome=(\w+) stage=(\w+).*?elapsedMs=(\d+)", line)
         if match:
             stages.append(dict(zip(("outcome", "stage", "elapsedMs"), (match[1], match[2], int(match[3])))))
+        match = re.search(r"Vertex provider call stage=(facts|initial_generation|repair) "
+                          r"(?:compact=(true|false) )?outcome=(received|failure) finishReason=([A-Z_]+) "
+                          r"outputTokens=(\d+|null|unknown) thinkingTokens=(\d+|null|unknown) "
+                          r"totalTokens=(\d+|null|unknown)", line)
+        if match:
+            stage, compact, outcome, finish, output, thinking, total = match.groups()
+            provider_calls.append({"stage": stage, "compact": None if compact is None else compact == "true",
+                                   "outcome": outcome, "finishReason": finish,
+                                   "outputTokens": int(output) if output.isdecimal() else None,
+                                   "thinkingTokens": int(thinking) if thinking.isdecimal() else None,
+                                   "totalTokens": int(total) if total.isdecimal() else None})
+        match = re.search(r"Vertex grounding stage=closure outcome=(success|failure) "
+                          r"finishReason=NOT_APPLICABLE outputTokens=NOT_APPLICABLE"
+                          r"(?: hitCount=(\d+) elapsedMs=(\d+))?", line)
+        if match:
+            outcome, hits, elapsed = match.groups()
+            grounding_stages.append({"stage": "closure", "outcome": outcome,
+                                     "hitCount": None if hits is None else int(hits),
+                                     "elapsedMs": None if elapsed is None else int(elapsed)})
     official_hits = sum(doc["authority"] == "PROVIDER_DOCUMENTATION"
                         and doc["documentType"] in ("AWS_PROVIDER_DOC", "AWS_PROVIDER_EXAMPLE")
                         and doc["sourceCommit"] == "f7a3b98da589ab1d52756b0dcee0dbf2de83d635"
                         for event in events for doc in event["documents"])
     return {"jobId": job_id, "events": events, "officialHitCount": official_hits, "stages": stages,
+            "providerCalls": provider_calls, "groundingStages": grounding_stages,
             "generatedClosureTrace": "NOT_EXPOSED_BY_CURRENT_RUNTIME", "rawVisionFacts": "NOT_EXPOSED_BY_CURRENT_RUNTIME"}
 
 

@@ -1,0 +1,10 @@
+{
+  "sourceSha": "70373842629fdd569815780e52dc5f0353b97880",
+  "runId": "37710171426",
+  "runAttempt": "1",
+  "mode": "pt8a-clean-v4",
+  "liveApprovalCommentId": "6049866256",
+  "status": "success",
+  "procedureSha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+  "receiptAvailable": true
+}

@@ -365,6 +365,29 @@ class VertexAnalysisProviderTest {
     }
 
     @Test
+    void closureTelemetrySeparatesRetrievalFromProviderGenerationWithoutPayloads() {
+        ReferenceDocument vpc = official("vpc", "aws_vpc");
+        String draft = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
+        ClosureFixture fixture = closureFixture(List.of(vpc), List.of(official("subnet", "aws_subnet")), draft, draft);
+        var logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(VertexGroundedGenerationOrchestrator.class);
+        var appender = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        appender.start(); logger.addAppender(appender);
+        try {
+            fixture.provider().analyze(context());
+            when(fixture.retriever().retrieve(any())).thenReturn(List.of(vpc))
+                    .thenThrow(new IllegalStateException("SENTINEL_CLOSURE_PAYLOAD"));
+            assertThatThrownBy(() -> fixture.provider().analyze(context())).isInstanceOf(IllegalStateException.class);
+            String messages = appender.list.stream().map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(messages).contains("stage=closure outcome=success", "hitCount=1", "elapsedMs=",
+                    "stage=closure outcome=failure", "finishReason=NOT_APPLICABLE", "outputTokens=NOT_APPLICABLE")
+                    .doesNotContain("SENTINEL_CLOSURE_PAYLOAD", draft);
+        } finally {
+            logger.detachAppender(appender); appender.stop();
+        }
+    }
+
+    @Test
     void successfulCompactFallbackStillAllowsOneClosureAndRepairWithoutAnotherCycle() throws Exception {
         String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
         String repaired = first + "\nresource \"aws_security_group\" \"new\" {}";

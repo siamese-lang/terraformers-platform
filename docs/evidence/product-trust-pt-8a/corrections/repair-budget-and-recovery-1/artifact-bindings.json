@@ -1,0 +1,80 @@
+[
+  {
+    "recordType": "AUTHENTICATED_GITHUB_ARTIFACT_ARCHIVE_DIGEST_VERIFIED_SELECTED_MEMBERS_UNCHANGED",
+    "runId": 37744660097,
+    "runAttempt": 1,
+    "event": "workflow_dispatch",
+    "workflow": ".github/workflows/gcp-target-runtime-dependencies.yml",
+    "headBranch": "main",
+    "sourceSha": "70373842629fdd569815780e52dc5f0353b97880",
+    "status": "completed",
+    "conclusion": "failure",
+    "artifactId": 11534783753,
+    "artifactName": "pt8a-official-37744660097",
+    "artifactDigest": "sha256:94ab23e3ace045d54b9b854a9a41be22447cf674b58c72ccf7ac3ba17976e21d",
+    "artifactExpiredAtRead": false,
+    "archiveSha256Verified": true,
+    "selectedMembers": [
+      {
+        "archiveMember": "observation/accepted.json",
+        "repositoryPath": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/observation/accepted.json",
+        "sha256": "66410d63e96e8bbf1d4a6c694ebd006e243e2db69b800d6e40afce76387cbd54",
+        "bytes": 241
+      },
+      {
+        "archiveMember": "observation/job.json",
+        "repositoryPath": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/observation/job.json",
+        "sha256": "9f9e8875435cb2cf6d92afdd209588c2f2b032bac96521bd47a442d86ab63d5e",
+        "bytes": 1421
+      },
+      {
+        "archiveMember": "observation/retrieval.json",
+        "repositoryPath": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/observation/retrieval.json",
+        "sha256": "6a288408111619dd9c837fa5863f918ded60bf41d087114d5133ef7ce4def454",
+        "bytes": 331
+      },
+      {
+        "archiveMember": "error.json",
+        "repositoryPath": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/readiness-failure/error.json",
+        "sha256": "51bb0b49e9eee7a95ff86f821b0bdcb3bf79c2f28e01717cc810dd9ec762eed6",
+        "bytes": 108
+      }
+    ]
+  },
+  {
+    "recordType": "AUTHENTICATED_GITHUB_ARTIFACT_ARCHIVE_DIGEST_VERIFIED_SELECTED_MEMBERS_UNCHANGED",
+    "runId": 37710171426,
+    "runAttempt": 1,
+    "event": "workflow_dispatch",
+    "workflow": ".github/workflows/gcp-target-corpus-ingestion.yml",
+    "headBranch": "main",
+    "sourceSha": "70373842629fdd569815780e52dc5f0353b97880",
+    "status": "completed",
+    "conclusion": "success",
+    "artifactId": 11522067032,
+    "artifactName": "gcp-corpus-ingestion-37710171426",
+    "artifactDigest": "sha256:0e6f556d5a10df8fad65c52dcadd5a2f7db1f9bf67c9c2f2fa3ac05ccb4063ac",
+    "artifactExpiredAtRead": false,
+    "archiveSha256Verified": true,
+    "selectedMembers": [
+      {
+        "archiveMember": "receipt.json",
+        "repositoryPath": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/clean-v4/receipt.json",
+        "sha256": "c1fb02fc5f19212e06b8a1429fd4c9856d95d3603f7a4edef0c703690ad54a53",
+        "bytes": 1435
+      },
+      {
+        "archiveMember": "clean-run-binding.json",
+        "repositoryPath": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/clean-v4/clean-run-binding.json",
+        "sha256": "85afa706e349980393846f66a3cda65f20ea17587f4bb978e89cb3e8b61aff36",
+        "bytes": 317
+      },
+      {
+        "archiveMember": "contract.json",
+        "repositoryPath": "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members/clean-v4/contract.json",
+        "sha256": "a7f9b5b6c44a52821c4e488b812aa4c2c554ccfce0d2e2443c01536ea4e2aa8f",
+        "bytes": 189
+      }
+    ]
+  }
+]

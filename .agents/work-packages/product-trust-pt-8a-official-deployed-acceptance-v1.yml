@@ -121,7 +121,7 @@ work_package:
   auto_repair_limit: 1
   auto_repairs_used: 1
   bounded_repair: validation_module_selection_only_failed_log_preserved_no_production_change
-  human_corrective_iterations: 4
+  human_corrective_iterations: 5
   preauth_workflow_syntax_correction:
     authority: APPROVE_PT8A_CLEAN_V4_PREAUTH_WORKFLOW_SYNTAX_CORRECTION_ONLY
     authority_evidence: docs/evidence/product-trust-pt-8a/corrections/preauth-workflow-syntax-1/approved-correction.md
@@ -202,7 +202,8 @@ work_package:
     observer_correction: uppercase_VERTEX_actual_logs_existing_ID_index_source_checks_preserved
     cross_source_reuse: BLOCKED_VECTOR_WRITE_CONTINUITY_UNPROVEN
     executable_receipt_and_history_guards: unchanged_no_source_or_failure_exception
-    proposed_recovery_procedure: docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md
+    proposed_recovery_procedure_at_review: docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md
+    proposed_recovery_procedure: docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/superseded-v3-proposal.md
     proposed_recovery_procedure_sha256: b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d
     proposed_recovery_procedure_status: PROPOSED_NOT_APPROVED_NOT_EXECUTABLE
     frozen_v2_and_candidate_bytes: unchanged
@@ -213,6 +214,41 @@ work_package:
     official_cases: NOT_RUN
     validation_evidence: docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/validation.json
     stop_at: independent_review_USER_merge_then_proposed_amendment_and_new_live_authority_gates
+  risk_qualified_recovery_implementation:
+    authority_comment: 6057566013
+    authority_evidence: docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/decision-comment.json
+    scope: repository_only_approved_risk_qualified_design_implementation
+    iteration: 5
+    correction_execution_base_sha: 9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447
+    main_reads_at_activation: 1
+    historical_preparation_and_correction_bases: preserved_no_rebase_rebind
+    additional_allowed_paths:
+      - tests/rag/test_ingest_gcp_target_corpus.py
+      - docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md
+    operation: pt8a-corrective-readiness
+    procedure_sha256: fc9f0dc91e56f4084c39c3649a33c3b0684452463084b43dea6fb82e187b5f18
+    procedure_status: implementation_independent_acceptance_USER_merge_pending_live_unauthorized
+    superseded_unapproved_v3_proposal: docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/superseded-v3-proposal.md
+    superseded_proposal_sha256: b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d
+    default_strict_v2: unchanged_source_receipt_history_case_checks
+    conditional_admission_class: RISK_QUALIFIED_RETAINED_V4
+    vector_continuity: VECTOR_WRITE_CONTINUITY_UNPROVEN
+    accepted_design_residual_risk: INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED
+    current_live_qualified_admission: not_observed
+    global_corrective_dispatch_attempt_upload_limits: 1_1_1_across_all_sources
+    prior_dispatch_or_incomplete_history: STOP_no_retry_even_preflight_failure_or_missing_artifact
+    original_clean: 37710171426_11522067032_source_70373842_approval_6049866256_unchanged_no_relabel
+    original_failure: 37744660097_11534783753_job_a93a7dcf_c40b_43f4_b55b_357c914a72f3_FAILED_ACCEPTED_CONSUMED
+    admission: authenticated_origins_exact_mapping_checksum_all_ID_nonvector_UUID_all_finite_1536_vectors_runtime_and_known_writer_history
+    admission_model_requests_and_index_writes: 0
+    official_cases: NOT_RUN_no_v3_case_execution_path_or_authority
+    case_A_compatibility: strict_v2_rejects_v3_artifact_future_separate_review_and_USER_authority_required
+    implementation_live_actions: 0
+    new_live_execution_authorized: false
+    autonomous_repair_counter_reset: false
+    auto_repairs_used_preserved: 1
+    validation_evidence: docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/validation.json
+    stop_at: independent_acceptance_USER_merge_then_separate_exact_live_gate
   stop_on:
     - FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
     - MAIN_DRIFT

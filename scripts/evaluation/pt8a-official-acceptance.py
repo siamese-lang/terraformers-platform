@@ -24,6 +24,21 @@ SCORING = ("architecture_classification", "core_components_services", "directed_
            "personalized_inputs", "official_evidence_closure", "real_cli_reviewable_draft", "persisted_visible_trust")
 CORPUS_SOURCE = "1ae69d589ac3965733818819792d98c5638e0ae5"
 CORPUS_CHECKSUM = "da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a"
+CORRECTIVE_PROCEDURE = "docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md"
+V2_SHA256 = "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823"
+CORRECTIVE_MODE = "corrective-readiness"
+CORRECTIVE_OPERATION = "pt8a-corrective-readiness"
+RECOVERY_DECISION = 6057566013
+ORIGIN_SOURCE = "70373842629fdd569815780e52dc5f0353b97880"
+ORIGIN_IMAGE = "asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:6883a720b330a1ee0e2802fd7b62e377f3c014adc865bfca2c5ab127b68b35c8"
+ORIGIN_CLEAN_RUN, ORIGIN_CLEAN_ARTIFACT, ORIGIN_APPROVAL = 37710171426, 11522067032, 6049866256
+ORIGIN_CLEAN_DIGEST = "sha256:0e6f556d5a10df8fad65c52dcadd5a2f7db1f9bf67c9c2f2fa3ac05ccb4063ac"
+ORIGIN_FAILED_RUN, ORIGIN_FAILED_ARTIFACT = 37744660097, 11534783753
+ORIGIN_FAILED_DIGEST = "sha256:94ab23e3ace045d54b9b854a9a41be22447cf674b58c72ccf7ac3ba17976e21d"
+ORIGIN_FAILED_JOB = "a93a7dcf-c40b-43f4-b55b-357c914a72f3"
+ORIGIN_UUID = "L8KKBHT1Qri3E2VVw7As2g"
+ORIGIN_CONTENT = "0bfa3e679a331f9680c9fee682f7f4d27bb2de1929a20df3b859a22036f878bb"
+READINESS_FIXTURE = "evaluation/terraformers-realistic-v1/fixtures/pt1-05-private-web-fleet.png"
 
 
 def module(name, path):
@@ -147,6 +162,186 @@ def request_contract(request, source, image, attempt):
         raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT")
 
 
+def corrective_live_fields(source, image):
+    """Exact future live authority, separate from the repository-only decision and origin approval."""
+    return {"gate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE", "decision": "APPROVED",
+            "purpose": "PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", "reviewed_source_sha": source,
+            "backend_image": image, "candidate_identity": IDENTITY,
+            "procedure_sha256": sha((ROOT / CORRECTIVE_PROCEDURE).read_bytes()),
+            "frozen_v2_procedure_sha256": V2_SHA256, "decision_comment_id": str(RECOVERY_DECISION),
+            "original_clean_run_id": str(ORIGIN_CLEAN_RUN), "original_clean_artifact_id": str(ORIGIN_CLEAN_ARTIFACT),
+            "original_clean_artifact_digest": ORIGIN_CLEAN_DIGEST, "original_clean_source_sha": ORIGIN_SOURCE,
+            "origin_clean_approval_id": str(ORIGIN_APPROVAL), "failed_readiness_run_id": str(ORIGIN_FAILED_RUN),
+            "failed_readiness_artifact_id": str(ORIGIN_FAILED_ARTIFACT), "failed_readiness_artifact_digest": ORIGIN_FAILED_DIGEST,
+            "failed_analysis_job_id": ORIGIN_FAILED_JOB, "failed_readiness_disposition": "FAILED_ACCEPTED_CONSUMED",
+            "corpus_checksum": CORPUS_CHECKSUM, "index_uuid": ORIGIN_UUID,
+            "nonvector_content_identity": ORIGIN_CONTENT, "embedding_model": "gemini-embedding-2", "vector_dimension": "1536",
+            "vector_write_continuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+            "accepted_residual_risk": "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED",
+            "once_only": "ONE_DISTINCT_CORRECTIVE_READINESS_ATTEMPT_ACROSS_SOURCES",
+            "official_cases": "A_TO_E_NOT_RUN", "readiness_fixture_sha256": sha((ROOT / READINESS_FIXTURE).read_bytes())}
+
+
+def corrective_request_contract(request, source, image, attempt):
+    allowed = {"mode", "liveApprovalCommentId", "provenanceRunId", "provenanceArtifactId"}
+    if (set(request) != allowed or request.get("mode") != CORRECTIVE_MODE or str(attempt) != "1"
+            or not re.fullmatch(r"[0-9a-f]{40}", source) or not re.fullmatch(
+                r"asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}", image)
+            or any(type(request[k]) is not int or request[k] <= 0 for k in allowed - {"mode"})
+            or (request["provenanceRunId"], request["provenanceArtifactId"]) != (ORIGIN_CLEAN_RUN, ORIGIN_CLEAN_ARTIFACT)):
+        raise ValueError("invalid corrective request/rerun/origin; no official case or inference")
+    if sha((ROOT / PROCEDURE).read_bytes()) != V2_SHA256:
+        raise ValueError("frozen v2 changed; no corrective inference")
+    decision = authority_comment(RECOVERY_DECISION, "[PT8A_RISK_QUALIFIED_RECOVERY_DECISION:v1]")
+    if (decision.get("decision") != "APPROVED_REPOSITORY_ONLY_IMPLEMENTATION"
+            or decision.get("approved_main_sha") != "9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447"
+            or decision.get("accepted_residual_risk") != "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"
+            or decision.get("once_only") != "ONE_DISTINCT_CORRECTIVE_READINESS_ATTEMPT_ACROSS_SOURCES"):
+        raise ValueError("repository risk-qualified design authority missing or changed")
+    approval = authority_comment(request["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    if any(approval.get(k) != v for k, v in corrective_live_fields(source, image).items()):
+        raise ValueError("separate corrective live/risk authority does not bind exact origin/source/image/procedure/candidate")
+    if transport.current_main() != source:
+        raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT")
+
+    return approval
+
+
+def complete_dispatch_history(workflow):
+    """All main dispatch sources, bounded pagination; no head_sha filter or history reset."""
+    rows = []
+    for page in range(1, 11):
+        response = github(f"actions/workflows/{workflow}/runs?event=workflow_dispatch&branch=main&per_page=100&page={page}")
+        runs = response["workflow_runs"]
+        rows.extend(runs)
+        if len(runs) < 100:
+            if len(rows) != response["total_count"] or len({r["id"] for r in rows}) != len(rows):
+                raise ValueError("corrective history incomplete or changed; no inference")
+            return rows
+    raise ValueError("corrective history inspection bound exhausted; no inference")
+
+
+def corrective_history(source, current_run_id):
+    rows = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
+    current = [r for r in rows if r["id"] == current_run_id]
+    if (len(current) != 1 or current[0]["head_sha"] != source or current[0]["run_attempt"] != 1
+            or not any(r["id"] == ORIGIN_FAILED_RUN and r["head_sha"] == ORIGIN_SOURCE for r in rows)):
+        raise ValueError("current dispatch or original consumed history binding missing")
+    for run in rows:
+        if run["id"] == current_run_id or run["id"] <= ORIGIN_FAILED_RUN:
+            continue
+        jobs = github(f"actions/runs/{run['id']}/jobs?per_page=100")
+        if jobs["total_count"] != len(jobs["jobs"]) or jobs["total_count"] > 100:
+            raise ValueError("corrective job history incomplete; no inference")
+        related = [j for j in jobs["jobs"] if j["name"] in (CORRECTIVE_OPERATION, "pt8a-official-acceptance")]
+        if len(related) != 1:
+            raise ValueError("prior dispatch operation unproven; no corrective inference")
+        if related[0]["conclusion"] != "skipped":
+            # Any post-origin corrective dispatch consumes the capability even before upload.
+            # A later ordinary observation also prevents using this as a result-driven retry.
+            raise ValueError("prior corrective/PT8A dispatch across sources already exists; no retry")
+    writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
+    if not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes):
+        raise ValueError("origin clean ingestion history unavailable")
+    later = [r for r in writes if r["id"] > ORIGIN_CLEAN_RUN]
+    if later:
+        raise ValueError("known later ingestion dispatch requires independent writer-history review; no reuse")
+    return {"allSourcesInspected": True, "runtimeDispatchesInspected": len(rows),
+            "ingestionDispatchesInspected": len(writes), "knownLaterIngestionDispatches": 0,
+            "completeAllWriterAuditAvailable": False, "vectorWriteContinuity": "UNPROVEN",
+            "unobservedVectorOnlyWritesCannotBeExcluded": True}
+
+
+def corrective_origins(private):
+    clean, binding = bound_artifact(ORIGIN_CLEAN_RUN, ORIGIN_CLEAN_ARTIFACT,
+        ["receipt.json", "clean-run-binding.json", "contract.json"], private, ".github/workflows/gcp-target-corpus-ingestion.yml")
+    expected = {"runId": ORIGIN_CLEAN_RUN, "artifactId": ORIGIN_CLEAN_ARTIFACT, "digest": ORIGIN_CLEAN_DIGEST,
+                "sourceSha": ORIGIN_SOURCE, "conclusion": "success"}
+    if any(binding.get(k) != v for k, v in expected.items()):
+        raise ValueError("original clean artifact identity mismatch; never rebind receipt")
+    receipt = clean["receipt.json"]
+    required = {"reviewed_source_sha": ORIGIN_SOURCE, "live_approval_comment_id": ORIGIN_APPROVAL,
+        "ingestion_mode": rag.PT8A_CLEAN_MODE, "outcome": "ingested", "document_count": 5395,
+        "embedded_this_run": 5395, "skipped_existing": 0, "corpus_version": "terraformers-reference-v4",
+        "index_name": "terraformers-reference-v4", "embedding_model_id": "gemini-embedding-2", "vector_dimension": 1536,
+        "index_uuid": ORIGIN_UUID, "index_uuid_before": ORIGIN_UUID, "index_uuid_after": ORIGIN_UUID,
+        "checksum": CORPUS_CHECKSUM, "non_vector_content_identity": ORIGIN_CONTENT,
+        "pre_content_identity": ORIGIN_CONTENT, "post_content_identity": ORIGIN_CONTENT,
+        "provider_source": rag.PT8A_PROVIDER_SOURCE, "project_decision_source": CORPUS_SOURCE,
+        "candidate_identity": IDENTITY, "procedure_sha256": V2_SHA256}
+    original_approval = authority_comment(ORIGIN_APPROVAL, "[HUMAN_GATE_APPROVAL:v1]")
+    approval_fields = {"gate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE", "decision": "APPROVED",
+        "reviewed_source_sha": ORIGIN_SOURCE, "backend_image": ORIGIN_IMAGE, "candidate_identity": IDENTITY,
+        "procedure_sha256": V2_SHA256, "purpose": "PT8A_CLEAN_V4_REEMBED_ALL_5395", "corpus_checksum": CORPUS_CHECKSUM,
+        "provider_source": rag.PT8A_PROVIDER_SOURCE, "project_decision_source": CORPUS_SOURCE,
+        "embedding_model": "gemini-embedding-2", "vector_dimension": "1536"}
+    cb = clean["clean-run-binding.json"]
+    if (any(receipt.get(k) != v for k, v in required.items())
+            or any(original_approval.get(k) != v for k, v in approval_fields.items())
+            or any(cb.get(k) != v for k, v in {"sourceSha": ORIGIN_SOURCE, "runId": str(ORIGIN_CLEAN_RUN),
+                "runAttempt": "1", "mode": rag.PT8A_CLEAN_MODE, "status": "success", "receiptAvailable": True,
+                "liveApprovalCommentId": str(ORIGIN_APPROVAL), "procedureSha256": V2_SHA256}.items())
+            or any(clean["contract.json"].get(k) != v for k, v in {"sha256": CORPUS_CHECKSUM,
+                "documentCount": 5395, "chunkCount": 5395, "corpusVersion": "terraformers-reference-v4"}.items())):
+        raise ValueError("original clean receipt/source/approval mismatch; no relabel or reuse")
+    failed, failed_binding = bound_artifact(ORIGIN_FAILED_RUN, ORIGIN_FAILED_ARTIFACT,
+        ["inventory.json", "binding.json", "ledger.json", "observation/accepted.json", "observation/job.json"],
+        private, ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+    accepted, job, fb = failed["observation/accepted.json"], failed["observation/job.json"], failed["binding.json"]
+    if (any(failed_binding.get(k) != v for k, v in {"runId": ORIGIN_FAILED_RUN,
+            "artifactId": ORIGIN_FAILED_ARTIFACT, "digest": ORIGIN_FAILED_DIGEST,
+            "sourceSha": ORIGIN_SOURCE, "conclusion": "failure"}.items())
+            or any(fb.get(k) != v for k, v in {"sourceSha": ORIGIN_SOURCE, "image": ORIGIN_IMAGE,
+                "candidateIdentity": IDENTITY, "procedureSha256": V2_SHA256, "mode": "readiness",
+                "liveApprovalCommentId": ORIGIN_APPROVAL, "runId": ORIGIN_FAILED_RUN}.items())
+            or accepted.get("jobId") != ORIGIN_FAILED_JOB or accepted.get("status") != "ACCEPTED"
+            or accepted.get("consumed") is not True or accepted.get("uploadAttempts") != 1
+            or type(accepted.get("projectId")) is not int or accepted["projectId"] <= 0
+            or type(accepted.get("sourceFileId")) is not int or accepted["sourceFileId"] <= 0
+            or job.get("id") != ORIGIN_FAILED_JOB or job.get("status") != "FAILED"
+            or job.get("resultFileId") is not None or job.get("resultObjectKey") is not None
+            or job.get("quality", {}).get("reasons") != ["PROVIDER_OUTPUT_TRUNCATED"]
+            or job.get("quality", {}).get("technicalStatus") != "FAIL"
+            or job.get("projectId") != accepted.get("projectId") or job.get("sourceFileId") != accepted.get("sourceFileId")
+            or failed["ledger.json"] != [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in CASES]):
+        raise ValueError("original FAILED/ACCEPTED/consumed evidence missing or altered")
+    return receipt, binding, failed_binding
+
+
+def risk_qualified_admission(client, manifest, schema, documents, checksum, receipt, binding, authority):
+    if (not authority or authority.get("purpose") != "PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE"
+            or authority.get("vector_write_continuity") != "VECTOR_WRITE_CONTINUITY_UNPROVEN"
+            or authority.get("accepted_residual_risk") != "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"):
+        raise ValueError("explicit corrective live risk authority missing")
+    if (checksum != CORPUS_CHECKSUM or receipt.get("reviewed_source_sha") != ORIGIN_SOURCE
+            or binding.get("sourceSha") != ORIGIN_SOURCE or binding.get("digest") != ORIGIN_CLEAN_DIGEST):
+        raise ValueError("risk-qualified origin/checksum mismatch")
+    snapshot = rag.verify_exact_v4(client, manifest, schema, documents, checksum,
+        {**binding, "githubArtifactBindingVerified": True, "receipt": receipt}, inspect_vectors=True)
+    if (snapshot["classification"] != "EXACT_REUSABLE_COMPLETED_V4" or snapshot.get("indexUuid") != ORIGIN_UUID
+            or snapshot.get("liveContentIdentity") != ORIGIN_CONTENT or snapshot.get("vectorDocumentsChecked") != 5395):
+        raise ValueError("risk-qualified admission failed: classification=" + snapshot["classification"]
+            + " reason=" + snapshot.get("reason", "unavailable")
+            + " uuidMatchesOrigin=" + str(snapshot.get("indexUuid") == ORIGIN_UUID)
+            + " contentMatchesOrigin=" + str(snapshot.get("liveContentIdentity") == ORIGIN_CONTENT)
+            + " vectorsChecked=" + str(snapshot.get("vectorDocumentsChecked")))
+    return {**snapshot, "classification": "RISK_QUALIFIED_RETAINED_V4",
+            "reason": "exact_read_only_content_shape_and_authenticated_origin_with_USER_accepted_residual_risk",
+            "vectorWriteContinuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN", "cryptographicVectorContinuityProven": False,
+            "originSourceSha": ORIGIN_SOURCE, "originApprovalCommentId": ORIGIN_APPROVAL,
+            "originArtifactDigest": ORIGIN_CLEAN_DIGEST, "indexWrites": 0}
+
+
+def corrective_release(release, source, image):
+    expected_runtime = (source + "|terraformers-reference-v4|terraformers-reference-v4|gemini-embedding-2|1536|1536"
+        "|https://identity.example.test/case-c|http://terraformers-jwks:8080/jwks.json|vertex|vertex|REQUIRED"
+        "|gemini-3.8-flash|case-c-runtime-client|gcs|gcs|http://terraformers-opensearch:9200|5.100.0")
+    if any(release.get(k) != v for k, v in {"sourceSha": source, "image": image,
+            "sourceTagDigest": image.split("@", 1)[1], "readyReplicas": 1,
+            "deployedRuntimeIdentity": expected_runtime, "noRuntimeConfigurationMutation": True}.items()):
+        raise ValueError("corrective deployed source/image/model/index/runtime identity mismatch")
+
+
 def ensure_latest_dispatch(request, source, current_run_id):
     """Existing serial workflow + authoritative history, not a new lock/queue service.
 
@@ -184,7 +379,7 @@ def ensure_latest_dispatch(request, source, current_run_id):
         raise ValueError("no prior deployed readiness dispatch; no official upload")
 
 
-def bound_artifact(run_id, artifact_id, names, directory, workflow):
+def bound_artifact(run_id, artifact_id, names, directory, workflow, *, verify_inventory=False):
     """Authenticated immutable artifact download; extract only explicitly selected bounded JSON."""
     import zipfile
     run, artifact = github(f"actions/runs/{run_id}"), github(f"actions/artifacts/{artifact_id}")
@@ -206,6 +401,15 @@ def bound_artifact(run_id, artifact_id, names, directory, workflow):
             if member.file_size > 2_000_000:
                 raise ValueError("bounded evidence JSON too large")
             result[name] = json.loads(zipped.read(member))
+        if verify_inventory:
+            entries = result["inventory.json"]["files"]
+            for name in names:
+                if name == "inventory.json":
+                    continue
+                matches = [e for e in entries if e.get("path") == name]
+                data = zipped.read(name)
+                if len(matches) != 1 or matches[0].get("sha256") != sha(data) or matches[0].get("sizeBytes") != len(data):
+                    raise ValueError("original artifact inventory/member hash mismatch")
     return result, {"runId": run_id, "artifactId": artifact_id, "digest": artifact["digest"],
                     "sourceSha": run["head_sha"], "conclusion": run["conclusion"]}
 
@@ -410,29 +614,58 @@ def main():
         seal(args.output); return
     request = json.loads(args.request_file.read_text())
     source, image = os.environ["GITHUB_SHA"], os.environ["BACKEND_IMAGE"]
-    request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
-    ensure_latest_dispatch(request, source, int(os.environ["GITHUB_RUN_ID"]))
+    corrective = request.get("mode") == CORRECTIVE_MODE
+    if corrective:
+        if os.environ.get("OPERATION") != CORRECTIVE_OPERATION:
+            raise ValueError("corrective mode requires its distinct reviewed workflow operation")
+        authority = corrective_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+        history = corrective_history(source, int(os.environ["GITHUB_RUN_ID"]))
+        if args.action == "preflight":
+            with tempfile.TemporaryDirectory(prefix="pt8a-origin-") as directory:
+                corrective_origins(Path(directory))
+    else:
+        if os.environ.get("OPERATION") == CORRECTIVE_OPERATION:
+            raise ValueError("corrective operation cannot execute ordinary readiness or official cases")
+        request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+        ensure_latest_dispatch(request, source, int(os.environ["GITHUB_RUN_ID"]))
     if args.action == "preflight":
         return
     output = args.output; output.mkdir(parents=True, exist_ok=False)
-    write(output / "release.json", json.loads((Path(os.environ["RUNNER_TEMP"]) / "pt8a-release.json").read_text()))
+    release = json.loads((Path(os.environ["RUNNER_TEMP"]) / "pt8a-release.json").read_text())
+    write(output / "release.json", release)
     ledger = [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in CASES]
     try:
         with tempfile.TemporaryDirectory(prefix="pt8a-private-") as temporary:
             private = Path(temporary)
-            receipt, binding = bound_artifact(request["provenanceRunId"], request["provenanceArtifactId"],
-                ["receipt.json"], private, ".github/workflows/gcp-target-corpus-ingestion.yml")
-            require_clean_receipt(receipt["receipt.json"], binding, request, source)
+            if corrective:
+                corrective_release(release, source, image)
+                origin_receipt, binding, failed_binding = corrective_origins(private)
+                # Store original identities separately; never issue a new ingestion receipt.
+                write(output / "origin-bindings.json", {"clean": binding, "failed": failed_binding,
+                    "originApprovalCommentId": ORIGIN_APPROVAL, "originalFailedJobConsumed": True})
+                write(output / "known-writer-history.json", history)
+            else:
+                receipt, binding = bound_artifact(request["provenanceRunId"], request["provenanceArtifactId"],
+                    ["receipt.json"], private, ".github/workflows/gcp-target-corpus-ingestion.yml")
+                require_clean_receipt(receipt["receipt.json"], binding, request, source)
             manifest, schema, documents, checksum = rag.load_corpus(args.corpus)
             if checksum != CORPUS_CHECKSUM:
                 raise ValueError("rebuilt expected corpus checksum differs; do not tune authority")
-            readiness = rag.verify_exact_v4(rag.JsonHttpClient("http://127.0.0.1:19200"), manifest, schema,
-                documents, checksum, {**binding, "githubArtifactBindingVerified": True, "receipt": receipt["receipt.json"]})
+            if corrective:
+                rag.validate_pt8a_clean_corpus(manifest, documents, checksum,
+                    json.loads((args.corpus / "coverage-report.json").read_text()))
+                readiness = risk_qualified_admission(rag.JsonHttpClient("http://127.0.0.1:19200"),
+                    manifest, schema, documents, checksum, origin_receipt, binding, authority)
+                readiness["correlatedBackendRetrieval"] = False
+            else:
+                readiness = rag.verify_exact_v4(rag.JsonHttpClient("http://127.0.0.1:19200"), manifest, schema,
+                    documents, checksum, {**binding, "githubArtifactBindingVerified": True, "receipt": receipt["receipt.json"]})
             write(output / "readiness.json", readiness)
-            if readiness["classification"] != "EXACT_REUSABLE_COMPLETED_V4":
+            if readiness["classification"] != ("RISK_QUALIFIED_RETAINED_V4" if corrective else "EXACT_REUSABLE_COMPLETED_V4"):
                 raise ValueError("readiness does not authorize case A; no automatic ingestion")
             write(output / "binding.json", {"sourceSha": source, "image": image, "candidateIdentity": IDENTITY,
-                "procedureSha256": sha((ROOT / PROCEDURE).read_bytes()), "mode": request["mode"], "caseId": request.get("caseId"),
+                "procedureSha256": sha((ROOT / (CORRECTIVE_PROCEDURE if corrective else PROCEDURE)).read_bytes()),
+                "mode": request["mode"], "caseId": request.get("caseId"),
                 "liveApprovalCommentId": request["liveApprovalCommentId"], "runId": int(os.environ["GITHUB_RUN_ID"])})
             if request["mode"] == "case":
                 prior, prior_binding = bound_artifact(request["priorRunId"], request["priorArtifactId"],
@@ -461,18 +694,28 @@ def main():
                 write(output / "input-identity.json", case)
             else:
                 record = {"caseId": "readiness-only", "status": "NOT_RUN", "consumed": False}
-                fixture = ROOT / "evaluation/terraformers-realistic-v1/fixtures/pt1-05-private-web-fleet.png"
+                fixture = ROOT / READINESS_FIXTURE
                 # Keep raw transport bodies in the private temporary directory, never the artifact.
                 private_fixture = private / "input.png"; private_fixture.write_bytes(fixture.read_bytes()); fixture = private_fixture
             if transport.current_main() != source:
                 raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT before inference")
+            if corrective:
+                corrective_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                corrective_history(source, int(os.environ["GITHUB_RUN_ID"]))
             subprocess.run(["bash", "scripts/smoke/ephemeral-jwks-fixture.sh", "prepare"], check=True)
             client = transport.CurlClient(Path(os.environ["RUNNER_TEMP"]) / "case-c-access.token")
             try:
                 observe(client, fixture, output / "observation", record, documents, "terraformers-pt8a-validation")
             finally:
                 client.close()
-            if request["mode"] == "readiness":
+            if corrective and record["status"] == "REVIEW_PENDING":
+                # Recheck after the one job, without any new upload or embedding request.
+                post = risk_qualified_admission(rag.JsonHttpClient("http://127.0.0.1:19200"),
+                    manifest, schema, documents, checksum, origin_receipt, binding, authority)
+                write(output / "post-admission.json", post)
+                write(output / "post-known-writer-history.json", corrective_history(source, int(os.environ["GITHUB_RUN_ID"])))
+                corrective_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+            if request["mode"] in ("readiness", CORRECTIVE_MODE):
                 readiness["correlatedBackendRetrieval"] = record["status"] == "REVIEW_PENDING"
                 write(output / "readiness.json", readiness)
                 write(output / "readiness-job.json", record)

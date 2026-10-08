@@ -1,0 +1,45 @@
+{
+  "purpose": "REPOSITORY_ONLY_IMPLEMENTATION_EVIDENCE_NOT_A_NEW_LIVE_RECEIPT",
+  "files": [
+    {
+      "path": "decision-comment.json",
+      "sha256": "abca3c5ca6d9a6513534eedfd8080f29b54575c2c292711e25b386dab7f2c993",
+      "sizeBytes": 4389
+    },
+    {
+      "path": "implementation.md",
+      "sha256": "4bed7f22361d09385567c4c797cbe16f97b4d7270c50f0a2d27ab899609ccfec",
+      "sizeBytes": 9312
+    },
+    {
+      "path": "metadata-invocation-failure.json",
+      "sha256": "9db856b551e6c7c143f2d9bda6df4d1bb41a35d719653666126519c45bccc8b1",
+      "sizeBytes": 1861
+    },
+    {
+      "path": "metadata-validation.json",
+      "sha256": "a3cc6b29c5c56bfc39bb43a13ee720582bc5988d74051ab74e3b7a09e0334737",
+      "sizeBytes": 4515
+    },
+    {
+      "path": "policy-tests.txt",
+      "sha256": "ad1a1a6169cd4273f8b595c99c36e4f8054053a41c743f5ad3b6e001d42224f7",
+      "sizeBytes": 4044
+    },
+    {
+      "path": "python-validation.txt",
+      "sha256": "75fa9d5d1aff90ab405d7fd7a820b3e22c8247960744943b124152bac186f3c8",
+      "sizeBytes": 19258
+    },
+    {
+      "path": "superseded-v3-proposal.md",
+      "sha256": "b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d",
+      "sizeBytes": 8704
+    },
+    {
+      "path": "validation.json",
+      "sha256": "8a177f9d88315c5f09afba6fa09d1c0b7b9c797ae032aad223a49c5b4791294f",
+      "sizeBytes": 3797
+    }
+  ]
+}

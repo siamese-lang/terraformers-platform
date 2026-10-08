@@ -371,12 +371,12 @@ class ExactV4ReadinessTests(unittest.TestCase):
                 "indexed_this_run": 5395, "skipped_existing": 0, "outcome": "ingested",
                 "non_vector_content_identity": gcp_ingest.content_identity(self.documents)}}
 
-    def client(self, documents=None, schema=None, checksum="abc"):
+    def client(self, documents=None, schema=None, checksum="abc", *, inspect_vectors=False, vector_overrides=None):
         class Snapshot(FakeOpenSearch):
             def request(inner, method, path, body=None, accepted=(200,)):
                 if path.endswith("/_search?scroll=1m"):
                     inner.calls.append((method, path, body))
-                    self.assertEqual({"excludes": ["embedding"]}, body["_source"])
+                    self.assertEqual(True if inspect_vectors else {"excludes": ["embedding"]}, body["_source"])
                     inner.offset = 0
                     return 200, {"_scroll_id": "snapshot", "hits": {
                         "total": {"value": 5395, "relation": "eq"}, "hits": inner.page()}}
@@ -388,11 +388,19 @@ class ExactV4ReadinessTests(unittest.TestCase):
             def page(inner):
                 docs = inner.live[inner.offset:inner.offset + 500]
                 inner.offset += 500
-                return [{"_id": d["documentId"], "_source": {k: v for k, v in d.items() if k != "embedding"}} for d in docs]
+                hits = [{"_id": d["documentId"], "_source": {k: v for k, v in d.items() if k != "embedding"}} for d in docs]
+                if inspect_vectors:
+                    for hit in hits:
+                        value = inner.vector_overrides.get(hit["_id"], inner.valid_vector)
+                        if value is not None:
+                            hit["_source"]["embedding"] = value
+                return hits
 
         client = Snapshot(schema or self.schema, checksum=checksum, count=5395,
                           corpus_version="terraformers-reference-v4")
         client.live = json.loads(json.dumps(self.documents if documents is None else documents))
+        client.valid_vector = [0.0] * 1536
+        client.vector_overrides = vector_overrides or {}
         client.documents = {d["documentId"]: d for d in client.live}
         client.hits = [{"_id": client.live[0]["documentId"], "_source": {"documentId": client.live[0]["documentId"]}}]
         return client
@@ -462,6 +470,33 @@ class ExactV4ReadinessTests(unittest.TestCase):
         self.assertTrue(any(method == "DELETE" for method, _, _ in client.calls))
         docs[0]["documentId"] = None
         self.assertEqual("STALE_OR_MIXED_MODEL_SPACE", self.verify(self.client(docs))["classification"])
+
+    def test_optional_all_vector_shape_inspection_is_read_only_and_never_persists_vectors(self):
+        client = self.client(inspect_vectors=True)
+        with patch.object(gcp_ingest.VertexDocumentEmbedder, "embed", side_effect=AssertionError("no embedding")):
+            result = gcp_ingest.verify_exact_v4(client, self.manifest, self.schema, self.documents,
+                                               "abc", self.provenance, inspect_vectors=True)
+        self.assertEqual(5395, result["vectorDocumentsChecked"])
+        self.assertEqual("UNPROVEN", result["vectorContinuity"])
+        self.assertEqual(0, result["embeddingRequests"])
+        self.assertFalse(result["vectorValuesPersisted"])
+        self.assertNotIn("[0.0", json.dumps(result))
+        self.assertFalse(any(method == "PUT" or "/_update/" in path or "/_refresh" in path
+                             or method == "DELETE" and path != "/_search/scroll"
+                             for method, path, body in client.calls))
+
+    def test_missing_wrong_dimension_boolean_nonfinite_or_string_vector_fails_at_any_document(self):
+        for value in (None, [0.0] * 1024, [True] * 1536, [float("nan")] * 1536,
+                      [float("inf")] * 1536, ["0"] * 1536):
+            # Place the defect in the last document, beyond the first scroll page.
+            client = self.client(inspect_vectors=True, vector_overrides={"doc-5394": value})
+            with self.subTest(value_type=type(value).__name__):
+                result = gcp_ingest.verify_exact_v4(client, self.manifest, self.schema, self.documents,
+                    "abc", self.provenance, inspect_vectors=True)
+                self.assertEqual("WRONG_MODEL_OR_DIMENSION", result["classification"])
+                self.assertEqual("invalid_retained_vector_shape", result["reason"])
+                self.assertEqual(5394, result["vectorDocumentsChecked"])
+                self.assertTrue(any(method == "DELETE" and path == "/_search/scroll" for method, path, _ in client.calls))
 
 
 class Pt8aCleanV4Tests(unittest.TestCase):

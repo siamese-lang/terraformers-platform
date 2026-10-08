@@ -15,6 +15,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 import yaml
+from contextlib import ExitStack
 
 SPEC = importlib.util.spec_from_file_location("pt8a", Path(__file__).with_name("pt8a-official-acceptance.py"))
 pt8a = importlib.util.module_from_spec(SPEC)
@@ -187,7 +188,256 @@ class OnceOnlyAndReviewContracts(unittest.TestCase):
         with self.assertRaises(ValueError): self.history(request, conclusion="skipped")
 
 
+class RiskQualifiedCorrectiveContracts(unittest.TestCase):
+    def setUp(self):
+        self.request = {"mode": pt8a.CORRECTIVE_MODE, "liveApprovalCommentId": 123,
+                        "provenanceRunId": pt8a.ORIGIN_CLEAN_RUN, "provenanceArtifactId": pt8a.ORIGIN_CLEAN_ARTIFACT}
+        self.authority = pt8a.corrective_live_fields(SOURCE, IMAGE)
+        self.decision = {"decision": "APPROVED_REPOSITORY_ONLY_IMPLEMENTATION",
+                         "approved_main_sha": "9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447",
+                         "accepted_residual_risk": "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED",
+                         "once_only": "ONE_DISTINCT_CORRECTIVE_READINESS_ATTEMPT_ACROSS_SOURCES"}
+        root = pt8a.ROOT / "docs/evidence/product-trust-pt-8a/corrections/repair-budget-and-recovery-1/original-artifact-members"
+        self.clean = {p: json.loads((root / "clean-v4" / p).read_text())
+                      for p in ("receipt.json", "clean-run-binding.json", "contract.json")}
+        self.clean_binding = {"runId": pt8a.ORIGIN_CLEAN_RUN, "artifactId": pt8a.ORIGIN_CLEAN_ARTIFACT,
+                              "digest": pt8a.ORIGIN_CLEAN_DIGEST, "sourceSha": pt8a.ORIGIN_SOURCE, "conclusion": "success"}
+        self.failed = {p: json.loads((root / "readiness-failure" / p).read_text())
+                       for p in ("observation/accepted.json", "observation/job.json")}
+        self.failed.update({"ledger.json": [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False}
+                                           for c in pt8a.CASES],
+                           "binding.json": {"sourceSha": pt8a.ORIGIN_SOURCE, "image": pt8a.ORIGIN_IMAGE,
+                               "candidateIdentity": pt8a.IDENTITY, "procedureSha256": pt8a.V2_SHA256,
+                               "mode": "readiness", "liveApprovalCommentId": pt8a.ORIGIN_APPROVAL,
+                               "runId": pt8a.ORIGIN_FAILED_RUN}})
+        self.failed_binding = {"runId": pt8a.ORIGIN_FAILED_RUN, "artifactId": pt8a.ORIGIN_FAILED_ARTIFACT,
+                               "digest": pt8a.ORIGIN_FAILED_DIGEST, "sourceSha": pt8a.ORIGIN_SOURCE, "conclusion": "failure"}
+        self.origin_approval = {"gate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE", "decision": "APPROVED",
+            "reviewed_source_sha": pt8a.ORIGIN_SOURCE, "backend_image": pt8a.ORIGIN_IMAGE,
+            "candidate_identity": pt8a.IDENTITY, "procedure_sha256": pt8a.V2_SHA256,
+            "purpose": "PT8A_CLEAN_V4_REEMBED_ALL_5395", "corpus_checksum": pt8a.CORPUS_CHECKSUM,
+            "provider_source": pt8a.rag.PT8A_PROVIDER_SOURCE, "project_decision_source": pt8a.CORPUS_SOURCE,
+            "embedding_model": "gemini-embedding-2", "vector_dimension": "1536"}
+
+    def authority_reader(self, comment_id, marker):
+        if comment_id == pt8a.RECOVERY_DECISION: return self.decision
+        if comment_id == pt8a.ORIGIN_APPROVAL: return self.origin_approval
+        return self.authority
+
+    def test_separate_exact_live_authority_and_explicit_risk_required_no_official_case_payload(self):
+        with patch.object(pt8a, "authority_comment", side_effect=self.authority_reader), \
+             patch.object(pt8a.transport, "current_main", return_value=SOURCE):
+            self.assertEqual(self.authority, pt8a.corrective_request_contract(self.request, SOURCE, IMAGE, 1))
+            for field in ("accepted_residual_risk", "vector_write_continuity", "purpose", "procedure_sha256",
+                          "frozen_v2_procedure_sha256", "original_clean_source_sha", "original_clean_artifact_digest",
+                          "failed_readiness_artifact_digest", "once_only", "backend_image", "index_uuid"):
+                with self.subTest(field=field):
+                    saved = self.authority.pop(field)
+                    try:
+                        with self.assertRaises(ValueError): pt8a.corrective_request_contract(self.request, SOURCE, IMAGE, 1)
+                    finally: self.authority[field] = saved
+            for request, attempt in ((self.request | {"caseId": pt8a.CASES[0]}, 1),
+                                     (self.request | {"mode": "case"}, 1), (self.request, 2),
+                                     (self.request | {"provenanceArtifactId": 1}, 1)):
+                with self.assertRaises(ValueError): pt8a.corrective_request_contract(request, SOURCE, IMAGE, attempt)
+            # The amended approval does not satisfy strict v2 or grant case A access.
+            with self.assertRaisesRegex(ValueError, "live approval"):
+                pt8a.request_contract(self.request | {"mode": "case", "caseId": pt8a.CASES[0],
+                    "priorRunId": 1, "priorArtifactId": 2, "priorReviewCommentId": 3}, SOURCE, IMAGE, 1)
+        with patch.object(pt8a, "authority_comment", side_effect=ValueError("missing live approval")):
+            with self.assertRaises(ValueError): pt8a.corrective_request_contract(self.request, SOURCE, IMAGE, 1)
+
+    def origins(self):
+        with tempfile.TemporaryDirectory() as d, patch.object(pt8a, "authority_comment", side_effect=self.authority_reader), \
+             patch.object(pt8a, "bound_artifact", side_effect=[(self.clean, self.clean_binding), (self.failed, self.failed_binding)]) as download:
+            result = pt8a.corrective_origins(Path(d))
+            self.assertTrue(download.call_args_list[1].kwargs["verify_inventory"])
+            return result
+
+    def test_original_receipt_and_consumed_failure_bindings_preserved_relabel_or_tamper_rejected(self):
+        receipt, binding, failed = self.origins()
+        self.assertEqual(pt8a.ORIGIN_SOURCE, receipt["reviewed_source_sha"])
+        self.assertEqual(pt8a.ORIGIN_CLEAN_DIGEST, binding["digest"])
+        self.assertEqual("failure", failed["conclusion"])
+        targets = [(self.clean["receipt.json"], "reviewed_source_sha", SOURCE),
+                   (self.clean_binding, "sourceSha", SOURCE), (self.clean_binding, "digest", "sha256:wrong"),
+                   (self.origin_approval, "reviewed_source_sha", SOURCE),
+                   (self.failed["observation/accepted.json"], "consumed", False),
+                   (self.failed["observation/accepted.json"], "jobId", "another-job"),
+                   (self.failed["observation/job.json"], "status", "SUCCEEDED"),
+                   (self.failed_binding, "digest", "sha256:wrong"),
+                   (self.failed["binding.json"], "sourceSha", SOURCE),
+                   (self.failed["ledger.json"][0], "status", "PASS")]
+        for target, field, changed in targets:
+            with self.subTest(field=field):
+                saved = target[field]; target[field] = changed
+                try:
+                    with self.assertRaises(ValueError): self.origins()
+                finally: target[field] = saved
+
+    def test_qualified_read_only_admission_is_not_exact_vector_continuity(self):
+        snapshot = {"classification": "EXACT_REUSABLE_COMPLETED_V4", "indexUuid": pt8a.ORIGIN_UUID,
+                    "liveContentIdentity": pt8a.ORIGIN_CONTENT, "vectorDocumentsChecked": 5395, "embeddingRequests": 0}
+        with patch.object(pt8a.rag, "verify_exact_v4", return_value=snapshot) as verify:
+            result = pt8a.risk_qualified_admission(None, {}, {}, [], pt8a.CORPUS_CHECKSUM,
+                self.clean["receipt.json"], self.clean_binding, self.authority)
+            self.assertTrue(verify.call_args.kwargs["inspect_vectors"])
+            self.assertEqual(pt8a.ORIGIN_SOURCE, verify.call_args.args[-1]["sourceSha"])
+            self.assertEqual("RISK_QUALIFIED_RETAINED_V4", result["classification"])
+            self.assertFalse(result["cryptographicVectorContinuityProven"])
+            self.assertEqual("VECTOR_WRITE_CONTINUITY_UNPROVEN", result["vectorWriteContinuity"])
+            self.assertEqual(0, result["indexWrites"])
+            for changed in ({"classification": "PARTIAL_INDEX"}, {"classification": "STALE_OR_MIXED_MODEL_SPACE"},
+                            {"classification": "WRONG_MODEL_OR_DIMENSION"}, {"indexUuid": "replacement"},
+                            {"liveContentIdentity": "changed"}, {"vectorDocumentsChecked": 5394}):
+                verify.return_value = snapshot | changed
+                with self.assertRaises(ValueError):
+                    pt8a.risk_qualified_admission(None, {}, {}, [], pt8a.CORPUS_CHECKSUM,
+                        self.clean["receipt.json"], self.clean_binding, self.authority)
+        for authority in (None, {}, self.authority | {"accepted_residual_risk": "NOT_APPROVED"}):
+            with patch.object(pt8a.rag, "verify_exact_v4") as verify, self.assertRaises(ValueError):
+                pt8a.risk_qualified_admission(None, {}, {}, [], pt8a.CORPUS_CHECKSUM,
+                    self.clean["receipt.json"], self.clean_binding, authority)
+            verify.assert_not_called()
+        with self.assertRaises(ValueError):
+            pt8a.risk_qualified_admission(None, {}, {}, [], "wrong-checksum",
+                self.clean["receipt.json"], self.clean_binding, self.authority)
+
+    def test_history_does_not_reset_with_source_and_incomplete_or_known_writer_history_stops(self):
+        current_id = pt8a.ORIGIN_FAILED_RUN + 1000
+        runtime = [{"id": current_id, "head_sha": SOURCE, "run_attempt": 1},
+                   {"id": pt8a.ORIGIN_FAILED_RUN, "head_sha": pt8a.ORIGIN_SOURCE}]
+        clean = [{"id": pt8a.ORIGIN_CLEAN_RUN, "head_sha": pt8a.ORIGIN_SOURCE}]
+        def api(path):
+            if "gcp-target-runtime-dependencies.yml/runs?" in path:
+                self.assertNotIn("head_sha=", path)
+                return {"total_count": len(runtime), "workflow_runs": runtime}
+            if "gcp-target-corpus-ingestion.yml/runs?" in path:
+                return {"total_count": len(clean), "workflow_runs": clean}
+            return {"total_count": 1, "jobs": [{"name": pt8a.CORRECTIVE_OPERATION, "conclusion": "failure"}]}
+        with patch.object(pt8a, "github", side_effect=api):
+            self.assertFalse(pt8a.corrective_history(SOURCE, current_id)["completeAllWriterAuditAvailable"])
+            runtime.append({"id": current_id - 1, "head_sha": "c" * 40})
+            with self.assertRaisesRegex(ValueError, "across sources"): pt8a.corrective_history(SOURCE, current_id)
+            runtime.pop()
+            clean.append({"id": pt8a.ORIGIN_CLEAN_RUN + 1, "head_sha": "c" * 40})
+            with self.assertRaisesRegex(ValueError, "writer-history"): pt8a.corrective_history(SOURCE, current_id)
+            clean.pop()
+        with patch.object(pt8a, "github", return_value={"total_count": 2, "workflow_runs": runtime[:1]}):
+            with self.assertRaisesRegex(ValueError, "incomplete"): pt8a.corrective_history(SOURCE, current_id)
+        with patch.object(pt8a, "github", return_value={"total_count": 1000,
+                "workflow_runs": [{"id": i} for i in range(100)]}):
+            with self.assertRaisesRegex(ValueError, "bound exhausted"): pt8a.complete_dispatch_history("workflow")
+        runtime.append({"id": current_id - 1, "head_sha": "c" * 40})
+        def incomplete_jobs(path):
+            if "/jobs?" in path: return {"total_count": 2, "jobs": []}
+            return api(path)
+        with patch.object(pt8a, "github", side_effect=incomplete_jobs):
+            with self.assertRaisesRegex(ValueError, "incomplete"): pt8a.corrective_history(SOURCE, current_id)
+
+    def test_runtime_release_source_digest_model_index_readback_must_match(self):
+        release = {"sourceSha": SOURCE, "image": IMAGE, "sourceTagDigest": IMAGE.split("@")[1],
+            "readyReplicas": 1, "noRuntimeConfigurationMutation": True,
+            "deployedRuntimeIdentity": SOURCE + "|terraformers-reference-v4|terraformers-reference-v4|gemini-embedding-2|1536|1536"
+                "|https://identity.example.test/case-c|http://terraformers-jwks:8080/jwks.json|vertex|vertex|REQUIRED"
+                "|gemini-3.8-flash|case-c-runtime-client|gcs|gcs|http://terraformers-opensearch:9200|5.100.0"}
+        pt8a.corrective_release(release, SOURCE, IMAGE)
+        for field in release:
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                pt8a.corrective_release(release | {field: "wrong"}, SOURCE, IMAGE)
+
+    def test_corrective_cli_preflight_rejects_case_or_wrong_operation_before_any_cloud_or_upload(self):
+        with tempfile.TemporaryDirectory() as d:
+            request_file = Path(d) / "request.json"
+            env = {"GITHUB_SHA": SOURCE, "BACKEND_IMAGE": IMAGE, "GITHUB_RUN_ATTEMPT": "1",
+                   "GITHUB_RUN_ID": str(pt8a.ORIGIN_FAILED_RUN + 1000), "OPERATION": pt8a.CORRECTIVE_OPERATION}
+            for request, operation in ((self.request | {"mode": "case", "caseId": pt8a.CASES[0]}, pt8a.CORRECTIVE_OPERATION),
+                                       (self.request, "pt8a-official-acceptance")):
+                request_file.write_text(json.dumps(request))
+                with patch.dict(os.environ, env | {"OPERATION": operation}), \
+                     patch.object(sys, "argv", ["pt8a", "preflight", "--request-file", str(request_file)]), \
+                     patch.object(pt8a, "github") as gh, patch.object(pt8a.transport, "CurlClient") as client:
+                    with self.assertRaisesRegex(ValueError, "operation"): pt8a.main()
+                    gh.assert_not_called(); client.assert_not_called()
+            request_file.write_text(json.dumps(self.request))
+            with patch.dict(os.environ, env), patch.object(sys, "argv", ["pt8a", "preflight", "--request-file", str(request_file)]), \
+                 patch.object(pt8a, "authority_comment", side_effect=self.authority_reader), \
+                 patch.object(pt8a.transport, "current_main", return_value=SOURCE), \
+                 patch.object(pt8a, "corrective_history", return_value={}), \
+                 patch.object(pt8a, "corrective_origins", side_effect=ValueError("original failure missing")), \
+                 patch.object(pt8a.transport, "CurlClient") as client:
+                with self.assertRaisesRegex(ValueError, "original failure missing"): pt8a.main()
+                client.assert_not_called()
+
+    def test_corrective_cli_runs_only_one_existing_observation_and_keeps_official_ledger_not_run(self):
+        for status in ("REVIEW_PENDING", "NOT_PASS"):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as d, ExitStack() as stack:
+                root = Path(d); out = root / "evidence"; request_file = root / "request.json"
+                request_file.write_text(json.dumps(self.request)); (root / "coverage-report.json").write_text("{}")
+                (root / "pt8a-release.json").write_text("{}")
+                env = {"GITHUB_SHA": SOURCE, "BACKEND_IMAGE": IMAGE, "GITHUB_RUN_ATTEMPT": "1",
+                    "GITHUB_RUN_ID": str(pt8a.ORIGIN_FAILED_RUN + 1000), "OPERATION": pt8a.CORRECTIVE_OPERATION,
+                    "RUNNER_TEMP": d}
+                stack.enter_context(patch.dict(os.environ, env))
+                stack.enter_context(patch.object(sys, "argv", ["pt8a", "run", "--request-file", str(request_file),
+                    "--corpus", d, "--output", str(out)]))
+                stack.enter_context(patch.object(pt8a, "authority_comment", side_effect=self.authority_reader))
+                stack.enter_context(patch.object(pt8a.transport, "current_main", return_value=SOURCE))
+                history = stack.enter_context(patch.object(pt8a, "corrective_history", return_value={"completeAllWriterAuditAvailable": False}))
+                stack.enter_context(patch.object(pt8a, "corrective_origins", return_value=(
+                    self.clean["receipt.json"], self.clean_binding, self.failed_binding)))
+                stack.enter_context(patch.object(pt8a, "corrective_release"))
+                stack.enter_context(patch.object(pt8a.rag, "load_corpus", return_value=({}, {}, [], pt8a.CORPUS_CHECKSUM)))
+                stack.enter_context(patch.object(pt8a.rag, "validate_pt8a_clean_corpus"))
+                scan = stack.enter_context(patch.object(pt8a, "risk_qualified_admission", return_value={
+                    "classification": "RISK_QUALIFIED_RETAINED_V4", "cryptographicVectorContinuityProven": False}))
+                stack.enter_context(patch.object(pt8a.subprocess, "run"))
+                stack.enter_context(patch.object(pt8a.transport, "CurlClient"))
+                fetch = stack.enter_context(patch.object(pt8a, "acquire", side_effect=AssertionError("no official inputs")))
+                def observation(client, fixture, directory, record, documents, pod):
+                    self.assertEqual("input.png", fixture.name)
+                    self.assertEqual((pt8a.ROOT / pt8a.READINESS_FIXTURE).read_bytes(), fixture.read_bytes())
+                    record.update(status=status, consumed=True, uploadAttempts=1, jobId="new-corrective-job")
+                observe = stack.enter_context(patch.object(pt8a, "observe", side_effect=observation))
+                if status == "NOT_PASS":
+                    with self.assertRaisesRegex(ValueError, "material technical/product failure"): pt8a.main()
+                else:
+                    pt8a.main()
+                observe.assert_called_once(); fetch.assert_not_called()
+                self.assertEqual(2 if status == "REVIEW_PENDING" else 1, scan.call_count)
+                self.assertEqual(3 if status == "REVIEW_PENDING" else 2, history.call_count)
+                self.assertEqual(["NOT_RUN"] * 5, [r["status"] for r in json.loads((out / "ledger.json").read_text())])
+                self.assertEqual(pt8a.CORRECTIVE_MODE, json.loads((out / "binding.json").read_text())["mode"])
+                self.assertEqual(pt8a.sha((pt8a.ROOT / pt8a.CORRECTIVE_PROCEDURE).read_bytes()),
+                                 json.loads((out / "binding.json").read_text())["procedureSha256"])
+                if status == "NOT_PASS": self.assertTrue((out / "error.json").is_file())
+
+
 class ArtifactAndObservationContracts(unittest.TestCase):
+    def test_original_selected_inventory_hashes_must_match_even_a_valid_archive_digest(self):
+        for altered in (False, True):
+            data = b'{"status":"ACCEPTED","consumed":true}'
+            inventory = {"files": [{"path": "accepted.json", "sha256": "wrong" if altered else pt8a.sha(data),
+                                    "sizeBytes": len(data)}]}
+            buf = io.BytesIO()
+            with zipfile.ZipFile(buf, "w") as zipped:
+                zipped.writestr("accepted.json", data); zipped.writestr("inventory.json", json.dumps(inventory))
+            archive = buf.getvalue()
+            run = {"event": "workflow_dispatch", "head_branch": "main", "run_attempt": 1,
+                "path": ".github/workflows/gcp-target-runtime-dependencies.yml", "status": "completed",
+                "head_sha": pt8a.ORIGIN_SOURCE, "conclusion": "failure"}
+            artifact = {"expired": False, "digest": "sha256:" + pt8a.sha(archive),
+                        "workflow_run": {"id": 1, "head_sha": pt8a.ORIGIN_SOURCE}}
+            def download(command, stdout, check): stdout.write(archive)
+            with tempfile.TemporaryDirectory() as d, patch.object(pt8a.subprocess, "run", side_effect=download), \
+                 patch.object(pt8a, "github", side_effect=[run, artifact]):
+                if altered:
+                    with self.assertRaisesRegex(ValueError, "inventory/member hash"):
+                        pt8a.bound_artifact(1, 2, ["inventory.json", "accepted.json"], Path(d), run["path"], verify_inventory=True)
+                else:
+                    result, binding = pt8a.bound_artifact(1, 2, ["inventory.json", "accepted.json"], Path(d), run["path"], verify_inventory=True)
+                    self.assertTrue(result["accepted.json"]["consumed"])
+
     def test_safe_provider_and_closure_metadata_retained_without_payload_or_invented_usage(self):
         raw = {"lines": [
             "Vertex provider call stage=facts outcome=received finishReason=STOP outputTokens=400 thinkingTokens=20 totalTokens=420 maxOutputTokens=800",

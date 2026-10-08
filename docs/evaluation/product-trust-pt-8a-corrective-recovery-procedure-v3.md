@@ -1,133 +1,189 @@
-# PT-8A corrective recovery procedure v3 — proposed, not executable
+# PT-8A corrective recovery procedure v3 — risk-qualified retained v4
 
-Status: **PROPOSED / INDEPENDENT REVIEW AND USER APPROVAL REQUIRED**. This document
-does not replace or approve frozen v2, authorize a dispatch, or relax the current
-observer's receipt/source and once-only checks. Its hash must be bound in any later
-approval. There is no predicted merged source SHA or image digest.
+Status: **REPOSITORY IMPLEMENTATION / INDEPENDENT ACCEPTANCE AND USER MERGE PENDING;
+LIVE EXECUTION UNAUTHORIZED**. USER design decision
+[6057566013](https://github.com/siamese-lang/terraformers-platform/pull/259#issuecomment-6057566013)
+authorizes this repository-only implementation at base
+`9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447`. It does not approve a future live source,
+image or this final procedure hash. Compute SHA256 from these complete bytes for
+independent acceptance and the later live approval; do not predict a merge SHA/digest.
 
-## Scope and preserved result
+The previous unapproved v3 proposal, SHA256
+`b2838e81c068c37df0b782744883e3f809351ca798f44ec9f92e2eb883d8a98d`, is preserved at
+[the superseded proposal](../evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/superseded-v3-proposal.md).
+This is a changed contract, not the same candidate bytes or a retroactive approval.
 
-This is one prospective correction of readiness's repair-truncation mechanism,
-not an official-case retry or a successful external benchmark. Frozen v2 remains
-byte-identical at SHA256 `d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823`.
-Official revision-2 candidate identity remains
-`3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757`;
-image-only truth, technical closure, ten review dimensions and cases A–E are unchanged.
-All official cases remain NOT_RUN, upload count 0.
+## Risk decision and evidence authority
 
-Original readiness run **37744660097 / attempt 1 / artifact 11534783753**,
-digest `sha256:94ab23e3ace045d54b9b854a9a41be22447cf674b58c72ccf7ac3ba17976e21d`,
-source `70373842629fdd569815780e52dc5f0353b97880`, accepted job
-`a93a7dcf-c40b-43f4-b55b-357c914a72f3` is **FAILED, ACCEPTED, consumed**.
-It is never deleted, treated as pre-observation, rerun or replaced by a successful
-sample. Its 86,959 ms terminal latency and original parser-empty retrieval artifact
-remain natural evidence. USER-supplied sanitized logs and independent forensic
-addendum 6056738716 separately establish actual retrieval counts 8 and 7 and the
-repair failure. They do not rewrite the original artifact or supply missing token usage.
+Risk-qualified reuse **does not prove exact/uninterrupted vector continuity**.
+Absent a completion-time vector checkpoint or complete all-writer audit, later
+vector-only writes cannot be excluded. USER chose the separate risk-qualified
+classification to avoid another 5,395 embeddings solely because backend source
+changed. The unavailable audit remains unavailable; no fabricated checkpoint,
+receipt relabel, blanket SHA bypass or cryptographic continuity claim is permitted.
 
-## Separate approvals before any future execution
+Frozen v2 is byte-identical at
+`d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823`.
+Its ordinary readiness/case source, clean-receipt and history guards are preserved.
+This v3 path is an explicit separately approved operation only, never an automatic
+retry exception in v2. Frozen AWS revision-2 identity remains
+`3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757`.
+Truth, URLs/image identities, case order and ten review dimensions are unchanged.
+Cases A–E remain NOT_RUN, uploads 0; no truth enters inference or corpus.
 
-Required, in order: independent acceptance of the substantive corrective PR;
-USER merge; independent acceptance and explicit USER approval of this exact v3
-amendment (including its hash); independent acceptance of vector-continuity evidence
-below; and a new source/image/procedure/candidate-bound
-`FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE` approval for **one corrective
-readiness**, using the existing protected runtime workflow only. Approval of this
-repository correction authorizes none of these live actions. Existing source-703
-or earlier approvals cannot be transplanted to the new source.
+Preserved origins, authenticated again before cloud access and before inference:
 
-Future approval must bind the actual merged source, immutable digest-qualified
-backend image and BUILD_SOURCE_REVISION, v3 hash, unchanged v2 hash and candidate,
-original consumed run/job/artifact/digest, origin clean run/artifact/digest/source,
-retained index UUID, corpus checksum/content identity/model/dimension, independent
-continuity-evidence identifiers, and a single recovery capability for this defect.
-Any implementation of this proposed contract also needs review before execution;
-current executable v2 guards continue to reject cross-source reuse.
-
-## Source-independent clean provenance admission
-
-Historical clean origin remains exactly:
-
-| Binding | Value |
+| Binding | Exact origin |
 | --- | --- |
-| Run / attempt / artifact | 37710171426 / 1 / 11522067032 |
-| Artifact digest | sha256:0e6f556d5a10df8fad65c52dcadd5a2f7db1f9bf67c9c2f2fa3ac05ccb4063ac |
-| Source / original approval | 70373842629fdd569815780e52dc5f0353b97880 / 6049866256 |
+| Clean run / attempt / artifact | 37710171426 / 1 / 11522067032 |
+| Clean archive digest | sha256:0e6f556d5a10df8fad65c52dcadd5a2f7db1f9bf67c9c2f2fa3ac05ccb4063ac |
+| Clean source / USER approval | 70373842629fdd569815780e52dc5f0353b97880 / 6049866256 |
+| Origin backend digest | sha256:6883a720b330a1ee0e2802fd7b62e377f3c014adc865bfca2c5ab127b68b35c8 |
 | Index / UUID | terraformers-reference-v4 / L8KKBHT1Qri3E2VVw7As2g |
-| Corpus checksum | da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a |
-| Full non-vector content identity | 0bfa3e679a331f9680c9fee682f7f4d27bb2de1929a20df3b859a22036f878bb |
-| Provider source | f7a3b98da589ab1d52756b0dcee0dbf2de83d635 |
-| Project-decision source | 1ae69d589ac3965733818819792d98c5638e0ae5 |
-| Model / dimension | gemini-embedding-2 / 1536 |
-| Documents / fresh embeddings / skips | 5395 / 5395 / 0 |
+| Checksum | da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a |
+| Non-vector identity | 0bfa3e679a331f9680c9fee682f7f4d27bb2de1929a20df3b859a22036f878bb |
+| Provider source / project-decision source | f7a3b98da589ab1d52756b0dcee0dbf2de83d635 / 1ae69d589ac3965733818819792d98c5638e0ae5 |
+| Model / dimension / fresh documents / skips | gemini-embedding-2 / 1536 / 5395 / 0 |
+| Failed readiness run / attempt / artifact | 37744660097 / 1 / 11534783753 |
+| Failure archive digest | sha256:94ab23e3ace045d54b9b854a9a41be22447cf674b58c72ccf7ac3ba17976e21d |
+| Failed accepted job | a93a7dcf-c40b-43f4-b55b-357c914a72f3 |
+| Failure disposition | FAILED / ACCEPTED / consumed; PROVIDER_OUTPUT_TRUNCATED |
 
-A source-only backend change is neither an automatic reason to spend 5,395 new
-embeddings nor proof that retained vectors have the same origin. Reuse must pass
-**all** these independent, read-only admissions before any upload:
+Original approval and receipt remain origin-source evidence, with exact model,
+checksum, original v2/candidate and all-5,395 fresh/zero-skip completion. The failed
+archive's inventory/selected member hashes, source/image/procedure, job/acceptance
+and all-NOT_RUN official ledger must agree. Original failure is never changed to
+pre-observation, NOT_RUN or PASS; its 86,959-ms latency and parser-empty retrieval
+artifact remain unchanged alongside the separate forensic 8/7 retrieval addendum.
 
-1. Authenticated GitHub run/artifact download and SHA256 verification bind the
-   exact completed successful attempt-1 clean workflow, original USER approval,
-   v2 procedure/candidate and receipt. Preserve the original receipt bytes and
-   source; create a separate provenance link to the future source, never relabel it.
-2. Rebuild/verify the exact corpus from the historical provider and project sources
-   with existing corpus tooling. Require checksum and the complete
-   1526 / 1514 / 1514 / 0 / 5387 / 8 / 5395 contract, exact expected mapping,
-   every ID and every non-vector field. Same counts or a few representative hits
-   are insufficient. Preserve full content identities before and after observation.
-3. Live readback binds the same UUID before admission, through observation and
-   afterwards, exact runtime model/dimension/index configuration, every vector's
-   presence and finite 1536-dimensional shape. Shape alone cannot prove model origin.
-4. Independently authenticated continuity evidence proves **no intervening vector
-   write** from the completed clean write through the future observation. Accept
-   either a complete canonical vector checkpoint bound to that clean completion
-   with current equality, or complete immutable index-write audit evidence for
-   every writer/route over the interval. A checkpoint first taken now cannot
-   retroactively prove clean origin; audit must cover direct writes, bulk/update
-   paths, ingestion and writers outside GitHub, with no unaccounted intervals.
-   UUID/non-vector equality, document timestamps, workflow history, matching
-   dimensions and a newly invented watermark are not substitutes.
-5. Review the source diff to confirm unchanged corpus build/ingester/model/index
-   semantics; bind new source/image/readiness separately to original clean provenance.
-   Record origin and current-source identities separately in the recovery evidence.
+## Future explicit live approval
 
-**Current disposition: BLOCKED — VECTOR_WRITE_CONTINUITY_UNPROVEN.** The existing
-receipt, contract and readiness artifact contain no vector checkpoint, write
-watermark or complete all-writer audit. This repository-only correction cannot
-establish item 4. No source bypass, new audit infrastructure, index rebuild/delete,
-document upsert, vector overwrite or automatic fresh embedding is authorized.
-If suitable existing independently verifiable evidence cannot be supplied, STOP
-for a separate USER decision; do not weaken admission to make recovery run.
+Independent acceptance and USER merge of this PR are prerequisites, not live
+approval. A new repository USER `[HUMAN_GATE_APPROVAL:v1]` comment must use gate
+`FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE`, decision `APPROVED`, purpose
+`PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE`. Comment 6057566013's repository-only
+marker cannot satisfy this contract. Earlier source-703/v2 approvals cannot be reused.
 
-## One corrective readiness capability
+The complete exact fields are enumerated by existing observer function
+`corrective_live_fields(actual_source, actual_immutable_image)`. Approval binds:
 
-Only after all approvals/admissions, the existing representative PT1-05 readiness
-input may receive **one distinct first upload on the corrected source**. Bind its
-existing fixture hash in approval. This is a new labeled mechanism measurement,
-not a resubmission of the failed job or an official-image product sample.
+- actual merged reviewed main, immutable backend image and deployed source/tag/digest;
+- exact new v3 SHA256 and `frozen_v2_procedure_sha256`, frozen candidate;
+- `decision_comment_id: 6057566013`, every clean origin run/artifact/digest/source/approval;
+- every consumed failure run/artifact/digest/job/disposition;
+- checksum, index UUID, non-vector content identity, embedding model/dimension;
+- `vector_write_continuity: VECTOR_WRITE_CONTINUITY_UNPROVEN` and
+  `accepted_residual_risk: INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED`;
+- `once_only: ONE_DISTINCT_CORRECTIVE_READINESS_ATTEMPT_ACROSS_SOURCES`;
+- `official_cases: A_TO_E_NOT_RUN` and hash of the unchanged PT1-05 readiness fixture.
 
-The capability is at most **one dispatch, attempt 1, and one upload total for this
-defect**, across all later sources; changing SHA cannot reset it. Before upload,
-complete authenticated GitHub dispatch/job/artifact history and the bound original
-failed artifact must establish that no prior corrective attempt consumed it.
-Unknown operation, missing/expired artifact, incomplete pagination, running job,
-rerun attempt or conflicting ledger stops execution. Existing source-specific
-history alone cannot establish this cross-source capability. A timeout/ambiguous
-dispatch response or ambiguous POST consumes the attempt conservatively; STOP,
-never dispatch or upload again to obtain a definite/passing result.
+No live approval is supplied or created by this repository task. The source/image
+are bound only after actual accepted merge/publication/rollout, under their respective
+separate gates. Main/source/image/procedure/candidate drift stops without rebase/rebind.
 
-Retain distinct original-failure and corrective-observation records. Do not reset
-original readiness consumption, official case ledger or repair counters. Provider
-budgets stay facts 370s / initial, compact and repair 220s / embedding 10s; SDK and
-durable attempts stay 1; original accepted-age cutoff stays 8 minutes. Initial
-generation retains only its MAX_TOKENS compact fallback; closure/repair remain
-single-cycle and repair single-attempt. Safe stage/finish/token telemetry is evidence,
-not a replacement for strict schema, real Terraform CLI and quality checks.
+## Existing workflow, new bounded operation
 
-Any provider truncation/error, invalid/incomplete HCL, quality/evidence failure,
-late/indeterminate terminalization, new failure class, partial provenance evidence,
-source/image/procedure/candidate drift or unexplained vector write stops at
-HUMAN_REQUIRED with natural evidence. No rerun, repair loop or automatic
-re-embedding follows. Even successful readiness needs independent acceptance of
-the unchanged frozen requirements before any separately authorized case A;
-B–E remain sequential, evidence-gated and NOT_RUN until individually eligible.
-No PT-8B, teardown, IAM expansion or AWS plan/apply authority is implied.
+Only `.github/workflows/gcp-target-runtime-dependencies.yml`, dispatched from main:
+`operation: pt8a-corrective-readiness`,
+`confirmation: RUN_REVIEWED_PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_V3`, exact
+`expected_sha`, `backend_source_sha`, immutable `backend_image`, and `pt8a_request`:
+
+```json
+{"mode":"corrective-readiness","liveApprovalCommentId":123,
+ "provenanceRunId":37710171426,"provenanceArtifactId":11522067032}
+```
+
+123 is a schema example, not authority. No other request fields, caseId, input URL,
+truth or input override are accepted. The job display name is independently
+identifiable as `pt8a-corrective-readiness` even when preflight fails without an
+artifact. Existing WIF/protected environment/runtime/JWKS/owned pod/evidence cleanup
+contracts are reused; no new IAM/security boundary or workflow is introduced.
+
+One corrective **dispatch / attempt 1 / upload 1 total** for this defect across
+all later sources. This is one new labeled mechanism observation, never a rerun
+of the failed run/job, an official sample, or a per-SHA retry entitlement.
+
+Before cloud access, again before upload and after a successful observation:
+
+1. Enumerate complete main workflow_dispatch history across all source SHAs,
+   at most 10 pages of 100, no head_sha filter. Duplicate rows, inconsistent totals,
+   incomplete pagination/job listings or bound exhaustion stop. Current attempt/source
+   and original failed run must be present.
+2. Any non-skipped prior corrective dispatch after the origin failure consumes the
+   capability regardless of success, cancellation, preflight failure, artifact absence
+   or whether POST happened. Another post-origin ordinary PT-8A observation also stops
+   recovery rather than permitting a result-driven retry. Unknown job/operation stops.
+   Unrelated runtime operations with a demonstrably skipped PT-8A job are not observations.
+3. Inspect complete known corpus-ingestion dispatch history. Original clean run/source
+   must be present; any subsequent ingestion dispatch requires independent writer-history
+   review and blocks automatic admission, rather than assuming it wrote nothing.
+   This is known GitHub history only, **not** a complete audit of direct/external writers.
+4. Existing workflow concurrency serializes retained runtime actions. A competing new
+   dispatch is visible and causes fail-closed admission. Unknown dispatch/POST acceptance
+   must never trigger a new dispatch/upload; preserve evidence and STOP.
+
+These are execution guards, not permission to dispatch now. Failed workflow logs/run
+metadata remain natural evidence even if preflight produced no artifact. The distinct
+non-skipped job remains detectable and consumes the capability; missing history is
+never permission to retry.
+
+## Read-only risk-qualified corpus admission
+
+Use the existing verifier; no embedder is instantiated. Verify rebuilt exact checksum,
+historical provider/project sources and full 1526 / 1514 / 1514 / 0 / 5387 / 8 / 5395
+contract. Read actual mapping/method/settings/metadata, every 5,395 ID and all non-vector
+source fields, exact expected content identity, before/after total counts and unchanged
+UUID. A same-count replacement, extra field, stale metadata or missing source fails.
+
+The optional full-vector scan reads every vector in memory, requiring presence,
+exactly 1536 numeric finite values, no booleans/NaN/infinity. It discards vector values
+before retaining non-vector snapshots and never publishes vectors or document bodies.
+It performs only mapping/settings/count/search/scroll reads and scroll-context cleanup;
+no index create/delete, document upsert/update, refresh or metadata write. Admission
+embeddingRequests=0 / indexWrites=0. Vector shape cannot prove which model produced
+those values. Configured runtime model/dimensions/index and authenticated original
+receipt supply bounded historical provenance, qualified by the expressly accepted gap.
+
+Existing workflow readback verifies actual backend Deployment image/ready replica,
+remote source-SHA tag digest, BUILD_SOURCE_REVISION and complete production-equivalent
+runtime identity, including v4 index/corpus and gemini-embedding-2 / 1536. The observer
+checks that release record again. No runtime configuration mutation or rollout happens
+in corrective readiness; those are separately approved prerequisites.
+
+On success publish **RISK_QUALIFIED_RETAINED_V4**, with origin source/digest kept
+separate from the current release binding, `cryptographicVectorContinuityProven=false`,
+`VECTOR_WRITE_CONTINUITY_UNPROVEN`, known writer history and the live risk approval ID.
+Do not publish EXACT_VECTOR_CONTINUITY or silently assert original vectors unchanged.
+After the single successful product job, repeat read-only admission/history/live
+binding checks. Any mismatch is a failed observation; preserve the accepted product
+job/evidence without another upload. Snapshots cannot exclude transient or unobserved
+writes between them, and no new full audit infrastructure is implied.
+
+## Product observation, failure and later case boundary
+
+Only the existing repository PT1-05 readiness fixture, hash-bound in approval, is
+copied to a private directory and uploaded once through the authenticated owner-scoped
+production AnalysisJob path. No official AWS image acquisition occurs. Preserve natural
+accepted job, terminal result, safe provider/retrieval metadata, HCL/CLI, persisted/user
+trust evidence and all-NOT_RUN official ledger. Output uses normal `pt8a-official-<run>`
+artifact/inventory with v3/current-source binding and separate immutable origin links.
+
+Provider truncation/error, timeout/censor, ambiguous POST, invalid/incomplete HCL,
+quality/evidence failure or any new failure class stops HUMAN_REQUIRED. No rerun,
+resubmission, reembedding or further autonomous correction. Option D, MAX_TOKENS compact
+fallback, single closure/repair and strict schema/real CLI/quality behavior are unchanged.
+Admission itself makes zero model/embedding calls; the one product job's ordinary
+facts/generation/query-embedding/repair calls require the separate live/model/cost gate.
+
+A successful job is REVIEW_PENDING, not self-accepted readiness or product trust.
+Independent review must bind the exact v3/current release, qualified admission,
+accepted residual risk, origins, run/artifact/digest and unchanged frozen readiness
+requirements before any next action.
+
+**Case-A compatibility boundary:** strict v2 case entry intentionally rejects a v3
+corrective artifact (procedure/mode/live approval mismatch and old-source clean receipt).
+It must not be relabeled as v2 or passed through a generic exception. This implementation
+adds no v3 official-case mode or official-case authority. A later separately reviewed,
+USER-authorized case-entry compatibility contract must carry the qualified provenance
+and independent readiness review rather than silently promoting it to strict continuity.
+Cases A–E stay NOT_RUN here; no PT-8B, teardown, AWS plan/apply or new security/cost scope.

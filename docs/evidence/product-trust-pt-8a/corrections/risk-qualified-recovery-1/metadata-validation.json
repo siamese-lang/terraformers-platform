@@ -1,0 +1,92 @@
+{
+  "strictV2AndProductObservationFunctionsUnchanged": "PASS; only bound_artifact optional inventory check and main explicit mode routing changed",
+  "ingestionEmbeddingCleanAuthorityAndWriteFunctionsUnchanged": "PASS; only optional read-only vector scan added to existing verifier",
+  "programStateWorkPackageConsistencyAndHistoricalCounters": "PASS",
+  "frozenAndProductionReadback": {
+    "result": "PASS",
+    "fileCount": 429,
+    "keyFiles": [
+      {
+        "path": "docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md",
+        "sha256": "d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823",
+        "unchanged": true
+      },
+      {
+        "path": "docs/evaluation/product-trust-aws-official-truth-candidate.md",
+        "sha256": "8828de056a9b2b121e8bf560bd1766b3ddc465770984317b67af3eb8001a6d45",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/rag/build-corpus-v4.py",
+        "sha256": "2948b503096b11a9af8bc77a775a7ff236a6b9dcf2b4307b990e69756f56f9cc",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/checks/rag-corpus-contract-verification.py",
+        "sha256": "9b79bd7edd2f03a38f27ee8e985fbb1e0386511dde8521b909a4052128223ed5",
+        "unchanged": true
+      },
+      {
+        "path": ".github/workflows/gcp-target-corpus-ingestion.yml",
+        "sha256": "8871846ab62eedfa44be4c69fa94827d4cc82889b241a2b0add6ece4736d62c6",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation/terraformers-realistic-v1/fixtures/pt1-05-private-web-fleet.png",
+        "sha256": "4de17a100ac94ea9cd4c61be505fad45cc99dd3cb066fb484b7cbc2f5b50be32",
+        "unchanged": true
+      }
+    ],
+    "allBackendCorpusOfficialCandidateAndPriorCorrectionEvidenceBytesUnchanged": true
+  },
+  "workflowYamlShellSyntaxAndUnchangedWifRuntimeCleanupBoundary": {
+    "result": "PASS",
+    "bashBlocks": [
+      "Validate frozen procedure and explicit live authority before cloud access",
+      "Verify exact deployed release and existing runtime identity",
+      "Rebuild expected corpus from pinned authority without embedding",
+      "Start owned validation pod with the already deployed immutable image",
+      "Observe read-only exact readiness and at most one accepted product job",
+      "Bind artifact for post-inference independent review",
+      "Remove only the owned ephemeral validation pod"
+    ],
+    "permissionsConcurrencyOtherJobsAndAllStepsExceptPreflightUnchanged": true
+  },
+  "allowedScope": {
+    "result": "PASS",
+    "files": [
+      ".agents/programs/product-trust-v1.yml",
+      ".agents/state/product-trust-v1.json",
+      ".agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml",
+      ".github/workflows/gcp-target-runtime-dependencies.yml",
+      "docs/AI_PROJECT_STATE.md",
+      "docs/evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md",
+      "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/decision-comment.json",
+      "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/implementation.md",
+      "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/inventory.json",
+      "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/metadata-invocation-failure.json",
+      "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/metadata-validation.json",
+      "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/policy-tests.txt",
+      "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/python-validation.txt",
+      "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/superseded-v3-proposal.md",
+      "docs/evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/validation.json",
+      "docs/plans/active/product-trust-modernization.md",
+      "scripts/evaluation/pt8a-official-acceptance.py",
+      "scripts/evaluation/test_pt8a_official_acceptance.py",
+      "scripts/rag/ingest-gcp-target-corpus.py",
+      "tests/rag/test_ingest_gcp_target_corpus.py"
+    ]
+  },
+  "gitDiffCheck": "PASS",
+  "finalEvidenceRecordAndScopeReadback": {
+    "result": "PASS",
+    "changedFiles": 20,
+    "jsonYamlParse": "PASS",
+    "relativeEvidenceLinks": "PASS",
+    "historicalFilesRechecked": 462,
+    "unchangedHistoricalGitBlobsWithExistingCheckoutEolConversion": [
+      "docs/evidence/product-trust-pt-8a/approved-request.md"
+    ],
+    "stateAndWorkPackageHashCounterConsistency": "PASS"
+  }
+}

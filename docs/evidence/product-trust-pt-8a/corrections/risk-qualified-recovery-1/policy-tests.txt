@@ -1,0 +1,28 @@
+test_authenticated_evidence_doc_skips_authenticated_runtime (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_authenticated_evidence_doc_skips_authenticated_runtime) ... ok
+test_authenticated_http_helper_runs_authenticated_runtime (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_authenticated_http_helper_runs_authenticated_runtime) ... ok
+test_authenticated_overlay_only_runs_authenticated_runtime (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_authenticated_overlay_only_runs_authenticated_runtime) ... ok
+test_aws_overlay_only_runs_aws_package_and_m1_runtime (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_aws_overlay_only_runs_aws_package_and_m1_runtime) ... ok
+test_backend_pom_runs_backend_mariadb_and_persistent_runtime (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_backend_pom_runs_backend_mariadb_and_persistent_runtime) ... ok
+test_backend_scope_and_image_inputs_are_separate (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_backend_scope_and_image_inputs_are_separate) ... ok
+test_base_manifest_runs_all_runtime_dependents (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_base_manifest_runs_all_runtime_dependents) ... ok
+test_current_repository_has_only_allowlisted_automatic_pr_workflows (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_current_repository_has_only_allowlisted_automatic_pr_workflows) ... ok
+test_deleted_base_manifest_is_collected_and_classified (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_deleted_base_manifest_is_collected_and_classified) ... ok
+test_docs_state_only_skips_expensive_workflows (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_docs_state_only_skips_expensive_workflows) ... ok
+test_frontend_only_runs_m1_frontend_and_boundary (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_frontend_only_runs_m1_frontend_and_boundary) ... ok
+test_gcp_apply_workflow_runs_terraform_static_verification (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_gcp_apply_workflow_runs_terraform_static_verification) ... ok
+test_gcp_corpus_ingestion_workflow_runs_terraform_static_verification (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_gcp_corpus_ingestion_workflow_runs_terraform_static_verification) ... ok
+test_gcp_delivery_gate_runs_terraform_static_verification (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_gcp_delivery_gate_runs_terraform_static_verification) ... ok
+test_gcp_evaluation_baseline_workflow_runs_terraform_static_verification (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_gcp_evaluation_baseline_workflow_runs_terraform_static_verification) ... ok
+test_gcp_opensearch_workflow_runs_terraform_static_verification (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_gcp_opensearch_workflow_runs_terraform_static_verification) ... ok
+test_gcp_serving_smoke_workflow_runs_terraform_static_verification (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_gcp_serving_smoke_workflow_runs_terraform_static_verification) ... ok
+test_policy_rejects_unapproved_automatic_pr_workflow (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_policy_rejects_unapproved_automatic_pr_workflow) ... ok
+test_policy_requires_explicit_allowlist_change_to_remove_core_pr_ci (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_policy_requires_explicit_allowlist_change_to_remove_core_pr_ci) ... ok
+test_portable_overlay_only_runs_persistent_runtime (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_portable_overlay_only_runs_persistent_runtime) ... ok
+test_required_backend_gate_fails_closed (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_required_backend_gate_fails_closed) ... ok
+test_selected_image_build_binds_and_verifies_revision (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_selected_image_build_binds_and_verifies_revision) ... ok
+test_unrelated_backend_test_skips_persistent_runtime (tests.ci.test_ci_changed_scope.ChangedScopeTest.test_unrelated_backend_test_skips_persistent_runtime) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 0.373s
+
+OK

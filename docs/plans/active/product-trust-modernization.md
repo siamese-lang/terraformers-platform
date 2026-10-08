@@ -2,6 +2,22 @@
 
 ## Status
 
+Current: **PT-8A risk-qualified retained-v4 recovery implementation, independent acceptance pending**.
+Bound base `9ef9d7dadbd4dcc3089c27e9fe58d6a7e2bdf447`; [USER design decision 6057566013](https://github.com/siamese-lang/terraformers-platform/pull/259#issuecomment-6057566013)
+accepts `VECTOR_WRITE_CONTINUITY_UNPROVEN` as a design residual, without live authority.
+PR #259 product correction is independently accepted/USER-merged; code/evidence remain preserved.
+[V3 execution contract](../../evaluation/product-trust-pt-8a-corrective-recovery-procedure-v3.md)
+adds one explicit operation in the existing workflow and `RISK_QUALIFIED_RETAINED_V4` admission:
+authenticated immutable origins, exact corpus/UUID/full non-vector equality, all finite 1536-vectors,
+actual source/image/model/index and known GitHub history, zero admission embedding/index writes.
+Global dispatch/attempt/upload limits 1/1/1 never reset by source. No complete all-writer audit or
+exact vector continuity is claimed. Strict v2 remains unchanged; Case A rejects the v3 artifact and
+requires later separate reviewed compatibility/authority. A–E NOT_RUN. Independent review/USER merge
+then a new exact live risk approval are required. No live operation or automatic reembedding.
+[Evidence](../../evidence/product-trust-pt-8a/corrections/risk-qualified-recovery-1/implementation.md).
+
+### Historical repair correction checkpoint (accepted for repository merge)
+
 Current: **PT-8A bounded product/recovery correction, independent acceptance pending**.
 Correction base `70373842629fdd569815780e52dc5f0353b97880` is separate from the preserved
 preparation base below. Readiness **37744660097** remains FAILED/ACCEPTED/consumed;

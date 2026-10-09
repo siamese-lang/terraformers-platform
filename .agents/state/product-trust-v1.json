@@ -43,7 +43,7 @@
     "proposedRepositoryRepairLimit": 3,
     "proposedRepairLimitAuthorized": true,
     "historicalRepairCountersReset": false,
-    "resumeAction": "Independent review and USER merge of the separately USER-authorized repository-only provider-diagnostics correction. Do not replay accepted A or continue B-E using approval 6081758174. A new live experiment/continuation decision must bind actual source, image, procedure, consumed history and cost/attempt limits; old repair counters remain consumed.",
+    "resumeAction": "Independent review and USER merge of the separately prepared single-generation diagnostic execution contract. Then bind actual merged source and successfully published immutable image in one separate live/model/cost approval before rollout or inference. No old campaign resume/replay, counter reset or B-E authority.",
     "repositoryImplementationApproval": "APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265",
     "preparationIndependentReviewId": 6079812459,
     "originalHistoricalWorkPackageAndCountersUnchanged": true,
@@ -2157,7 +2157,7 @@
     "authority": "USER independent root-cause investigation and autonomous repository-only correction request",
     "executionBaseSha": "406711e498b2a73568257ecb8280f79f6ded492e",
     "scope": "Safe per-SDK-call duration/configured-timeout/original exception types through existing log/artifact paths; real pinned-SDK loopback regression",
-    "status": "REPOSITORY_CORRECTION_INDEPENDENT_REVIEW_PENDING_LIVE_CAUSE_UNRESOLVED",
+    "status": "REPOSITORY_DIAGNOSTICS_INDEPENDENTLY_ACCEPTED_MERGED_LIVE_CAUSE_UNRESOLVED",
     "originalRecoveryWorkPackageBaseAndCountersUnchanged": true,
     "keylessReadRunId": 37953845542,
     "keylessReadArtifactId": 11626414892,
@@ -2193,6 +2193,60 @@
       "policyLedgerMetadataFrozenDiff": "PASS",
       "initialLocalTestFixtureFailuresPreserved": true,
       "normalPrCI": "GitHub_authoritative_no_manual_rerun"
+    },
+    "independentReviewId": 6084964588,
+    "mergedSourceSha": "d1d92c7521addd3473b641f49c411f512cec08b2"
+  },
+  "generationResolutionDiagnostic": {
+    "authority": "USER continuation from merged PR #267; repository-only preparation, not live authority",
+    "atomicTaskExecutionBaseSha": "d1d92c7521addd3473b641f49c411f512cec08b2",
+    "status": "REPOSITORY_IMPLEMENTATION_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE_PENDING",
+    "humanGate": "PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE",
+    "liveExecutionAuthorized": false,
+    "originalFailureResolved": false,
+    "endToEndGoalComplete": false,
+    "purpose": "PT8A_SINGLE_GENERATION_DIAGNOSTIC_NOT_ACCEPTANCE",
+    "contractSha256": "03cee0a6811def41044fc622b2faecb640c13563c2ecf1e8d8a3b29ad5e45c5d",
+    "operation": "pt8a-diagnostic-case",
+    "mode": "generation-diagnostic",
+    "proposedBounds": {
+      "uploads": 1,
+      "reservedModelCallsIncludingEmbedding": 6,
+      "dispatchesAcrossSourcesAndApprovals": 1,
+      "workflowWallclockMinutes": 35,
+      "acceptedJobObservationSeconds": 540
+    },
+    "liveApprovalSourceSha": null,
+    "liveApprovalBackendImage": null,
+    "originalRecoveryBaseAndRepairCountersUnchanged": true,
+    "consumedTimeout": {
+      "runId": 37936469909,
+      "artifactId": 11619270081,
+      "artifactDigest": "sha256:579a96b9279a8a042efca05ea4f77b27c8a48e7bdd830312ae406af5b474d8d1",
+      "sourceSha": "1d33cf880c1747b6be855fe328c87b90438b7f5a",
+      "independentReviewId": 6082116692,
+      "disposition": "TECHNICAL_FAILURE_NOT_PASS_CONSUMED"
+    },
+    "newUploads": 0,
+    "newModelCalls": 0,
+    "newLiveDispatches": 0,
+    "productionBehaviorChanges": 0,
+    "casesBToE": "NOT_RUN_IN_THIS_EPISODE",
+    "officialAcceptance": "NOT_ACCEPTANCE",
+    "validation": {
+      "observerTests": 78,
+      "failures": 0,
+      "initialValidation": "78 tests; two new original-consumption tamper subtests failed; corrected only the new admission checks; failure preserved, no live execution",
+      "backendRegression": "PR267 accepted unchanged production tree; not repeated locally for observer/authorization-only changes",
+      "normalPrCI": "GitHub_authoritative_no_manual_rerun",
+      "ragTests": 55,
+      "ragFailures": 0,
+      "ciScopeTests": 23,
+      "ciScopeFailures": 0,
+      "metadataPolicyLedgerShellScopeFrozenReadback": "PASS",
+      "pt8aShellSteps": 13,
+      "frozenFilesReadBack": 12,
+      "diffCheck": "PASS"
     }
   }
 }

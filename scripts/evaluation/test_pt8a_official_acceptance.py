@@ -1448,6 +1448,27 @@ class AutonomousRecoveryContracts(unittest.TestCase):
 
 
 class ArtifactAndObservationContracts(unittest.TestCase):
+    def test_provider_call_diagnostics_preserve_measured_duration_and_safe_sdk_types_without_guessing_old_calls(self):
+        base = ("Vertex provider call stage=initial_generation compact=false outcome=failure "
+                "finishReason=UNAVAILABLE outputTokens=unknown thinkingTokens=unknown totalTokens=unknown "
+                "errorClass=AnalysisProviderTimeoutException upstreamHttpStatus=null")
+        lines = [base, base + " elapsedMs=220014 configuredTimeoutMs=220000 "
+                 "sdkExceptionTypes=GenAiIOException,InterruptedIOException PRIVATE_BODY",
+                 base + " elapsedMs=-1 configuredTimeoutMs=999999 "
+                 "sdkExceptionTypes=private.request.response"]
+        with patch.object(pt8a.transport, "collect_logs", return_value={"lines": lines}):
+            result = pt8a.retrieval_evidence("job", "since", [])
+        old, measured, malformed = result["providerCalls"]
+        self.assertNotIn("elapsedMs", old)
+        self.assertNotIn("sdkExceptionTypes", old)
+        self.assertEqual(220014, measured["elapsedMs"])
+        self.assertEqual(220000, measured["configuredTimeoutMs"])
+        self.assertEqual(["GenAiIOException", "InterruptedIOException"], measured["sdkExceptionTypes"])
+        self.assertIsNone(measured["upstreamHttpStatus"])
+        for field in ("elapsedMs", "configuredTimeoutMs", "sdkExceptionTypes"):
+            self.assertNotIn(field, malformed)
+        self.assertNotIn("PRIVATE_BODY", json.dumps(result))
+
     def test_diagnostic_censor_keeps_partial_job_and_retrieval_without_late_observation_or_retry(self):
         calls = []
         class Client:
@@ -1838,6 +1859,7 @@ class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
         self.assertEqual(263819, receipt["events"][1]["elapsedMs"])
         self.assertEqual(429, receipt["events"][2]["httpStatus"])
         self.assertNotIn(secret, json.dumps(receipt))
+
         self.assertNotIn("requestTimeoutMs", json.dumps(receipt))  # Never invent the configured 220s as observed.
         for index, (request, timeout) in enumerate(requests):
             self.assertEqual(self.module["ENDPOINT"], request.full_url)
@@ -1848,6 +1870,27 @@ class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
             for fixed in (self.module["JOB"], self.module["START"], self.module["END"], 'container_name="backend"'):
                 self.assertIn(fixed, body["filter"])
             self.assertEqual("page-2" if index else None, body.get("pageToken"))
+
+
+    def test_measured_provider_diagnostics_survive_existing_sanitizer_without_raw_causes(self):
+        base = ("Vertex provider call stage=initial_generation compact=false outcome=failure "
+                "errorClass=AnalysisProviderTimeoutException upstreamHttpStatus=null")
+        result, receipt, _ = self.run_query([{"entries": [
+            self.entry(base + " elapsedMs=220014 configuredTimeoutMs=220000 "
+                       "sdkExceptionTypes=GenAiIOException,InterruptedIOException message=PRIVATE_BODY"),
+            self.entry(base + " configuredTimeoutMs=0 sdkExceptionTypes=private.request.response"),
+            self.entry(base + " configuredTimeoutMs=999999 sdkExceptionTypes=" + ",".join(["Exception"] * 9)),
+        ]}])
+        self.assertEqual(0, result)
+        event = receipt["events"][0]
+        self.assertEqual(220014, event["elapsedMs"])
+        self.assertEqual(220000, event["configuredTimeoutMs"])
+        self.assertEqual(["GenAiIOException", "InterruptedIOException"], event["sdkExceptionTypes"])
+        self.assertNotIn("httpStatus", event)  # Client timeout does not establish an upstream status.
+        for malformed in receipt["events"][1:]:
+            self.assertNotIn("configuredTimeoutMs", malformed)
+            self.assertNotIn("sdkExceptionTypes", malformed)
+        self.assertNotIn("PRIVATE_BODY", json.dumps(receipt))
 
     def test_unrelated_scope_and_untrusted_payloads_are_not_saved(self):
         wrong_resource = {"type": "k8s_container", "labels": self.module["LABELS"] | {"namespace_name": "other"}}

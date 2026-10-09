@@ -12,7 +12,7 @@
   "pendingRecovery": {
     "workPackage": ".agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml",
     "decisionBrief": "docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md",
-    "status": "IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING",
+    "status": "STOPPED_TECHNICAL_FAILURE_INCOMPLETE",
     "humanGate": "PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE",
     "preparationExecutionBaseSha": "c789d433f13da744e14c6a6f31db2d4fd3cf1d74",
     "preparationAuthorized": true,
@@ -37,13 +37,13 @@
     },
     "originalDiagnosticCasesCToE": "NOT_RUN",
     "earlierDiagnosticApprovalNotRecoveryAuthority": 6078152582,
-    "newRecoveryCampaignStarted": false,
+    "newRecoveryCampaignStarted": true,
     "singleCandidateAEComplete": false,
     "aggregateQualityRates": null,
     "proposedRepositoryRepairLimit": 3,
     "proposedRepairLimitAuthorized": true,
     "historicalRepairCountersReset": false,
-    "resumeAction": "Read independent correction acceptance on the same PR/bound base. Repository repair budget 3/3 is consumed; further blockers require USER review. USER merge and separate exact live source/image/model/call/upload/dispatch/wallclock/risk authority remain mandatory; no dispatch from repository approval.",
+    "resumeAction": "Independent review and USER merge of the separately USER-authorized repository-only provider-diagnostics correction. Do not replay accepted A or continue B-E using approval 6081758174. A new live experiment/continuation decision must bind actual source, image, procedure, consumed history and cost/attempt limits; old repair counters remain consumed.",
     "repositoryImplementationApproval": "APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265",
     "preparationIndependentReviewId": 6079812459,
     "originalHistoricalWorkPackageAndCountersUnchanged": true,
@@ -85,7 +85,27 @@
       "executableContractSha256": "0fec07586fe41d9f955b93b75a3dc167fa9b3eedbff9ea01382f2f2573ec694d",
       "procedureSha256": "138b70f1ae4faa7cb2174511ab24ad9fb22d57d6a11893f3663d1a7a937a7f57"
     },
-    "zeroPostRecovery": "Authenticated unentered submission boundary and complete zero-upload/model-call artifact, or complete pre-cloud failed/skipped GitHub steps; resume only earliest unsubmitted case under exact authority and remaining dispatch budget. Ambiguous/accepted POST never resubmits."
+    "zeroPostRecovery": "Authenticated unentered submission boundary and complete zero-upload/model-call artifact, or complete pre-cloud failed/skipped GitHub steps; resume only earliest unsubmitted case under exact authority and remaining dispatch budget. Ambiguous/accepted POST never resubmits.",
+    "latestCampaign": {
+      "runId": 37936469909,
+      "runAttempt": 1,
+      "sourceSha": "1d33cf880c1747b6be855fe328c87b90438b7f5a",
+      "independentReviewId": 6082116692,
+      "caseAArtifactId": 11619270081,
+      "caseAArtifactDigest": "sha256:579a96b9279a8a042efca05ea4f77b27c8a48e7bdd830312ae406af5b474d8d1",
+      "caseAJobId": "a195d5ff-fce0-4728-80d5-ac2ebaf75d1d",
+      "caseA": "TECHNICAL_FAILURE_NOT_PASS_CONSUMED",
+      "casesBToE": "NOT_RUN",
+      "failureStage": "initial_generation",
+      "failureReason": "PROVIDER_TIMEOUT",
+      "upstreamHttpStatus": null,
+      "physicalProviderCause": "UNPROVEN",
+      "acceptedToTerminalMs": 263985,
+      "providerCallElapsedMs": null,
+      "terraformDraft": "ABSENT",
+      "terraformCli": "NOT_RUN",
+      "semanticAcceptance": "NOT_ESTABLISHED"
+    }
   },
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
@@ -2132,5 +2152,47 @@
     "thisAmendmentAuthorizesCloud": false,
     "falseTrustedSuccessRequired": 0
   },
-  "legacyRootAcceptanceFieldsScope": "acceptanceBeforeHumanFreeze and truthFreezeApproval describe historical PT-1 only; current v4 candidate/amendment authority is officialAcceptanceCandidate and programAmendments[V4_EVIDENCE_VALIDITY]. Root repair counters are preserved; per-phase/amendment counters are authoritative for their own executions."
+  "legacyRootAcceptanceFieldsScope": "acceptanceBeforeHumanFreeze and truthFreezeApproval describe historical PT-1 only; current v4 candidate/amendment authority is officialAcceptanceCandidate and programAmendments[V4_EVIDENCE_VALIDITY]. Root repair counters are preserved; per-phase/amendment counters are authoritative for their own executions.",
+  "providerFailureInvestigation": {
+    "authority": "USER independent root-cause investigation and autonomous repository-only correction request",
+    "executionBaseSha": "406711e498b2a73568257ecb8280f79f6ded492e",
+    "scope": "Safe per-SDK-call duration/configured-timeout/original exception types through existing log/artifact paths; real pinned-SDK loopback regression",
+    "status": "REPOSITORY_CORRECTION_INDEPENDENT_REVIEW_PENDING_LIVE_CAUSE_UNRESOLVED",
+    "originalRecoveryWorkPackageBaseAndCountersUnchanged": true,
+    "keylessReadRunId": 37953845542,
+    "keylessReadArtifactId": 11626414892,
+    "keylessReadArtifactDigest": "sha256:14f1c5994c82e6bd95fe787ac8adf536d9976538ab3b789eff031d556014698a",
+    "loggingApiHttpStatus": 200,
+    "loggingOutcome": "READ_COMPLETE",
+    "newLiveAuthorityGranted": false,
+    "newModelCalls": 0,
+    "newUploads": 0,
+    "policyDChanged": false,
+    "corpusOrFrozenTruthChanged": false,
+    "originalFailureResolved": false,
+    "endToEndGoalComplete": false,
+    "deterministicValidation": {
+      "focusedBackend": {
+        "tests": 63,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "backendPackage": {
+        "outcome": "BUILD_SUCCESS",
+        "tests": 591,
+        "passed": 587,
+        "skippedMariaDbPrerequisites": 4,
+        "failures": 0,
+        "errors": 0,
+        "executions": 1
+      },
+      "observerWorkflowTests": 74,
+      "ciScopeAndIngestionTests": 60,
+      "workflowShellSteps": 63,
+      "policyLedgerMetadataFrozenDiff": "PASS",
+      "initialLocalTestFixtureFailuresPreserved": true,
+      "normalPrCI": "GitHub_authoritative_no_manual_rerun"
+    }
+  }
 }

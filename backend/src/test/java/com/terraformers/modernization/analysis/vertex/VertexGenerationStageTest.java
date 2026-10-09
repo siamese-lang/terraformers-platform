@@ -25,6 +25,112 @@ import org.junit.jupiter.api.Test;
 class VertexGenerationStageTest {
 
     @Test
+    void realSdkWholeCallDeadlineAndHttp429StayDistinctSingleAttemptFailures() throws Exception {
+        // Real pinned SDK + loopback transport. No cloud credentials or model calls.
+        for (boolean timeout : List.of(true, false)) {
+            var requests = new java.util.concurrent.atomic.AtomicInteger();
+            var release = new java.util.concurrent.CountDownLatch(1);
+            var observed = new java.util.concurrent.atomic.AtomicReference<com.fasterxml.jackson.databind.JsonNode>();
+            var serverTimeout = new java.util.concurrent.atomic.AtomicReference<String>();
+            var server = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+            server.createContext("/", exchange -> {
+                requests.incrementAndGet();
+                observed.set(new ObjectMapper().readTree(exchange.getRequestBody()));
+                serverTimeout.set(exchange.getRequestHeaders().getFirst("X-Server-Timeout"));
+                try {
+                    if (timeout) release.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                    else {
+                        byte[] body = "{\"error\":{\"code\":429,\"status\":\"RESOURCE_EXHAUSTED\",\"message\":\"PRIVATE_PROVIDER_BODY\"}}"
+                                .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                        exchange.sendResponseHeaders(429, body.length);
+                        exchange.getResponseBody().write(body);
+                    }
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                } finally { exchange.close(); }
+            });
+            server.start();
+            var logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(VertexGenerationStage.class);
+            var appender = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+            appender.start(); logger.addAppender(appender);
+            try (var client = localSdk(server.getAddress().getPort())) {
+                var properties = new VertexRuntimeProperties();
+                properties.setGenerationTimeout(java.time.Duration.ofMillis(750));
+                var stage = new VertexGenerationStage(client, properties, new VertexPromptBuilder(),
+                        new VertexResponseParser(new ObjectMapper()));
+                assertThatThrownBy(() -> stage.generate(context(), source(), List.of(reference())))
+                        .isInstanceOf(timeout ? AnalysisProviderTimeoutException.class : AnalysisProviderFailureException.class)
+                        .satisfies(failure -> {
+                            if (!timeout) assertThat(((AnalysisProviderFailureException) failure).reason())
+                                    .isEqualTo(AnalysisProviderFailureReason.RATE_LIMITED);
+                        });
+                assertThat(requests).hasValue(1);
+                // SDK 1.72.0 emits this header only when HttpOptions.headers is supplied.
+                // The production timeout-only options still bound the local whole call.
+                assertThat(serverTimeout.get()).isNull();
+                assertThat(observed.get().path("generationConfig").path("maxOutputTokens").asInt()).isEqualTo(8192);
+                assertThat(observed.get().path("generationConfig").has("thinkingConfig")).isFalse();
+                assertThat(observed.get().path("contents").get(0).path("parts").get(0).has("inlineData")).isTrue();
+                assertThat(appender.list).hasSize(1);
+                var event = appender.list.get(0);
+                String message = event.getFormattedMessage();
+                assertThat(message).contains("stage=initial_generation compact=false outcome=failure",
+                        "configuredTimeoutMs=750", "elapsedMs=", "sdkExceptionTypes=")
+                        .doesNotContain("PRIVATE_PROVIDER_BODY", reference().content(), "Analyze the image", "base64");
+                assertThat(event.getThrowableProxy()).isNull();
+                if (timeout) {
+                    assertThat(message).contains("upstreamHttpStatus=null", "GenAiIOException,InterruptedIOException");
+                    long elapsed = Long.parseLong(message.split("elapsedMs=")[1].split(" ")[0]);
+                    assertThat(elapsed).isBetween(600L, 5000L);
+                } else assertThat(message).contains("upstreamHttpStatus=429", "sdkExceptionTypes=ClientException");
+            } finally {
+                release.countDown(); server.stop(0);
+                logger.detachAppender(appender); appender.stop();
+            }
+        }
+    }
+
+    @Test
+    void realSdkNormalCompletionRetainsRequiredSchemaAndReportsCallDuration() throws Exception {
+        var requests = new java.util.concurrent.atomic.AtomicInteger();
+        var server = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            requests.incrementAndGet(); exchange.getRequestBody().readAllBytes();
+            var result = java.util.Map.of("inputType", "ARCHITECTURE_DIAGRAM", "classificationConfidence", 1.0,
+                    "classificationReason", "diagram", "summary", "VPC", "components", List.of("VPC"),
+                    "relationships", List.of("VPC -> app"), "warnings", List.of(), "terraformCode", original().terraformCode());
+            byte[] body = new ObjectMapper().writeValueAsBytes(java.util.Map.of("candidates", List.of(java.util.Map.of(
+                    "finishReason", "STOP", "content", java.util.Map.of("parts", List.of(java.util.Map.of("text",
+                            new ObjectMapper().writeValueAsString(result)))))), "usageMetadata",
+                    java.util.Map.of("candidatesTokenCount", 10, "totalTokenCount", 20)));
+            exchange.sendResponseHeaders(200, body.length); exchange.getResponseBody().write(body); exchange.close();
+        });
+        server.start();
+        var logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(VertexGenerationStage.class);
+        var appender = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        appender.start(); logger.addAppender(appender);
+        try (var client = localSdk(server.getAddress().getPort())) {
+            var stage = new VertexGenerationStage(client, new VertexRuntimeProperties(), new VertexPromptBuilder(),
+                    new VertexResponseParser(new ObjectMapper()));
+            var result = stage.generate(context(), source(), List.of(reference()));
+            assertThat(result.terraformCode()).isEqualTo(original().terraformCode());
+            assertThat(result.retryOccurred()).isFalse(); assertThat(requests).hasValue(1);
+            assertThat(appender.list).hasSize(1);
+            assertThat(appender.list.get(0).getFormattedMessage()).contains("outcome=received finishReason=STOP",
+                    "configuredTimeoutMs=220000", "elapsedMs=", "outputTokens=10")
+                    .doesNotContain(original().terraformCode());
+        } finally { server.stop(0); logger.detachAppender(appender); appender.stop(); }
+    }
+
+    private com.google.genai.Client localSdk(int port) {
+        return com.google.genai.Client.builder().vertexAI(true).project("local-test").location("global")
+                .credentials(com.google.auth.oauth2.GoogleCredentials.create(new com.google.auth.oauth2.AccessToken(
+                        "local-test-token", new java.util.Date(System.currentTimeMillis() + 3600000))))
+                .httpOptions(VertexRuntimeConfiguration.clientHttpOptions().toBuilder()
+                        .baseUrl("http://127.0.0.1:" + port).build()).build();
+    }
+
+    @Test
     void recognizesOnlyExplicitContentAndSafetyFinishReasonsAsBlocked() {
         assertThat(VertexGenerationStage.isContentBlocked(FinishReason.Known.SAFETY)).isTrue();
         assertThat(VertexGenerationStage.isContentBlocked(FinishReason.Known.BLOCKLIST)).isTrue();

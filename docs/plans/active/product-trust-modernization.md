@@ -2,18 +2,19 @@
 
 ## Status
 
-Current: **PT-8A autonomous recovery preparation / AWAITING_APPROVAL**, bound to
-`c789d433f13da744e14c6a6f31db2d4fd3cf1d74`. [Decision and exact resume point](../../evaluation/product-trust-pt-8a-autonomous-recovery-decision.md)
-and [one proposed Work Package](../../../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml)
-retain original A REJECTED/consumed and diagnostic B technical failure/consumed; C–E NOT_RUN.
-B repair's actual HTTP/quota cause remains unproven; existing provider regressions 40 PASS.
-No production or executable automation changes are authorized by this preparation. The proposed
-single existing protected-job sequence avoids nested-dispatch concurrency deadlock and repeated
-child environment gates; technical-progress/final-review policy, candidate/budgets and the new
-repair limit require consolidated USER approval. Approved Program and historical counters stay
-unchanged. Stop **HUMAN_REQUIRED: PT8A_AUTONOMOUS_RECOVERY_POLICY_AND_WORK_PACKAGE_APPROVAL**;
-resume this same PR from the bound base after decision, then review/merge and exact live approval.
-No A–E final fixed-candidate success or live action is claimed.
+Current: **PT-8A autonomous Recovery implementation / INDEPENDENT ACCEPTANCE PENDING**, bound to
+`c789d433f13da744e14c6a6f31db2d4fd3cf1d74`. USER approved same-PR repository implementation with
+max 3 bounded corrections; [contract/evidence](../../evaluation/product-trust-pt-8a-autonomous-recovery-decision.md)
+and [Work Package](../../../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml) bind that scope.
+The existing protected runtime job/observer implement separate A→E observation, immutable per-case
+checkpoints and same-candidate resume, with no automatic resubmission or semantic self-acceptance.
+One read-only drain retains original accepted owner and censoring. Original A/B remain consumed;
+original C–E remain NOT_RUN, old repair 1/1 and Policy D stay unchanged. B's typed HTTP/quota cause
+remains unproven; numeric failure telemetry is added without retry/product behavior changes.
+New unit correction 1/3 aligns the existing artifact-condition assertion; observer suite 62 tests; final-tree results recorded in the PR.
+Live budgets are separately required before execution, not before offline implementation.
+Stop **HUMAN_REQUIRED: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE**; then bind actual
+reviewed merge source/image and USER live/model/cost authority. No live action or A–E success is claimed.
 
 ### Historical v3-qualified case-chain preparation checkpoint
 

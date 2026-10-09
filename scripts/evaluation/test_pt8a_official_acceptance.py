@@ -1049,16 +1049,298 @@ class DiagnosticContinuationContracts(unittest.TestCase):
     def test_diagnostic_workflow_is_gated_before_wif_and_keeps_distinct_artifact_and_no_new_workflow(self):
         workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
         job = workflow["jobs"]["pt8a-official-acceptance"]
-        self.assertEqual(pt8a.SKIPPED_DIAGNOSTIC_JOB_NAME, job["name"][4:-3])
+        self.assertEqual(pt8a.SKIPPED_RECOVERY_JOB_NAME, job["name"][4:-3])
         steps = job["steps"]; gate = next(i for i,s in enumerate(steps) if "preflight --request-file" in s.get("run", ""))
         wif = next(i for i,s in enumerate(steps) if s.get("uses") == "google-github-actions/auth@v3")
         self.assertLess(gate, wif); self.assertIn("RUN_REVIEWED_PT8A_B_TO_E_DIAGNOSTIC_ONLY", steps[gate]["run"])
         artifact = next(s for s in steps if s.get("id") == "pt8a-artifact")
-        self.assertIn("pt8a-diagnostic", artifact["with"]["name"]); self.assertEqual("always()", artifact["if"])
+        self.assertIn("pt8a-diagnostic", artifact["with"]["name"])
+        self.assertEqual("always() && inputs.operation != 'pt8a-recovery-campaign'", artifact["if"])
         for step in steps:
             if "run" in step:
                 parsed = subprocess.run(["bash", "-n"], input=step["run"], text=True, capture_output=True)
                 self.assertEqual(0, parsed.returncode, parsed.stderr)
+
+
+class AutonomousRecoveryContracts(unittest.TestCase):
+    def setUp(self):
+        self.base = QualifiedCaseChainContracts(); self.base.setUp()
+        self.addCleanup(patch.stopall)
+        # These are explicit synthetic approval values, never deployment/cost defaults.
+        self.request = {"mode": pt8a.RECOVERY_MODE, "campaignId": "synthetic-recovery-1", "liveApprovalCommentId": 800,
+            "resumeRunId": 0, "liveBounds": {"maxUploads": 5, "maxModelCalls": 30, "maxDispatches": 4,
+                "wallclockMinutes": 90, "modelLocation": "global"}}
+        self.current = pt8a.CASE_B_RUN + 10000
+        self.runtime = [{"id": self.current, "head_sha": SOURCE, "run_attempt": 1, "status": "in_progress"}]
+        self.writes = [{"id": pt8a.ORIGIN_CLEAN_RUN, "head_sha": pt8a.ORIGIN_SOURCE}]
+        self.jobs = {self.current: {"total_count": 1, "jobs": [{"name": pt8a.RECOVERY_OPERATION, "conclusion": None,
+            "started_at": pt8a.datetime.now().astimezone().isoformat()}]}}
+        self.artifacts, self.downloads = {}, {}
+        self.release = self.base.release | {"modelProject": "terraformers-platform", "modelLocation": "global"}
+
+    def checkpoint(self, index):
+        data = copy.deepcopy(self.base.artifacts[self.base.reference(index)["runId"]])
+        record = self.base.record(index) | {"acceptedAt": "2026-10-09T09:31:00Z", "campaignState": "PRODUCT_REVIEW_REQUIRED"}
+        data.update({"record.json": record, "cleanup.json": {"JWKSRestored": True}, "release.json": self.release})
+        data["observation/accepted.json"] = record | {"status": "ACCEPTED"}
+        data["observation/draft-identity.json"]["hclPresent"] = True
+        return data
+
+    def prior(self, cases, *, run=None):
+        run = run or self.current - 1
+        owner = min([r["id"] for r in self.runtime if r["id"] < self.current] + [run])
+        self.runtime.append({"id": run, "head_sha": SOURCE, "run_attempt": 1, "status": "completed", "conclusion": "failure"})
+        self.request["resumeRunId"] = run
+        steps = [{"name": "Observe recovery case " + c[-1].upper(), "status": "completed",
+                  "conclusion": "success" if c in cases else "skipped"} for c in pt8a.CASES]
+        self.jobs[run] = {"total_count": 1, "jobs": [{"name": pt8a.RECOVERY_OPERATION, "steps": steps, "conclusion": "failure"}]}
+        arts = []
+        for suffix,data in {"start": {"campaign.json": {}}, **{c[-1]: d for c,d in cases.items()}}.items():
+            aid = run * 10 + len(arts)
+            bound = {"runId": run, "artifactId": aid, "digest": "sha256:" + str(aid).zfill(64), "sourceSha": SOURCE, "conclusion": "failure"}
+            arts.append({"id": aid, "name": f"pt8a-recovery-{run}-{suffix}", "digest": bound["digest"]})
+            data["binding.json"] = pt8a.recovery_binding(self.request, SOURCE, IMAGE, run, owner) | (
+                {"caseId": "aws-official-" + suffix} if suffix != "start" else {})
+            self.downloads[aid] = (data, bound)
+        self.artifacts[run] = {"total_count": len(arts), "artifacts": arts}
+        return run
+
+    def api(self, path):
+        self.assertNotIn("head_sha=", path)
+        if "gcp-target-runtime-dependencies.yml/runs?" in path: return {"total_count": len(self.runtime), "workflow_runs": self.runtime}
+        if "gcp-target-corpus-ingestion.yml/runs?" in path: return {"total_count": len(self.writes), "workflow_runs": self.writes}
+        rid = int(path.split('/')[2])
+        return self.jobs[rid] if '/jobs?' in path else self.artifacts[rid]
+
+    def history(self):
+        with tempfile.TemporaryDirectory() as d, patch.object(pt8a, 'github', side_effect=self.api), \
+             patch.object(pt8a, 'bound_artifact', side_effect=lambda r,a,*args,**kwargs: self.downloads[a]):
+            return pt8a.recovery_history(self.request, SOURCE, IMAGE, self.current, Path(d))
+
+    def test_explicit_exact_live_budgets_and_risk_required_repository_approval_cannot_execute(self):
+        live = pt8a.recovery_live_fields(self.request, SOURCE, IMAGE)
+        # Verify every required field is actually parseable from a future USER comment.
+        text = '[HUMAN_GATE_APPROVAL:v1]\n' + '\n'.join(k+': '+v for k,v in live.items())
+        self.assertEqual(live, pt8a.fields(text, '[HUMAN_GATE_APPROVAL:v1]'))
+        with patch.object(pt8a.transport, 'current_main', return_value=SOURCE):
+            for field in ('purpose','decision','backend_image','reviewed_source_sha','campaign_id','recovery_contract_sha256',
+                          'maximum_total_uploads','maximum_model_calls','model_location','accepted_residual_risk'):
+                with self.subTest(field=field), patch.object(pt8a,'authority_comment',return_value=live | {field:'wrong'}), self.assertRaises(ValueError):
+                    pt8a.recovery_request_contract(self.request,SOURCE,IMAGE,1)
+            with patch.object(pt8a,'authority_comment',return_value=live):
+                pt8a.recovery_request_contract(self.request,SOURCE,IMAGE,1)
+                for change in ({'maxModelCalls':None},{'maxUploads':6},{'wallclockMinutes':None},{'modelLocation':None}):
+                    with self.subTest(change=change),self.assertRaises(ValueError):
+                        pt8a.recovery_request_contract(self.request | {'liveBounds':self.request['liveBounds'] | change},SOURCE,IMAGE,1)
+                with self.assertRaises(ValueError):pt8a.recovery_request_contract(self.request,SOURCE,IMAGE,2)
+
+    def test_partial_checkpoint_resumes_next_case_without_restarting_or_promoting_a(self):
+        data=self.checkpoint(0)
+        data['record.json']['status']='NOT_PASS'
+        data['observation/job.json']['quality']={'technicalStatus':'UNKNOWN','knowledgeStatus':'DEGRADED'}
+        data['observation/cli.json']['initValidateExitCode']=1
+        self.prior({pt8a.CASES[0]:data})
+        history=self.history()
+        self.assertEqual('PRODUCT_REVIEW_REQUIRED',pt8a.recovery_checkpoint(history['records'][pt8a.CASES[0]],pt8a.CASES[0]))
+        self.assertEqual('NOT_PASS',history['records'][pt8a.CASES[0]]['record.json']['status'])
+        self.assertNotIn(pt8a.CASES[1],history['records'])
+        for r in ('resumeRunId','liveApprovalCommentId','campaignId'):
+            saved=self.request[r];self.request[r]=0 if r!='campaignId' else 'changed-campaign'
+            with self.subTest(field=r),self.assertRaises(ValueError):self.history()
+            self.request[r]=saved
+
+    def test_duplicates_source_drift_missing_checkpoint_and_out_of_order_fail_closed(self):
+        data=self.checkpoint(0);run=self.prior({pt8a.CASES[0]:data})
+        baseline=copy.deepcopy((self.runtime,self.jobs,self.artifacts,self.downloads,self.request))
+        def reset():self.runtime,self.jobs,self.artifacts,self.downloads,self.request=copy.deepcopy(baseline)
+        self.prior({pt8a.CASES[0]:self.checkpoint(0)},run=run+1)
+        with self.assertRaises(ValueError):self.history()
+        reset();self.runtime[-1]['head_sha']='c'*40
+        with self.assertRaises(ValueError):self.history()
+        reset();self.artifacts[run]['artifacts'].pop();self.artifacts[run]['total_count']=1
+        with self.assertRaises(ValueError):self.history()
+        reset();self.jobs[run]['jobs'][0]['steps'].pop()
+        with self.assertRaises(ValueError):self.history()
+        reset();self.runtime[-1]['run_attempt']=2
+        with self.assertRaises(ValueError):self.history()
+        self.runtime=self.runtime[:1];self.request['resumeRunId']=0
+        self.prior({pt8a.CASES[1]:self.checkpoint(1)},run=run)
+        with self.assertRaises(ValueError):self.history()
+
+    def test_one_read_only_drain_keeps_original_censor_and_cannot_be_a_second_upload(self):
+        data=self.checkpoint(0)
+        data['record.json'].pop('terminalState');data['record.json']['censoredObservationMs']=541000
+        run=self.prior({pt8a.CASES[0]:data},run=self.current-2)
+        ref=self.history()['references'][pt8a.CASES[0]]
+        late=self.checkpoint(0);late['record.json'].update(readOnlyDrain=True,originalObservation=ref,censoredObservationMs=541000)
+        self.prior({pt8a.CASES[0]:late},run=run+1)
+        state=self.history();self.assertEqual(541000,state['records'][pt8a.CASES[0]]['record.json']['censoredObservationMs'])
+        late['record.json']['censoredObservationMs']=1000
+        with self.assertRaises(ValueError):self.history()
+        late['record.json']['censoredObservationMs']=541000;late['record.json']['readOnlyDrain']=False
+        with self.assertRaises(ValueError):self.history()
+
+    def test_failed_provider_ambiguous_post_and_incomplete_provenance_never_unlock_next_case(self):
+        for kind in ('provider','ambiguous','missing-post-admission','cleanup'):
+            data=self.checkpoint(0)
+            if kind=='provider':
+                data['record.json']['terminalState']='FAILED';data['observation/job.json'].update(status='FAILED',failureReason='PROVIDER_RATE_LIMITED')
+            elif kind=='ambiguous':data['record.json']['status']='INDETERMINATE_ACCEPTANCE'
+            elif kind=='missing-post-admission':del data['post-admission.json']
+            else:data['cleanup.json']['JWKSRestored']=False
+            self.assertIn(pt8a.recovery_checkpoint(data,pt8a.CASES[0]) if kind!='cleanup' else 'BLOCKED',('TECHNICAL_FAILURE','BLOCKED'))
+            if kind=='cleanup':
+                with self.assertRaises(ValueError):pt8a.recovery_checkpoint(data,pt8a.CASES[0])
+            self.runtime=self.runtime[:1];self.prior({pt8a.CASES[0]:data,pt8a.CASES[1]:self.checkpoint(1)})
+            with self.assertRaises(ValueError):self.history()
+
+    def test_budget_exhaustion_and_unknown_history_cannot_reset_campaign(self):
+        self.prior({pt8a.CASES[0]:self.checkpoint(0)})
+        self.request['liveBounds']['maxDispatches']=1
+        with self.assertRaises(ValueError):self.history()
+        self.request['liveBounds']['maxDispatches']=4
+        self.jobs[self.current-1]['jobs'][0]['name']='unknown job'
+        with self.assertRaises(ValueError):self.history()
+
+    def test_input_rejection_and_generated_technical_defect_are_not_provider_infrastructure_failures(self):
+        data=self.checkpoint(0);data['record.json'].update(terminalState='FAILED',status='NOT_PASS')
+        data['observation/job.json'].update(status='FAILED',resultObjectKey=None,quality={'contractVersion':'evidence-quality-v1',
+            'technicalStatus':'PASS','knowledgeStatus':'NOT_APPLICABLE','qualityStatus':'NOT_APPLICABLE'})
+        data['observation/draft-identity.json']={'hclPresent':False}
+        data['observation/cli.json']={'status':'NOT_RUN','reason':'BACKEND_FAILED','AWSPlanApply':False}
+        data['inventory.json']['files']=[]
+        self.assertEqual('PRODUCT_REVIEW_REQUIRED',pt8a.recovery_checkpoint(data,pt8a.CASES[0]))
+        data['observation/job.json']['quality']={'reasons':['TERRAFORM_EXECUTABLE_FAILURE'],'technicalStatus':'FAIL'}
+        self.assertEqual('PRODUCT_REVIEW_REQUIRED',pt8a.recovery_checkpoint(data,pt8a.CASES[0]))
+        data['observation/job.json']['quality']={'reasons':['PROVIDER_RATE_LIMITED'],'technicalStatus':'FAIL'}
+        self.assertEqual('TECHNICAL_FAILURE',pt8a.recovery_checkpoint(data,pt8a.CASES[0]))
+        data['observation/job.json']['quality']={'reasons':[],'technicalStatus':'FAIL'}
+        self.assertEqual('BLOCKED',pt8a.recovery_checkpoint(data,pt8a.CASES[0]))
+
+    def test_real_observer_read_only_drain_never_posts_or_replaces_censored_latency(self):
+        record={'caseId':pt8a.CASES[0],'status':'NOT_PASS','uploadAttempts':1,'consumed':True,'jobId':'job-1',
+            'projectId':1,'sourceFileId':2,'acceptedAt':'2026-10-09T09:31:00Z','censoredObservationMs':541000,'readOnlyDrain':True}
+        calls=[]
+        class Client:
+            def request(inner,method,path,*args,**kwargs):
+                calls.append((method,path));self.assertEqual('GET',method)
+                if '/analysis/jobs/' in path:return {'httpStatus':200,'json':{'id':'job-1','projectId':1,'sourceFileId':2,'status':'FAILED','resultObjectKey':None}}
+                return {'httpStatus':200,'json':{'projectId':1,'latestAnalysisJobId':'job-1','latestResultObjectKey':None}}
+        with tempfile.TemporaryDirectory() as d,patch.object(pt8a,'retrieval_evidence',return_value={'jobId':'job-1'}):
+            pt8a.observe(Client(),Path(d)/'input.png',Path(d)/'obs',record,[],'unused',diagnostic=True,resume_accepted=True)
+        self.assertEqual(541000,record['censoredObservationMs']);self.assertEqual(1,record['uploadAttempts'])
+        self.assertTrue(all(method=='GET' for method,path in calls))
+
+    def test_workflow_uses_same_protected_job_and_artifact_barriers_before_next_upload(self):
+        workflow=yaml.safe_load((pt8a.ROOT/'.github/workflows/gcp-target-runtime-dependencies.yml').read_text())
+        job=workflow['jobs']['pt8a-official-acceptance'];steps=job['steps']
+        self.assertEqual('gcp-target-apply',job['environment']);self.assertEqual('read',workflow['permissions']['actions'])
+        gate=next(i for i,s in enumerate(steps) if 'preflight --request-file' in s.get('run',''))
+        start=next(i for i,s in enumerate(steps) if s.get('id')=='recovery-start-artifact')
+        wif=next(i for i,s in enumerate(steps) if s.get('uses')=='google-github-actions/auth@v3')
+        self.assertLess(gate,start);self.assertLess(start,wif)
+        for i,letter in enumerate('abcde'):
+            step=next(s for s in steps if s.get('id')=='recovery-'+letter)
+            artifact=next(s for s in steps if s.get('id')=='recovery-'+letter+'-artifact')
+            if i:
+                self.assertIn('outputs.proceed',step['if']);self.assertIn('artifact.outcome',step['if'])
+            self.assertIn('cleanup.json',step['run']);self.assertIn(' checkpoint ',step['run'])
+            self.assertIn('restore',step['run']);self.assertIn('always()',artifact['if'])
+            self.assertEqual('error',artifact['with']['if-no-files-found'])
+        self.assertNotIn('/dispatches',json.dumps(job))
+
+    def test_owner_override_is_restricted_before_any_kubectl_call(self):
+        script=str(pt8a.ROOT/'scripts/smoke/ephemeral-jwks-fixture.sh')
+        with tempfile.TemporaryDirectory() as d:
+            env=os.environ|{'RUNNER_TEMP':d,'OPERATION':pt8a.RECOVERY_OPERATION,'NAMESPACE':'unused',
+                'ISSUER_URI':'https://identity.example.test/case-c','CLIENT_ID':'case-c-runtime-client',
+                'GITHUB_RUN_ID':'100','IDENTITY_RUN_ID':'200','PT8A_RECOVERY_OWNER_RUN_ID':'201'}
+            result=subprocess.run(['bash',script,'prepare'],env=env,text=True,capture_output=True)
+        self.assertNotEqual(0,result.returncode);self.assertIn('admitted original campaign',result.stderr)
+        self.assertNotIn('kubectl',result.stderr)
+
+    def test_actual_cli_collects_five_negative_drafts_with_checkpoints_and_reuses_completed_case(self):
+        # Exercise the real runner/observer and CLI-validation command construction. External
+        # transport/process boundaries are deterministic; no model, image or cloud is accessed.
+        with tempfile.TemporaryDirectory() as d,ExitStack() as stack:
+            root=Path(d);out=root/'campaign';outputs=root/'github.output';outputs.touch()
+            (root/'coverage-report.json').write_text('{}');(root/'pt8a-release.json').write_text(json.dumps(self.release))
+            env={'GITHUB_SHA':SOURCE,'BACKEND_IMAGE':IMAGE,'GITHUB_RUN_ATTEMPT':'1','GITHUB_RUN_ID':str(self.current),
+                'OPERATION':pt8a.RECOVERY_OPERATION,'RUNNER_TEMP':d,'GITHUB_ENV':str(root/'github.env'),'GITHUB_OUTPUT':str(outputs)}
+            stack.enter_context(patch.dict(os.environ,env))
+            stack.enter_context(patch.object(pt8a.transport,'current_main',return_value=SOURCE))
+            stack.enter_context(patch.object(pt8a,'authority_comment',side_effect=lambda *a:pt8a.recovery_live_fields(self.request,SOURCE,IMAGE)))
+            stack.enter_context(patch.object(pt8a,'github',side_effect=self.api))
+            stack.enter_context(patch.object(pt8a,'recovery_originals',return_value={'originalA':'consumed','originalB':'consumed'}))
+            stack.enter_context(patch.object(pt8a,'corrective_origins',return_value=(self.base.origin.clean['receipt.json'],self.base.origin.clean_binding,self.base.origin.failed_binding)))
+            stack.enter_context(patch.object(pt8a.rag,'load_corpus',return_value=({}, {}, [], pt8a.CORPUS_CHECKSUM)))
+            stack.enter_context(patch.object(pt8a.rag,'validate_pt8a_clean_corpus'))
+            scans=stack.enter_context(patch.object(pt8a,'risk_qualified_admission',return_value=self.base.snapshot))
+            stack.enter_context(patch.object(pt8a,'retrieval_evidence',side_effect=lambda job,*a:{'jobId':job,'officialHitCount':0,'events':[]}))
+            selected=[0];posts=[];commands=[]
+            def command(args,**kwargs):
+                commands.append(args)
+                return subprocess.CompletedProcess(args,1 if 'validate' in args else 0,'deterministic invalid draft','')
+            stack.enter_context(patch.object(pt8a.subprocess,'run',side_effect=command))
+            def acquire(case,private):
+                self.assertEqual(set(case),{'caseId','imageUrl','sha256','sizeBytes','mediaType','width','height'})
+                fixture=private/'input.png';fixture.write_bytes(b'synthetic-only');return fixture
+            fetch=stack.enter_context(patch.object(pt8a,'acquire',side_effect=acquire))
+            class Client:
+                def __init__(inner,*a):pass
+                def close(inner):pass
+                def request(inner,method,path,*a,**kw):
+                    i=selected[0];job='job-'+str(i);project=i+1;obj='draft-'+str(i)
+                    quality={'contractVersion':'evidence-quality-v1','technicalStatus':'UNKNOWN','knowledgeStatus':'DEGRADED'}
+                    if method=='POST':
+                        posts.append(i)
+                        return accepted()|{'json':accepted()['json']|{'analysisJobId':job,'projectId':project}}
+                    if '/analysis/jobs/' in path:
+                        return {'httpStatus':200,'json':{'id':job,'projectId':project,'sourceFileId':2,'status':'SUCCEEDED','resultObjectKey':obj,'quality':quality}}
+                    if path.endswith('main.tf'):return {'httpStatus':200,'json':{'latestAnalysisJobId':job,'latestResultObjectKey':obj,'content':'invalid Terraform'}}
+                    return {'httpStatus':200,'json':{'projectId':project,'latestAnalysisJobId':job,'analysisStatus':'SUCCEEDED','latestResultObjectKey':obj,'quality':quality}}
+            stack.enter_context(patch.object(pt8a.transport,'CurlClient',Client))
+            def call(action,case=None):
+                argv=['pt8a',action,'--request-file',str(root/'request.json'),'--output',str(out),'--corpus',d]
+                if case:argv+=['--case-id',case]
+                (root/'request.json').write_text(json.dumps(self.request))
+                with patch.object(sys,'argv',argv):pt8a.main()
+            call('preflight')
+            for i,case in enumerate(pt8a.CASES):
+                selected[0]=i;call('run',case)
+                self.assertTrue(outputs.read_text().endswith('proceed=false\ncheckpoint=true\n'))
+                pt8a.write(out/case[-1]/'cleanup.json',{'JWKSRestored':True});call('checkpoint',case)
+                self.assertTrue(outputs.read_text().endswith('proceed=true\ncheckpoint=true\n'))
+                self.assertEqual('NOT_PASS',json.loads((out/case[-1]/'record.json').read_text())['status'])
+            self.assertEqual([0,1,2,3,4],posts);self.assertEqual(5,fetch.call_count)
+            self.assertEqual(5,sum('validate' in c for c in commands));self.assertEqual(10,scans.call_count)
+            call('run',pt8a.CASES[0]);self.assertEqual(5,len(posts));self.assertEqual(5,fetch.call_count)
+            self.assertTrue(outputs.read_text().endswith('proceed=true\ncheckpoint=false\n'))
+            call('finish');summary=json.loads((out/'summary/summary.json').read_text())
+            self.assertEqual('EVIDENCE_COLLECTED_AWAITING_INDEPENDENT_REVIEW',summary['outcome'])
+            self.assertEqual('NOT_ESTABLISHED',summary['semanticAcceptance']);self.assertIsNone(summary['rates'])
+            self.assertEqual(5,summary['uploadsUsed']);self.assertEqual(list(pt8a.SCORING),summary['requiredIndependentDimensions'])
+            # Actual cleanup failure is never replaced by optimistic provider/CLI evidence.
+            pt8a.write(out/'e/cleanup.json',{'JWKSRestored':False});call('checkpoint',pt8a.CASES[-1])
+            self.assertTrue(outputs.read_text().endswith('proceed=false\ncheckpoint=true\n'))
+            with self.assertRaises(ValueError):call('finish')
+
+    def test_original_b_cannot_be_rebound_or_reclassified(self):
+        diagnostic=DiagnosticContinuationContracts();diagnostic.setUp()
+        data=copy.deepcopy(diagnostic.artifacts[diagnostic.reference(1)['runId']])
+        data['binding.json'].update(sourceSha=pt8a.CASE_B_SOURCE,image=pt8a.CASE_B_IMAGE,runId=pt8a.CASE_B_RUN)
+        data['observation/job.json'].update(status='FAILED',resultObjectKey=None,quality={'reasons':['PROVIDER_RATE_LIMITED']})
+        bound={'runId':pt8a.CASE_B_RUN,'artifactId':pt8a.CASE_B_ARTIFACT,'digest':pt8a.CASE_B_DIGEST,'sourceSha':pt8a.CASE_B_SOURCE,'conclusion':'failure'}
+        review={'decision':'ACKNOWLEDGED_DIAGNOSTIC_ONLY','official_acceptance':'NOT_ACCEPTANCE','infrastructure_auth_provenance':'VERIFIED',
+            'reviewed_source_sha':pt8a.CASE_B_SOURCE,'run_id':str(pt8a.CASE_B_RUN),'artifact_id':str(pt8a.CASE_B_ARTIFACT),
+            'artifact_digest':pt8a.CASE_B_DIGEST,'case_id':pt8a.CASES[1],'observed_status':'NOT_PASS'}
+        with tempfile.TemporaryDirectory() as d,patch.object(pt8a,'diagnostic_origin',return_value=(diagnostic.artifacts[pt8a.CASE_A_RUN]['ledger.json'],{})),patch.object(pt8a,'bound_artifact',return_value=(data,bound)),patch.object(pt8a,'authority_comment',side_effect=lambda cid,marker:pt8a.diagnostic_live_fields(pt8a.CASE_B_SOURCE,pt8a.CASE_B_IMAGE) if marker=='[HUMAN_GATE_APPROVAL:v1]' else review):
+            pt8a.recovery_originals(Path(d))
+            data['observation/job.json']['quality']['reasons']=['SUCCESS']
+            with self.assertRaises(ValueError):pt8a.recovery_originals(Path(d))
+            data['observation/job.json']['quality']['reasons']=['PROVIDER_RATE_LIMITED']
+            bound['sourceSha']=SOURCE
+            with self.assertRaises(ValueError):pt8a.recovery_originals(Path(d))
 
 
 class ArtifactAndObservationContracts(unittest.TestCase):
@@ -1168,7 +1450,7 @@ class ArtifactAndObservationContracts(unittest.TestCase):
             "Vertex provider call stage=initial_generation compact=true outcome=received finishReason=STOP outputTokens=7000 thinkingTokens=100 totalTokens=7100 maxOutputTokens=8192",
             "Vertex grounding stage=closure outcome=success finishReason=NOT_APPLICABLE outputTokens=NOT_APPLICABLE hitCount=7 elapsedMs=807",
             "Vertex provider call stage=repair compact=false outcome=received finishReason=MAX_TOKENS outputTokens=15000 thinkingTokens=1384 totalTokens=16384 maxOutputTokens=16384",
-            "Vertex provider call stage=repair compact=false outcome=failure finishReason=UNAVAILABLE outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass=AnalysisProviderFailureException secret=DO_NOT_PUBLISH",
+            "Vertex provider call stage=repair compact=false outcome=failure finishReason=UNAVAILABLE outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass=AnalysisProviderFailureException upstreamHttpStatus=429 secret=DO_NOT_PUBLISH",
             "Vertex grounding stage=closure outcome=failure finishReason=NOT_APPLICABLE outputTokens=NOT_APPLICABLE errorClass=RuntimeException raw=DO_NOT_PUBLISH",
             "prompt=DO_NOT_PUBLISH model response=DO_NOT_PUBLISH",
         ]}
@@ -1182,6 +1464,8 @@ class ArtifactAndObservationContracts(unittest.TestCase):
         self.assertEqual(16384, result["providerCalls"][3]["totalTokens"])
         self.assertEqual("MAX_TOKENS", result["providerCalls"][3]["finishReason"])
         self.assertIsNone(result["providerCalls"][4]["outputTokens"])
+        self.assertEqual(429, result["providerCalls"][4]["upstreamHttpStatus"])
+        self.assertIsNone(result["providerCalls"][0]["upstreamHttpStatus"])
         self.assertEqual([{"stage": "closure", "outcome": "success", "hitCount": 7, "elapsedMs": 807},
                           {"stage": "closure", "outcome": "failure", "hitCount": None, "elapsedMs": None}],
                          result["groundingStages"])

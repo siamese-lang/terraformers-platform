@@ -2,6 +2,8 @@ package com.terraformers.modernization.analysis;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -45,6 +47,16 @@ class ProviderFailureClassifierTest {
     @Test
     void non429HttpStatusIsNotRateLimited() {
         assertFalse(ProviderFailureClassifier.isRateLimited(new HttpStatusException(503)));
+    }
+
+    @Test
+    void preservesOnlyTypedNestedStatusWithoutInferringFromSensitiveMessage() {
+        assertEquals(429, ProviderFailureClassifier.upstreamHttpStatus(
+                new RuntimeException("private provider payload", new HttpStatusException(429))));
+        assertEquals(503, ProviderFailureClassifier.upstreamHttpStatus(new HttpStatusException(503)));
+        assertNull(ProviderFailureClassifier.upstreamHttpStatus(new RuntimeException("429 quota exhausted")));
+        assertNull(ProviderFailureClassifier.upstreamHttpStatus(new ProviderThrottlingException()));
+        assertNull(ProviderFailureClassifier.upstreamHttpStatus(new HttpStatusException(700)));
     }
 
     public static final class HttpStatusException extends RuntimeException {

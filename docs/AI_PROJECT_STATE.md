@@ -12,31 +12,28 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
-- Current task: **PT-8A autonomous recovery root-cause/contract preparation**, bound to
-  `c789d433f13da744e14c6a6f31db2d4fd3cf1d74` under the USER's 2026-10-09 absent-user request.
-  [Decision/evidence and resume point](evaluation/product-trust-pt-8a-autonomous-recovery-decision.md),
-  [one proposed integrated Work Package](../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml).
-  Status **AWAITING_APPROVAL**; new production/workflow implementation and live authority are false.
-- GitHub supersedes the historical preparation snapshots below: PR #263 and #264 are merged.
-  Original A run/artifact **37783345572/11552729185**, review **6060977646**, remains independently
-  REJECTED / NOT_PASS / consumed. Diagnostic B **37911522774/11606947643**, review **6078438584**,
-  remains an acknowledged technical failure / NOT_PASS / consumed, with no HCL/CLI or semantic
-  result. C–E are NOT_RUN. Earlier diagnostic live approval **6078152582** is not Recovery authority.
-- B archive digest and all 20 original inventory members verify. Facts/initial generation STOP,
-  retrieval 10+9 and closure success precede repair PROVIDER_RATE_LIMITED; actual upstream HTTP
-  code, quota/capacity cause and repair token usage are unproven. Existing offline provider tests:
-  **40 PASS**, no classifier defect demonstrated. No blind retry, prompt tuning or corpus rebuild.
-- A parent dispatching the same workflow while holding its whole-run concurrency lock can
-  deadlock. Proposed automation uses the existing protected job with serial case/artifact steps,
-  retaining the USER environment gate; no child dispatch, PAT or Actions write is needed for that
-  design. Technical progression/final-review separation, budgets, candidate binding and proposed
-  new repair limit 3 require one consolidated USER policy decision, not inference from absence.
-- Approved Program/active historical Work Package, auto repair 1/1, Policy D, frozen candidate,
-  original v2/v3/diagnostic once-only guards and all earlier evidence remain unchanged. This PR
-  records only the pending proposal; no transient PR/branch lifecycle enters durable state.
-  Stop at **HUMAN_REQUIRED: PT8A_AUTONOMOUS_RECOVERY_POLICY_AND_WORK_PACKAGE_APPROVAL**.
-  Continue the same PR after decision if main is unchanged, then independent review/USER merge
-  and separately bound live/model/cost authority. A–E recovery goal is NOT COMPLETE.
+- Current task: **PT-8A autonomous Recovery implementation**, bound to
+  `c789d433f13da744e14c6a6f31db2d4fd3cf1d74`, under USER approval
+  `APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265` and
+  [preparation review 6079812459](https://github.com/siamese-lang/terraformers-platform/pull/265#issuecomment-6079812459).
+  [Implementation/evidence/resume contract](evaluation/product-trust-pt-8a-autonomous-recovery-decision.md),
+  [integrated Work Package](../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml).
+- Existing protected job/observer add a separate A–E Recovery mode with per-case artifact barriers,
+  same-candidate resume, one owner-scoped read-only drain and final independent ten-dimension
+  review. Completed observations are reused without resubmission. Ambiguous/missing evidence,
+  provider technical failure, failed cleanup and source/image drift stop progression.
+- Original A **37783345572/11552729185**, review **6060977646**, remains REJECTED/NOT_PASS/consumed.
+  Diagnostic B **37911522774/11606947643**, review **6078438584**, remains technical failure/consumed;
+  its archive matches all 20 inventory members. C–E in the original campaign remain NOT_RUN.
+  HTTP/quota/capacity cause is unproven; narrow typed-status logs do not rewrite history or add retry.
+- USER-authorized repository repair limit is 3 for this unit; iteration 1 aligns one stale workflow
+  assertion. Original repair 1/1, Policy D, frozen candidate/procedures and strict modes are unchanged.
+  Live budgets are mandatory before execution and do not block repository implementation. Current
+  source/image publication, rollout, model/embedding and Recovery dispatch are unauthorized.
+- Stop at **PT8A RECOVERY IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING** and
+  **HUMAN_REQUIRED: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE**.
+  Independent review then USER merge precede exact final source/image/live authority. A–E goal is
+  NOT COMPLETE. GitHub owns transient PR/branch lifecycle; durable state stores no active PR/branch.
 
 ### Historical v3-qualified case-chain preparation checkpoint
 

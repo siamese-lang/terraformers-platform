@@ -100,8 +100,8 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
             );
         } catch (RuntimeException exception) {
             log.warn("Vertex provider call stage=facts outcome=failure finishReason=UNAVAILABLE "
-                    + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={}",
-                    safeErrorType(exception));
+                    + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={} upstreamHttpStatus={}",
+                    safeErrorType(exception), ProviderFailureClassifier.upstreamHttpStatus(exception));
             throw providerFailure(exception);
         }
         if (response == null) {

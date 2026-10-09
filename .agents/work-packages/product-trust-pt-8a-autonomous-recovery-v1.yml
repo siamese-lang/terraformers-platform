@@ -2,7 +2,7 @@ work_package:
   id: product-trust-pt-8a-autonomous-recovery-v1
   program: product-trust-v1
   phase: PT-8A
-  status: AWAITING_APPROVAL
+  status: IMPLEMENTATION_COMPLETE_INDEPENDENT_ACCEPTANCE_PENDING
   kind: integrated_recovery_decision_then_repository_implementation_then_separately_gated_live_campaign
   approved_base_sha: c789d433f13da744e14c6a6f31db2d4fd3cf1d74
   execution_base_sha: c789d433f13da744e14c6a6f31db2d4fd3cf1d74
@@ -10,26 +10,29 @@ work_package:
     preparation_authorized: true
     preparation_request: USER_2026_10_09_PT8A_A_E_Autonomous_Recovery_and_absent_user_instructions
     request_attachment_sha256: 40ac59f730f866b61116b6fd15d5d872b0effaef8fb27304b0099db166471074
-    implementation_authorized: false
+    implementation_authorized: true
     policy_approval_comment_id: null
     independent_acceptance_comment_id: null
     live_execution_authorized: false
     earlier_diagnostic_approval_not_recovery_authority: 6078152582
+    repository_implementation_approval: APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265
+    preparation_independent_review: 6079812459
   activation:
     main_reads_at_preparation_activation: 1
     later_main_reads: drift_checks_only
     refresh_rebase_rebind: prohibited
-    implementation: require_explicit_USER_policy_approval_and_unchanged_bound_main_continue_same_PR
+    implementation: USER_approved_same_PR_same_bound_main_no_rebase
     subsequent_main_drift: HUMAN_REQUIRED_MAIN_DRIFT
-  improvement_axes: [AI_RAG_evaluation_and_targeted_improvement, observability_based_on_real_failure_diagnosis]
+  improvement_axes:
+  - AI_RAG_evaluation_and_targeted_improvement
+  - observability_based_on_real_failure_diagnosis
   representative_case: existing_Case_A_AI_RAG_quality_with_Case_B_provider_termination_evidence
-  objective: >
-    Prepare and, only after decision approval, implement one resumable A-E measurement campaign
-    for one immutable backend candidate. Retain every natural observation and separately report
-    semantic quality, technical failures and final independent acceptance. This preparation
-    neither activates a replacement campaign nor replenishes original A/B attempt budgets.
+  objective: Implement one separate resumable A-E measurement campaign for one immutable
+    candidate, using the existing protected runtime job and observer. Preserve original
+    consumed A/B failures and all Policy D behavior; final semantic acceptance and
+    live execution remain separately gated.
   decision_brief: docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md
-  current_human_gate: PT8A_AUTONOMOUS_RECOVERY_POLICY_AND_WORK_PACKAGE_APPROVAL
+  current_human_gate: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE
   original_contract:
     work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
     auto_repairs_used: 1
@@ -38,57 +41,52 @@ work_package:
     v2_procedure_sha256: d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823
     v3_procedure_sha256: 29e1b9915448a3d8fedffd2661cd95c7d4e0d314afcd88a16d84c3dca548c268
     diagnostic_contract_sha256: a7c445c6f18935e75f499ac36f360e6223893dcabe42c2f494108aa6deecd059
-    case_A: {run: 37783345572, artifact: 11552729185, review: 6060977646, disposition: REJECTED_NOT_PASS_CONSUMED}
-    case_B: {run: 37911522774, artifact: 11606947643, review: 6078438584, disposition: TECHNICAL_FAILURE_NOT_PASS_CONSUMED}
+    case_A:
+      run: 37783345572
+      artifact: 11552729185
+      review: 6060977646
+      disposition: REJECTED_NOT_PASS_CONSUMED
+    case_B:
+      run: 37911522774
+      artifact: 11606947643
+      review: 6078438584
+      disposition: TECHNICAL_FAILURE_NOT_PASS_CONSUMED
     original_diagnostic_C_D_E: NOT_RUN
   frozen_input:
     dataset: terraformers-aws-official-v1
     revision: 2
     identity: 3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757
-    order: [aws-official-a, aws-official-b, aws-official-c, aws-official-d, aws-official-e]
+    order:
+    - aws-official-a
+    - aws-official-b
+    - aws-official-c
+    - aws-official-d
+    - aws-official-e
     images_truth_URLs_hashes_dimensions: immutable
     truth_in_model_request_or_corpus: prohibited
   allowed_paths:
-    - .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
-    - .agents/state/product-trust-v1.json
-    - docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md
-    - docs/AI_PROJECT_STATE.md
-    - docs/plans/active/product-trust-modernization.md
+  - .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
+  - .agents/state/product-trust-v1.json
+  - docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md
+  - docs/AI_PROJECT_STATE.md
+  - docs/plans/active/product-trust-modernization.md
+  - scripts/evaluation/pt8a-official-acceptance.py
+  - scripts/evaluation/test_pt8a_official_acceptance.py
+  - scripts/smoke/ephemeral-jwks-fixture.sh
+  - .github/workflows/gcp-target-runtime-dependencies.yml
+  - .agents/programs/product-trust-v1.yml
+  - backend/src/main/java/com/terraformers/modernization/analysis/ProviderFailureClassifier.java
+  - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java
+  - backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java
+  - backend/src/test/java/com/terraformers/modernization/analysis/ProviderFailureClassifierTest.java
   allowed_actions:
-    - read_authoritative_GitHub_reviews_runs_artifacts_logs_permissions_environment_and_ruleset
-    - read_existing_production_code_SDK_and_contracts
-    - run_existing_focused_offline_provider_regressions_and_repository_metadata_checks
-    - prepare_commit_push_one_integrated_PR_and_observe_normal_PR_CI
-  proposed_implementation_paths_after_USER_decision:
-    - scripts/evaluation/pt8a-official-acceptance.py
-    - scripts/evaluation/test_pt8a_official_acceptance.py
-    - .github/workflows/gcp-target-runtime-dependencies.yml
-    - backend/src/main/java/com/terraformers/modernization/analysis/ProviderFailureClassifier.java
-    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java
-    - backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java
-    - existing_corresponding_provider_tests
-    - allowed_paths_of_this_preparation
-    - .agents/programs/product-trust-v1.yml
-  proposed_design_not_executable:
-    operation: separate_recovery_campaign_mode_in_existing_runtime_workflow_and_observer
-    execution: one_existing_protected_job_serial_A_E_with_per_case_artifact_checkpoints
-    child_workflow_dispatch: not_required
-    new_workflow_controller_service_PAT_or_verifier: prohibited
-    review_policy: automated_technical_evidence_gate_then_final_independent_ten_dimension_review
-    original_v2_v3_and_diagnostic_modes: unchanged
-    production_correction: none_selected_without_supported_cause_and_USER_decision
-    optional_observability: typed_HTTP_status_and_stage_metadata_only_after_scope_approval_no_raw_exception_payload
-    campaign_identity: new_explicitly_approved_identity_not_original_acceptance_or_diagnostic_campaign
-    ledger: reuse_existing_GitHub_Run_Artifact_and_per_case_observation_json
-    states: [NOT_RUN, RUNNING, TECHNICAL_FAILURE, PRODUCT_REVIEW_REQUIRED, PRODUCT_DEFECT, REVIEWED_PASS, RECOVERY_AUTHORIZED, BLOCKED]
-    state_authority: technical_states_from_original_evidence_quality_states_only_from_independent_review
-    resume: earliest_unresolved_case_of_same_candidate_never_restart_A_or_rewrite_prior_observations
-    accepted_nonterminal_job: bound_owner_scoped_read_only_observation_no_fresh_upload
-    ambiguous_POST_or_missing_attempt_evidence: BLOCKED_no_resubmission
-    technical_failure_recovery: requires_confirmed_allowlisted_cause_and_explicit_campaign_budget_not_SDK_retry
-    product_failure: retain_no_result_driven_retry_or_best_of_N_selection
-    candidate_change: new_identity_no_cross_candidate_PASS_promotion
-    release_identity: USER_decision_required_on_control_source_vs_backend_build_source_separation
+  - read_authoritative_GitHub_reviews_runs_artifacts_logs_permissions_environment_and_ruleset
+  - read_existing_production_code_SDK_and_contracts
+  - run_existing_focused_offline_provider_regressions_and_repository_metadata_checks
+  - prepare_commit_push_one_integrated_PR_and_observe_normal_PR_CI
+  - implement_existing_observer_workflow_checkpoint_resume_and_narrow_typed_provider_telemetry
+  - run_proportional_existing_python_RAG_backend_tests_and_normal_PR_CI
+  - repair_same_scope_contract_failures_up_to_3_with_failures_preserved
   preserved_production_policy_D:
     facts_timeout_ms: 370000
     generation_compact_repair_timeout_ms: 220000
@@ -112,15 +110,9 @@ work_package:
     reuse: existing_read_only_risk_qualified_admission
     vector_write_continuity: VECTOR_WRITE_CONTINUITY_UNPROVEN
     ingestion_reembedding_index_write: prohibited
-  decisions_required_before_implementation_or_live:
-    - approve_distinct_campaign_and_automated_technical_progress_gate_without_changing_original_review_rules
-    - approve_new_repository_only_corrective_iteration_limit_3_with_no_old_counter_reset
-    - choose_no_production_change_or_narrow_typed_provider_failure_telemetry_scope
-    - choose_explicit_candidate_binding_policy_existing_image_reuse_only_with_verified_unchanged_backend_build_inputs
-    - approve_cause_allowlist_recovery_attempt_ceiling_total_upload_provider_call_cost_and_workflow_wallclock_budgets
   proposed_live_bounds:
     initial_uploads_per_case_proposed: 1
-    additional_recovery_uploads_per_case: null
+    additional_recovery_uploads_per_case: 0
     maximum_total_uploads: null
     maximum_provider_calls: null
     cost_ceiling: null
@@ -128,35 +120,98 @@ work_package:
     actual_model_region_binding: null
     live_source_and_image_binding: bind_actual_reviewed_values_after_implementation_not_predicted
     missing_numeric_or_live_authority: STOP_no_default_invented
+    budget_decisions_block_repository_implementation: false
   acceptance_criteria:
-    - original_A_B_reviews_artifacts_consumption_and_historical_counters_remain_exact
-    - frozen_truth_and_v2_v3_original_guards_remain_unchanged
-    - no_claim_of_HTTP_429_quota_or_shared_capacity_cause_without_typed_evidence
-    - no_SDK_job_timeout_retry_policy_change_without_separate_explicit_authority
-    - proposed_authority_and_budgets_remain_unapproved_with_exact_same_PR_resume_point
-    - current_Program_and_active_Work_Package_remain_byte_identical
-    - changed_metadata_parses_links_scope_and_diff_checks_pass
-    - normal_PR_CI_is_recorded_without_manual_rerun_or_Product_Trust_acceptance_claim
-  proposed_campaign_acceptance_criteria_after_USER_decision:
-    - one_campaign_candidate_has_all_five_case_observations_or_explicit_unmet_dimensions_never_fabricated_PASS
-    - each_draft_has_real_pinned_Terraform_CLI_and_preserved_original_job_result_quality_evidence
-    - resume_uses_GitHub_durable_evidence_no_duplicate_or_ambiguous_upload
-    - no_user_signature_forgery_or_protected_environment_bypass
-    - final_independent_review_is_required_CI_or_technical_gate_is_not_Product_Trust_acceptance
-  auto_repair_limit: 1
-  auto_repairs_used: 0
-  proposed_implementation_auto_repair_limit: 3
-  proposed_limit_authorized: false
+  - original_A_B_reviews_artifacts_consumption_and_historical_counters_remain_exact
+  - frozen_truth_and_v2_v3_original_guards_remain_unchanged
+  - no_claim_of_HTTP_429_quota_or_shared_capacity_cause_without_typed_evidence
+  - no_SDK_job_timeout_retry_policy_change_without_separate_explicit_authority
+  - changed_metadata_parses_links_scope_and_diff_checks_pass
+  - normal_PR_CI_is_recorded_without_manual_rerun_or_Product_Trust_acceptance_claim
+  - one_campaign_candidate_has_all_five_case_observations_or_explicit_unmet_dimensions_never_fabricated_PASS
+  - each_draft_has_real_pinned_Terraform_CLI_and_preserved_original_job_result_quality_evidence
+  - resume_uses_GitHub_durable_evidence_no_duplicate_or_ambiguous_upload
+  - no_user_signature_forgery_or_protected_environment_bypass
+  - final_independent_review_is_required_CI_or_technical_gate_is_not_Product_Trust_acceptance
+  - live_bounds_required_only_before_execution_no_live_authority_inferred_from_repository_approval
+  - real_runner_sequential_cases_negative_outcomes_resume_and_cleanup_barriers_covered
+  - original_active_historical_Work_Package_bytes_and_repair_counters_unchanged
+  auto_repair_limit: 3
+  auto_repairs_used: 1
   stop_on:
-    - implementation_needed_before_USER_policy_decision
-    - new_failure_class_or_scope_architecture_security_IAM_or_budget_change
-    - missing_or_exhausted_explicit_live_authority
-    - ambiguous_ACCEPTED_state_or_incomplete_durable_evidence
-    - unsupported_provider_cause_recovery_or_result_driven_resubmission
-    - main_drift_from_bound_execution_base
-    - independent_review_USER_merge_and_each_actual_live_gate
+  - new_failure_class_or_scope_architecture_security_IAM_or_budget_change
+  - missing_or_exhausted_explicit_live_authority
+  - ambiguous_ACCEPTED_state_or_incomplete_durable_evidence
+  - unsupported_provider_cause_recovery_or_result_driven_resubmission
+  - main_drift_from_bound_execution_base
+  - independent_review_USER_merge_and_each_actual_live_gate
   prohibited_actions:
-    - any_model_embedding_case_readiness_dispatch_publication_rollout_or_GCP_runtime_operation
-    - production_workflow_runner_prompt_retrieval_scoring_or_approved_Program_policy_changes
-    - historical_A_B_rerun_artifact_reissue_or_counter_reset
-    - self_accept_merge_IAM_ruleset_environment_settings_or_teardown
+  - any_model_embedding_case_readiness_dispatch_publication_rollout_or_GCP_runtime_operation
+  - historical_A_B_rerun_artifact_reissue_or_counter_reset
+  - self_accept_merge_IAM_ruleset_environment_settings_or_teardown
+  - prompt_model_RAG_quality_semantics_and_Policy_D_changes
+  - blind_429_retry_or_any_new_paid_or_cloud_operation
+  implementation_contract:
+    operation: pt8a-recovery-campaign
+    execution: one_existing_protected_job_serial_A_E_with_per_case_artifact_checkpoints
+    child_workflow_dispatch: not_required
+    new_workflow_controller_service_PAT_or_verifier: prohibited
+    review_policy: automated_complete_product_observation_gate_then_final_independent_ten_dimension_review
+    original_v2_v3_and_diagnostic_modes: unchanged
+    production_correction: typed_numeric_HTTP_failure_observability_only_no_demonstrated_classifier_or_retry_defect
+    optional_observability: numeric_upstreamHttpStatus_without_exception_message_or_response_body
+    campaign_identity: new_explicitly_approved_identity_not_original_acceptance_or_diagnostic_campaign
+    ledger: reuse_existing_GitHub_Run_Artifact_and_per_case_observation_json
+    states:
+    - NOT_RUN
+    - RUNNING
+    - TECHNICAL_FAILURE
+    - PRODUCT_REVIEW_REQUIRED
+    - PRODUCT_DEFECT
+    - REVIEWED_PASS
+    - RECOVERY_AUTHORIZED
+    - BLOCKED
+    state_authority: technical_states_from_original_evidence_quality_states_only_from_independent_review
+    resume: earliest_unresolved_case_of_same_candidate_never_restart_A_or_rewrite_prior_observations
+    accepted_nonterminal_job: one_same_owner_read_only_drain_preserves_original_censor_no_POST
+    ambiguous_POST_or_missing_attempt_evidence: BLOCKED_no_resubmission
+    technical_failure_recovery: STOP_no_automatic_resubmission_cause_unproven
+    product_failure: retain_no_result_driven_retry_or_best_of_N_selection
+    candidate_change: new_identity_no_cross_candidate_PASS_promotion
+    release_identity: exact_same_control_source_backend_source_image_no_equivalence_waiver
+    mode: recovery-campaign
+    executable_contract_sha256: 0fec07586fe41d9f955b93b75a3dc167fa9b3eedbff9ea01382f2f2573ec694d
+    procedure_sha256: 138b70f1ae4faa7cb2174511ab24ad9fb22d57d6a11893f3663d1a7a937a7f57
+  separate_live_requirements:
+  - exact_reviewed_merged_source_and_immutable_image
+  - explicit_live_upload_model_call_dispatch_workflow_wallclock_and_model_location_bounds
+  - frozen_recovery_contract_and_procedure_hashes_original_A_B_and_clean_v4_origins
+  - accepted_VECTOR_WRITE_CONTINUITY_UNPROVEN_risk
+  - existing_gcp_target_apply_environment_approval_no_bypass
+  bounded_corrections:
+  - iteration: 1
+    failure: one_legacy_workflow_artifact_if_assertion_did_not_include_new_mode_exclusion
+    preserved_log: PR_validation_initial_59_tests_1_failure
+    correction: align_existing_assertion_preserving_always_evidence_for_original_modes
+    scope: same_approved_runner_workflow_contract
+    initial_tests: 59
+    initial_failures: 1
+    initial_errors: 0
+    failed_test: DiagnosticContinuationContracts.test_diagnostic_workflow_is_gated_before_wif_and_keeps_distinct_artifact_and_no_new_workflow
+  validation:
+    observer_tests: 62
+    observer_failures: 0
+    RAG_tests: 55
+    RAG_failures: 0
+    focused_backend_tests: 41
+    backend_package:
+      outcome: BUILD_SUCCESS
+      tests: 588
+      passed: 584
+      skipped_MariaDB_prerequisites: 4
+      failures: 0
+      errors: 0
+      executions: 1
+    metadata_policy_scope_syntax_frozen_diff: PASS
+    normal_exact_head_CI: recorded_in_GitHub_PR_no_manual_rerun
+    live_executions: 0

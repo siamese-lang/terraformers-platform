@@ -1,25 +1,16 @@
 # PT-8A autonomous recovery decision and resume checkpoint
 
-Status: **REPOSITORY PREPARATION COMPLETE / POLICY AND WORK PACKAGE APPROVAL REQUIRED**.
-This is a decision proposal, not an executable measurement procedure, campaign approval or
-Product Trust acceptance. The USER's 2026-10-09 request authorizes investigation, contract/PR
-preparation and existing deterministic validation while absent. It explicitly preserves actual
-architecture, policy, merge, live/cost and security gates.
+Status: **REPOSITORY IMPLEMENTATION / INDEPENDENT ACCEPTANCE PENDING**.
+USER approved `APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265`
+after [preparation review 6079812459](https://github.com/siamese-lang/terraformers-platform/pull/265#issuecomment-6079812459).
+This authorizes same-PR implementation and at most three bounded repository corrective iterations,
+not live execution or Product Trust acceptance. Numeric live budgets are not prerequisites to
+writing/testing repository code; they must be bound before actual inference.
 
-[AGENTS.md — Case Decision Gate](../../AGENTS.md#case-decision-gate) explicitly requires:
-“위 판단 방향을 사용자가 승인하기 전에는 대표 case 구현을 시작하지 않는다.”
-The approved Program and active Work Package also require one case per dispatch followed by
-independent review, with the historical repair budget already consumed (1/1). A new automated
-progression policy and three-iteration budget therefore need an explicit decision; preparation
-does not change those existing requirements.
-
-Preparation is bound to remote main `c789d433f13da744e14c6a6f31db2d4fd3cf1d74`.
-No refresh/rebase or replacement of historical execution bases is permitted.
-[One proposed integrated Work Package](../../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml)
-keeps implementation/live authority false. Continue that same PR after an explicit decision if
-main remains unchanged; a separate contract merge is not presumed necessary. Do not create another
-activation/state-sync PR. Request attachment SHA-256:
-`40ac59f730f866b61116b6fd15d5d872b0effaef8fb27304b0099db166471074`.
+Execution remains bound to `c789d433f13da744e14c6a6f31db2d4fd3cf1d74`; no rebase/base refresh.
+[The integrated Work Package](../../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml)
+records this authority separately from the original consumed 1/1 repair budget. The original USER
+request attachment SHA-256 remains `40ac59f730f866b61116b6fd15d5d872b0effaef8fb27304b0099db166471074`.
 
 ## Verified observations and actual causal boundary
 
@@ -129,92 +120,112 @@ deletion and non-fast-forward protections. Leave these settings intact.
 | --- | --- |
 | Keep original manual diagnostic sequence | Safe existing lane; cannot establish new fixed-candidate A–E evidence or satisfy autonomous Recovery progression. Retain unchanged as historical authority. |
 | Parent/child workflow dispatcher | Reject as default: shared lock deadlock, separate per-child protected approvals and unnecessary Actions write/controller state. No new framework/PAT/permission workaround. |
-| One existing protected job with serial case steps and per-case artifacts | **Recommended for USER decision.** One start/environment approval, existing WIF/runtime/observer/CLI, no child dispatch API or Actions write needed. Fixed order with durable checkpoint/resume and separate final independent review. |
+| One existing protected job with serial case steps and per-case artifacts | **Selected under USER repository implementation approval.** One start/environment approval, existing WIF/runtime/observer/CLI, no child dispatch API or Actions write needed. Fixed order with durable checkpoint/resume and separate final independent review. |
 | SDK/job retries or blind quota increase | Not selected. Violates current Policy D without a new decision and cannot fix an unproven cause. |
 
 This is genuine GitHub Actions campaign automation, not a substitute test system. Repository
-implementation/CI is authorized only after the policy/Work Package decision. The future one-time
+implementation/CI is now USER-authorized; live execution remains separately gated. The future one-time
 live campaign authority must bind exact source/image/budget before the protected start. Existing
 environment approval remains mandatory. A resume needing a new protected run can require another
 actual environment approval; the design must stop there rather than guarantee unavailable access.
 
-## Proposed recovery contract and validation
+## Implemented separate Recovery contract
 
-Retain strict v2/v3 and diagnostic modes, their original artifacts and all once-only guards. Add
-one separately approved campaign/mode to the existing observer and runtime job only. A campaign
-has one explicit immutable backend candidate, control/procedure source, frozen image/truth set,
-model/region and corpus admission. Automated technical progression retains original observations;
-it cannot sign independent semantic reviews or generate REVIEWED_PASS. Final independent review
-must annotate all ten frozen dimensions for every case. A complete evidence campaign with product
-defects is not Product Trust acceptance; missing HCL/dimensions remain unmet, never invented PASS.
+The existing observer and `gcp-target-runtime-dependencies.yml` add **recovery-campaign /
+pt8a-recovery-campaign** only. Strict v2/v3/diagnostic authority, predecessor review, consumption
+and frozen bytes remain unchanged. A separately authenticated USER live comment must bind the
+actual merged source, same-source immutable backend image, campaign ID, executable contract hash,
+this procedure's final file hash, frozen candidate/v2/v3, original A/B and clean-v4 provenance,
+accepted vector-continuity risk and numeric live bounds. Repository approval and the original
+B–E approval do not satisfy that comment. No predicted merge SHA or image digest is recorded.
 
-Per-case artifact checkpoints reuse existing accepted/job/presentation/retrieval/draft/CLI/inventory
-JSON. Each captures campaign/case/candidate and original run/artifact identity, technical state,
-independent review state and remaining **approved** attempt budget. GitHub owns transient lifecycle;
-do not put active PR/branch state in the Program JSON. Before any POST, a prior started or ambiguous
-step without sufficient durable evidence blocks replay. On resume, read all prior case artifacts,
-continue the earliest unresolved case, and never repeat an independently reviewed success from
-the same candidate. An accepted nonterminal job may only be observed read-only under its bound
-owner/job; do not replace censoring or missing acceptance with a fresh upload.
+One existing `gcp-target-apply` protected job executes A→E. Preflight runs before WIF/cloud access
+and uploads an immutable start checkpoint. Each case has a separate artifact upload after the
+actual JWKS cleanup receipt; the next case requires the preceding observation/cleanup and artifact
+step to succeed. A shared YAML shell anchor keeps five case steps from duplicating implementation.
+No child dispatch, PAT, new workflow, controller service, verifier or permission change is needed.
+The original modes retain 35 minutes/1800s validation-pod sleep; Recovery uses its explicitly
+approved workflow limit, capped by GitHub's hosted-job maximum. It does not change Policy D.
 
-Semantic defects cannot receive technical-recovery retries. A separately authorized technical
-recovery needs a confirmed allowlisted cause and an explicit per-case/total budget; retain every
-failed attempt, never best-of-N selection. The original A/B budgets stay consumed regardless of
-any new campaign. Candidate changes invalidate cross-candidate PASS reuse and require a newly
-approved measurement scope. Original B repair failure is not proof that all calls should retry.
+Requests require explicit `liveBounds`: `maxUploads` (at most five), `maxModelCalls`,
+`maxDispatches`, `wallclockMinutes`, `modelLocation`. Before first upload of a case, the runner
+reserves the production path's upper bound of six calls: facts 1 + initial/compact ≤2 + repair ≤1
++ retrieval query embeddings ≤2. Final documentation lookups do not embed. This is conservative
+budget accounting, not observed/billed usage or a newly chosen cost ceiling. The runtime's model
+project/location is independently read back. Missing/wrong bounds fail before cloud/inference.
+The actual job start determines remaining approved wallclock; no new case/drain starts with less
+than its existing 540-second observation window. Actual cost/call/attempt values remain USER live
+decisions, and a short total budget can leave an honest incomplete campaign.
 
-Preserve Policy D: facts/generation+compact+repair/embedding 370/220/10s, SDK attempts 1 and status
-retry list empty, durable attempts 1, original accepted-age cutoff 8m, single initial MAX_TOKENS
-compact fallback, one closure/repair and finalization/deadline/cleanup/post-commit fences.
-Read-only corpus admission reuses original clean run 37710171426/artifact 11522067032 and exact
-5395 / 1536 / UUID L8KKBHT1Qri3E2VVw7As2g, without embedding/index writes. The accepted
-VECTOR_WRITE_CONTINUITY_UNPROVEN residual remains explicit. Normal serving retrieval embeddings
-are model calls and need live budget; admission's embeddingRequests=0 does not erase them.
+Resume scans complete main dispatch history across sources, authenticated run/artifact archive
+digests and every inventory member. Unknown/missing/rerun/concurrent history, a changed candidate,
+stale resume run, duplicate/out-of-order observations, later ingestion or missing checkpoint blocks
+submission. Original A/B remain consumed in their separate campaigns. A completed product
+observation from this same Recovery candidate is reused without another fetch/upload/model call;
+its negative CLI/quality/HCL outcome remains intact and is never converted to semantic PASS.
+A selected case step without durable evidence fails closed even if it may have failed before POST;
+preflight/partial failure is not an excuse to reset original once-only guards.
 
-The existing 35-minute job timeout is not enough to promise five sequential 540s observation
-windows plus setup/admission/artifact work. A reviewed total workflow wallclock budget is required;
-do not silently alter provider/job deadlines. SDK/job retry changes remain separately gated.
-Per-case recovery limits, total uploads, model/embedding call and cost ceilings, actual model region
-and workflow budget are **unset**, not defaults. The proposed three repository-only corrective
-iterations need explicit approval for this new unit; old auto-repair 1/1 stays unchanged.
+An accepted nonterminal checkpoint permits **one read-only drain** of that same owner/job, never
+a POST. The existing JWT/JWKS fixture restricts this operation's owner to the first Recovery run
+admitted from authenticated same-candidate artifacts; arbitrary overrides and PT-2 owner changes
+remain forbidden. Original acceptance identity and latency censoring stay bound; a later terminal
+readback supplements the old artifact and never removes/replaces its censor. Another drain,
+ambiguous acceptance, incomplete provenance or failed cleanup blocks further work. No new accepted
+job overlaps an unresolved predecessor.
 
-Control-only changes also must not cause ceremonial backend publication. Recommend, for decision,
-separating control source from backend build source only when all backend Docker build inputs and
-runtime identity are verified unchanged, and live approval explicitly binds both sources/image.
-Current strict modes still require their existing same-source binding. If typed production
-telemetry or a supported product correction changes backend build inputs, one new publication/
-rollout becomes necessary at the actual release/live checkpoint. No source-equivalence waiver,
-predicted merge SHA/digest or release is implemented in this preparation.
+A complete SUCCEEDED observation can progress even when quality is UNKNOWN/DEGRADED, CLI fails,
+or no reviewable HCL exists. All original job/presentation/retrieval/draft/CLI evidence is retained
+for final review. Explicit input rejection and generated Terraform-validation failure remain product observations;
+unknown failed-job causes block classification. Terminal provider failures stop as `TECHNICAL_FAILURE`; an unconfirmed 429 cause
+never authorizes an automatic recovery upload. There is **no automatic resubmission, SDK retry,
+quota change, best-of-N selection or new product generation fix**. The original B rate-limit root
+cause remains unproven. Future technical re-submission needs supported cause evidence and separate
+authority rather than inventing a current recovery policy.
 
-After decision, extend only existing tests for actual contracts: all-source duplicate/ambiguous
-uploads, partial artifact resume, same-candidate reviewed-success reuse, candidate drift, negative
-semantic evidence, bounded cause-authorized recovery, read-only admission and unforgeable final
-review. No separate test framework or tests solely restating new names. Use proportional existing
-backend tests if production telemetry changes, existing observer/RAG tests if runner changes, then
-normal PR CI once per justified tree. Preserve natural failures; no unchanged rerun-until-green.
+The only production change adds numeric `upstreamHttpStatus` from typed exception accessors to
+existing facts/generation/repair failure logs, with null for missing evidence. The existing
+classifier, request/model/prompt/retrieval choices and timeouts are unchanged. No exception
+message, response body, prompt, image, quota guess or secret is logged. The observer retains that
+field without treating UNAVAILABLE/throttling/message text as an HTTP code. Historical evidence
+is not retrospectively filled from this new telemetry.
 
-## Completed preparation and exact resume point
+Before/after each observation, admission reuses the existing authenticated clean-v4 receipt and
+read-only exact mapping/5395 IDs/non-vector bodies/index UUID/finite 1536-dimensional vectors.
+No admission embedding/index write occurs. `VECTOR_WRITE_CONTINUITY_UNPROVEN` remains explicit;
+normal serving retrieval embeddings are separately budgeted model calls. Unknown write history
+stops reuse. The approved corpus is never rebuilt/re-embedded to follow backend source changes.
 
-Existing offline tests ran once: ProviderFailureClassifierTest **6**, VertexGenerationStageTest
-**19**, VertexArchitectureFactsExtractorTest **12**, VertexFinalClientInjectionTest **1**,
-TerminalQualityAssessmentMapperTest **2** — **40 PASS / 0 failures / 0 errors / 0 skipped**.
-Command: `mvn -o -s /workspace/.cloud-setup/maven-settings.xml -Dtest=ProviderFailureClassifierTest,VertexGenerationStageTest,VertexArchitectureFactsExtractorTest,VertexFinalClientInjectionTest,TerminalQualityAssessmentMapperTest test`
-in backend with the cached JDK 17/Maven 3.9.9. This validates current mechanisms, not live quota,
-historical HTTP status or improved model quality. No new tests, production or executable workflow
-changes were made. Metadata/scope/frozen checks and normal PR CI are recorded in the PR.
+Campaign completion is only `EVIDENCE_COLLECTED_AWAITING_INDEPENDENT_REVIEW`. The final artifact
+keeps all five individual states, original A/B references, uploads used and all ten required
+independent dimensions. No automatic REVIEWED_PASS, fabricated quality rates or Product Trust
+closure is produced; rates stay null. Semantic/product defects require independent assessment
+and any later candidate must receive its own evidence, without cross-candidate PASS promotion.
 
-Stop at **HUMAN_REQUIRED: PT8A_AUTONOMOUS_RECOVERY_POLICY_AND_WORK_PACKAGE_APPROVAL**.
-Resume the same PR from this bound base after one consolidated USER decision covering:
+## Validation, corrections and exact resume point
 
-1. The distinct campaign and technical-progress/final-review policy, plus at most three bounded
-   repository-only corrections for the new unit, without any original counter reset.
-2. Whether to obtain the missing original read-only provider evidence first or authorize narrow
-   typed telemetry; no retry/product fix is justified by current evidence alone.
-3. Fixed candidate/control-source binding and explicit cause/attempt/call/cost/wallclock budgets
-   before live execution; unchanged Policy D unless separately decided otherwise.
+Initial observer run: **59 tests / 1 legacy assertion failure**, preserved in PR evidence. The
+assertion required the old artifact step's exact `always()` string; the new mode needs that upload
+to run always for non-Recovery operations. Corrective iteration **1/3** aligned only this expected
+condition and completed the same-scope checkpoint tests. Historical repair 1/1 is unchanged.
+Observer final suite: **62 PASS** (existing 50 plus 12 Recovery regressions), including the actual runner
+and observer executing five sequential deterministic drafts, real Terraform-command construction,
+negative UNKNOWN/DEGRADED/CLI outcomes, checkpoint reuse, duplicate/partial/candidate/source/censor
+fail-closed, one GET-only drain, missing live authority/budgets, owner restriction and cleanup gates.
+These use deterministic external transport/process boundaries; they are not live product samples.
 
-Then implement/validate the chosen scope in that PR, obtain independent acceptance and USER merge,
-and bind the actual final candidate to the separate live/model/cost approval. Do not require a
-contract-only merge first unless review establishes a real prerequisite. No self-merge, SDK policy
-change, new token, cloud/model operation, official fetch/upload, ingestion, rollout or teardown
-occurred. The full A–E goal is **NOT COMPLETE**; this checkpoint is not a successful benchmark.
+Backend focused tests **41 PASS**. Full offline package **BUILD SUCCESS: 588 total / 584 PASS /
+4 MariaDB-prerequisite SKIP / 0 failures / 0 errors**, executed once. Existing RAG suites **55 PASS**.
+YAML/JSON, workflow/smoke Bash syntax, repository policy, Case C ledger, exact scope/state preservation,
+original frozen hashes and diff checks PASS. Normal exact-head PR CI results are recorded in the PR. No manual CI rerun or cloud/model operation is
+permitted. The source/image release and exact live budgets are future gates, not current code
+prerequisites. Narrow telemetry changes the backend build inputs, so any future publication/rollout
+must use the actual independently accepted merge source and separate explicit release authority.
+
+Stop at **PT8A RECOVERY IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING**, with gate
+**HUMAN_REQUIRED: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE**. Continue on the same PR
+only for independent feedback within the approved scope/remaining correction limit while main is
+unchanged. After independent acceptance and USER merge, require separately bound live/model/cost
+approval and the existing environment gate; do not activate cases from repository approval alone.
+No live dispatch, model call, official image fetch/upload, publication, rollout, corpus write,
+reembedding, IAM change, teardown or self-merge occurred. The full A–E goal is **NOT COMPLETE**.

@@ -4,10 +4,25 @@ import java.lang.reflect.Method;
 import java.io.InterruptedIOException;
 import com.google.genai.errors.GenAiIOException;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 
 /** Bounded transport classification shared by provider adapters. */
 public final class ProviderFailureClassifier {
     private ProviderFailureClassifier() {}
+
+    /** Class names only: no messages, stack traces, bodies or suppressed exceptions. */
+    public static String safeExceptionTypes(Throwable failure) {
+        var seen = Collections.newSetFromMap(new IdentityHashMap<Throwable, Boolean>());
+        var types = new ArrayList<String>();
+        for (Throwable current = failure; current != null && types.size() < 8 && seen.add(current);
+                current = current.getCause()) {
+            String name = current.getClass().getSimpleName();
+            types.add(name.matches("[A-Za-z_$][A-Za-z0-9_$]{0,63}") ? name : "UnknownException");
+        }
+        return String.join(",", types);
+    }
 
     /** Numeric transport evidence only; never exception messages or provider response bodies. */
     public static Integer upstreamHttpStatus(Throwable failure) {

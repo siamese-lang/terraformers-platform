@@ -254,6 +254,12 @@ jobs:
               elapsed = fields.get("elapsedMs", "")
               if re.fullmatch(r"[0-9]{1,12}", elapsed):
                   event["elapsedMs"] = int(elapsed)
+              timeout = fields.get("configuredTimeoutMs", "")
+              if re.fullmatch(r"[0-9]{1,6}", timeout) and 0 < int(timeout) <= 370000:
+                  event["configuredTimeoutMs"] = int(timeout)
+              types = fields.get("sdkExceptionTypes", "").split(",")
+              if 1 <= len(types) <= 8 and all(re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_$]{0,63}", t) for t in types):
+                  event["sdkExceptionTypes"] = types
               return event
 
           def main():

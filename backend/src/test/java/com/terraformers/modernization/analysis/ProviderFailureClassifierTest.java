@@ -10,6 +10,20 @@ import org.junit.jupiter.api.Test;
 
 class ProviderFailureClassifierTest {
     @Test
+    void diagnosticCauseTypesAreBoundedCycleSafeAndNeverContainMessages() {
+        Throwable nested = new com.google.genai.errors.GenAiIOException("PRIVATE_REQUEST_RESPONSE",
+                new java.io.InterruptedIOException("timeout"));
+        assertEquals("GenAiIOException,InterruptedIOException", ProviderFailureClassifier.safeExceptionTypes(nested));
+        Throwable deep = new IllegalStateException("PRIVATE_SECRET");
+        for (int i = 0; i < 12; i++) deep = new RuntimeException("PRIVATE_SECRET", deep);
+        assertEquals(8, ProviderFailureClassifier.safeExceptionTypes(deep).split(",").length);
+        RuntimeException first = new RuntimeException("PRIVATE_SECRET");
+        RuntimeException second = new RuntimeException("PRIVATE_SECRET", first);
+        first.initCause(second);
+        assertEquals("RuntimeException,RuntimeException", ProviderFailureClassifier.safeExceptionTypes(first));
+    }
+
+    @Test
     void recognizesExactSdkWholeCallTimeoutAndPreservesStandardTimeouts() {
         var timeout = new com.google.genai.errors.GenAiIOException("SDK I/O",
                 new java.io.InterruptedIOException("timeout"));

@@ -12,6 +12,37 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
+- Current task: **USER-authorized independent PT-8A provider-failure investigation and narrow
+  repository-only diagnostics correction**, bound once to remote main
+  `406711e498b2a73568257ecb8280f79f6ded492e`. This advances real failure diagnosis within the
+  existing AI/RAG Case A chain. Original Recovery WP base and consumed repair counters remain unchanged.
+- [Independent result review 6082116692](https://github.com/siamese-lang/terraformers-platform/pull/265#issuecomment-6082116692)
+  accepts recovery run **37936469909** as authentic technical failure / INCOMPLETE. Its Case A
+  `a195d5ff-fce0-4728-80d5-ac2ebaf75d1d` remains ACCEPTED / NOT_PASS / consumed, with no Terraform
+  draft and CLI NOT_RUN. B–E remain NOT_RUN. Total accepted-to-terminal **263985 ms** is not
+  generation-call latency. Original archive digests and all **19** inventory members reverified.
+- [Keyless Logging result 6084282960](https://github.com/siamese-lang/terraformers-platform/pull/266#issuecomment-6084282960)
+  binds run **37953845542**, artifact **11626414892**, digest
+  `sha256:14f1c5994c82e6bd95fe787ac8adf536d9976538ab3b789eff031d556014698a`:
+  WIF succeeded, Logging API 200 / READ_COMPLETE, three safe events. This proves Logging access,
+  not a Vertex HTTP 200. Original SDK cause, call latency, upstream status and capacity cause remain unknown.
+- Actual SDK 1.72.0 source applies per-request milliseconds to OkHttp whole-call timeout, with one
+  SDK attempt and no retryable HTTP statuses. The existing application logs discard original SDK
+  class names and do not measure individual calls. The correction retains only bounded cause class
+  names, monotonic elapsed milliseconds and explicitly separate configured timeout through existing
+  provider logs, observer and fixed-scope keyless sanitizer. No raw messages, stack, prompts or images.
+- No evidence establishes quota/capacity, a defective timeout/retry policy or excessive thinking as
+  the physical cause. Policy D, initial model-default thinking, repair LOW/16384, MAX_TOKENS fallback,
+  single closure/repair, RAG/quality and all frozen procedures/truth remain unchanged. Original A/B
+  failures cannot be replayed or promoted to PASS. No new live operation is authorized by this task.
+- Stop for independent correction review / USER merge at
+  **HUMAN_REQUIRED: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE**. A new controlled
+  live experiment requires actual accepted source/image plus explicit procedure, original-history,
+  upload/model-call/dispatch/time/cost authority; approval 6081758174 does not grant a fresh A upload
+  or B–E progression after technical failure. **Actual PT-8A failure is not yet resolved; E2E remains unproven.**
+
+### Historical Recovery implementation checkpoint
+
 - Current task: **PT-8A autonomous Recovery implementation**, bound to
   `c789d433f13da744e14c6a6f31db2d4fd3cf1d74`, under USER approval
   `APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265` and

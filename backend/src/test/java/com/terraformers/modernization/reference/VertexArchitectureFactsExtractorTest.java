@@ -29,8 +29,10 @@ class VertexArchitectureFactsExtractorTest {
             String messages = appender.list.stream().map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
                     .collect(java.util.stream.Collectors.joining("\n"));
             assertThat(messages).contains("stage=facts", "finishReason=MAX_TOKENS", "outputTokens=800",
-                    "thinkingTokens=17", "totalTokens=817", "maxOutputTokens=800", "finishReason=UNAVAILABLE")
+                    "thinkingTokens=17", "totalTokens=817", "maxOutputTokens=800", "finishReason=UNAVAILABLE",
+                    "configuredTimeoutMs=370000", "elapsedMs=", "sdkExceptionTypes=IllegalStateException")
                     .doesNotContain(SECRET_PAYLOAD, "safe-image-fixture", VertexArchitectureFactsExtractor.FACTS_PROMPT);
+            assertThat(appender.list).allSatisfy(event -> assertThat(event.getThrowableProxy()).isNull());
         } finally {
             logger.detachAppender(appender); appender.stop();
         }

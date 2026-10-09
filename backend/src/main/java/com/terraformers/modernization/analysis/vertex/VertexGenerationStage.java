@@ -140,14 +140,19 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
     private GenerateContentResponse completedResponse(Content content, GenerateContentConfig config,
             String stage, boolean compact) {
         GenerateContentResponse response;
+        long startedAt = System.nanoTime();
         try {
             response = request(content, config);
         } catch (RuntimeException exception) {
             RuntimeException failure = providerCallFailure(exception);
             log.warn("Vertex provider call stage={} compact={} outcome=failure finishReason=UNAVAILABLE "
-                            + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={} upstreamHttpStatus={}",
+                            + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={} upstreamHttpStatus={} "
+                            + "elapsedMs={} configuredTimeoutMs={} sdkExceptionTypes={}",
                     stage, compact, failure.getClass().getSimpleName(),
-                    ProviderFailureClassifier.upstreamHttpStatus(exception));
+                    ProviderFailureClassifier.upstreamHttpStatus(exception),
+                    java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt),
+                    config.httpOptions().flatMap(options -> options.timeout()).orElse(null),
+                    ProviderFailureClassifier.safeExceptionTypes(exception));
             throw failure;
         }
         Integer outputTokens = response.usageMetadata()
@@ -159,11 +164,13 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
                 : finishReason.knownEnum();
 
         log.info("Vertex provider call stage={} compact={} outcome=received finishReason={} "
-                        + "outputTokens={} thinkingTokens={} totalTokens={} maxOutputTokens={}",
+                        + "outputTokens={} thinkingTokens={} totalTokens={} maxOutputTokens={} elapsedMs={} configuredTimeoutMs={}",
                 stage, compact, known.name(), outputTokens,
                 response.usageMetadata().flatMap(metadata -> metadata.thoughtsTokenCount()).orElse(null),
                 response.usageMetadata().flatMap(metadata -> metadata.totalTokenCount()).orElse(null),
-                config.maxOutputTokens().orElse(null));
+                config.maxOutputTokens().orElse(null),
+                java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt),
+                config.httpOptions().flatMap(options -> options.timeout()).orElse(null));
 
         requireNormalCompletion(known, finishReason, outputTokens);
         return response;

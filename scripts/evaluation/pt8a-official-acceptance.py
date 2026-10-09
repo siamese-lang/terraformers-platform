@@ -1275,6 +1275,15 @@ def retrieval_evidence(job_id, since, expected_documents):
             status = re.search(r"\bupstreamHttpStatus=(\d{3}|null)\b", line)
             provider_calls[-1]["upstreamHttpStatus"] = (int(status[1]) if status and status[1].isdecimal()
                                                         and 100 <= int(status[1]) <= 599 else None)
+            for field, bound in (("elapsedMs", 999999999999), ("configuredTimeoutMs", 370000)):
+                value = re.search(rf"\b{field}=([0-9]{{1,12}})\b", line)
+                if value and (1 if field == "configuredTimeoutMs" else 0) <= int(value[1]) <= bound:
+                    provider_calls[-1][field] = int(value[1])
+            types = re.search(r"\bsdkExceptionTypes=([^\s]+)", line)
+            if types:
+                names = types[1].split(",")
+                if 1 <= len(names) <= 8 and all(re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_$]{0,63}", n) for n in names):
+                    provider_calls[-1]["sdkExceptionTypes"] = names
         match = re.search(r"Vertex grounding stage=closure outcome=(success|failure) "
                           r"finishReason=NOT_APPLICABLE outputTokens=NOT_APPLICABLE"
                           r"(?: hitCount=(\d+) elapsedMs=(\d+))?", line)

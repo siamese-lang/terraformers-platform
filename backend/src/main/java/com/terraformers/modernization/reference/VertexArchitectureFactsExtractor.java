@@ -92,6 +92,7 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
                 Part.fromText(FACTS_PROMPT)
         );
         VertexFactsResponse response;
+        long startedAt = System.nanoTime();
         try {
             response = factsClient.generate(
                     properties.requireGenerationModelId(),
@@ -100,8 +101,12 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
             );
         } catch (RuntimeException exception) {
             log.warn("Vertex provider call stage=facts outcome=failure finishReason=UNAVAILABLE "
-                    + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={} upstreamHttpStatus={}",
-                    safeErrorType(exception), ProviderFailureClassifier.upstreamHttpStatus(exception));
+                    + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={} upstreamHttpStatus={} "
+                    + "elapsedMs={} configuredTimeoutMs={} sdkExceptionTypes={}",
+                    safeErrorType(exception), ProviderFailureClassifier.upstreamHttpStatus(exception),
+                    java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt),
+                    config.httpOptions().flatMap(options -> options.timeout()).orElse(null),
+                    ProviderFailureClassifier.safeExceptionTypes(exception));
             throw providerFailure(exception);
         }
         if (response == null) {
@@ -109,9 +114,11 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
                     ArchitectureFactsExtractionException.Reason.EMPTY_RESPONSE, null);
         }
         log.info("Vertex provider call stage=facts outcome=received finishReason={} "
-                        + "outputTokens={} thinkingTokens={} totalTokens={} maxOutputTokens={}",
+                        + "outputTokens={} thinkingTokens={} totalTokens={} maxOutputTokens={} elapsedMs={} configuredTimeoutMs={}",
                 response.finishReason(), response.outputTokens(), response.thinkingTokens(),
-                response.totalTokens(), MAX_FACT_TOKENS);
+                response.totalTokens(), MAX_FACT_TOKENS,
+                java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt),
+                config.httpOptions().flatMap(options -> options.timeout()).orElse(null));
         if (response.finishReason() == FinishReason.Known.MAX_TOKENS) {
             throw ArchitectureFactsExtractionException.response(
                     ArchitectureFactsExtractionException.Reason.RESPONSE_TRUNCATED, null);

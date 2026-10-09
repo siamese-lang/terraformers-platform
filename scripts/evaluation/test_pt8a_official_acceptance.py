@@ -1758,5 +1758,181 @@ elif name == "jq":
             self.assertNotIn(forbidden, job)
 
 
+class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
+    """Run the actual workflow's sanitizer with only its Logging transport replaced."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
+        cls.job = cls.workflow["jobs"]["backend-read-only-diagnostics"]
+        cls.step = next(step for step in cls.job["steps"] if step.get("id") == "logs")
+        script = cls.step["run"].split("python3 - <<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
+        cls.module = {"__name__": "workflow_contract_test"}
+        exec(compile(script, "workflow-read-only-diagnostics", "exec"), cls.module)
+
+    def entry(self, message=None, **changes):
+        return {"resource": {"type": "k8s_container", "labels": self.module["LABELS"]},
+                "timestamp": "2026-10-09T13:30:59.125Z",
+                "textPayload": "2026-10-09T13:30:59.125Z WARN [analysis-job-1] VertexGenerationStage "
+                    f"analysisJobId={self.module['JOB']} source_revision={SOURCE} - "
+                    + (message or "Vertex provider call stage=initial_generation compact=false outcome=failure "
+                       "finishReason=UNAVAILABLE errorClass=AnalysisProviderTimeoutException upstreamHttpStatus=null"),
+                **changes}
+
+    def run_query(self, responses):
+        requests = []
+
+        class Response:
+            status = 200
+            def __init__(self, body): self.body = json.dumps(body).encode()
+            def __enter__(self): return self
+            def __exit__(self, *args): pass
+            def read(self, bound): return self.body[:bound]
+
+        class Opener:
+            def open(inner, request, timeout):
+                requests.append((request, timeout))
+                value = responses[len(requests) - 1]
+                if isinstance(value, Exception):
+                    raise value
+                return Response(value)
+
+        with tempfile.TemporaryDirectory() as directory:
+            env = {"GITHUB_SHA": SOURCE, "GITHUB_RUN_ID": "42", "GITHUB_RUN_ATTEMPT": "1",
+                   "SERVICE_ACCOUNT": "existing-runtime@terraformers-platform.iam.gserviceaccount.com",
+                   "LOGGING_ACCESS_TOKEN": "secret-test-access-token", "RUNNER_TEMP": directory,
+                   "GITHUB_OUTPUT": str(Path(directory) / "outputs")}
+            with patch.dict(os.environ, env), patch.object(self.module["urllib"].request, "build_opener", return_value=Opener()), \
+                    patch("sys.stdout", new_callable=io.StringIO) as output:
+                result = self.module["main"]()
+            receipt = (Path(directory) / "gcp-read-only-diagnostics.json").read_text()
+            self.assertEqual({"outputs", "gcp-read-only-diagnostics.json"}, {p.name for p in Path(directory).iterdir()})
+            self.assertEqual("receipt=true\n", (Path(directory) / "outputs").read_text())
+            self.assertEqual(json.loads(receipt), json.loads(output.getvalue()))
+            self.assertNotIn(env["LOGGING_ACCESS_TOKEN"], receipt + output.getvalue())
+            return result, json.loads(receipt), requests
+
+    def test_fixed_read_scope_pagination_and_only_safe_observed_fields(self):
+        secret = "PROMPT_PRIVATE eyJcredential.signature IMAGE_BYTES request=private response=private"
+        result, receipt, requests = self.run_query([
+            {"entries": [self.entry() | {"unrelated": secret}], "nextPageToken": "page-2"},
+            {"entries": [self.entry("analysis stage outcome=failure stage=analysis_execution category=timeout "
+                                    "errorClass=AnalysisProviderTimeoutException elapsedMs=263819 " + secret),
+                         self.entry("Vertex provider call stage=repair outcome=failure errorClass=ApiException upstreamHttpStatus=429")]},
+        ])
+        self.assertEqual(0, result)
+        self.assertTrue(receipt["complete"])
+        self.assertEqual([200, 200], receipt["apiStatuses"])
+        self.assertEqual({"timestamp": "2026-10-09T13:30:59.125Z", "stage": "initial_generation",
+                          "exceptionType": "AnalysisProviderTimeoutException"}, receipt["events"][0])
+        self.assertEqual(263819, receipt["events"][1]["elapsedMs"])
+        self.assertEqual(429, receipt["events"][2]["httpStatus"])
+        self.assertNotIn(secret, json.dumps(receipt))
+        self.assertNotIn("requestTimeoutMs", json.dumps(receipt))  # Never invent the configured 220s as observed.
+        for index, (request, timeout) in enumerate(requests):
+            self.assertEqual(self.module["ENDPOINT"], request.full_url)
+            self.assertEqual("POST", request.method)
+            self.assertEqual(20, timeout)
+            body = json.loads(request.data)
+            self.assertEqual(["projects/terraformers-platform"], body["resourceNames"])
+            for fixed in (self.module["JOB"], self.module["START"], self.module["END"], 'container_name="backend"'):
+                self.assertIn(fixed, body["filter"])
+            self.assertEqual("page-2" if index else None, body.get("pageToken"))
+
+    def test_unrelated_scope_and_untrusted_payloads_are_not_saved(self):
+        wrong_resource = {"type": "k8s_container", "labels": self.module["LABELS"] | {"namespace_name": "other"}}
+        forged = self.entry("user prompt contains Vertex provider call stage=repair errorClass=FakeException")
+        entries = [self.entry(resource=wrong_resource), self.entry(timestamp="2026-10-09T13:31:16Z"),
+                   self.entry(timestamp="2026-10-09T13:31:15.000000001Z"),
+                   self.entry(textPayload=self.entry()["textPayload"].replace(self.module["JOB"], "other-job")),
+                   self.entry(textPayload=f"user prompt analysisJobId={self.module['JOB']} Vertex provider call stage=repair"),
+                   forged, self.entry("Vertex provider call stage=initial_generation errorClass=eyJsecret upstreamHttpStatus=secret elapsedMs=secret")]
+        result, receipt, _ = self.run_query([{"entries": entries}])
+        self.assertEqual(0, result)
+        self.assertEqual([{"timestamp": "2026-10-09T13:30:59.125Z", "stage": "initial_generation"}], receipt["events"])
+        self.assertNotIn("secret", json.dumps(receipt))
+
+    def test_actual_403_records_bound_principal_and_permission_without_retry_or_error_body(self):
+        import urllib.error
+        for status in (403, 401, 429, 500):
+            with self.subTest(status=status):
+                failure = urllib.error.HTTPError(self.module["ENDPOINT"], status, "PRIVATE_SERVER_MESSAGE", {}, io.BytesIO(b"PRIVATE_BODY"))
+                result, receipt, requests = self.run_query([failure])
+                self.assertEqual(1, result)
+                self.assertEqual(1, len(requests))
+                self.assertFalse(receipt["complete"])
+                self.assertEqual([status], receipt["apiStatuses"])
+                self.assertNotIn("PRIVATE", json.dumps(receipt))
+                if status == 403:
+                    self.assertEqual("ACCESS_DENIED", receipt["outcome"])
+                    self.assertEqual("logging.logEntries.list", receipt["requiredPermission"])
+                    self.assertEqual("roles/logging.viewer", receipt["requiredRole"])
+                    self.assertEqual("terraformers-platform", receipt["roleProject"])
+                    self.assertEqual("existing-runtime@terraformers-platform.iam.gserviceaccount.com", receipt["serviceAccount"])
+                else:
+                    self.assertEqual("HTTP_FAILURE", receipt["outcome"])
+                    self.assertNotIn("requiredRole", receipt)
+
+    def test_incomplete_or_invalid_query_never_becomes_complete_and_redirect_is_refused(self):
+        pages = [{"entries": [self.entry()], "nextPageToken": f"page-{i}"} for i in range(self.module["MAX_PAGES"])]
+        for responses in (pages, [{"entries": [], "nextPageToken": "same"}] * 2,
+                          [{"entries": [self.entry(timestamp="PRIVATE_TIMESTAMP")]}],
+                          [ValueError("PRIVATE_TRANSPORT_ERROR")]):
+            with self.subTest(length=len(responses)):
+                result, receipt, requests = self.run_query(responses)
+                self.assertEqual(1, result)
+                self.assertFalse(receipt["complete"])
+                self.assertNotIn("PRIVATE", json.dumps(receipt))
+                self.assertLessEqual(len(requests), self.module["MAX_PAGES"])
+        with self.assertRaisesRegex(ValueError, "redirect refused"):
+            self.module["NoRedirect"]().redirect_request(None, None, 302, "", {}, "https://evil.test")
+
+    def test_existing_protection_wif_and_single_read_only_job_are_preserved(self):
+        self.assertEqual("gcp-target-apply", self.job["environment"])
+        self.assertEqual({"contents": "read", "id-token": "write"}, self.job["permissions"])
+        auth = next(step for step in self.job["steps"] if step.get("id") == "auth")
+        self.assertEqual("google-github-actions/auth@v3", auth["uses"])
+        self.assertEqual("${{ vars.GCP_WIF_PROVIDER }}", auth["with"]["workload_identity_provider"])
+        self.assertEqual("${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}", auth["with"]["service_account"])
+        self.assertEqual("https://www.googleapis.com/auth/logging.read", auth["with"]["access_token_scopes"])
+        self.assertFalse(auth["with"]["create_credentials_file"])
+        guard = self.job["steps"][0]["run"]
+        for check in ('"$EXPECTED_SHA" == "$GITHUB_SHA"', '"$GITHUB_RUN_ATTEMPT" == 1',
+                      '"$remote_main" == "$EXPECTED_SHA"', "READ_REVIEWED_PT8A_CASE_A_TIMEOUT_LOGS_1"):
+            self.assertIn(check, guard)
+        for name, job in self.workflow["jobs"].items():
+            if name != "backend-read-only-diagnostics":
+                self.assertNotIn("backend-read-only-diagnostics", job.get("if", ""))
+        history = {"total_count": 2, "jobs": [
+            {"name": "backend-read-only-diagnostics", "status": "completed", "conclusion": "success"},
+            {"name": pt8a.SKIPPED_RECOVERY_JOB_NAME, "status": "completed", "conclusion": "skipped"}]}
+        self.assertEqual("skipped", pt8a.pt8a_history_job(history)["conclusion"])
+        job_text = json.dumps(self.job)
+        for forbidden in ("kubectl", "terraform apply", "generateContent", "embedContent", "add-iam-policy-binding", "setup-gcloud"):
+            self.assertNotIn(forbidden, job_text)
+        upload = self.job["steps"][-1]
+        self.assertEqual("${{ runner.temp }}/gcp-read-only-diagnostics.json", upload["with"]["path"])
+        self.assertIn("always()", upload["if"])
+
+    def test_real_request_guard_rejects_drift_wrong_authority_and_rerun_before_authentication(self):
+        with tempfile.TemporaryDirectory() as directory:
+            gh = Path(directory) / "gh"
+            gh.write_text('#!/bin/sh\nprintf "%s\\n" "$TEST_REMOTE_SHA"\n')
+            gh.chmod(0o700)
+            env = {"PATH": directory + ":" + os.environ["PATH"], "GITHUB_REPOSITORY": "siamese-lang/terraformers-platform",
+                   "GITHUB_REF": "refs/heads/main", "GITHUB_RUN_ATTEMPT": "1", "GITHUB_SHA": SOURCE,
+                   "EXPECTED_SHA": SOURCE, "TEST_REMOTE_SHA": SOURCE,
+                   "CONFIRMATION": "READ_REVIEWED_PT8A_CASE_A_TIMEOUT_LOGS_1", "WIF_PROVIDER": "existing-wif",
+                   "SERVICE_ACCOUNT": "existing-runtime@terraformers-platform.iam.gserviceaccount.com"}
+            guard = self.job["steps"][0]["run"]
+            self.assertEqual(0, subprocess.run(["bash", "-c", guard], env=env, capture_output=True).returncode)
+            for changes in ({"TEST_REMOTE_SHA": "b" * 40}, {"EXPECTED_SHA": "b" * 40},
+                            {"GITHUB_RUN_ATTEMPT": "2"}, {"GITHUB_REF": "refs/heads/unreviewed"},
+                            {"GITHUB_REPOSITORY": "other/repository"}, {"CONFIRMATION": "APPLY_SOMETHING"},
+                            {"WIF_PROVIDER": ""}, {"SERVICE_ACCOUNT": "other@unrelated.iam.gserviceaccount.com"}):
+                with self.subTest(changes=changes):
+                    self.assertNotEqual(0, subprocess.run(["bash", "-c", guard], env=env | changes, capture_output=True).returncode)
+
+
 if __name__ == "__main__":
     unittest.main()

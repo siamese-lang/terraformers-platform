@@ -14,6 +14,7 @@ on:
           - kubernetes-prerequisites
           - backend-deployment
           - backend-revision-rollout
+          - backend-read-only-diagnostics
           - backend-replacement-durability
           - backend-live-validation
           - backend-live-validation-c2-stability
@@ -69,6 +70,216 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  backend-read-only-diagnostics:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'backend-read-only-diagnostics'
+    runs-on: ubuntu-latest
+    environment: gcp-target-apply
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Validate bounded read-only diagnostic request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == siamese-lang/terraformers-platform ]]
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$GITHUB_RUN_ATTEMPT" == 1 ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ && "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
+          [[ "$CONFIRMATION" == READ_REVIEWED_PT8A_CASE_A_TIMEOUT_LOGS_1 ]]
+          [[ -n "$WIF_PROVIDER" ]]
+          [[ "$SERVICE_ACCOUNT" =~ ^[a-z0-9-]+@terraformers-platform\.iam\.gserviceaccount\.com$ ]]
+          remote_main="$(gh api repos/siamese-lang/terraformers-platform/git/ref/heads/main --jq .object.sha)"
+          [[ "$remote_main" == "$EXPECTED_SHA" ]] || {
+            echo 'HUMAN_REQUIRED: MAIN_DRIFT' >&2
+            exit 1
+          }
+
+      - id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: terraformers-platform
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/logging.read
+          access_token_lifetime: 300s
+          create_credentials_file: false
+
+      - name: Read and sanitize fixed Case A Cloud Logging window
+        id: logs
+        env:
+          LOGGING_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          SERVICE_ACCOUNT: ${{ vars.GCP_TF_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import urllib.error
+          import urllib.request
+
+          PROJECT = "terraformers-platform"
+          JOB = "a195d5ff-fce0-4728-80d5-ac2ebaf75d1d"
+          START = "2026-10-09T13:26:40Z"
+          END = "2026-10-09T13:31:15Z"
+          LABELS = {"project_id": PROJECT, "cluster_name": "terraformers-target",
+                    "namespace_name": "terraformers-target", "container_name": "backend"}
+          ENDPOINT = "https://logging.googleapis.com/v2/entries:list"
+          MAX_PAGES, PAGE_SIZE, MAX_PAGE_BYTES = 10, 100, 2 * 1024 * 1024
+          STAGES = {"facts", "initial_generation", "repair", "closure", "final_evidence",
+                    "analysis_execution", "result_finalize", "compensation", "cleanup_recovery"}
+          FILTER = "\n".join([
+              'resource.type="k8s_container"',
+              *(f'resource.labels.{key}="{value}"' for key, value in LABELS.items()),
+              f'timestamp >= "{START}"', f'timestamp <= "{END}"',
+              f'(textPayload:"analysisJobId={JOB}" OR jsonPayload.analysisJobId="{JOB}")',
+          ])
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, *args):
+                  raise ValueError("redirect refused")
+
+          def timestamp(value):
+              # Return only a validated numeric RFC3339 timestamp, never arbitrary log text.
+              match = re.fullmatch(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})",
+                                   value) if isinstance(value, str) else None
+              if not match:
+                  raise ValueError("invalid timestamp")
+              # Preserve nanosecond boundaries rather than truncating Cloud Logging timestamps.
+              return (dt.datetime.fromisoformat(match[1] + match[3].replace("Z", "+00:00")),
+                      (match[2] or "").ljust(9, "0"))
+
+          def safe_event(entry):
+              resource = entry.get("resource", {})
+              if resource.get("type") != "k8s_container" or any(
+                      resource.get("labels", {}).get(key) != value for key, value in LABELS.items()):
+                  return None
+              at = entry.get("timestamp")
+              if not timestamp(START) <= timestamp(at) <= timestamp(END):
+                  return None
+              payload = entry.get("jsonPayload", {})
+              text = entry.get("textPayload", payload.get("message", ""))
+              if not isinstance(text, str):
+                  return None
+              # The current backend console pattern binds MDC before the message delimiter.
+              # A job UUID appearing in a prompt/message cannot establish correlation.
+              prefix, delimiter, message = text.partition(" - ")
+              if delimiter:
+                  if not re.search(rf"(?:^|\s)analysisJobId={JOB}(?:\s|$)", prefix):
+                      return None
+              elif payload.get("analysisJobId") == JOB:
+                  message = text
+              else:
+                  return None
+              # Only known telemetry templates; ignore stack/message text and unrelated logs.
+              message = message.splitlines()[0] if message else ""
+              if not message.startswith(("Vertex provider call stage=", "Vertex grounding stage=",
+                                         "analysis stage outcome=")):
+                  return None
+              fields = dict(re.findall(r"(?:^|\s)([A-Za-z]+)=([^\s]+)", message))
+              stage = fields.get("stage")
+              if stage not in STAGES:
+                  return None
+              event = {"timestamp": at, "stage": stage}
+              error = fields.get("errorClass", "")
+              if re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_.$]{0,150}(?:Exception|Error)", error):
+                  event["exceptionType"] = error
+              status = fields.get("upstreamHttpStatus", "")
+              if re.fullmatch(r"[1-5][0-9]{2}", status):
+                  event["httpStatus"] = int(status)
+              elapsed = fields.get("elapsedMs", "")
+              if re.fullmatch(r"[0-9]{1,12}", elapsed):
+                  event["elapsedMs"] = int(elapsed)
+              return event
+
+          def main():
+              receipt = {"project": PROJECT, "analysisJobId": JOB, "startUtc": START, "endUtc": END,
+                         "sourceSha": os.environ["GITHUB_SHA"], "runId": os.environ["GITHUB_RUN_ID"],
+                         "runAttempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+                         "serviceAccount": os.environ["SERVICE_ACCOUNT"],
+                         "apiStatuses": [], "complete": False, "events": [], "outcome": "QUERY_FAILED"}
+              code = 1
+              try:
+                  opener = urllib.request.build_opener(NoRedirect())
+                  page_token, seen_tokens = None, set()
+                  for _ in range(MAX_PAGES):
+                      body = {"resourceNames": [f"projects/{PROJECT}"], "filter": FILTER,
+                              "orderBy": "timestamp asc", "pageSize": PAGE_SIZE}
+                      if page_token:
+                          body["pageToken"] = page_token
+                      request = urllib.request.Request(ENDPOINT, json.dumps(body).encode(), method="POST",
+                          headers={"Authorization": "Bearer " + os.environ["LOGGING_ACCESS_TOKEN"],
+                                   "Content-Type": "application/json"})
+                      # POST is the read-only entries:list API. No retries, writes or raw log files.
+                      with opener.open(request, timeout=20) as response:
+                          receipt["apiStatuses"].append(response.status)
+                          if response.status != 200:
+                              raise ValueError("unexpected HTTP status")
+                          raw = response.read(MAX_PAGE_BYTES + 1)
+                      if len(raw) > MAX_PAGE_BYTES:
+                          raise ValueError("page byte bound exceeded")
+                      page = json.loads(raw)
+                      entries = page.get("entries", [])
+                      if not isinstance(entries, list) or len(entries) > PAGE_SIZE:
+                          raise ValueError("invalid entries page")
+                      for entry in entries:
+                          event = safe_event(entry)
+                          if event is not None:
+                              receipt["events"].append(event)
+                      page_token = page.get("nextPageToken")
+                      if not page_token:
+                          receipt.update(complete=True, outcome="READ_COMPLETE")
+                          code = 0
+                          break
+                      if not isinstance(page_token, str) or page_token in seen_tokens:
+                          raise ValueError("invalid pagination")
+                      seen_tokens.add(page_token)
+                  else:
+                      receipt["outcome"] = "PAGE_BOUND_EXCEEDED"
+              except urllib.error.HTTPError as failure:
+                  receipt["apiStatuses"].append(failure.code)
+                  failure.close()  # Never print/read/save the error response body.
+                  if failure.code == 403:
+                      receipt.update(outcome="ACCESS_DENIED", requiredPermission="logging.logEntries.list",
+                                     requiredRole="roles/logging.viewer", roleProject=PROJECT)
+                  else:
+                      receipt["outcome"] = "HTTP_FAILURE"
+              except Exception as failure:
+                  # Class only; exception messages can contain credentials or raw server responses.
+                  receipt["failureType"] = type(failure).__name__
+              output = Path(os.environ["RUNNER_TEMP"]) / "gcp-read-only-diagnostics.json"
+              output.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+                  handle.write("receipt=true\n")
+              print(json.dumps(receipt))
+              return code
+
+          if __name__ == "__main__":
+              raise SystemExit(main())
+          PY
+
+      - name: Upload sanitized read-only diagnostic receipt
+        if: ${{ always() && steps.logs.outputs.receipt == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcp-read-only-diagnostics-${{ github.run_id }}
+          path: ${{ runner.temp }}/gcp-read-only-diagnostics.json
+          if-no-files-found: error
+          retention-days: 14
+
   terraform-preflight:
     if: >-
       github.ref == 'refs/heads/main' &&

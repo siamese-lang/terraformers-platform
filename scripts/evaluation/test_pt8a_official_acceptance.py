@@ -1766,9 +1766,17 @@ class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
         cls.workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
         cls.job = cls.workflow["jobs"]["backend-read-only-diagnostics"]
         cls.step = next(step for step in cls.job["steps"] if step.get("id") == "logs")
-        script = cls.step["run"].split("python3 - <<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
+        cls.script = cls.step["run"].split("python3 - <<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
+        cls.request = {"analysisJobId": "a195d5ff-fce0-4728-80d5-ac2ebaf75d1d",
+                       "startUtc": "2026-10-09T13:26:40Z", "endUtc": "2026-10-09T13:31:15Z"}
         cls.module = {"__name__": "workflow_contract_test"}
-        exec(compile(script, "workflow-read-only-diagnostics", "exec"), cls.module)
+        with patch.dict(os.environ, cls.query_env(cls.request)):
+            exec(compile(cls.script, "workflow-read-only-diagnostics", "exec"), cls.module)
+
+    @staticmethod
+    def query_env(request):
+        return {"DIAGNOSTIC_JOB_ID": request["analysisJobId"], "DIAGNOSTIC_START_UTC": request["startUtc"],
+                "DIAGNOSTIC_END_UTC": request["endUtc"]}
 
     def entry(self, message=None, **changes):
         return {"resource": {"type": "k8s_container", "labels": self.module["LABELS"]},
@@ -1779,7 +1787,7 @@ class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
                        "finishReason=UNAVAILABLE errorClass=AnalysisProviderTimeoutException upstreamHttpStatus=null"),
                 **changes}
 
-    def run_query(self, responses):
+    def run_query(self, responses, request=None):
         requests = []
 
         class Response:
@@ -1801,10 +1809,12 @@ class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
             env = {"GITHUB_SHA": SOURCE, "GITHUB_RUN_ID": "42", "GITHUB_RUN_ATTEMPT": "1",
                    "SERVICE_ACCOUNT": "existing-runtime@terraformers-platform.iam.gserviceaccount.com",
                    "LOGGING_ACCESS_TOKEN": "secret-test-access-token", "RUNNER_TEMP": directory,
-                   "GITHUB_OUTPUT": str(Path(directory) / "outputs")}
+                   "GITHUB_OUTPUT": str(Path(directory) / "outputs"), **self.query_env(request or self.request)}
             with patch.dict(os.environ, env), patch.object(self.module["urllib"].request, "build_opener", return_value=Opener()), \
                     patch("sys.stdout", new_callable=io.StringIO) as output:
-                result = self.module["main"]()
+                module = {"__name__": "workflow_contract_test"}
+                exec(compile(self.script, "workflow-read-only-diagnostics", "exec"), module)
+                result = module["main"]()
             receipt = (Path(directory) / "gcp-read-only-diagnostics.json").read_text()
             self.assertEqual({"outputs", "gcp-read-only-diagnostics.json"}, {p.name for p in Path(directory).iterdir()})
             self.assertEqual("receipt=true\n", (Path(directory) / "outputs").read_text())
@@ -1897,8 +1907,9 @@ class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
         self.assertEqual("https://www.googleapis.com/auth/logging.read", auth["with"]["access_token_scopes"])
         self.assertFalse(auth["with"]["create_credentials_file"])
         guard = self.job["steps"][0]["run"]
+        self.assertNotIn("${{ inputs.pt8a_request }}", json.dumps(self.job))  # No unvalidated request in step env logs.
         for check in ('"$EXPECTED_SHA" == "$GITHUB_SHA"', '"$GITHUB_RUN_ATTEMPT" == 1',
-                      '"$remote_main" == "$EXPECTED_SHA"', "READ_REVIEWED_PT8A_CASE_A_TIMEOUT_LOGS_1"):
+                      '"$remote_main" == "$EXPECTED_SHA"', "READ_REVIEWED_BACKEND_DIAGNOSTIC_LOGS_1"):
             self.assertIn(check, guard)
         for name, job in self.workflow["jobs"].items():
             if name != "backend-read-only-diagnostics":
@@ -1919,11 +1930,14 @@ class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
             gh = Path(directory) / "gh"
             gh.write_text('#!/bin/sh\nprintf "%s\\n" "$TEST_REMOTE_SHA"\n')
             gh.chmod(0o700)
+            event = Path(directory) / "event.json"
+            event.write_text(json.dumps({"inputs": {"pt8a_request": json.dumps(self.request)}}))
             env = {"PATH": directory + ":" + os.environ["PATH"], "GITHUB_REPOSITORY": "siamese-lang/terraformers-platform",
                    "GITHUB_REF": "refs/heads/main", "GITHUB_RUN_ATTEMPT": "1", "GITHUB_SHA": SOURCE,
                    "EXPECTED_SHA": SOURCE, "TEST_REMOTE_SHA": SOURCE,
-                   "CONFIRMATION": "READ_REVIEWED_PT8A_CASE_A_TIMEOUT_LOGS_1", "WIF_PROVIDER": "existing-wif",
-                   "SERVICE_ACCOUNT": "existing-runtime@terraformers-platform.iam.gserviceaccount.com"}
+                   "CONFIRMATION": "READ_REVIEWED_BACKEND_DIAGNOSTIC_LOGS_1", "WIF_PROVIDER": "existing-wif",
+                   "SERVICE_ACCOUNT": "existing-runtime@terraformers-platform.iam.gserviceaccount.com",
+                   "GITHUB_EVENT_PATH": str(event), "GITHUB_ENV": str(Path(directory) / "env")}
             guard = self.job["steps"][0]["run"]
             self.assertEqual(0, subprocess.run(["bash", "-c", guard], env=env, capture_output=True).returncode)
             for changes in ({"TEST_REMOTE_SHA": "b" * 40}, {"EXPECTED_SHA": "b" * 40},
@@ -1932,6 +1946,59 @@ class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
                             {"WIF_PROVIDER": ""}, {"SERVICE_ACCOUNT": "other@unrelated.iam.gserviceaccount.com"}):
                 with self.subTest(changes=changes):
                     self.assertNotEqual(0, subprocess.run(["bash", "-c", guard], env=env | changes, capture_output=True).returncode)
+
+    def test_reusable_job_window_validation_precedes_wif_and_binds_normalized_receipt(self):
+        guard = self.job["steps"][0]["run"].split("python3 - <<'PY'\n", 1)[1].split("\nPY", 1)[0]
+        second = {"analysisJobId": "b12e8435-7d70-4b74-b7fd-cb73dc965c02",
+                  "startUtc": "2026-10-08T01:00:00.000Z", "endUtc": "2026-10-08T01:15:00.000000000Z"}
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "env"
+            event = Path(directory) / "event.json"
+            event.write_text(json.dumps({"inputs": {"pt8a_request": json.dumps(second)}}))
+            with patch.dict(os.environ, {"GITHUB_EVENT_PATH": str(event), "GITHUB_ENV": str(output)}):
+                exec(compile(guard, "workflow-diagnostic-request-guard", "exec"), {})
+            normalized = dict(line.split("=", 1) for line in output.read_text().splitlines())
+            request = {"analysisJobId": normalized["DIAGNOSTIC_JOB_ID"],
+                       "startUtc": normalized["DIAGNOSTIC_START_UTC"], "endUtc": normalized["DIAGNOSTIC_END_UTC"]}
+            self.assertEqual(second["analysisJobId"], request["analysisJobId"])
+            self.assertEqual("2026-10-08T01:00:00Z", request["startUtc"])
+            self.assertEqual("2026-10-08T01:15:00Z", request["endUtc"])
+            entry = self.entry(timestamp="2026-10-08T01:04:00Z")
+            entry["textPayload"] = entry["textPayload"].replace(self.request["analysisJobId"], request["analysisJobId"])
+            result, receipt, calls = self.run_query([
+                {"entries": [entry, self.entry(timestamp="2026-10-08T01:04:00Z")]}], request=request)
+            self.assertEqual(0, result)
+            for key, value in request.items():
+                self.assertEqual(value, receipt[key])
+            self.assertEqual(1, len(receipt["events"]))
+            self.assertEqual("2026-10-08T01:04:00Z", receipt["events"][0]["timestamp"])
+            self.assertIn(request["analysisJobId"], json.loads(calls[0][0].data)["filter"])
+            self.assertNotIn(self.request["analysisJobId"], json.loads(calls[0][0].data)["filter"])
+
+    def test_invalid_diagnostic_requests_fail_before_wif_without_exposing_untrusted_strings(self):
+        guard = self.job["steps"][0]["run"].split("python3 - <<'PY'\n", 1)[1].split("\nPY", 1)[0]
+        invalid = [self.request | {"analysisJobId": value} for value in (
+            "PRIVATE_SECRET", self.request["analysisJobId"].upper(), self.request["analysisJobId"].replace("-", ""), None)]
+        invalid += [self.request | change for change in (
+            {"startUtc": self.request["endUtc"]}, {"endUtc": self.request["startUtc"]},
+            {"endUtc": "2026-10-09T13:41:40.000000001Z"}, {"startUtc": "2026-02-30T00:00:00Z"},
+            {"startUtc": "2026-10-09T13:26:40+00:00"}, {"startUtc": "2026-10-09 13:26:40Z"},
+            {"startUtc": "2099-01-01T00:00:00Z", "endUtc": "2099-01-01T00:01:00Z"},
+            {"project": "PRIVATE_SECRET"}, {"filter": "PRIVATE_SECRET"}, {"serviceAccount": "PRIVATE_SECRET"})]
+        serialized = [json.dumps(item) for item in invalid]
+        serialized += ["PRIVATE_SECRET", "[]", json.dumps(self.request).replace(
+            '"analysisJobId":', '"analysisJobId":"PRIVATE_SECRET", "analysisJobId":'), " " * 1025]
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "env"
+            event = Path(directory) / "event.json"
+            for raw in serialized:
+                event.write_text(json.dumps({"inputs": {"pt8a_request": raw}}))
+                with self.subTest(raw_length=len(raw)), patch.dict(os.environ, {"GITHUB_EVENT_PATH": str(event), "GITHUB_ENV": str(output)}), \
+                        patch.object(self.module["urllib"].request, "build_opener", side_effect=AssertionError("no cloud access")):
+                    with self.assertRaises(SystemExit) as failure:
+                        exec(compile(guard, "workflow-diagnostic-request-guard", "exec"), {})
+                    self.assertNotIn("PRIVATE_SECRET", str(failure.exception))
+                    self.assertFalse(output.exists())
 
 
 if __name__ == "__main__":

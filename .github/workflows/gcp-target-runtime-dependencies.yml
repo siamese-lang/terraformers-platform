@@ -56,7 +56,7 @@ on:
         type: string
 
       pt8a_request:
-        description: PT-8A reviewed JSON request binding mode/case and immutable approval/provenance/prior evidence IDs; no live authority implied.
+        description: PT-8A reviewed JSON request; read-only diagnostics accept only analysisJobId, startUtc and endUtc (positive UTC window, at most 15 minutes).
         required: false
         type: string
 
@@ -95,9 +95,60 @@ jobs:
           [[ "$GITHUB_REF" == refs/heads/main ]]
           [[ "$GITHUB_RUN_ATTEMPT" == 1 ]]
           [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ && "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
-          [[ "$CONFIRMATION" == READ_REVIEWED_PT8A_CASE_A_TIMEOUT_LOGS_1 ]]
+          [[ "$CONFIRMATION" == READ_REVIEWED_BACKEND_DIAGNOSTIC_LOGS_1 ]]
           [[ -n "$WIF_PROVIDER" ]]
           [[ "$SERVICE_ACCOUNT" =~ ^[a-z0-9-]+@terraformers-platform\.iam\.gserviceaccount\.com$ ]]
+          python3 - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          import re
+          import uuid
+
+          def unique_fields(pairs):
+              fields = {}
+              for key, value in pairs:
+                  if key in fields:
+                      raise ValueError("duplicate field")
+                  fields[key] = value
+              return fields
+
+          def utc(value):
+              match = re.fullmatch(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?Z",
+                                   value) if isinstance(value, str) else None
+              if not match:
+                  raise ValueError("strict UTC timestamp required")
+              instant = dt.datetime.fromisoformat(match[1] + "+00:00")
+              delta = instant - dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc)
+              nanos = (delta.days * 86400 + delta.seconds) * 10**9 + int((match[2] or "").ljust(9, "0"))
+              fraction = (match[2] or "").rstrip("0")
+              normalized = instant.isoformat(timespec="seconds")[:-6] + ("." + fraction if fraction else "") + "Z"
+              return normalized, nanos
+
+          try:
+              # Read the existing dispatch payload without exposing raw input in step env logs.
+              with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as handle:
+                  raw = json.load(handle)["inputs"]["pt8a_request"]
+              if not isinstance(raw, str) or len(raw) > 1024:
+                  raise ValueError("request size bound exceeded")
+              request = json.loads(raw, object_pairs_hook=unique_fields)
+              if not isinstance(request, dict) or set(request) != {"analysisJobId", "startUtc", "endUtc"}:
+                  raise ValueError("unexpected request fields")
+              job = request["analysisJobId"]
+              if not isinstance(job, str) or str(uuid.UUID(job)) != job:
+                  raise ValueError("canonical UUID required")
+              start, start_ns = utc(request["startUtc"])
+              end, end_ns = utc(request["endUtc"])
+              now = dt.datetime.now(dt.timezone.utc)
+              _, now_ns = utc(now.isoformat().replace("+00:00", "Z"))
+              if not 0 < end_ns - start_ns <= 15 * 60 * 10**9 or end_ns > now_ns:
+                  raise ValueError("positive historical window of at most 15 minutes required")
+          except (KeyError, TypeError, ValueError, AttributeError, OSError):
+              raise SystemExit("Invalid bounded diagnostic request; no cloud authentication performed.")
+          # Only canonical UUID / normalized numeric UTC timestamps cross the step boundary.
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"DIAGNOSTIC_JOB_ID={job}\nDIAGNOSTIC_START_UTC={start}\nDIAGNOSTIC_END_UTC={end}\n")
+          PY
           remote_main="$(gh api repos/siamese-lang/terraformers-platform/git/ref/heads/main --jq .object.sha)"
           [[ "$remote_main" == "$EXPECTED_SHA" ]] || {
             echo 'HUMAN_REQUIRED: MAIN_DRIFT' >&2
@@ -115,7 +166,7 @@ jobs:
           access_token_lifetime: 300s
           create_credentials_file: false
 
-      - name: Read and sanitize fixed Case A Cloud Logging window
+      - name: Read and sanitize validated backend Cloud Logging window
         id: logs
         env:
           LOGGING_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
@@ -132,9 +183,9 @@ jobs:
           import urllib.request
 
           PROJECT = "terraformers-platform"
-          JOB = "a195d5ff-fce0-4728-80d5-ac2ebaf75d1d"
-          START = "2026-10-09T13:26:40Z"
-          END = "2026-10-09T13:31:15Z"
+          JOB = os.environ["DIAGNOSTIC_JOB_ID"]
+          START = os.environ["DIAGNOSTIC_START_UTC"]
+          END = os.environ["DIAGNOSTIC_END_UTC"]
           LABELS = {"project_id": PROJECT, "cluster_name": "terraformers-target",
                     "namespace_name": "terraformers-target", "container_name": "backend"}
           ENDPOINT = "https://logging.googleapis.com/v2/entries:list"

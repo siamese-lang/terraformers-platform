@@ -1202,6 +1202,110 @@ class AutonomousRecoveryContracts(unittest.TestCase):
         self.jobs[self.current-1]['jobs'][0]['name']='unknown job'
         with self.assertRaises(ValueError):self.history()
 
+    def test_preflight_without_artifact_needs_complete_precloud_proof_and_consumes_dispatch_budget(self):
+        run = self.current - 1
+        self.runtime.append({'id': run, 'head_sha': SOURCE, 'run_attempt': 1,
+            'status': 'completed', 'conclusion': 'failure'})
+        self.request['resumeRunId'] = run
+        workflow = yaml.safe_load((pt8a.ROOT / '.github/workflows/gcp-target-runtime-dependencies.yml').read_text())
+        steps = [{'name': step.get('name', 'Run ' + step.get('uses', '')), 'number': n,
+            'status': 'completed', 'conclusion': 'skipped'}
+            for n, step in enumerate(workflow['jobs']['pt8a-official-acceptance']['steps'], 1)]
+        steps[0]['conclusion'] = 'success'
+        steps[1]['conclusion'] = 'failure'
+        job = {'id': 42, 'name': pt8a.RECOVERY_OPERATION, 'status': 'completed',
+            'conclusion': 'failure', 'steps': steps}
+        self.jobs[run] = {'total_count': 1, 'jobs': [job]}
+        self.artifacts[run] = {'total_count': 0, 'artifacts': []}
+        history = self.history()
+        self.assertEqual({}, history['records'])
+        self.assertEqual(self.current, history['ownerRunId'])  # No unbound prior owner or image claim.
+        proof = history['provenNoPostPreflightFailures'][0]
+        self.assertEqual((run, SOURCE, 0, 0), (proof['runId'], proof['sourceSha'], proof['uploadAttempts'], proof['modelCalls']))
+        self.assertEqual('UNAVAILABLE_PRE_CLOUD_NOT_REBOUND', proof['requestBinding'])
+        self.request['liveBounds']['maxDispatches'] = 1
+        with self.assertRaisesRegex(ValueError, 'dispatch budget'): self.history()
+        self.request['liveBounds']['maxDispatches'] = 4
+        for change in ('cloud-started', 'missing-cloud-step', 'unknown-started-step', 'unknown-before-gate', 'incomplete-step', 'wrong-source'):
+            with self.subTest(change=change):
+                saved = copy.deepcopy((self.runtime, self.jobs))
+                if change == 'cloud-started': steps[3]['conclusion'] = 'success'
+                elif change == 'missing-cloud-step': steps.pop(3)
+                elif change == 'unknown-started-step': steps.append({'name': 'unrecognized execution',
+                    'number': 999, 'status': 'completed', 'conclusion': 'success'})
+                elif change == 'unknown-before-gate': steps[0]['name'] = 'unrecognized preflight execution'
+                elif change == 'incomplete-step': steps[-1]['status'] = 'in_progress'
+                else: self.runtime[-1]['head_sha'] = 'c' * 40
+                with self.assertRaises(ValueError): self.history()
+                self.runtime, self.jobs = saved
+                job = self.jobs[run]['jobs'][0]; steps = job['steps']
+
+    def test_zero_post_interruption_retries_only_unsubmitted_case_and_ambiguous_post_stays_consumed(self):
+        # Execute the actual runner twice around a failed image acquisition. A is already
+        # complete, B has no POST; after resume B's ambiguous POST must never be repeated.
+        original_a = self.checkpoint(0)
+        self.prior({pt8a.CASES[0]: original_a}, run=self.current - 2)
+        with tempfile.TemporaryDirectory() as d, ExitStack() as stack:
+            root = Path(d); output = root / 'first'; outputs = root / 'outputs'; outputs.touch()
+            (root / 'coverage-report.json').write_text('{}')
+            (root / 'pt8a-release.json').write_text(json.dumps(self.release))
+            env = {'GITHUB_SHA': SOURCE, 'BACKEND_IMAGE': IMAGE, 'GITHUB_RUN_ATTEMPT': '1',
+                'GITHUB_RUN_ID': str(self.current), 'OPERATION': pt8a.RECOVERY_OPERATION,
+                'RUNNER_TEMP': d, 'GITHUB_ENV': str(root / 'env'), 'GITHUB_OUTPUT': str(outputs)}
+            stack.enter_context(patch.dict(os.environ, env))
+            stack.enter_context(patch.object(pt8a.transport, 'current_main', return_value=SOURCE))
+            stack.enter_context(patch.object(pt8a, 'authority_comment', side_effect=lambda *a:pt8a.recovery_live_fields(self.request, SOURCE, IMAGE)))
+            stack.enter_context(patch.object(pt8a, 'github', side_effect=self.api))
+            stack.enter_context(patch.object(pt8a, 'bound_artifact', side_effect=lambda r,a,*args,**kw:self.downloads[a]))
+            stack.enter_context(patch.object(pt8a, 'recovery_originals', return_value={'A':'consumed','B':'consumed'}))
+            stack.enter_context(patch.object(pt8a, 'corrective_origins', return_value=(self.base.origin.clean['receipt.json'],
+                self.base.origin.clean_binding, self.base.origin.failed_binding)))
+            stack.enter_context(patch.object(pt8a.rag, 'load_corpus', return_value=({}, {}, [], pt8a.CORPUS_CHECKSUM)))
+            stack.enter_context(patch.object(pt8a.rag, 'validate_pt8a_clean_corpus'))
+            stack.enter_context(patch.object(pt8a, 'risk_qualified_admission', return_value=self.base.snapshot))
+            stack.enter_context(patch.object(pt8a.subprocess, 'run'))
+            fetch = stack.enter_context(patch.object(pt8a, 'acquire', side_effect=ValueError('synthetic pre-POST acquisition failure')))
+            client = stack.enter_context(patch.object(pt8a.transport, 'CurlClient'))
+            client.return_value.request.return_value = {'transportExitCode':0, 'httpStatus':500, 'json':{}}
+            def call(action, case=None):
+                (root / 'request.json').write_text(json.dumps(self.request))
+                argv = ['pt8a', action, '--request-file', str(root / 'request.json'), '--output', str(output), '--corpus', d]
+                if case: argv += ['--case-id', case]
+                with patch.object(sys, 'argv', argv): pt8a.main()
+            call('preflight'); call('run', pt8a.CASES[0]); call('run', pt8a.CASES[1])
+            self.assertEqual(1, fetch.call_count); client.assert_not_called()
+            pt8a.write(output / 'b/cleanup.json', {'JWKSRestored':True}); call('checkpoint', pt8a.CASES[1])
+            failed = {p.relative_to(output / 'b').as_posix():json.loads(p.read_text()) for p in (output / 'b').rglob('*.json')}
+            self.assertEqual('PROVEN_NO_POST', pt8a.recovery_checkpoint(failed, pt8a.CASES[1]))
+            for change in ({'submissionBoundary':'ENTERED'}, {'modelCalls':None}, {'consumed':True}, {'jobId':'maybe-accepted'}):
+                with self.subTest(change=change):
+                    bad = copy.deepcopy(failed); bad['record.json'].update(change)
+                    self.assertEqual('BLOCKED', pt8a.recovery_checkpoint(bad, pt8a.CASES[1]))
+            bad = copy.deepcopy(failed); bad['observation/attempt.json'] = {'status':'SUBMISSION_STARTED'}
+            self.assertEqual('BLOCKED', pt8a.recovery_checkpoint(bad, pt8a.CASES[1]))
+            previous_run = self.current
+            self.runtime = [r for r in self.runtime if r['id'] != previous_run]
+            self.current += 1
+            self.runtime.insert(0, {'id':self.current, 'head_sha':SOURCE, 'run_attempt':1, 'status':'in_progress'})
+            self.jobs[self.current] = {'total_count':1,'jobs':[{'name':pt8a.RECOVERY_OPERATION,
+                'conclusion':None,'started_at':pt8a.datetime.now().astimezone().isoformat()}]}
+            self.prior({pt8a.CASES[1]:failed}, run=previous_run)
+            os.environ['GITHUB_RUN_ID'] = str(self.current); output = root / 'resumed'
+            fetch.side_effect = lambda case,private: private / 'input.png'
+            call('preflight'); call('run', pt8a.CASES[0]); call('run', pt8a.CASES[1])
+            client.return_value.request.assert_called_once()
+            self.assertEqual('POST', client.return_value.request.call_args.args[0])
+            pt8a.write(output / 'b/cleanup.json', {'JWKSRestored':True}); call('checkpoint', pt8a.CASES[1])
+            state = json.loads((root / 'pt8a-recovery-resume.json').read_text())
+            b = state['records'][pt8a.CASES[1]]
+            self.assertEqual('INDETERMINATE_ACCEPTANCE', b['record.json']['status'])
+            self.assertEqual(1, b['record.json']['uploadAttempts'])
+            self.assertEqual(previous_run, b['record.json']['priorZeroPostFailure']['runId'])
+            self.assertEqual(original_a, state['records'][pt8a.CASES[0]])
+            call('run', pt8a.CASES[1])  # Same ambiguous request never receives another POST.
+            self.assertEqual(1, client.return_value.request.call_count)
+            with self.assertRaisesRegex(ValueError, 'predecessor unresolved'): call('run', pt8a.CASES[2])
+
     def test_input_rejection_and_generated_technical_defect_are_not_provider_infrastructure_failures(self):
         data=self.checkpoint(0);data['record.json'].update(terminalState='FAILED',status='NOT_PASS')
         data['observation/job.json'].update(status='FAILED',resultObjectKey=None,quality={'contractVersion':'evidence-quality-v1',

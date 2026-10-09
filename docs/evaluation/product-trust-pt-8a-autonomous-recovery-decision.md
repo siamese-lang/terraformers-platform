@@ -160,11 +160,27 @@ decisions, and a short total budget can leave an honest incomplete campaign.
 Resume scans complete main dispatch history across sources, authenticated run/artifact archive
 digests and every inventory member. Unknown/missing/rerun/concurrent history, a changed candidate,
 stale resume run, duplicate/out-of-order observations, later ingestion or missing checkpoint blocks
-submission. Original A/B remain consumed in their separate campaigns. A completed product
+submission unless the narrowly defined zero-POST proof below is complete. Original A/B remain consumed in their separate campaigns. A completed product
 observation from this same Recovery candidate is reused without another fetch/upload/model call;
 its negative CLI/quality/HCL outcome remains intact and is never converted to semantic PASS.
-A selected case step without durable evidence fails closed even if it may have failed before POST;
-preflight/partial failure is not an excuse to reset original once-only guards.
+A selected case step without durable evidence still fails closed. An authenticated case artifact
+may instead record **PROVEN_NO_POST** only with zero upload/model calls, an unentered submission
+boundary, no accepted/job/attempt evidence and successful JWKS cleanup. The boundary is journaled
+as entered before invoking the observer; a zero or missing upload counter alone is insufficient.
+Only the earliest unsubmitted case may be retried in a new authorized run, preserving its original
+failure artifact reference and complete predecessors. It consumes remaining dispatch budget,
+not another upload allowance. Once a POST may have started or was accepted, no fresh POST is allowed.
+
+A failed preflight without a start artifact is recoverable only when authenticated complete GitHub
+job steps prove preflight failure and every WIF/cloud/observation step skipped. Missing, ambiguous,
+unknown executed or cloud-started steps block recovery. Such a run has no available request/image/
+campaign binding: the proof explicitly records that limitation, supplies no product observation
+or owner identity, and is conservatively counted against the current same-source dispatch budget.
+The new run must still satisfy exact campaign/candidate/source/image/live authority; nothing is
+falsely rebound to the previous run. The first artifact-bound admitted run retains owner authority.
+The original failed run/step proof is retained in the new start and summary artifacts. If this proof
+is unavailable, stop for independent operational recovery review rather than infer zero POST.
+Original v2/v3/diagnostic preflight-consumption rules remain unchanged.
 
 An accepted nonterminal checkpoint permits **one read-only drain** of that same owner/job, never
 a POST. The existing JWT/JWKS fixture restricts this operation's owner to the first Recovery run
@@ -208,11 +224,23 @@ Initial observer run: **59 tests / 1 legacy assertion failure**, preserved in PR
 assertion required the old artifact step's exact `always()` string; the new mode needs that upload
 to run always for non-Recovery operations. Corrective iteration **1/3** aligned only this expected
 condition and completed the same-scope checkpoint tests. Historical repair 1/1 is unchanged.
-Observer final suite: **62 PASS** (existing 50 plus 12 Recovery regressions), including the actual runner
+Initial implementation observer suite: **62 PASS** (existing 50 plus 12 Recovery regressions), including the actual runner
 and observer executing five sequential deterministic drafts, real Terraform-command construction,
 negative UNKNOWN/DEGRADED/CLI outcomes, checkpoint reuse, duplicate/partial/candidate/source/censor
 fail-closed, one GET-only drain, missing live authority/budgets, owner restriction and cleanup gates.
 These use deterministic external transport/process boundaries; they are not live product samples.
+
+[Independent review 6080701270](https://github.com/siamese-lang/terraformers-platform/pull/265#issuecomment-6080701270)
+required the targeted zero-POST recovery correction at reviewed head
+`e3fd8011db595fa0ef3fb71ecfb8e75f45ea89b2`. Corrective iteration **2/3** adds the distinction above
+and two existing-suite regressions. Initial focused validation: pre-cloud proof test PASS; actual
+resume test FAIL because its synthetic HTTP response omitted `transportExitCode`, leaving the safe
+SUBMISSION_STARTED state instead of the expected INDETERMINATE_ACCEPTANCE. Corrective iteration
+**3/3** adds only that required test response field. The corrected focused test PASS and full
+observer suite **64 PASS / 0 failures / 0 errors**. No repository correction budget remains;
+any further blocker requires USER review/authorization. Historical original repair 1/1 is unchanged.
+Backend production, runtime workflow and JWKS fixture bytes did not change in this iteration;
+previous backend/RAG results below are retained, not newly executed local measurements.
 
 Backend focused tests **41 PASS**. Full offline package **BUILD SUCCESS: 588 total / 584 PASS /
 4 MariaDB-prerequisite SKIP / 0 failures / 0 errors**, executed once. Existing RAG suites **55 PASS**.
@@ -224,8 +252,8 @@ must use the actual independently accepted merge source and separate explicit re
 
 Stop at **PT8A RECOVERY IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING**, with gate
 **HUMAN_REQUIRED: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE**. Continue on the same PR
-only for independent feedback within the approved scope/remaining correction limit while main is
-unchanged. After independent acceptance and USER merge, require separately bound live/model/cost
+for independent feedback while main is unchanged; the three approved corrections are now consumed.
+After independent acceptance and USER merge, require separately bound live/model/cost
 approval and the existing environment gate; do not activate cases from repository approval alone.
 No live dispatch, model call, official image fetch/upload, publication, rollout, corpus write,
 reembedding, IAM change, teardown or self-merge occurred. The full A–E goal is **NOT COMPLETE**.

@@ -815,6 +815,7 @@ def recovery_contract_sha256():
         "originalA": [CASE_A_RUN, CASE_A_ARTIFACT, CASE_A_DIGEST, CASE_A_REVIEW],
         "originalB": [CASE_B_RUN, CASE_B_ARTIFACT, CASE_B_DIGEST, CASE_B_REVIEW],
         "initialUploadsPerCase": 1, "automaticResubmission": False, "readOnlyDrainsPerCase": 1,
+        "zeroPostResume": "PROVEN_NO_POST_EARLIEST_UNSUBMITTED_CASE_WITHIN_DISPATCH_BUDGET",
         "modelCallReservationPerUpload": MODEL_CALL_RESERVATION, "observationSeconds": 540,
         "SDKAttempts": 1, "durableAttempts": 1, "originalAcceptedCutoffMs": 480000,
         "progress": "COMPLETE_PRODUCT_OBSERVATION_NOT_SEMANTIC_PASS",
@@ -907,8 +908,18 @@ def recovery_checkpoint(data, case, *, require_cleanup=True):
     record = data["record.json"]
     if record.get("caseId") != case:
         raise ValueError("recovery checkpoint case/attempt mismatch")
-    if record.get("uploadAttempts", 0) == 0 and record.get("campaignState") == "BLOCKED":
-        return "BLOCKED"
+    if record.get("uploadAttempts") == 0:
+        # Authenticated archives may prove a failure before the submission boundary. A
+        # missing/zero counter alone cannot prove that a POST never reached the backend.
+        no_post = (type(record["uploadAttempts"]) is int and record.get("status") == "PROVEN_NO_POST"
+            and record.get("submissionBoundary") == "NOT_ENTERED" and type(record.get("modelCalls")) is int
+            and record["modelCalls"] == 0
+            and record.get("consumed") is False and "error.json" in data
+            and not any(record.get(k) is not None for k in ("jobId", "projectId", "sourceFileId", "acceptedAt", "terminalState"))
+            and not any(k.startswith("observation/") for k in data)
+            and not any(e["path"].startswith("observation/") for e in data["inventory.json"]["files"])
+            and (not require_cleanup or data.get("cleanup.json", {}).get("JWKSRestored") is True))
+        return "PROVEN_NO_POST" if no_post else "BLOCKED"
     if record.get("uploadAttempts") != 1:
         raise ValueError("recovery upload count changed")
     if record.get("status") in ("SUBMISSION_STARTED", "INDETERMINATE_ACCEPTANCE", "PRE_ACCEPTANCE_REJECTED"):
@@ -960,6 +971,41 @@ def recovery_checkpoint(data, case, *, require_cleanup=True):
     return "PRODUCT_REVIEW_REQUIRED"  # Never automated PASS, even with CLI/quality green.
 
 
+def recovery_precloud_failure(job):
+    """Authenticate a failed preflight with complete, skipped downstream job steps.
+
+    No artifact means no original request/image/campaign binding is available. Such a
+    same-source run consumes dispatch budget conservatively but supplies no product
+    evidence or owner identity; current exact live authority must still admit the resume.
+    """
+    steps = job.get("steps", [])
+    gate = "Validate frozen procedure and explicit live authority before cloud access"
+    required = {"Checkpoint admitted recovery campaign before cloud access",
+        "Run google-github-actions/auth@v3", "Run google-github-actions/setup-gcloud@v3",
+        "Run google-github-actions/get-gke-credentials@v3",
+        "Verify exact deployed release and existing runtime identity",
+        "Rebuild expected corpus from pinned authority without embedding",
+        "Start owned validation pod with the already deployed immutable image",
+        "Observe read-only exact readiness and at most one accepted product job",
+        *["Observe recovery case " + c[-1].upper() for c in CASES]}
+    names = [s.get("name") for s in steps]
+    numbers = [s.get("number") for s in steps]
+    if (job.get("status") != "completed" or job.get("conclusion") != "failure"
+            or names.count(gate) != 1 or not required.issubset(names) or len(set(names)) != len(names)
+            or any(type(n) is not int or n < 1 for n in numbers) or numbers != sorted(set(numbers))
+            or any(s.get("status") != "completed" for s in steps)):
+        return False
+    position = names.index(gate)
+    if steps[position].get("conclusion") != "failure":
+        return False
+    harmless = {"Bind artifact for post-inference independent review", "Post Run actions/checkout@v5", "Complete job"}
+    return ("Run actions/checkout@v5" in names[:position]
+        and all(s["name"] in {"Set up job", "Run actions/checkout@v5"} and s.get("conclusion") == "success"
+                for s in steps[:position])
+        and all(s.get("conclusion") == "skipped" for s in steps if s["name"] in required)
+        and all(s.get("conclusion") == "skipped" or s["name"] in harmless for s in steps[position + 1:]))
+
+
 def recovery_history(request, source, image, current_run, private):
     runs = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
     current = [r for r in runs if r["id"] == current_run]
@@ -970,7 +1016,7 @@ def recovery_history(request, source, image, current_run, private):
         raise ValueError("current recovery operation identity missing")
     started = datetime.fromisoformat(current_job["started_at"].replace("Z", "+00:00"))
     if started.tzinfo is None: raise ValueError("workflow job start lacks timezone")
-    records, references, prior_runs, owner = {}, {}, [], current_run
+    records, references, prior_runs, precloud_failures, owner = {}, {}, [], [], None
     for run in sorted(runs, key=lambda r:r["id"]):
         if run["id"] <= CASE_B_RUN or run["id"] == current_run:
             continue
@@ -982,11 +1028,20 @@ def recovery_history(request, source, image, current_run, private):
         if (run["id"] > current_run or run.get("status") != "completed" or run.get("run_attempt") != 1
                 or run["head_sha"] != source or run.get("conclusion") not in ("success", "failure")):
             raise ValueError("recovery concurrent/rerun/candidate-changed history; no reset")
-        prior_runs.append(run["id"]); owner = prior_runs[0]
+        prior_runs.append(run["id"])
         arts = github(f"actions/runs/{run['id']}/artifacts?per_page=100")
         if arts["total_count"] != len(arts["artifacts"]) or arts["total_count"] > 100:
             raise ValueError("recovery artifact history incomplete")
         prefix = f"pt8a-recovery-{run['id']}-"
+        if not any(a["name"] == prefix + "start" for a in arts["artifacts"]):
+            if arts["artifacts"] or not recovery_precloud_failure(job):
+                raise ValueError("start checkpoint missing without complete pre-cloud/no-POST proof")
+            precloud_failures.append({"runId": run["id"], "jobId": job["id"], "sourceSha": source,
+                "classification": "PROVEN_NO_POST", "uploadAttempts": 0, "modelCalls": 0,
+                "requestBinding": "UNAVAILABLE_PRE_CLOUD_NOT_REBOUND", "steps": job["steps"]})
+            continue
+        if owner is None:
+            owner = run["id"]
         def download(suffix):
             matches = [a for a in arts["artifacts"] if a["name"] == prefix + suffix]
             if len(matches) != 1:
@@ -1019,7 +1074,12 @@ def recovery_history(request, source, image, current_run, private):
             corrective_release(data["release.json"], source, image)
             previous = records.get(case)
             if previous is not None:
-                if (recovery_checkpoint(previous, case) != "RUNNING" or data["record.json"].get("readOnlyDrain") is not True
+                previous_state = recovery_checkpoint(previous, case)
+                if previous_state == "PROVEN_NO_POST":
+                    if (data["record.json"].get("priorZeroPostFailure") != references[case]
+                            or data["record.json"].get("readOnlyDrain") is True):
+                        raise ValueError("zero-POST failure reference missing; no fresh submission")
+                elif (previous_state != "RUNNING" or data["record.json"].get("readOnlyDrain") is not True
                         or data["record.json"].get("originalObservation") != references[case]
                         or previous["record.json"].get("readOnlyDrain") is True
                         or any(data["record.json"].get(k) != previous["record.json"].get(k)
@@ -1037,7 +1097,8 @@ def recovery_history(request, source, image, current_run, private):
     if (not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes)
             or any(r["id"] > ORIGIN_CLEAN_RUN for r in writes)):
         raise ValueError("known ingestion history changed; no recovery reuse")
-    return {"records": records, "references": references, "ownerRunId": owner,
+    return {"records": records, "references": references, "ownerRunId": owner or current_run,
+        "provenNoPostPreflightFailures": precloud_failures,
         "runtimeRunIds": sorted(r["id"] for r in runs), "ingestionRunIds": sorted(r["id"] for r in writes),
         "jobDeadlineEpochSeconds": started.timestamp() + 60 * request["liveBounds"]["wallclockMinutes"]}
 
@@ -1357,6 +1418,7 @@ def recovery_cli(args, request, source, image):
             write(start / "campaign.json", {"originalObservations": origins,
                 "clean": origin, "failedReadiness": failed, "states": {c: recovery_checkpoint(history["records"][c], c)
                     if c in history["records"] else "NOT_RUN" for c in CASES},
+                "provenNoPostPreflightFailures": history["provenNoPostPreflightFailures"],
                 "automaticResubmission": False, "semanticAcceptance": "NOT_ESTABLISHED"})
             seal(start)
             with open(os.environ["GITHUB_ENV"], "a") as stream:
@@ -1391,6 +1453,7 @@ def recovery_cli(args, request, source, image):
             write(summary / "ledger.json", rows)
             write(summary / "summary.json", {"outcome": "EVIDENCE_COLLECTED_AWAITING_INDEPENDENT_REVIEW" if done else "BLOCKED_OR_INCOMPLETE",
                 "originalObservations": state["originalObservations"], "semanticAcceptance": "NOT_ESTABLISHED",
+                "provenNoPostPreflightFailures": state["provenNoPostPreflightFailures"],
                 "requiredIndependentDimensions": SCORING, "automaticResubmission": False,
                 "uploadsUsed": sum(d["record.json"].get("uploadAttempts", 0) for d in state["records"].values()),
                 "modelCallBudgetAccounting": "CONSERVATIVE_RESERVATION_NOT_OBSERVED_OR_BILLED_USAGE",
@@ -1424,10 +1487,15 @@ def recovery_cli(args, request, source, image):
         if (release.get("modelLocation") != request["liveBounds"]["modelLocation"]
                 or release.get("modelProject") != "terraformers-platform"):
             raise ValueError("live request model project/location differs from approved readback")
-        record = json.loads(json.dumps(previous["record.json"])) if previous else {"caseId": case, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False}
-        if previous:
+        draining = previous_state == "RUNNING"
+        record = json.loads(json.dumps(previous["record.json"])) if draining else {
+            "caseId": case, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False,
+            "submissionBoundary": "NOT_ENTERED", "modelCalls": 0}
+        if draining:
             record.update(readOnlyDrain=True, originalObservation=state["references"][case])
         else:
+            if previous:
+                record["priorZeroPostFailure"] = state["references"][case]
             uploads = 1 + sum(d["record.json"].get("uploadAttempts", 0) for d in state["records"].values())
             if uploads > request["liveBounds"]["maxUploads"] or MODEL_CALL_RESERVATION * uploads > request["liveBounds"]["maxModelCalls"]:
                 raise ValueError("approved upload/model-call reservation budget exhausted; no inference")
@@ -1448,7 +1516,7 @@ def recovery_cli(args, request, source, image):
             write(output / "readiness.json", scan())
             acquisition = next(c for c in frozen_inputs() if c["caseId"] == case)
             write(output / "input-identity.json", acquisition)
-            if previous:
+            if draining:
                 fixture = private / "input.png"  # Scratch path only; no image fetch or POST in a drain.
             else:
                 fixture = acquire(acquisition, private)
@@ -1457,13 +1525,18 @@ def recovery_cli(args, request, source, image):
             subprocess.run(["bash", "scripts/smoke/ephemeral-jwks-fixture.sh", "prepare"], check=True,
                 env=os.environ | {"IDENTITY_RUN_ID": str(state["ownerRunId"])})
             client = transport.CurlClient(Path(os.environ["RUNNER_TEMP"]) / "case-c-access.token")
+            if not draining:
+                record.update(submissionBoundary="ENTERED", modelCalls=None)
+                write(output / "record.json", record)  # Journal before any possible POST.
             observe(client, fixture, output / "observation", record, documents, "terraformers-pt8a-validation",
-                    diagnostic=True, resume_accepted=previous is not None, record_path=output / "record.json")
+                    diagnostic=True, resume_accepted=draining, record_path=output / "record.json")
             write(output / "post-admission.json", scan())
         except Exception as error:
             write(output / "error.json", {"class": type(error).__name__, "reason": str(error)[:300]})
         finally:
             if client: client.close()
+            if record.get("submissionBoundary") == "NOT_ENTERED" and record.get("uploadAttempts") == 0:
+                record["status"] = "PROVEN_NO_POST"
             # JWKS restore and cleanup receipt are performed by the existing workflow EXIT trap.
             record["campaignState"] = "BLOCKED"
             write(output / "record.json", record)

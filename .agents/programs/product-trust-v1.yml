@@ -533,7 +533,7 @@ program:
         recovery_progress: complete_product_observation_then_final_independent_ten_dimension_review
         SDK_and_job_retries: unchanged_Policy_D
         automatic_resubmission: prohibited
-        resume: authenticated_same_candidate_checkpoints_one_owner_scoped_read_only_drain_no_censor_replacement
+        resume: authenticated_same_candidate_checkpoints_proven_zero_POST_earliest_unsubmitted_within_dispatch_budget_one_owner_scoped_drain_no_censor_replacement
         repair_limit: 3
         historical_counter_reset: false
         live_budget_decisions_block_repository_implementation: false

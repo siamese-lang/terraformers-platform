@@ -17,6 +17,8 @@ work_package:
     earlier_diagnostic_approval_not_recovery_authority: 6078152582
     repository_implementation_approval: APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265
     preparation_independent_review: 6079812459
+    implementation_correction_review: 6080701270
+    reviewed_implementation_head: e3fd8011db595fa0ef3fb71ecfb8e75f45ea89b2
   activation:
     main_reads_at_preparation_activation: 1
     later_main_reads: drift_checks_only
@@ -137,7 +139,7 @@ work_package:
   - real_runner_sequential_cases_negative_outcomes_resume_and_cleanup_barriers_covered
   - original_active_historical_Work_Package_bytes_and_repair_counters_unchanged
   auto_repair_limit: 3
-  auto_repairs_used: 1
+  auto_repairs_used: 3
   stop_on:
   - new_failure_class_or_scope_architecture_security_IAM_or_budget_change
   - missing_or_exhausted_explicit_live_authority
@@ -164,6 +166,7 @@ work_package:
     ledger: reuse_existing_GitHub_Run_Artifact_and_per_case_observation_json
     states:
     - NOT_RUN
+    - PROVEN_NO_POST
     - RUNNING
     - TECHNICAL_FAILURE
     - PRODUCT_REVIEW_REQUIRED
@@ -175,13 +178,15 @@ work_package:
     resume: earliest_unresolved_case_of_same_candidate_never_restart_A_or_rewrite_prior_observations
     accepted_nonterminal_job: one_same_owner_read_only_drain_preserves_original_censor_no_POST
     ambiguous_POST_or_missing_attempt_evidence: BLOCKED_no_resubmission
+    zero_POST_recovery: authenticated_unentered_boundary_zero_upload_model_calls_earliest_unsubmitted_same_candidate_remaining_dispatch_budget
+    pre_start_recovery: complete_authenticated_preflight_failed_cloud_skipped_steps_no_product_or_owner_binding_conservative_dispatch_count
     technical_failure_recovery: STOP_no_automatic_resubmission_cause_unproven
     product_failure: retain_no_result_driven_retry_or_best_of_N_selection
     candidate_change: new_identity_no_cross_candidate_PASS_promotion
     release_identity: exact_same_control_source_backend_source_image_no_equivalence_waiver
     mode: recovery-campaign
-    executable_contract_sha256: 0fec07586fe41d9f955b93b75a3dc167fa9b3eedbff9ea01382f2f2573ec694d
-    procedure_sha256: 138b70f1ae4faa7cb2174511ab24ad9fb22d57d6a11893f3663d1a7a937a7f57
+    executable_contract_sha256: 99cc539c6b7d9aee4aff0d634de3a6d2f7f9403bf3e5c9787f5255367133a5e2
+    procedure_sha256: db9bf088e630fdc6409e12a8618530c03c92b2bfc2805f2d0a60da4f7e1836ad
   separate_live_requirements:
   - exact_reviewed_merged_source_and_immutable_image
   - explicit_live_upload_model_call_dispatch_workflow_wallclock_and_model_location_bounds
@@ -198,8 +203,24 @@ work_package:
     initial_failures: 1
     initial_errors: 0
     failed_test: DiagnosticContinuationContracts.test_diagnostic_workflow_is_gated_before_wif_and_keeps_distinct_artifact_and_no_new_workflow
+  - iteration: 2
+    review: 6080701270
+    reviewed_head: e3fd8011db595fa0ef3fb71ecfb8e75f45ea89b2
+    failure: proven_zero_POST_preflight_and_pre_submission_failures_permanently_blocked_resume
+    correction: distinguish_authenticated_zero_POST_from_ambiguous_or_accepted_submission_preserve_failure_and_dispatch_bounds
+    scope: existing_observer_checkpoint_history_and_resume_only
+    initial_focused_tests: 2
+    initial_focused_passed: 1
+    initial_focused_failed: 1
+  - iteration: 3
+    failure: synthetic_HTTP_response_missing_required_transportExitCode_left_SUBMISSION_STARTED_instead_of_INDETERMINATE_ACCEPTANCE
+    correction: add_transportExitCode_0_to_existing_new_test_fixture_only
+    failed_test: AutonomousRecoveryContracts.test_zero_post_interruption_retries_only_unsubmitted_case_and_ambiguous_post_stays_consumed
+    corrected_focused_tests: 1
+    corrected_focused_passed: 1
+    production_behavior_changed: false
   validation:
-    observer_tests: 62
+    observer_tests: 64
     observer_failures: 0
     RAG_tests: 55
     RAG_failures: 0
@@ -215,3 +236,7 @@ work_package:
     metadata_policy_scope_syntax_frozen_diff: PASS
     normal_exact_head_CI: recorded_in_GitHub_PR_no_manual_rerun
     live_executions: 0
+    zero_POST_correction:
+      new_existing_suite_tests: 2
+      backend_workflow_JWKS_changes: 0
+      previous_backend_and_RAG_results_preserved_not_reexecuted_locally: true

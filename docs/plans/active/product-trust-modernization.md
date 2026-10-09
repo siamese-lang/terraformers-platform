@@ -11,7 +11,11 @@ checkpoints and same-candidate resume, with no automatic resubmission or semanti
 One read-only drain retains original accepted owner and censoring. Original A/B remain consumed;
 original C–E remain NOT_RUN, old repair 1/1 and Policy D stay unchanged. B's typed HTTP/quota cause
 remains unproven; numeric failure telemetry is added without retry/product behavior changes.
-New unit correction 1/3 aligns the existing artifact-condition assertion; observer suite 62 tests; final-tree results recorded in the PR.
+New unit corrections **3/3 used**: artifact-condition assertion, review 6080701270 zero-POST resume,
+then one missing synthetic transport response field. Observer suite **64 PASS**; final-tree results
+recorded in the same PR. Only proven zero-POST/pre-cloud failure resumes the earliest unsubmitted
+case within exact authority/dispatch bounds; accepted or ambiguous submissions never repeat.
+Further correction requires USER review. Backend/Policy D and original evidence remain unchanged.
 Live budgets are separately required before execution, not before offline implementation.
 Stop **HUMAN_REQUIRED: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE**; then bind actual
 reviewed merge source/image and USER live/model/cost authority. No live action or A–E success is claimed.

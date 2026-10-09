@@ -22,12 +22,17 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
   same-candidate resume, one owner-scoped read-only drain and final independent ten-dimension
   review. Completed observations are reused without resubmission. Ambiguous/missing evidence,
   provider technical failure, failed cleanup and source/image drift stop progression.
+  Review 6080701270 correction permits only authenticated PROVEN_NO_POST / pre-cloud step proof
+  to resume the earliest unsubmitted case within the same candidate and remaining dispatch budget.
+  Accepted or ambiguous POST never permits another upload; original failure evidence is retained.
 - Original A **37783345572/11552729185**, review **6060977646**, remains REJECTED/NOT_PASS/consumed.
   Diagnostic B **37911522774/11606947643**, review **6078438584**, remains technical failure/consumed;
   its archive matches all 20 inventory members. C–E in the original campaign remain NOT_RUN.
   HTTP/quota/capacity cause is unproven; narrow typed-status logs do not rewrite history or add retry.
-- USER-authorized repository repair limit is 3 for this unit; iteration 1 aligns one stale workflow
-  assertion. Original repair 1/1, Policy D, frozen candidate/procedures and strict modes are unchanged.
+- USER-authorized repository repair limit is 3 for this unit, now **3/3 used**: iteration 1 aligns
+  one stale workflow assertion, iteration 2 corrects zero-POST recovery, iteration 3 supplies a
+  missing synthetic transport response field. Observer suite **64 PASS**. Further blockers require
+  USER review. Original repair 1/1, Policy D, frozen candidate/procedures and strict modes are unchanged.
   Live budgets are mandatory before execution and do not block repository implementation. Current
   source/image publication, rollout, model/embedding and Recovery dispatch are unauthorized.
 - Stop at **PT8A RECOVERY IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING** and

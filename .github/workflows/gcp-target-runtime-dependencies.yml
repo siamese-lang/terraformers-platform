@@ -3464,7 +3464,11 @@ jobs:
           if [[ "$OPERATION" == pt8a-recovery-campaign ]]; then
             [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_A_TO_E_RECOVERY_CAMPAIGN ]]
           elif [[ "$OPERATION" == pt8a-diagnostic-case ]]; then
-            [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_B_TO_E_DIAGNOSTIC_ONLY ]]
+            if [[ "$(jq -r '.mode' <<< "$PT8A_REQUEST")" == generation-diagnostic ]]; then
+              [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_GENERATION_DIAGNOSTIC_ONCE ]]
+            else
+              [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_B_TO_E_DIAGNOSTIC_ONLY ]]
+            fi
           elif [[ "$OPERATION" == pt8a-qualified-case ]]; then
             [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_V3_QUALIFIED_OFFICIAL_CASE ]]
           elif [[ "$OPERATION" == pt8a-corrective-readiness ]]; then
@@ -3510,11 +3514,15 @@ jobs:
           runtime="$(kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend -- sh -c 'printf "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" "$BUILD_SOURCE_REVISION" "$CORPUS_VERSION" "$INDEX_NAME" "$VERTEX_EMBEDDING_MODEL_ID" "$VERTEX_EMBEDDING_DIMENSION" "$EXPECTED_VECTOR_DIMENSION" "$JWT_ISSUER_URI" "$JWT_JWK_SET_URI" "$ANALYSIS_PROVIDER" "$EMBEDDING_PROVIDER" "$RETRIEVAL_MODE" "$VERTEX_GENERATION_MODEL_ID" "$TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID" "$OBJECT_READER_PROVIDER" "$OBJECT_WRITER_PROVIDER" "$OPENSEARCH_ENDPOINT" "$PROVIDER_VERSION"')"
           [[ "$runtime" == "$GITHUB_SHA|terraformers-reference-v4|terraformers-reference-v4|gemini-embedding-2|1536|1536|https://identity.example.test/case-c|http://terraformers-jwks:8080/jwks.json|vertex|vertex|REQUIRED|gemini-3.8-flash|case-c-runtime-client|gcs|gcs|http://terraformers-opensearch:9200|5.100.0" ]]
           model_project=''; model_location=''
-          if [[ "$OPERATION" == pt8a-recovery-campaign ]]; then
+          if [[ "$OPERATION" == pt8a-recovery-campaign ]] || [[ "$OPERATION" == pt8a-diagnostic-case && "$(jq -r '.mode' "$RUNNER_TEMP/pt8a-request.json")" == generation-diagnostic ]]; then
             model_project="$(kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend -- printenv GOOGLE_CLOUD_PROJECT)"
             model_location="$(kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend -- printenv GOOGLE_CLOUD_LOCATION)"
             [[ "$model_project" == terraformers-platform ]]
-            [[ "$model_location" == "$(jq -r '.liveBounds.modelLocation' "$RUNNER_TEMP/pt8a-request.json")" ]]
+            if [[ "$OPERATION" == pt8a-recovery-campaign ]]; then
+              [[ "$model_location" == "$(jq -r '.liveBounds.modelLocation' "$RUNNER_TEMP/pt8a-request.json")" ]]
+            else
+              [[ "$model_location" == global ]]
+            fi
           fi
           export PT8A_MODEL_PROJECT="$model_project" PT8A_MODEL_LOCATION="$model_location"
           export PT8A_RUNTIME_IDENTITY="$runtime" PT8A_TAG_DIGEST="$tag_digest"
@@ -3745,6 +3753,9 @@ jobs:
             echo 'RECOVERY_MEASUREMENT_ONLY. Read each per-case immutable checkpoint; original A/B remain consumed. Final ten-dimension independent acceptance is pending.' >> "$GITHUB_STEP_SUMMARY"
           elif [[ "$OPERATION" == pt8a-diagnostic-case ]]; then
             echo 'DIAGNOSTIC_ONLY / NOT_ACCEPTANCE. Product FAIL/UNKNOWN is preserved. Authenticated diagnostic review precedes the next case; no retries across sources.' >> "$GITHUB_STEP_SUMMARY"
+            if [[ "$(jq -r '.mode' "$RUNNER_TEMP/pt8a-request.json")" == generation-diagnostic ]]; then
+              echo 'Single generation diagnostic only: original A failures remain consumed; B-E are not authorized. Stop on every outcome; no acceptance-chain promotion or second dispatch.' >> "$GITHUB_STEP_SUMMARY"
+            fi
           fi
           if [[ "$OPERATION" != pt8a-recovery-campaign ]]; then
             echo 'One accepted case maximum. No self-scoring/acceptance. Independent post-inference review precedes the next case.' >> "$GITHUB_STEP_SUMMARY"

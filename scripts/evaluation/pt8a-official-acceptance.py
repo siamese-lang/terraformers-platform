@@ -38,6 +38,12 @@ RECOVERY_MODE = "recovery-campaign"
 RECOVERY_OPERATION = "pt8a-recovery-campaign"
 RECOVERY_PURPOSE = "PT8A_A_TO_E_AUTONOMOUS_RECOVERY"
 RECOVERY_PROCEDURE = "docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md"
+GENERATION_DIAGNOSTIC_MODE = "generation-diagnostic"
+GENERATION_DIAGNOSTIC_PURPOSE = "PT8A_SINGLE_GENERATION_DIAGNOSTIC_NOT_ACCEPTANCE"
+TIMEOUT_RUN, TIMEOUT_ARTIFACT, TIMEOUT_REVIEW = 37936469909, 11619270081, 6082116692
+TIMEOUT_SOURCE = "1d33cf880c1747b6be855fe328c87b90438b7f5a"
+TIMEOUT_DIGEST = "sha256:579a96b9279a8a042efca05ea4f77b27c8a48e7bdd830312ae406af5b474d8d1"
+DIAGNOSTICS_MERGE = "d1d92c7521addd3473b641f49c411f512cec08b2"
 CASE_B_RUN, CASE_B_ARTIFACT, CASE_B_REVIEW = 37911522774, 11606947643, 6078438584
 CASE_B_SOURCE = "c789d433f13da744e14c6a6f31db2d4fd3cf1d74"
 CASE_B_DIGEST = "sha256:289519752b3e3f0fc07d4f12dd1717fa306845d59a6a6aa5e93f559e00443ba7"
@@ -65,6 +71,23 @@ DIAGNOSTIC_CONTRACT = {
     "nonterminalCensorAmbiguousAcceptanceOrInfrastructureFailure": "BLOCK_NEXT_DIAGNOSTIC",
     "acceptancePromotion": False, "admission": "READ_ONLY_RISK_QUALIFIED_RETAINED_V4",
     "vectorContinuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN", "admissionEmbeddingRequests": 0, "indexWrites": 0,
+}
+# A proposed independent episode, not a reset/resume of any consumed campaign.
+# Its exact live authority must be granted after implementation review and merge.
+GENERATION_DIAGNOSTIC_CONTRACT = {
+    "version": "pt8a-single-generation-diagnostic-v1", "classification": "DIAGNOSTIC_ONLY",
+    "caseId": CASES[0], "candidateIdentity": IDENTITY,
+    "v2Sha256": V2_SHA256, "v3Sha256": V3_SHA256, "diagnosticsMergeSha": DIAGNOSTICS_MERGE,
+    "consumedFailure": {"runId": TIMEOUT_RUN, "artifactId": TIMEOUT_ARTIFACT,
+        "digest": TIMEOUT_DIGEST, "sourceSha": TIMEOUT_SOURCE, "reviewCommentId": TIMEOUT_REVIEW},
+    "dispatchesAcrossSourcesAndApprovals": 1, "uploads": 1, "reservedModelCalls": MODEL_CALL_RESERVATION,
+    "workflowWallclockMinutes": 35, "acceptedJobObservationSeconds": 540,
+    "preflightFailureConsumesDispatch": True, "retryOrResubmission": False,
+    "productionPolicy": "UNCHANGED_POLICY_D", "model": "gemini-3.8-flash",
+    "modelProject": "terraformers-platform", "modelLocation": "global",
+    "admission": "READ_ONLY_RISK_QUALIFIED_RETAINED_V4", "indexWrites": 0,
+    "acceptancePromotion": False, "originalLedgers": "UNCHANGED", "casesBToE": "NOT_RUN",
+    "decision": "STOP_FOR_INDEPENDENT_CAUSE_AND_TEN_DIMENSION_REVIEW_ON_EVERY_OUTCOME",
 }
 # GitHub returns this unevaluated display name when the existing job's `if` is false.
 # It identifies a skipped job only; it is never an active operation identity.
@@ -279,7 +302,7 @@ def pt8a_history_job(jobs):
     names = {CORRECTIVE_OPERATION, "pt8a-official-acceptance", SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME,
              RECOVERY_OPERATION, SKIPPED_RECOVERY_JOB_NAME}
     names.update(QUALIFIED_OPERATION + "/" + case for case in CASES)
-    names.update(DIAGNOSTIC_OPERATION + "/" + case for case in DIAGNOSTIC_CASES)
+    names.update(DIAGNOSTIC_OPERATION + "/" + case for case in CASES)
     related = [j for j in jobs["jobs"] if j["name"] in names]
     if len(related) != 1:
         raise ValueError("prior dispatch operation unproven; no inference")
@@ -373,7 +396,7 @@ def corrective_origins(private):
 
 
 def risk_qualified_admission(client, manifest, schema, documents, checksum, receipt, binding, authority):
-    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE, RECOVERY_PURPOSE)
+    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE, RECOVERY_PURPOSE, GENERATION_DIAGNOSTIC_PURPOSE)
             or authority.get("vector_write_continuity") != "VECTOR_WRITE_CONTINUITY_UNPROVEN"
             or authority.get("accepted_residual_risk") != "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"):
         raise ValueError("explicit corrective live risk authority missing")
@@ -628,6 +651,103 @@ def diagnostic_live_fields(source, image):
         "embedding_model": "gemini-embedding-2", "vector_dimension": "1536",
         "vector_write_continuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
         "accepted_residual_risk": "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"}
+
+
+def generation_diagnostic_contract_sha256():
+    return sha(json.dumps(GENERATION_DIAGNOSTIC_CONTRACT, sort_keys=True, separators=(",", ":")).encode())
+
+
+def generation_diagnostic_live_fields(source, image):
+    return {**diagnostic_live_fields(source, image),
+        "purpose": GENERATION_DIAGNOSTIC_PURPOSE,
+        "diagnostic_contract_sha256": generation_diagnostic_contract_sha256(),
+        "official_cases": "NONE_DIAGNOSTIC_INPUT_A_ONLY_NO_ACCEPTANCE_PROMOTION",
+        "once_only": "ONE_NEW_DIAGNOSTIC_DISPATCH_ATTEMPT_UPLOAD_ACROSS_SOURCES_AND_APPROVALS",
+        "consumed_timeout_run_id": str(TIMEOUT_RUN), "consumed_timeout_artifact_id": str(TIMEOUT_ARTIFACT),
+        "consumed_timeout_artifact_digest": TIMEOUT_DIGEST, "consumed_timeout_source_sha": TIMEOUT_SOURCE,
+        "consumed_timeout_review_id": str(TIMEOUT_REVIEW), "consumed_timeout_disposition": "TECHNICAL_FAILURE_NOT_PASS_CONSUMED",
+        "maximum_total_uploads": "1", "maximum_model_calls": str(MODEL_CALL_RESERVATION), "maximum_dispatches": "1",
+        "workflow_wallclock_minutes": "35", "model_project": "terraformers-platform", "model_location": "global",
+        "generation_model": "gemini-3.8-flash", "sdk_policy": "UNCHANGED_POLICY_D",
+        "cost_authority": "ONE_JOB_SIX_RESERVED_MODEL_CALLS_NO_AUTOMATIC_EXPANSION"}
+
+
+def generation_diagnostic_request_contract(request, source, image, attempt):
+    # Reuse the B-E diagnostic envelope, but require a different purpose and exact
+    # consumed-timeout predecessor. No original diagnostic/Recovery approval admits A.
+    allowed = {"mode", "caseId", "liveApprovalCommentId", "provenanceRunId", "provenanceArtifactId",
+               "priorRunId", "priorArtifactId", "priorReviewCommentId"}
+    if (set(request) != allowed or request.get("mode") != GENERATION_DIAGNOSTIC_MODE or request.get("caseId") != CASES[0]
+            or str(attempt) != "1" or not re.fullmatch(r"[0-9a-f]{40}", source)
+            or not re.fullmatch(r"asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}", image)
+            or any(type(request[k]) is not int or request[k] <= 0 for k in allowed - {"mode", "caseId"})
+            or (request["provenanceRunId"], request["provenanceArtifactId"]) != (ORIGIN_CLEAN_RUN, ORIGIN_CLEAN_ARTIFACT)
+            or (request["priorRunId"], request["priorArtifactId"], request["priorReviewCommentId"]) != (TIMEOUT_RUN, TIMEOUT_ARTIFACT, TIMEOUT_REVIEW)
+            or sha((ROOT / PROCEDURE).read_bytes()) != V2_SHA256
+            or sha((ROOT / CORRECTIVE_PROCEDURE).read_bytes()) != V3_SHA256):
+        raise ValueError("invalid single-generation diagnostic/source/image/original evidence binding")
+    authority = authority_comment(request["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    if any(authority.get(k) != v for k, v in generation_diagnostic_live_fields(source, image).items()):
+        raise ValueError("separate single-generation diagnostic live/model/cost authority missing")
+    if github(f"compare/{DIAGNOSTICS_MERGE}...{source}").get("status") not in ("ahead", "identical"):
+        raise ValueError("diagnostic source lacks independently accepted SDK failure correction")
+    if transport.current_main() != source:
+        raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT")
+    return authority
+
+
+def generation_diagnostic_origin(private):
+    originals = recovery_originals(private)
+    data, bound = bound_artifact(TIMEOUT_RUN, TIMEOUT_ARTIFACT,
+        ["inventory.json", "binding.json", "record.json", "cleanup.json", "observation/accepted.json", "observation/job.json"],
+        private, ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True, all_json=True)
+    binding = data["binding.json"]
+    original_request = {"mode": RECOVERY_MODE, "campaignId": "pt8a-recovery-1d33cf88-v1", "liveApprovalCommentId": 6081758174,
+        "resumeRunId": 0, "liveBounds": {"maxUploads": 5, "maxModelCalls": 30, "maxDispatches": 2,
+            "wallclockMinutes": 90, "modelLocation": "global"}}
+    review = authority_comment(TIMEOUT_REVIEW, "[PT8A_RECOVERY_LIVE_RESULT_INDEPENDENT_REVIEW:v1]")
+    approval = authority_comment(original_request["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    if (bound != {"runId": TIMEOUT_RUN, "artifactId": TIMEOUT_ARTIFACT, "digest": TIMEOUT_DIGEST,
+                 "sourceSha": TIMEOUT_SOURCE, "conclusion": "failure"}
+            or binding != recovery_binding(original_request, TIMEOUT_SOURCE, binding.get("image", ""), TIMEOUT_RUN, TIMEOUT_RUN) | {"caseId": CASES[0]}
+            or any(approval.get(k) != v for k, v in recovery_live_fields(original_request, TIMEOUT_SOURCE, binding["image"]).items())
+            or any(review.get(k) != v for k, v in {"decision": "AUTHENTIC_CAMPAIGN_TECHNICAL_FAILURE_INCOMPLETE",
+                "reviewed_run_id": str(TIMEOUT_RUN), "reviewed_run_attempt": "1", "reviewed_source_sha": TIMEOUT_SOURCE,
+                "reviewed_approval_comment_id": "6081758174", "case_a_status": "TECHNICAL_FAILURE_CONSUMED",
+                "case_a_failure": "PROVIDER_TIMEOUT_INITIAL_GENERATION", "cases_b_to_e": "NOT_RUN"}.items())
+            or recovery_checkpoint(data, CASES[0]) != "TECHNICAL_FAILURE"
+            or data["record.json"].get("consumed") is not True or data["record.json"].get("uploadAttempts") != 1
+            or data["observation/accepted.json"].get("uploadAttempts") != 1
+            or data["record.json"].get("jobId") != "a195d5ff-fce0-4728-80d5-ac2ebaf75d1d"
+            or data["observation/job.json"].get("quality", {}).get("reasons") != ["PROVIDER_TIMEOUT"]):
+        raise ValueError("original timeout/consumption/artifact/review/approval changed; no new diagnostic")
+    return {"originalObservations": originals, "consumedTimeout": bound, "record": data["record.json"]}
+
+
+def generation_diagnostic_history(source, current_run):
+    # Global episode limit: neither a new source nor a new approval revives it.
+    runs = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
+    current = [r for r in runs if r["id"] == current_run]
+    origin = [r for r in runs if r["id"] == TIMEOUT_RUN]
+    if (len(current) != 1 or current[0]["head_sha"] != source or current[0]["run_attempt"] != 1
+            or current_run <= TIMEOUT_RUN or len(origin) != 1
+            or any(origin[0].get(k) != v for k,v in {"head_sha": TIMEOUT_SOURCE, "run_attempt": 1,
+                "status": "completed", "conclusion": "failure"}.items())):
+        raise ValueError("single-generation diagnostic current/original history incomplete or rerun")
+    for run in runs:
+        if run["id"] <= TIMEOUT_RUN:
+            continue
+        job = pt8a_history_job(github(f"actions/runs/{run['id']}/jobs?per_page=100"))
+        if run["id"] == current_run:
+            if job["name"] != DIAGNOSTIC_OPERATION + "/" + CASES[0] or job.get("conclusion") == "skipped":
+                raise ValueError("current single-generation diagnostic operation identity mismatch")
+        elif job["name"] not in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME, SKIPPED_RECOVERY_JOB_NAME):
+            raise ValueError("another post-timeout PT8A dispatch exists; no retry/reset/overlap")
+    writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
+    if (not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes)
+            or any(r["id"] > ORIGIN_CLEAN_RUN for r in writes)):
+        raise ValueError("known ingestion history changed; no diagnostic reuse")
+    return {"runtimeDispatches": runs, "ingestionDispatches": writes, "dispatchConsumed": True}
 
 
 def diagnostic_request_contract(request, source, image, attempt):
@@ -1586,9 +1706,19 @@ def main():
         raise ValueError("finish/checkpoint is restricted to the separate recovery campaign")
     corrective = request.get("mode") == CORRECTIVE_MODE
     qualified = request.get("mode") == QUALIFIED_MODE
-    diagnostic = request.get("mode") == DIAGNOSTIC_MODE
+    generation_diagnostic = request.get("mode") == GENERATION_DIAGNOSTIC_MODE
+    diagnostic = request.get("mode") == DIAGNOSTIC_MODE or generation_diagnostic
     risk_path = corrective or qualified or diagnostic
-    if diagnostic:
+    if generation_diagnostic:
+        if os.environ.get("OPERATION") != DIAGNOSTIC_OPERATION:
+            raise ValueError("single-generation diagnostic requires the existing diagnostic workflow operation")
+        authority = generation_diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+        history = generation_diagnostic_history(source, int(os.environ["GITHUB_RUN_ID"]))
+        if args.action == "preflight":
+            with tempfile.TemporaryDirectory(prefix="pt8a-generation-") as directory:
+                corrective_origins(Path(directory))
+                generation_diagnostic_origin(Path(directory))
+    elif diagnostic:
         if os.environ.get("OPERATION") != DIAGNOSTIC_OPERATION:
             raise ValueError("diagnostic mode requires its separate workflow operation")
         authority = diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
@@ -1625,18 +1755,25 @@ def main():
     release = json.loads((Path(os.environ["RUNNER_TEMP"]) / "pt8a-release.json").read_text())
     write(output / "release.json", release)
     ledger = None if diagnostic else [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in CASES]
+    record = None
     if diagnostic:
-        write(output / "diagnostic-contract.json", DIAGNOSTIC_CONTRACT)
+        write(output / "diagnostic-contract.json", GENERATION_DIAGNOSTIC_CONTRACT if generation_diagnostic else DIAGNOSTIC_CONTRACT)
         write(output / "diagnostic-disposition.json", {"classification": "DIAGNOSTIC_ONLY",
             "officialAcceptance": "NOT_ACCEPTANCE", "evidenceValidity": "INCOMPLETE", "dispatchConsumed": True})
     try:
         with tempfile.TemporaryDirectory(prefix="pt8a-private-") as temporary:
             private = Path(temporary)
             if risk_path:
-                if diagnostic:
+                if generation_diagnostic:
+                    original = generation_diagnostic_origin(private)
+                    write(output / "original-observations.json", original)
+                elif diagnostic:
                     ledger = diagnostic_predecessor(request, history, private)
                     original_ledger = json.loads(json.dumps(ledger))
                 corrective_release(release, source, image)
+                if generation_diagnostic and (release.get("modelProject") != "terraformers-platform"
+                        or release.get("modelLocation") != "global"):
+                    raise ValueError("single-generation diagnostic runtime project/location mismatch")
                 origin_receipt, binding, failed_binding = corrective_origins(private)
                 # Store original identities separately; never issue a new ingestion receipt.
                 write(output / "origin-bindings.json", {"clean": binding, "failed": failed_binding,
@@ -1673,13 +1810,15 @@ def main():
             if readiness["classification"] != ("RISK_QUALIFIED_RETAINED_V4" if risk_path else "EXACT_REUSABLE_COMPLETED_V4"):
                 raise ValueError("readiness does not authorize case A; no automatic ingestion")
             write(output / "binding.json", {"sourceSha": source, "image": image, "candidateIdentity": IDENTITY,
-                "procedureSha256": diagnostic_contract_sha256() if diagnostic else sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
+                "procedureSha256": generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256() if diagnostic else sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
                 "mode": request["mode"], "caseId": request.get("caseId"),
                 "liveApprovalCommentId": request["liveApprovalCommentId"], "runId": int(os.environ["GITHUB_RUN_ID"]),
-                **({"classification": "DIAGNOSTIC_ONLY", "diagnosticContractSha256": diagnostic_contract_sha256(),
+                **({"classification": "DIAGNOSTIC_ONLY", "diagnosticContractSha256": generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256(),
                     "frozenV2Sha256": V2_SHA256, "frozenV3Sha256": V3_SHA256} if diagnostic else {})})
             if qualified or diagnostic:
-                record = ledger[CASES.index(request["caseId"])]
+                record = ({"caseId": CASES[0], "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False,
+                    "mode": GENERATION_DIAGNOSTIC_MODE, "officialAcceptance": "NOT_ACCEPTANCE"}
+                    if generation_diagnostic else ledger[CASES.index(request["caseId"])])
                 if diagnostic:
                     record.update(classification="DIAGNOSTIC_ONLY", dispatchConsumed=True)
                 case = next(c for c in frozen_inputs() if c["caseId"] == request["caseId"])
@@ -1717,7 +1856,12 @@ def main():
                 private_fixture = private / "input.png"; private_fixture.write_bytes(fixture.read_bytes()); fixture = private_fixture
             if transport.current_main() != source:
                 raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT before inference")
-            if diagnostic:
+            if generation_diagnostic:
+                authority = generation_diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                history = generation_diagnostic_history(source, int(os.environ["GITHUB_RUN_ID"]))
+                if generation_diagnostic_origin(private) != original:
+                    raise ValueError("original consumed timeout evidence changed before independent diagnostic")
+            elif diagnostic:
                 authority = diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                 history = diagnostic_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
                 if diagnostic_predecessor(request, history, private) != original_ledger:
@@ -1743,8 +1887,12 @@ def main():
                     manifest, schema, documents, checksum, origin_receipt, binding, authority)
                 write(output / "post-admission.json", post)
                 if diagnostic:
-                    write(output / "post-known-writer-history.json", diagnostic_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
-                    diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                    if generation_diagnostic:
+                        write(output / "post-known-writer-history.json", generation_diagnostic_history(source, int(os.environ["GITHUB_RUN_ID"])))
+                        generation_diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                    else:
+                        write(output / "post-known-writer-history.json", diagnostic_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
+                        diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                     complete = (record.get("consumed") is True and record.get("uploadAttempts") == 1
                         and record.get("terminalState") in ("FAILED", "SUCCEEDED") and "censoredObservationMs" not in record)
                     write(output / "diagnostic-disposition.json", {"classification": "DIAGNOSTIC_ONLY",
@@ -1769,6 +1917,8 @@ def main():
                 "failureClassification": "INDEPENDENT_EVIDENCE_CLASSIFICATION_REQUIRED"} if diagnostic else {})})
         raise
     finally:
+        if generation_diagnostic and record is not None:
+            write(output / "record.json", record)
         if ledger is not None:
             write(output / "ledger.json", ledger)
         seal(output)

@@ -1062,6 +1062,148 @@ class DiagnosticContinuationContracts(unittest.TestCase):
                 self.assertEqual(0, parsed.returncode, parsed.stderr)
 
 
+class SingleGenerationDiagnosticContracts(unittest.TestCase):
+    def setUp(self):
+        self.base = QualifiedCaseChainContracts(); self.base.setUp()
+        self.addCleanup(patch.stopall)
+        self.request = {"mode": pt8a.GENERATION_DIAGNOSTIC_MODE, "caseId": pt8a.CASES[0], "liveApprovalCommentId": 900,
+            "provenanceRunId": pt8a.ORIGIN_CLEAN_RUN, "provenanceArtifactId": pt8a.ORIGIN_CLEAN_ARTIFACT,
+            "priorRunId": pt8a.TIMEOUT_RUN, "priorArtifactId": pt8a.TIMEOUT_ARTIFACT, "priorReviewCommentId": pt8a.TIMEOUT_REVIEW}
+        self.live = pt8a.generation_diagnostic_live_fields(SOURCE, IMAGE)
+        self.current = pt8a.TIMEOUT_RUN + 100
+        self.runtime = [{"id": pt8a.TIMEOUT_RUN, "head_sha": pt8a.TIMEOUT_SOURCE, "run_attempt": 1, "status": "completed", "conclusion": "failure"},
+            {"id": self.current, "head_sha": SOURCE, "run_attempt": 1, "status": "in_progress", "conclusion": None}]
+        self.jobs = {self.current: {"total_count": 1, "jobs": [{"name": pt8a.DIAGNOSTIC_OPERATION + "/" + pt8a.CASES[0],
+            "status": "in_progress", "conclusion": None}]}}
+        self.writes = [{"id": pt8a.ORIGIN_CLEAN_RUN, "head_sha": pt8a.ORIGIN_SOURCE}]
+
+    def api(self, path):
+        self.assertNotIn("head_sha=", path)
+        if path.startswith("compare/"): return {"status": "ahead"}
+        if "gcp-target-runtime-dependencies.yml/runs?" in path: return {"total_count": len(self.runtime), "workflow_runs": self.runtime}
+        if "gcp-target-corpus-ingestion.yml/runs?" in path: return {"total_count": len(self.writes), "workflow_runs": self.writes}
+        return self.jobs[int(path.split('/')[2])]
+
+    def test_distinct_authority_binds_every_field_and_cannot_authorize_other_modes_or_cases(self):
+        body = '[HUMAN_GATE_APPROVAL:v1]\n' + '\n'.join(k + ': ' + v for k,v in self.live.items())
+        self.assertEqual(self.live, pt8a.fields(body, '[HUMAN_GATE_APPROVAL:v1]'))
+        with patch.object(pt8a.transport, 'current_main', return_value=SOURCE), patch.object(pt8a, 'github', side_effect=self.api):
+            for key in self.live:
+                with self.subTest(field=key), patch.object(pt8a, 'authority_comment', return_value=self.live | {key: 'wrong'}), self.assertRaises(ValueError):
+                    pt8a.generation_diagnostic_request_contract(self.request, SOURCE, IMAGE, 1)
+            with patch.object(pt8a, 'authority_comment', return_value=self.live):
+                pt8a.generation_diagnostic_request_contract(self.request, SOURCE, IMAGE, 1)
+                for changed in ({'mode': pt8a.DIAGNOSTIC_MODE}, {'caseId': pt8a.CASES[1]}, {'priorRunId': pt8a.CASE_A_RUN},
+                                {'priorArtifactId': 1}, {'priorReviewCommentId': 1}, {'liveApprovalCommentId': True}):
+                    with self.subTest(changed=changed), self.assertRaises(ValueError):
+                        pt8a.generation_diagnostic_request_contract(self.request | changed, SOURCE, IMAGE, 1)
+                with self.assertRaises(ValueError): pt8a.generation_diagnostic_request_contract(self.request, SOURCE, IMAGE, 2)
+                with self.assertRaises(ValueError): pt8a.diagnostic_request_contract(self.request | {'mode': pt8a.DIAGNOSTIC_MODE}, SOURCE, IMAGE, 1)
+            for old in (pt8a.diagnostic_live_fields(SOURCE, IMAGE), {'purpose': pt8a.RECOVERY_PURPOSE}):
+                with patch.object(pt8a, 'authority_comment', return_value=old), self.assertRaises(ValueError):
+                    pt8a.generation_diagnostic_request_contract(self.request, SOURCE, IMAGE, 1)
+            with patch.object(pt8a.transport, 'current_main', return_value='c'*40), patch.object(pt8a, 'authority_comment', return_value=self.live), self.assertRaisesRegex(ValueError, 'MAIN_DRIFT'):
+                pt8a.generation_diagnostic_request_contract(self.request, SOURCE, IMAGE, 1)
+
+    def test_history_admits_unrelated_skips_but_blocks_any_second_episode_across_sources(self):
+        with patch.object(pt8a, 'github', side_effect=self.api):
+            self.runtime.append({'id': self.current-1, 'head_sha': 'd'*40, 'run_attempt': 1})
+            self.jobs[self.current-1] = {'total_count': 1, 'jobs': [{'name': pt8a.SKIPPED_RECOVERY_JOB_NAME,
+                'status': 'completed', 'conclusion': 'skipped'}]}
+            pt8a.generation_diagnostic_history(SOURCE, self.current)
+            for name in (pt8a.DIAGNOSTIC_OPERATION+'/'+pt8a.CASES[0], pt8a.QUALIFIED_OPERATION+'/'+pt8a.CASES[0], pt8a.RECOVERY_OPERATION):
+                for outcome in ('failure', 'success', 'skipped', None):
+                    self.jobs[self.current-1]['jobs'][0].update(name=name, conclusion=outcome)
+                    with self.subTest(name=name, outcome=outcome), self.assertRaises(ValueError):
+                        pt8a.generation_diagnostic_history(SOURCE, self.current)
+            self.jobs[self.current-1]['jobs'][0].update(name=pt8a.SKIPPED_RECOVERY_JOB_NAME, status='in_progress', conclusion='skipped')
+            with self.assertRaises(ValueError): pt8a.generation_diagnostic_history(SOURCE, self.current)
+            self.jobs[self.current-1]['jobs'][0].update(status='completed', conclusion='skipped')
+            self.jobs[self.current-1]['total_count'] = 2
+            with self.assertRaises(ValueError): pt8a.generation_diagnostic_history(SOURCE, self.current)
+            self.jobs[self.current-1]['total_count'] = 1
+            self.writes.append({'id': pt8a.ORIGIN_CLEAN_RUN+1, 'head_sha': SOURCE})
+            with self.assertRaises(ValueError): pt8a.generation_diagnostic_history(SOURCE, self.current)
+            self.writes.pop(); self.runtime[0]['conclusion'] = 'success'
+            with self.assertRaises(ValueError): pt8a.generation_diagnostic_history(SOURCE, self.current)
+
+    def timeout_fixture(self):
+        original = {'mode': pt8a.RECOVERY_MODE, 'campaignId': 'pt8a-recovery-1d33cf88-v1', 'liveApprovalCommentId': 6081758174,
+            'resumeRunId': 0, 'liveBounds': {'maxUploads': 5, 'maxModelCalls': 30, 'maxDispatches': 2, 'wallclockMinutes': 90, 'modelLocation': 'global'}}
+        data = copy.deepcopy(self.base.artifacts[self.base.reference(0)['runId']])
+        record = self.base.record(0) | {'status': 'NOT_PASS', 'jobId': 'a195d5ff-fce0-4728-80d5-ac2ebaf75d1d', 'terminalState': 'FAILED'}
+        data.update({'binding.json': pt8a.recovery_binding(original, pt8a.TIMEOUT_SOURCE, IMAGE, pt8a.TIMEOUT_RUN, pt8a.TIMEOUT_RUN) | {'caseId': pt8a.CASES[0]},
+            'record.json': record, 'cleanup.json': {'JWKSRestored': True}, 'observation/accepted.json': record | {'status': 'ACCEPTED'},
+            'observation/draft-identity.json': {'hclPresent': False}, 'observation/cli.json': {'status': 'NOT_RUN', 'reason': 'BACKEND_FAILED'},
+            'inventory.json': {'files': []}, 'observation/retrieval.json': {'jobId': record['jobId']}})
+        data['observation/job.json'].update(id=record['jobId'], status='FAILED', resultFileId=None, resultObjectKey=None,
+            quality={'contractVersion': 'evidence-quality-v1', 'technicalStatus': 'FAIL', 'knowledgeStatus': 'UNKNOWN', 'reasons': ['PROVIDER_TIMEOUT']})
+        data['observation/presentation.json'].update(latestAnalysisJobId=record['jobId'], analysisStatus='FAILED', latestResultObjectKey=None)
+        bound = {'runId': pt8a.TIMEOUT_RUN, 'artifactId': pt8a.TIMEOUT_ARTIFACT, 'digest': pt8a.TIMEOUT_DIGEST, 'sourceSha': pt8a.TIMEOUT_SOURCE, 'conclusion': 'failure'}
+        review = {'decision': 'AUTHENTIC_CAMPAIGN_TECHNICAL_FAILURE_INCOMPLETE', 'reviewed_run_id': str(pt8a.TIMEOUT_RUN),
+            'reviewed_run_attempt': '1', 'reviewed_source_sha': pt8a.TIMEOUT_SOURCE, 'reviewed_approval_comment_id': '6081758174',
+            'case_a_status': 'TECHNICAL_FAILURE_CONSUMED', 'case_a_failure': 'PROVIDER_TIMEOUT_INITIAL_GENERATION', 'cases_b_to_e': 'NOT_RUN'}
+        approval = pt8a.recovery_live_fields(original, pt8a.TIMEOUT_SOURCE, IMAGE)
+        return data, bound, review, approval
+
+    def test_original_accepted_timeout_is_authenticated_and_never_rebound(self):
+        data, bound, review, approval = self.timeout_fixture()
+        with tempfile.TemporaryDirectory() as d, patch.object(pt8a, 'recovery_originals', return_value={}), \
+             patch.object(pt8a, 'bound_artifact', return_value=(data, bound)) as archive, \
+             patch.object(pt8a, 'authority_comment', side_effect=lambda ident,marker: review if ident==pt8a.TIMEOUT_REVIEW else approval):
+            before = copy.deepcopy(data)
+            result = pt8a.generation_diagnostic_origin(Path(d))
+            self.assertEqual(bound, result['consumedTimeout']); self.assertEqual(before, data)
+            self.assertTrue(archive.call_args.kwargs['verify_inventory']); self.assertTrue(archive.call_args.kwargs['all_json'])
+            for target,key,value in ((bound,'sourceSha',SOURCE),(bound,'digest','sha256:'+'0'*64),(review,'decision','ACCEPTED'),
+                                     (data['record.json'],'consumed',False),(data['observation/accepted.json'],'uploadAttempts',0),
+                                     (data['cleanup.json'],'JWKSRestored',False),(data['binding.json'],'liveApprovalCommentId',900)):
+                old = target[key]; target[key] = value
+                with self.subTest(key=key), self.assertRaises(ValueError): pt8a.generation_diagnostic_origin(Path(d))
+                target[key] = old
+
+    def test_main_collects_one_distinct_record_and_preserves_failure_without_changing_original_ledger(self):
+        for status in ('NOT_PASS', 'REVIEW_PENDING', 'INDETERMINATE_ACCEPTANCE'):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as d, ExitStack() as stack:
+                root=Path(d); request_file=root/'request.json'; output=root/'evidence'
+                request_file.write_text(json.dumps(self.request)); (root/'coverage-report.json').write_text('{}')
+                (root/'pt8a-release.json').write_text(json.dumps(self.base.release | {'modelProject':'terraformers-platform','modelLocation':'global'}))
+                stack.enter_context(patch.dict(os.environ, {'GITHUB_SHA':SOURCE,'BACKEND_IMAGE':IMAGE,'GITHUB_RUN_ATTEMPT':'1',
+                    'GITHUB_RUN_ID':str(self.current),'OPERATION':pt8a.DIAGNOSTIC_OPERATION,'RUNNER_TEMP':d}))
+                stack.enter_context(patch.object(sys,'argv',['pt8a','run','--request-file',str(request_file),'--corpus',d,'--output',str(output)]))
+                stack.enter_context(patch.object(pt8a,'github',side_effect=self.api))
+                stack.enter_context(patch.object(pt8a,'authority_comment',return_value=self.live))
+                stack.enter_context(patch.object(pt8a.transport,'current_main',return_value=SOURCE))
+                original={'consumedTimeout':{'runId':pt8a.TIMEOUT_RUN,'digest':pt8a.TIMEOUT_DIGEST},'record':{'consumed':True,'status':'NOT_PASS'}}
+                stack.enter_context(patch.object(pt8a,'generation_diagnostic_origin',return_value=original))
+                stack.enter_context(patch.object(pt8a,'corrective_origins',return_value=(self.base.origin.clean['receipt.json'],self.base.origin.clean_binding,self.base.origin.failed_binding)))
+                stack.enter_context(patch.object(pt8a.rag,'load_corpus',return_value=({}, {}, [], pt8a.CORPUS_CHECKSUM)))
+                stack.enter_context(patch.object(pt8a.rag,'validate_pt8a_clean_corpus'))
+                scans=stack.enter_context(patch.object(pt8a,'risk_qualified_admission',return_value=self.base.snapshot.copy()))
+                stack.enter_context(patch.object(pt8a.subprocess,'run')); stack.enter_context(patch.object(pt8a.transport,'CurlClient'))
+                def acquire(case,private):
+                    self.assertEqual(self.base.inputs[0],case)
+                    fixture=private/'input.png';fixture.write_bytes(b'synthetic-test-only');return fixture
+                stack.enter_context(patch.object(pt8a,'acquire',side_effect=acquire))
+                def observed(client,fixture,directory,record,documents,pod,**kwargs):
+                    self.assertEqual({'diagnostic':True},kwargs);record.update(status=status,uploadAttempts=1)
+                    if status=='INDETERMINATE_ACCEPTANCE':raise ValueError('ambiguous upload acceptance; never resubmit')
+                    record.update(consumed=True,terminalState='FAILED' if status=='NOT_PASS' else 'SUCCEEDED')
+                observation=stack.enter_context(patch.object(pt8a,'observe',side_effect=observed))
+                if status=='REVIEW_PENDING':pt8a.main()
+                else:
+                    with self.assertRaises(ValueError):pt8a.main()
+                observation.assert_called_once();self.assertEqual(1 if status=='INDETERMINATE_ACCEPTANCE' else 2,scans.call_count)
+                self.assertEqual(original,json.loads((output/'original-observations.json').read_text()))
+                self.assertFalse((output/'ledger.json').exists())
+                self.assertEqual(status,json.loads((output/'record.json').read_text())['status'])
+                binding=json.loads((output/'binding.json').read_text())
+                self.assertEqual(pt8a.GENERATION_DIAGNOSTIC_MODE,binding['mode'])
+                self.assertEqual(pt8a.generation_diagnostic_contract_sha256(),binding['diagnosticContractSha256'])
+                self.assertEqual('NOT_ACCEPTANCE',json.loads((output/'diagnostic-disposition.json').read_text())['officialAcceptance'])
+                self.assertTrue((output/'inventory.json').exists())
+
+
 class AutonomousRecoveryContracts(unittest.TestCase):
     def setUp(self):
         self.base = QualifiedCaseChainContracts(); self.base.setUp()

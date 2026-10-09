@@ -4,10 +4,10 @@ program:
   contract_status: APPROVED_V4_INDEPENDENTLY_ACCEPTED_AND_USER_MERGED
   active_amendment: null
   active_phase: PT-8A
-  active_work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
+  active_work_package: .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
   amendment_preparation_authority: USER_explicit_repository_only_v4_request
   exact_candidate_truth_approved: true
-  current_human_gate: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE
+  current_human_gate: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE
   status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
@@ -513,13 +513,30 @@ program:
       title: Final external official AI RAG deployed acceptance
       kind: live_acceptance
       status: HUMAN_REQUIRED_PREPARATION_ONLY
-      active_work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
+      active_work_package: .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
+      original_execution_work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
       preparation_execution_base_sha: 2bdb73d20486262856bfa6b680b7bf221fa23ca0
       preparation_authorized: true
       live_execution_authorized: false
       live_reviewed_source_sha: null
       frozen_procedure: docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md
       execution_unit: one_official_case_per_dispatch_then_independent_post_inference_review
+      autonomous_recovery:
+        work_package: .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
+        repository_implementation_approval: APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265
+        preparation_independent_review: 6079812459
+        implementation_base_sha: c789d433f13da744e14c6a6f31db2d4fd3cf1d74
+        implementation_acceptance: PENDING_INDEPENDENT_REVIEW_AND_USER_MERGE
+        live_execution_authorized: false
+        separate_campaign_operation: pt8a-recovery-campaign
+        original_execution_unit_and_modes: unchanged
+        recovery_progress: complete_product_observation_then_final_independent_ten_dimension_review
+        SDK_and_job_retries: unchanged_Policy_D
+        automatic_resubmission: prohibited
+        resume: authenticated_same_candidate_checkpoints_proven_zero_POST_earliest_unsubmitted_within_dispatch_budget_one_owner_scoped_drain_no_censor_replacement
+        repair_limit: 3
+        historical_counter_reset: false
+        live_budget_decisions_block_repository_implementation: false
       depends_on: [PT-7]
       auto_start_after_dependencies: false
       human_gate_before_start: FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE

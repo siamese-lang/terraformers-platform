@@ -2,6 +2,26 @@
 
 ## Status
 
+Current: **PT-8A autonomous Recovery implementation / INDEPENDENT ACCEPTANCE PENDING**, bound to
+`c789d433f13da744e14c6a6f31db2d4fd3cf1d74`. USER approved same-PR repository implementation with
+max 3 bounded corrections; [contract/evidence](../../evaluation/product-trust-pt-8a-autonomous-recovery-decision.md)
+and [Work Package](../../../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml) bind that scope.
+The existing protected runtime job/observer implement separate A→E observation, immutable per-case
+checkpoints and same-candidate resume, with no automatic resubmission or semantic self-acceptance.
+One read-only drain retains original accepted owner and censoring. Original A/B remain consumed;
+original C–E remain NOT_RUN, old repair 1/1 and Policy D stay unchanged. B's typed HTTP/quota cause
+remains unproven; numeric failure telemetry is added without retry/product behavior changes.
+New unit corrections **3/3 used**: artifact-condition assertion, review 6080701270 zero-POST resume,
+then one missing synthetic transport response field. Observer suite **64 PASS**; final-tree results
+recorded in the same PR. Only proven zero-POST/pre-cloud failure resumes the earliest unsubmitted
+case within exact authority/dispatch bounds; accepted or ambiguous submissions never repeat.
+Further correction requires USER review. Backend/Policy D and original evidence remain unchanged.
+Live budgets are separately required before execution, not before offline implementation.
+Stop **HUMAN_REQUIRED: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE**; then bind actual
+reviewed merge source/image and USER live/model/cost authority. No live action or A–E success is claimed.
+
+### Historical v3-qualified case-chain preparation checkpoint
+
 Current: **PT-8A v3-qualified official-case chain, repository implementation pending independent acceptance**.
 Bound base `c9caeafd900b8310eae8ead467b20f8e358599db`; [USER decision 6058612980](https://github.com/siamese-lang/terraformers-platform/pull/260#issuecomment-6058612980).
 PR #260 recovery is independently accepted/USER-merged with the separately authorized case-entry

@@ -9,6 +9,15 @@ import java.util.List;
 public final class ProviderFailureClassifier {
     private ProviderFailureClassifier() {}
 
+    /** Numeric transport evidence only; never exception messages or provider response bodies. */
+    public static Integer upstreamHttpStatus(Throwable failure) {
+        for (Throwable current = failure; current != null; current = current.getCause()) {
+            Integer status = statusCode(current);
+            if (status != null) return status;
+        }
+        return null;
+    }
+
     public static boolean isRateLimited(Throwable failure) {
         for (Throwable current = failure; current != null; current = current.getCause()) {
             Integer status = statusCode(current);

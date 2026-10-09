@@ -12,6 +12,36 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
+- Current task: **PT-8A autonomous Recovery implementation**, bound to
+  `c789d433f13da744e14c6a6f31db2d4fd3cf1d74`, under USER approval
+  `APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265` and
+  [preparation review 6079812459](https://github.com/siamese-lang/terraformers-platform/pull/265#issuecomment-6079812459).
+  [Implementation/evidence/resume contract](evaluation/product-trust-pt-8a-autonomous-recovery-decision.md),
+  [integrated Work Package](../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml).
+- Existing protected job/observer add a separate A–E Recovery mode with per-case artifact barriers,
+  same-candidate resume, one owner-scoped read-only drain and final independent ten-dimension
+  review. Completed observations are reused without resubmission. Ambiguous/missing evidence,
+  provider technical failure, failed cleanup and source/image drift stop progression.
+  Review 6080701270 correction permits only authenticated PROVEN_NO_POST / pre-cloud step proof
+  to resume the earliest unsubmitted case within the same candidate and remaining dispatch budget.
+  Accepted or ambiguous POST never permits another upload; original failure evidence is retained.
+- Original A **37783345572/11552729185**, review **6060977646**, remains REJECTED/NOT_PASS/consumed.
+  Diagnostic B **37911522774/11606947643**, review **6078438584**, remains technical failure/consumed;
+  its archive matches all 20 inventory members. C–E in the original campaign remain NOT_RUN.
+  HTTP/quota/capacity cause is unproven; narrow typed-status logs do not rewrite history or add retry.
+- USER-authorized repository repair limit is 3 for this unit, now **3/3 used**: iteration 1 aligns
+  one stale workflow assertion, iteration 2 corrects zero-POST recovery, iteration 3 supplies a
+  missing synthetic transport response field. Observer suite **64 PASS**. Further blockers require
+  USER review. Original repair 1/1, Policy D, frozen candidate/procedures and strict modes are unchanged.
+  Live budgets are mandatory before execution and do not block repository implementation. Current
+  source/image publication, rollout, model/embedding and Recovery dispatch are unauthorized.
+- Stop at **PT8A RECOVERY IMPLEMENTATION COMPLETE / INDEPENDENT ACCEPTANCE PENDING** and
+  **HUMAN_REQUIRED: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE**.
+  Independent review then USER merge precede exact final source/image/live authority. A–E goal is
+  NOT COMPLETE. GitHub owns transient PR/branch lifecycle; durable state stores no active PR/branch.
+
+### Historical v3-qualified case-chain preparation checkpoint
+
 - Current task: **PT-8A v3-qualified official-case chain**, repository-only, bound once to
   `c9caeafd900b8310eae8ead467b20f8e358599db` under [USER decision 6058612980](https://github.com/siamese-lang/terraformers-platform/pull/260#issuecomment-6058612980).
   This closes the source/procedure connection blocker before any new backend release or sole

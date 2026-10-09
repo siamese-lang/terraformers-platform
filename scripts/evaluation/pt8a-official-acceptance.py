@@ -34,6 +34,17 @@ DIAGNOSTIC_MODE = "diagnostic-case"
 DIAGNOSTIC_OPERATION = "pt8a-diagnostic-case"
 DIAGNOSTIC_PURPOSE = "PT8A_B_TO_E_DIAGNOSTIC_ONLY_ONCE"
 DIAGNOSTIC_CASES = CASES[1:]
+RECOVERY_MODE = "recovery-campaign"
+RECOVERY_OPERATION = "pt8a-recovery-campaign"
+RECOVERY_PURPOSE = "PT8A_A_TO_E_AUTONOMOUS_RECOVERY"
+RECOVERY_PROCEDURE = "docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md"
+CASE_B_RUN, CASE_B_ARTIFACT, CASE_B_REVIEW = 37911522774, 11606947643, 6078438584
+CASE_B_SOURCE = "c789d433f13da744e14c6a6f31db2d4fd3cf1d74"
+CASE_B_DIGEST = "sha256:289519752b3e3f0fc07d4f12dd1717fa306845d59a6a6aa5e93f559e00443ba7"
+CASE_B_IMAGE = "asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:49a3fd8ba65750d11f0254309f75ffc395bed501697061d6060645cca62f6d0e"
+# Policy D: facts 1, initial+compact <=2, repair <=1, retrieval embeddings <=2.
+# Documentary final-resource lookups do not embed. This is a reservation, not billed usage.
+MODEL_CALL_RESERVATION = 6
 V3_SHA256 = "29e1b9915448a3d8fedffd2661cd95c7d4e0d314afcd88a16d84c3dca548c268"
 CASE_A_RUN, CASE_A_ARTIFACT, CASE_A_REVIEW = 37783345572, 11552729185, 6060977646
 CASE_A_SOURCE = "ba8eb15a37c02184d02da9f1731c15a802477ef9"
@@ -66,6 +77,8 @@ SKIPPED_DIAGNOSTIC_JOB_NAME = (
     "inputs.operation == 'pt8a-diagnostic-case' && format('pt8a-diagnostic-case/{0}', "
     "fromJSON(inputs.pt8a_request).caseId) || " + SKIPPED_PT8A_JOB_NAME
 )
+SKIPPED_RECOVERY_JOB_NAME = ("inputs.operation == 'pt8a-recovery-campaign' && 'pt8a-recovery-campaign' || "
+                             + SKIPPED_DIAGNOSTIC_JOB_NAME)
 CHAIN_DECISION = 6058612980
 RECOVERY_DECISION = 6057566013
 ORIGIN_SOURCE = "70373842629fdd569815780e52dc5f0353b97880"
@@ -263,14 +276,15 @@ def complete_dispatch_history(workflow):
 def pt8a_history_job(jobs):
     if jobs["total_count"] != len(jobs["jobs"]) or jobs["total_count"] > 100:
         raise ValueError("PT8A job history incomplete; no inference")
-    names = {CORRECTIVE_OPERATION, "pt8a-official-acceptance", SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME}
+    names = {CORRECTIVE_OPERATION, "pt8a-official-acceptance", SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME,
+             RECOVERY_OPERATION, SKIPPED_RECOVERY_JOB_NAME}
     names.update(QUALIFIED_OPERATION + "/" + case for case in CASES)
     names.update(DIAGNOSTIC_OPERATION + "/" + case for case in DIAGNOSTIC_CASES)
     related = [j for j in jobs["jobs"] if j["name"] in names]
     if len(related) != 1:
         raise ValueError("prior dispatch operation unproven; no inference")
     job = related[0]
-    if job["name"] in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME) and (
+    if job["name"] in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME, SKIPPED_RECOVERY_JOB_NAME) and (
             job.get("status") != "completed" or job.get("conclusion") != "skipped"):
         raise ValueError("unevaluated PT8A job name does not prove skipped execution; no inference")
     return job
@@ -359,7 +373,7 @@ def corrective_origins(private):
 
 
 def risk_qualified_admission(client, manifest, schema, documents, checksum, receipt, binding, authority):
-    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE)
+    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE, RECOVERY_PURPOSE)
             or authority.get("vector_write_continuity") != "VECTOR_WRITE_CONTINUITY_UNPROVEN"
             or authority.get("accepted_residual_risk") != "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"):
         raise ValueError("explicit corrective live risk authority missing")
@@ -796,6 +810,299 @@ def diagnostic_predecessor(request, history, private):
     return json.loads(json.dumps(ledger if ledger is not None else origin))
 
 
+def recovery_contract_sha256():
+    contract = {"version": "pt8a-autonomous-recovery-v1", "cases": CASES, "candidate": IDENTITY,
+        "originalA": [CASE_A_RUN, CASE_A_ARTIFACT, CASE_A_DIGEST, CASE_A_REVIEW],
+        "originalB": [CASE_B_RUN, CASE_B_ARTIFACT, CASE_B_DIGEST, CASE_B_REVIEW],
+        "initialUploadsPerCase": 1, "automaticResubmission": False, "readOnlyDrainsPerCase": 1,
+        "zeroPostResume": "PROVEN_NO_POST_EARLIEST_UNSUBMITTED_CASE_WITHIN_DISPATCH_BUDGET",
+        "modelCallReservationPerUpload": MODEL_CALL_RESERVATION, "observationSeconds": 540,
+        "SDKAttempts": 1, "durableAttempts": 1, "originalAcceptedCutoffMs": 480000,
+        "progress": "COMPLETE_PRODUCT_OBSERVATION_NOT_SEMANTIC_PASS",
+        "finalReview": SCORING, "originalModes": "UNCHANGED", "indexWrites": 0}
+    return sha(json.dumps(contract, sort_keys=True, separators=(",", ":")).encode())
+
+
+def recovery_live_fields(request, source, image):
+    bounds = request["liveBounds"]
+    return {**diagnostic_live_fields(source, image), "purpose": RECOVERY_PURPOSE,
+        "official_cases": "A_TO_E_SEPARATE_RECOVERY_CAMPAIGN", "campaign_id": request["campaignId"],
+        "recovery_contract_sha256": recovery_contract_sha256(),
+        "recovery_procedure_sha256": sha((ROOT / RECOVERY_PROCEDURE).read_bytes()),
+        "original_case_b_run_id": str(CASE_B_RUN), "original_case_b_artifact_id": str(CASE_B_ARTIFACT),
+        "original_case_b_artifact_digest": CASE_B_DIGEST, "original_case_b_review_id": str(CASE_B_REVIEW),
+        "original_case_b_source_sha": CASE_B_SOURCE, "original_case_b_disposition": "TECHNICAL_FAILURE_NOT_PASS_CONSUMED",
+        "once_only": "ONE_INITIAL_UPLOAD_PER_CASE_NO_AUTOMATIC_RESUBMISSION",
+        "progress_policy": "TECHNICAL_EVIDENCE_GATE_THEN_FINAL_INDEPENDENT_TEN_DIMENSION_REVIEW",
+        "maximum_total_uploads": str(bounds["maxUploads"]), "maximum_model_calls": str(bounds["maxModelCalls"]),
+        "maximum_dispatches": str(bounds["maxDispatches"]), "workflow_wallclock_minutes": str(bounds["wallclockMinutes"]),
+        "model_location": bounds["modelLocation"], "model_project": "terraformers-platform",
+        "generation_model": "gemini-3.8-flash", "model_call_reservation_per_upload": str(MODEL_CALL_RESERVATION),
+        "automatic_recovery_uploads": "0", "sdk_policy": "UNCHANGED_POLICY_D"}
+
+
+def recovery_request_contract(request, source, image, attempt):
+    keys = {"mode", "campaignId", "liveApprovalCommentId", "resumeRunId", "liveBounds"}
+    if (set(request) != keys or request["mode"] != RECOVERY_MODE or str(attempt) != "1"
+            or not re.fullmatch(r"[a-z0-9][a-z0-9-]{7,63}", str(request["campaignId"]))
+            or type(request["liveApprovalCommentId"]) is not int or request["liveApprovalCommentId"] <= 0
+            or type(request["resumeRunId"]) is not int or request["resumeRunId"] < 0
+            or not re.fullmatch(r"[0-9a-f]{40}", source)
+            or not re.fullmatch(r"asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}", image)
+            or sha((ROOT / PROCEDURE).read_bytes()) != V2_SHA256
+            or sha((ROOT / CORRECTIVE_PROCEDURE).read_bytes()) != V3_SHA256):
+        raise ValueError("invalid recovery request/source/image/frozen binding; no inference")
+    bounds = request["liveBounds"]
+    if (not isinstance(bounds, dict) or set(bounds) != {"maxUploads", "maxModelCalls", "maxDispatches", "wallclockMinutes", "modelLocation"}
+            or any(type(bounds[k]) is not int or bounds[k] < 1 for k in bounds if k != "modelLocation")
+            or bounds["maxUploads"] > len(CASES) or bounds["maxModelCalls"] < MODEL_CALL_RESERVATION * bounds["maxUploads"]
+            or bounds["wallclockMinutes"] > 360
+            or not re.fullmatch(r"global|[a-z]+-[a-z]+\d", str(bounds["modelLocation"]))):
+        raise ValueError("explicit live upload/call/dispatch/wallclock/location bounds missing or invalid")
+    authority = authority_comment(request["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    if any(authority.get(k) != v for k, v in recovery_live_fields(request, source, image).items()):
+        raise ValueError("separate exact recovery live/model/cost authority missing; repository approval is not live authority")
+    if transport.current_main() != source:
+        raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT")
+    return authority
+
+
+def recovery_originals(private):
+    original_a, _ = diagnostic_origin(private)  # Authenticated REJECTED/consumed A.
+    data, bound = bound_artifact(CASE_B_RUN, CASE_B_ARTIFACT,
+        ["inventory.json", "binding.json", "ledger.json", "observation/accepted.json", "observation/job.json"],
+        private, ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+    b, accepted, job = data["binding.json"], data["observation/accepted.json"], data["observation/job.json"]
+    review = authority_comment(CASE_B_REVIEW, "[PT8A_DIAGNOSTIC_REVIEW:v1]")
+    original_approval = authority_comment(b["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    if (bound != {"runId": CASE_B_RUN, "artifactId": CASE_B_ARTIFACT, "digest": CASE_B_DIGEST,
+                 "sourceSha": CASE_B_SOURCE, "conclusion": "failure"}
+            or any(b.get(k) != v for k, v in {"sourceSha": CASE_B_SOURCE, "runId": CASE_B_RUN, "image": CASE_B_IMAGE,
+                "mode": DIAGNOSTIC_MODE, "caseId": CASES[1], "candidateIdentity": IDENTITY,
+                "diagnosticContractSha256": diagnostic_contract_sha256()}.items())
+            or accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True or accepted.get("uploadAttempts") != 1
+            or job.get("id") != accepted.get("jobId") or job.get("projectId") != accepted.get("projectId")
+            or job.get("sourceFileId") != accepted.get("sourceFileId") or job.get("status") != "FAILED"
+            or job.get("resultObjectKey") is not None or (job.get("quality") or {}).get("reasons") != ["PROVIDER_RATE_LIMITED"]
+            or data["ledger.json"][1].get("status") != "NOT_PASS" or data["ledger.json"][1].get("consumed") is not True
+            or data["ledger.json"][0] != original_a[0]
+            or data["ledger.json"][2:] != [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in CASES[2:]]
+            or any(original_approval.get(k) != v for k,v in diagnostic_live_fields(CASE_B_SOURCE, CASE_B_IMAGE).items())
+            or any(review.get(k) != v for k, v in {"decision": "ACKNOWLEDGED_DIAGNOSTIC_ONLY",
+                "official_acceptance": "NOT_ACCEPTANCE", "infrastructure_auth_provenance": "VERIFIED",
+                "reviewed_source_sha": CASE_B_SOURCE, "run_id": str(CASE_B_RUN), "artifact_id": str(CASE_B_ARTIFACT),
+                "artifact_digest": CASE_B_DIGEST, "case_id": CASES[1], "observed_status": "NOT_PASS"}.items())):
+        raise ValueError("original consumed B failure/provenance/review changed")
+    return {"caseA": {"runId": CASE_A_RUN, "artifactId": CASE_A_ARTIFACT, "digest": CASE_A_DIGEST}, "caseB": bound}
+
+
+def recovery_binding(request, source, image, run_id, owner):
+    return {"sourceSha": source, "image": image, "runId": run_id, "ownerRunId": owner,
+        "campaignId": request["campaignId"], "mode": RECOVERY_MODE, "candidateIdentity": IDENTITY,
+        "contractSha256": recovery_contract_sha256(), "procedureSha256": sha((ROOT / RECOVERY_PROCEDURE).read_bytes()),
+        "liveApprovalCommentId": request["liveApprovalCommentId"], "liveBounds": request["liveBounds"],
+        "classification": "RECOVERY_MEASUREMENT_ONLY", "officialAcceptance": "PENDING_INDEPENDENT_REVIEW"}
+
+
+def recovery_checkpoint(data, case, *, require_cleanup=True):
+    record = data["record.json"]
+    if record.get("caseId") != case:
+        raise ValueError("recovery checkpoint case/attempt mismatch")
+    if record.get("uploadAttempts") == 0:
+        # Authenticated archives may prove a failure before the submission boundary. A
+        # missing/zero counter alone cannot prove that a POST never reached the backend.
+        no_post = (type(record["uploadAttempts"]) is int and record.get("status") == "PROVEN_NO_POST"
+            and record.get("submissionBoundary") == "NOT_ENTERED" and type(record.get("modelCalls")) is int
+            and record["modelCalls"] == 0
+            and record.get("consumed") is False and "error.json" in data
+            and not any(record.get(k) is not None for k in ("jobId", "projectId", "sourceFileId", "acceptedAt", "terminalState"))
+            and not any(k.startswith("observation/") for k in data)
+            and not any(e["path"].startswith("observation/") for e in data["inventory.json"]["files"])
+            and (not require_cleanup or data.get("cleanup.json", {}).get("JWKSRestored") is True))
+        return "PROVEN_NO_POST" if no_post else "BLOCKED"
+    if record.get("uploadAttempts") != 1:
+        raise ValueError("recovery upload count changed")
+    if record.get("status") in ("SUBMISSION_STARTED", "INDETERMINATE_ACCEPTANCE", "PRE_ACCEPTANCE_REJECTED"):
+        return "BLOCKED"
+    accepted = data.get("observation/accepted.json", {})
+    if (accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True
+            or any(accepted.get(k) != record.get(k) for k in ("jobId", "projectId", "sourceFileId", "acceptedAt"))):
+        raise ValueError("recovery acceptance/owner identity missing; no resubmission")
+    if not record.get("terminalState"):
+        return "RUNNING"  # One read-only drain is possible; never another POST.
+    for name in ("readiness.json", "post-admission.json"):
+        snapshot = data.get(name, {})
+        required = {"classification": "RISK_QUALIFIED_RETAINED_V4", "indexUuid": ORIGIN_UUID,
+            "liveContentIdentity": ORIGIN_CONTENT, "vectorDocumentsChecked": 5395, "vectorDimension": 1536,
+            "originSourceSha": ORIGIN_SOURCE, "originArtifactDigest": ORIGIN_CLEAN_DIGEST,
+            "vectorWriteContinuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN", "cryptographicVectorContinuityProven": False,
+            "embeddingRequests": 0, "indexWrites": 0}
+        if any(snapshot.get(k) != v for k,v in required.items()):
+            return "BLOCKED"
+    job = data["observation/job.json"]
+    if (any(job.get(k) != record.get(v) for k,v in (("id", "jobId"), ("projectId", "projectId"), ("sourceFileId", "sourceFileId"), ("status", "terminalState")))
+            or require_cleanup and data.get("cleanup.json", {}).get("JWKSRestored") is not True):
+        raise ValueError("recovery terminal/cleanup evidence incomplete")
+    if job["status"] not in ("FAILED", "SUCCEEDED"):
+        raise ValueError("unknown recovery terminal state")
+    presentation, cli, draft = (data["observation/" + k + ".json"] for k in ("presentation", "cli", "draft-identity"))
+    if (presentation.get("latestAnalysisJobId") != record["jobId"] or presentation.get("projectId") != record["projectId"]
+            or data["observation/retrieval.json"].get("jobId") != record["jobId"]
+            or data["input-identity.json"] != next(c for c in frozen_inputs() if c["caseId"] == case)):
+        raise ValueError("recovery product/input/retrieval identity mismatch")
+    entries = [e for e in data["inventory.json"]["files"] if e["path"] == "observation/main.tf"]
+    if draft.get("hclPresent") is True:
+        if (len(entries) != 1 or entries[0]["sha256"] != draft.get("hclSha256") or cli.get("hclSha256") != draft.get("hclSha256")
+                or cli.get("terraformVersion") != "1.8.5" or cli.get("providerVersion") != "5.100.0"
+                or type(cli.get("initValidateExitCode")) is not int or cli.get("AWSPlanApply") is not False):
+            raise ValueError("recovery original real CLI/draft proof missing")
+    elif (entries or draft.get("hclPresent") is not False or cli.get("status") != "NOT_RUN"
+          or cli.get("reason") != ("BACKEND_FAILED" if job["status"] == "FAILED" and not job.get("resultObjectKey") else "NO_REVIEWABLE_DRAFT")):
+        raise ValueError("missing Terraform cannot be promoted to validity")
+    if job["status"] == "FAILED":
+        quality = job.get("quality") or {}
+        reasons = quality.get("reasons") or []
+        if (quality.get("contractVersion") == "evidence-quality-v1" and quality.get("technicalStatus") == "PASS"
+                and quality.get("knowledgeStatus") == "NOT_APPLICABLE" and quality.get("qualityStatus") == "NOT_APPLICABLE"):
+            return "PRODUCT_REVIEW_REQUIRED"  # Rejected frozen architecture input; not infrastructure failure.
+        if "TERRAFORM_EXECUTABLE_FAILURE" in reasons:
+            return "PRODUCT_REVIEW_REQUIRED"  # Generated technical defect, no fabricated missing HCL/CLI.
+        return "TECHNICAL_FAILURE" if any(r.startswith("PROVIDER_") for r in reasons) else "BLOCKED"
+    return "PRODUCT_REVIEW_REQUIRED"  # Never automated PASS, even with CLI/quality green.
+
+
+def recovery_precloud_failure(job):
+    """Authenticate a failed preflight with complete, skipped downstream job steps.
+
+    No artifact means no original request/image/campaign binding is available. Such a
+    same-source run consumes dispatch budget conservatively but supplies no product
+    evidence or owner identity; current exact live authority must still admit the resume.
+    """
+    steps = job.get("steps", [])
+    gate = "Validate frozen procedure and explicit live authority before cloud access"
+    required = {"Checkpoint admitted recovery campaign before cloud access",
+        "Run google-github-actions/auth@v3", "Run google-github-actions/setup-gcloud@v3",
+        "Run google-github-actions/get-gke-credentials@v3",
+        "Verify exact deployed release and existing runtime identity",
+        "Rebuild expected corpus from pinned authority without embedding",
+        "Start owned validation pod with the already deployed immutable image",
+        "Observe read-only exact readiness and at most one accepted product job",
+        *["Observe recovery case " + c[-1].upper() for c in CASES]}
+    names = [s.get("name") for s in steps]
+    numbers = [s.get("number") for s in steps]
+    if (job.get("status") != "completed" or job.get("conclusion") != "failure"
+            or names.count(gate) != 1 or not required.issubset(names) or len(set(names)) != len(names)
+            or any(type(n) is not int or n < 1 for n in numbers) or numbers != sorted(set(numbers))
+            or any(s.get("status") != "completed" for s in steps)):
+        return False
+    position = names.index(gate)
+    if steps[position].get("conclusion") != "failure":
+        return False
+    harmless = {"Bind artifact for post-inference independent review", "Post Run actions/checkout@v5", "Complete job"}
+    return ("Run actions/checkout@v5" in names[:position]
+        and all(s["name"] in {"Set up job", "Run actions/checkout@v5"} and s.get("conclusion") == "success"
+                for s in steps[:position])
+        and all(s.get("conclusion") == "skipped" for s in steps if s["name"] in required)
+        and all(s.get("conclusion") == "skipped" or s["name"] in harmless for s in steps[position + 1:]))
+
+
+def recovery_history(request, source, image, current_run, private):
+    runs = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
+    current = [r for r in runs if r["id"] == current_run]
+    if len(current) != 1 or current[0]["head_sha"] != source or current[0]["run_attempt"] != 1:
+        raise ValueError("recovery current dispatch identity missing/rerun")
+    current_job = pt8a_history_job(github(f"actions/runs/{current_run}/jobs?per_page=100"))
+    if current_job["name"] != RECOVERY_OPERATION or current_job.get("conclusion") == "skipped":
+        raise ValueError("current recovery operation identity missing")
+    started = datetime.fromisoformat(current_job["started_at"].replace("Z", "+00:00"))
+    if started.tzinfo is None: raise ValueError("workflow job start lacks timezone")
+    records, references, prior_runs, precloud_failures, owner = {}, {}, [], [], None
+    for run in sorted(runs, key=lambda r:r["id"]):
+        if run["id"] <= CASE_B_RUN or run["id"] == current_run:
+            continue
+        job = pt8a_history_job(github(f"actions/runs/{run['id']}/jobs?per_page=100"))
+        if job["name"] != RECOVERY_OPERATION:
+            if job.get("conclusion") != "skipped":
+                raise ValueError("another post-B PT8A observation requires review; no overlapping campaign")
+            continue
+        if (run["id"] > current_run or run.get("status") != "completed" or run.get("run_attempt") != 1
+                or run["head_sha"] != source or run.get("conclusion") not in ("success", "failure")):
+            raise ValueError("recovery concurrent/rerun/candidate-changed history; no reset")
+        prior_runs.append(run["id"])
+        arts = github(f"actions/runs/{run['id']}/artifacts?per_page=100")
+        if arts["total_count"] != len(arts["artifacts"]) or arts["total_count"] > 100:
+            raise ValueError("recovery artifact history incomplete")
+        prefix = f"pt8a-recovery-{run['id']}-"
+        if not any(a["name"] == prefix + "start" for a in arts["artifacts"]):
+            if arts["artifacts"] or not recovery_precloud_failure(job):
+                raise ValueError("start checkpoint missing without complete pre-cloud/no-POST proof")
+            precloud_failures.append({"runId": run["id"], "jobId": job["id"], "sourceSha": source,
+                "classification": "PROVEN_NO_POST", "uploadAttempts": 0, "modelCalls": 0,
+                "requestBinding": "UNAVAILABLE_PRE_CLOUD_NOT_REBOUND", "steps": job["steps"]})
+            continue
+        if owner is None:
+            owner = run["id"]
+        def download(suffix):
+            matches = [a for a in arts["artifacts"] if a["name"] == prefix + suffix]
+            if len(matches) != 1:
+                raise ValueError("recovery checkpoint unavailable/duplicate; acceptance indeterminate")
+            return bound_artifact(run["id"], matches[0]["id"], ["inventory.json", "binding.json"] + (
+                ["campaign.json"] if suffix == "start" else ["record.json", "cleanup.json"]), private,
+                ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True, all_json=True)
+        start, _ = download("start")
+        expected = recovery_binding(request, source, image, run["id"], owner)
+        if start["binding.json"] != expected:
+            raise ValueError("recovery source/image/campaign/approval/budget rebound; no observation reuse")
+        steps = job.get("steps", [])
+        for case in CASES:
+            label = case[-1].upper()
+            selected = [s for s in steps if s["name"] == "Observe recovery case " + label]
+            if len(selected) != 1 or selected[0].get("status") != "completed":
+                raise ValueError("recovery step history incomplete")
+            matches = [a for a in arts["artifacts"] if a["name"] == prefix + case[-1]]
+            if selected[0].get("conclusion") == "skipped":
+                if matches: raise ValueError("skipped case has unexpected observation")
+                continue
+            if not matches:
+                if (case not in records or selected[0].get("conclusion") != "success"
+                        or recovery_checkpoint(records[case], case) != "PRODUCT_REVIEW_REQUIRED"):
+                    raise ValueError("started case lacks checkpoint; never resubmit")
+                continue  # Reused complete checkpoint; no new observation was made.
+            data, ref = download(case[-1])
+            if data["binding.json"] != expected | {"caseId": case} or data["cleanup.json"].get("JWKSRestored") is not True:
+                raise ValueError("recovery checkpoint binding/cleanup mismatch")
+            corrective_release(data["release.json"], source, image)
+            previous = records.get(case)
+            if previous is not None:
+                previous_state = recovery_checkpoint(previous, case)
+                if previous_state == "PROVEN_NO_POST":
+                    if (data["record.json"].get("priorZeroPostFailure") != references[case]
+                            or data["record.json"].get("readOnlyDrain") is True):
+                        raise ValueError("zero-POST failure reference missing; no fresh submission")
+                elif (previous_state != "RUNNING" or data["record.json"].get("readOnlyDrain") is not True
+                        or data["record.json"].get("originalObservation") != references[case]
+                        or previous["record.json"].get("readOnlyDrain") is True
+                        or any(data["record.json"].get(k) != previous["record.json"].get(k)
+                               for k in ("jobId", "projectId", "sourceFileId", "acceptedAt", "censoredObservationMs"))):
+                    raise ValueError("duplicate upload/second drain or changed original censor; no retry")
+            elif any(recovery_checkpoint(records[c], c) != "PRODUCT_REVIEW_REQUIRED" for c in CASES[:CASES.index(case)] if c in records) or any(c not in records for c in CASES[:CASES.index(case)]):
+                raise ValueError("recovery out-of-order or unresolved predecessor")
+            recovery_checkpoint(data, case)
+            records[case], references[case] = data, ref
+    if request["resumeRunId"] != (prior_runs[-1] if prior_runs else 0):
+        raise ValueError("stale recovery resume; do not restart A")
+    if len(prior_runs) + 1 > request["liveBounds"]["maxDispatches"]:
+        raise ValueError("approved campaign dispatch budget exhausted")
+    writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
+    if (not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes)
+            or any(r["id"] > ORIGIN_CLEAN_RUN for r in writes)):
+        raise ValueError("known ingestion history changed; no recovery reuse")
+    return {"records": records, "references": references, "ownerRunId": owner or current_run,
+        "provenNoPostPreflightFailures": precloud_failures,
+        "runtimeRunIds": sorted(r["id"] for r in runs), "ingestionRunIds": sorted(r["id"] for r in writes),
+        "jobDeadlineEpochSeconds": started.timestamp() + 60 * request["liveBounds"]["wallclockMinutes"]}
+
+
 def ensure_latest_dispatch(request, source, current_run_id):
     """Existing serial workflow + authoritative history, not a new lock/queue service.
 
@@ -833,7 +1140,7 @@ def ensure_latest_dispatch(request, source, current_run_id):
         raise ValueError("no prior deployed readiness dispatch; no official upload")
 
 
-def bound_artifact(run_id, artifact_id, names, directory, workflow, *, verify_inventory=False):
+def bound_artifact(run_id, artifact_id, names, directory, workflow, *, verify_inventory=False, all_json=False):
     """Authenticated immutable artifact download; extract only explicitly selected bounded JSON."""
     import zipfile
     run, artifact = github(f"actions/runs/{run_id}"), github(f"actions/artifacts/{artifact_id}")
@@ -868,6 +1175,8 @@ def bound_artifact(run_id, artifact_id, names, directory, workflow, *, verify_in
                 data = zipped.read(name)
                 if entry.get("sha256") != sha(data) or entry.get("sizeBytes") != len(data):
                     raise ValueError("original artifact inventory/member hash mismatch")
+                if all_json and name.endswith(".json"):
+                    result[name] = json.loads(data)
     return result, {"runId": run_id, "artifactId": artifact_id, "digest": artifact["digest"],
                     "sourceSha": run["head_sha"], "conclusion": run["conclusion"]}
 
@@ -963,6 +1272,9 @@ def retrieval_evidence(job_id, since, expected_documents):
                                    "outputTokens": int(output) if output.isdecimal() else None,
                                    "thinkingTokens": int(thinking) if thinking.isdecimal() else None,
                                    "totalTokens": int(total) if total.isdecimal() else None})
+            status = re.search(r"\bupstreamHttpStatus=(\d{3}|null)\b", line)
+            provider_calls[-1]["upstreamHttpStatus"] = (int(status[1]) if status and status[1].isdecimal()
+                                                        and 100 <= int(status[1]) <= 599 else None)
         match = re.search(r"Vertex grounding stage=closure outcome=(success|failure) "
                           r"finishReason=NOT_APPLICABLE outputTokens=NOT_APPLICABLE"
                           r"(?: hitCount=(\d+) elapsedMs=(\d+))?", line)
@@ -995,13 +1307,20 @@ def validate_draft(hcl, private, pod):
             "hclSha256": sha(hcl.encode()), "AWSPlanApply": False}
 
 
-def observe(client, fixture, directory, record, documents, pod, clock=time.monotonic, wait=time.sleep, *, diagnostic=False):
-    record.update(status="SUBMISSION_STARTED", uploadAttempts=1)
-    write(directory / "attempt.json", record)
-    response = client.request("POST", "/api/upload", fixture.parent, "upload", fixture=fixture,
-                              project_name="pt8a-" + os.environ["GITHUB_RUN_ID"])
-    mark_upload(record, response)
-    write(directory / "accepted.json", record)
+def observe(client, fixture, directory, record, documents, pod, clock=time.monotonic, wait=time.sleep, *, diagnostic=False, resume_accepted=False, record_path=None):
+    if resume_accepted:
+        if record.get("consumed") is not True or not record.get("jobId") or record.get("uploadAttempts") != 1:
+            raise ValueError("read-only drain requires the original accepted owner/job")
+        write(directory / "accepted.json", record | {"status": "ACCEPTED", "readOnlyDrain": True})
+    else:
+        record.update(status="SUBMISSION_STARTED", uploadAttempts=1)
+        write(directory / "attempt.json", record)
+        if record_path: write(record_path, record)
+        response = client.request("POST", "/api/upload", fixture.parent, "upload", fixture=fixture,
+                                  project_name="pt8a-" + os.environ["GITHUB_RUN_ID"])
+        mark_upload(record, response)
+        write(directory / "accepted.json", record)
+        if record_path: write(record_path, record)
     started, terminal, last_job = clock(), None, None
     while clock() - started < 540:
         polled = client.request("GET", "/api/analysis/jobs/" + record["jobId"], fixture.parent, "poll-" + str(time.time_ns()))
@@ -1016,7 +1335,9 @@ def observe(client, fixture, directory, record, documents, pod, clock=time.monot
             raise ValueError("accepted job inaccessible; no new owner or resubmission")
         wait(5)
     if terminal is None:
-        record.update(status="NOT_PASS", observation="TERMINAL_NOT_OBSERVED", censoredObservationMs=round((clock()-started)*1000))
+        record.update(status="NOT_PASS", observation="TERMINAL_NOT_OBSERVED")
+        duration_key = "drainCensoredObservationMs" if resume_accepted else "censoredObservationMs"
+        record[duration_key] = round((clock()-started)*1000)
         if diagnostic and last_job is not None:
             write(directory / "job.json", sanitized_job(last_job))
             write(directory / "retrieval.json", retrieval_evidence(record["jobId"], record["acceptedAt"], documents))
@@ -1072,12 +1393,175 @@ def seal(output):
     write(output / "inventory.json", {"files": files, "embeddingVectors": False, "credentials": False, "officialImageBytes": False})
 
 
+def recovery_output(**values):
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
+            for key,value in values.items(): stream.write(f"{key}={str(value).lower()}\n")
+
+
+def recovery_cli(args, request, source, image):
+    if os.environ.get("OPERATION") != RECOVERY_OPERATION:
+        raise ValueError("recovery campaign requires its isolated workflow operation")
+    authority = recovery_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+    run_id = int(os.environ["GITHUB_RUN_ID"])
+    cache = Path(os.environ["RUNNER_TEMP"]) / "pt8a-recovery-resume.json"
+    with tempfile.TemporaryDirectory(prefix="pt8a-recovery-private-") as d:
+        private = Path(d)
+        if args.action == "preflight":
+            origins = recovery_originals(private)
+            receipt, origin, failed = corrective_origins(private)
+            history = recovery_history(request, source, image, run_id, private)
+            binding = recovery_binding(request, source, image, run_id, history["ownerRunId"])
+            write(cache, history | {"binding": binding, "originalObservations": origins})
+            start = args.output / "start"
+            write(start / "binding.json", binding)
+            write(start / "campaign.json", {"originalObservations": origins,
+                "clean": origin, "failedReadiness": failed, "states": {c: recovery_checkpoint(history["records"][c], c)
+                    if c in history["records"] else "NOT_RUN" for c in CASES},
+                "provenNoPostPreflightFailures": history["provenNoPostPreflightFailures"],
+                "automaticResubmission": False, "semanticAcceptance": "NOT_ESTABLISHED"})
+            seal(start)
+            with open(os.environ["GITHUB_ENV"], "a") as stream:
+                stream.write(f"PT8A_RECOVERY_OWNER_RUN_ID={history['ownerRunId']}\n")
+            return
+        state = json.loads(cache.read_text())
+        if state["binding"] != recovery_binding(request, source, image, run_id, state["ownerRunId"]):
+            raise ValueError("local resume state differs from authenticated campaign binding")
+        if args.action == "checkpoint":
+            output = args.output / args.case_id[-1]
+            seal(output)
+            data = {p.relative_to(output).as_posix(): json.loads(p.read_text()) for p in output.rglob("*.json")}
+            try: outcome = recovery_checkpoint(data, args.case_id)
+            except (KeyError, ValueError): outcome = "BLOCKED"
+            data["record.json"]["campaignState"] = outcome
+            write(output / "record.json", data["record.json"]); seal(output)
+            state["records"][args.case_id] = data
+            write(cache, state)
+            recovery_output(proceed=outcome == "PRODUCT_REVIEW_REQUIRED", checkpoint=True)
+            return
+        if args.action == "finish":
+            rows = []
+            for c in CASES:
+                try: outcome = recovery_checkpoint(state["records"][c], c) if c in state["records"] else "NOT_RUN"
+                except (KeyError, ValueError): outcome = "BLOCKED"
+                rows.append({"caseId": c, "state": outcome,
+                    "observation": state["records"][c]["record.json"] if c in state["records"] else None,
+                    "originalArtifact": state["references"].get(c)})
+            done = all(r["state"] == "PRODUCT_REVIEW_REQUIRED" for r in rows)
+            summary = args.output / "summary"
+            write(summary / "binding.json", state["binding"])
+            write(summary / "ledger.json", rows)
+            write(summary / "summary.json", {"outcome": "EVIDENCE_COLLECTED_AWAITING_INDEPENDENT_REVIEW" if done else "BLOCKED_OR_INCOMPLETE",
+                "originalObservations": state["originalObservations"], "semanticAcceptance": "NOT_ESTABLISHED",
+                "provenNoPostPreflightFailures": state["provenNoPostPreflightFailures"],
+                "requiredIndependentDimensions": SCORING, "automaticResubmission": False,
+                "uploadsUsed": sum(d["record.json"].get("uploadAttempts", 0) for d in state["records"].values()),
+                "modelCallBudgetAccounting": "CONSERVATIVE_RESERVATION_NOT_OBSERVED_OR_BILLED_USAGE",
+                "rates": None})
+            seal(summary)
+            if not done: raise ValueError("recovery campaign incomplete; preserve checkpoints and stop")
+            return
+        if args.action != "run" or args.case_id not in CASES:
+            raise ValueError("one recovery case step required")
+        case = args.case_id
+        previous = state["records"].get(case)
+        previous_state = recovery_checkpoint(previous, case) if previous else "NOT_RUN"
+        if previous_state == "PRODUCT_REVIEW_REQUIRED":
+            recovery_output(proceed=True, checkpoint=False)  # Reuse evidence, never claim semantic PASS.
+            return
+        if previous_state in ("BLOCKED", "TECHNICAL_FAILURE") or previous and previous["record.json"].get("readOnlyDrain"):
+            recovery_output(proceed=False, checkpoint=False)
+            return  # Unknown 429/cause never authorizes another POST.
+        if state["jobDeadlineEpochSeconds"] - time.time() < 540:
+            raise ValueError("insufficient approved workflow observation time; no new upload/drain")
+        if any(c not in state["records"] or recovery_checkpoint(state["records"][c], c) != "PRODUCT_REVIEW_REQUIRED"
+               for c in CASES[:CASES.index(case)]):
+            raise ValueError("recovery predecessor unresolved; no overlapping accepted jobs")
+        runtime = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
+        writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
+        if (sorted(r["id"] for r in runtime) != state["runtimeRunIds"]
+                or sorted(r["id"] for r in writes) != state["ingestionRunIds"]):
+            raise ValueError("GitHub execution/writer history changed before case; no inference")
+        release = json.loads((Path(os.environ["RUNNER_TEMP"]) / "pt8a-release.json").read_text())
+        corrective_release(release, source, image)
+        if (release.get("modelLocation") != request["liveBounds"]["modelLocation"]
+                or release.get("modelProject") != "terraformers-platform"):
+            raise ValueError("live request model project/location differs from approved readback")
+        draining = previous_state == "RUNNING"
+        record = json.loads(json.dumps(previous["record.json"])) if draining else {
+            "caseId": case, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False,
+            "submissionBoundary": "NOT_ENTERED", "modelCalls": 0}
+        if draining:
+            record.update(readOnlyDrain=True, originalObservation=state["references"][case])
+        else:
+            if previous:
+                record["priorZeroPostFailure"] = state["references"][case]
+            uploads = 1 + sum(d["record.json"].get("uploadAttempts", 0) for d in state["records"].values())
+            if uploads > request["liveBounds"]["maxUploads"] or MODEL_CALL_RESERVATION * uploads > request["liveBounds"]["maxModelCalls"]:
+                raise ValueError("approved upload/model-call reservation budget exhausted; no inference")
+        output = args.output / case[-1]
+        output.mkdir(parents=True, exist_ok=False)
+        write(output / "binding.json", state["binding"] | {"caseId": case})
+        write(output / "release.json", release)
+        write(output / "record.json", record)
+        client = None
+        try:
+            receipt, origin, _ = corrective_origins(private)
+            manifest, schema, documents, checksum = rag.load_corpus(args.corpus)
+            rag.validate_pt8a_clean_corpus(manifest, documents, checksum,
+                json.loads((args.corpus / "coverage-report.json").read_text()))
+            def scan():
+                return risk_qualified_admission(rag.JsonHttpClient("http://127.0.0.1:19200"),
+                    manifest, schema, documents, checksum, receipt, origin, authority)
+            write(output / "readiness.json", scan())
+            acquisition = next(c for c in frozen_inputs() if c["caseId"] == case)
+            write(output / "input-identity.json", acquisition)
+            if draining:
+                fixture = private / "input.png"  # Scratch path only; no image fetch or POST in a drain.
+            else:
+                fixture = acquire(acquisition, private)
+            # Recheck mutable authority/main immediately before any upload or owner-scoped drain.
+            recovery_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+            subprocess.run(["bash", "scripts/smoke/ephemeral-jwks-fixture.sh", "prepare"], check=True,
+                env=os.environ | {"IDENTITY_RUN_ID": str(state["ownerRunId"])})
+            client = transport.CurlClient(Path(os.environ["RUNNER_TEMP"]) / "case-c-access.token")
+            if not draining:
+                record.update(submissionBoundary="ENTERED", modelCalls=None)
+                write(output / "record.json", record)  # Journal before any possible POST.
+            observe(client, fixture, output / "observation", record, documents, "terraformers-pt8a-validation",
+                    diagnostic=True, resume_accepted=draining, record_path=output / "record.json")
+            write(output / "post-admission.json", scan())
+        except Exception as error:
+            write(output / "error.json", {"class": type(error).__name__, "reason": str(error)[:300]})
+        finally:
+            if client: client.close()
+            if record.get("submissionBoundary") == "NOT_ENTERED" and record.get("uploadAttempts") == 0:
+                record["status"] = "PROVEN_NO_POST"
+            # JWKS restore and cleanup receipt are performed by the existing workflow EXIT trap.
+            record["campaignState"] = "BLOCKED"
+            write(output / "record.json", record)
+            seal(output)
+            data = {p.relative_to(output).as_posix(): json.loads(p.read_text()) for p in output.rglob("*.json")}
+            # A preliminary state cannot authorize the next step. The workflow records actual
+            # cleanup, then invokes checkpoint to bind it before setting proceed=true.
+            try: outcome = recovery_checkpoint(data, case, require_cleanup=False)
+            except (KeyError, ValueError): outcome = "BLOCKED"
+            record["campaignState"] = outcome
+            write(output / "record.json", record); seal(output)
+            data["record.json"] = record
+            state["records"][case] = data
+            state["references"][case] = {"runId": run_id, "caseId": case, "artifactName": f"pt8a-recovery-{run_id}-{case[-1]}"}
+            write(cache, state)
+            recovery_output(proceed=False, checkpoint=True)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("verify", "preflight", "run", "inventory"))
+    parser.add_argument("action", choices=("verify", "preflight", "run", "inventory", "finish", "checkpoint"))
     parser.add_argument("--output", type=Path)
     parser.add_argument("--corpus", type=Path)
     parser.add_argument("--request-file", type=Path)
+    parser.add_argument("--case-id", choices=CASES)
     args = parser.parse_args()
     frozen_inputs()
     if args.action == "verify":
@@ -1087,6 +1571,10 @@ def main():
         seal(args.output); return
     request = json.loads(args.request_file.read_text())
     source, image = os.environ["GITHUB_SHA"], os.environ["BACKEND_IMAGE"]
+    if request.get("mode") == RECOVERY_MODE:
+        return recovery_cli(args, request, source, image)
+    if args.action in ("finish", "checkpoint"):
+        raise ValueError("finish/checkpoint is restricted to the separate recovery campaign")
     corrective = request.get("mode") == CORRECTIVE_MODE
     qualified = request.get("mode") == QUALIFIED_MODE
     diagnostic = request.get("mode") == DIAGNOSTIC_MODE
@@ -1118,7 +1606,7 @@ def main():
             with tempfile.TemporaryDirectory(prefix="pt8a-origin-") as directory:
                 corrective_origins(Path(directory))
     else:
-        if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION, DIAGNOSTIC_OPERATION):
+        if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION, DIAGNOSTIC_OPERATION, RECOVERY_OPERATION):
             raise ValueError("qualified/corrective operation cannot execute ordinary readiness or official cases")
         request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
         ensure_latest_dispatch(request, source, int(os.environ["GITHUB_RUN_ID"]))

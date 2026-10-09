@@ -145,8 +145,9 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
         } catch (RuntimeException exception) {
             RuntimeException failure = providerCallFailure(exception);
             log.warn("Vertex provider call stage={} compact={} outcome=failure finishReason=UNAVAILABLE "
-                            + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={}",
-                    stage, compact, failure.getClass().getSimpleName());
+                            + "outputTokens=unknown thinkingTokens=unknown totalTokens=unknown errorClass={} upstreamHttpStatus={}",
+                    stage, compact, failure.getClass().getSimpleName(),
+                    ProviderFailureClassifier.upstreamHttpStatus(exception));
             throw failure;
         }
         Integer outputTokens = response.usageMetadata()

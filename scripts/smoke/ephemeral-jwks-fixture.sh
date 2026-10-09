@@ -72,6 +72,14 @@ if [[ "$OPERATION" == pt2-realistic-continuation ]]; then
     echo 'PT-2 continuation requires the exact original fixture owner.' >&2
     exit 1
   }
+elif [[ "$OPERATION" == pt8a-recovery-campaign ]]; then
+  # Preflight derives this owner from authenticated same-candidate campaign artifacts.
+  # It cannot select another user's job, an old PT-2 owner, or an arbitrary override.
+  [[ "${PT8A_RECOVERY_OWNER_RUN_ID:-}" =~ ^[0-9]+$ &&
+     "$identity_run_id" == "$PT8A_RECOVERY_OWNER_RUN_ID" ]] || {
+    echo 'Recovery fixture owner must equal the admitted original campaign run.' >&2
+    exit 1
+  }
 elif [[ "$identity_run_id" != "$GITHUB_RUN_ID" ]]; then
   echo 'Fixture owner override is restricted to the bound PT-2 continuation operation.' >&2
   exit 1

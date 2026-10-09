@@ -9,6 +9,42 @@
   "activeWorkPackage": "product-trust-pt-8a-official-deployed-acceptance-v1",
   "activePullRequest": null,
   "humanGate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE",
+  "pendingRecovery": {
+    "workPackage": ".agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml",
+    "decisionBrief": "docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md",
+    "status": "AWAITING_APPROVAL",
+    "humanGate": "PT8A_AUTONOMOUS_RECOVERY_POLICY_AND_WORK_PACKAGE_APPROVAL",
+    "preparationExecutionBaseSha": "c789d433f13da744e14c6a6f31db2d4fd3cf1d74",
+    "preparationAuthorized": true,
+    "implementationAuthorized": false,
+    "liveExecutionAuthorized": false,
+    "approvedProgramAndActiveWorkPackageUnchanged": true,
+    "originalCaseA": {
+      "runId": 37783345572,
+      "artifactId": 11552729185,
+      "independentReviewId": 6060977646,
+      "disposition": "REJECTED_NOT_PASS_CONSUMED"
+    },
+    "originalDiagnosticCaseB": {
+      "runId": 37911522774,
+      "artifactId": 11606947643,
+      "artifactDigest": "sha256:289519752b3e3f0fc07d4f12dd1717fa306845d59a6a6aa5e93f559e00443ba7",
+      "independentReviewId": 6078438584,
+      "disposition": "TECHNICAL_FAILURE_NOT_PASS_CONSUMED",
+      "upstreamHttpStatus": null,
+      "quotaOrCapacityCause": "UNPROVEN",
+      "semanticQuality": "NOT_OBSERVED"
+    },
+    "originalDiagnosticCasesCToE": "NOT_RUN",
+    "earlierDiagnosticApprovalNotRecoveryAuthority": 6078152582,
+    "newRecoveryCampaignStarted": false,
+    "singleCandidateAEComplete": false,
+    "aggregateQualityRates": null,
+    "proposedRepositoryRepairLimit": 3,
+    "proposedRepairLimitAuthorized": false,
+    "historicalRepairCountersReset": false,
+    "resumeAction": "Obtain consolidated policy/Work Package decision, then implement on the same PR only if bound main is unchanged; no live execution before later exact authority."
+  },
   "liveRuntime": {
     "status": "ACTIVE_RETAINED",
     "reason": "Retain the expensive recreated representative GCP runtime until the realistic product baseline and any explicitly approved live-dependent proof are complete.",

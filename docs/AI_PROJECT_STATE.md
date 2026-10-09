@@ -12,6 +12,34 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
+- Current task: **PT-8A autonomous recovery root-cause/contract preparation**, bound to
+  `c789d433f13da744e14c6a6f31db2d4fd3cf1d74` under the USER's 2026-10-09 absent-user request.
+  [Decision/evidence and resume point](evaluation/product-trust-pt-8a-autonomous-recovery-decision.md),
+  [one proposed integrated Work Package](../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml).
+  Status **AWAITING_APPROVAL**; new production/workflow implementation and live authority are false.
+- GitHub supersedes the historical preparation snapshots below: PR #263 and #264 are merged.
+  Original A run/artifact **37783345572/11552729185**, review **6060977646**, remains independently
+  REJECTED / NOT_PASS / consumed. Diagnostic B **37911522774/11606947643**, review **6078438584**,
+  remains an acknowledged technical failure / NOT_PASS / consumed, with no HCL/CLI or semantic
+  result. C–E are NOT_RUN. Earlier diagnostic live approval **6078152582** is not Recovery authority.
+- B archive digest and all 20 original inventory members verify. Facts/initial generation STOP,
+  retrieval 10+9 and closure success precede repair PROVIDER_RATE_LIMITED; actual upstream HTTP
+  code, quota/capacity cause and repair token usage are unproven. Existing offline provider tests:
+  **40 PASS**, no classifier defect demonstrated. No blind retry, prompt tuning or corpus rebuild.
+- A parent dispatching the same workflow while holding its whole-run concurrency lock can
+  deadlock. Proposed automation uses the existing protected job with serial case/artifact steps,
+  retaining the USER environment gate; no child dispatch, PAT or Actions write is needed for that
+  design. Technical progression/final-review separation, budgets, candidate binding and proposed
+  new repair limit 3 require one consolidated USER policy decision, not inference from absence.
+- Approved Program/active historical Work Package, auto repair 1/1, Policy D, frozen candidate,
+  original v2/v3/diagnostic once-only guards and all earlier evidence remain unchanged. This PR
+  records only the pending proposal; no transient PR/branch lifecycle enters durable state.
+  Stop at **HUMAN_REQUIRED: PT8A_AUTONOMOUS_RECOVERY_POLICY_AND_WORK_PACKAGE_APPROVAL**.
+  Continue the same PR after decision if main is unchanged, then independent review/USER merge
+  and separately bound live/model/cost authority. A–E recovery goal is NOT COMPLETE.
+
+### Historical v3-qualified case-chain preparation checkpoint
+
 - Current task: **PT-8A v3-qualified official-case chain**, repository-only, bound once to
   `c9caeafd900b8310eae8ead467b20f8e358599db` under [USER decision 6058612980](https://github.com/siamese-lang/terraformers-platform/pull/260#issuecomment-6058612980).
   This closes the source/procedure connection blocker before any new backend release or sole

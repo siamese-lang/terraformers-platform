@@ -1,0 +1,162 @@
+work_package:
+  id: product-trust-pt-8a-autonomous-recovery-v1
+  program: product-trust-v1
+  phase: PT-8A
+  status: AWAITING_APPROVAL
+  kind: integrated_recovery_decision_then_repository_implementation_then_separately_gated_live_campaign
+  approved_base_sha: c789d433f13da744e14c6a6f31db2d4fd3cf1d74
+  execution_base_sha: c789d433f13da744e14c6a6f31db2d4fd3cf1d74
+  authority:
+    preparation_authorized: true
+    preparation_request: USER_2026_10_09_PT8A_A_E_Autonomous_Recovery_and_absent_user_instructions
+    request_attachment_sha256: 40ac59f730f866b61116b6fd15d5d872b0effaef8fb27304b0099db166471074
+    implementation_authorized: false
+    policy_approval_comment_id: null
+    independent_acceptance_comment_id: null
+    live_execution_authorized: false
+    earlier_diagnostic_approval_not_recovery_authority: 6078152582
+  activation:
+    main_reads_at_preparation_activation: 1
+    later_main_reads: drift_checks_only
+    refresh_rebase_rebind: prohibited
+    implementation: require_explicit_USER_policy_approval_and_unchanged_bound_main_continue_same_PR
+    subsequent_main_drift: HUMAN_REQUIRED_MAIN_DRIFT
+  improvement_axes: [AI_RAG_evaluation_and_targeted_improvement, observability_based_on_real_failure_diagnosis]
+  representative_case: existing_Case_A_AI_RAG_quality_with_Case_B_provider_termination_evidence
+  objective: >
+    Prepare and, only after decision approval, implement one resumable A-E measurement campaign
+    for one immutable backend candidate. Retain every natural observation and separately report
+    semantic quality, technical failures and final independent acceptance. This preparation
+    neither activates a replacement campaign nor replenishes original A/B attempt budgets.
+  decision_brief: docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md
+  current_human_gate: PT8A_AUTONOMOUS_RECOVERY_POLICY_AND_WORK_PACKAGE_APPROVAL
+  original_contract:
+    work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
+    auto_repairs_used: 1
+    auto_repair_limit: 1
+    counters_and_authority_unchanged: true
+    v2_procedure_sha256: d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823
+    v3_procedure_sha256: 29e1b9915448a3d8fedffd2661cd95c7d4e0d314afcd88a16d84c3dca548c268
+    diagnostic_contract_sha256: a7c445c6f18935e75f499ac36f360e6223893dcabe42c2f494108aa6deecd059
+    case_A: {run: 37783345572, artifact: 11552729185, review: 6060977646, disposition: REJECTED_NOT_PASS_CONSUMED}
+    case_B: {run: 37911522774, artifact: 11606947643, review: 6078438584, disposition: TECHNICAL_FAILURE_NOT_PASS_CONSUMED}
+    original_diagnostic_C_D_E: NOT_RUN
+  frozen_input:
+    dataset: terraformers-aws-official-v1
+    revision: 2
+    identity: 3e105771401051e0b199d8f79b3b993b161f27a03beeb0fb2d223f460d9a0757
+    order: [aws-official-a, aws-official-b, aws-official-c, aws-official-d, aws-official-e]
+    images_truth_URLs_hashes_dimensions: immutable
+    truth_in_model_request_or_corpus: prohibited
+  allowed_paths:
+    - .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
+    - .agents/state/product-trust-v1.json
+    - docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+  allowed_actions:
+    - read_authoritative_GitHub_reviews_runs_artifacts_logs_permissions_environment_and_ruleset
+    - read_existing_production_code_SDK_and_contracts
+    - run_existing_focused_offline_provider_regressions_and_repository_metadata_checks
+    - prepare_commit_push_one_integrated_PR_and_observe_normal_PR_CI
+  proposed_implementation_paths_after_USER_decision:
+    - scripts/evaluation/pt8a-official-acceptance.py
+    - scripts/evaluation/test_pt8a_official_acceptance.py
+    - .github/workflows/gcp-target-runtime-dependencies.yml
+    - backend/src/main/java/com/terraformers/modernization/analysis/ProviderFailureClassifier.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/VertexGenerationStage.java
+    - backend/src/main/java/com/terraformers/modernization/reference/VertexArchitectureFactsExtractor.java
+    - existing_corresponding_provider_tests
+    - allowed_paths_of_this_preparation
+    - .agents/programs/product-trust-v1.yml
+  proposed_design_not_executable:
+    operation: separate_recovery_campaign_mode_in_existing_runtime_workflow_and_observer
+    execution: one_existing_protected_job_serial_A_E_with_per_case_artifact_checkpoints
+    child_workflow_dispatch: not_required
+    new_workflow_controller_service_PAT_or_verifier: prohibited
+    review_policy: automated_technical_evidence_gate_then_final_independent_ten_dimension_review
+    original_v2_v3_and_diagnostic_modes: unchanged
+    production_correction: none_selected_without_supported_cause_and_USER_decision
+    optional_observability: typed_HTTP_status_and_stage_metadata_only_after_scope_approval_no_raw_exception_payload
+    campaign_identity: new_explicitly_approved_identity_not_original_acceptance_or_diagnostic_campaign
+    ledger: reuse_existing_GitHub_Run_Artifact_and_per_case_observation_json
+    states: [NOT_RUN, RUNNING, TECHNICAL_FAILURE, PRODUCT_REVIEW_REQUIRED, PRODUCT_DEFECT, REVIEWED_PASS, RECOVERY_AUTHORIZED, BLOCKED]
+    state_authority: technical_states_from_original_evidence_quality_states_only_from_independent_review
+    resume: earliest_unresolved_case_of_same_candidate_never_restart_A_or_rewrite_prior_observations
+    accepted_nonterminal_job: bound_owner_scoped_read_only_observation_no_fresh_upload
+    ambiguous_POST_or_missing_attempt_evidence: BLOCKED_no_resubmission
+    technical_failure_recovery: requires_confirmed_allowlisted_cause_and_explicit_campaign_budget_not_SDK_retry
+    product_failure: retain_no_result_driven_retry_or_best_of_N_selection
+    candidate_change: new_identity_no_cross_candidate_PASS_promotion
+    release_identity: USER_decision_required_on_control_source_vs_backend_build_source_separation
+  preserved_production_policy_D:
+    facts_timeout_ms: 370000
+    generation_compact_repair_timeout_ms: 220000
+    embedding_timeout_ms: 10000
+    SDK_attempts: 1
+    SDK_retryable_HTTP_statuses: []
+    durable_job_attempts: 1
+    original_accepted_age_cutoff_ms: 480000
+    MAX_TOKENS_initial_compact_fallback: preserved
+    closure_repair: single_attempt_no_second_cycle
+    finalization_fencing_sweep_cleanup_postcommit_publication: preserved
+  retained_corpus:
+    index: terraformers-reference-v4
+    index_uuid: L8KKBHT1Qri3E2VVw7As2g
+    documents: 5395
+    model: gemini-embedding-2
+    dimension: 1536
+    checksum: da410626b80d8624e93c8a8da81206a2ed8da1b06086a75279d5646b068bd66a
+    origin_run: 37710171426
+    origin_artifact: 11522067032
+    reuse: existing_read_only_risk_qualified_admission
+    vector_write_continuity: VECTOR_WRITE_CONTINUITY_UNPROVEN
+    ingestion_reembedding_index_write: prohibited
+  decisions_required_before_implementation_or_live:
+    - approve_distinct_campaign_and_automated_technical_progress_gate_without_changing_original_review_rules
+    - approve_new_repository_only_corrective_iteration_limit_3_with_no_old_counter_reset
+    - choose_no_production_change_or_narrow_typed_provider_failure_telemetry_scope
+    - choose_explicit_candidate_binding_policy_existing_image_reuse_only_with_verified_unchanged_backend_build_inputs
+    - approve_cause_allowlist_recovery_attempt_ceiling_total_upload_provider_call_cost_and_workflow_wallclock_budgets
+  proposed_live_bounds:
+    initial_uploads_per_case_proposed: 1
+    additional_recovery_uploads_per_case: null
+    maximum_total_uploads: null
+    maximum_provider_calls: null
+    cost_ceiling: null
+    workflow_wallclock_limit_minutes: null
+    actual_model_region_binding: null
+    live_source_and_image_binding: bind_actual_reviewed_values_after_implementation_not_predicted
+    missing_numeric_or_live_authority: STOP_no_default_invented
+  acceptance_criteria:
+    - original_A_B_reviews_artifacts_consumption_and_historical_counters_remain_exact
+    - frozen_truth_and_v2_v3_original_guards_remain_unchanged
+    - no_claim_of_HTTP_429_quota_or_shared_capacity_cause_without_typed_evidence
+    - no_SDK_job_timeout_retry_policy_change_without_separate_explicit_authority
+    - proposed_authority_and_budgets_remain_unapproved_with_exact_same_PR_resume_point
+    - current_Program_and_active_Work_Package_remain_byte_identical
+    - changed_metadata_parses_links_scope_and_diff_checks_pass
+    - normal_PR_CI_is_recorded_without_manual_rerun_or_Product_Trust_acceptance_claim
+  proposed_campaign_acceptance_criteria_after_USER_decision:
+    - one_campaign_candidate_has_all_five_case_observations_or_explicit_unmet_dimensions_never_fabricated_PASS
+    - each_draft_has_real_pinned_Terraform_CLI_and_preserved_original_job_result_quality_evidence
+    - resume_uses_GitHub_durable_evidence_no_duplicate_or_ambiguous_upload
+    - no_user_signature_forgery_or_protected_environment_bypass
+    - final_independent_review_is_required_CI_or_technical_gate_is_not_Product_Trust_acceptance
+  auto_repair_limit: 1
+  auto_repairs_used: 0
+  proposed_implementation_auto_repair_limit: 3
+  proposed_limit_authorized: false
+  stop_on:
+    - implementation_needed_before_USER_policy_decision
+    - new_failure_class_or_scope_architecture_security_IAM_or_budget_change
+    - missing_or_exhausted_explicit_live_authority
+    - ambiguous_ACCEPTED_state_or_incomplete_durable_evidence
+    - unsupported_provider_cause_recovery_or_result_driven_resubmission
+    - main_drift_from_bound_execution_base
+    - independent_review_USER_merge_and_each_actual_live_gate
+  prohibited_actions:
+    - any_model_embedding_case_readiness_dispatch_publication_rollout_or_GCP_runtime_operation
+    - production_workflow_runner_prompt_retrieval_scoring_or_approved_Program_policy_changes
+    - historical_A_B_rerun_artifact_reissue_or_counter_reset
+    - self_accept_merge_IAM_ruleset_environment_settings_or_teardown

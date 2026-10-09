@@ -2,6 +2,21 @@
 
 ## Status
 
+Current: **PT-8A autonomous recovery preparation / AWAITING_APPROVAL**, bound to
+`c789d433f13da744e14c6a6f31db2d4fd3cf1d74`. [Decision and exact resume point](../../evaluation/product-trust-pt-8a-autonomous-recovery-decision.md)
+and [one proposed Work Package](../../../.agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml)
+retain original A REJECTED/consumed and diagnostic B technical failure/consumed; C–E NOT_RUN.
+B repair's actual HTTP/quota cause remains unproven; existing provider regressions 40 PASS.
+No production or executable automation changes are authorized by this preparation. The proposed
+single existing protected-job sequence avoids nested-dispatch concurrency deadlock and repeated
+child environment gates; technical-progress/final-review policy, candidate/budgets and the new
+repair limit require consolidated USER approval. Approved Program and historical counters stay
+unchanged. Stop **HUMAN_REQUIRED: PT8A_AUTONOMOUS_RECOVERY_POLICY_AND_WORK_PACKAGE_APPROVAL**;
+resume this same PR from the bound base after decision, then review/merge and exact live approval.
+No A–E final fixed-candidate success or live action is claimed.
+
+### Historical v3-qualified case-chain preparation checkpoint
+
 Current: **PT-8A v3-qualified official-case chain, repository implementation pending independent acceptance**.
 Bound base `c9caeafd900b8310eae8ead467b20f8e358599db`; [USER decision 6058612980](https://github.com/siamese-lang/terraformers-platform/pull/260#issuecomment-6058612980).
 PR #260 recovery is independently accepted/USER-merged with the separately authorized case-entry

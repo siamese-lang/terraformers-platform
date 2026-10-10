@@ -17,6 +17,99 @@ class GeneratedTerraformContractInspectorTest {
     private final GeneratedTerraformContractInspector inspector = new GeneratedTerraformContractInspector(catalog);
 
     @Test
+    void detectsPendingCertificateConsumerDespiteSchemaValidityAndUnrelatedValidation() {
+        String draft = pendingCertificateDraft();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft)).isTrue();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft.replace("pending", "renamed"))).isTrue();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft.replace("\"DNS\"", "\"EMAIL\""))).isTrue();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft + validationWait())).isTrue();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft.replace(
+                "viewer_certificate {", "depends_on = [aws_acm_certificate_validation.other]\n viewer_certificate {")
+                + validationWait().replace("pending.arn", "unrelated.arn").replace("\"issued\"", "\"other\""))).isTrue();
+        String alias = "locals { requested = aws_acm_certificate.pending.arn }\n";
+        assertThat(inspector.missingCloudFrontCertificateValidation(alias + draft.replace(
+                "acm_certificate_arn = aws_acm_certificate.pending.arn", "acm_certificate_arn = local.requested"))).isTrue();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft.replace(
+                "acm_certificate_arn = aws_acm_certificate.pending.arn",
+                "acm_certificate_arn = \"${aws_acm_certificate.pending.arn}\""))).isTrue();
+    }
+
+    @Test
+    void acceptsMatchingValidationDependencyAndIssuedExternalBoundaries() {
+        String draft = pendingCertificateDraft();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft.replace(
+                "aws_acm_certificate.pending.arn", "aws_acm_certificate_validation.issued.certificate_arn")
+                + validationWait())).isFalse();
+        String ordered = draft.replace("viewer_certificate {",
+                "depends_on = [aws_acm_certificate_validation.issued]\n viewer_certificate {") + validationWait();
+        assertThat(inspector.missingCloudFrontCertificateValidation(ordered)).isFalse();
+        String transitive = ordered.replace("depends_on = [aws_acm_certificate_validation.issued]",
+                "depends_on = [aws_route53_record.validation_barrier]") + """
+                resource "aws_route53_record" "validation_barrier" {
+                  depends_on = [aws_acm_certificate_validation.issued]
+                  name = var.domain
+                }
+                """;
+        assertThat(inspector.missingCloudFrontCertificateValidation(transitive)).isFalse();
+        String implicit = ordered.replace("depends_on = [aws_acm_certificate_validation.issued]",
+                "comment = local.issued_certificate")
+                + "locals { issued_certificate = aws_acm_certificate_validation.issued.certificate_arn }";
+        assertThat(inspector.missingCloudFrontCertificateValidation(implicit)).isFalse();
+        // External DNS can supply validation_record_fqdns; no Route 53 template is forced.
+        for (String arn : List.of("var.issued_certificate_arn", "data.aws_acm_certificate.existing.arn")) {
+            assertThat(inspector.missingCloudFrontCertificateValidation(draft.replace(
+                    "acm_certificate_arn = aws_acm_certificate.pending.arn", "acm_certificate_arn = " + arn))).isFalse();
+        }
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft + """
+                import {
+                  to = aws_acm_certificate.pending
+                  id = var.existing_issued_certificate_arn
+                }
+                """)).isFalse();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft.replace(
+                "validation_method = \"DNS\"", "certificate_body = var.imported_certificate_body"))).isFalse();
+    }
+
+    @Test
+    void ignoresCommentAndStringLookalikesAndFindsEachPendingConsumer() {
+        String draft = pendingCertificateDraft();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft + """
+                # depends_on = [aws_acm_certificate_validation.issued]
+                locals {
+                  example = "aws_acm_certificate_validation.issued"
+                }
+                """ + validationWait())).isTrue();
+        assertThat(inspector.missingCloudFrontCertificateValidation("# " + draft.replace("\n", "\n# "))).isFalse();
+        String valid = draft.replace("aws_acm_certificate.pending.arn", "var.issued_certificate_arn");
+        assertThat(inspector.missingCloudFrontCertificateValidation(valid + draft.replace(
+                "\"edge\"", "\"other_edge\"").replace("pending", "other_pending"))).isTrue();
+    }
+
+    private String pendingCertificateDraft() {
+        return """
+                resource "aws_acm_certificate" "pending" {
+                  domain_name = var.domain
+                  validation_method = "DNS"
+                }
+                resource "aws_cloudfront_distribution" "edge" {
+                  viewer_certificate {
+                    acm_certificate_arn = aws_acm_certificate.pending.arn
+                    ssl_support_method = "sni-only"
+                  }
+                }
+                """;
+    }
+
+    private String validationWait() {
+        return """
+                resource "aws_acm_certificate_validation" "issued" {
+                  certificate_arn = aws_acm_certificate.pending.arn
+                  validation_record_fqdns = var.externally_managed_validation_fqdns
+                }
+                """;
+    }
+
+    @Test
     void detectsOmissionAcrossNamesInterpolationAndMultipleOrigins() throws Exception {
         String draft = originDraft();
         assertThat(inspector.missingCloudFrontS3Authorization(draft)).isTrue();

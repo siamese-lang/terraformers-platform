@@ -12,64 +12,50 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
-- Current atomic task is USER-authorized PT-8A continuation after PR #267 merge, bound once to
-  authoritative main `d1d92c7521addd3473b641f49c411f512cec08b2`. PR #267's independent review
-  [6084964588](https://github.com/siamese-lang/terraformers-platform/pull/267#issuecomment-6084964588)
-  accepts the diagnostics implementation only; product timeout resolution and E2E remain unproven.
-  Its reviewed tree and merged tree are identical. Existing SDK/log/offline checks are reused.
-- No proven product defect warrants changing Policy D, model, thinking, prompt or retrieval.
-  Earlier instrumented fact-reuse evidence also found long text-only response waits with one HTTP
-  exchange and comparable token counts. It does not establish the cause of the current A timeout.
-  The existing comparison runner is not production-equivalent (different request/retry contracts,
-  no complete RAG/closure/real CLI/persisted path). A simple synthetic smoke would not validate A.
-- Repository-only implementation therefore prepares **one independent full-path generation
-  diagnostic**, using the existing protected `pt8a-diagnostic-case` job and existing observer.
-  Request mode is `generation-diagnostic`, case `aws-official-a`; purpose is
-  `PT8A_SINGLE_GENERATION_DIAGNOSTIC_NOT_ACCEPTANCE`. This is a proposed fresh observation of
-  the same frozen input, explicitly NOT a resume/retry or acceptance promotion of consumed A.
-  Original A/B records, timeout artifact, frozen truth/procedures and all old repair counters remain
-  unchanged. No backend or production configuration changes are made.
-- The procedure is the canonical JSON `GENERATION_DIAGNOSTIC_CONTRACT` in
-  [the existing observer](../scripts/evaluation/pt8a-official-acceptance.py), SHA-256
-  `03cee0a6811def41044fc622b2faecb640c13563c2ecf1e8d8a3b29ad5e45c5d`.
-  Proposed incremental inference budget: **one upload, six reserved model calls including up to
-  two embeddings, one dispatch/attempt across all sources and approvals, 35-minute workflow,
-  540-second accepted-job observation**. Policy D remains 370/220/10s, SDK and durable attempts 1,
-  original accepted-age cutoff 8 minutes; initial MAX_TOKENS fallback and single repair remain.
-  These are call/time cost bounds, not a quoted dollar price or a claim that aborted upstream
-  inference is free. No retry or automatic budget expansion, even after a preflight failure.
-- This one observation discriminates a current SDK transport/deadline failure from a recorded
-  numeric provider HTTP error when available, or demonstrates a completed draft on this input.
-  It cannot retroactively recover the original exception or distinguish provider scheduling from
-  compute without corresponding evidence. A completed draft still needs independent comparison
-  against all ten frozen semantic/technical/trust dimensions; one successful call is not a
-  reliability or five-case acceptance claim. Every outcome stops for review, B-E remain unexecuted
-  in this episode, and a failure remains INCOMPLETE rather than prompting another A submission.
-- Preflight authenticates original approvals/reviews and SHA-inventoried archives; original
-  `37936469909 / 11619270081` remains bound to `1d33cf8…`, consumed and FAILED. Read-only v4
-  admission retains `VECTOR_WRITE_CONTINUITY_UNPROVEN`; no embedding during admission or vector
-  write. New evidence uses a separate `record.json`, not an updated historical `ledger.json`.
-  Source/image/runtime project/location and all-source once-only history are rechecked before POST.
-- Required dispatch envelope after independent implementation acceptance, USER merge and a separate
-  exact live approval (all IDs below are already known except the NEW approval):
-
-  ```json
-  {"mode":"generation-diagnostic","caseId":"aws-official-a","liveApprovalCommentId":"NEW_USER_COMMENT_ID_AS_INTEGER","provenanceRunId":37710171426,"provenanceArtifactId":11522067032,"priorRunId":37936469909,"priorArtifactId":11619270081,"priorReviewCommentId":6082116692}
-  ```
-
-  Existing workflow: `gcp-target-runtime-dependencies.yml`, operation `pt8a-diagnostic-case`,
-  confirmation `RUN_REVIEWED_PT8A_GENERATION_DIAGNOSTIC_ONCE`. **Do not dispatch this template**:
-  the new comment must be an integer and contain every field returned by
-  `generation_diagnostic_live_fields(actual_merged_source, actual_published_digest_image)`.
-  Source/image are intentionally not predicted. If current runtime is older, the one approval
-  proposal must also bind immutable publication (existing 45-minute publish workflow), inspected
-  current image and reviewed rollout before inference; neither is authorized now. Existing WIF,
-  protected environments and ephemeral identity/pod cleanup are reused, with no IAM expansion.
-- Stop at **HUMAN_REQUIRED: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE** for this
-  repository contract. After merge, stop at **FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE**
-  until the actual source/image, contract hash, consumed history, retained-vector risk and the
-  proposed one-job bounds are separately USER-approved. This task grants zero paid calls,
-  uploads, dispatches, publication, rollout, corpus writes or cloud operations. PT-8A remains INCOMPLETE.
+- Current atomic task is the USER-authorized independent PT-8A artifact/confirmed-defect correction,
+  bound once to authoritative main `afa08e5c2a335aa1714d740bd50276184db47d1b`. PR #268's
+  [independent acceptance 6085508577](https://github.com/siamese-lang/terraformers-platform/pull/268#issuecomment-6085508577)
+  covers the diagnostic contract, not product acceptance. Historical Work Package bases and exhausted
+  repair counters remain unchanged; this subsequent USER task does not reset them.
+- The separately approved diagnostic ran once: **38011709155 / attempt 1**, artifact **11654405275**,
+  archive SHA-256 `acca008b5c4b954c5b559225695b54c2d877612b6e56347886249fabfa8f72ca`,
+  exact source `afa08e5c…`, job `f606d36e-2098-49c1-942d-107125e0aeb5`, immutable image
+  `sha256:eaa29f5d6097b54b8773b19f9981ab35f7fad437801007e744a13a159095b532`.
+  GitHub metadata, original archive and 21 inventoried files agree. Approval **6091914531** and
+  original observations are preserved. Diagnostic dispatch/upload are consumed; do not replay them.
+- Backend **SUCCEEDED** in **73944 ms**; facts/initial generation/repair completed with STOP in
+  **7602 / 30535 / 16836 ms**. Terraform 1.8.5 / AWS Provider 5.100.0 init and validate passed.
+  Three retrieval events supplied **9 / 6 / 1** documents, including 15 official provider hits;
+  the final 15 managed resource types have corresponding selected official documents.
+  Persisted job/project quality is technical PASS, knowledge COMPLETE, overall UNKNOWN,
+  project decision UNKNOWN, no reasons. This is **DIAGNOSTIC_ONLY / NOT_ACCEPTANCE**.
+- Original timeout **37936469909 / 11619270081** remains FAILED/NOT_PASS/consumed, with no
+  Terraform. Its SDK cause chain, individual generation elapsed time, HTTP status and quota/capacity
+  cause were not recorded. Between the failed and successful sources, backend changes were safe
+  diagnostic logging only; request budgets/configuration were unchanged. A completed observation
+  neither recovers the old cause nor proves timeout reliability. No evidence supports changing
+  Policy D, SDK, model, thinking, retries or rebuilding the corpus.
+- The preserved HCL does demonstrate a separate usability defect: a newly requested DNS ACM
+  certificate feeds CloudFront directly, without validation issuance ordering. Pinned provider
+  source `f7a3b98…` explicitly states that aws_acm_certificate does not wait for issuance.
+  Resource/schema documentation coverage and CLI validate cannot establish this relationship.
+  The existing generation/repair instructions now require coherent issuance/consumer wiring;
+  the existing deterministic quality assessor exposes the directly identifiable omission as
+  **DEGRADED / CLOUDFRONT_CERTIFICATE_VALIDATION_MISSING**, while retaining technical status.
+  External issued ARN/data/import inputs, validated ARN references and matching direct/transitive
+  validation dependencies remain allowed. No case-specific production rule or new evaluator.
+- This declaration check does not prove DNS ownership, live certificate status, provider region,
+  every image relationship or model improvement. The observed draft also lacks executable domain
+  mappings/CloudFront aliases and API custom-domain wiring for the detected domain/TLS intent.
+  Shared draft instructions clarify that unrelated zone/certificate blocks do not wire those paths;
+  live semantic improvement remains unverified. Lambda/API/Cognito/DynamoDB major graph and IAM
+  wiring are preserved; no S3 origin or CloudFront-to-API edge is required by the frozen image.
+- Frozen official candidate/truth, v2/v3/Recovery/generation diagnostic contracts, original A/B
+  artifacts and all consumed history are unchanged. Retained-v4 risk remains
+  **VECTOR_WRITE_CONTINUITY_UNPROVEN**. B-E remain NOT_RUN in this episode and are unauthorized.
+  PT-8A is **INCOMPLETE**. Repository correction stops for independent acceptance and USER merge;
+  new publication/rollout/model/upload/dispatch requires fresh exact live authority and a reviewed
+  once-only contract. No live work is authorized by this repository-only task.
 
 ### Historical PR #267 diagnostics checkpoint
 

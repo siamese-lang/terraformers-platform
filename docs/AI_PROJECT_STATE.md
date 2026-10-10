@@ -1,5 +1,21 @@
 # AI Project State
 
+## Current PT-8A checkpoint: B–E cause-focused diagnostic proposal
+
+Authoritative activation main: `f79bea4b09f56b0bbbb38e37c909ff0f43d7d6d2`.
+Post-correction Case A run `38063586496` / artifact `11673954499` remains consumed,
+`NOT_PASS`, and `allow_next_measurement=false` under independent review `6099185607`.
+Forensic comment `6099689738` localizes the previously fixed facts-to-initial-generation
+gap while retaining other semantic uncertainties. The proposed
+[B–E cause episode](evaluation/product-trust-pt-8a-b-to-e-cause-diagnostics.md) reuses
+the existing runner, protected workflow and private diagnostics for separate sequential
+first observations B, C, D, E. This repository-only proposal authorizes no live execution.
+Gate: **PT8A_B_TO_E_CAUSE_DIAGNOSTIC_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE**;
+after merge, exact source/image rollout and live/model/cost/risk approval are still separate.
+PT-8A remains INCOMPLETE. All older artifacts, consumption and quality decisions remain
+unchanged; PT-8B and teardown remain unauthorized. Earlier pending wording below is
+historical where superseded by this checkpoint.
+
 ## Current PT-8A checkpoint: distinct follow-up measurement episode proposal
 
 PR #272 was independently accepted and USER-merged into authoritative main

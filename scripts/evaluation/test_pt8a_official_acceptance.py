@@ -1080,7 +1080,7 @@ class DiagnosticContinuationContracts(unittest.TestCase):
     def test_diagnostic_workflow_is_gated_before_wif_and_keeps_distinct_artifact_and_no_new_workflow(self):
         workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
         job = workflow["jobs"]["pt8a-official-acceptance"]
-        self.assertEqual(pt8a.SKIPPED_POST_CORRECTION_JOB_NAME, job["name"][4:-3])
+        self.assertEqual(pt8a.SKIPPED_CAUSE_JOB_NAME, job["name"][4:-3])
         steps = job["steps"]; gate = next(i for i,s in enumerate(steps) if "preflight --request-file" in s.get("run", ""))
         wif = next(i for i,s in enumerate(steps) if s.get("uses") == "google-github-actions/auth@v3")
         self.assertLess(gate, wif); self.assertIn("RUN_REVIEWED_PT8A_B_TO_E_DIAGNOSTIC_ONLY", steps[gate]["run"])
@@ -2947,6 +2947,346 @@ class PostCorrectionSingleObservationContracts(unittest.TestCase):
             self.assertEqual("REVIEW_PENDING", json.loads((output / "record.json").read_text())["status"])
             self.assertEqual("COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION",
                 json.loads((output / "diagnostic-disposition.json").read_text())["evidenceValidity"])
+            self.assertTrue((output / "inventory.json").is_file())
+
+class CauseDiagnosticEpisodeContracts(unittest.TestCase):
+    def setUp(self):
+        self.request = {"mode": pt8a.CAUSE_MODE, "caseId": pt8a.DIAGNOSTIC_CASES[0],
+            "episodeId": pt8a.CAUSE_EPISODE, "startAfterRunId": pt8a.CAUSE_START_AFTER_RUN,
+            "liveApprovalCommentId": 9101, "provenanceRunId": pt8a.ORIGIN_CLEAN_RUN,
+            "provenanceArtifactId": pt8a.ORIGIN_CLEAN_ARTIFACT,
+            "priorRunId": 0, "priorArtifactId": 0, "priorReviewCommentId": 0,
+            "amendmentPullRequest": 9102, "amendmentReviewCommentId": 9103}
+        self.live = pt8a.cause_live_fields(self.request, SOURCE, IMAGE)
+        self.review = {"decision": "ACCEPTED", "reviewed_head": "d" * 40,
+            "execution_base_sha": pt8a.CAUSE_BASE,
+            "cause_contract_sha256": pt8a.cause_contract_sha256()}
+        self.pr = {"merged": True, "base": {"ref": "main"},
+            "head": {"sha": "d" * 40}, "merge_commit_sha": "e" * 40}
+        self.current = pt8a.CAUSE_START_AFTER_RUN + 1000
+        self.runs = [
+            {"id": pt8a.CAUSE_START_AFTER_RUN, "head_sha": pt8a.CAUSE_BASE,
+             "run_attempt": 1, "status": "completed", "conclusion": "success"},
+            {"id": self.current, "head_sha": SOURCE, "run_attempt": 1,
+             "status": "in_progress", "conclusion": None}]
+        self.jobs = {pt8a.CAUSE_START_AFTER_RUN: {"total_count": 1, "jobs": [{
+            "name": pt8a.POST_CORRECTION_OPERATION, "conclusion": "success"}]},
+            self.current: {"total_count": 1, "jobs": [{
+                "name": pt8a.CAUSE_OPERATION + "/" + pt8a.DIAGNOSTIC_CASES[0],
+                "conclusion": None}]}}
+        self.artifacts = {}
+        self.writes = [{"id": pt8a.ORIGIN_CLEAN_RUN, "head_sha": pt8a.ORIGIN_SOURCE}]
+
+    def test_cause_authority_uses_existing_read_only_vector_admission(self):
+        snapshot = {"classification": "EXACT_REUSABLE_COMPLETED_V4", "indexUuid": pt8a.ORIGIN_UUID,
+            "liveContentIdentity": pt8a.ORIGIN_CONTENT, "vectorDocumentsChecked": 5395}
+        receipt = {"reviewed_source_sha": pt8a.ORIGIN_SOURCE}
+        binding = {"sourceSha": pt8a.ORIGIN_SOURCE, "digest": pt8a.ORIGIN_CLEAN_DIGEST}
+        with patch.object(pt8a.rag, "verify_exact_v4", return_value=snapshot) as verify:
+            result = pt8a.risk_qualified_admission(None, {}, {}, [], pt8a.CORPUS_CHECKSUM,
+                receipt, binding, self.live)
+            self.assertEqual("RISK_QUALIFIED_RETAINED_V4", result["classification"])
+            self.assertTrue(verify.call_args.kwargs["inspect_vectors"])
+            verify.return_value = snapshot | {"vectorDocumentsChecked": 5394}
+            with self.assertRaises(ValueError):
+                pt8a.risk_qualified_admission(None, {}, {}, [], pt8a.CORPUS_CHECKSUM,
+                    receipt, binding, self.live)
+
+    def api(self, path):
+        if path.startswith("pulls/"): return self.pr
+        if path.startswith("issues/comments/"):
+            return {"issue_url": "https://api.github.com/repos/siamese-lang/terraformers-platform/issues/9102"}
+        if path.startswith("compare/"): return {"status": "ahead"}
+        if "gcp-target-runtime-dependencies.yml/runs?" in path:
+            return {"total_count": len(self.runs), "workflow_runs": self.runs}
+        if "gcp-target-corpus-ingestion.yml/runs?" in path:
+            return {"total_count": len(self.writes), "workflow_runs": self.writes}
+        if path.endswith("/artifacts?per_page=100"):
+            return self.artifacts[int(path.split("/")[2])]
+        return self.jobs[int(path.split("/")[2])]
+
+    def authority(self, comment_id, marker):
+        if comment_id == self.request["liveApprovalCommentId"]: return self.live
+        if comment_id == self.request["amendmentReviewCommentId"]: return self.review
+        raise AssertionError("unexpected authority")
+
+    def test_exact_new_source_image_budget_and_merged_review_required(self):
+        with patch.object(pt8a, "github", side_effect=self.api), \
+             patch.object(pt8a, "authority_comment", side_effect=self.authority), \
+             patch.object(pt8a.transport, "current_main", return_value=SOURCE):
+            self.assertEqual(self.live, pt8a.cause_request_contract(self.request, SOURCE, IMAGE, 1))
+            self.assertEqual("24", self.live["maximum_model_calls"])
+            for changed in ({"caseId": pt8a.CASES[0]}, {"caseId": pt8a.CASES[-1]},
+                    {"priorRunId": 1}, {"episodeId": pt8a.MEASUREMENT_EPISODE},
+                    {"liveApprovalCommentId": pt8a.POST_CORRECTION_ORIGIN_APPROVAL}):
+                with self.subTest(changed=changed), self.assertRaises((ValueError, AssertionError)):
+                    pt8a.cause_request_contract(self.request | changed, SOURCE, IMAGE, 1)
+            for source, image, attempt in ((SOURCE, IMAGE + "wrong", 1), (SOURCE, IMAGE, 2)):
+                with self.assertRaises(ValueError): pt8a.cause_request_contract(self.request, source, image, attempt)
+            with patch.dict(self.live, {"backend_image": "wrong"}), self.assertRaises(ValueError):
+                pt8a.cause_request_contract(self.request, SOURCE, IMAGE, 1)
+            with patch.dict(self.review, {"decision": "CHANGES_REQUIRED"}), self.assertRaises(ValueError):
+                pt8a.cause_request_contract(self.request, SOURCE, IMAGE, 1)
+            with patch.object(pt8a.transport, "current_main", return_value="f" * 40), self.assertRaisesRegex(ValueError, "MAIN_DRIFT"):
+                pt8a.cause_request_contract(self.request, SOURCE, IMAGE, 1)
+
+    def test_first_B_is_separate_from_consumed_A_and_duplicate_or_unknown_attempts_block(self):
+        with patch.object(pt8a, "github", side_effect=self.api):
+            self.assertEqual({}, pt8a.cause_history(self.request, SOURCE, self.current)["predecessors"])
+            extra = {"id": self.current - 1, "head_sha": SOURCE, "run_attempt": 1,
+                "status": "completed", "conclusion": "failure"}
+            self.runs.insert(1, extra)
+            self.jobs[extra["id"]] = {"total_count": 1, "jobs": [{
+                "name": pt8a.CAUSE_OPERATION + "/" + pt8a.DIAGNOSTIC_CASES[0],
+                "conclusion": "failure"}]}
+            with self.assertRaises(ValueError): pt8a.cause_history(self.request, SOURCE, self.current)
+            self.jobs[extra["id"]]["jobs"][0]["name"] = "unrecognized-pt8a-job"
+            with self.assertRaises(ValueError): pt8a.cause_history(self.request, SOURCE, self.current)
+            self.runs.pop(1)
+            self.runs[0]["run_attempt"] = 2
+            with self.assertRaises(ValueError): pt8a.cause_history(self.request, SOURCE, self.current)
+            self.runs[0]["run_attempt"] = 1
+            self.writes.append({"id": self.current + 1, "head_sha": SOURCE})
+            with self.assertRaises(ValueError): pt8a.cause_history(self.request, SOURCE, self.current)
+
+    def test_B_failure_review_can_gate_C_without_promoting_quality_or_allowing_second_B(self):
+        prior_run = self.current - 1
+        self.runs.insert(1, {"id": prior_run, "head_sha": SOURCE, "run_attempt": 1,
+            "status": "completed", "conclusion": "failure"})
+        self.jobs[prior_run] = {"total_count": 1, "jobs": [{
+            "name": pt8a.CAUSE_OPERATION + "/" + pt8a.DIAGNOSTIC_CASES[0],
+            "conclusion": "failure", "steps": [{"name": "Remove only the owned ephemeral validation pod",
+                "conclusion": "success"}]}]}
+        self.artifacts[prior_run] = {"total_count": 1, "artifacts": [{
+            "id": 9331, "name": f"pt8a-cause-{prior_run}", "digest": "sha256:" + "a" * 64}]}
+        request = self.request | {"caseId": pt8a.DIAGNOSTIC_CASES[1],
+            "priorRunId": prior_run, "priorArtifactId": 9331, "priorReviewCommentId": 9332}
+        self.jobs[self.current]["jobs"][0]["name"] = pt8a.CAUSE_OPERATION + "/" + pt8a.DIAGNOSTIC_CASES[1]
+        with patch.object(pt8a, "github", side_effect=self.api):
+            self.assertEqual(prior_run, pt8a.cause_history(request, SOURCE, self.current)["predecessors"][pt8a.DIAGNOSTIC_CASES[0]]["runId"])
+            for changed in ({"priorRunId": 0}, {"caseId": pt8a.DIAGNOSTIC_CASES[2]}):
+                with self.assertRaises(ValueError): pt8a.cause_history(request | changed, SOURCE, self.current)
+            self.runs[1]["head_sha"] = "f" * 40
+            with self.assertRaises(ValueError): pt8a.cause_history(request, SOURCE, self.current)
+            self.runs[1]["head_sha"] = SOURCE
+            self.jobs[prior_run]["jobs"][0]["steps"][0]["conclusion"] = "failure"
+            with self.assertRaises(ValueError): pt8a.cause_history(request, SOURCE, self.current)
+
+    def test_existing_workflow_routes_protected_cause_operation_before_wif(self):
+        wf = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
+        self.assertIn(pt8a.CAUSE_OPERATION, wf[True]["workflow_dispatch"]["inputs"]["operation"]["options"])
+        job = wf["jobs"]["pt8a-official-acceptance"]
+        self.assertEqual("gcp-target-apply", job["environment"])
+        self.assertEqual(pt8a.SKIPPED_CAUSE_JOB_NAME, job["name"][4:-3])
+        names = [s.get("name", s.get("uses")) for s in job["steps"]]
+        self.assertLess(names.index("Validate frozen procedure and explicit live authority before cloud access"),
+            names.index("google-github-actions/auth@v3"))
+        steps = "\n".join(s.get("run", "") for s in job["steps"])
+        self.assertIn("pt8a-official-acceptance.py preflight", steps)
+        self.assertIn("RUN_REVIEWED_PT8A_B_TO_E_CAUSE_DIAGNOSTIC_ONCE", steps)
+        self.assertIn("pt8a-cause", str(job))
+
+    def test_each_later_case_requires_all_prior_cases_in_frozen_order(self):
+        with patch.object(pt8a, "github", side_effect=self.api):
+            for case in pt8a.DIAGNOSTIC_CASES[1:]:
+                index = pt8a.DIAGNOSTIC_CASES.index(case)
+                self.runs = self.runs[:1] + [self.runs[-1]]
+                for old in list(self.jobs):
+                    if old not in (pt8a.CAUSE_START_AFTER_RUN, self.current): self.jobs.pop(old)
+                self.artifacts.clear()
+                predecessors = []
+                for i, previous in enumerate(pt8a.DIAGNOSTIC_CASES[:index]):
+                    run = self.current - index + i
+                    predecessors.append(run)
+                    self.runs.insert(-1, {"id": run, "head_sha": SOURCE, "run_attempt": 1,
+                        "status": "completed", "conclusion": "failure"})
+                    self.jobs[run] = {"total_count": 1, "jobs": [{
+                        "name": pt8a.CAUSE_OPERATION + "/" + previous,
+                        "conclusion": "failure", "steps": [{
+                            "name": "Remove only the owned ephemeral validation pod", "conclusion": "success"}]}]}
+                    self.artifacts[run] = {"total_count": 1, "artifacts": [{
+                        "id": run * 10, "name": f"pt8a-cause-{run}",
+                        "digest": "sha256:" + "a" * 64}]}
+                self.jobs[self.current]["jobs"][0]["name"] = pt8a.CAUSE_OPERATION + "/" + case
+                request = self.request | {"caseId": case, "priorRunId": predecessors[-1],
+                    "priorArtifactId": predecessors[-1] * 10, "priorReviewCommentId": 9000}
+                self.assertEqual(index, len(pt8a.cause_history(request, SOURCE, self.current)["predecessors"]))
+                missing = predecessors[0]
+                self.runs = [r for r in self.runs if r["id"] != missing]
+                with self.assertRaises(ValueError): pt8a.cause_history(request, SOURCE, self.current)
+
+    def test_failed_B_requires_originals_safe_cause_review_and_cleanup_before_C(self):
+        run, artifact, review_id = self.current - 1, 9331, 9332
+        case = pt8a.DIAGNOSTIC_CASES[0]
+        request = self.request | {"caseId": pt8a.DIAGNOSTIC_CASES[1],
+            "priorRunId": run, "priorArtifactId": artifact, "priorReviewCommentId": review_id}
+        bound = {"runId": run, "artifactId": artifact, "digest": "sha256:" + "a" * 64,
+            "sourceSha": SOURCE, "conclusion": "failure"}
+        history = {"predecessors": {case: bound}}
+        job = {"id": "job-b", "projectId": 16, "sourceFileId": 24, "status": "FAILED"}
+        diagnostic = safe_diagnostics(job)
+        diagnostic["ownerScopedOriginalReadback"] = readback_proof(diagnostic)
+        proof = diagnostic["ownerScopedOriginalReadback"]
+        record = {"caseId": case, "jobId": job["id"], "status": "NOT_PASS", "consumed": True,
+            "uploadAttempts": 1, "terminalState": "FAILED", "diagnosticEvidence": "AVAILABLE"}
+        empty = {"caseId": pt8a.DIAGNOSTIC_CASES[1], "status": "NOT_RUN",
+            "uploadAttempts": 0, "consumed": False}
+        snapshot = {"classification": "RISK_QUALIFIED_RETAINED_V4", "indexUuid": pt8a.ORIGIN_UUID,
+            "liveContentIdentity": pt8a.ORIGIN_CONTENT, "vectorDocumentsChecked": 5395,
+            "vectorDimension": 1536, "embeddingRequests": 0, "indexWrites": 0}
+        data = {"inventory.json": {"files": []},
+            "binding.json": {"sourceSha": SOURCE, "image": IMAGE, "runId": run,
+                "mode": pt8a.CAUSE_MODE, "caseId": case, "episodeId": pt8a.CAUSE_EPISODE,
+                "candidateIdentity": pt8a.IDENTITY, "procedureSha256": pt8a.cause_contract_sha256(),
+                "classification": "CAUSE_DIAGNOSTIC_ONLY",
+                "diagnosticContractSha256": pt8a.cause_contract_sha256(),
+                "liveApprovalCommentId": self.request["liveApprovalCommentId"],
+                "startAfterRunId": pt8a.CAUSE_START_AFTER_RUN,
+                "amendmentPullRequest": self.request["amendmentPullRequest"],
+                "amendmentReviewCommentId": self.request["amendmentReviewCommentId"]},
+            "ledger.json": [record, empty, {"caseId": pt8a.DIAGNOSTIC_CASES[2],
+                "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False},
+                {"caseId": pt8a.DIAGNOSTIC_CASES[3], "status": "NOT_RUN",
+                "uploadAttempts": 0, "consumed": False}],
+            "diagnostic-chain.json": {"prior": {"runId": 0, "artifactId": 0, "reviewCommentId": 0}},
+            "diagnostic-disposition.json": {"classification": "CAUSE_DIAGNOSTIC_ONLY",
+                "officialAcceptance": "NOT_ACCEPTANCE", "dispatchConsumed": True,
+                "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION"},
+            "cleanup.json": {"JWKSRestored": True}, "release.json": {},
+            "readiness.json": snapshot.copy(), "post-admission.json": snapshot.copy(),
+            "input-identity.json": {"caseId": case},
+            "observation/accepted.json": {"status": "ACCEPTED", "consumed": True,
+                "uploadAttempts": 1, "jobId": "job-b", "projectId": 16, "sourceFileId": 24},
+            "observation/job.json": job, "observation/diagnostics.json": diagnostic,
+            "observation/cli.json": {"status": "NOT_RUN"},
+            "observation/draft-identity.json": {"hclPresent": False},
+            "observation/presentation.json": {"latestAnalysisJobId": "job-b", "projectId": 16},
+            "observation/retrieval.json": {"jobId": "job-b"}}
+        review = {"decision": "EVIDENCE_VALID_CAUSE_DIAGNOSTIC_ONLY",
+            "allow_next_diagnostic": "true", "official_acceptance": "NOT_ACCEPTANCE",
+            "run_id": str(run), "artifact_id": str(artifact), "artifact_digest": bound["digest"],
+            "source_sha": SOURCE, "backend_image": IMAGE, "case_id": case,
+            "job_id": "job-b", "terminal_state": "FAILED",
+            "observed_status": "NOT_PASS", "product_quality": "NOT_PASS",
+            "diagnostic_evidence_sha256": diagnostic["evidenceSha256"],
+            "private_original_readback": proof["status"],
+            "candidate_readback_sha256": pt8a.sha(json.dumps(proof, sort_keys=True, separators=(",", ":")).encode()),
+            "cause_review": "VERIFIED_FROM_ORIGINALS_AND_SAFE_STAGE_EVIDENCE",
+            "first_divergence_stage": "initial_generation",
+            "safe_cli_diagnostics_sha256": "NOT_CAPTURED",
+            "failure_stage": diagnostic["failure"]["stage"],
+            "failure_category": diagnostic["failure"]["category"]}
+        def authority(comment_id, marker):
+            return self.live if comment_id == self.request["liveApprovalCommentId"] else review
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.object(pt8a, "bound_artifact", return_value=(data, bound)), \
+             patch.object(pt8a, "authority_comment", side_effect=authority), \
+             patch.object(pt8a, "github", side_effect=self.api), \
+             patch.object(pt8a, "corrective_release"), \
+             patch.object(pt8a, "frozen_inputs", return_value=[{"caseId": case}]):
+            rows = pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)
+            self.assertEqual("NOT_PASS", rows[0]["status"])
+            for obj, key, value in ((record, "jobId", "other-job"),
+                    (data["observation/accepted.json"], "projectId", 17),
+                    (data["observation/accepted.json"], "sourceFileId", 25),
+                    (data["observation/presentation.json"], "latestAnalysisJobId", "other-job"),
+                    (data["observation/presentation.json"], "projectId", 17),
+                    (data["observation/retrieval.json"], "jobId", "other-job")):
+                old = obj[key]; obj[key] = value
+                with self.subTest(identity=key), self.assertRaises(ValueError):
+                    pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)
+                obj[key] = old
+            old_job = job["status"]
+            old_terminal = record["terminalState"]
+            old_diagnostic = data["observation/diagnostics.json"]
+            old_review = review.copy()
+            job["status"] = record["terminalState"] = "SUCCEEDED"
+            data["observation/diagnostics.json"] = safe_diagnostics(job)
+            data["observation/diagnostics.json"]["ownerScopedOriginalReadback"] = readback_proof(data["observation/diagnostics.json"])
+            review["terminal_state"] = "SUCCEEDED"
+            review["diagnostic_evidence_sha256"] = data["observation/diagnostics.json"]["evidenceSha256"]
+            review["candidate_readback_sha256"] = pt8a.sha(json.dumps(
+                data["observation/diagnostics.json"]["ownerScopedOriginalReadback"],
+                sort_keys=True, separators=(",", ":")).encode())
+            review["private_original_readback"] = "VERIFIED"
+            review.pop("failure_stage"); review.pop("failure_category")
+            review["first_divergence_stage"] = "NONE_NO_MATERIAL_MISMATCH"
+            with self.assertRaises(ValueError):
+                pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)
+            review["first_divergence_stage"] = "trust_presentation"
+            self.assertEqual("NOT_PASS", pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)[0]["status"])
+            review["product_quality"] = "UNDETERMINED"
+            review["first_divergence_stage"] = "NONE_NO_MATERIAL_MISMATCH"
+            record["status"] = review["observed_status"] = "REVIEW_PENDING"
+            self.assertEqual("REVIEW_PENDING", pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)[0]["status"])
+            self.assertEqual("UNDETERMINED", review["product_quality"])
+            record["status"] = "NOT_PASS"
+            review["observed_status"] = "NOT_PASS"
+            job["status"] = old_job
+            record["terminalState"] = old_terminal
+            data["observation/diagnostics.json"] = old_diagnostic
+            review.clear(); review.update(old_review)
+            for obj, key, value in ((review, "cause_review", "NOT_VERIFIED"),
+                    (review, "product_quality", "PASS"),
+                    (review, "first_divergence_stage", "UNLOCALIZED"),
+                    (data["cleanup.json"], "JWKSRestored", False),
+                    (diagnostic, "status", "DIAGNOSTIC_EVIDENCE_INCOMPLETE"),
+                    (diagnostic["failure"], "category", "UNCLASSIFIED_INTERNAL_FAILURE"),
+                    (data["binding.json"], "image", IMAGE + "wrong")):
+                old = obj[key]; obj[key] = value
+                with self.subTest(key=key), self.assertRaises(ValueError):
+                    pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)
+                obj[key] = old
+
+    def test_runner_preserves_a_separately_and_seals_first_B_even_when_product_fails(self):
+        with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
+            root = Path(directory)
+            request_file = root / "request.json"; request_file.write_text(json.dumps(self.request))
+            (root / "coverage-report.json").write_text("{}")
+            (root / "pt8a-release.json").write_text(json.dumps({
+                "sourceSha": SOURCE, "image": IMAGE,
+                "modelProject": "terraformers-platform", "modelLocation": "global"}))
+            original = {"postCorrectionCaseA": {"runId": pt8a.CAUSE_START_AFTER_RUN},
+                "productQuality": "NOT_PASS", "allowNextMeasurement": False}
+            initial_rows = [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0,
+                "consumed": False} for c in pt8a.DIAGNOSTIC_CASES]
+            output = root / "evidence"
+            stack.enter_context(patch.dict(os.environ, {"GITHUB_SHA": SOURCE, "BACKEND_IMAGE": IMAGE,
+                "GITHUB_RUN_ATTEMPT": "1", "GITHUB_RUN_ID": str(self.current),
+                "OPERATION": pt8a.CAUSE_OPERATION, "RUNNER_TEMP": directory}))
+            stack.enter_context(patch.object(sys, "argv", ["pt8a", "run", "--request-file", str(request_file),
+                "--corpus", directory, "--output", str(output)]))
+            stack.enter_context(patch.object(pt8a.transport, "current_main", return_value=SOURCE))
+            stack.enter_context(patch.object(pt8a, "cause_request_contract", return_value=self.live))
+            stack.enter_context(patch.object(pt8a, "cause_history", return_value={"predecessors": {}}))
+            stack.enter_context(patch.object(pt8a, "cause_origin", return_value=original))
+            stack.enter_context(patch.object(pt8a, "cause_predecessor", side_effect=lambda *a: copy.deepcopy(initial_rows)))
+            stack.enter_context(patch.object(pt8a, "corrective_origins", return_value=(
+                {"ingestion_mode": "pt8a-clean-v4"}, {}, {})))
+            stack.enter_context(patch.object(pt8a, "corrective_release"))
+            stack.enter_context(patch.object(pt8a.rag, "load_corpus", return_value=({}, {}, [], pt8a.CORPUS_CHECKSUM)))
+            stack.enter_context(patch.object(pt8a.rag, "validate_pt8a_clean_corpus"))
+            stack.enter_context(patch.object(pt8a, "risk_qualified_admission", return_value={
+                "classification": "RISK_QUALIFIED_RETAINED_V4"}))
+            stack.enter_context(patch.object(pt8a.subprocess, "run"))
+            stack.enter_context(patch.object(pt8a.transport, "CurlClient"))
+            def synthetic_input(case, private):
+                path = private / "input.png"; path.write_bytes(b"synthetic-B"); return path
+            stack.enter_context(patch.object(pt8a, "acquire", side_effect=synthetic_input))
+            def observed(client, fixture, evidence_dir, record, documents, pod, **kwargs):
+                self.assertEqual({"diagnostic": True, "require_diagnostics": True}, kwargs)
+                record.update(status="NOT_PASS", consumed=True, uploadAttempts=1,
+                    terminalState="FAILED", diagnosticEvidence="AVAILABLE")
+            observe = stack.enter_context(patch.object(pt8a, "observe", side_effect=observed))
+            with self.assertRaisesRegex(ValueError, "material technical/product failure"):
+                pt8a.main()
+            observe.assert_called_once()
+            self.assertEqual(original, json.loads((output / "original-observations.json").read_text()))
+            rows = json.loads((output / "ledger.json").read_text())
+            self.assertEqual("NOT_PASS", rows[0]["status"])
+            self.assertTrue(all(row["status"] == "NOT_RUN" for row in rows[1:]))
+            self.assertEqual("CAUSE_DIAGNOSTIC_ONLY",
+                json.loads((output / "diagnostic-disposition.json").read_text())["classification"])
             self.assertTrue((output / "inventory.json").is_file())
 
 

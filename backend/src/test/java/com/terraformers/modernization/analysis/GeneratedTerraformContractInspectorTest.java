@@ -107,6 +107,45 @@ class GeneratedTerraformContractInspectorTest {
                 """)).isTrue();
     }
 
+    @Test
+    void requiresIssuanceDependencyForTheConsumedCertificateInstance() {
+        for (List<String> indices : List.of(List.of("0", "1"), List.of("\"other\"", "\"edge\""))) {
+            String draft = pendingCertificateDraft().replace("pending.arn", "pending[" + indices.get(1) + "].arn")
+                    .replace("viewer_certificate {", "depends_on = [aws_acm_certificate_validation.issued]\n viewer_certificate {");
+            String mismatched = validationWait().replace("pending.arn", "pending[" + indices.get(0) + "].arn");
+            String matching = validationWait().replace("pending.arn", "pending[" + indices.get(1) + "].arn");
+            assertThat(inspector.missingCloudFrontCertificateValidation(draft + mismatched)).isTrue();
+            assertThat(inspector.missingCloudFrontCertificateValidation(draft + matching)).isFalse();
+            String transitive = draft.replace("depends_on = [aws_acm_certificate_validation.issued]",
+                    "depends_on = [aws_route53_record.barrier]") + """
+                    resource "aws_route53_record" "barrier" {
+                      depends_on = [aws_acm_certificate_validation.issued]
+                      name = var.domain
+                    }
+                    """;
+            assertThat(inspector.missingCloudFrontCertificateValidation(transitive + mismatched)).isTrue();
+            assertThat(inspector.missingCloudFrontCertificateValidation(transitive + matching)).isFalse();
+        }
+    }
+
+    @Test
+    void checksEveryPotentialConsumerInstanceWhilePreservingIndividualImports() {
+        String draft = pendingCertificateDraft().replace("pending.arn",
+                "var.use_imported ? aws_acm_certificate.pending[0].arn : aws_acm_certificate.pending[1].arn")
+                .replace("viewer_certificate {", "depends_on = [aws_acm_certificate_validation.issued]\n viewer_certificate {");
+        String firstWait = validationWait().replace("pending.arn", "pending[0].arn");
+        String secondWait = validationWait().replace("pending.arn", "pending[1].arn");
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft + firstWait)).isTrue();
+        String imported = """
+                import {
+                  to = aws_acm_certificate.pending[0]
+                  id = var.existing_issued_certificate_arn
+                }
+                """;
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft + imported + secondWait)).isFalse();
+        assertThat(inspector.missingCloudFrontCertificateValidation(draft + imported + firstWait)).isTrue();
+    }
+
     private String pendingCertificateDraft() {
         return """
                 resource "aws_acm_certificate" "pending" {

@@ -94,17 +94,18 @@ public class GeneratedTerraformContractInspector {
                     if (method.size() != 1 || !method.get(0).quoted()
                             || !Set.of("DNS", "EMAIL").contains(method.get(0).value())) continue;
                     List<List<Token>> addresses = certificateArnAddresses(arn, certificate);
-                    if (addresses.isEmpty()) continue;
-                    // An import declares only its exact instance; another index is not an external boundary.
-                    if (addresses.stream().allMatch(address -> blocks(source, "import").stream().anyMatch(block ->
-                            attribute(block.body(), "to").equals(address)
-                            && !emptyExpression(attribute(block.body(), "id"))))) continue;
-                    boolean ordered = resources.stream()
-                            .filter(block -> block.type().equals("aws_acm_certificate_validation"))
-                            .filter(block -> !certificateArnAddresses(resolveAliases(
-                                    attribute(block.body(), "certificate_arn"), locals, 0), certificate).isEmpty())
-                            .anyMatch(block -> dependsOn(distribution, block, resources, locals, new LinkedHashSet<>()));
-                    if (!ordered) return true;
+                    for (List<Token> address : addresses) {
+                        // Imports and issuance waits each cover only the consumed certificate instance.
+                        if (blocks(source, "import").stream().anyMatch(block ->
+                                attribute(block.body(), "to").equals(address)
+                                && !emptyExpression(attribute(block.body(), "id")))) continue;
+                        boolean ordered = resources.stream()
+                                .filter(block -> block.type().equals("aws_acm_certificate_validation"))
+                                .filter(block -> certificateArnAddresses(resolveAliases(
+                                        attribute(block.body(), "certificate_arn"), locals, 0), certificate).contains(address))
+                                .anyMatch(block -> dependsOn(distribution, block, resources, locals, new LinkedHashSet<>()));
+                        if (!ordered) return true;
+                    }
                 }
             }
         }

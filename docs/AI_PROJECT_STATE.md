@@ -1,5 +1,31 @@
 # AI Project State
 
+## Current PT-8A checkpoint: distinct follow-up measurement episode proposal
+
+PR #272 was independently accepted and USER-merged into authoritative main
+`228367c6df7ad8bbb74b1c9a0c135f768d780310`. Its private failed-HCL and safe
+CLI/stage diagnostics exist in production code, but no new live observation has used them.
+The current repository-only [episode amendment](evaluation/product-trust-pt-8a-followup-measurement-episode.md)
+reuses the existing runner and protected workflow. Proposed episode identity
+`pt8a-reviewable-draft-diagnostics-episode-2` starts strictly after cancelled run
+`38029924066`; its contract hash is `933785c78faf55dfcc36fbded65a2842aedf365a5849ba6101e56967b782835c`.
+
+The previous source `2302a85ff828411a24f235919ceddcab3cd6c89e` remains a separately
+authenticated stopped episode: A run `38028039113` / artifact `11660394315` /
+review `6094373643`; B run `38029022214` / artifact `11661990598` /
+review `6094486765`, FAILED/NOT_PASS/consumed; C cancelled with no artifact; D/E NOT_RUN.
+Their original digests and USER approval `6094259044` remain bound to that source and
+are never inserted into a new five-case aggregate. The observer now requires private
+owner-scoped candidate readback with matching SHA before a failure can be called
+diagnosable; only safe cause/location/hash evidence enters the public artifact.
+
+Current gate: **PT8A_FOLLOWUP_MEASUREMENT_EPISODE_ACCEPTANCE_AND_USER_MERGE**.
+This proposal is not adopted live authority. Independent exact-head acceptance, explicit
+USER policy approval and merge, then a separate exact merged source/immutable image/
+contract/risk/cost approval and the existing protected environment are needed before
+the first new A dispatch. No live action, old-result replacement, PT-8B or teardown.
+The sections below are historical checkpoints where their pending wording is superseded.
+
 ## Current PT-8A checkpoint: failure diagnosability correction
 
 USER decision [6094591490](https://github.com/siamese-lang/terraformers-platform/pull/271#issuecomment-6094591490)

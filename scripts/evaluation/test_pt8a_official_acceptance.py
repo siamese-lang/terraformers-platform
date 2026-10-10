@@ -67,8 +67,8 @@ def safe_diagnostics(job, *, category=None):
     failed = job.get("status") == "FAILED"
     category = category or "PROVIDER_TIMEOUT"
     stage = "cli_validate" if category == "VALIDATE_CONFIGURATION" else "initial_generation"
-    candidates = ({"final": {"status": "CAPTURED", "sha256": "a" * 64, "bytes": 123},
-                   "validated": {"status": "CAPTURED", "sha256": "a" * 64, "bytes": 123}}
+    candidates = ({"final": {"status": "CAPTURED", "sha256": pt8a.sha(b"x" * 123), "bytes": 123},
+                   "validated": {"status": "CAPTURED", "sha256": pt8a.sha(b"x" * 123), "bytes": 123}}
                   if not failed or category == "VALIDATE_CONFIGURATION" else {})
     return {"contractVersion": "analysis-diagnostics-v1", "jobId": job["id"], "projectId": job["projectId"],
         "claimGeneration": 1, "complete": True, "status": "AVAILABLE", "evidenceSha256": "b" * 64,
@@ -78,6 +78,20 @@ def safe_diagnostics(job, *, category=None):
         "cliDiagnostics": {"diagnosticClasses": ["MISSING_REQUIRED_ARGUMENT"], "errorCount": 1, "warningCount": 0,
             "details": [{"diagnosticClass": "MISSING_REQUIRED_ARGUMENT", "summary": "Missing required argument", "line": 7, "column": 3}]}
             if category == "VALIDATE_CONFIGURATION" else None}
+
+
+def original_diagnostics(evidence):
+    original = copy.deepcopy(evidence)
+    original["facts"] = {"status": original.pop("factsStatus")}
+    original["retrieval"] = {}
+    for candidate in original["candidates"].values():
+        candidate["content"] = "x" * 123
+    return original
+
+
+def readback_proof(evidence):
+    hashes = {name: candidate["sha256"] for name, candidate in evidence["candidates"].items()}
+    return {"status": "VERIFIED" if hashes else "NO_CANDIDATE_PRODUCED", "candidateSha256": hashes}
 
 
 class InputAndRequestContracts(unittest.TestCase):
@@ -1091,7 +1105,8 @@ class DraftMeasurementContracts(unittest.TestCase):
         self.review = {"decision": "ACCEPTED", "reviewed_head": "d" * 40,
             "execution_base_sha": pt8a.MEASUREMENT_BASE, "measurement_contract_sha256": pt8a.measurement_contract_sha256(),
             "diagnostic_evidence_amendment_sha256": pt8a.diagnostic_evidence_amendment_sha256(),
-            "amendment_sha256": pt8a.sha((pt8a.ROOT / pt8a.MEASUREMENT_PROCEDURE).read_bytes())}
+            "amendment_sha256": pt8a.sha((pt8a.ROOT / pt8a.MEASUREMENT_EPISODE_PROCEDURE).read_bytes()),
+            "episode_id": pt8a.MEASUREMENT_EPISODE, "start_after_run_id": str(pt8a.MEASUREMENT_START_AFTER_RUN)}
         self.pr = {"merged": True, "base": {"ref": "main"}, "head": {"sha": "d" * 40}, "merge_commit_sha": "e" * 40}
         self.artifacts, self.bindings, self.reviews = {}, {}, {}
         for index, case in enumerate(pt8a.CASES):
@@ -1105,6 +1120,7 @@ class DraftMeasurementContracts(unittest.TestCase):
             data["ledger.json"] = rows
             data["cleanup.json"] = {"JWKSRestored": True}
             data["binding.json"].update(mode=pt8a.MEASUREMENT_MODE, runId=ref["runId"],
+                episodeId=pt8a.MEASUREMENT_EPISODE, startAfterRunId=pt8a.MEASUREMENT_START_AFTER_RUN,
                 procedureSha256=pt8a.measurement_contract_sha256(), measurementContractSha256=pt8a.measurement_contract_sha256(),
                 classification="REVIEWABLE_DRAFT_MEASUREMENT_ONLY", liveApprovalCommentId=self.live_id,
                 amendmentPullRequest=self.pr_id, amendmentReviewCommentId=self.review_id, policyApprovalCommentId=self.policy_id)
@@ -1131,10 +1147,21 @@ class DraftMeasurementContracts(unittest.TestCase):
                 "case_id": case, "observed_status": record["status"], "vector_write_continuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
                 "material_defect": "true" if index in (0, 3) else "false", "false_trusted_success": "0",
                 **{"dimension_" + d: disposition for d in pt8a.SCORING}}
-            data["observation/diagnostics.json"] = safe_diagnostics(data["observation/job.json"])
+            data["observation/diagnostics.json"] = safe_diagnostics(data["observation/job.json"],
+                category="VALIDATE_CONFIGURATION" if index == 2 else None)
+            data["observation/diagnostics.json"]["ownerScopedOriginalReadback"] = readback_proof(data["observation/diagnostics.json"])
             record["diagnosticEvidence"] = "AVAILABLE"
             review["failure_diagnosability"] = "VERIFIED"
             review["diagnostic_evidence_sha256"] = data["observation/diagnostics.json"]["evidenceSha256"]
+            proof = data["observation/diagnostics.json"]["ownerScopedOriginalReadback"]
+            review["private_original_readback"] = proof["status"]
+            review["candidate_readback_sha256"] = pt8a.sha(json.dumps(proof, sort_keys=True, separators=(",", ":")).encode())
+            if index == 2:
+                review["failure_cause_review"] = "VERIFIED_FROM_SAFE_STAGE_CATEGORY_AND_AVAILABLE_CLI_DETAILS"
+                review["failure_stage"] = data["observation/diagnostics.json"]["failure"]["stage"]
+                review["failure_category"] = data["observation/diagnostics.json"]["failure"]["category"]
+                review["safe_cli_diagnostics_sha256"] = pt8a.sha(json.dumps(
+                    data["observation/diagnostics.json"]["cliDiagnostics"], sort_keys=True, separators=(",", ":")).encode())
             review["product_quality"] = pt8a.measurement_quality(record, review)
             self.reviews[ref["reviewCommentId"]] = review
             self.bindings[ref["runId"]] = {"runId": ref["runId"], "artifactId": ref["artifactId"],
@@ -1143,11 +1170,12 @@ class DraftMeasurementContracts(unittest.TestCase):
 
     def reference(self, index):
         return {"runId": 0, "artifactId": 0, "reviewCommentId": 0} if index < 0 else {
-            "runId": pt8a.GENERATION_OBSERVATION_RUN + 100 * (index + 1), "artifactId": 400 + index, "reviewCommentId": 500 + index}
+            "runId": pt8a.MEASUREMENT_START_AFTER_RUN + 100 * (index + 1), "artifactId": 400 + index, "reviewCommentId": 500 + index}
 
     def request(self, index, final=False):
         ref = self.reference(index if final else index - 1)
         return {"mode": pt8a.MEASUREMENT_MODE, "caseId": pt8a.CASES[index], "liveApprovalCommentId": 800,
+            "episodeId": pt8a.MEASUREMENT_EPISODE, "startAfterRunId": pt8a.MEASUREMENT_START_AFTER_RUN,
             "provenanceRunId": pt8a.ORIGIN_CLEAN_RUN, "provenanceArtifactId": pt8a.ORIGIN_CLEAN_ARTIFACT,
             "amendmentPullRequest": 803, "amendmentReviewCommentId": 802, "policyApprovalCommentId": 801,
             "priorRunId": ref["runId"], "priorArtifactId": ref["artifactId"], "priorReviewCommentId": ref["reviewCommentId"]}
@@ -1161,6 +1189,16 @@ class DraftMeasurementContracts(unittest.TestCase):
 
     def history(self, index, final=False):
         self.runtime, self.jobs, self.archive_rows = [], {}, {}
+        for old_index, (run_id, artifact_id, digest, review_id, conclusion) in enumerate(pt8a.STOPPED_MEASUREMENT):
+            self.runtime.append({"id": run_id, "head_sha": pt8a.STOPPED_MEASUREMENT_SOURCE,
+                "run_attempt": 1, "status": "completed", "conclusion": conclusion})
+            self.jobs[run_id] = {"total_count": 1, "jobs": [{"name": pt8a.MEASUREMENT_OPERATION + "/" + pt8a.CASES[old_index],
+                "status": "completed", "conclusion": conclusion}]}
+        self.runtime.append({"id": pt8a.MEASUREMENT_START_AFTER_RUN, "head_sha": pt8a.STOPPED_MEASUREMENT_SOURCE,
+            "run_attempt": 1, "status": "completed", "conclusion": "cancelled"})
+        self.jobs[pt8a.MEASUREMENT_START_AFTER_RUN] = {"total_count": 1, "jobs": [{"name": pt8a.MEASUREMENT_OPERATION + "/" + pt8a.CASES[2],
+            "status": "completed", "conclusion": "cancelled"}]}
+        self.archive_rows[pt8a.MEASUREMENT_START_AFTER_RUN] = {"total_count": 0, "artifacts": []}
         for stage in range(index + 1):
             ref = self.reference(stage); bound = self.bindings[ref["runId"]]; current = stage == index and not final
             self.runtime.append({"id": ref["runId"], "head_sha": SOURCE, "run_attempt": 1,
@@ -1206,15 +1244,18 @@ class DraftMeasurementContracts(unittest.TestCase):
             with patch.dict(self.pr, {"merged": False}), self.assertRaises(ValueError):
                 pt8a.measurement_request_contract(self.request_a, SOURCE, IMAGE, 1)
             for request in (self.request_a | {"priorRunId": 1}, self.request(1) | {"priorReviewCommentId": 0},
-                            self.request_a | {"mode": pt8a.QUALIFIED_MODE}, self.request_a | {"liveApprovalCommentId": True}):
+                            self.request_a | {"mode": pt8a.QUALIFIED_MODE}, self.request_a | {"liveApprovalCommentId": True},
+                            self.request_a | {"episodeId": "stopped-episode"}, self.request_a | {"startAfterRunId": 0}):
                 with self.subTest(request=request), self.assertRaises(ValueError):
                     pt8a.measurement_request_contract(request, SOURCE, IMAGE, 1)
+            with self.assertRaises(ValueError):
+                pt8a.measurement_request_contract(self.request_a, pt8a.STOPPED_MEASUREMENT_SOURCE, IMAGE, 1)
             with self.assertRaises(ValueError): pt8a.measurement_request_contract(self.request_a, SOURCE, IMAGE, 2)
             with patch.object(pt8a.transport, "current_main", return_value="c" * 40), self.assertRaisesRegex(ValueError, "MAIN_DRIFT"):
                 pt8a.measurement_request_contract(self.request_a, SOURCE, IMAGE, 1)
 
     def test_diagnostic_storage_loss_or_missing_cause_review_blocks_next_paid_case(self):
-        for defect in ("storage", "candidate", "review"):
+        for defect in ("storage", "candidate", "readback", "review"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
                 self.patches(stack)
                 ref = self.reference(0)
@@ -1224,6 +1265,7 @@ class DraftMeasurementContracts(unittest.TestCase):
                 try:
                     if defect == "storage": data["observation/diagnostics.json"]["status"] = "DIAGNOSTIC_EVIDENCE_INCOMPLETE"
                     if defect == "candidate": data["observation/diagnostics.json"]["candidates"] = {}
+                    if defect == "readback": data["observation/diagnostics.json"]["ownerScopedOriginalReadback"] = {"status": "VERIFIED", "candidateSha256": {}}
                     if defect == "review": self.reviews[ref["reviewCommentId"]].pop("failure_diagnosability")
                     history = pt8a.measurement_history(self.request(1), SOURCE, self.history(1))
                     with self.assertRaisesRegex(ValueError, "DIAGNOSTIC_EVIDENCE_INCOMPLETE"):
@@ -1246,22 +1288,76 @@ class DraftMeasurementContracts(unittest.TestCase):
 
     def test_stopped_real_measurement_episode_blocks_new_source_case_a_without_episode_authority(self):
         current = self.history(0)
-        future = 38040000000
-        self.runtime[0]["id"] = future
-        self.jobs[future] = self.jobs.pop(current)
-        active = self.runtime[0].copy()
-        # Exact existing run IDs/source/attempt/conclusions and evaluated job names.
-        # New approvals or a source change cannot erase any of these dispatches.
-        for run_id, case, conclusion in ((38028039113, pt8a.CASES[0], "success"),
-                (38029022214, pt8a.CASES[1], "failure"), (38029924066, pt8a.CASES[2], "cancelled")):
-            with self.subTest(run_id=run_id), ExitStack() as stack:
-                self.runtime = [{"id": run_id, "head_sha": "2302a85ff828411a24f235919ceddcab3cd6c89e",
-                    "run_attempt": 1, "status": "completed", "conclusion": conclusion}, active]
-                self.jobs[run_id] = {"total_count": 1, "jobs": [{"name": pt8a.MEASUREMENT_OPERATION + "/" + case,
-                    "status": "completed", "conclusion": conclusion}]}
-                self.patches(stack)
-                with self.assertRaisesRegex(ValueError, "dispatch consumed, no retry"):
-                    pt8a.measurement_history(self.request(0), SOURCE, future)
+        with ExitStack() as stack:
+            self.patches(stack)
+            admitted = pt8a.measurement_history(self.request(0), SOURCE, current)
+            self.assertEqual([row[0] for row in pt8a.STOPPED_MEASUREMENT] + [pt8a.MEASUREMENT_START_AFTER_RUN],
+                admitted["authenticatedStoppedRunIds"])
+            self.assertEqual({}, admitted["predecessors"])
+            for run_id in admitted["authenticatedStoppedRunIds"]:
+                with self.subTest(run_id=run_id), patch.dict(self.runtime[next(i for i, r in enumerate(self.runtime) if r["id"] == run_id)],
+                        {"run_attempt": 2}), self.assertRaises(ValueError):
+                    pt8a.measurement_history(self.request(0), SOURCE, current)
+
+    def test_stopped_episode_archives_reviews_approval_and_cancelled_boundary_are_authenticated(self):
+        old = {}
+        prior = {"runId": 0, "artifactId": 0, "reviewCommentId": 0}
+        for index, (run_id, artifact_id, digest, review_id, conclusion) in enumerate(pt8a.STOPPED_MEASUREMENT):
+            status = "REVIEW_PENDING" if index == 0 else "NOT_PASS"
+            job_id = "original-" + str(index)
+            rows = [{"caseId": case, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for case in pt8a.CASES]
+            rows[index] = {"caseId": pt8a.CASES[index], "status": status, "consumed": True,
+                "uploadAttempts": 1, "terminalState": "SUCCEEDED" if index == 0 else "FAILED", "jobId": job_id}
+            old[run_id] = ({"binding.json": {"sourceSha": pt8a.STOPPED_MEASUREMENT_SOURCE,
+                    "image": pt8a.STOPPED_MEASUREMENT_IMAGE, "runId": run_id, "mode": pt8a.MEASUREMENT_MODE,
+                    "caseId": pt8a.CASES[index], "candidateIdentity": pt8a.IDENTITY,
+                    "measurementContractSha256": pt8a.STOPPED_MEASUREMENT_CONTRACT_SHA256,
+                    "liveApprovalCommentId": pt8a.STOPPED_MEASUREMENT_APPROVAL},
+                "ledger.json": rows, "measurement-chain.json": {"prior": prior},
+                "observation/accepted.json": {"status": "ACCEPTED", "consumed": True,
+                    "uploadAttempts": 1, "jobId": job_id},
+                "observation/job.json": {"id": job_id, "status": rows[index]["terminalState"]},
+                "measurement-disposition.json": {"observedStatus": status}},
+                {"runId": run_id, "artifactId": artifact_id, "digest": digest,
+                 "sourceSha": pt8a.STOPPED_MEASUREMENT_SOURCE, "conclusion": conclusion})
+            prior = {"runId": run_id, "artifactId": artifact_id, "reviewCommentId": review_id}
+        def comment(comment_id, marker):
+            if comment_id == pt8a.STOPPED_MEASUREMENT_APPROVAL:
+                return {"decision": "APPROVED", "purpose": pt8a.MEASUREMENT_PURPOSE,
+                    "reviewed_source_sha": pt8a.STOPPED_MEASUREMENT_SOURCE,
+                    "backend_image": pt8a.STOPPED_MEASUREMENT_IMAGE,
+                    "candidate_identity": pt8a.IDENTITY,
+                    "measurement_contract_sha256": pt8a.STOPPED_MEASUREMENT_CONTRACT_SHA256,
+                    "amendment_pr": "271"}
+            if comment_id == 6094591490:
+                return {"decision": "STOP_FURTHER_PAID_MEASUREMENTS",
+                    "reviewed_source_sha": pt8a.STOPPED_MEASUREMENT_SOURCE,
+                    "case_b_run_id": str(pt8a.STOPPED_MEASUREMENT[1][0]),
+                    "case_b_artifact_id": str(pt8a.STOPPED_MEASUREMENT[1][1]),
+                    "case_b_review_comment_id": str(pt8a.STOPPED_MEASUREMENT[1][3]),
+                    "case_c_dispatched_run_id": str(pt8a.MEASUREMENT_START_AFTER_RUN),
+                    "case_c_status": "CANCELLED_BEFORE_PRODUCT_OBSERVATION"}
+            row = next(r for r in pt8a.STOPPED_MEASUREMENT if r[3] == comment_id)
+            index = pt8a.STOPPED_MEASUREMENT.index(row)
+            return {"decision": "EVIDENCE_VALID_MEASUREMENT_ONLY", "reviewed_source_sha": pt8a.STOPPED_MEASUREMENT_SOURCE,
+                "backend_image": pt8a.STOPPED_MEASUREMENT_IMAGE,
+                "measurement_contract_sha256": pt8a.STOPPED_MEASUREMENT_CONTRACT_SHA256,
+                "run_id": str(row[0]), "artifact_id": str(row[1]), "artifact_digest": row[2],
+                "case_id": pt8a.CASES[index], "observed_status": "REVIEW_PENDING" if index == 0 else "NOT_PASS"}
+        def download(run_id, artifact_id, *args, **kwargs):
+            self.assertEqual(pt8a.STOPPED_MEASUREMENT[0 if run_id == pt8a.STOPPED_MEASUREMENT[0][0] else 1][1], artifact_id)
+            self.assertTrue(kwargs["verify_inventory"])
+            return old[run_id]
+        with tempfile.TemporaryDirectory() as directory, patch.object(pt8a, "authority_comment", side_effect=comment), \
+                patch.object(pt8a, "bound_artifact", side_effect=download):
+            result = pt8a.stopped_measurement_originals(Path(directory))
+            self.assertFalse(result["mergedIntoNewLedger"])
+            self.assertEqual("NOT_PASS", result["A_B"][1]["observedStatus"])
+            self.assertEqual("CANCELLED_NO_ARTIFACT", result["C"]["status"])
+            with patch.dict(old[pt8a.STOPPED_MEASUREMENT[1][0]][1], {"digest": "sha256:" + "0" * 64}), self.assertRaises(ValueError):
+                pt8a.stopped_measurement_originals(Path(directory))
+            with patch.dict(old[pt8a.STOPPED_MEASUREMENT[1][0]][0]["ledger.json"][1], {"consumed": False}), self.assertRaises(ValueError):
+                pt8a.stopped_measurement_originals(Path(directory))
 
     def test_duplicates_other_sources_preflight_skips_reruns_ambiguous_history_and_writers_fail_closed(self):
         current = self.history(1)
@@ -1349,6 +1445,7 @@ class DraftMeasurementContracts(unittest.TestCase):
             "sourceSha": pt8a.GENERATION_OBSERVATION_SOURCE, "digest": pt8a.GENERATION_OBSERVATION_DIGEST, "conclusion": "success"}
         with tempfile.TemporaryDirectory() as directory, patch.object(pt8a, "recovery_originals", return_value={}), \
                 patch.object(pt8a, "generation_diagnostic_origin", return_value={"consumed": True}), \
+                patch.object(pt8a, "stopped_measurement_originals", return_value={"status": "AUTHENTICATED"}), \
                 patch.object(pt8a, "bound_artifact", return_value=(data, bound)) as download:
             self.assertEqual(bound, pt8a.measurement_originals(Path(directory))["consumedGenerationDiagnostic"])
             self.assertTrue(download.call_args.kwargs["verify_inventory"])
@@ -1939,17 +2036,21 @@ class ArtifactAndObservationContracts(unittest.TestCase):
                 pt8a.require_diagnostic_evidence(evidence | changed, job)
         with tempfile.TemporaryDirectory() as directory:
             client = unittest.mock.Mock()
-            client.request.return_value = {"httpStatus": 200, "json": evidence}
+            client.request.side_effect = [{"httpStatus": 200, "json": copy.deepcopy(evidence)},
+                {"httpStatus": 200, "json": original_diagnostics(evidence)}]
             saved = pt8a.capture_diagnostic_evidence(client, job, Path(directory), Path(directory))
             self.assertEqual("AVAILABLE", saved["status"])
+            self.assertEqual("VERIFIED", saved["ownerScopedOriginalReadback"]["status"])
             self.assertNotIn("content", (Path(directory)/"diagnostics.json").read_text())
+            client.reset_mock(); client.request.side_effect = None
             client.request.return_value = {"httpStatus": 503, "json": {"content": "private-user-HCL"}}
             saved = pt8a.capture_diagnostic_evidence(client, job, Path(directory), Path(directory))
             self.assertEqual("DIAGNOSTIC_EVIDENCE_INCOMPLETE", saved["status"])
             self.assertNotIn("private-user-HCL", (Path(directory)/"diagnostics.json").read_text())
-            self.assertEqual(["GET", "GET"], [call.args[0] for call in client.request.call_args_list])
+            self.assertEqual(["GET"], [call.args[0] for call in client.request.call_args_list])
             pending = {"jobId": job["id"], "projectId": job["projectId"], "storageStatus": "PENDING"}
-            client.reset_mock(); client.request.side_effect = [{"httpStatus": 200, "json": pending}, {"httpStatus": 200, "json": evidence}]
+            client.reset_mock(); client.request.side_effect = [{"httpStatus": 200, "json": pending},
+                {"httpStatus": 200, "json": copy.deepcopy(evidence)}, {"httpStatus": 200, "json": original_diagnostics(evidence)}]
             waits = []
             saved = pt8a.capture_diagnostic_evidence(client, job, Path(directory), Path(directory), wait=waits.append)
             self.assertEqual("AVAILABLE", saved["status"]); self.assertEqual([5], waits)
@@ -1958,6 +2059,28 @@ class ArtifactAndObservationContracts(unittest.TestCase):
             saved = pt8a.capture_diagnostic_evidence(client, job, Path(directory), Path(directory), wait=waits.append)
             self.assertEqual("DIAGNOSTIC_EVIDENCE_INCOMPLETE", saved["status"])
             self.assertEqual(7, client.request.call_count); self.assertEqual(30, sum(waits))
+
+    def test_private_original_readback_is_required_and_mismatch_never_exports_hcl(self):
+        job = {"id": "job-1", "projectId": 1, "status": "FAILED"}
+        evidence = safe_diagnostics(job, category="VALIDATE_CONFIGURATION")
+        with tempfile.TemporaryDirectory() as directory:
+            client = unittest.mock.Mock()
+            for response in ({"httpStatus": 403, "json": {"content": "secret"}},
+                    {"httpStatus": 200, "json": original_diagnostics(evidence) | {"evidenceSha256": "0" * 64}},
+                    {"httpStatus": 200, "json": original_diagnostics(evidence)}):
+                if response["httpStatus"] == 200 and response["json"].get("evidenceSha256") == evidence["evidenceSha256"]:
+                    response["json"]["candidates"]["final"]["content"] = "private-secret"
+                client.request.side_effect = [{"httpStatus": 200, "json": copy.deepcopy(evidence)}, response]
+                captured = pt8a.capture_diagnostic_evidence(client, job, Path(directory), Path(directory))
+                self.assertEqual("DIAGNOSTIC_EVIDENCE_INCOMPLETE", captured["status"])
+                self.assertNotIn("private-secret", (Path(directory) / "diagnostics.json").read_text())
+                self.assertNotIn("secret", (Path(directory) / "diagnostics.json").read_text())
+            no_candidate = safe_diagnostics(job, category="PROVIDER_TIMEOUT")
+            client.request.side_effect = [{"httpStatus": 200, "json": copy.deepcopy(no_candidate)},
+                {"httpStatus": 200, "json": original_diagnostics(no_candidate)}]
+            captured = pt8a.capture_diagnostic_evidence(client, job, Path(directory), Path(directory))
+            self.assertEqual("AVAILABLE", captured["status"])
+            self.assertEqual("NO_CANDIDATE_PRODUCED", captured["ownerScopedOriginalReadback"]["status"])
 
     def test_unclassified_or_internal_category_never_counts_as_complete_cause_evidence(self):
         job = {"id": "job-1", "projectId": 1, "status": "FAILED"}
@@ -1985,6 +2108,8 @@ class ArtifactAndObservationContracts(unittest.TestCase):
                 calls.append((method, path))
                 if method == "POST": return accepted()
                 if path.endswith("/diagnostics"): return {"httpStatus": 200, "json": safe_diagnostics(job, category="VALIDATE_CONFIGURATION")}
+                if path.endswith("/diagnostics?includeContent=true"):
+                    return {"httpStatus": 200, "json": original_diagnostics(safe_diagnostics(job, category="VALIDATE_CONFIGURATION"))}
                 if "/analysis/jobs/" in path: return {"httpStatus": 200, "json": job}
                 return {"httpStatus": 200, "json": {"projectId": 1, "latestAnalysisJobId": "job-1", "latestResultObjectKey": None}}
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"GITHUB_RUN_ID": "1"}), \
@@ -1997,7 +2122,7 @@ class ArtifactAndObservationContracts(unittest.TestCase):
             self.assertFalse((out/"main.tf").exists())
             self.assertEqual("VALIDATE_CONFIGURATION", json.loads((out/"diagnostics.json").read_text())["failure"]["category"])
             self.assertEqual(1, sum(method == "POST" for method, path in calls))
-            self.assertFalse(any("includeContent" in path for method, path in calls))
+            self.assertEqual(1, sum("includeContent=true" in path for method, path in calls))
 
 
     def test_provider_call_diagnostics_preserve_measured_duration_and_safe_sdk_types_without_guessing_old_calls(self):

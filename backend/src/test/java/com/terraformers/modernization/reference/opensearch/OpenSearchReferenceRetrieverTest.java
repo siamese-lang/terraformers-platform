@@ -66,11 +66,33 @@ class OpenSearchReferenceRetrieverTest {
             assertThat(request.path("size").asInt()).isEqualTo(2);
             assertThat(request.toString()).contains("[0.1,0.2]", "terraformers-reference-v2", "5.100.0");
         });
-        assertThat(resourceFilter(requests.get(0))).containsExactly("aws_alpha", "aws_beta");
+        assertThat(resourceFilter(requests.get(0))).isEmpty();
         assertThat(resourceFilter(requests.get(1))).containsExactly("aws_alpha");
         assertThat(resourceFilter(requests.get(2))).containsExactly("aws_beta");
         assertThat(resourceFilter(requests.get(3))).containsExactly("aws_alpha", "aws_beta");
         assertThat(requests.get(3).toString()).contains("PROJECT_DECISION", "authority");
+    }
+
+    @Test
+    void semanticSearchCanRetainOfficialRelationshipSupportOutsideEndpointResourceTypes() throws Exception {
+        Fixture fixture = fixture(3,
+                response(officialDocument("link-doc", "aws_sns_topic_subscription"),
+                        officialDocument("relay-doc", "aws_sns_topic"),
+                        officialDocument("worker-doc", "aws_sqs_queue")),
+                response(), response(), response());
+        String directedQuery = "Components: relay, worker. Relationships: relay -> worker.";
+
+        List<ReferenceDocument> selected = fixture.retriever().retrieve(new ReferenceQuery(
+                directedQuery, List.of("aws_sns_topic", "aws_sqs_queue"), 3));
+
+        assertThat(selected).extracting(ReferenceDocument::id)
+                .containsExactly("link-doc", "relay-doc", "worker-doc");
+        verify(fixture.embedding(), times(1)).embed(directedQuery);
+        ArgumentCaptor<String> bodies = ArgumentCaptor.forClass(String.class);
+        verify(fixture.transport(), times(4)).post(any(), bodies.capture());
+        assertThat(resourceFilter(readTree(bodies.getAllValues().get(0)))).isEmpty();
+        assertThat(bodies.getAllValues().stream().map(this::readTree).toList())
+                .allSatisfy(body -> assertThat(body.path("size").asInt()).isEqualTo(3));
     }
 
     @Test

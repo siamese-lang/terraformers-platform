@@ -285,8 +285,8 @@ class VertexGenerationStageTest {
         AnalysisGenerationResult result = stage.generate(context(), source(), List.of(reference()));
 
         assertThat(stage.invocations).containsExactly(
-                new Invocation(false, false),
-                new Invocation(true, true));
+                new Invocation(false, false, List.of()),
+                new Invocation(true, true, List.of()));
         assertThat(result.retryOccurred()).isTrue();
     }
 
@@ -298,8 +298,8 @@ class VertexGenerationStageTest {
                 .isInstanceOf(VertexOutputTruncatedException.class);
 
         assertThat(stage.invocations).containsExactly(
-                new Invocation(false, false),
-                new Invocation(true, true));
+                new Invocation(false, false, List.of()),
+                new Invocation(true, true, List.of()));
     }
 
     @Test
@@ -319,9 +319,24 @@ class VertexGenerationStageTest {
                 new AwsProviderSchemaEvidence(java.util.Map.of("aws_vpc", "cidr_block: string (optional)")));
 
         assertThat(stage.invocations).containsExactly(
-                new Invocation(false, false),
-                new Invocation(true, true));
+                new Invocation(false, false, List.of()),
+                new Invocation(true, true, List.of()));
         assertThat(result.retryOccurred()).isTrue();
+    }
+
+    @Test
+    void compactTruncationRetryRetainsTheSameObservedDirectedRelationship() {
+        RecordingStage stage = new RecordingStage(1);
+        var facts = new com.terraformers.modernization.reference.ArchitectureRetrievalFacts(
+                "relay system", List.of("relay", "worker"), List.of("relay -> worker"),
+                List.of("aws_sns_topic", "aws_sqs_queue"));
+
+        stage.generate(context(), source(), facts, List.of(reference()),
+                new AwsProviderSchemaEvidence(java.util.Map.of()));
+
+        assertThat(stage.invocations).containsExactly(
+                new Invocation(false, false, List.of("relay -> worker")),
+                new Invocation(true, true, List.of("relay -> worker")));
     }
 
     @Test
@@ -333,8 +348,8 @@ class VertexGenerationStageTest {
                 .isInstanceOf(VertexOutputTruncatedException.class);
 
         assertThat(stage.invocations).containsExactly(
-                new Invocation(false, false),
-                new Invocation(true, true));
+                new Invocation(false, false, List.of()),
+                new Invocation(true, true, List.of()));
     }
 
     @Test
@@ -493,7 +508,7 @@ class VertexGenerationStageTest {
         return new ReferenceDocument("ref", "title", "content", 1.0);
     }
 
-    private record Invocation(boolean compact, boolean retryOccurred) {}
+    private record Invocation(boolean compact, boolean retryOccurred, List<String> relationships) {}
 
     private static final class RecordingStage extends VertexGenerationStage {
         private final List<Invocation> invocations = new ArrayList<>();
@@ -508,12 +523,13 @@ class VertexGenerationStageTest {
         @Override
         AnalysisGenerationResult invoke(
                 ObjectContent source,
+                com.terraformers.modernization.reference.ArchitectureRetrievalFacts facts,
                 List<ReferenceDocument> references,
                 AwsProviderSchemaEvidence schemaEvidence,
                 boolean compact,
                 boolean retryOccurred
         ) {
-            invocations.add(new Invocation(compact, retryOccurred));
+            invocations.add(new Invocation(compact, retryOccurred, facts.relationships()));
             if (truncationsRemaining > 0) {
                 truncationsRemaining--;
                 throw new VertexOutputTruncatedException(8192);

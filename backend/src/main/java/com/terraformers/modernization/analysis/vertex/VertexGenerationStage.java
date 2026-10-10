@@ -63,11 +63,18 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
 
     public AnalysisGenerationResult generate(AnalysisRequestContext context, ObjectContent source,
             List<ReferenceDocument> references, AwsProviderSchemaEvidence schemaEvidence) {
+        return generate(context, source, new ArchitectureRetrievalFacts("", List.of(), List.of(), List.of()),
+                references, schemaEvidence);
+    }
+
+    public AnalysisGenerationResult generate(AnalysisRequestContext context, ObjectContent source,
+            ArchitectureRetrievalFacts facts, List<ReferenceDocument> references,
+            AwsProviderSchemaEvidence schemaEvidence) {
         List<ReferenceDocument> safeReferences = references == null ? List.of() : List.copyOf(references);
         try {
-            return invoke(source, safeReferences, schemaEvidence, false, false);
+            return invoke(source, facts, safeReferences, schemaEvidence, false, false);
         } catch (VertexOutputTruncatedException exception) {
-            return invoke(source, safeReferences, schemaEvidence, true, true);
+            return invoke(source, facts, safeReferences, schemaEvidence, true, true);
         }
     }
 
@@ -107,6 +114,7 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
 
     AnalysisGenerationResult invoke(
             ObjectContent source,
+            ArchitectureRetrievalFacts facts,
             List<ReferenceDocument> references,
             AwsProviderSchemaEvidence schemaEvidence,
             boolean compact,
@@ -117,7 +125,7 @@ public class VertexGenerationStage implements AnalysisGenerationStage {
 
         Content content = Content.fromParts(
                 Part.fromBytes(source.bytes(), source.metadata().contentType()),
-                Part.fromText(promptBuilder.build(source, references, schemaEvidence, compact))
+                Part.fromText(promptBuilder.build(source, facts, references, schemaEvidence, compact))
         );
 
         GenerateContentResponse response = completedResponse(content, config, "initial_generation", compact);

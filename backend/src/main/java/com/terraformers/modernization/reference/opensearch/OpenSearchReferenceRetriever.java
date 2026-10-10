@@ -48,7 +48,10 @@ public class OpenSearchReferenceRetriever {
             }
             return selector.select(closure.values(), List.of(), query.resourceTypes(), baseTopK, maxEvidence);
         }
-        List<ReferenceDocument> global = search(vector, baseTopK, query.resourceTypes());
+        // The embedding includes observed relationships. Keep the first semantic search unfiltered
+        // so implementation-support documents can surface even when facts name only endpoint types.
+        // Resource-specific searches below still provide bounded official coverage for those types.
+        List<ReferenceDocument> global = search(vector, baseTopK, List.of());
         if (query.resourceTypes().isEmpty()) {
             return global;
         }

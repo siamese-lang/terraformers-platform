@@ -38,6 +38,13 @@ public class VertexPromptBuilder {
 
     public String build(ObjectContent source, List<ReferenceDocument> references,
                         AwsProviderSchemaEvidence schemaEvidence, boolean compact) {
+        return build(source, new ArchitectureRetrievalFacts("", List.of(), List.of(), List.of()),
+                references, schemaEvidence, compact);
+    }
+
+    public String build(ObjectContent source, ArchitectureRetrievalFacts facts,
+                        List<ReferenceDocument> references, AwsProviderSchemaEvidence schemaEvidence,
+                        boolean compact) {
         requireSupportedImageMediaType(source.metadata().contentType());
         String referenceText = (references == null ? List.<ReferenceDocument>of() : references).stream()
                 .map(this::formatReference)
@@ -69,6 +76,17 @@ public class VertexPromptBuilder {
                 - contentType: %s
                 - contentLength: %s
 
+                Extracted image observations (advisory; verify against the image):
+                - summary: %s
+                - components: %s
+                - directed relationships: %s
+                - resource candidates: %s
+                For each clear directed relationship, preserve its direction and endpoint roles in actual
+                Terraform references, wiring or declared external inputs. Listing both endpoint resources
+                does not establish their relationship. If the image or observations are uncertain or
+                conflict, do not invent a connection; describe unresolved intent in warnings.
+                Omission from these partial observations does not prove an image relationship is absent.
+
                 Retrieved reference evidence:
                 %s
 
@@ -81,6 +99,7 @@ public class VertexPromptBuilder {
                         : "Standard mode: keep analysis and Terraform concise and avoid equivalent repeated detail.",
                 source.metadata().contentType(),
                 source.metadata().contentLength(),
+                facts.summary(), facts.components(), facts.relationships(), facts.resourceTypes(),
                 referenceText.isBlank() ? "- none" : referenceText,
                 schemaEvidence.promptText()
         );
@@ -120,6 +139,10 @@ public class VertexPromptBuilder {
                   Do not preserve an inferred connection merely to retain prior prose or match an example;
                   keep necessary unspecified endpoints as declared external inputs. Extracted facts are
                   partial: omission is not evidence of absence. Do not remove visible topology to reduce gaps.
+                - Check each clear extracted directed relationship against actual HCL references and
+                  wiring in the corrected draft. Naming both endpoint resources or repeating the prior
+                  relationship prose does not implement their connection. Repair missing grounded wiring;
+                  leave uncertain connections unresolved rather than inventing them.
                 - Correct HCL using supplied official provider documentation and exact AWS Provider 5.100.0 schema.
                 - Do not introduce unrelated architecture components. Preserve necessary implementation
                   support resources and validate them against the provider schema.

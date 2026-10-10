@@ -65,7 +65,7 @@ class ProductionEquivalentClosureEvaluationTest {
         assertThat(trace.generation().evidence().groundingClosure().finalSelectedReferences())
                 .isEqualTo(trace.retrieval().evidence().hits());
         verify(fixture.retriever(), times(1)).retrieve(any());
-        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
         verify(fixture.stage(), never()).repair(any(), any(), any(), any());
         verify(fixture.orchestrator(), times(1)).generate(any(), any(), any(), eq(List.of(bucket, decision)), any());
         verify(fixture.cli()).validate(BUCKET);
@@ -128,7 +128,7 @@ class ProductionEquivalentClosureEvaluationTest {
         assertThat(new CaseAQualityCalibrationScorer().score(positive(), trace).labeledQualitySuccess()).isFalse();
         verify(fixture.retriever(), times(2)).retrieve(any());
         verify(fixture.retriever(), times(1)).retrieveOfficialDocumentation("aws_security_group");
-        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
         verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
         verify(fixture.cli()).validate(finalTerraform);
     }
@@ -148,7 +148,7 @@ class ProductionEquivalentClosureEvaluationTest {
         assertThat(score.generatedResourceOfficialEvidenceCoverage().matched()).isEqualTo(3);
         assertThat(score.retrievalToGenerationHandoffComplete()).isTrue();
         assertThat(trace.generation().evidence().suppliedReferenceIds()).containsExactly("bucket", "decision");
-        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
         verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
         verify(fixture.retriever(), times(2)).retrieve(any());
         verify(fixture.retriever(), times(1)).retrieveOfficialDocumentation("aws_security_group");
@@ -189,7 +189,7 @@ class ProductionEquivalentClosureEvaluationTest {
         for (AnalysisInputClassification classification : List.of(AnalysisInputClassification.AMBIGUOUS,
                 AnalysisInputClassification.NON_ARCHITECTURE_IMAGE)) {
             Fixture fixture = fixture(List.of(bucket), List.of(instance), BUCKET, null);
-            when(fixture.stage().generate(any(), any(), any(), any())).thenThrow(
+            when(fixture.stage().generate(any(), any(), any(), any(), any())).thenThrow(
                     new AnalysisInputRejectedException(classification, .9, false, null));
             EvaluationCase definition = CaseATestFixtures.definition("negative",
                     EvaluationCase.InputClassification.valueOf(classification.name()), List.of(), List.of());
@@ -211,7 +211,7 @@ class ProductionEquivalentClosureEvaluationTest {
         ReferenceRetriever retriever = mock(ReferenceRetriever.class);
         when(retriever.retrieve(any())).thenReturn(initial, closure);
         VertexGenerationStage stage = mock(VertexGenerationStage.class);
-        when(stage.generate(any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult("vertex:test",
+        when(stage.generate(any(), any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult("vertex:test",
                 AnalysisInputClassification.ARCHITECTURE_DIAGRAM, 1.0, first, "Bucket", List.of("Bucket"),
                 List.of("Bucket -> app"), List.of(), "STOP", 10, false));
         when(stage.repair(any(), any(), any(), any())).thenReturn(repaired);

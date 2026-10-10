@@ -97,7 +97,7 @@ class VertexAnalysisProviderTest {
                     : List.of(official("vpc", "aws_vpc"), official("subnet", "aws_subnet")),
                     List.of(official("subnet", "aws_subnet")), first, repaired);
             var original = generation(first);
-            when(fixture.stage().generate(any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult(
+            when(fixture.stage().generate(any(), any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult(
                     original.provider(), original.inputClassification(), original.classificationConfidence(),
                     first, original.summary(), original.components(), original.relationships(), List.of(warning),
                     original.stopReason(), original.outputTokens(), original.retryOccurred()));
@@ -109,7 +109,7 @@ class VertexAnalysisProviderTest {
             assertThat(result.terraformCode()).isEqualTo(repair ? repaired : first);
             assertThat(result.warnings()).containsExactly(repair
                     ? "Initial draft (before grounding repair; not revalidated): " + warning : warning);
-            verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+            verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
             verify(fixture.stage(), times(repair ? 1 : 0)).repair(any(), any(), any(), any());
         }
     }
@@ -127,7 +127,7 @@ class VertexAnalysisProviderTest {
                 .isEqualTo(com.terraformers.modernization.analysis.EvidenceQualityAssessment.QualityStatus.DEGRADED);
         assertThat(result.qualityAssessment().reasons()).contains(
                 com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING);
-        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
         verify(fixture.stage(), org.mockito.Mockito.never()).repair(any(), any(), any(), any());
         verify(fixture.retriever(), times(1)).retrieve(any());
     }
@@ -150,7 +150,7 @@ class VertexAnalysisProviderTest {
             assertThat(result.qualityAssessment().reasons().contains(
                     com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING))
                     .isEqualTo(finalDraft.equals(missing));
-            verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+            verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
             verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
             verify(fixture.retriever(), times(2)).retrieve(any());
         }
@@ -186,7 +186,7 @@ class VertexAnalysisProviderTest {
             return List.of(reference());
         };
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(safeGeneration());
+        when(generationStage.generate(any(), any(), any(), any(), any())).thenReturn(safeGeneration());
         AwsProviderSchemaCatalog catalog = catalogWith(
                 List.of("aws_vpc", "aws_db_instance", "aws_security_group"),
                 new AwsProviderSchemaEvidence(Map.of("aws_vpc", "cidr_block(optional)")));
@@ -207,7 +207,7 @@ class VertexAnalysisProviderTest {
     @Test
     void requiredArchitectureGenerationFailsClosedWhenRetrievalIsEmpty() {
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(generatedArchitecture());
+        when(generationStage.generate(any(), any(), any(), any(), any())).thenReturn(generatedArchitecture());
         VertexAnalysisProvider provider = provider(query -> List.of(), generationStage);
 
         assertThatThrownBy(() -> provider.analyze(context()))
@@ -221,7 +221,7 @@ class VertexAnalysisProviderTest {
                 AnalysisInputClassification.NON_ARCHITECTURE_IMAGE,
                 AnalysisInputClassification.AMBIGUOUS)) {
             VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-            when(generationStage.generate(any(), any(), any(), any())).thenThrow(
+            when(generationStage.generate(any(), any(), any(), any(), any())).thenThrow(
                     new AnalysisInputRejectedException(classification, 0.9, false, null));
             VertexAnalysisProvider provider = provider(query -> List.of(), generationStage);
 
@@ -242,14 +242,14 @@ class VertexAnalysisProviderTest {
                   password = "example-password"
                 }
                 """);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(literalDraft);
+        when(generationStage.generate(any(), any(), any(), any(), any())).thenReturn(literalDraft);
         GeneratedTerraformContractInspector inspector = mock(GeneratedTerraformContractInspector.class);
         VertexAnalysisProvider provider = provider(retriever, generationStage, inspector);
 
         var result = provider.analyze(context());
 
         assertThat(result.terraformCode()).contains("example-password");
-        verify(generationStage, times(1)).generate(any(), any(), any(), any());
+        verify(generationStage, times(1)).generate(any(), any(), any(), any(), any());
         verify(inspector).inspect(literalDraft.terraformCode());
     }
 
@@ -259,8 +259,9 @@ class VertexAnalysisProviderTest {
         ObjectReader objectReader = mock(ObjectReader.class);
         when(objectReader.readContent(any())).thenReturn(source);
         VertexArchitectureFactsExtractor factsExtractor = mock(VertexArchitectureFactsExtractor.class);
-        when(factsExtractor.extract(source)).thenReturn(new ArchitectureRetrievalFacts(
-                "VPC", List.of("VPC"), List.of(), List.of("aws_vpc")));
+        ArchitectureRetrievalFacts observed = new ArchitectureRetrievalFacts(
+                "VPC", List.of("VPC"), List.of("VPC -> subnet"), List.of("aws_vpc"));
+        when(factsExtractor.extract(source)).thenReturn(observed);
 
         ReferenceDocument companion = new ReferenceDocument(
                 "network-pattern",
@@ -291,7 +292,7 @@ class VertexAnalysisProviderTest {
         AwsProviderSchemaCatalog catalog = catalogWith(
                 List.of("aws_vpc", "aws_subnet", "aws_lb_listener"), expectedEvidence);
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), same(expectedEvidence))).thenReturn(safeGeneration());
+        when(generationStage.generate(any(), any(), any(), any(), same(expectedEvidence))).thenReturn(safeGeneration());
 
         VertexAnalysisProvider provider = new VertexAnalysisProvider(
                 objectReader, retriever, requiredProperties(), factsExtractor,
@@ -304,7 +305,7 @@ class VertexAnalysisProviderTest {
         ArgumentCaptor<Collection<String>> candidates = ArgumentCaptor.forClass(Collection.class);
         verify(catalog).resolve(candidates.capture());
         assertThat(candidates.getValue()).containsExactly("aws_vpc", "aws_subnet", "aws_lb_listener");
-        verify(generationStage).generate(any(), same(source), eq(List.of(companion)), same(expectedEvidence));
+        verify(generationStage).generate(any(), same(source), same(observed), eq(List.of(companion)), same(expectedEvidence));
     }
 
     @Test
@@ -322,7 +323,7 @@ class VertexAnalysisProviderTest {
                 new AwsProviderSchemaEvidence(Map.of("aws_vpc", "cidr_block(optional)"));
         AwsProviderSchemaCatalog catalog = catalogWith(List.of("aws_vpc"), evidence);
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), same(evidence))).thenReturn(safeGeneration());
+        when(generationStage.generate(any(), any(), any(), any(), same(evidence))).thenReturn(safeGeneration());
         GeneratedTerraformContractInspector inspector = mock(GeneratedTerraformContractInspector.class);
 
         VertexAnalysisProvider provider = new VertexAnalysisProvider(
@@ -343,7 +344,7 @@ class VertexAnalysisProviderTest {
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
         AnalysisGenerationResult generated = generation(
                 "resource \"aws_subnet\" \"generated\" { vpc_id = \"vpc-example\" }");
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(generated);
+        when(generationStage.generate(any(), any(), any(), any(), any())).thenReturn(generated);
         GeneratedTerraformContractInspector inspector = mock(GeneratedTerraformContractInspector.class);
 
         provider(query -> List.of(reference()), generationStage, inspector).analyze(context());
@@ -354,7 +355,7 @@ class VertexAnalysisProviderTest {
     @Test
     void successfulArchitectureResultCarriesEvidenceQualityAssessment() {
         VertexGenerationStage generationStage = mock(VertexGenerationStage.class);
-        when(generationStage.generate(any(), any(), any(), any())).thenReturn(safeGeneration());
+        when(generationStage.generate(any(), any(), any(), any(), any())).thenReturn(safeGeneration());
 
         var result = provider(query -> List.of(reference()), generationStage).analyze(context());
 
@@ -370,7 +371,7 @@ class VertexAnalysisProviderTest {
         var result = fixture.provider().analyze(context());
         assertThat(result.references()).containsExactly("vpc");
         verify(fixture.retriever(), times(1)).retrieve(any());
-        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
         verify(fixture.stage(), org.mockito.Mockito.never()).repair(any(), any(), any(), any());
         verify(fixture.inspector()).inspect(safeGeneration().terraformCode());
         verify(fixture.orchestrator()).generate(any(), any(), any(), eq(List.of(official("vpc", "aws_vpc"))), any());
@@ -402,7 +403,7 @@ class VertexAnalysisProviderTest {
         verify(fixture.stage(), times(1)).repair(any(), eq(generation(first)), any(), schemas.capture());
         assertThat(schemas.getValue().resourceTypes()).containsExactlyInAnyOrder("aws_vpc", "aws_instance");
         assertThat(schemas.getValue().promptText()).contains("ami", "required", "instance_type", "block");
-        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
         verify(fixture.inspector()).inspect(repaired);
         ArgumentCaptor<EvidenceQualityAssessor.Input> quality = ArgumentCaptor.forClass(EvidenceQualityAssessor.Input.class);
         verify(fixture.assessor()).assess(quality.capture());
@@ -437,7 +438,7 @@ class VertexAnalysisProviderTest {
                     && warning.contains("aws_security_group"));
             verify(fixture.retriever(), times(2)).retrieve(any());
             verify(fixture.retriever(), times(1)).retrieveOfficialDocumentation("aws_security_group");
-            verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+            verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
             verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
             verify(fixture.inspector()).inspect(repaired);
         }
@@ -466,7 +467,7 @@ class VertexAnalysisProviderTest {
         assertThat(quality.getValue().selectedReferences()).contains(support);
         verify(fixture.retriever(), times(1)).retrieveOfficialDocumentation("aws_security_group");
         verify(fixture.retriever(), times(2)).retrieve(any());
-        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
         verify(fixture.inspector()).inspect(repaired);
     }
 
@@ -498,7 +499,7 @@ class VertexAnalysisProviderTest {
         assertThat(repairContext.getValue()).hasSize(2);
         verify(fixture.retriever(), times(18)).retrieveOfficialDocumentation(any());
         verify(fixture.retriever(), times(2)).retrieve(any());
-        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
+        verify(fixture.stage(), times(1)).generate(any(), any(), any(), any(), any());
         assertThat(result.terraformCode()).isEqualTo(repaired);
     }
 
@@ -595,7 +596,7 @@ class VertexAnalysisProviderTest {
         assertThat(requests.getAllValues().get(2).parts().orElseThrow()).hasSize(1);
         assertThat(requests.getAllValues().get(2).parts().orElseThrow().get(0).inlineData()).isEmpty();
         ArgumentCaptor<AnalysisGenerationResult> draft = ArgumentCaptor.forClass(AnalysisGenerationResult.class);
-        verify(stage, times(1)).generate(any(), any(), any(), any());
+        verify(stage, times(1)).generate(any(), any(), any(), any(), any());
         verify(stage, times(1)).repair(any(), draft.capture(), any(), any());
         assertThat(draft.getValue().retryOccurred()).isTrue();
         assertThat(draft.getValue().terraformCode()).isEqualTo(first);
@@ -619,7 +620,7 @@ class VertexAnalysisProviderTest {
                 .hasCauseInstanceOf(VertexOutputTruncatedException.class);
 
         verify(stage, times(3)).request(any(), any());
-        verify(stage, times(1)).generate(any(), any(), any(), any());
+        verify(stage, times(1)).generate(any(), any(), any(), any(), any());
         verify(stage, times(1)).repair(any(), any(), any(), any());
         verify(fixture.retriever(), times(2)).retrieve(any());
     }
@@ -650,7 +651,7 @@ class VertexAnalysisProviderTest {
         for (var classification : List.of(AnalysisInputClassification.NON_ARCHITECTURE_IMAGE,
                 AnalysisInputClassification.AMBIGUOUS)) {
             ClosureFixture fixture = closureFixture(List.of(reference()), List.of(), "", null);
-            when(fixture.stage().generate(any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult(
+            when(fixture.stage().generate(any(), any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult(
                     "vertex:test", classification, 0.9, "", "", List.of(), List.of(), List.of(), "STOP", 1, false));
             assertThatThrownBy(() -> fixture.provider().analyze(context())).isInstanceOf(AnalysisProviderFailureException.class);
             verify(fixture.retriever(), times(1)).retrieve(any());
@@ -661,7 +662,7 @@ class VertexAnalysisProviderTest {
     private ClosureFixture closureFixture(List<ReferenceDocument> initial, List<ReferenceDocument> closure,
             String first, String repaired) {
         var stage = mock(VertexGenerationStage.class);
-        when(stage.generate(any(), any(), any(), any())).thenReturn(generation(first));
+        when(stage.generate(any(), any(), any(), any(), any())).thenReturn(generation(first));
         when(stage.repair(any(), any(), any(), any())).thenReturn(repaired);
         return closureFixture(initial, closure, stage);
     }

@@ -1080,7 +1080,7 @@ class DiagnosticContinuationContracts(unittest.TestCase):
     def test_diagnostic_workflow_is_gated_before_wif_and_keeps_distinct_artifact_and_no_new_workflow(self):
         workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
         job = workflow["jobs"]["pt8a-official-acceptance"]
-        self.assertEqual(pt8a.SKIPPED_MEASUREMENT_JOB_NAME, job["name"][4:-3])
+        self.assertEqual(pt8a.SKIPPED_POST_CORRECTION_JOB_NAME, job["name"][4:-3])
         steps = job["steps"]; gate = next(i for i,s in enumerate(steps) if "preflight --request-file" in s.get("run", ""))
         wif = next(i for i,s in enumerate(steps) if s.get("uses") == "google-github-actions/auth@v3")
         self.assertLess(gate, wif); self.assertIn("RUN_REVIEWED_PT8A_B_TO_E_DIAGNOSTIC_ONLY", steps[gate]["run"])
@@ -2720,6 +2720,234 @@ class KeylessReadOnlyDiagnosticContracts(unittest.TestCase):
                         exec(compile(guard, "workflow-diagnostic-request-guard", "exec"), {})
                     self.assertNotIn("PRIVATE_SECRET", str(failure.exception))
                     self.assertFalse(output.exists())
+
+
+class PostCorrectionSingleObservationContracts(unittest.TestCase):
+    def setUp(self):
+        self.request = {"mode": pt8a.POST_CORRECTION_MODE, "caseId": pt8a.CASES[0],
+            "liveApprovalCommentId": 910, "provenanceRunId": pt8a.ORIGIN_CLEAN_RUN,
+            "provenanceArtifactId": pt8a.ORIGIN_CLEAN_ARTIFACT,
+            "priorRunId": pt8a.POST_CORRECTION_ORIGIN_RUN,
+            "priorArtifactId": pt8a.POST_CORRECTION_ORIGIN_ARTIFACT,
+            "priorReviewCommentId": pt8a.POST_CORRECTION_ORIGIN_REVIEW,
+            "amendmentPullRequest": 911, "amendmentReviewCommentId": 912}
+        self.live = pt8a.post_correction_live_fields(self.request, SOURCE, IMAGE)
+        self.review = {"decision": "ACCEPTED", "reviewed_head": "d" * 40,
+            "execution_base_sha": pt8a.POST_CORRECTION_MERGE,
+            "post_correction_contract_sha256": pt8a.post_correction_contract_sha256()}
+        self.pr = {"merged": True, "base": {"ref": "main"},
+            "head": {"sha": "d" * 40}, "merge_commit_sha": "e" * 40}
+        self.current = pt8a.POST_CORRECTION_ORIGIN_RUN + 1000
+        self.runs = [
+            {"id": pt8a.POST_CORRECTION_ORIGIN_RUN, "head_sha": pt8a.POST_CORRECTION_ORIGIN_SOURCE,
+             "run_attempt": 1, "status": "completed", "conclusion": "success"},
+            {"id": self.current, "head_sha": SOURCE, "run_attempt": 1,
+             "status": "in_progress", "conclusion": None}]
+        self.jobs = {
+            pt8a.POST_CORRECTION_ORIGIN_RUN: {"total_count": 1, "jobs": [{
+                "name": pt8a.MEASUREMENT_OPERATION + "/" + pt8a.CASES[0],
+                "status": "completed", "conclusion": "success"}]},
+            self.current: {"total_count": 1, "jobs": [{"name": pt8a.POST_CORRECTION_OPERATION,
+                "status": "in_progress", "conclusion": None}]}}
+        self.writes = [{"id": pt8a.ORIGIN_CLEAN_RUN, "head_sha": pt8a.ORIGIN_SOURCE}]
+        self.origin_review = {"decision": "EVIDENCE_VALID_MEASUREMENT_ONLY",
+            "reviewed_source_sha": pt8a.POST_CORRECTION_ORIGIN_SOURCE,
+            "backend_image": pt8a.POST_CORRECTION_ORIGIN_IMAGE,
+            "candidate_identity": pt8a.IDENTITY,
+            "measurement_contract_sha256": pt8a.POST_CORRECTION_ORIGIN_CONTRACT,
+            "episode_id": pt8a.MEASUREMENT_EPISODE,
+            "run_id": str(pt8a.POST_CORRECTION_ORIGIN_RUN),
+            "artifact_id": str(pt8a.POST_CORRECTION_ORIGIN_ARTIFACT),
+            "artifact_digest": pt8a.POST_CORRECTION_ORIGIN_DIGEST,
+            "case_id": pt8a.CASES[0], "product_quality": "NOT_PASS",
+            "dimension_directed_relationships": "FAIL", "allow_next_measurement": "false",
+            "diagnostic_evidence_sha256": pt8a.POST_CORRECTION_ORIGIN_DIAGNOSTIC}
+
+    def api(self, path):
+        if path.startswith("pulls/"): return self.pr
+        if path.startswith("issues/comments/"):
+            return {"issue_url": "https://api.github.com/repos/siamese-lang/terraformers-platform/issues/911"}
+        if path.startswith("compare/"): return {"status": "ahead"}
+        if "gcp-target-runtime-dependencies.yml/runs?" in path:
+            return {"total_count": len(self.runs), "workflow_runs": self.runs}
+        if "gcp-target-corpus-ingestion.yml/runs?" in path:
+            return {"total_count": len(self.writes), "workflow_runs": self.writes}
+        return self.jobs[int(path.split("/")[2])]
+
+    def authority(self, comment_id, marker):
+        if comment_id == self.request["liveApprovalCommentId"]: return self.live
+        if comment_id == pt8a.POST_CORRECTION_ORIGIN_APPROVAL and hasattr(self, "origin_live"):
+            return self.origin_live
+        if comment_id == 6096529026: return self.live | {"purpose": "OLD_EPISODE_AUTHORITY"}
+        if comment_id == self.request["amendmentReviewCommentId"]: return self.review
+        if comment_id == pt8a.POST_CORRECTION_ORIGIN_REVIEW: return self.origin_review
+        raise AssertionError("unexpected authority")
+
+    def test_new_source_requires_separate_exact_live_and_merged_independent_authority(self):
+        with patch.object(pt8a, "github", side_effect=self.api), \
+             patch.object(pt8a, "authority_comment", side_effect=self.authority), \
+             patch.object(pt8a.transport, "current_main", return_value=SOURCE):
+            self.assertEqual(self.live, pt8a.post_correction_request_contract(self.request, SOURCE, IMAGE, 1))
+            for changed in ({"mode": pt8a.MEASUREMENT_MODE}, {"caseId": pt8a.CASES[1]},
+                    {"priorRunId": 0}, {"liveApprovalCommentId": 6096529026}):
+                with self.subTest(changed=changed), self.assertRaises(ValueError):
+                    pt8a.post_correction_request_contract(self.request | changed, SOURCE, IMAGE, 1)
+            for source, image, attempt in ((pt8a.POST_CORRECTION_ORIGIN_SOURCE, IMAGE, 1),
+                    (SOURCE, IMAGE + "wrong", 1), (SOURCE, IMAGE, 2)):
+                with self.assertRaises(ValueError):
+                    pt8a.post_correction_request_contract(self.request, source, image, attempt)
+            with patch.dict(self.pr, {"merged": False}), self.assertRaises(ValueError):
+                pt8a.post_correction_request_contract(self.request, SOURCE, IMAGE, 1)
+            with patch.dict(self.live, {"backend_image": "wrong"}), self.assertRaises(ValueError):
+                pt8a.post_correction_request_contract(self.request, SOURCE, IMAGE, 1)
+            with patch.dict(self.review, {"decision": "CHANGES_REQUIRED"}), self.assertRaises(ValueError):
+                pt8a.post_correction_request_contract(self.request, SOURCE, IMAGE, 1)
+            with patch.object(pt8a.transport, "current_main", return_value="f" * 40), self.assertRaisesRegex(ValueError, "MAIN_DRIFT"):
+                pt8a.post_correction_request_contract(self.request, SOURCE, IMAGE, 1)
+
+    def test_history_preserves_consumed_origin_and_rejects_second_or_ambiguous_dispatch(self):
+        with patch.object(pt8a, "github", side_effect=self.api):
+            self.assertTrue(pt8a.post_correction_history(SOURCE, self.current)["singleDispatchConsumed"])
+            other = {"id": self.current - 1, "head_sha": "f" * 40, "run_attempt": 1,
+                "status": "completed", "conclusion": "failure"}
+            self.runs.insert(1, other)
+            self.jobs[other["id"]] = {"total_count": 1, "jobs": [{"name": pt8a.POST_CORRECTION_OPERATION,
+                "status": "completed", "conclusion": "failure"}]}
+            with self.assertRaises(ValueError): pt8a.post_correction_history(SOURCE, self.current)
+            self.jobs[other["id"]] = {"total_count": 1, "jobs": [{
+                "name": pt8a.SKIPPED_POST_CORRECTION_JOB_NAME,
+                "status": "completed", "conclusion": "skipped"}]}
+            with self.assertRaises(ValueError): pt8a.post_correction_history(SOURCE, self.current)
+            self.jobs[other["id"]]["total_count"] = 2
+            self.jobs[other["id"]]["jobs"].append({"name": "backend-revision-rollout",
+                "status": "completed", "conclusion": "success"})
+            pt8a.post_correction_history(SOURCE, self.current)
+            self.runs[0]["run_attempt"] = 2
+            with self.assertRaises(ValueError): pt8a.post_correction_history(SOURCE, self.current)
+            self.runs[0]["run_attempt"] = 1
+            self.writes.append({"id": self.current + 1, "head_sha": SOURCE})
+            with self.assertRaises(ValueError): pt8a.post_correction_history(SOURCE, self.current)
+
+    def test_original_not_pass_and_no_next_review_remain_immutable(self):
+        rows = [{"caseId": c, "status": "NOT_RUN"} for c in pt8a.CASES]
+        rows[0].update(status="REVIEW_PENDING", consumed=True, uploadAttempts=1)
+        data = {"inventory.json": {"files": []},
+            "binding.json": {"sourceSha": pt8a.POST_CORRECTION_ORIGIN_SOURCE,
+                "image": pt8a.POST_CORRECTION_ORIGIN_IMAGE,
+                "runId": pt8a.POST_CORRECTION_ORIGIN_RUN, "mode": pt8a.MEASUREMENT_MODE,
+                "caseId": pt8a.CASES[0], "episodeId": pt8a.MEASUREMENT_EPISODE,
+                "measurementContractSha256": pt8a.POST_CORRECTION_ORIGIN_CONTRACT,
+                "liveApprovalCommentId": pt8a.POST_CORRECTION_ORIGIN_APPROVAL,
+                "amendmentPullRequest": 273, "amendmentReviewCommentId": 6096463681,
+                "policyApprovalCommentId": 6096487884,
+                "candidateIdentity": pt8a.IDENTITY},
+            "ledger.json": rows, "measurement-disposition.json": {"officialAcceptance": "NOT_ACCEPTANCE"},
+            "cleanup.json": {"JWKSRestored": True},
+            "observation/accepted.json": {"status": "ACCEPTED", "consumed": True,
+                "uploadAttempts": 1, "jobId": pt8a.POST_CORRECTION_ORIGIN_JOB},
+            "observation/job.json": {"id": pt8a.POST_CORRECTION_ORIGIN_JOB, "status": "SUCCEEDED"},
+            "observation/diagnostics.json": {"evidenceSha256": pt8a.POST_CORRECTION_ORIGIN_DIAGNOSTIC}}
+        bound = {"runId": pt8a.POST_CORRECTION_ORIGIN_RUN,
+            "artifactId": pt8a.POST_CORRECTION_ORIGIN_ARTIFACT,
+            "digest": pt8a.POST_CORRECTION_ORIGIN_DIGEST,
+            "sourceSha": pt8a.POST_CORRECTION_ORIGIN_SOURCE, "conclusion": "success"}
+        self.origin_live = pt8a.measurement_live_fields(data["binding.json"],
+            pt8a.POST_CORRECTION_ORIGIN_SOURCE, pt8a.POST_CORRECTION_ORIGIN_IMAGE)
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.object(pt8a, "measurement_originals", return_value={"historical": "unchanged"}), \
+             patch.object(pt8a, "bound_artifact", return_value=(data, bound)), \
+             patch.object(pt8a, "authority_comment", side_effect=self.authority):
+            self.assertFalse(pt8a.post_correction_origin(Path(directory))["allowNextMeasurement"])
+            for item, key, value in ((bound, "digest", "wrong"), (rows[0], "consumed", False),
+                    (self.origin_review, "allow_next_measurement", "true"),
+                    (self.origin_live, "backend_image", "wrong"),
+                    (data["observation/diagnostics.json"], "evidenceSha256", "wrong"),
+                    (data["cleanup.json"], "JWKSRestored", False)):
+                old = item[key]; item[key] = value
+                with self.assertRaises(ValueError): pt8a.post_correction_origin(Path(directory))
+                item[key] = old
+
+    def test_existing_workflow_routes_only_one_distinct_protected_observation(self):
+        workflow = yaml.safe_load((pt8a.ROOT / ".github/workflows/gcp-target-runtime-dependencies.yml").read_text())
+        options = workflow[True]["workflow_dispatch"]["inputs"]["operation"]["options"]
+        self.assertIn(pt8a.POST_CORRECTION_OPERATION, options)
+        job = workflow["jobs"]["pt8a-official-acceptance"]
+        self.assertEqual("gcp-target-apply", job["environment"])
+        self.assertIn(pt8a.POST_CORRECTION_OPERATION, job["name"])
+        scripts = "\n".join(step.get("run", "") for step in job["steps"])
+        self.assertIn("RUN_REVIEWED_PT8A_POST_CORRECTION_OBSERVATION_ONCE", scripts)
+        self.assertIn("pt8a-official-acceptance.py preflight", scripts)
+        self.assertIn("pt8a-official-acceptance.py run", scripts)
+        self.assertIn("ephemeral-jwks-fixture.sh restore", scripts)
+        self.assertIn("pt8a-post-correction", str(job))
+
+    def test_new_purpose_uses_existing_read_only_vector_admission(self):
+        snapshot = {"classification": "EXACT_REUSABLE_COMPLETED_V4", "indexUuid": pt8a.ORIGIN_UUID,
+            "liveContentIdentity": pt8a.ORIGIN_CONTENT, "vectorDocumentsChecked": 5395,
+            "embeddingRequests": 0}
+        receipt = {"reviewed_source_sha": pt8a.ORIGIN_SOURCE}
+        binding = {"sourceSha": pt8a.ORIGIN_SOURCE, "digest": pt8a.ORIGIN_CLEAN_DIGEST}
+        with patch.object(pt8a.rag, "verify_exact_v4", return_value=snapshot) as verify:
+            result = pt8a.risk_qualified_admission(None, {}, {}, [], pt8a.CORPUS_CHECKSUM,
+                receipt, binding, self.live)
+            self.assertTrue(verify.call_args.kwargs["inspect_vectors"])
+            self.assertEqual(0, result["indexWrites"])
+            self.assertFalse(result["cryptographicVectorContinuityProven"])
+            verify.return_value = snapshot | {"vectorDocumentsChecked": 5394}
+            with self.assertRaises(ValueError):
+                pt8a.risk_qualified_admission(None, {}, {}, [], pt8a.CORPUS_CHECKSUM,
+                    receipt, binding, self.live)
+
+
+    def test_runner_seals_distinct_observation_without_rewriting_episode_two(self):
+        with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
+            root = Path(directory)
+            request_file = root / "request.json"; request_file.write_text(json.dumps(self.request))
+            (root / "coverage-report.json").write_text("{}")
+            (root / "pt8a-release.json").write_text(json.dumps({
+                "sourceSha": SOURCE, "image": IMAGE,
+                "modelProject": "terraformers-platform", "modelLocation": "global"}))
+            original = {"historicalEpisodes": "unchanged", "consumedEpisode2CaseA": {
+                "runId": pt8a.POST_CORRECTION_ORIGIN_RUN}, "productQuality": "NOT_PASS",
+                "allowNextMeasurement": False}
+            admission = {"classification": "RISK_QUALIFIED_RETAINED_V4"}
+            output = root / "evidence"
+            stack.enter_context(patch.dict(os.environ, {"GITHUB_SHA": SOURCE, "BACKEND_IMAGE": IMAGE,
+                "GITHUB_RUN_ATTEMPT": "1", "GITHUB_RUN_ID": str(self.current),
+                "OPERATION": pt8a.POST_CORRECTION_OPERATION, "RUNNER_TEMP": directory}))
+            stack.enter_context(patch.object(sys, "argv", ["pt8a", "run", "--request-file", str(request_file),
+                "--corpus", directory, "--output", str(output)]))
+            stack.enter_context(patch.object(pt8a.transport, "current_main", return_value=SOURCE))
+            stack.enter_context(patch.object(pt8a, "post_correction_request_contract", return_value=self.live))
+            stack.enter_context(patch.object(pt8a, "post_correction_history", return_value={"singleDispatchConsumed": True}))
+            stack.enter_context(patch.object(pt8a, "post_correction_origin", return_value=original))
+            stack.enter_context(patch.object(pt8a, "corrective_origins", return_value=(
+                {"ingestion_mode": "pt8a-clean-v4"}, {}, {})))
+            stack.enter_context(patch.object(pt8a, "corrective_release"))
+            stack.enter_context(patch.object(pt8a.rag, "load_corpus", return_value=({}, {}, [], pt8a.CORPUS_CHECKSUM)))
+            stack.enter_context(patch.object(pt8a.rag, "validate_pt8a_clean_corpus"))
+            scans = stack.enter_context(patch.object(pt8a, "risk_qualified_admission", return_value=admission))
+            stack.enter_context(patch.object(pt8a.subprocess, "run"))
+            stack.enter_context(patch.object(pt8a.transport, "CurlClient"))
+            def synthetic_input(case, private):
+                image = private / "input.png"; image.write_bytes(b"synthetic-input"); return image
+            stack.enter_context(patch.object(pt8a, "acquire", side_effect=synthetic_input))
+            def observed(client, fixture, evidence_dir, record, documents, pod, **kwargs):
+                self.assertEqual({"diagnostic": True, "require_diagnostics": True}, kwargs)
+                record.update(status="REVIEW_PENDING", consumed=True, uploadAttempts=1,
+                    terminalState="SUCCEEDED", diagnosticEvidence="AVAILABLE")
+            observe = stack.enter_context(patch.object(pt8a, "observe", side_effect=observed))
+            pt8a.main()
+            observe.assert_called_once()
+            self.assertEqual(2, scans.call_count)
+            self.assertEqual(original, json.loads((output / "original-observations.json").read_text()))
+            self.assertFalse((output / "ledger.json").exists())
+            self.assertEqual("POST_CORRECTION_SINGLE_OBSERVATION_ONLY",
+                json.loads((output / "binding.json").read_text())["classification"])
+            self.assertEqual("REVIEW_PENDING", json.loads((output / "record.json").read_text())["status"])
+            self.assertEqual("COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION",
+                json.loads((output / "diagnostic-disposition.json").read_text())["evidenceValidity"])
+            self.assertTrue((output / "inventory.json").is_file())
 
 
 if __name__ == "__main__":

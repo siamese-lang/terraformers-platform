@@ -25,6 +25,7 @@ on:
           - pt8a-diagnostic-case
           - pt8a-recovery-campaign
           - pt8a-draft-measurement
+          - pt8a-post-correction-observation
           - capacity-baseline
           - runtime-live-acceptance
       expected_sha:
@@ -3436,8 +3437,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   pt8a-official-acceptance:
-    name: ${{ inputs.operation == 'pt8a-draft-measurement' && format('pt8a-draft-measurement/{0}', fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-recovery-campaign' && 'pt8a-recovery-campaign' || inputs.operation == 'pt8a-diagnostic-case' && format('pt8a-diagnostic-case/{0}', fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-qualified-case' && format('pt8a-qualified-case/{0}', fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-corrective-readiness' && 'pt8a-corrective-readiness' || 'pt8a-official-acceptance' }}
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && (inputs.operation == 'pt8a-official-acceptance' || inputs.operation == 'pt8a-corrective-readiness' || inputs.operation == 'pt8a-qualified-case' || inputs.operation == 'pt8a-diagnostic-case' || inputs.operation == 'pt8a-recovery-campaign' || inputs.operation == 'pt8a-draft-measurement')
+    name: ${{ inputs.operation == 'pt8a-post-correction-observation' && 'pt8a-post-correction-observation' || inputs.operation == 'pt8a-draft-measurement' && format('pt8a-draft-measurement/{0}', fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-recovery-campaign' && 'pt8a-recovery-campaign' || inputs.operation == 'pt8a-diagnostic-case' && format('pt8a-diagnostic-case/{0}', fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-qualified-case' && format('pt8a-qualified-case/{0}', fromJSON(inputs.pt8a_request).caseId) || inputs.operation == 'pt8a-corrective-readiness' && 'pt8a-corrective-readiness' || 'pt8a-official-acceptance' }}
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && (inputs.operation == 'pt8a-official-acceptance' || inputs.operation == 'pt8a-corrective-readiness' || inputs.operation == 'pt8a-qualified-case' || inputs.operation == 'pt8a-diagnostic-case' || inputs.operation == 'pt8a-recovery-campaign' || inputs.operation == 'pt8a-draft-measurement' || inputs.operation == 'pt8a-post-correction-observation')
     runs-on: ubuntu-latest
     environment: gcp-target-apply
     timeout-minutes: ${{ inputs.operation == 'pt8a-recovery-campaign' && fromJSON(inputs.pt8a_request).liveBounds.wallclockMinutes || 35 }}
@@ -3464,6 +3465,8 @@ jobs:
           [[ "$EXPECTED_SHA" == "$GITHUB_SHA" && "$BACKEND_SOURCE_SHA" == "$GITHUB_SHA" ]]
           if [[ "$OPERATION" == pt8a-draft-measurement ]]; then
             [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_DRAFT_MEASUREMENT_CASE_ONCE ]]
+          elif [[ "$OPERATION" == pt8a-post-correction-observation ]]; then
+            [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_POST_CORRECTION_OBSERVATION_ONCE ]]
           elif [[ "$OPERATION" == pt8a-recovery-campaign ]]; then
             [[ "$CONFIRMATION" == RUN_REVIEWED_PT8A_A_TO_E_RECOVERY_CAMPAIGN ]]
           elif [[ "$OPERATION" == pt8a-diagnostic-case ]]; then
@@ -3517,7 +3520,7 @@ jobs:
           runtime="$(kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend -- sh -c 'printf "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" "$BUILD_SOURCE_REVISION" "$CORPUS_VERSION" "$INDEX_NAME" "$VERTEX_EMBEDDING_MODEL_ID" "$VERTEX_EMBEDDING_DIMENSION" "$EXPECTED_VECTOR_DIMENSION" "$JWT_ISSUER_URI" "$JWT_JWK_SET_URI" "$ANALYSIS_PROVIDER" "$EMBEDDING_PROVIDER" "$RETRIEVAL_MODE" "$VERTEX_GENERATION_MODEL_ID" "$TERRAFORMERS_SECURITY_JWT_COGNITO_CLIENT_ID" "$OBJECT_READER_PROVIDER" "$OBJECT_WRITER_PROVIDER" "$OPENSEARCH_ENDPOINT" "$PROVIDER_VERSION"')"
           [[ "$runtime" == "$GITHUB_SHA|terraformers-reference-v4|terraformers-reference-v4|gemini-embedding-2|1536|1536|https://identity.example.test/case-c|http://terraformers-jwks:8080/jwks.json|vertex|vertex|REQUIRED|gemini-3.8-flash|case-c-runtime-client|gcs|gcs|http://terraformers-opensearch:9200|5.100.0" ]]
           model_project=''; model_location=''
-          if [[ "$OPERATION" == pt8a-recovery-campaign || "$OPERATION" == pt8a-draft-measurement ]] || [[ "$OPERATION" == pt8a-diagnostic-case && "$(jq -r '.mode' "$RUNNER_TEMP/pt8a-request.json")" == generation-diagnostic ]]; then
+          if [[ "$OPERATION" == pt8a-recovery-campaign || "$OPERATION" == pt8a-draft-measurement || "$OPERATION" == pt8a-post-correction-observation ]] || [[ "$OPERATION" == pt8a-diagnostic-case && "$(jq -r '.mode' "$RUNNER_TEMP/pt8a-request.json")" == generation-diagnostic ]]; then
             model_project="$(kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend -- printenv GOOGLE_CLOUD_PROJECT)"
             model_location="$(kubectl -n "$NAMESPACE" exec deployment/terraformers-backend -c backend -- printenv GOOGLE_CLOUD_LOCATION)"
             [[ "$model_project" == terraformers-platform ]]
@@ -3590,7 +3593,7 @@ jobs:
             if ! bash scripts/smoke/ephemeral-jwks-fixture.sh restore; then restored=false; result=1; fi
             [[ -z "$backend_pf" ]] || kill "$backend_pf" 2>/dev/null || true
             [[ -z "$search_pf" ]] || kill "$search_pf" 2>/dev/null || true
-            if [[ "$OPERATION" == pt8a-draft-measurement && -d "$RUNNER_TEMP/pt8a-evidence" ]]; then
+            if [[ "$OPERATION" == pt8a-draft-measurement || "$OPERATION" == pt8a-post-correction-observation ]] && [[ -d "$RUNNER_TEMP/pt8a-evidence" ]]; then
               printf '{"JWKSRestored":%s}\n' "$restored" > "$RUNNER_TEMP/pt8a-evidence/cleanup.json"
               python3 scripts/evaluation/pt8a-official-acceptance.py inventory --output "$RUNNER_TEMP/pt8a-evidence" || result=1
             fi
@@ -3745,7 +3748,7 @@ jobs:
         if: always() && inputs.operation != 'pt8a-recovery-campaign'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.operation == 'pt8a-draft-measurement' && 'pt8a-measurement' || inputs.operation == 'pt8a-diagnostic-case' && 'pt8a-diagnostic' || 'pt8a-official' }}-${{ github.run_id }}
+          name: ${{ inputs.operation == 'pt8a-post-correction-observation' && 'pt8a-post-correction' || inputs.operation == 'pt8a-draft-measurement' && 'pt8a-measurement' || inputs.operation == 'pt8a-diagnostic-case' && 'pt8a-diagnostic' || 'pt8a-official' }}-${{ github.run_id }}
           path: ${{ runner.temp }}/pt8a-evidence
           if-no-files-found: warn
           retention-days: 90
@@ -3760,6 +3763,8 @@ jobs:
             echo 'RECOVERY_MEASUREMENT_ONLY. Read each per-case immutable checkpoint; original A/B remain consumed. Final ten-dimension independent acceptance is pending.' >> "$GITHUB_STEP_SUMMARY"
           elif [[ "$OPERATION" == pt8a-draft-measurement ]]; then
             echo 'REVIEWABLE_DRAFT_MEASUREMENT_ONLY / NOT_ACCEPTANCE. Measurement completeness and product quality are separate. Preserve terminal FAIL/UNKNOWN; valid independent evidence review, not quality PASS, gates the next first observation. Final E review is required.' >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$OPERATION" == pt8a-post-correction-observation ]]; then
+            echo 'POST_CORRECTION_SINGLE_OBSERVATION_ONLY / NOT_ACCEPTANCE. Historical Episode 2 Case A remains NOT_PASS and consumed with allow_next_measurement=false. This distinct first observation has no retry or next-case authority.' >> "$GITHUB_STEP_SUMMARY"
           elif [[ "$OPERATION" == pt8a-diagnostic-case ]]; then
             echo 'DIAGNOSTIC_ONLY / NOT_ACCEPTANCE. Product FAIL/UNKNOWN is preserved. Authenticated diagnostic review precedes the next case; no retries across sources.' >> "$GITHUB_STEP_SUMMARY"
             if [[ "$(jq -r '.mode' "$RUNNER_TEMP/pt8a-request.json")" == generation-diagnostic ]]; then

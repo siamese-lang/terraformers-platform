@@ -3127,7 +3127,7 @@ class CauseDiagnosticEpisodeContracts(unittest.TestCase):
         diagnostic = safe_diagnostics(job)
         diagnostic["ownerScopedOriginalReadback"] = readback_proof(diagnostic)
         proof = diagnostic["ownerScopedOriginalReadback"]
-        record = {"caseId": case, "status": "NOT_PASS", "consumed": True,
+        record = {"caseId": case, "jobId": job["id"], "status": "NOT_PASS", "consumed": True,
             "uploadAttempts": 1, "terminalState": "FAILED", "diagnosticEvidence": "AVAILABLE"}
         empty = {"caseId": pt8a.DIAGNOSTIC_CASES[1], "status": "NOT_RUN",
             "uploadAttempts": 0, "consumed": False}
@@ -3156,11 +3156,12 @@ class CauseDiagnosticEpisodeContracts(unittest.TestCase):
             "readiness.json": snapshot.copy(), "post-admission.json": snapshot.copy(),
             "input-identity.json": {"caseId": case},
             "observation/accepted.json": {"status": "ACCEPTED", "consumed": True,
-                "uploadAttempts": 1, "jobId": "job-b"},
+                "uploadAttempts": 1, "jobId": "job-b", "projectId": 16, "sourceFileId": 24},
             "observation/job.json": job, "observation/diagnostics.json": diagnostic,
             "observation/cli.json": {"status": "NOT_RUN"},
             "observation/draft-identity.json": {"hclPresent": False},
-            "observation/presentation.json": {}, "observation/retrieval.json": {}}
+            "observation/presentation.json": {"latestAnalysisJobId": "job-b", "projectId": 16},
+            "observation/retrieval.json": {"jobId": "job-b"}}
         review = {"decision": "EVIDENCE_VALID_CAUSE_DIAGNOSTIC_ONLY",
             "allow_next_diagnostic": "true", "official_acceptance": "NOT_ACCEPTANCE",
             "run_id": str(run), "artifact_id": str(artifact), "artifact_digest": bound["digest"],
@@ -3185,6 +3186,46 @@ class CauseDiagnosticEpisodeContracts(unittest.TestCase):
              patch.object(pt8a, "frozen_inputs", return_value=[{"caseId": case}]):
             rows = pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)
             self.assertEqual("NOT_PASS", rows[0]["status"])
+            for obj, key, value in ((record, "jobId", "other-job"),
+                    (data["observation/accepted.json"], "projectId", 17),
+                    (data["observation/accepted.json"], "sourceFileId", 25),
+                    (data["observation/presentation.json"], "latestAnalysisJobId", "other-job"),
+                    (data["observation/presentation.json"], "projectId", 17),
+                    (data["observation/retrieval.json"], "jobId", "other-job")):
+                old = obj[key]; obj[key] = value
+                with self.subTest(identity=key), self.assertRaises(ValueError):
+                    pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)
+                obj[key] = old
+            old_job = job["status"]
+            old_terminal = record["terminalState"]
+            old_diagnostic = data["observation/diagnostics.json"]
+            old_review = review.copy()
+            job["status"] = record["terminalState"] = "SUCCEEDED"
+            data["observation/diagnostics.json"] = safe_diagnostics(job)
+            data["observation/diagnostics.json"]["ownerScopedOriginalReadback"] = readback_proof(data["observation/diagnostics.json"])
+            review["terminal_state"] = "SUCCEEDED"
+            review["diagnostic_evidence_sha256"] = data["observation/diagnostics.json"]["evidenceSha256"]
+            review["candidate_readback_sha256"] = pt8a.sha(json.dumps(
+                data["observation/diagnostics.json"]["ownerScopedOriginalReadback"],
+                sort_keys=True, separators=(",", ":")).encode())
+            review["private_original_readback"] = "VERIFIED"
+            review.pop("failure_stage"); review.pop("failure_category")
+            review["first_divergence_stage"] = "NONE_NO_MATERIAL_MISMATCH"
+            with self.assertRaises(ValueError):
+                pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)
+            review["first_divergence_stage"] = "trust_presentation"
+            self.assertEqual("NOT_PASS", pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)[0]["status"])
+            review["product_quality"] = "UNDETERMINED"
+            review["first_divergence_stage"] = "NONE_NO_MATERIAL_MISMATCH"
+            record["status"] = review["observed_status"] = "REVIEW_PENDING"
+            self.assertEqual("REVIEW_PENDING", pt8a.cause_predecessor(request, history, Path(directory), SOURCE, IMAGE)[0]["status"])
+            self.assertEqual("UNDETERMINED", review["product_quality"])
+            record["status"] = "NOT_PASS"
+            review["observed_status"] = "NOT_PASS"
+            job["status"] = old_job
+            record["terminalState"] = old_terminal
+            data["observation/diagnostics.json"] = old_diagnostic
+            review.clear(); review.update(old_review)
             for obj, key, value in ((review, "cause_review", "NOT_VERIFIED"),
                     (review, "product_quality", "PASS"),
                     (review, "first_divergence_stage", "UNLOCALIZED"),

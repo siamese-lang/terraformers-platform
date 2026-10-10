@@ -1498,7 +1498,10 @@ def cause_predecessor(request, history, private, source, image):
                 or record.get("status") not in ("NOT_PASS", "REVIEW_PENDING")
                 or record.get("terminalState") not in ("SUCCEEDED", "FAILED")
                 or accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True
-                or accepted.get("uploadAttempts") != 1 or accepted.get("jobId") != job.get("id")
+                or accepted.get("uploadAttempts") != 1
+                or record.get("jobId") != accepted.get("jobId") or job.get("id") != accepted.get("jobId")
+                or job.get("projectId") != accepted.get("projectId")
+                or job.get("sourceFileId") != accepted.get("sourceFileId")
                 or job.get("status") != record["terminalState"]
                 or record.get("diagnosticEvidence") != "AVAILABLE"
                 or tuple(r.get("caseId") for r in data["ledger.json"]) != DIAGNOSTIC_CASES
@@ -1512,6 +1515,11 @@ def cause_predecessor(request, history, private, source, image):
         if any(predecessor_authority.get(k) != v for k, v in cause_live_fields(request, source, image).items()):
             raise ValueError("B-E predecessor live authority changed")
         require_diagnostic_evidence(diagnostic, job, private_readback=True)
+        presentation, retrieved = data["observation/presentation.json"], data["observation/retrieval.json"]
+        if (presentation.get("projectId") != accepted.get("projectId")
+                or presentation.get("latestAnalysisJobId") != job["id"]
+                or retrieved.get("jobId") != job["id"]):
+            raise ValueError("B-E predecessor owner/result/retrieval identity mismatch")
         cli, draft = data["observation/cli.json"], data["observation/draft-identity.json"]
         hcl = [e for e in data["inventory.json"]["files"] if e["path"] == "observation/main.tf"]
         if draft.get("hclPresent") is True:
@@ -1555,7 +1563,8 @@ def cause_predecessor(request, history, private, source, image):
                 or review.get("product_quality") not in ("PASS", "NOT_PASS", "UNDETERMINED")
                 or (record["status"] == "NOT_PASS" and review.get("product_quality") != "NOT_PASS")
                 or first_stage not in valid_stages | {"NONE_NO_MATERIAL_MISMATCH"}
-                or (job["status"] == "FAILED" and first_stage == "NONE_NO_MATERIAL_MISMATCH")
+                or ((job["status"] == "FAILED" or review.get("product_quality") == "NOT_PASS")
+                    and first_stage == "NONE_NO_MATERIAL_MISMATCH")
                 or review.get("safe_cli_diagnostics_sha256") != (
                     sha(json.dumps(diagnostic["cliDiagnostics"], sort_keys=True, separators=(",", ":")).encode())
                     if diagnostic.get("cliDiagnostics") is not None else "NOT_CAPTURED")

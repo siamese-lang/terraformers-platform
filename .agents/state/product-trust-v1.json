@@ -2248,5 +2248,91 @@
       "frozenFilesReadBack": 12,
       "diffCheck": "PASS"
     }
+  },
+  "generationDiagnosticOutcome": {
+    "sourceSha": "afa08e5c2a335aa1714d740bd50276184db47d1b",
+    "runId": 38011709155,
+    "runAttempt": 1,
+    "artifactId": 11654405275,
+    "artifactDigest": "sha256:acca008b5c4b954c5b559225695b54c2d877612b6e56347886249fabfa8f72ca",
+    "inventoryBoundFiles": 21,
+    "jobId": "f606d36e-2098-49c1-942d-107125e0aeb5",
+    "liveApprovalCommentId": 6091914531,
+    "consumed": true,
+    "uploads": 1,
+    "dispatches": 1,
+    "backendTerminalState": "SUCCEEDED",
+    "acceptedToTerminalMs": 73944,
+    "providerCalls": {
+      "facts": {
+        "elapsedMs": 7602,
+        "outputTokens": 296,
+        "finishReason": "STOP"
+      },
+      "initial_generation": {
+        "elapsedMs": 30535,
+        "outputTokens": 3482,
+        "thinkingTokens": 655,
+        "finishReason": "STOP"
+      },
+      "repair": {
+        "elapsedMs": 16836,
+        "outputTokens": 3135,
+        "finishReason": "STOP"
+      }
+    },
+    "actualEmbeddingCallCount": "NOT_EXPOSED_BY_ARTIFACT",
+    "reservedModelCallsIncludingEmbedding": 6,
+    "terraformCli": {
+      "terraformVersion": "1.8.5",
+      "providerVersion": "5.100.0",
+      "initExitCode": 0,
+      "validateExitCode": 0,
+      "AWSPlanApply": false
+    },
+    "persistedQuality": {
+      "technicalStatus": "PASS",
+      "knowledgeStatus": "COMPLETE",
+      "qualityStatus": "UNKNOWN",
+      "projectDecisionStatus": "UNKNOWN",
+      "reasons": []
+    },
+    "officialAcceptance": "NOT_ACCEPTANCE",
+    "classification": "DIAGNOSTIC_ONLY",
+    "originalTimeoutResolved": false,
+    "semanticAcceptance": "NOT_ESTABLISHED",
+    "retainedVectorRisk": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+    "BToE": "NOT_RUN_IN_THIS_EPISODE",
+    "furtherLiveExecutionAuthorized": false
+  },
+  "certificateIssuanceCorrection": {
+    "authority": "USER independent confirmed-product-defect correction task; repository-only; technical choice delegated to Codex",
+    "atomicTaskExecutionBaseSha": "afa08e5c2a335aa1714d740bd50276184db47d1b",
+    "status": "REPOSITORY_CORRECTION_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE_PENDING",
+    "humanGate": "PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE",
+    "observedFailure": "New DNS ACM certificate directly consumed by CloudFront without an issuance validation dependency",
+    "evidenceArtifactId": 11654405275,
+    "observedTerraformSha256": "2d9399e59b7113c5f92a1a7fd31630acf89f64a7608cd9f4e475df88bc2c0f13",
+    "earliestSupportedMechanism": "Generation/repair can omit certificate issuance wiring; final quality previously checked selected resource documentation and S3 authorization but not this dependency",
+    "implementation": "Existing shared generation/repair draft instructions plus existing contract inspector and evidence-quality assessment expose the omission as DEGRADED while preserving CLI status",
+    "timeoutPhysicalCause": "UNRESOLVED_NO_EVIDENCE_FOR_POLICY_CHANGE",
+    "historicalExecutionBasesAndRepairCountersUnchanged": true,
+    "newLiveCallsUploadsDispatches": 0,
+    "furtherLiveExecutionAuthorized": false,
+    "limits": [
+      "Declaration/dependency check only; no live certificate status, DNS ownership, region or complete image semantic proof",
+      "Directly identifiable new DNS/EMAIL certificate requests only; external/data/import boundaries remain editable",
+      "One successful diagnostic does not prove timeout reliability or official A-E acceptance"
+    ],
+    "validation": {
+      "beforeRegression": "1 test FAIL: expected DEGRADED, observed UNKNOWN; confirms original omission",
+      "focusedJava": "72 PASS, plus final-repair 1 PASS; after transitive dependency correction, inspector/final-repair 15 PASS",
+      "frontendStatusTests": "16 PASS",
+      "observerTests": "78 PASS",
+      "fullBackend": "mvn -o -f backend/pom.xml clean package: BUILD SUCCESS; 596 total / 592 PASS / 4 MariaDB prerequisite SKIP / 0 failures / 0 errors; one full execution",
+      "localDependencyExpansionFailure": "14 tests / 1 failure: attribute reference through local alias was not recognized; corrected resource-address boundary and preserved assertion",
+      "correctedIssuanceExample": "Local offline Terraform 1.8.5 / AWS Provider 5.100.0 init and validate PASS, 0 errors/warnings; manually amended fixture, not a new model/product observation",
+      "metadataScopePolicyAndFrozenHashes": "PASS; all original state fields unchanged; v2 SHA d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823 preserved"
+    }
   }
 }

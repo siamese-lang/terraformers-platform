@@ -79,6 +79,29 @@ class EvidenceQualityAssessorTest {
                 .isEqualTo(QualityStatus.UNKNOWN);
     }
 
+    @Test
+    void observedCliValidDraftExposesMissingCertificateIssuanceDependency() throws Exception {
+        String terraform = Files.readString(Path.of("src/test/resources/terraform/pt8a-observed-custom-tls-draft.tf"));
+        EvidenceQualityAssessment assessment = assessSupportedOrigin(terraform, ProjectDecisionApplicability.UNKNOWN);
+        assertThat(assessment.technicalStatus()).isEqualTo(TechnicalStatus.PASS);
+        assertThat(assessment.knowledgeStatus()).isEqualTo(KnowledgeStatus.COMPLETE);
+        assertThat(assessment.generatedResourcesWithoutSelectedEvidence()).isEmpty();
+        assertThat(assessment.qualityStatus()).isEqualTo(QualityStatus.DEGRADED);
+        assertThat(assessment.reasons()).containsExactly(Reason.CLOUDFRONT_CERTIFICATE_VALIDATION_MISSING);
+        assertThat(objectMapper.readValue(objectMapper.writeValueAsString(assessment), EvidenceQualityAssessment.class))
+                .isEqualTo(assessment);
+        String ordered = terraform.replace("viewer_certificate {",
+                "depends_on = [aws_acm_certificate_validation.issued]\n  viewer_certificate {") + """
+                resource "aws_acm_certificate_validation" "issued" {
+                  certificate_arn = aws_acm_certificate.cert.arn
+                  validation_record_fqdns = var.external_validation_fqdns
+                }
+                """;
+        EvidenceQualityAssessment supplied = assessSupportedOrigin(ordered, ProjectDecisionApplicability.UNKNOWN);
+        assertThat(supplied.qualityStatus()).isEqualTo(QualityStatus.UNKNOWN);
+        assertThat(supplied.reasons()).isEmpty();
+    }
+
     private EvidenceQualityAssessment assessSupportedOrigin(String terraform,
             ProjectDecisionApplicability applicability) {
         var supportedCatalog = org.mockito.Mockito.mock(AwsProviderSchemaCatalog.class);

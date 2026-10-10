@@ -33,6 +33,13 @@ test('semantic degradation is visible despite technical PASS and does not assert
   expect(screen.getByText(/실제 권한 유효성 또는 배포 성공이 보장되지 않습니다/)).toBeInTheDocument();
 });
 
+test('certificate issuance omission remains visible with technical PASS', () => {
+  render(<AnalysisStatus status="SUCCEEDED" quality={quality('DEGRADED', { reasons: ['CLOUDFRONT_CERTIFICATE_VALIDATION_MISSING'] })} />);
+  expect(screen.getByText(/새 인증서의 발급 완료 의존성을 찾지 못했습니다/)).toBeInTheDocument();
+  expect(screen.getByText(/기술 검사: 통과/)).toBeInTheDocument();
+  expect(screen.queryByText(/선택된 근거로 뒷받침됨/)).not.toBeInTheDocument();
+});
+
 test.each([
   quality('EVIDENCE_BACKED', { contractVersion: 'future-contract' }),
   quality('EVIDENCE_BACKED', { runtimeQualityBoundary: 'UNCONDITIONAL' }),

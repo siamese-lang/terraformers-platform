@@ -51,40 +51,29 @@ import org.mockito.ArgumentCaptor;
 class VertexAnalysisProviderTest {
 
     @Test
-    void certificateOmissionInFinalRepairDegradesWithoutAnotherGenerationCycle() {
-        String pending = """
-                resource "aws_acm_certificate" "requested" {
-                  domain_name = var.domain
-                  validation_method = "DNS"
-                }
-                resource "aws_cloudfront_distribution" "edge" {
-                  viewer_certificate { acm_certificate_arn = aws_acm_certificate.requested.arn }
-                }
-                """;
-        String ordered = pending.replace("viewer_certificate {",
-                "depends_on = [aws_acm_certificate_validation.issued]\n viewer_certificate {") + """
-                resource "aws_acm_certificate_validation" "issued" {
-                  certificate_arn = aws_acm_certificate.requested.arn
-                  validation_record_fqdns = var.external_validation_fqdns
-                }
-                """;
-        for (String finalDraft : List.of(pending, ordered)) {
-            var fixture = closureFixture(List.of(official("vpc", "aws_vpc"),
-                    official("edge", "aws_cloudfront_distribution")),
-                    List.of(official("certificate", "aws_acm_certificate")), pending, finalDraft);
-            when(fixture.catalog().contains("aws_acm_certificate")).thenReturn(true);
-            when(fixture.catalog().contains("aws_acm_certificate_validation")).thenReturn(true);
-            when(fixture.retriever().retrieveOfficialDocumentation("aws_acm_certificate_validation"))
-                    .thenReturn(List.of(official("validation", "aws_acm_certificate_validation")));
+    void repairRetainsWarningsAsInitialDraftInformationRatherThanFinalCodeClaims() {
+        String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
+        String repaired = first + "\nresource \"aws_security_group\" \"support\" {}";
+        String warning = "Initial implementation uses an external endpoint.";
+        for (boolean repair : List.of(false, true)) {
+            var fixture = closureFixture(repair ? List.of(official("vpc", "aws_vpc"))
+                    : List.of(official("vpc", "aws_vpc"), official("subnet", "aws_subnet")),
+                    List.of(official("subnet", "aws_subnet")), first, repaired);
+            var original = generation(first);
+            when(fixture.stage().generate(any(), any(), any(), any())).thenReturn(new AnalysisGenerationResult(
+                    original.provider(), original.inputClassification(), original.classificationConfidence(),
+                    first, original.summary(), original.components(), original.relationships(), List.of(warning),
+                    original.stopReason(), original.outputTokens(), original.retryOccurred()));
+            when(fixture.retriever().retrieveOfficialDocumentation("aws_security_group"))
+                    .thenReturn(List.of(official("security", "aws_security_group")));
+
             var result = fixture.provider().analyze(context());
-            assertThat(result.terraformCode()).isEqualTo(finalDraft);
-            assertThat(result.qualityAssessment().reasons().contains(
-                    com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.CLOUDFRONT_CERTIFICATE_VALIDATION_MISSING))
-                    .isEqualTo(finalDraft.equals(pending));
-            assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence()).isEmpty();
+
+            assertThat(result.terraformCode()).isEqualTo(repair ? repaired : first);
+            assertThat(result.warnings()).containsExactly(repair
+                    ? "Initial draft (before grounding repair; not revalidated): " + warning : warning);
             verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
-            verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
-            verify(fixture.retriever(), times(2)).retrieve(any());
+            verify(fixture.stage(), times(repair ? 1 : 0)).repair(any(), any(), any(), any());
         }
     }
 

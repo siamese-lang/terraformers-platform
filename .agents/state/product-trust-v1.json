@@ -2334,5 +2334,91 @@
       "correctedIssuanceExample": "Local offline Terraform 1.8.5 / AWS Provider 5.100.0 init and validate PASS, 0 errors/warnings; manually amended fixture, not a new model/product observation",
       "metadataScopePolicyAndFrozenHashes": "PASS; all original state fields unchanged; v2 SHA d087508c99a267b36e2c7a2ce70bb69ca9b62d161a95de79ff1fa30e9d3b4823 preserved"
     }
+  },
+  "reviewableDraftBoundaryAudit": {
+    "authority": "USER post-PR269 image-first reviewable-draft audit and confirmed repository-only corrections; independent technical judgment delegated",
+    "atomicTaskExecutionBaseSha": "739877718c25d77c694a2e5f2020a59e0c4a87cf",
+    "status": "REPOSITORY_CORRECTION_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE_PENDING",
+    "evidence": {
+      "runId": 38011709155,
+      "runAttempt": 1,
+      "artifactId": 11654405275,
+      "archiveSha256": "acca008b5c4b954c5b559225695b54c2d877612b6e56347886249fabfa8f72ca",
+      "classification": "DIAGNOSTIC_ONLY",
+      "originalConsumptionUnchanged": true
+    },
+    "observedDraftDisposition": "NOT_ACCEPTANCE_READY_MAJOR_GRAPH_PRESENT_DOMAIN_TLS_RELATIONSHIPS_PARTIAL",
+    "validPersonalizedBoundaries": "Variables and coherent external references are valid; actual identifiers, DNS ownership and Lambda package bytes are not required",
+    "technicalVsSemantic": "Original real CLI PASS and 15 official resource-type bindings do not prove every visible edge or chosen certificate issuance wiring",
+    "confirmedAdditionalDefects": [
+      "Indexed declared issued-certificate import falsely flagged by the certificate omission check",
+      "HCL-only repair leaves initial draft warnings presented without provenance despite changed final choices"
+    ],
+    "correction": "Preserve exact literal certificate instance addresses for imports and label retained post-repair warnings as initial/unrevalidated; no new resources, prompt changes or evaluator",
+    "validation": {
+      "before": "2 targeted tests / 2 expected failures against bound production; real offline count-indexed import init/validate PASS with 0 errors/warnings",
+      "firstFocusedFailure": "51 tests / 1 failure: quoted index key lost during address extraction; assertion and failure preserved",
+      "boundedCorrectiveIterationsUsed": 1,
+      "boundedCorrectiveIterationLimit": 1,
+      "focused": "51 tests / 51 PASS / 0 failures / 0 errors",
+      "fullBackend": "One mvn -o clean package: BUILD SUCCESS, 598 total / 594 PASS / 4 MariaDB-prerequisite SKIP / 0 failures / 0 errors",
+      "localSameInstanceAfter": "Original locally constructed count-indexed import omission=true before, false after; not a model observation",
+      "observer": "78 PASS; original v2/v3/qualified/diagnostic/recovery guards unchanged",
+      "metadataScopePolicyFrozen": "Metadata parse, exact six-file scope, automatic PR workflow policy, CI scope 23 PASS, 14 protected blobs and git diff --check PASS"
+    },
+    "timeoutPhysicalCause": "UNRESOLVED; historical SDK chain, request elapsed and upstream status unavailable; no evidence for policy change",
+    "existingExecutionContract": "Rejected consumed qualified A blocks B; diagnostic B and global single-generation episode consumed; failed Recovery cannot rebind source or resubmit accepted A",
+    "remainingCompletion": "Independently reviewed successor contract plus USER exact live authority required for affected A regression and first successor B-E observations; no history reset or diagnostic promotion",
+    "proposedSuccessorBoundsNotAuthorized": {
+      "uploads": 5,
+      "modelCallReservationsIncludingEmbedding": 30,
+      "dispatches": 2,
+      "workflowMinutesEach": 90,
+      "acceptedJobObservationSeconds": 540,
+      "separatePublicationMinutes": 45,
+      "separateRolloutMinutes": 20,
+      "USDCeiling": "NOT_ESTABLISHED"
+    },
+    "retainedVectorRisk": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+    "unchangedHistoricalBasesCountersTruthArtifactsAndGuards": true,
+    "newModelCalls": 0,
+    "newUploads": 0,
+    "newLiveDispatches": 0,
+    "furtherLiveExecutionAuthorized": false,
+    "limits": [
+      "Local certificate declaration/ordering check, not full HCL or live certificate/DNS/region proof",
+      "Original raw first vision facts and first draft unavailable; no assignment of every semantic failure to vision versus repair",
+      "Full browser trust not observed; original UNKNOWN quality is not semantic PASS",
+      "No timeout reliability or post-change model fidelity established"
+    ]
+  },
+  "reviewableDraftProductContractRealignment": {
+    "authority": "USER selective ACM reversal on existing product task; repository-only; technical implementation delegated",
+    "atomicTaskExecutionBaseSha": "739877718c25d77c694a2e5f2020a59e0c4a87cf",
+    "status": "REPOSITORY_CORRECTION_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE_PENDING",
+    "humanGate": "PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE",
+    "supersededCurrentImplementationInterpretations": [
+      "certificateIssuanceCorrection",
+      "reviewableDraftBoundaryAudit ACM issuance/import/instance enforcement only"
+    ],
+    "implementation": "Remove ACM issuance dependency inspector, dedicated reason/UI and mandatory issuance/custom-domain instruction; retain image-first draft boundaries, final evidence/schema/CLI validation and initial-warning provenance",
+    "preservedObservedDraftRegression": "Original observed Terraform bytes retain technical PASS, selected knowledge COMPLETE and UNKNOWN quality/applicability without a dedicated deployment-completion finding; no semantic acceptance inference",
+    "otherResourceSpecificChecks": "Existing CloudFront OAC/new S3 origin declaration check and provider-region coherence instructions retained; no effective IAM, deployed certificate or DNS status guarantee",
+    "acceptanceAlignment": "Frozen v4 already permits variables/external references and excludes page-only issuance/DNS semantics; clarification proposal documented but not applied",
+    "originalEvidenceAndConsumption": "All original runs/artifacts, failed and successful DIAGNOSTIC_ONLY observations, persisted outcomes and consumed attempts unchanged",
+    "timeoutPhysicalCause": "UNRESOLVED_NO_EVIDENCE_FOR_POLICY_CHANGE",
+    "humanAuthorizedCorrection": "Separate USER-authorized product-contract correction; does not reset or consume additional autonomous repair authority",
+    "historicalBasesCountersTruthProceduresAndGuardsUnchanged": true,
+    "validation": {
+      "focusedBackend": "80 PASS; inspector/assessor/provider/prompt/generation/CLI regressions",
+      "focusedFrontend": "15 PASS; existing AnalysisStatus suite",
+      "fullBackend": "One offline clean package: BUILD SUCCESS; 593 total / 589 PASS / 4 MariaDB-prerequisite SKIP / 0 failures / 0 errors",
+      "fullFrontend": "13 suites / 82 PASS / 0 failures",
+      "normalPrCI": "GitHub_authoritative_no_manual_dispatch_or_rerun"
+    },
+    "newModelCalls": 0,
+    "newUploads": 0,
+    "newLiveDispatches": 0,
+    "furtherLiveExecutionAuthorized": false
   }
 }

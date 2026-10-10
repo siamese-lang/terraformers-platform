@@ -71,9 +71,7 @@ class VertexPromptBuilderTest {
                 "omission is not evidence of absence", "shared support", "IAM role",
                 "resourceTypes=[aws_instance]", "documentation covers these managed resource types: [aws_instance]",
                 "not an allowed-resource list", "Final resource types will be looked up separately",
-                "without fabricated defaults", "CloudFront ACM certificates require us-east-1",
-                "certificate request is not an issued certificate", "issuance wait",
-                "explicit matching", "DNS records alone do not wait", "custom-domain aliases/mappings");
+                "without fabricated defaults", "CloudFront ACM certificates require us-east-1");
         assertThat(builder.repairResponseJsonSchema().get("required")).isEqualTo(List.of("terraformCode"));
     }
 

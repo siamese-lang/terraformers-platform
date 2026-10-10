@@ -74,62 +74,6 @@ public class GeneratedTerraformContractInspector {
         return false;
     }
 
-    /**
-     * An Amazon-issued certificate request does not wait for issuance. Detect a CloudFront
-     * consumer of that request ARN without a matching validation dependency. External/data
-     * certificates and explicit imports remain editable boundaries, not new pending requests.
-     * This checks declared ordering only, not DNS ownership, certificate status or region.
-     */
-    public boolean missingCloudFrontCertificateValidation(String terraform) {
-        List<Token> source = tokens(terraform == null ? "" : terraform);
-        List<Block> resources = blocks(source, "resource");
-        List<Block> locals = blocks(source, "locals");
-        for (Block distribution : resources) {
-            if (!distribution.type().equals("aws_cloudfront_distribution")) continue;
-            for (Block viewer : blocks(distribution.body(), "viewer_certificate")) {
-                String arn = expression(resolveAliases(attribute(viewer.body(), "acm_certificate_arn"), locals, 0));
-                for (Block certificate : resources) {
-                    if (!certificate.type().equals("aws_acm_certificate")) continue;
-                    List<Token> method = resolveAliases(attribute(certificate.body(), "validation_method"), locals, 0);
-                    if (method.size() != 1 || !method.get(0).quoted()
-                            || !Set.of("DNS", "EMAIL").contains(method.get(0).value())) continue;
-                    if (!referencesResource(arn, certificate.type(), certificate.name(), "arn")) continue;
-                    if (blocks(source, "import").stream().anyMatch(block ->
-                            expression(attribute(block.body(), "to")).equals(certificate.type() + "." + certificate.name())
-                            && !emptyExpression(attribute(block.body(), "id")))) continue;
-                    boolean ordered = resources.stream()
-                            .filter(block -> block.type().equals("aws_acm_certificate_validation"))
-                            .filter(block -> referencesResource(expression(resolveAliases(
-                                    attribute(block.body(), "certificate_arn"), locals, 0)),
-                                    certificate.type(), certificate.name(), "arn"))
-                            .anyMatch(block -> dependsOn(distribution, block, resources, locals, new LinkedHashSet<>()));
-                    if (!ordered) return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean dependsOn(Block consumer, Block validation, List<Block> resources,
-            List<Block> locals, Set<String> visited) {
-        String identity = consumer.type() + "." + consumer.name();
-        if (!visited.add(identity)) return false;
-        if (identity.equals(validation.type() + "." + validation.name())) return true;
-        // Terraform uses both explicit depends_on and expression references as ordering edges.
-        String dependencies = expression(resolveAliases(consumer.body(), locals, 0));
-        for (Block resource : resources) {
-            if (referencesResource(dependencies, resource.type(), resource.name(), null)
-                    && dependsOn(resource, validation, resources, locals, visited)) return true;
-        }
-        return false;
-    }
-
-    private boolean referencesResource(String expression, String type, String name, String attribute) {
-        return Pattern.compile("(?<![\\w.])" + Pattern.quote(type) + "\\." + Pattern.quote(name)
-                + "(?:\\[[^\\]]+\\])?" + (attribute == null ? "" : "\\." + Pattern.quote(attribute))
-                + (attribute == null ? "(?![\\w-])" : "(?![\\w.-])")).matcher(expression).find();
-    }
-
     private boolean hasSuppliedAuthorization(List<Block> resources, Block bucket, List<Block> locals) {
         // Legacy inline policy / public ACL and separate bucket policies / public ACLs are
         // alternative declarations. No particular policy template or resource name is required.

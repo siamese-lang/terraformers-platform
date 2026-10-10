@@ -30,13 +30,6 @@ public class VertexPromptBuilder {
               CloudFront ACM certificates require us-east-1; regional API Gateway certificates and origins
               must match the API's actual region. Use separate provider aliases or declared external
               certificates when necessary, not an undeclared region embedded in an endpoint string.
-            - A new Amazon-issued ACM certificate request is not an issued certificate. Supply its DNS
-              validation records (or declared externally managed validation inputs) and an issuance wait,
-              then connect TLS consumers to the validated certificate ARN or an explicit matching
-              validation dependency. An externally issued certificate ARN is also a valid declared input.
-              DNS records alone do not wait for issuance. Keep visible domain-mapping/TLS relationships
-              wired to their actual endpoints, including custom-domain aliases/mappings when chosen;
-              an unrelated hosted zone or certificate block does not implement those relationships.
             """;
 
     public String build(ObjectContent source, List<ReferenceDocument> references, boolean compact) {

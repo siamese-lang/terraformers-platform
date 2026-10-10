@@ -74,7 +74,11 @@ The observer uses at most seven owner-scoped GETs, with at most 30 seconds of wa
 polls (inherited HTTP timeout unchanged), to allow the post-terminal storage write to finish.
 Unavailable/expired/forbidden evidence is not retried. It fetches only the authenticated safe diagnostic summary; it never requests original content
 or exports failed HCL. A failed validation requires its candidate identity and CLI diagnostic reduction;
-a provider/facts/RAG failure requires an exact stage/category plus explicit uncaptured stages. The summary
+a provider/facts/RAG failure requires an exact stage/category plus explicit uncaptured stages. A stage and exception class alone do not establish cause. `UNCLASSIFIED_INTERNAL_FAILURE` and
+`INTERNAL` are incomplete even when a candidate exists: the existing INTERNAL category does not
+distinguish malformed diagnostics, cleanup or other internal mechanisms. Partial originals remain
+owner-readable; they cannot justify another paid case. Classified provider/CLI failures retain their
+existing treatment and candidate/diagnostic requirements. The summary
 must pass strict field/type/identifier allowlists and the owner-scoped storage/readback identity checks.
 Independent review additionally states `failure_diagnosability: VERIFIED` and binds
 `diagnostic_evidence_sha256` to the private bundle identity. EVIDENCE_VALID_MEASUREMENT_ONLY is therefore
@@ -94,6 +98,17 @@ There is no backfill, reclassification, consumed-dispatch reuse or old-episode c
 cross-source once-only guards still deny consumed cases. A future distinct episode requires a separate
 explicit decision/live scope after independently accepted correction and USER merge; this PR creates
 neither that episode nor execution authority. PT-8B/teardown remain unauthorized.
+
+Operational limitation: the current `measurement_history()` inspects the stopped A/B/C dispatches
+across sources and rejects a new-source Case A. This is intentional fail-closed preservation, not a
+ready-to-run new episode. The exact real job names/conclusions (A success, B failure, C cancelled)
+are covered by a regression. Changing source, contract hash or approval does not reset eligibility.
+Synthetic chain tests exercise conditional runner behavior; they do not prove current live eligibility.
+A future USER decision must explicitly define a distinct episode identity/scope, authenticated binding
+of all stopped observations, cross-source once-only consumption within that episode and ambiguous
+acceptance/non-replacement rules, followed by independent implementation acceptance, USER merge and
+new source/image/live cost authority. This PR implements no episode partition or history exception;
+a policy/live approval alone cannot unblock the current history.
 
 ## Deterministic proof and limitations
 

@@ -2467,8 +2467,8 @@
     "status": "IMPLEMENTATION_INDEPENDENT_ACCEPTANCE_PENDING",
     "humanGate": "PT8A_FAILURE_DIAGNOSABILITY_CORRECTION_ACCEPTANCE_AND_USER_MERGE",
     "amendment": "docs/evaluation/product-trust-pt-8a-diagnostic-evidence-amendment.md",
-    "amendmentSha256": "e995d64cc3a1b877d084942a7a76c99413ada608e43f7d7a460d7e83a8854640",
-    "successorMeasurementContractSha256": "64e7cb22b6d5c41b7d09b674a014db03e9b48d62280a8bd2c3db8aea97cf0be2",
+    "amendmentSha256": "cda2d90b26c9aba6c574bcc10f56ceca771144faf5fdfe3540bfdb0e9888fc98",
+    "successorMeasurementContractSha256": "50bd9d006347a2b2fb8dc9211bee5bbdfca736d05d1f5e06454c837ffb647872",
     "historicalMeasurementContractSha256": "67c5c9cdc9f47a2cd4f3ab70f73c9cf91e53e53917cd187e675770b590068154",
     "failureState": "DIAGNOSTIC_EVIDENCE_INCOMPLETE",
     "furtherLiveExecutionAuthorized": false,
@@ -2530,6 +2530,34 @@
       "fullBackendPackageInvocations": 2,
       "finalizationMetadataFocusedTests": 14,
       "finalizationMetadataFocusedFailures": 0
+    },
+    "supersededPreReviewContractSha256": "64e7cb22b6d5c41b7d09b674a014db03e9b48d62280a8bd2c3db8aea97cf0be2",
+    "supersededPreReviewAmendmentSha256": "e995d64cc3a1b877d084942a7a76c99413ada608e43f7d7a460d7e83a8854640",
+    "reviewCorrectiveIteration": {
+      "authority": "USER explicit PR272 BLOCKED review correction; same branch/WP",
+      "reviewedHead": "e27608d62dcb5ac25911595fc882b6943e9e66bf",
+      "status": "IMPLEMENTATION_INDEPENDENT_ACCEPTANCE_PENDING",
+      "scope": "Unclassified/internal cause evidence cannot be complete; stopped measurement episode remains blocked across sources",
+      "priorValidationPreserved": true,
+      "newEpisodeSupport": "NOT_IMPLEMENTED_NOT_AUTHORIZED",
+      "historicalCountersReset": false,
+      "newLiveActions": 0,
+      "validation": {
+        "beforeBackend": "1 expected failure: complete=false expected, true actual",
+        "beforeObserver": "1 test / 4 expected failing subcases: unclassified/internal with/without candidate accepted",
+        "focusedBackendTests": 42,
+        "focusedFailures": 0,
+        "fullBackendTests": 601,
+        "fullBackendFailures": 0,
+        "fullBackendErrors": 0,
+        "fullBackendSkipped": 4,
+        "skipReason": "Existing local MariaDB-only regressions",
+        "observerTests": 91,
+        "observerFailures": 0,
+        "realStoppedEpisodeHistoryRegression": "A/B/C original job metadata rejects new-source Case A; no exception/partition added",
+        "frozenScopePolicyHashAndDiffChecks": "PASS",
+        "normalExactHeadCI": "GitHub-authoritative ordinary regression only"
+      }
     }
   }
 }

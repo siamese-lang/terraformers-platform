@@ -105,6 +105,8 @@ MEASUREMENT_CONTRACT = {
     "missingDiagnosticEvidence": "DIAGNOSTIC_EVIDENCE_INCOMPLETE_BLOCK_NEXT_PAID_MEASUREMENT",
     "oldEpisodeResumption": False, "diagnosticReadbackMaximumGets": 7, "diagnosticReadbackWaitSeconds": 30, "cases": CASES, "candidateIdentity": IDENTITY,
     "classification": "REVIEWABLE_DRAFT_MEASUREMENT_ONLY", "executionBase": MEASUREMENT_BASE,
+    "unclassifiedInternalEvidence": "INCOMPLETE_EVEN_WITH_CANDIDATE",
+    "postStopEpisodeSupport": "NOT_IMPLEMENTED_EXISTING_CONSUMED_HISTORY_STILL_BLOCKS",
     "frozenV2Sha256": V2_SHA256, "frozenV3Sha256": V3_SHA256,
     "dispatchesPerCaseAcrossSourcesAndApprovals": 1, "uploadsPerCase": 1,
     "dispatchBudget": 5, "uploadBudget": 5, "reservedModelCallsIncludingEmbedding": 30,
@@ -1755,6 +1757,8 @@ def require_diagnostic_evidence(evidence, job):
                 or not re.fullmatch(r"[A-Za-z][A-Za-z0-9]{0,100}", failure["exceptionType"])
                 or evidence["stages"].get(failure["stage"], {}).get("status") != "FAILED"):
             raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: exact failed stage/category missing")
+        if failure["category"] in ("UNCLASSIFIED_INTERNAL_FAILURE", "INTERNAL"):
+            raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: internal cause not classified; stage/class or candidate alone is insufficient")
         if failure["stage"] in ("draft_validation", "cli_init", "cli_validate", "result_finalization") and "final" not in evidence["candidates"]:
             raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: failed candidate lost")
         if failure["stage"] in ("cli_init", "cli_validate") and "validated" not in evidence["candidates"]:

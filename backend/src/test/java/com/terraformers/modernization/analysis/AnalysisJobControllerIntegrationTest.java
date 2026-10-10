@@ -158,6 +158,27 @@ class AnalysisJobControllerIntegrationTest {
 
 
     @Test
+    void unclassifiedOrInternalFailureWithoutCandidateCannotClaimCompleteCauseEvidence() throws Exception {
+        for (RuntimeException injected : java.util.List.of(new IllegalStateException("private-internal-cause"),
+                new TerraformValidationFailureException(TerraformValidationFailureException.Category.INTERNAL,
+                        "private-internal-cause"))) {
+            org.mockito.Mockito.doThrow(injected).when(analysisProvider).analyze(org.mockito.ArgumentMatchers.any());
+            JsonNode upload = createOwnedProjectAndSourceFile();
+            var job = jobs.findFirstByProjectIdOrderByCreatedAtDesc(upload.path("projectId").asLong()).orElseThrow();
+            mockMvc.perform(get("/api/analysis/jobs/{id}/diagnostics", job.getId()).with(testUserJwt()))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.complete").value(false))
+                    .andExpect(jsonPath("$.status").value("DIAGNOSTIC_EVIDENCE_INCOMPLETE"))
+                    .andExpect(jsonPath("$.failure.stage").value("provider"))
+                    .andExpect(jsonPath("$.failure.exceptionType").value(injected.getClass().getSimpleName()))
+                    .andExpect(jsonPath("$.candidates").isEmpty())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(not(containsString("private-internal-cause"))));
+            org.assertj.core.api.Assertions.assertThat(job.getStatus()).isEqualTo(AnalysisJobStatus.FAILED);
+            org.assertj.core.api.Assertions.assertThat(job.getResultFileId()).isNull();
+            org.assertj.core.api.Assertions.assertThat(jobs.findById(job.getId()).orElseThrow().getDiagnosticStatus()).isEqualTo("INCOMPLETE");
+        }
+    }
+
+    @Test
     void diagnosticWriteFailureIsExplicitAndDoesNotRegisterFailedHclAsResult() throws Exception {
         objects.failWrites = true;
         try {

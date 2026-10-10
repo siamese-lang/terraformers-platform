@@ -1244,6 +1244,25 @@ class DraftMeasurementContracts(unittest.TestCase):
                     self.assertEqual("NOT_PASS", reviewed["ledger"][0]["status"])
                 self.assertTrue(all(r["status"] == "NOT_RUN" for r in reviewed["ledger"][index:]))
 
+    def test_stopped_real_measurement_episode_blocks_new_source_case_a_without_episode_authority(self):
+        current = self.history(0)
+        future = 38040000000
+        self.runtime[0]["id"] = future
+        self.jobs[future] = self.jobs.pop(current)
+        active = self.runtime[0].copy()
+        # Exact existing run IDs/source/attempt/conclusions and evaluated job names.
+        # New approvals or a source change cannot erase any of these dispatches.
+        for run_id, case, conclusion in ((38028039113, pt8a.CASES[0], "success"),
+                (38029022214, pt8a.CASES[1], "failure"), (38029924066, pt8a.CASES[2], "cancelled")):
+            with self.subTest(run_id=run_id), ExitStack() as stack:
+                self.runtime = [{"id": run_id, "head_sha": "2302a85ff828411a24f235919ceddcab3cd6c89e",
+                    "run_attempt": 1, "status": "completed", "conclusion": conclusion}, active]
+                self.jobs[run_id] = {"total_count": 1, "jobs": [{"name": pt8a.MEASUREMENT_OPERATION + "/" + case,
+                    "status": "completed", "conclusion": conclusion}]}
+                self.patches(stack)
+                with self.assertRaisesRegex(ValueError, "dispatch consumed, no retry"):
+                    pt8a.measurement_history(self.request(0), SOURCE, future)
+
     def test_duplicates_other_sources_preflight_skips_reruns_ambiguous_history_and_writers_fail_closed(self):
         current = self.history(1)
         with ExitStack() as stack:
@@ -1939,6 +1958,24 @@ class ArtifactAndObservationContracts(unittest.TestCase):
             saved = pt8a.capture_diagnostic_evidence(client, job, Path(directory), Path(directory), wait=waits.append)
             self.assertEqual("DIAGNOSTIC_EVIDENCE_INCOMPLETE", saved["status"])
             self.assertEqual(7, client.request.call_count); self.assertEqual(30, sum(waits))
+
+    def test_unclassified_or_internal_category_never_counts_as_complete_cause_evidence(self):
+        job = {"id": "job-1", "projectId": 1, "status": "FAILED"}
+        for category in ("UNCLASSIFIED_INTERNAL_FAILURE", "INTERNAL"):
+            for has_candidate in (False, True):
+                with self.subTest(category=category, has_candidate=has_candidate):
+                    evidence = safe_diagnostics(job, category=category)
+                    evidence["failure"]["exceptionType"] = "IllegalStateException"
+                    if has_candidate:
+                        evidence["candidates"] = {"final": {"status": "CAPTURED", "sha256": "a" * 64, "bytes": 123}}
+                    with self.assertRaisesRegex(ValueError, "DIAGNOSTIC_EVIDENCE_INCOMPLETE"):
+                        pt8a.require_diagnostic_evidence(evidence, job)
+                    with tempfile.TemporaryDirectory() as directory:
+                        client = unittest.mock.Mock()
+                        client.request.return_value = {"httpStatus": 200, "json": evidence}
+                        captured = pt8a.capture_diagnostic_evidence(client, job, Path(directory), Path(directory))
+                        self.assertEqual("DIAGNOSTIC_EVIDENCE_INCOMPLETE", captured["status"])
+                        client.request.assert_called_once()
 
     def test_measurement_observer_exports_failed_diagnostic_hashes_without_raw_hcl_or_resubmission(self):
         job = {"id": "job-1", "projectId": 1, "sourceFileId": 2, "status": "FAILED", "resultObjectKey": None}

@@ -27,6 +27,7 @@ public final class AnalysisDiagnosticEvidence implements AutoCloseable {
     private Map<String, Object> failure;
     private TerraformDiagnosticSummary cliDiagnostics;
     private boolean bounded = true;
+    private boolean classifiedFailure = true;
 
     private AnalysisDiagnosticEvidence(AnalysisJobEntity job) {
         jobId = job.getId(); projectId = job.getProjectId(); generation = job.getClaimGeneration();
@@ -129,6 +130,9 @@ public final class AnalysisDiagnosticEvidence implements AutoCloseable {
             category = "FACTS_" + factsFailure.reason().name();
         else if (exception instanceof com.terraformers.modernization.storage.ObjectStorageException sourceFailure)
             category = "OBJECT_STORAGE_" + sourceFailure.reason().name();
+        // A stage and exception class locate failure; they do not establish its cause.
+        // Keep partial originals owner-readable, but do not certify unclassified/internal evidence.
+        classifiedFailure = !List.of("UNCLASSIFIED_INTERNAL_FAILURE", "INTERNAL").contains(category);
         failure = Map.of("stage", activeStage, "category", category,
                 "exceptionType", exception.getClass().getSimpleName()); // Class only; no exception message/cause text.
         var detail = new LinkedHashMap<String, Object>();
@@ -141,7 +145,7 @@ public final class AnalysisDiagnosticEvidence implements AutoCloseable {
         var value = new LinkedHashMap<String, Object>();
         value.put("contractVersion", "analysis-diagnostics-v1");
         value.put("jobId", jobId); value.put("projectId", projectId); value.put("claimGeneration", generation);
-        boolean complete = bounded;
+        boolean complete = bounded && classifiedFailure;
         if (failure == null) complete &= candidates.containsKey("final");
         else {
             String stage = String.valueOf(failure.get("stage"));

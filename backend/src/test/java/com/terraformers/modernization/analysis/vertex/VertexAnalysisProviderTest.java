@@ -70,6 +70,8 @@ class VertexAnalysisProviderTest {
                 assertThat(tree.path("facts").path("status").asText())
                         .isEqualTo(failureStage.equals("facts") ? "NOT_CAPTURED" : "CAPTURED");
                 assertThat(tree.path("facts").path("boundaries").asText()).isEqualTo("NOT_CAPTURED");
+                assertThat(tree.path("complete").asBoolean())
+                        .isEqualTo(!failureStage.equals("facts") && !failureStage.equals("retrieval"));
                 if (failureStage.equals("none") || failureStage.equals("repair")) {
                     assertThat(tree.path("candidates").path("initial").path("content").asText()).isEqualTo(first);
                     assertThat(tree.path("retrieval").path("retrieval").get(0).path("id").asText()).isEqualTo("vpc");

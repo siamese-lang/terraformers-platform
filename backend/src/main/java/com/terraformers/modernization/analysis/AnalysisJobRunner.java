@@ -45,6 +45,11 @@ public class AnalysisJobRunner {
         this.clock = clock;
     }
 
+    private AnalysisDiagnosticStorage diagnostics;
+
+    @Autowired
+    void setDiagnosticStorage(AnalysisDiagnosticStorage diagnostics) { this.diagnostics = diagnostics; }
+
     public void run(String jobId) {
         try (AnalysisLogCorrelation ignored = AnalysisLogCorrelation.forJob(jobId)) {
             Instant claimTime = clock.instant();
@@ -76,6 +81,8 @@ public class AnalysisJobRunner {
             io.micrometer.core.instrument.Timer.Sample sample = observability.startAnalysis();
             observability.jobStarted();
             log.info("Analysis job execution started");
+            AnalysisDiagnosticEvidence evidence = AnalysisDiagnosticEvidence.open(runningJob);
+            if (diagnostics != null) diagnostics.begin(runningJob);
             AnalysisResult result = null;
             ObjectReference writtenReference = null;
             boolean writeAttempted = false;
@@ -84,6 +91,7 @@ public class AnalysisJobRunner {
                 result = observability.recordStage(AnalysisTelemetryStage.ANALYSIS_EXECUTION,
                         () -> orchestrator.executeProviderAndValidate(runningJob));
                 if (leaseLost.get()) {
+                    evidence.fenced();
                     log.warn("Analysis result not finalized because durable ownership was lost generation={}", generation);
                     return;
                 }
@@ -91,13 +99,16 @@ public class AnalysisJobRunner {
                 if (!stateService.recordResultObjectIntentOwned(jobId, generation, clock.instant(),
                         reference.bucket(), reference.key())) {
                     leaseLost.set(true);
+                    evidence.fenced();
                     log.warn("Analysis result intent rejected because durable ownership was lost generation={}", generation);
                     return;
                 }
                 if (leaseLost.get()) {
+                    evidence.fenced();
                     log.warn("Analysis result not written because durable ownership was lost generation={}", generation);
                     return;
                 }
+                AnalysisDiagnosticEvidence.stage("result_finalization");
                 AnalysisResult completed = result;
                 writtenReference = reference;
                 writeAttempted = true;
@@ -108,13 +119,18 @@ public class AnalysisJobRunner {
                             reference, writeResult);
                 });
                 successCommitted = finalized;
-                if (finalized) observability.jobSucceeded();
+                if (finalized) {
+                    evidence.captured("result_finalization");
+                    observability.jobSucceeded();
+                }
                 if (finalized) observability.terminalQuality(completed.qualityAssessment());
                 else {
                     leaseLost.set(true);
+                    evidence.fenced();
                     log.warn("Analysis success finalization rejected because durable ownership was lost generation={}", generation);
                 }
             } catch (RuntimeException exception) {
+                evidence.failed(exception);
                 if (leaseLost.get()) {
                     log.warn("Analysis failure not finalized because durable ownership was lost generation={}", generation);
                     return;
@@ -147,7 +163,10 @@ public class AnalysisJobRunner {
                     log.warn("Analysis failure finalization rejected because durable ownership was lost generation={}", generation);
                 }
             } finally {
+                // Preserve private evidence even for failed validation or rejected late finalization.
                 heartbeat.cancel(false);
+                try { if (diagnostics != null) diagnostics.finish(runningJob, evidence); }
+                finally { evidence.close(); }
                 if (writeAttempted && !successCommitted) cleanupWrittenResult(jobId, generation, writtenReference);
                 observability.stopAnalysis(sample);
             }

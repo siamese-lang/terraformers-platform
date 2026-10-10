@@ -54,6 +54,18 @@ public class AnalysisJobController {
         return service.get(id, requester);
     }
 
+    private AnalysisDiagnosticStorage diagnostics;
+    @org.springframework.beans.factory.annotation.Autowired
+    void setDiagnosticStorage(AnalysisDiagnosticStorage diagnostics) { this.diagnostics = diagnostics; }
+
+    @GetMapping("/{id}/diagnostics")
+    public ResponseEntity<java.util.Map<String, Object>> diagnostics(@PathVariable String id,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "false") boolean includeContent,
+            @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(diagnostics.read(id, authenticatedUserService.getOrCreate(jwt), includeContent));
+    }
+
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<String> handleNotFound(NoSuchElementException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());

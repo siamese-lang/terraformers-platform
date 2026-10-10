@@ -1,5 +1,26 @@
 # AI Project State
 
+## Current PT-8A checkpoint: failure diagnosability correction
+
+USER decision [6094591490](https://github.com/siamese-lang/terraformers-platform/pull/271#issuecomment-6094591490)
+stops further paid measurements. Repository-only correction binds remote main
+`2302a85ff828411a24f235919ceddcab3cd6c89e`. Gate:
+`PT8A_FAILURE_DIAGNOSABILITY_CORRECTION_ACCEPTANCE_AND_USER_MERGE`.
+The externally approved/merged PR #271 policy is historical, not a new live authority.
+A run 38028039113/artifact 11660394315 is unchanged; B run 38029022214/artifact 11661990598
+remains FAILED/NOT_PASS/consumed with irrecoverable missing HCL/exact CLI diagnostics;
+C run 38029924066 remains CANCELLED; D/E remain NOT_RUN.
+
+The [diagnostic evidence amendment](evaluation/product-trust-pt-8a-diagnostic-evidence-amendment.md)
+adds separate owner/admin-only failed-candidate storage, safe CLI/stage export and fail-closed
+measurement progression. It does not register invalid HCL as success, change truth/Policy D,
+reset historical budgets, resume the stopped episode or authorize a new episode/live dispatch.
+Implementation acceptance, USER merge and any later episode/live authority are still required.
+PT-8A remains INCOMPLETE; PT-8B/teardown remain unauthorized.
+
+The sections below preserve earlier decisions and evidence; their historical pending proposals
+are not the current execution authority where superseded by this checkpoint.
+
 This checkpoint lets a new conversation or agent resume from repository evidence without guessing. It records current state, not an implementation guide or a new architecture decision.
 
 ## Repository

@@ -7,8 +7,14 @@ import java.util.Objects;
 public record TerraformDiagnosticSummary(
         List<DiagnosticClass> diagnosticClasses,
         int errorCount,
-        int warningCount
+        int warningCount,
+        List<Detail> details
 ) {
+    public TerraformDiagnosticSummary(List<DiagnosticClass> diagnosticClasses, int errorCount, int warningCount) {
+        this(diagnosticClasses, errorCount, warningCount, List.of());
+    }
+    /** Values and snippets are intentionally excluded. Summary is chosen from an application allowlist. */
+    public record Detail(DiagnosticClass diagnosticClass, String summary, Integer line, Integer column) {}
     static final int MAX_COUNT = 1_000;
 
     public TerraformDiagnosticSummary {
@@ -20,6 +26,7 @@ public record TerraformDiagnosticSummary(
                         .sorted()
                         .toList();
         if (diagnosticClasses.isEmpty()) diagnosticClasses = List.of(DiagnosticClass.UNKNOWN);
+        details = details == null ? List.of() : details.stream().limit(32).toList();
         errorCount = bounded(errorCount);
         warningCount = bounded(warningCount);
     }

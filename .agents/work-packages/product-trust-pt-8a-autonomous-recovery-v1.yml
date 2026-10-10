@@ -34,7 +34,7 @@ work_package:
     consumed A/B failures and all Policy D behavior; final semantic acceptance and
     live execution remain separately gated.
   decision_brief: docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md
-  current_human_gate: PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE
+  current_human_gate: PT8A_FAILURE_DIAGNOSABILITY_CORRECTION_ACCEPTANCE_AND_USER_MERGE
   original_contract:
     work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
     auto_repairs_used: 1
@@ -251,3 +251,17 @@ work_package:
     live_execution_authorized: false
     criteria_adoption_requires: independent_review_explicit_USER_policy_approval_USER_merge
     existing_v2_v3_diagnostic_recovery_contracts: unchanged
+
+  failure_diagnosability_correction:
+    authority: USER_explicit_mandatory_correction_and_comment_6094591490
+    execution_base_sha: 2302a85ff828411a24f235919ceddcab3cd6c89e
+    status: IMPLEMENTATION_INDEPENDENT_ACCEPTANCE_PENDING
+    separate_from_exhausted_historical_recovery_repairs: true
+    historical_auto_repairs_used: 3
+    historical_counters_reset: false
+    allowed_scope: existing_analysis_generation_validation_storage_owner_API_tests_and_measurement_contract
+    prohibited: live_model_upload_dispatch_GCP_IAM_ingestion_new_workflow_evaluator_merge_or_phase_progression
+    amendment: docs/evaluation/product-trust-pt-8a-diagnostic-evidence-amendment.md
+    acceptance: original_failed_candidates_and_safe_cause_recoverable_with_owner_isolation_bounded_retention_and_fail_closed_measurement
+    human_gate: PT8A_FAILURE_DIAGNOSABILITY_CORRECTION_ACCEPTANCE_AND_USER_MERGE
+    new_episode_or_live_execution_authorized: false

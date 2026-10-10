@@ -20,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
+import com.terraformers.modernization.analysis.AnalysisDiagnosticEvidence;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -63,8 +64,16 @@ public class VertexGroundedGenerationOrchestrator {
             ArchitectureRetrievalFacts facts, List<ReferenceDocument> initialReferences,
             Consumer<Outcome> evidenceObserver) {
         List<ReferenceDocument> initial = initialReferences == null ? List.of() : List.copyOf(initialReferences);
+        AnalysisDiagnosticEvidence.stage("schema_grounding");
         AwsProviderSchemaEvidence schemaEvidence = schemaCatalog.resolve(schemaCandidates(facts, initial));
+        if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().captured("schema_grounding");
+        if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().references("initial_context", initial);
+        AnalysisDiagnosticEvidence.stage("initial_generation");
         AnalysisGenerationResult generated = generationStage.generate(context, source, initial, schemaEvidence);
+        if (AnalysisDiagnosticEvidence.current() != null) {
+            AnalysisDiagnosticEvidence.current().candidate("initial", generated.terraformCode());
+            AnalysisDiagnosticEvidence.current().captured("initial_generation");
+        }
         Outcome outcome = new Outcome(generated, initial, null, initial, false,
                 generated.terraformCode(), List.of());
         evidenceObserver.accept(outcome);
@@ -84,9 +93,11 @@ public class VertexGroundedGenerationOrchestrator {
                     false, generated.terraformCode(), missing);
             evidenceObserver.accept(outcome);
             List<ReferenceDocument> closure;
+            AnalysisDiagnosticEvidence.stage("closure");
             long closureStarted = System.nanoTime();
             try {
                 closure = referenceRetriever.retrieve(query);
+                if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().references("closure", closure);
             } catch (RuntimeException failure) {
                 log.warn("Vertex grounding stage=closure outcome=failure finishReason=NOT_APPLICABLE "
                         + "outputTokens=NOT_APPLICABLE errorClass={}", failure.getClass().getSimpleName());
@@ -108,12 +119,20 @@ public class VertexGroundedGenerationOrchestrator {
             outcome = new Outcome(generated, initial, new ClosureRetrieval(query, closure), selected,
                     true, generated.terraformCode(), missingOfficialEvidence(generatedTypes, selected));
             evidenceObserver.accept(outcome);
+            if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().references("repair_context", selected);
+            AnalysisDiagnosticEvidence.stage("repair");
             String repaired = generationStage.repair(facts, generated, selected, expandedSchema);
+            if (AnalysisDiagnosticEvidence.current() != null) {
+                AnalysisDiagnosticEvidence.current().candidate("final", repaired);
+                AnalysisDiagnosticEvidence.current().captured("repair");
+            }
             outcome = new Outcome(generated, initial, outcome.closureRetrieval(), selected,
                     true, repaired, List.of());
             evidenceObserver.accept(outcome);
         }
         // No second generation/repair cycle. Bind documentation only after validating the final resource types.
+        if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().candidate("final", outcome.finalTerraform());
+        AnalysisDiagnosticEvidence.stage("final_evidence");
         contractInspector.inspect(outcome.finalTerraform());
         List<String> finalTypes = contractInspector.resourceTypes(outcome.finalTerraform()).stream()
                 .filter(schemaCatalog::contains).toList();

@@ -20,6 +20,59 @@ class TerraformCliValidatorTest {
     Path tempRoot;
 
     @Test
+    void realOfflineMissingProviderCannotBeMistakenForHclSchemaFailure() throws Exception {
+        org.junit.jupiter.api.Assumptions.assumeTrue(System.getProperty("pt8a.testTerraform") != null,
+                "uses already checked Dockerfile-pinned local executable when supplied; no test download");
+        Path emptyPlugins = Files.createDirectory(tempRoot.resolve("empty-plugins"));
+        try {
+            var real = new TerraformCliValidator(new ObjectMapper(), new TerraformCliValidator.ProcessCommandExecutor(),
+                    System.getProperty("pt8a.testTerraform"), emptyPlugins, Duration.ofSeconds(60), Duration.ofSeconds(20), tempRoot);
+            String candidate = """
+                    terraform {
+                      required_providers {
+                        aws = { source = "hashicorp/aws", version = "=5.100.0" }
+                      }
+                    }
+                    resource "aws_vpc" "valid" { cidr_block = "10.0.0.0/16" }
+                    """;
+            var failed = real.validate(candidate);
+            assertThat(failed.reason()).startsWith("PROVIDER_CLOSURE:");
+            assertThat(failed.executionPhase()).isEqualTo("init");
+            assertThat(failed.sanitizedContent()).isEqualTo(candidate);
+            assertThat(failed.exitCode()).isNotZero();
+        } finally { Files.deleteIfExists(emptyPlugins); }
+        assertTempRootEmpty();
+    }
+
+    @Test
+    void commandExecutionFailureIsNotConfigurationOrTimeoutAndNeverReturnsExceptionText() {
+        TerraformCliValidator.CommandExecutor failed = (command, dir, timeout) -> {
+            throw new java.io.IOException("PRIVATE-EXECUTION-DETAIL");
+        };
+        var result = validator(failed).validate("resource \"aws_vpc\" \"x\" {}");
+        assertThat(result.reason()).startsWith("COMMAND_EXECUTION:").doesNotContain("PRIVATE-EXECUTION-DETAIL");
+        assertThat(result.executionPhase()).isEqualTo("init");
+        assertThat(result.exitCode()).isNull();
+        assertThat(result.elapsedMs()).isNotNegative();
+        var malformed = validator(new RecordingExecutor(result(0, false, "ok"), result(1, false, "PRIVATE-RAW-JSON")))
+                .validate("resource \"aws_vpc\" \"x\" {}");
+        assertThat(malformed.reason()).startsWith("INTERNAL:").doesNotContain("PRIVATE-RAW-JSON");
+        assertThat(malformed.executionPhase()).isEqualTo("validate");
+        assertThat(malformed.exitCode()).isEqualTo(1);
+    }
+
+    @Test
+    void initializationDiagnosticsSurviveTerminalExceptionMapping() {
+        var invalid = validator(new RecordingExecutor(result(1, false, "Error: Invalid character\nPRIVATE-USER-VALUE")))
+                .validate("resource \"aws_vpc\" \"x\" {}");
+        var failure = TerraformValidationFailureException.fromSafeReason(invalid.reason(), invalid.diagnosticSummary());
+        assertThat(failure.category()).isEqualTo(TerraformValidationFailureException.Category.INIT_CONFIGURATION);
+        assertThat(failure.diagnosticSummary()).isEqualTo(invalid.diagnosticSummary());
+        assertThat(failure.diagnosticSummary().diagnosticClasses()).containsExactly(TerraformDiagnosticSummary.DiagnosticClass.CONFIGURATION_SYNTAX);
+        assertThat(failure.toString()).doesNotContain("PRIVATE-USER-VALUE");
+    }
+
+    @Test
     void acceptsValidCliDiagnosticsUsingOfflineBoundedCommandsAndCleansWorkspace() {
         RecordingExecutor executor = new RecordingExecutor(
                 result(0, false, "init ok"),
@@ -259,7 +312,7 @@ class TerraformCliValidatorTest {
         assertTempRootEmpty();
     }
 
-    private TerraformCliValidator validator(RecordingExecutor executor) {
+    private TerraformCliValidator validator(TerraformCliValidator.CommandExecutor executor) {
         return new TerraformCliValidator(
                 new ObjectMapper(),
                 executor,

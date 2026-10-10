@@ -129,6 +129,28 @@ public class AnalysisJobEntity {
     @Column(name = "terminal_at")
     private Instant terminalAt;
 
+    @Column(name = "diagnostic_bucket", length = 255)
+    private String diagnosticBucket;
+    @Column(name = "diagnostic_key", length = 1024)
+    private String diagnosticKey;
+    @Column(name = "diagnostic_sha256", length = 64)
+    private String diagnosticSha256;
+    @Column(name = "diagnostic_status", length = 32)
+    private String diagnosticStatus;
+    @Column(name = "diagnostic_expires_at")
+    private Instant diagnosticExpiresAt;
+
+    public String getDiagnosticBucket() { return diagnosticBucket; }
+    public void setDiagnosticBucket(String value) { diagnosticBucket = value; }
+    public String getDiagnosticKey() { return diagnosticKey; }
+    public void setDiagnosticKey(String value) { diagnosticKey = value; }
+    public String getDiagnosticSha256() { return diagnosticSha256; }
+    public void setDiagnosticSha256(String value) { diagnosticSha256 = value; }
+    public String getDiagnosticStatus() { return diagnosticStatus; }
+    public void setDiagnosticStatus(String value) { diagnosticStatus = value; }
+    public Instant getDiagnosticExpiresAt() { return diagnosticExpiresAt; }
+    public void setDiagnosticExpiresAt(Instant value) { diagnosticExpiresAt = value; }
+
     @PrePersist
     void prePersist() {
         Instant now = Instant.now();

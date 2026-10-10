@@ -64,6 +64,8 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
         String content = candidate == null ? "" : candidate;
         Path workspace = null;
         TerraformDraftValidation outcome;
+        long started = System.nanoTime();
+        String phase = "init";
         try {
             workspace = createWorkspace();
             Files.writeString(workspace.resolve("main.tf"), content, StandardCharsets.UTF_8);
@@ -85,13 +87,19 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
                                 reduceInitializationDiagnostics(init.output())
                         );
             } else {
+                phase = "validate";
                 outcome = validateInitializedWorkspace(content, workspace);
             }
+            if (phase.equals("init")) outcome = outcome.withExecution("init", init.exitCode(),
+                    (System.nanoTime() - started) / 1_000_000);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            outcome = failure(content, TerraformValidationFailureException.Category.INTERNAL,
+            outcome = failure(content, TerraformValidationFailureException.Category.INTERRUPTED,
                     "Terraform CLI validation was interrupted");
-        } catch (IOException | RuntimeException exception) {
+        } catch (IOException exception) {
+            outcome = failure(content, TerraformValidationFailureException.Category.COMMAND_EXECUTION,
+                    "Terraform CLI command could not execute");
+        } catch (RuntimeException exception) {
             outcome = failure(content, TerraformValidationFailureException.Category.INTERNAL,
                     "Terraform CLI validation could not be completed");
         }
@@ -100,34 +108,40 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
             return failure(content, TerraformValidationFailureException.Category.INTERNAL,
                     "Terraform CLI validation workspace cleanup failed");
         }
-        return outcome;
+        return outcome.executionPhase() == null
+                ? outcome.withExecution(phase, null, (System.nanoTime() - started) / 1_000_000) : outcome;
     }
 
     private TerraformDraftValidation validateInitializedWorkspace(String content, Path workspace)
             throws IOException, InterruptedException {
+        long started = System.nanoTime();
         CommandResult validation = executor.run(validateCommand(), workspace, validationTimeout);
         if (validation.timedOut()) {
-            return failure(content, TerraformValidationFailureException.Category.VALIDATE_TIMEOUT,
-                    "Terraform CLI validation timed out");
+            return validationExecution(failure(content, TerraformValidationFailureException.Category.VALIDATE_TIMEOUT,
+                    "Terraform CLI validation timed out"), validation, started);
         }
 
         JsonNode diagnostics;
         try {
             diagnostics = objectMapper.readTree(validation.output());
         } catch (Exception exception) {
-            return failure(content, TerraformValidationFailureException.Category.INTERNAL,
-                    "Terraform CLI validation returned malformed diagnostics");
+            return validationExecution(failure(content, TerraformValidationFailureException.Category.INTERNAL,
+                    "Terraform CLI validation returned malformed diagnostics"), validation, started);
         }
         if (diagnostics == null || !diagnostics.path("valid").isBoolean()) {
-            return failure(content, TerraformValidationFailureException.Category.INTERNAL,
-                    "Terraform CLI validation returned malformed diagnostics");
+            return validationExecution(failure(content, TerraformValidationFailureException.Category.INTERNAL,
+                    "Terraform CLI validation returned malformed diagnostics"), validation, started);
         }
         if (validation.exitCode() != 0 || !diagnostics.path("valid").asBoolean()) {
             TerraformDiagnosticSummary summary = reduceDiagnostics(diagnostics);
-            return new TerraformDraftValidation(false, content,
-                    "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation", summary);
+            return validationExecution(new TerraformDraftValidation(false, content,
+                    "VALIDATE_CONFIGURATION: generated Terraform failed Terraform CLI validation", summary), validation, started);
         }
-        return new TerraformDraftValidation(true, content, null);
+        return validationExecution(new TerraformDraftValidation(true, content, null), validation, started);
+    }
+
+    private TerraformDraftValidation validationExecution(TerraformDraftValidation result, CommandResult command, long started) {
+        return result.withExecution("validate", command.exitCode(), (System.nanoTime() - started) / 1_000_000);
     }
 
     private TerraformDiagnosticSummary reduceInitializationDiagnostics(String output) {
@@ -167,17 +181,36 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
 
     private TerraformDiagnosticSummary reduceDiagnostics(JsonNode envelope) {
         List<TerraformDiagnosticSummary.DiagnosticClass> classes = new ArrayList<>();
+        List<TerraformDiagnosticSummary.Detail> details = new ArrayList<>();
         JsonNode diagnostics = envelope.path("diagnostics");
         if (diagnostics.isArray()) {
             for (JsonNode diagnostic : diagnostics) {
                 if ("error".equals(diagnostic.path("severity").asText().toLowerCase(Locale.ROOT))) {
-                    classes.add(classify(diagnostic.path("summary").asText()));
+                    var kind = classify(diagnostic.path("summary").asText());
+                    classes.add(kind);
+                    if (details.size() < 32) details.add(new TerraformDiagnosticSummary.Detail(kind, safeSummary(kind),
+                            location(diagnostic.path("range").path("start").path("line")),
+                            location(diagnostic.path("range").path("start").path("column"))));
                 }
             }
         }
         return new TerraformDiagnosticSummary(classes,
                 boundedJsonCount(envelope.path("error_count")),
-                boundedJsonCount(envelope.path("warning_count")));
+                boundedJsonCount(envelope.path("warning_count")), details);
+    }
+
+    private Integer location(JsonNode value) {
+        return value.canConvertToInt() && value.asInt() > 0 && value.asInt() <= 1_000_000 ? value.asInt() : null;
+    }
+
+    private String safeSummary(TerraformDiagnosticSummary.DiagnosticClass kind) {
+        return switch (kind) {
+            case CONFIGURATION_SYNTAX -> "Invalid Terraform configuration syntax";
+            case MISSING_REQUIRED_ARGUMENT -> "Missing required argument";
+            case UNDECLARED_REFERENCE -> "Reference to undeclared resource, variable or module";
+            case UNSUPPORTED_ARGUMENT_OR_BLOCK -> "Unsupported argument or block";
+            case UNKNOWN -> "Unclassified Terraform diagnostic; raw message withheld";
+        };
     }
 
     private int boundedJsonCount(JsonNode value) {
@@ -255,7 +288,8 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
         String bounded = output == null ? "" : output.toLowerCase(java.util.Locale.ROOT);
         return bounded.contains("provider") && (bounded.contains("not found")
                 || bounded.contains("unavailable") || bounded.contains("no available releases")
-                || bounded.contains("does not match") || bounded.contains("failed to query available provider"));
+                || bounded.contains("does not match") || bounded.contains("failed to query available provider")
+                || bounded.contains("failed to install provider") || bounded.contains("failed to load plugin schemas"));
     }
 
     interface CommandExecutor {

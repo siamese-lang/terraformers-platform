@@ -8,6 +8,8 @@ public class TerraformValidationFailureException extends IllegalStateException {
         INIT_CONFIGURATION,
         VALIDATE_TIMEOUT,
         VALIDATE_CONFIGURATION,
+        COMMAND_EXECUTION,
+        INTERRUPTED,
         INTERNAL
     }
 
@@ -42,7 +44,7 @@ public class TerraformValidationFailureException extends IllegalStateException {
         for (Category category : Category.values()) {
             if (reason != null && reason.startsWith(category.name() + ":")) {
                 return new TerraformValidationFailureException(category, reason,
-                        category == Category.VALIDATE_CONFIGURATION ? diagnosticSummary : null);
+                        diagnosticSummary);
             }
         }
         return new TerraformValidationFailureException(Category.INTERNAL, "INTERNAL: Terraform CLI failure");

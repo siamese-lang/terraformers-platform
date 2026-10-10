@@ -43,6 +43,21 @@ public class GcsObjectReader implements ObjectReader {
         }
     }
 
+    @Override
+    public ObjectContent readContent(ObjectReference reference, int maxBytes) {
+        try {
+            Blob blob = requireBlob(reference);
+            if (blob.getSize() > maxBytes) throw new IllegalStateException("object size limit exceeded");
+            try (var channel = blob.reader(); var input = java.nio.channels.Channels.newInputStream(channel)) {
+                byte[] bytes = input.readNBytes(maxBytes + 1);
+                if (bytes.length > maxBytes) throw new IllegalStateException("object size limit exceeded");
+                return new ObjectContent(metadata(reference, blob), bytes);
+            } catch (java.io.IOException exception) {
+                throw new IllegalStateException("bounded object read failed", exception);
+            }
+        } catch (StorageException exception) { throw translate(reference, exception); }
+    }
+
     private Blob requireBlob(ObjectReference reference) {
         Blob blob = storage.get(BlobId.of(reference.bucket(), reference.key()));
         if (blob == null) {

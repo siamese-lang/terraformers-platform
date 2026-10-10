@@ -13,6 +13,15 @@ import org.springframework.data.repository.query.Param;
 
 public interface AnalysisJobRepository extends JpaRepository<AnalysisJobEntity, String> {
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select job from AnalysisJobEntity job where job.id = :jobId and job.claimGeneration = :generation")
+    Optional<AnalysisJobEntity> lockDiagnosticGeneration(String jobId, long generation);
+
+    @Query("select job from AnalysisJobEntity job where job.diagnosticExpiresAt <= :now "
+            + "and job.diagnosticStatus <> 'EXPIRED' order by job.diagnosticExpiresAt, job.id")
+    List<AnalysisJobEntity> findExpiredDiagnostics(Instant now, Pageable pageable);
+
+
     Optional<AnalysisJobEntity> findFirstByProjectIdOrderByCreatedAtDesc(Long projectId);
 
     @Query("""

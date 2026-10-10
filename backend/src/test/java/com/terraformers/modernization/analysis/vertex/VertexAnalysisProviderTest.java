@@ -51,6 +51,41 @@ import org.mockito.ArgumentCaptor;
 class VertexAnalysisProviderTest {
 
     @Test
+    void privateDiagnosticSnapshotsPreserveActualFactsAndBothCandidatesAndDistinguishMissingStages() {
+        String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
+        String repaired = first + "\nresource \"aws_security_group\" \"new\" {}";
+        for (String failureStage : List.of("none", "facts", "retrieval", "repair")) {
+            var fixture = closureFixture(List.of(official("vpc", "aws_vpc")),
+                    List.of(official("subnet", "aws_subnet")), first, repaired);
+            if (failureStage.equals("facts")) when(fixture.facts().extract(any())).thenThrow(new IllegalStateException("sensitive image detail"));
+            if (failureStage.equals("retrieval")) when(fixture.retriever().retrieve(any())).thenThrow(new IllegalStateException("sensitive query"));
+            if (failureStage.equals("repair")) when(fixture.stage().repair(any(), any(), any(), any()))
+                    .thenThrow(new VertexOutputTruncatedException(512));
+            var job = new com.terraformers.modernization.analysis.AnalysisJobEntity();
+            job.setProjectId(1L); job.setSourceFileId(2L);
+            try (var evidence = com.terraformers.modernization.analysis.AnalysisDiagnosticEvidence.open(job)) {
+                try { fixture.provider().analyze(context()); }
+                catch (RuntimeException failure) { evidence.failed(failure); }
+                var tree = new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(evidence.bundle(new com.fasterxml.jackson.databind.ObjectMapper()));
+                assertThat(tree.path("facts").path("status").asText())
+                        .isEqualTo(failureStage.equals("facts") ? "NOT_CAPTURED" : "CAPTURED");
+                assertThat(tree.path("facts").path("boundaries").asText()).isEqualTo("NOT_CAPTURED");
+                if (failureStage.equals("none") || failureStage.equals("repair")) {
+                    assertThat(tree.path("candidates").path("initial").path("content").asText()).isEqualTo(first);
+                    assertThat(tree.path("retrieval").path("retrieval").get(0).path("id").asText()).isEqualTo("vpc");
+                } else assertThat(tree.path("candidates").size()).isZero();
+                if (failureStage.equals("none")) assertThat(tree.path("candidates").path("final").path("content").asText()).isEqualTo(repaired);
+                else {
+                    assertThat(tree.path("failure").path("stage").asText()).isEqualTo(failureStage);
+                    assertThat(tree.path("candidates").has("final")).isFalse();
+                    assertThat(tree.toString()).doesNotContain("sensitive image detail", "sensitive query");
+                }
+            }
+            assertThat(com.terraformers.modernization.analysis.AnalysisDiagnosticEvidence.current()).isNull();
+        }
+    }
+
+    @Test
     void repairRetainsWarningsAsInitialDraftInformationRatherThanFinalCodeClaims() {
         String first = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
         String repaired = first + "\nresource \"aws_security_group\" \"support\" {}";
@@ -336,7 +371,7 @@ class VertexAnalysisProviderTest {
         verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
         verify(fixture.stage(), org.mockito.Mockito.never()).repair(any(), any(), any(), any());
         verify(fixture.inspector()).inspect(safeGeneration().terraformCode());
-        verify(fixture.orchestrator()).generate(any(), any(), any(), eq(List.of(official("vpc", "aws_vpc"))));
+        verify(fixture.orchestrator()).generate(any(), any(), any(), eq(List.of(official("vpc", "aws_vpc"))), any());
     }
 
     @Test

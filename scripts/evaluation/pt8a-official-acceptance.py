@@ -103,6 +103,17 @@ POST_CORRECTION_MODE = "post-correction-observation"
 POST_CORRECTION_OPERATION = "pt8a-post-correction-observation"
 POST_CORRECTION_PURPOSE = "PT8A_POST_CORRECTION_CASE_A_SINGLE_OBSERVATION"
 POST_CORRECTION_PROCEDURE = "docs/evaluation/product-trust-pt-8a-post-correction-observation.md"
+CAUSE_MODE = "cause-diagnostic-case"
+CAUSE_OPERATION = "pt8a-cause-diagnostic-case"
+CAUSE_PURPOSE = "PT8A_B_TO_E_CAUSE_DIAGNOSTICS_ONCE"
+CAUSE_EPISODE = "pt8a-b-to-e-cause-diagnostics-episode-3"
+CAUSE_PROCEDURE = "docs/evaluation/product-trust-pt-8a-b-to-e-cause-diagnostics.md"
+CAUSE_BASE = "f79bea4b09f56b0bbbb38e37c909ff0f43d7d6d2"
+CAUSE_START_AFTER_RUN = 38063586496
+CAUSE_ORIGIN_ARTIFACT = 11673954499
+CAUSE_ORIGIN_DIGEST = "sha256:697a2018760b2837c13a97d1de78abb4b072d08fbb5f3775351253528a68a553"
+CAUSE_ORIGIN_REVIEW = 6099185607
+CAUSE_FORENSIC_REVIEW = 6099689738
 POST_CORRECTION_MERGE = "322a61e6f3323e37e470e4a885fb2b78af8ef612"
 POST_CORRECTION_ORIGIN_RUN = 38045068365
 POST_CORRECTION_ORIGIN_ARTIFACT = 11667283466
@@ -169,6 +180,22 @@ POST_CORRECTION_CONTRACT = {
     "admission": "READ_ONLY_RISK_QUALIFIED_RETAINED_V4", "indexWrites": 0,
     "originalEpisodeContinuation": False, "officialAcceptancePromotion": False,
 }
+CAUSE_CONTRACT = {
+    "version": "pt8a-b-to-e-cause-diagnostics-v1", "episodeId": CAUSE_EPISODE,
+    "cases": DIAGNOSTIC_CASES, "candidateIdentity": IDENTITY,
+    "predecessor": {"runId": CAUSE_START_AFTER_RUN, "artifactId": CAUSE_ORIGIN_ARTIFACT,
+        "digest": CAUSE_ORIGIN_DIGEST, "reviewCommentId": CAUSE_ORIGIN_REVIEW,
+        "disposition": "EVIDENCE_VALID_PRODUCT_NOT_PASS_NO_NEXT_AUTHORITY"},
+    "firstDispatchAfterRunId": CAUSE_START_AFTER_RUN,
+    "dispatchesPerCaseAcrossSources": 1, "uploadsPerCase": 1,
+    "preflightFailureConsumesDispatch": True, "retryOrResultReplacement": False,
+    "reservedModelCallsIncludingEmbeddingPerCase": MODEL_CALL_RESERVATION,
+    "workflowMinutesPerCase": 35, "acceptedJobObservationSeconds": 540,
+    "progression": "INDEPENDENT_CAUSE_AND_EVIDENCE_REVIEW_NOT_QUALITY_PASS",
+    "missingDiagnosticEvidence": "STOP_NO_NEXT_PAID_CASE",
+    "admission": "READ_ONLY_RISK_QUALIFIED_RETAINED_V4", "indexWrites": 0,
+    "originalEpisodeContinuation": False, "officialAcceptancePromotion": False,
+}
 
 # GitHub returns this unevaluated display name when the existing job's `if` is false.
 # It identifies a skipped job only; it is never an active operation identity.
@@ -187,6 +214,9 @@ SKIPPED_MEASUREMENT_JOB_NAME = ("inputs.operation == 'pt8a-draft-measurement' &&
     "format('pt8a-draft-measurement/{0}', fromJSON(inputs.pt8a_request).caseId) || " + SKIPPED_RECOVERY_JOB_NAME)
 SKIPPED_POST_CORRECTION_JOB_NAME = ("inputs.operation == 'pt8a-post-correction-observation' && "
     "'pt8a-post-correction-observation' || " + SKIPPED_MEASUREMENT_JOB_NAME)
+SKIPPED_CAUSE_JOB_NAME = ("inputs.operation == 'pt8a-cause-diagnostic-case' && "
+    "format('pt8a-cause-diagnostic-case/{0}', fromJSON(inputs.pt8a_request).caseId) || "
+    + SKIPPED_POST_CORRECTION_JOB_NAME)
 CHAIN_DECISION = 6058612980
 RECOVERY_DECISION = 6057566013
 ORIGIN_SOURCE = "70373842629fdd569815780e52dc5f0353b97880"
@@ -386,16 +416,19 @@ def pt8a_history_job(jobs):
         raise ValueError("PT8A job history incomplete; no inference")
     names = {CORRECTIVE_OPERATION, "pt8a-official-acceptance", SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME,
              RECOVERY_OPERATION, SKIPPED_RECOVERY_JOB_NAME, SKIPPED_MEASUREMENT_JOB_NAME,
-             SKIPPED_POST_CORRECTION_JOB_NAME, POST_CORRECTION_OPERATION}
+             SKIPPED_POST_CORRECTION_JOB_NAME, POST_CORRECTION_OPERATION,
+             SKIPPED_CAUSE_JOB_NAME}
     names.update(QUALIFIED_OPERATION + "/" + case for case in CASES)
     names.update(DIAGNOSTIC_OPERATION + "/" + case for case in CASES)
     names.update(MEASUREMENT_OPERATION + "/" + case for case in CASES)
+    names.update(CAUSE_OPERATION + "/" + case for case in DIAGNOSTIC_CASES)
     related = [j for j in jobs["jobs"] if j["name"] in names]
     if len(related) != 1:
         raise ValueError("prior dispatch operation unproven; no inference")
     job = related[0]
     if job["name"] in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME, SKIPPED_RECOVERY_JOB_NAME,
-            SKIPPED_MEASUREMENT_JOB_NAME, SKIPPED_POST_CORRECTION_JOB_NAME) and (
+            SKIPPED_MEASUREMENT_JOB_NAME, SKIPPED_POST_CORRECTION_JOB_NAME,
+            SKIPPED_CAUSE_JOB_NAME) and (
             job.get("status") != "completed" or job.get("conclusion") != "skipped"):
         raise ValueError("unevaluated PT8A job name does not prove skipped execution; no inference")
     return job
@@ -484,7 +517,7 @@ def corrective_origins(private):
 
 
 def risk_qualified_admission(client, manifest, schema, documents, checksum, receipt, binding, authority):
-    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE, RECOVERY_PURPOSE, GENERATION_DIAGNOSTIC_PURPOSE, MEASUREMENT_PURPOSE, POST_CORRECTION_PURPOSE)
+    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE, RECOVERY_PURPOSE, GENERATION_DIAGNOSTIC_PURPOSE, MEASUREMENT_PURPOSE, POST_CORRECTION_PURPOSE, CAUSE_PURPOSE)
             or authority.get("vector_write_continuity") != "VECTOR_WRITE_CONTINUITY_UNPROVEN"
             or authority.get("accepted_residual_risk") != "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"):
         raise ValueError("explicit corrective live risk authority missing")
@@ -1256,6 +1289,289 @@ def post_correction_history(source, current_run):
     return {"allSourcesInspected": True, "predecessorRunId": POST_CORRECTION_ORIGIN_RUN,
         "singleDispatchConsumed": True, "knownLaterIngestionDispatches": 0,
         "vectorWriteContinuity": "UNPROVEN"}
+
+
+def cause_contract_sha256():
+    return sha(json.dumps(CAUSE_CONTRACT, sort_keys=True, separators=(",", ":")).encode())
+
+
+def cause_live_fields(request, source, image):
+    return {**diagnostic_live_fields(source, image),
+        "purpose": CAUSE_PURPOSE, "diagnostic_contract_sha256": cause_contract_sha256(),
+        "procedure_sha256": sha((ROOT / CAUSE_PROCEDURE).read_bytes()),
+        "episode_id": CAUSE_EPISODE, "start_after_run_id": str(CAUSE_START_AFTER_RUN),
+        "predecessor_run_id": str(CAUSE_START_AFTER_RUN),
+        "predecessor_artifact_id": str(CAUSE_ORIGIN_ARTIFACT),
+        "predecessor_artifact_digest": CAUSE_ORIGIN_DIGEST,
+        "predecessor_review_id": str(CAUSE_ORIGIN_REVIEW),
+        "predecessor_forensic_id": str(CAUSE_FORENSIC_REVIEW),
+        "predecessor_disposition": "EVIDENCE_VALID_PRODUCT_NOT_PASS_NO_NEXT_AUTHORITY",
+        "amendment_pr": str(request["amendmentPullRequest"]),
+        "amendment_review_comment_id": str(request["amendmentReviewCommentId"]),
+        "official_cases": "NONE_B_TO_E_CAUSE_DIAGNOSTICS_ONLY",
+        "once_only": "ONE_DISPATCH_ATTEMPT_UPLOAD_PER_CASE_ACROSS_ALL_SOURCES",
+        "maximum_total_uploads": "4", "maximum_model_calls": "24",
+        "maximum_dispatches": "4", "workflow_wallclock_minutes_per_case": "35",
+        "accepted_job_observation_seconds": "540", "model_project": "terraformers-platform",
+        "model_location": "global", "generation_model": "gemini-3.8-flash",
+        "sdk_policy": "UNCHANGED_POLICY_D",
+        "cost_authority": "FOUR_JOBS_SIX_RESERVED_MODEL_CALLS_EACH_NO_AUTOMATIC_EXPANSION"}
+
+
+def cause_request_contract(request, source, image, attempt):
+    allowed = {"mode", "caseId", "episodeId", "startAfterRunId", "liveApprovalCommentId",
+        "provenanceRunId", "provenanceArtifactId", "priorRunId", "priorArtifactId",
+        "priorReviewCommentId", "amendmentPullRequest", "amendmentReviewCommentId"}
+    first = request.get("caseId") == DIAGNOSTIC_CASES[0]
+    prior = ("priorRunId", "priorArtifactId", "priorReviewCommentId")
+    if (set(request) != allowed or request.get("mode") != CAUSE_MODE
+            or request.get("caseId") not in DIAGNOSTIC_CASES
+            or request.get("episodeId") != CAUSE_EPISODE
+            or request.get("startAfterRunId") != CAUSE_START_AFTER_RUN
+            or str(attempt) != "1" or not re.fullmatch(r"[0-9a-f]{40}", source)
+            or not re.fullmatch(r"asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}", image)
+            or any(type(request.get(k)) is not int or request[k] <= 0 for k in allowed -
+                {"mode", "caseId", "episodeId", "startAfterRunId", *prior})
+            or any(type(request.get(k)) is not int or (request[k] != 0 if first else request[k] <= 0) for k in prior)
+            or (request["provenanceRunId"], request["provenanceArtifactId"]) !=
+                (ORIGIN_CLEAN_RUN, ORIGIN_CLEAN_ARTIFACT)
+            or sha((ROOT / PROCEDURE).read_bytes()) != V2_SHA256
+            or sha((ROOT / CORRECTIVE_PROCEDURE).read_bytes()) != V3_SHA256):
+        raise ValueError("invalid B-E cause episode/source/image/request; no inference")
+    pr = github(f"pulls/{request['amendmentPullRequest']}")
+    review = authority_comment(request["amendmentReviewCommentId"], "[PRODUCT_TRUST_REVIEW:v1]")
+    issue_url = f"https://api.github.com/repos/siamese-lang/terraformers-platform/issues/{request['amendmentPullRequest']}"
+    if (pr.get("merged") is not True or pr.get("base", {}).get("ref") != "main"
+            or github(f"issues/comments/{request['amendmentReviewCommentId']}").get("issue_url") != issue_url
+            or any(review.get(k) != v for k, v in {"decision": "ACCEPTED",
+                "reviewed_head": pr["head"]["sha"], "execution_base_sha": CAUSE_BASE,
+                "cause_contract_sha256": cause_contract_sha256()}.items())
+            or github(f"compare/{pr['merge_commit_sha']}...{source}").get("status") not in ("ahead", "identical")):
+        raise ValueError("B-E cause amendment acceptance/USER merge/source lineage missing")
+    authority = authority_comment(request["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    if (github(f"issues/comments/{request['liveApprovalCommentId']}").get("issue_url") != issue_url
+            or any(authority.get(k) != v for k, v in cause_live_fields(request, source, image).items())):
+        raise ValueError("exact new B-E cause live/model/cost authority missing")
+    if transport.current_main() != source:
+        raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT")
+    return authority
+
+
+def cause_origin(private):
+    old = post_correction_origin(private)
+    data, bound = bound_artifact(CAUSE_START_AFTER_RUN, CAUSE_ORIGIN_ARTIFACT,
+        ["inventory.json", "binding.json", "record.json", "cleanup.json",
+         "diagnostic-disposition.json", "observation/accepted.json", "observation/job.json",
+         "observation/diagnostics.json"], private,
+        ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+    review = authority_comment(CAUSE_ORIGIN_REVIEW, "[PT8A_POST_CORRECTION_INDEPENDENT_REVIEW:v1]")
+    forensic = authority_comment(CAUSE_FORENSIC_REVIEW, "[PT8A_CASE_A_ROOT_CAUSE_FORENSIC:v1]")
+    b, record, accepted, job = (data[k] for k in
+        ("binding.json", "record.json", "observation/accepted.json", "observation/job.json"))
+    if (bound != {"runId": CAUSE_START_AFTER_RUN, "artifactId": CAUSE_ORIGIN_ARTIFACT,
+                "digest": CAUSE_ORIGIN_DIGEST, "sourceSha": CAUSE_BASE, "conclusion": "success"}
+            or any(b.get(k) != v for k, v in {"sourceSha": CAUSE_BASE, "runId": CAUSE_START_AFTER_RUN,
+                "mode": POST_CORRECTION_MODE, "caseId": CASES[0], "candidateIdentity": IDENTITY,
+                "diagnosticContractSha256": post_correction_contract_sha256()}.items())
+            or any(review.get(k) != v for k, v in {"decision": "EVIDENCE_VALID_PRODUCT_NOT_PASS",
+                "source_sha": CAUSE_BASE, "run_id": str(CAUSE_START_AFTER_RUN),
+                "artifact_id": str(CAUSE_ORIGIN_ARTIFACT), "artifact_digest": CAUSE_ORIGIN_DIGEST,
+                "product_quality": "NOT_PASS", "allow_next_measurement": "false"}.items())
+            or any(forensic.get(k) != v for k, v in {"scope": "CASE_A_BEFORE_AND_POST_CORRECTION_ONLY",
+                "post_correction_run_id": str(CAUSE_START_AFTER_RUN),
+                "post_correction_source_sha": CAUSE_BASE,
+                "independent_product_quality": "NOT_PASS_UNCHANGED",
+                "new_paid_observation_authority": "NONE"}.items())
+            or record.get("consumed") is not True or record.get("uploadAttempts") != 1
+            or record.get("terminalState") != "SUCCEEDED"
+            or accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True
+            or accepted.get("uploadAttempts") != 1 or accepted.get("jobId") != job.get("id")
+            or data["cleanup.json"].get("JWKSRestored") is not True
+            or data["diagnostic-disposition.json"].get("officialAcceptance") != "NOT_ACCEPTANCE"
+            or data["observation/diagnostics.json"].get("status") != "AVAILABLE"):
+        raise ValueError("post-correction Case A consumed negative origin changed; no B-E upload")
+    return {"historical": old, "postCorrectionCaseA": bound,
+        "productQuality": "NOT_PASS", "allowNextMeasurement": False,
+        "forensicCommentId": CAUSE_FORENSIC_REVIEW}
+
+
+def cause_history(request, source, current_run):
+    runs = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
+    current = [r for r in runs if r["id"] == current_run]
+    origin = [r for r in runs if r["id"] == CAUSE_START_AFTER_RUN]
+    if (len(current) != 1 or current[0].get("head_sha") != source
+            or current[0].get("run_attempt") != 1 or current_run <= CAUSE_START_AFTER_RUN
+            or len(origin) != 1 or any(origin[0].get(k) != v for k, v in {
+                "head_sha": CAUSE_BASE, "run_attempt": 1, "status": "completed",
+                "conclusion": "success"}.items())):
+        raise ValueError("B-E current/origin dispatch history missing or rerun")
+    index = DIAGNOSTIC_CASES.index(request["caseId"])
+    expected = DIAGNOSTIC_CASES[:index]
+    predecessors = {}
+    for run in runs:
+        if run["id"] < CAUSE_START_AFTER_RUN:
+            continue
+        jobs = github(f"actions/runs/{run['id']}/jobs?per_page=100")
+        job = pt8a_history_job(jobs)
+        if run["id"] == CAUSE_START_AFTER_RUN:
+            if job.get("name") != POST_CORRECTION_OPERATION or job.get("conclusion") != "success":
+                raise ValueError("consumed post-correction origin operation changed")
+            continue
+        if run["id"] == current_run:
+            if job.get("name") != CAUSE_OPERATION + "/" + request["caseId"] or job.get("conclusion") == "skipped":
+                raise ValueError("current B-E cause operation/case mismatch")
+            continue
+        if job.get("name") in (SKIPPED_POST_CORRECTION_JOB_NAME, SKIPPED_CAUSE_JOB_NAME):
+            if not any(j.get("name") != job["name"] and j.get("conclusion") in ("success", "failure")
+                    for j in jobs["jobs"]):
+                raise ValueError("ambiguous intervening dispatch; no inference")
+            continue
+        case = job.get("name", "").removeprefix(CAUSE_OPERATION + "/")
+        if (case not in expected or case in predecessors or run["id"] >= current_run
+                or run.get("status") != "completed" or run.get("run_attempt") != 1
+                or run.get("head_sha") != source or run.get("conclusion") not in ("success", "failure")
+                or job.get("conclusion") != run["conclusion"]):
+            raise ValueError("duplicate/out-of-order/ambiguous B-E observation across sources")
+        cleanup = [s for s in job.get("steps", []) if s.get("name") == "Remove only the owned ephemeral validation pod"]
+        if len(cleanup) != 1 or cleanup[0].get("conclusion") != "success":
+            raise ValueError("B-E predecessor cleanup incomplete")
+        artifacts = github(f"actions/runs/{run['id']}/artifacts?per_page=100")
+        matches = [a for a in artifacts["artifacts"] if a["name"] == f"pt8a-cause-{run['id']}"]
+        if (artifacts.get("total_count") != len(artifacts.get("artifacts", []))
+                or artifacts["total_count"] > 100 or len(matches) != 1):
+            raise ValueError("B-E predecessor artifact missing or ambiguous")
+        predecessors[case] = {"runId": run["id"], "artifactId": matches[0]["id"],
+            "digest": matches[0]["digest"], "sourceSha": source, "conclusion": run["conclusion"]}
+    ordered = [predecessors[c]["runId"] for c in expected if c in predecessors]
+    prior = predecessors.get(expected[-1]) if expected else {"runId": 0, "artifactId": 0}
+    if (set(predecessors) != set(expected) or ordered != sorted(ordered)
+            or prior is None
+            or (request["priorRunId"], request["priorArtifactId"]) !=
+                (prior["runId"], prior["artifactId"])):
+        raise ValueError("B-E predecessor order or bound identity incomplete")
+    writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
+    if (not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes)
+            or any(r["id"] > ORIGIN_CLEAN_RUN for r in writes)):
+        raise ValueError("known ingestion writer history changed; no retained-vector reuse")
+    return {"predecessors": predecessors, "allSourcesInspected": True,
+        "knownLaterIngestionDispatches": 0, "vectorWriteContinuity": "UNPROVEN"}
+
+
+def cause_predecessor(request, history, private, source, image):
+    rows = [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False}
+        for c in DIAGNOSTIC_CASES]
+    reference = {"runId": request["priorRunId"], "artifactId": request["priorArtifactId"],
+        "reviewCommentId": request["priorReviewCommentId"]}
+    ledgers = []
+    for case in reversed(DIAGNOSTIC_CASES[:DIAGNOSTIC_CASES.index(request["caseId"])]):
+        expected = history["predecessors"][case]
+        if any(reference[k] != expected[k] for k in ("runId", "artifactId")):
+            raise ValueError("B-E predecessor chain does not match all-source history")
+        data, bound = bound_artifact(reference["runId"], reference["artifactId"],
+            ["inventory.json", "binding.json", "ledger.json", "diagnostic-chain.json",
+             "diagnostic-disposition.json", "cleanup.json", "release.json", "readiness.json",
+             "post-admission.json", "input-identity.json", "observation/accepted.json",
+             "observation/job.json", "observation/diagnostics.json", "observation/cli.json",
+             "observation/draft-identity.json", "observation/presentation.json",
+             "observation/retrieval.json"], private,
+            ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+        b = data["binding.json"]
+        record = data["ledger.json"][DIAGNOSTIC_CASES.index(case)]
+        accepted, job, diagnostic = (data[k] for k in
+            ("observation/accepted.json", "observation/job.json", "observation/diagnostics.json"))
+        if (bound != expected or any(b.get(k) != v for k, v in {
+                "sourceSha": source, "image": image,
+                "runId": expected["runId"], "mode": CAUSE_MODE, "caseId": case,
+                "episodeId": CAUSE_EPISODE, "candidateIdentity": IDENTITY,
+                "procedureSha256": cause_contract_sha256(),
+                "classification": "CAUSE_DIAGNOSTIC_ONLY",
+                "diagnosticContractSha256": cause_contract_sha256(),
+                "liveApprovalCommentId": request["liveApprovalCommentId"]}.items())
+                or b.get("startAfterRunId") != CAUSE_START_AFTER_RUN
+                or b.get("amendmentPullRequest") != request["amendmentPullRequest"]
+                or b.get("amendmentReviewCommentId") != request["amendmentReviewCommentId"]
+                or data["cleanup.json"].get("JWKSRestored") is not True
+                or any(data["diagnostic-disposition.json"].get(k) != v for k, v in {
+                    "classification": "CAUSE_DIAGNOSTIC_ONLY", "officialAcceptance": "NOT_ACCEPTANCE",
+                    "dispatchConsumed": True, "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION"}.items())
+                or record.get("consumed") is not True or record.get("uploadAttempts") != 1
+                or record.get("status") not in ("NOT_PASS", "REVIEW_PENDING")
+                or record.get("terminalState") not in ("SUCCEEDED", "FAILED")
+                or accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True
+                or accepted.get("uploadAttempts") != 1 or accepted.get("jobId") != job.get("id")
+                or job.get("status") != record["terminalState"]
+                or record.get("diagnosticEvidence") != "AVAILABLE"
+                or tuple(r.get("caseId") for r in data["ledger.json"]) != DIAGNOSTIC_CASES
+                or data["ledger.json"][DIAGNOSTIC_CASES.index(case)+1:] != [
+                    {"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False}
+                    for c in DIAGNOSTIC_CASES[DIAGNOSTIC_CASES.index(case)+1:]]
+                or data["input-identity.json"] != next(c for c in frozen_inputs() if c["caseId"] == case)):
+            raise ValueError("B-E predecessor provenance, cleanup, diagnostic or terminal mismatch")
+        corrective_release(data["release.json"], source, image)
+        predecessor_authority = authority_comment(b["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+        if any(predecessor_authority.get(k) != v for k, v in cause_live_fields(request, source, image).items()):
+            raise ValueError("B-E predecessor live authority changed")
+        require_diagnostic_evidence(diagnostic, job, private_readback=True)
+        cli, draft = data["observation/cli.json"], data["observation/draft-identity.json"]
+        hcl = [e for e in data["inventory.json"]["files"] if e["path"] == "observation/main.tf"]
+        if draft.get("hclPresent") is True:
+            if (len(hcl) != 1 or draft.get("hclSha256") != hcl[0]["sha256"]
+                    or cli.get("hclSha256") != hcl[0]["sha256"]
+                    or cli.get("terraformVersion") != "1.8.5"
+                    or cli.get("providerVersion") != "5.100.0"
+                    or type(cli.get("initValidateExitCode")) is not int
+                    or cli.get("AWSPlanApply") is not False):
+                raise ValueError("B-E real CLI and final HCL identity unproven")
+        elif draft.get("hclPresent") is not False or hcl or cli.get("status") != "NOT_RUN":
+            raise ValueError("B-E missing draft cannot be presented as validated")
+        for snapshot in (data["readiness.json"], data["post-admission.json"]):
+            if any(snapshot.get(k) != v for k, v in {"classification": "RISK_QUALIFIED_RETAINED_V4",
+                    "indexUuid": ORIGIN_UUID, "liveContentIdentity": ORIGIN_CONTENT,
+                    "vectorDocumentsChecked": 5395, "vectorDimension": 1536,
+                    "embeddingRequests": 0, "indexWrites": 0}.items()):
+                raise ValueError("B-E predecessor retained-v4 identity changed")
+        review = authority_comment(reference["reviewCommentId"], "[PT8A_CAUSE_DIAGNOSTIC_REVIEW:v1]")
+        if github(f"issues/comments/{reference['reviewCommentId']}").get("issue_url") != (
+                f"https://api.github.com/repos/siamese-lang/terraformers-platform/issues/"
+                f"{request['amendmentPullRequest']}"):
+            raise ValueError("B-E independent cause review is not on its amendment PR")
+        proof = diagnostic["ownerScopedOriginalReadback"]
+        required = {"decision": "EVIDENCE_VALID_CAUSE_DIAGNOSTIC_ONLY",
+            "allow_next_diagnostic": "true", "official_acceptance": "NOT_ACCEPTANCE",
+            "run_id": str(bound["runId"]), "artifact_id": str(bound["artifactId"]),
+            "artifact_digest": bound["digest"], "source_sha": bound["sourceSha"],
+            "backend_image": b["image"], "case_id": case,
+            "job_id": job["id"], "terminal_state": job["status"],
+            "observed_status": record["status"],
+            "diagnostic_evidence_sha256": diagnostic["evidenceSha256"],
+            "private_original_readback": proof["status"],
+            "candidate_readback_sha256": sha(json.dumps(proof, sort_keys=True, separators=(",", ":")).encode()),
+            "cause_review": "VERIFIED_FROM_ORIGINALS_AND_SAFE_STAGE_EVIDENCE"}
+        first_stage = review.get("first_divergence_stage")
+        valid_stages = {"source_read", "facts", "retrieval", "initial_generation", "closure",
+            "repair", "final_evidence", "draft_validation", "cli_init", "cli_validate",
+            "result_finalization", "trust_presentation"}
+        if (any(review.get(k) != v for k, v in required.items())
+                or review.get("product_quality") not in ("PASS", "NOT_PASS", "UNDETERMINED")
+                or (record["status"] == "NOT_PASS" and review.get("product_quality") != "NOT_PASS")
+                or first_stage not in valid_stages | {"NONE_NO_MATERIAL_MISMATCH"}
+                or (job["status"] == "FAILED" and first_stage == "NONE_NO_MATERIAL_MISMATCH")
+                or review.get("safe_cli_diagnostics_sha256") != (
+                    sha(json.dumps(diagnostic["cliDiagnostics"], sort_keys=True, separators=(",", ":")).encode())
+                    if diagnostic.get("cliDiagnostics") is not None else "NOT_CAPTURED")
+                or job["status"] == "FAILED" and any(review.get(k) != v for k, v in {
+                    "failure_stage": diagnostic["failure"]["stage"],
+                    "failure_category": diagnostic["failure"]["category"]}.items())):
+            raise ValueError("independent B-E cause review missing or mismatched")
+        prior = data["diagnostic-chain.json"].get("prior")
+        rows[DIAGNOSTIC_CASES.index(case)] = record
+        ledgers.append((DIAGNOSTIC_CASES.index(case), data["ledger.json"]))
+        reference = prior
+    if reference != {"runId": 0, "artifactId": 0, "reviewCommentId": 0}:
+        raise ValueError("B-E cause chain does not end at its distinct boundary")
+    if any(old[:position+1] != rows[:position+1] for position, old in ledgers):
+        raise ValueError("B-E predecessor ledger rewrote an earlier result")
+    return rows
 
 
 def diagnostic_request_contract(request, source, image, attempt):
@@ -2416,14 +2732,26 @@ def main():
     qualified = request.get("mode") == QUALIFIED_MODE
     generation_diagnostic = request.get("mode") == GENERATION_DIAGNOSTIC_MODE
     post_correction = request.get("mode") == POST_CORRECTION_MODE
+    cause = request.get("mode") == CAUSE_MODE
     measurement = request.get("mode") == MEASUREMENT_MODE
-    diagnostic = request.get("mode") == DIAGNOSTIC_MODE or generation_diagnostic or measurement or post_correction
-    classification = ("POST_CORRECTION_SINGLE_OBSERVATION_ONLY" if post_correction else
+    diagnostic = request.get("mode") == DIAGNOSTIC_MODE or generation_diagnostic or measurement or post_correction or cause
+    classification = ("CAUSE_DIAGNOSTIC_ONLY" if cause else "POST_CORRECTION_SINGLE_OBSERVATION_ONLY" if post_correction else
         "REVIEWABLE_DRAFT_MEASUREMENT_ONLY" if measurement else "DIAGNOSTIC_ONLY")
     disposition_file = "measurement-disposition.json" if measurement else "diagnostic-disposition.json"
     chain_file = "measurement-chain.json" if measurement else "diagnostic-chain.json"
     risk_path = corrective or qualified or diagnostic
-    if measurement:
+    if cause:
+        if os.environ.get("OPERATION") != CAUSE_OPERATION:
+            raise ValueError("B-E cause diagnostic requires its distinct existing-workflow operation")
+        authority = cause_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+        history = cause_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
+        if args.action == "preflight":
+            with tempfile.TemporaryDirectory(prefix="pt8a-cause-") as directory:
+                private = Path(directory)
+                corrective_origins(private)
+                cause_origin(private)
+                cause_predecessor(request, history, private, source, image)
+    elif measurement:
         if os.environ.get("OPERATION") != MEASUREMENT_OPERATION:
             raise ValueError("measurement cannot use an old acceptance/diagnostic operation")
         authority = measurement_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
@@ -2479,7 +2807,7 @@ def main():
                 corrective_origins(Path(directory))
     else:
         if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION, DIAGNOSTIC_OPERATION,
-                RECOVERY_OPERATION, MEASUREMENT_OPERATION, POST_CORRECTION_OPERATION):
+                RECOVERY_OPERATION, MEASUREMENT_OPERATION, POST_CORRECTION_OPERATION, CAUSE_OPERATION):
             raise ValueError("qualified/corrective operation cannot execute ordinary readiness or official cases")
         request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
         ensure_latest_dispatch(request, source, int(os.environ["GITHUB_RUN_ID"]))
@@ -2492,7 +2820,7 @@ def main():
     record = None
     if diagnostic:
         write(output / ("measurement-contract.json" if measurement else "diagnostic-contract.json"),
-            MEASUREMENT_CONTRACT if measurement else POST_CORRECTION_CONTRACT if post_correction else
+            CAUSE_CONTRACT if cause else MEASUREMENT_CONTRACT if measurement else POST_CORRECTION_CONTRACT if post_correction else
             GENERATION_DIAGNOSTIC_CONTRACT if generation_diagnostic else DIAGNOSTIC_CONTRACT)
         write(output / disposition_file, {"classification": classification,
             "officialAcceptance": "NOT_ACCEPTANCE", "evidenceValidity": "INCOMPLETE", "dispatchConsumed": True})
@@ -2500,7 +2828,12 @@ def main():
         with tempfile.TemporaryDirectory(prefix="pt8a-private-") as temporary:
             private = Path(temporary)
             if risk_path:
-                if measurement:
+                if cause:
+                    original = cause_origin(private)
+                    write(output / "original-observations.json", original)
+                    ledger = cause_predecessor(request, history, private, source, image)
+                    original_ledger = json.loads(json.dumps(ledger))
+                elif measurement:
                     original = measurement_originals(private)
                     write(output / "original-observations.json", original)
                     reviewed = diagnostic_predecessor(request, history, private, measurement=True)
@@ -2516,7 +2849,7 @@ def main():
                     ledger = diagnostic_predecessor(request, history, private)
                     original_ledger = json.loads(json.dumps(ledger))
                 corrective_release(release, source, image)
-                if (generation_diagnostic or measurement or post_correction) and (release.get("modelProject") != "terraformers-platform"
+                if (generation_diagnostic or measurement or post_correction or cause) and (release.get("modelProject") != "terraformers-platform"
                         or release.get("modelLocation") != "global"):
                     raise ValueError("single-generation diagnostic runtime project/location mismatch")
                 origin_receipt, binding, failed_binding = corrective_origins(private)
@@ -2555,17 +2888,18 @@ def main():
             if readiness["classification"] != ("RISK_QUALIFIED_RETAINED_V4" if risk_path else "EXACT_REUSABLE_COMPLETED_V4"):
                 raise ValueError("readiness does not authorize case A; no automatic ingestion")
             write(output / "binding.json", {"sourceSha": source, "image": image, "candidateIdentity": IDENTITY,
-                "procedureSha256": measurement_contract_sha256() if measurement else post_correction_contract_sha256() if post_correction else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256() if diagnostic else sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
+                "procedureSha256": cause_contract_sha256() if cause else measurement_contract_sha256() if measurement else post_correction_contract_sha256() if post_correction else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256() if diagnostic else sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
                 "mode": request["mode"], "caseId": request.get("caseId"),
                 "liveApprovalCommentId": request["liveApprovalCommentId"], "runId": int(os.environ["GITHUB_RUN_ID"]),
-                **({"classification": classification, "measurementContractSha256" if measurement else "diagnosticContractSha256": measurement_contract_sha256() if measurement else post_correction_contract_sha256() if post_correction else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256(),
+                **({"classification": classification, "measurementContractSha256" if measurement else "diagnosticContractSha256": cause_contract_sha256() if cause else measurement_contract_sha256() if measurement else post_correction_contract_sha256() if post_correction else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256(),
                     **({k: request[k] for k in ("amendmentPullRequest", "amendmentReviewCommentId", "policyApprovalCommentId", "episodeId", "startAfterRunId")} if measurement else
+                       {k: request[k] for k in ("amendmentPullRequest", "amendmentReviewCommentId", "episodeId", "startAfterRunId")} if cause else
                        {k: request[k] for k in ("amendmentPullRequest", "amendmentReviewCommentId")} if post_correction else {}),
                     "frozenV2Sha256": V2_SHA256, "frozenV3Sha256": V3_SHA256} if diagnostic else {})})
             if qualified or diagnostic:
                 record = ({"caseId": CASES[0], "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False,
                     "mode": request["mode"], "officialAcceptance": "NOT_ACCEPTANCE"}
-                    if generation_diagnostic or post_correction else ledger[CASES.index(request["caseId"])])
+                    if generation_diagnostic or post_correction else ledger[DIAGNOSTIC_CASES.index(request["caseId"])] if cause else ledger[CASES.index(request["caseId"])])
                 if diagnostic:
                     record.update(classification=classification, dispatchConsumed=True)
                 case = next(c for c in frozen_inputs() if c["caseId"] == request["caseId"])
@@ -2603,7 +2937,12 @@ def main():
                 private_fixture = private / "input.png"; private_fixture.write_bytes(fixture.read_bytes()); fixture = private_fixture
             if transport.current_main() != source:
                 raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT before inference")
-            if measurement:
+            if cause:
+                authority = cause_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                history = cause_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
+                if cause_origin(private) != original or cause_predecessor(request, history, private, source, image) != original_ledger:
+                    raise ValueError("B-E original or predecessor changed before upload")
+            elif measurement:
                 authority = measurement_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                 history = measurement_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
                 if diagnostic_predecessor(request, history, private, measurement=True)["ledger"] != original_ledger or measurement_originals(private) != original:
@@ -2635,7 +2974,7 @@ def main():
             client = transport.CurlClient(Path(os.environ["RUNNER_TEMP"]) / "case-c-access.token")
             try:
                 observe(client, fixture, output / "observation", record, documents, "terraformers-pt8a-validation",
-                        **({"diagnostic": True, **({"require_diagnostics": True} if measurement or post_correction else {})} if diagnostic else {}))
+                        **({"diagnostic": True, **({"require_diagnostics": True} if measurement or post_correction or cause else {})} if diagnostic else {}))
             finally:
                 client.close()
             if risk_path and (record["status"] == "REVIEW_PENDING" or diagnostic):
@@ -2644,7 +2983,10 @@ def main():
                     manifest, schema, documents, checksum, origin_receipt, binding, authority)
                 write(output / "post-admission.json", post)
                 if diagnostic:
-                    if measurement:
+                    if cause:
+                        write(output / "post-known-writer-history.json", cause_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
+                        cause_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                    elif measurement:
                         write(output / "post-known-writer-history.json", measurement_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
                         measurement_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                     elif post_correction:
@@ -2658,11 +3000,11 @@ def main():
                         diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                     complete = (record.get("consumed") is True and record.get("uploadAttempts") == 1
                         and record.get("terminalState") in ("FAILED", "SUCCEEDED") and "censoredObservationMs" not in record
-                        and (not (measurement or post_correction) or record.get("diagnosticEvidence") == "AVAILABLE"))
+                        and (not (measurement or post_correction or cause) or record.get("diagnosticEvidence") == "AVAILABLE"))
                     write(output / disposition_file, {"classification": classification,
                         "officialAcceptance": "NOT_ACCEPTANCE", "observedStatus": record["status"], "dispatchConsumed": True,
                         "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION" if complete else
-                            "DIAGNOSTIC_EVIDENCE_INCOMPLETE" if measurement or post_correction else "INCOMPLETE"})
+                            "DIAGNOSTIC_EVIDENCE_INCOMPLETE" if measurement or post_correction or cause else "INCOMPLETE"})
                 elif qualified:
                     write(output / "post-known-writer-history.json", qualified_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
                     qualified_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
@@ -2674,7 +3016,7 @@ def main():
                 write(output / "readiness.json", readiness)
                 if not qualified:
                     write(output / "readiness-job.json", record)
-            if (measurement or post_correction) and record.get("diagnosticEvidence") != "AVAILABLE":
+            if (measurement or post_correction or cause) and record.get("diagnosticEvidence") != "AVAILABLE":
                 raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: preserve original observation; no next paid case")
             if record["status"] == "NOT_PASS":
                 raise ValueError("material technical/product failure; preserve later cases NOT_RUN")

@@ -99,6 +99,22 @@ MEASUREMENT_BASE = "228367c6df7ad8bbb74b1c9a0c135f768d780310"
 MEASUREMENT_EPISODE = "pt8a-reviewable-draft-diagnostics-episode-2"
 MEASUREMENT_START_AFTER_RUN = 38029924066
 MEASUREMENT_EPISODE_PROCEDURE = "docs/evaluation/product-trust-pt-8a-followup-measurement-episode.md"
+POST_CORRECTION_MODE = "post-correction-observation"
+POST_CORRECTION_OPERATION = "pt8a-post-correction-observation"
+POST_CORRECTION_PURPOSE = "PT8A_POST_CORRECTION_CASE_A_SINGLE_OBSERVATION"
+POST_CORRECTION_PROCEDURE = "docs/evaluation/product-trust-pt-8a-post-correction-observation.md"
+POST_CORRECTION_MERGE = "322a61e6f3323e37e470e4a885fb2b78af8ef612"
+POST_CORRECTION_ORIGIN_RUN = 38045068365
+POST_CORRECTION_ORIGIN_ARTIFACT = 11667283466
+POST_CORRECTION_ORIGIN_DIGEST = "sha256:458307617e8eb79da14402a56c512f347b6e8ba821ddd5d30db679d3bd0db7bc"
+POST_CORRECTION_ORIGIN_REVIEW = 6096812002
+POST_CORRECTION_ORIGIN_JOB = "02b97766-646b-4d1f-8dff-a1c2a6ee6e95"
+POST_CORRECTION_ORIGIN_DIAGNOSTIC = "e92da12576d95a740d3d4609724895b7e34e77659db2d945ea0c12532c392864"
+POST_CORRECTION_ORIGIN_SOURCE = "542bc9b92671c6490821fd0b59d5f6c7486aa4c8"
+POST_CORRECTION_ORIGIN_IMAGE = ("asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/"
+    "terraformers-backend@sha256:72209b49f1ed80072e247e33d1d6a3961f01b77203b1a38f7dbe8214683af509")
+POST_CORRECTION_ORIGIN_APPROVAL = 6096529026
+POST_CORRECTION_ORIGIN_CONTRACT = "933785c78faf55dfcc36fbded65a2842aedf365a5849ba6101e56967b782835c"
 STOPPED_MEASUREMENT_SOURCE = "2302a85ff828411a24f235919ceddcab3cd6c89e"
 STOPPED_MEASUREMENT_IMAGE = ("asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/"
     "terraformers-backend@sha256:ff0653a37a92d89691bbcaef301ab00e99d6b2a647778a167899fe03ea14e9f4")
@@ -138,6 +154,21 @@ MEASUREMENT_CONTRACT = {
         [CASE_B_RUN, CASE_B_ARTIFACT, CASE_B_DIGEST], [TIMEOUT_RUN, TIMEOUT_ARTIFACT, TIMEOUT_DIGEST],
         [GENERATION_OBSERVATION_RUN, GENERATION_OBSERVATION_ARTIFACT, GENERATION_OBSERVATION_DIGEST]],
 }
+POST_CORRECTION_CONTRACT = {
+    "version": "pt8a-post-correction-single-observation-v1",
+    "classification": "POST_CORRECTION_SINGLE_OBSERVATION_ONLY",
+    "caseId": CASES[0], "candidateIdentity": IDENTITY,
+    "correctionMergeSha": POST_CORRECTION_MERGE,
+    "predecessor": {"runId": POST_CORRECTION_ORIGIN_RUN, "artifactId": POST_CORRECTION_ORIGIN_ARTIFACT,
+        "digest": POST_CORRECTION_ORIGIN_DIGEST, "reviewCommentId": POST_CORRECTION_ORIGIN_REVIEW,
+        "sourceSha": POST_CORRECTION_ORIGIN_SOURCE, "disposition": "NOT_PASS_CONSUMED_ALLOW_NEXT_FALSE"},
+    "dispatchesAcrossSourcesAndApprovals": 1, "uploads": 1,
+    "preflightFailureConsumesDispatch": True, "retryOrResultReplacement": False,
+    "reservedModelCallsIncludingEmbedding": MODEL_CALL_RESERVATION,
+    "workflowMinutes": 35, "acceptedJobObservationSeconds": 540,
+    "admission": "READ_ONLY_RISK_QUALIFIED_RETAINED_V4", "indexWrites": 0,
+    "originalEpisodeContinuation": False, "officialAcceptancePromotion": False,
+}
 
 # GitHub returns this unevaluated display name when the existing job's `if` is false.
 # It identifies a skipped job only; it is never an active operation identity.
@@ -154,6 +185,8 @@ SKIPPED_RECOVERY_JOB_NAME = ("inputs.operation == 'pt8a-recovery-campaign' && 'p
                              + SKIPPED_DIAGNOSTIC_JOB_NAME)
 SKIPPED_MEASUREMENT_JOB_NAME = ("inputs.operation == 'pt8a-draft-measurement' && "
     "format('pt8a-draft-measurement/{0}', fromJSON(inputs.pt8a_request).caseId) || " + SKIPPED_RECOVERY_JOB_NAME)
+SKIPPED_POST_CORRECTION_JOB_NAME = ("inputs.operation == 'pt8a-post-correction-observation' && "
+    "'pt8a-post-correction-observation' || " + SKIPPED_MEASUREMENT_JOB_NAME)
 CHAIN_DECISION = 6058612980
 RECOVERY_DECISION = 6057566013
 ORIGIN_SOURCE = "70373842629fdd569815780e52dc5f0353b97880"
@@ -352,7 +385,8 @@ def pt8a_history_job(jobs):
     if jobs["total_count"] != len(jobs["jobs"]) or jobs["total_count"] > 100:
         raise ValueError("PT8A job history incomplete; no inference")
     names = {CORRECTIVE_OPERATION, "pt8a-official-acceptance", SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME,
-             RECOVERY_OPERATION, SKIPPED_RECOVERY_JOB_NAME, SKIPPED_MEASUREMENT_JOB_NAME}
+             RECOVERY_OPERATION, SKIPPED_RECOVERY_JOB_NAME, SKIPPED_MEASUREMENT_JOB_NAME,
+             SKIPPED_POST_CORRECTION_JOB_NAME, POST_CORRECTION_OPERATION}
     names.update(QUALIFIED_OPERATION + "/" + case for case in CASES)
     names.update(DIAGNOSTIC_OPERATION + "/" + case for case in CASES)
     names.update(MEASUREMENT_OPERATION + "/" + case for case in CASES)
@@ -360,7 +394,8 @@ def pt8a_history_job(jobs):
     if len(related) != 1:
         raise ValueError("prior dispatch operation unproven; no inference")
     job = related[0]
-    if job["name"] in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME, SKIPPED_RECOVERY_JOB_NAME, SKIPPED_MEASUREMENT_JOB_NAME) and (
+    if job["name"] in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME, SKIPPED_RECOVERY_JOB_NAME,
+            SKIPPED_MEASUREMENT_JOB_NAME, SKIPPED_POST_CORRECTION_JOB_NAME) and (
             job.get("status") != "completed" or job.get("conclusion") != "skipped"):
         raise ValueError("unevaluated PT8A job name does not prove skipped execution; no inference")
     return job
@@ -449,7 +484,7 @@ def corrective_origins(private):
 
 
 def risk_qualified_admission(client, manifest, schema, documents, checksum, receipt, binding, authority):
-    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE, RECOVERY_PURPOSE, GENERATION_DIAGNOSTIC_PURPOSE, MEASUREMENT_PURPOSE)
+    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE, RECOVERY_PURPOSE, GENERATION_DIAGNOSTIC_PURPOSE, MEASUREMENT_PURPOSE, POST_CORRECTION_PURPOSE)
             or authority.get("vector_write_continuity") != "VECTOR_WRITE_CONTINUITY_UNPROVEN"
             or authority.get("accepted_residual_risk") != "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"):
         raise ValueError("explicit corrective live risk authority missing")
@@ -1081,6 +1116,146 @@ def generation_diagnostic_history(source, current_run):
             or any(r["id"] > ORIGIN_CLEAN_RUN for r in writes)):
         raise ValueError("known ingestion history changed; no diagnostic reuse")
     return {"runtimeDispatches": runs, "ingestionDispatches": writes, "dispatchConsumed": True}
+
+
+def post_correction_contract_sha256():
+    return sha(json.dumps(POST_CORRECTION_CONTRACT, sort_keys=True, separators=(",", ":")).encode())
+
+
+def post_correction_live_fields(request, source, image):
+    return {**diagnostic_live_fields(source, image),
+        "purpose": POST_CORRECTION_PURPOSE,
+        "diagnostic_contract_sha256": post_correction_contract_sha256(),
+        "procedure_sha256": sha((ROOT / POST_CORRECTION_PROCEDURE).read_bytes()),
+        "correction_merge_sha": POST_CORRECTION_MERGE,
+        "predecessor_run_id": str(POST_CORRECTION_ORIGIN_RUN),
+        "predecessor_artifact_id": str(POST_CORRECTION_ORIGIN_ARTIFACT),
+        "predecessor_artifact_digest": POST_CORRECTION_ORIGIN_DIGEST,
+        "predecessor_review_id": str(POST_CORRECTION_ORIGIN_REVIEW),
+        "predecessor_diagnostic_sha256": POST_CORRECTION_ORIGIN_DIAGNOSTIC,
+        "predecessor_disposition": "NOT_PASS_CONSUMED_ALLOW_NEXT_FALSE",
+        "amendment_pr": str(request["amendmentPullRequest"]),
+        "amendment_review_comment_id": str(request["amendmentReviewCommentId"]),
+        "official_cases": "NONE_SINGLE_CASE_A_COMPARATIVE_OBSERVATION_ONLY",
+        "once_only": "ONE_DISPATCH_ATTEMPT_UPLOAD_ACROSS_ALL_SOURCES_AND_APPROVALS",
+        "maximum_total_uploads": "1", "maximum_model_calls": str(MODEL_CALL_RESERVATION),
+        "maximum_dispatches": "1", "workflow_wallclock_minutes": "35",
+        "accepted_job_observation_seconds": "540",
+        "model_project": "terraformers-platform", "model_location": "global",
+        "generation_model": "gemini-3.8-flash", "sdk_policy": "UNCHANGED_POLICY_D",
+        "cost_authority": "ONE_JOB_SIX_RESERVED_MODEL_CALLS_NO_AUTOMATIC_EXPANSION"}
+
+
+def post_correction_request_contract(request, source, image, attempt):
+    allowed = {"mode", "caseId", "liveApprovalCommentId", "provenanceRunId", "provenanceArtifactId",
+        "priorRunId", "priorArtifactId", "priorReviewCommentId", "amendmentPullRequest", "amendmentReviewCommentId"}
+    if (set(request) != allowed or request.get("mode") != POST_CORRECTION_MODE or request.get("caseId") != CASES[0]
+            or str(attempt) != "1" or not re.fullmatch(r"[0-9a-f]{40}", source)
+            or source == POST_CORRECTION_ORIGIN_SOURCE
+            or not re.fullmatch(r"asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}", image)
+            or any(type(request[k]) is not int or request[k] <= 0 for k in allowed - {"mode", "caseId"})
+            or (request["provenanceRunId"], request["provenanceArtifactId"]) != (ORIGIN_CLEAN_RUN, ORIGIN_CLEAN_ARTIFACT)
+            or (request["priorRunId"], request["priorArtifactId"], request["priorReviewCommentId"]) != (
+                POST_CORRECTION_ORIGIN_RUN, POST_CORRECTION_ORIGIN_ARTIFACT, POST_CORRECTION_ORIGIN_REVIEW)
+            or sha((ROOT / PROCEDURE).read_bytes()) != V2_SHA256
+            or sha((ROOT / CORRECTIVE_PROCEDURE).read_bytes()) != V3_SHA256):
+        raise ValueError("invalid post-correction request/source/image/original binding; no inference")
+    pr = github(f"pulls/{request['amendmentPullRequest']}")
+    review = authority_comment(request["amendmentReviewCommentId"], "[PRODUCT_TRUST_REVIEW:v1]")
+    if (pr.get("merged") is not True or pr.get("base", {}).get("ref") != "main"
+            or github(f"issues/comments/{request['amendmentReviewCommentId']}").get("issue_url") !=
+                f"https://api.github.com/repos/siamese-lang/terraformers-platform/issues/{request['amendmentPullRequest']}"
+            or any(review.get(k) != v for k, v in {"decision": "ACCEPTED", "reviewed_head": pr["head"]["sha"],
+                "execution_base_sha": POST_CORRECTION_MERGE,
+                "post_correction_contract_sha256": post_correction_contract_sha256()}.items())
+            or github(f"compare/{pr['merge_commit_sha']}...{source}").get("status") not in ("ahead", "identical")
+            or github(f"compare/{POST_CORRECTION_MERGE}...{source}").get("status") not in ("ahead", "identical")):
+        raise ValueError("post-correction amendment acceptance/USER merge/source lineage missing")
+    authority = authority_comment(request["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    if any(authority.get(k) != v for k, v in post_correction_live_fields(request, source, image).items()):
+        raise ValueError("new exact single-observation live/model/cost authority missing")
+    if transport.current_main() != source:
+        raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT")
+    return authority
+
+
+def post_correction_origin(private):
+    originals = measurement_originals(private)
+    data, bound = bound_artifact(POST_CORRECTION_ORIGIN_RUN, POST_CORRECTION_ORIGIN_ARTIFACT,
+        ["inventory.json", "binding.json", "ledger.json", "measurement-disposition.json", "cleanup.json",
+         "observation/accepted.json", "observation/job.json", "observation/diagnostics.json"],
+        private, ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+    review = authority_comment(POST_CORRECTION_ORIGIN_REVIEW, "[PT8A_DRAFT_MEASUREMENT_REVIEW:v1]")
+    binding, rows, accepted, job = (data[k] for k in
+        ("binding.json", "ledger.json", "observation/accepted.json", "observation/job.json"))
+    original_approval = authority_comment(POST_CORRECTION_ORIGIN_APPROVAL, "[HUMAN_GATE_APPROVAL:v1]")
+    if (bound != {"runId": POST_CORRECTION_ORIGIN_RUN, "artifactId": POST_CORRECTION_ORIGIN_ARTIFACT,
+                "digest": POST_CORRECTION_ORIGIN_DIGEST, "sourceSha": POST_CORRECTION_ORIGIN_SOURCE,
+                "conclusion": "success"}
+            or any(binding.get(k) != v for k, v in {"sourceSha": POST_CORRECTION_ORIGIN_SOURCE,
+                "image": POST_CORRECTION_ORIGIN_IMAGE, "runId": POST_CORRECTION_ORIGIN_RUN,
+                "mode": MEASUREMENT_MODE, "caseId": CASES[0], "episodeId": MEASUREMENT_EPISODE,
+                "measurementContractSha256": POST_CORRECTION_ORIGIN_CONTRACT,
+                "liveApprovalCommentId": POST_CORRECTION_ORIGIN_APPROVAL,
+                "candidateIdentity": IDENTITY}.items())
+            or any(original_approval.get(k) != v for k, v in
+                measurement_live_fields(binding, POST_CORRECTION_ORIGIN_SOURCE, POST_CORRECTION_ORIGIN_IMAGE).items())
+            or any(review.get(k) != v for k, v in {"decision": "EVIDENCE_VALID_MEASUREMENT_ONLY",
+                "reviewed_source_sha": POST_CORRECTION_ORIGIN_SOURCE,
+                "backend_image": POST_CORRECTION_ORIGIN_IMAGE,
+                "candidate_identity": IDENTITY,
+                "measurement_contract_sha256": POST_CORRECTION_ORIGIN_CONTRACT,
+                "episode_id": MEASUREMENT_EPISODE,
+                "run_id": str(POST_CORRECTION_ORIGIN_RUN), "artifact_id": str(POST_CORRECTION_ORIGIN_ARTIFACT),
+                "artifact_digest": POST_CORRECTION_ORIGIN_DIGEST, "case_id": CASES[0],
+                "product_quality": "NOT_PASS", "dimension_directed_relationships": "FAIL",
+                "allow_next_measurement": "false", "diagnostic_evidence_sha256": POST_CORRECTION_ORIGIN_DIAGNOSTIC}.items())
+            or len(rows) != len(CASES) or rows[0].get("status") != "REVIEW_PENDING"
+            or rows[0].get("consumed") is not True or rows[0].get("uploadAttempts") != 1
+            or any(row.get("status") != "NOT_RUN" for row in rows[1:])
+            or accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True
+            or accepted.get("uploadAttempts") != 1 or accepted.get("jobId") != POST_CORRECTION_ORIGIN_JOB
+            or job.get("id") != POST_CORRECTION_ORIGIN_JOB or job.get("status") != "SUCCEEDED"
+            or data["cleanup.json"].get("JWKSRestored") is not True
+            or data["observation/diagnostics.json"].get("evidenceSha256") != POST_CORRECTION_ORIGIN_DIAGNOSTIC
+            or data["measurement-disposition.json"].get("officialAcceptance") != "NOT_ACCEPTANCE"):
+        raise ValueError("consumed Episode 2 Case A evidence/review changed; no new upload")
+    return {"historicalEpisodes": originals, "consumedEpisode2CaseA": bound,
+        "productQuality": "NOT_PASS", "allowNextMeasurement": False}
+
+
+def post_correction_history(source, current_run):
+    runs = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
+    current = [r for r in runs if r["id"] == current_run]
+    origin = [r for r in runs if r["id"] == POST_CORRECTION_ORIGIN_RUN]
+    if (len(current) != 1 or current[0].get("head_sha") != source or current[0].get("run_attempt") != 1
+            or current_run <= POST_CORRECTION_ORIGIN_RUN or len(origin) != 1
+            or any(origin[0].get(k) != v for k, v in {"head_sha": POST_CORRECTION_ORIGIN_SOURCE,
+                "run_attempt": 1, "status": "completed", "conclusion": "success"}.items())):
+        raise ValueError("post-correction current/original dispatch identity incomplete or rerun")
+    for run in runs:
+        if run["id"] < POST_CORRECTION_ORIGIN_RUN:
+            continue
+        jobs = github(f"actions/runs/{run['id']}/jobs?per_page=100")
+        job = pt8a_history_job(jobs)
+        if run["id"] == POST_CORRECTION_ORIGIN_RUN:
+            if job.get("name") != MEASUREMENT_OPERATION + "/" + CASES[0] or job.get("conclusion") != "success":
+                raise ValueError("original Episode 2 Case A job identity changed")
+        elif run["id"] == current_run:
+            if job.get("name") != POST_CORRECTION_OPERATION or job.get("conclusion") == "skipped":
+                raise ValueError("current post-correction operation identity mismatch")
+        elif (job.get("name") not in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME,
+                SKIPPED_RECOVERY_JOB_NAME, SKIPPED_MEASUREMENT_JOB_NAME, SKIPPED_POST_CORRECTION_JOB_NAME)
+                or not any(other.get("name") != job["name"] and other.get("conclusion") in ("success", "failure")
+                    for other in jobs["jobs"])):
+            raise ValueError("another or ambiguous post-origin dispatch exists; no retry/overlap")
+    writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
+    if (not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes)
+            or any(r["id"] > ORIGIN_CLEAN_RUN for r in writes)):
+        raise ValueError("known ingestion history changed; no retained-vector reuse")
+    return {"allSourcesInspected": True, "predecessorRunId": POST_CORRECTION_ORIGIN_RUN,
+        "singleDispatchConsumed": True, "knownLaterIngestionDispatches": 0,
+        "vectorWriteContinuity": "UNPROVEN"}
 
 
 def diagnostic_request_contract(request, source, image, attempt):
@@ -2240,9 +2415,11 @@ def main():
     corrective = request.get("mode") == CORRECTIVE_MODE
     qualified = request.get("mode") == QUALIFIED_MODE
     generation_diagnostic = request.get("mode") == GENERATION_DIAGNOSTIC_MODE
+    post_correction = request.get("mode") == POST_CORRECTION_MODE
     measurement = request.get("mode") == MEASUREMENT_MODE
-    diagnostic = request.get("mode") == DIAGNOSTIC_MODE or generation_diagnostic or measurement
-    classification = "REVIEWABLE_DRAFT_MEASUREMENT_ONLY" if measurement else "DIAGNOSTIC_ONLY"
+    diagnostic = request.get("mode") == DIAGNOSTIC_MODE or generation_diagnostic or measurement or post_correction
+    classification = ("POST_CORRECTION_SINGLE_OBSERVATION_ONLY" if post_correction else
+        "REVIEWABLE_DRAFT_MEASUREMENT_ONLY" if measurement else "DIAGNOSTIC_ONLY")
     disposition_file = "measurement-disposition.json" if measurement else "diagnostic-disposition.json"
     chain_file = "measurement-chain.json" if measurement else "diagnostic-chain.json"
     risk_path = corrective or qualified or diagnostic
@@ -2256,6 +2433,15 @@ def main():
                 corrective_origins(Path(directory))
                 measurement_originals(Path(directory))
                 diagnostic_predecessor(request, history, Path(directory), measurement=True)
+    elif post_correction:
+        if os.environ.get("OPERATION") != POST_CORRECTION_OPERATION:
+            raise ValueError("post-correction observation requires its distinct existing-workflow operation")
+        authority = post_correction_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+        history = post_correction_history(source, int(os.environ["GITHUB_RUN_ID"]))
+        if args.action == "preflight":
+            with tempfile.TemporaryDirectory(prefix="pt8a-post-correction-") as directory:
+                corrective_origins(Path(directory))
+                post_correction_origin(Path(directory))
     elif generation_diagnostic:
         if os.environ.get("OPERATION") != DIAGNOSTIC_OPERATION:
             raise ValueError("single-generation diagnostic requires the existing diagnostic workflow operation")
@@ -2292,7 +2478,8 @@ def main():
             with tempfile.TemporaryDirectory(prefix="pt8a-origin-") as directory:
                 corrective_origins(Path(directory))
     else:
-        if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION, DIAGNOSTIC_OPERATION, RECOVERY_OPERATION, MEASUREMENT_OPERATION):
+        if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION, DIAGNOSTIC_OPERATION,
+                RECOVERY_OPERATION, MEASUREMENT_OPERATION, POST_CORRECTION_OPERATION):
             raise ValueError("qualified/corrective operation cannot execute ordinary readiness or official cases")
         request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
         ensure_latest_dispatch(request, source, int(os.environ["GITHUB_RUN_ID"]))
@@ -2305,7 +2492,8 @@ def main():
     record = None
     if diagnostic:
         write(output / ("measurement-contract.json" if measurement else "diagnostic-contract.json"),
-            MEASUREMENT_CONTRACT if measurement else GENERATION_DIAGNOSTIC_CONTRACT if generation_diagnostic else DIAGNOSTIC_CONTRACT)
+            MEASUREMENT_CONTRACT if measurement else POST_CORRECTION_CONTRACT if post_correction else
+            GENERATION_DIAGNOSTIC_CONTRACT if generation_diagnostic else DIAGNOSTIC_CONTRACT)
         write(output / disposition_file, {"classification": classification,
             "officialAcceptance": "NOT_ACCEPTANCE", "evidenceValidity": "INCOMPLETE", "dispatchConsumed": True})
     try:
@@ -2318,6 +2506,9 @@ def main():
                     reviewed = diagnostic_predecessor(request, history, private, measurement=True)
                     ledger = reviewed["ledger"]
                     original_ledger = json.loads(json.dumps(ledger))
+                elif post_correction:
+                    original = post_correction_origin(private)
+                    write(output / "original-observations.json", original)
                 elif generation_diagnostic:
                     original = generation_diagnostic_origin(private)
                     write(output / "original-observations.json", original)
@@ -2325,7 +2516,7 @@ def main():
                     ledger = diagnostic_predecessor(request, history, private)
                     original_ledger = json.loads(json.dumps(ledger))
                 corrective_release(release, source, image)
-                if (generation_diagnostic or measurement) and (release.get("modelProject") != "terraformers-platform"
+                if (generation_diagnostic or measurement or post_correction) and (release.get("modelProject") != "terraformers-platform"
                         or release.get("modelLocation") != "global"):
                     raise ValueError("single-generation diagnostic runtime project/location mismatch")
                 origin_receipt, binding, failed_binding = corrective_origins(private)
@@ -2364,16 +2555,17 @@ def main():
             if readiness["classification"] != ("RISK_QUALIFIED_RETAINED_V4" if risk_path else "EXACT_REUSABLE_COMPLETED_V4"):
                 raise ValueError("readiness does not authorize case A; no automatic ingestion")
             write(output / "binding.json", {"sourceSha": source, "image": image, "candidateIdentity": IDENTITY,
-                "procedureSha256": measurement_contract_sha256() if measurement else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256() if diagnostic else sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
+                "procedureSha256": measurement_contract_sha256() if measurement else post_correction_contract_sha256() if post_correction else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256() if diagnostic else sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
                 "mode": request["mode"], "caseId": request.get("caseId"),
                 "liveApprovalCommentId": request["liveApprovalCommentId"], "runId": int(os.environ["GITHUB_RUN_ID"]),
-                **({"classification": classification, "measurementContractSha256" if measurement else "diagnosticContractSha256": measurement_contract_sha256() if measurement else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256(),
-                    **({k: request[k] for k in ("amendmentPullRequest", "amendmentReviewCommentId", "policyApprovalCommentId", "episodeId", "startAfterRunId")} if measurement else {}),
+                **({"classification": classification, "measurementContractSha256" if measurement else "diagnosticContractSha256": measurement_contract_sha256() if measurement else post_correction_contract_sha256() if post_correction else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256(),
+                    **({k: request[k] for k in ("amendmentPullRequest", "amendmentReviewCommentId", "policyApprovalCommentId", "episodeId", "startAfterRunId")} if measurement else
+                       {k: request[k] for k in ("amendmentPullRequest", "amendmentReviewCommentId")} if post_correction else {}),
                     "frozenV2Sha256": V2_SHA256, "frozenV3Sha256": V3_SHA256} if diagnostic else {})})
             if qualified or diagnostic:
                 record = ({"caseId": CASES[0], "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False,
-                    "mode": GENERATION_DIAGNOSTIC_MODE, "officialAcceptance": "NOT_ACCEPTANCE"}
-                    if generation_diagnostic else ledger[CASES.index(request["caseId"])])
+                    "mode": request["mode"], "officialAcceptance": "NOT_ACCEPTANCE"}
+                    if generation_diagnostic or post_correction else ledger[CASES.index(request["caseId"])])
                 if diagnostic:
                     record.update(classification=classification, dispatchConsumed=True)
                 case = next(c for c in frozen_inputs() if c["caseId"] == request["caseId"])
@@ -2416,6 +2608,11 @@ def main():
                 history = measurement_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
                 if diagnostic_predecessor(request, history, private, measurement=True)["ledger"] != original_ledger or measurement_originals(private) != original:
                     raise ValueError("measurement origin/predecessor changed before upload")
+            elif post_correction:
+                authority = post_correction_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                history = post_correction_history(source, int(os.environ["GITHUB_RUN_ID"]))
+                if post_correction_origin(private) != original:
+                    raise ValueError("consumed Episode 2 original changed before post-correction upload")
             elif generation_diagnostic:
                 authority = generation_diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                 history = generation_diagnostic_history(source, int(os.environ["GITHUB_RUN_ID"]))
@@ -2438,7 +2635,7 @@ def main():
             client = transport.CurlClient(Path(os.environ["RUNNER_TEMP"]) / "case-c-access.token")
             try:
                 observe(client, fixture, output / "observation", record, documents, "terraformers-pt8a-validation",
-                        **({"diagnostic": True, **({"require_diagnostics": True} if measurement else {})} if diagnostic else {}))
+                        **({"diagnostic": True, **({"require_diagnostics": True} if measurement or post_correction else {})} if diagnostic else {}))
             finally:
                 client.close()
             if risk_path and (record["status"] == "REVIEW_PENDING" or diagnostic):
@@ -2450,6 +2647,9 @@ def main():
                     if measurement:
                         write(output / "post-known-writer-history.json", measurement_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
                         measurement_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                    elif post_correction:
+                        write(output / "post-known-writer-history.json", post_correction_history(source, int(os.environ["GITHUB_RUN_ID"])))
+                        post_correction_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                     elif generation_diagnostic:
                         write(output / "post-known-writer-history.json", generation_diagnostic_history(source, int(os.environ["GITHUB_RUN_ID"])))
                         generation_diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
@@ -2458,11 +2658,11 @@ def main():
                         diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                     complete = (record.get("consumed") is True and record.get("uploadAttempts") == 1
                         and record.get("terminalState") in ("FAILED", "SUCCEEDED") and "censoredObservationMs" not in record
-                        and (not measurement or record.get("diagnosticEvidence") == "AVAILABLE"))
+                        and (not (measurement or post_correction) or record.get("diagnosticEvidence") == "AVAILABLE"))
                     write(output / disposition_file, {"classification": classification,
                         "officialAcceptance": "NOT_ACCEPTANCE", "observedStatus": record["status"], "dispatchConsumed": True,
                         "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION" if complete else
-                            "DIAGNOSTIC_EVIDENCE_INCOMPLETE" if measurement else "INCOMPLETE"})
+                            "DIAGNOSTIC_EVIDENCE_INCOMPLETE" if measurement or post_correction else "INCOMPLETE"})
                 elif qualified:
                     write(output / "post-known-writer-history.json", qualified_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
                     qualified_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
@@ -2474,7 +2674,7 @@ def main():
                 write(output / "readiness.json", readiness)
                 if not qualified:
                     write(output / "readiness-job.json", record)
-            if measurement and record.get("diagnosticEvidence") != "AVAILABLE":
+            if (measurement or post_correction) and record.get("diagnosticEvidence") != "AVAILABLE":
                 raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: preserve original observation; no next paid case")
             if record["status"] == "NOT_PASS":
                 raise ValueError("material technical/product failure; preserve later cases NOT_RUN")
@@ -2484,7 +2684,7 @@ def main():
                 "failureClassification": "INDEPENDENT_EVIDENCE_CLASSIFICATION_REQUIRED"} if diagnostic else {})})
         raise
     finally:
-        if generation_diagnostic and record is not None:
+        if (generation_diagnostic or post_correction) and record is not None:
             write(output / "record.json", record)
         if ledger is not None:
             write(output / "ledger.json", ledger)

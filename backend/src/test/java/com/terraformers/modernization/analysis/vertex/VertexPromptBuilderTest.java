@@ -3,6 +3,7 @@ package com.terraformers.modernization.analysis.vertex;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
+import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.storage.ObjectContent;
 import com.terraformers.modernization.storage.ObjectMetadata;
 import java.util.List;
@@ -43,6 +44,47 @@ class VertexPromptBuilderTest {
         String prompt = builder.build(source(), List.of(), evidence, false);
 
         assertThat(prompt).doesNotContain("aws_subnet");
+    }
+
+    @Test
+    void initialAndRepairPromptsKeepDirectedObservationsDistinctFromProviderSyntax() {
+        var builder = new VertexPromptBuilder();
+        var schema = new AwsProviderSchemaEvidence(Map.of());
+        var forward = new ArchitectureRetrievalFacts("message flow", List.of("relay", "worker"),
+                List.of("relay -> worker"), List.of("aws_sns_topic", "aws_sqs_queue"));
+        var reverse = new ArchitectureRetrievalFacts("message flow", List.of("relay", "worker"),
+                List.of("worker -> relay"), List.of("aws_sns_topic", "aws_sqs_queue"));
+
+        String first = builder.build(source(), forward, List.of(), schema, false);
+        String second = builder.build(source(), reverse, List.of(), schema, false);
+
+        assertThat(first).contains("directed relationships: [relay -> worker]", "advisory",
+                "Terraform references", "describe unresolved intent in warnings")
+                .doesNotContain("worker -> relay");
+        assertThat(second).contains("directed relationships: [worker -> relay]")
+                .doesNotContain("relay -> worker");
+        var original = new com.terraformers.modernization.analysis.AnalysisGenerationResult(
+                "vertex:test", com.terraformers.modernization.analysis.AnalysisInputClassification.ARCHITECTURE_DIAGRAM,
+                1.0, "resource \"aws_sqs_queue\" \"work\" {}", "message flow",
+                List.of("relay", "worker"), List.of("relay -> worker"), List.of(), "STOP", 10, false);
+        assertThat(builder.buildRepair(forward, original, List.of(), schema))
+                .contains("relationships=[relay -> worker]", "Check each clear extracted directed relationship",
+                        "does not implement their connection", "leave uncertain connections unresolved");
+    }
+
+    @Test
+    void uncertainObservationRemainsAdvisoryInsteadOfBecomingAnInventedConnection() {
+        var facts = new ArchitectureRetrievalFacts("two isolated services", List.of("queue", "database"),
+                List.of("queue may connect to database; direction unclear"),
+                List.of("aws_sqs_queue", "aws_dynamodb_table"));
+
+        String prompt = new VertexPromptBuilder().build(source(), facts, List.of(),
+                new AwsProviderSchemaEvidence(Map.of()), false);
+
+        assertThat(prompt).contains("queue may connect to database; direction unclear",
+                "verify against the image", "do not invent a connection",
+                "describe unresolved intent in warnings");
+        assertThat(prompt).doesNotContain("queue -> database", "database -> queue");
     }
 
     @Test

@@ -69,7 +69,7 @@ public class VertexGroundedGenerationOrchestrator {
         if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().captured("schema_grounding");
         if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().references("initial_context", initial);
         AnalysisDiagnosticEvidence.stage("initial_generation");
-        AnalysisGenerationResult generated = generationStage.generate(context, source, initial, schemaEvidence);
+        AnalysisGenerationResult generated = generationStage.generate(context, source, facts, initial, schemaEvidence);
         if (AnalysisDiagnosticEvidence.current() != null) {
             AnalysisDiagnosticEvidence.current().candidate("initial", generated.terraformCode());
             AnalysisDiagnosticEvidence.current().captured("initial_generation");

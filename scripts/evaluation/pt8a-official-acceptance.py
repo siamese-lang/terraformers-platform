@@ -89,6 +89,35 @@ GENERATION_DIAGNOSTIC_CONTRACT = {
     "acceptancePromotion": False, "originalLedgers": "UNCHANGED", "casesBToE": "NOT_RUN",
     "decision": "STOP_FOR_INDEPENDENT_CAUSE_AND_TEN_DIMENSION_REVIEW_ON_EVERY_OUTCOME",
 }
+# Proposed successor only: repository approval/merge never supplies live authority.
+MEASUREMENT_MODE = "draft-measurement-case"
+MEASUREMENT_OPERATION = "pt8a-draft-measurement"
+MEASUREMENT_PURPOSE = "PT8A_REVIEWABLE_DRAFT_MEASUREMENT_A_TO_E_ONCE"
+MEASUREMENT_PROCEDURE = "docs/evaluation/product-trust-pt-8a-draft-measurement-amendment.md"
+MEASUREMENT_BASE = "1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a"
+GENERATION_OBSERVATION_RUN, GENERATION_OBSERVATION_ARTIFACT = 38011709155, 11654405275
+GENERATION_OBSERVATION_SOURCE = "afa08e5c2a335aa1714d740bd50276184db47d1b"
+GENERATION_OBSERVATION_DIGEST = "sha256:acca008b5c4b954c5b559225695b54c2d877612b6e56347886249fabfa8f72ca"
+MEASUREMENT_CONTRACT = {
+    "version": "pt8a-reviewable-draft-measurement-v1", "cases": CASES, "candidateIdentity": IDENTITY,
+    "classification": "REVIEWABLE_DRAFT_MEASUREMENT_ONLY", "executionBase": MEASUREMENT_BASE,
+    "frozenV2Sha256": V2_SHA256, "frozenV3Sha256": V3_SHA256,
+    "dispatchesPerCaseAcrossSourcesAndApprovals": 1, "uploadsPerCase": 1,
+    "dispatchBudget": 5, "uploadBudget": 5, "reservedModelCallsIncludingEmbedding": 30,
+    "workflowMinutesPerCase": 35, "acceptedJobObservationSeconds": 540,
+    "preflightFailureConsumesDispatch": True, "retryOrResultReplacement": False,
+    "progression": "AUTHENTICATED_VALID_EVIDENCE_REVIEW_NOT_QUALITY_PASS",
+    "measurementCompletion": "FIVE_VALID_FIRST_OBSERVATIONS_AND_INDEPENDENT_REVIEWS",
+    "productQualityPass": "ALL_TEN_DIMENSIONS_PASS_EACH_CASE_NO_MATERIAL_DEFECT_OR_FALSE_TRUST",
+    "technicalFailure": "VALID_TERMINAL_PRODUCT_FAILURE_CAN_BE_MEASURED_NOT_PASSED",
+    "ambiguousAcceptanceCensorOrIntegrityFailure": "INCOMPLETE_STOP_NO_RESUBMISSION",
+    "admission": "READ_ONLY_RISK_QUALIFIED_RETAINED_V4", "indexWrites": 0,
+    "originalModesTruthResultsConsumptionAndPolicyD": "UNCHANGED", "oldObservationPromotion": False,
+    "historicalEpisodes": [[CASE_A_RUN, CASE_A_ARTIFACT, CASE_A_DIGEST],
+        [CASE_B_RUN, CASE_B_ARTIFACT, CASE_B_DIGEST], [TIMEOUT_RUN, TIMEOUT_ARTIFACT, TIMEOUT_DIGEST],
+        [GENERATION_OBSERVATION_RUN, GENERATION_OBSERVATION_ARTIFACT, GENERATION_OBSERVATION_DIGEST]],
+}
+
 # GitHub returns this unevaluated display name when the existing job's `if` is false.
 # It identifies a skipped job only; it is never an active operation identity.
 SKIPPED_PT8A_JOB_NAME = (
@@ -102,6 +131,8 @@ SKIPPED_DIAGNOSTIC_JOB_NAME = (
 )
 SKIPPED_RECOVERY_JOB_NAME = ("inputs.operation == 'pt8a-recovery-campaign' && 'pt8a-recovery-campaign' || "
                              + SKIPPED_DIAGNOSTIC_JOB_NAME)
+SKIPPED_MEASUREMENT_JOB_NAME = ("inputs.operation == 'pt8a-draft-measurement' && "
+    "format('pt8a-draft-measurement/{0}', fromJSON(inputs.pt8a_request).caseId) || " + SKIPPED_RECOVERY_JOB_NAME)
 CHAIN_DECISION = 6058612980
 RECOVERY_DECISION = 6057566013
 ORIGIN_SOURCE = "70373842629fdd569815780e52dc5f0353b97880"
@@ -300,14 +331,15 @@ def pt8a_history_job(jobs):
     if jobs["total_count"] != len(jobs["jobs"]) or jobs["total_count"] > 100:
         raise ValueError("PT8A job history incomplete; no inference")
     names = {CORRECTIVE_OPERATION, "pt8a-official-acceptance", SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME,
-             RECOVERY_OPERATION, SKIPPED_RECOVERY_JOB_NAME}
+             RECOVERY_OPERATION, SKIPPED_RECOVERY_JOB_NAME, SKIPPED_MEASUREMENT_JOB_NAME}
     names.update(QUALIFIED_OPERATION + "/" + case for case in CASES)
     names.update(DIAGNOSTIC_OPERATION + "/" + case for case in CASES)
+    names.update(MEASUREMENT_OPERATION + "/" + case for case in CASES)
     related = [j for j in jobs["jobs"] if j["name"] in names]
     if len(related) != 1:
         raise ValueError("prior dispatch operation unproven; no inference")
     job = related[0]
-    if job["name"] in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME, SKIPPED_RECOVERY_JOB_NAME) and (
+    if job["name"] in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME, SKIPPED_RECOVERY_JOB_NAME, SKIPPED_MEASUREMENT_JOB_NAME) and (
             job.get("status") != "completed" or job.get("conclusion") != "skipped"):
         raise ValueError("unevaluated PT8A job name does not prove skipped execution; no inference")
     return job
@@ -396,7 +428,7 @@ def corrective_origins(private):
 
 
 def risk_qualified_admission(client, manifest, schema, documents, checksum, receipt, binding, authority):
-    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE, RECOVERY_PURPOSE, GENERATION_DIAGNOSTIC_PURPOSE)
+    if (not authority or authority.get("purpose") not in ("PT8A_RISK_QUALIFIED_CORRECTIVE_READINESS_ONCE", DIAGNOSTIC_PURPOSE, RECOVERY_PURPOSE, GENERATION_DIAGNOSTIC_PURPOSE, MEASUREMENT_PURPOSE)
             or authority.get("vector_write_continuity") != "VECTOR_WRITE_CONTINUITY_UNPROVEN"
             or authority.get("accepted_residual_risk") != "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED"):
         raise ValueError("explicit corrective live risk authority missing")
@@ -629,6 +661,183 @@ def qualified_predecessor(request, source, image, campaign, history, private):
     return successor_ledger
 
 
+def measurement_contract_sha256():
+    return sha(json.dumps(MEASUREMENT_CONTRACT, sort_keys=True, separators=(",", ":")).encode())
+
+
+def measurement_policy_fields():
+    return {"gate": "PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW", "decision": "APPROVED",
+        "execution_base_sha": MEASUREMENT_BASE, "candidate_identity": IDENTITY,
+        "measurement_contract_sha256": measurement_contract_sha256(),
+        "amendment_sha256": sha((ROOT / MEASUREMENT_PROCEDURE).read_bytes()),
+        "measurement_completion": "VALID_FIRST_OBSERVATIONS_AND_REVIEWS_ALL_FIVE",
+        "quality_pass_required_for_next_case": "false", "original_consumption": "UNCHANGED"}
+
+
+def measurement_live_fields(request, source, image):
+    return {"gate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE", "decision": "APPROVED",
+        "purpose": MEASUREMENT_PURPOSE, "reviewed_source_sha": source, "backend_image": image,
+        "candidate_identity": IDENTITY, "procedure_sha256": sha((ROOT / MEASUREMENT_PROCEDURE).read_bytes()),
+        "measurement_contract_sha256": measurement_contract_sha256(),
+        "amendment_pr": str(request["amendmentPullRequest"]),
+        "amendment_review_comment_id": str(request["amendmentReviewCommentId"]),
+        "policy_approval_comment_id": str(request["policyApprovalCommentId"]),
+        "frozen_v2_sha256": V2_SHA256, "frozen_v3_sha256": V3_SHA256,
+        "original_case_a_artifact_digest": CASE_A_DIGEST, "original_case_b_artifact_digest": CASE_B_DIGEST,
+        "consumed_recovery_artifact_digest": TIMEOUT_DIGEST,
+        "consumed_generation_diagnostic_artifact_digest": GENERATION_OBSERVATION_DIGEST,
+        "original_clean_run_id": str(ORIGIN_CLEAN_RUN), "original_clean_artifact_id": str(ORIGIN_CLEAN_ARTIFACT),
+        "original_clean_source_sha": ORIGIN_SOURCE, "original_clean_artifact_digest": ORIGIN_CLEAN_DIGEST,
+        "origin_clean_approval_id": str(ORIGIN_APPROVAL), "corpus_checksum": CORPUS_CHECKSUM,
+        "index_uuid": ORIGIN_UUID, "nonvector_content_identity": ORIGIN_CONTENT,
+        "embedding_model": "gemini-embedding-2", "vector_dimension": "1536",
+        "vector_write_continuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN",
+        "accepted_residual_risk": "INTERVENING_VECTOR_ONLY_WRITES_CANNOT_BE_EXCLUDED",
+        "official_cases": "A_TO_E_NEW_MEASUREMENT_EPISODE_NO_OLD_RESULT_REPLACEMENT",
+        "dispatch_budget": "5", "upload_budget": "5", "model_call_reservations_including_embedding": "30",
+        "workflow_minutes_per_case": "35", "accepted_job_observation_seconds": "540",
+        "model": "gemini-3.8-flash", "model_project": "terraformers-platform", "model_location": "global",
+        "usd_ceiling": "NOT_ESTABLISHED_EXECUTION_COUNT_AND_TIME_BOUNDS_ONLY",
+        "production_policy": "UNCHANGED_POLICY_D", "quality_failures": "PRESERVE_NOT_ACCEPTANCE_PASS"}
+
+
+def measurement_request_contract(request, source, image, attempt):
+    keys = {"mode", "caseId", "liveApprovalCommentId", "provenanceRunId", "provenanceArtifactId",
+        "priorRunId", "priorArtifactId", "priorReviewCommentId", "amendmentPullRequest",
+        "amendmentReviewCommentId", "policyApprovalCommentId"}
+    prior_keys = {"priorRunId", "priorArtifactId", "priorReviewCommentId"}
+    if (set(request) != keys or request.get("mode") != MEASUREMENT_MODE or request.get("caseId") not in CASES
+            or str(attempt) != "1" or not re.fullmatch(r"[0-9a-f]{40}", source)
+            or not re.fullmatch(r"asia-northeast3-docker\.pkg\.dev/terraformers-platform/terraformers-backend/terraformers-backend@sha256:[0-9a-f]{64}", image)
+            or any(type(request[k]) is not int or request[k] <= 0 for k in keys - prior_keys - {"mode", "caseId"})
+            or any(type(request[k]) is not int or request[k] != 0 for k in prior_keys) and request["caseId"] == CASES[0]
+            or any(type(request[k]) is not int or request[k] <= 0 for k in prior_keys) and request["caseId"] != CASES[0]
+            or (request["provenanceRunId"], request["provenanceArtifactId"]) != (ORIGIN_CLEAN_RUN, ORIGIN_CLEAN_ARTIFACT)
+            or sha((ROOT / PROCEDURE).read_bytes()) != V2_SHA256
+            or sha((ROOT / CORRECTIVE_PROCEDURE).read_bytes()) != V3_SHA256):
+        raise ValueError("invalid successor measurement request/source/origin; no inference")
+    pr = github(f"pulls/{request['amendmentPullRequest']}")
+    if pr.get("merged") is not True or pr.get("base", {}).get("ref") != "main":
+        raise ValueError("measurement amendment not USER-merged; no live adoption")
+    issue_url = f"https://api.github.com/repos/siamese-lang/terraformers-platform/issues/{request['amendmentPullRequest']}"
+    for key in ("amendmentReviewCommentId", "policyApprovalCommentId"):
+        if github(f"issues/comments/{request[key]}").get("issue_url") != issue_url:
+            raise ValueError("measurement decision/review not on the merged amendment PR")
+    review = authority_comment(request["amendmentReviewCommentId"], "[PRODUCT_TRUST_REVIEW:v1]")
+    policy = authority_comment(request["policyApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    reviewed_head = pr["head"]["sha"]
+    required_review = {"decision": "ACCEPTED", "reviewed_head": reviewed_head,
+        "execution_base_sha": MEASUREMENT_BASE, "measurement_contract_sha256": measurement_contract_sha256(),
+        "amendment_sha256": sha((ROOT / MEASUREMENT_PROCEDURE).read_bytes())}
+    if (any(review.get(k) != v for k,v in required_review.items())
+            or any(policy.get(k) != v for k,v in (measurement_policy_fields() | {"reviewed_head": reviewed_head}).items())
+            or github(f"compare/{pr['merge_commit_sha']}...{source}").get("status") not in ("ahead", "identical")):
+        raise ValueError("independent exact-head acceptance/USER policy approval/merged source missing")
+    authority = authority_comment(request["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
+    if any(authority.get(k) != v for k,v in measurement_live_fields(request, source, image).items()):
+        raise ValueError("new measurement live/model/cost/risk authority missing; old approvals do not authorize it")
+    if transport.current_main() != source:
+        raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT")
+    return authority
+
+
+def measurement_originals(private):
+    originals = recovery_originals(private)
+    originals["consumedRecovery"] = generation_diagnostic_origin(private)
+    data, bound = bound_artifact(GENERATION_OBSERVATION_RUN, GENERATION_OBSERVATION_ARTIFACT,
+        ["inventory.json", "binding.json", "record.json", "observation/accepted.json", "observation/job.json"],
+        private, ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+    record, accepted, job, binding = (data[n] for n in
+        ("record.json", "observation/accepted.json", "observation/job.json", "binding.json"))
+    if (bound != {"runId": GENERATION_OBSERVATION_RUN, "artifactId": GENERATION_OBSERVATION_ARTIFACT,
+            "digest": GENERATION_OBSERVATION_DIGEST, "sourceSha": GENERATION_OBSERVATION_SOURCE, "conclusion": "success"}
+            or binding.get("sourceSha") != GENERATION_OBSERVATION_SOURCE
+            or binding.get("mode") != GENERATION_DIAGNOSTIC_MODE or binding.get("caseId") != CASES[0]
+            or binding.get("candidateIdentity") != IDENTITY
+            or binding.get("diagnosticContractSha256") != generation_diagnostic_contract_sha256()
+            or record.get("consumed") is not True or record.get("uploadAttempts") != 1
+            or accepted.get("status") != "ACCEPTED" or accepted.get("consumed") is not True
+            or accepted.get("uploadAttempts") != 1 or accepted.get("jobId") != record.get("jobId")
+            or job.get("id") != accepted.get("jobId") or job.get("status") != "SUCCEEDED"
+            or job.get("projectId") != accepted.get("projectId") or job.get("sourceFileId") != accepted.get("sourceFileId")):
+        raise ValueError("consumed generation diagnostic changed; never promote or replace it")
+    originals["consumedGenerationDiagnostic"] = bound
+    return originals
+
+
+def measurement_history(request, source, current_run, *, final=False):
+    runs = complete_dispatch_history("gcp-target-runtime-dependencies.yml")
+    current = [r for r in runs if r["id"] == current_run]
+    if (len(current) != 1 or current[0].get("head_sha") != source or current[0].get("run_attempt") != 1
+            or current_run <= GENERATION_OBSERVATION_RUN or final and request["caseId"] != CASES[-1]):
+        raise ValueError("measurement current dispatch/rerun/final identity invalid")
+    expected = CASES if final else CASES[:CASES.index(request["caseId"])]; predecessors = {}
+    for run in runs:
+        if run["id"] <= GENERATION_OBSERVATION_RUN:
+            continue
+        job = pt8a_history_job(github(f"actions/runs/{run['id']}/jobs?per_page=100"))
+        if run["id"] == current_run and not final:
+            if job["name"] != MEASUREMENT_OPERATION + "/" + request["caseId"] or job.get("conclusion") == "skipped":
+                raise ValueError("current measurement operation/case unproven")
+            continue
+        if not job["name"].startswith(MEASUREMENT_OPERATION + "/"):
+            if job.get("conclusion") != "skipped":
+                raise ValueError("another post-origin PT8A observation; no overlap or reinterpretation")
+            continue
+        case = job["name"].removeprefix(MEASUREMENT_OPERATION + "/")
+        if (case not in expected or case in predecessors or run["id"] > current_run
+                or run.get("status") != "completed" or run.get("run_attempt") != 1
+                or run.get("head_sha") != source or run.get("conclusion") not in ("success", "failure")
+                or job.get("conclusion") != run["conclusion"]):
+            raise ValueError("duplicate/out-of-order/incomplete measurement across sources; dispatch consumed, no retry")
+        cleanup = [step for step in job.get("steps", []) if step.get("name") == "Remove only the owned ephemeral validation pod"]
+        if len(cleanup) != 1 or cleanup[0].get("conclusion") != "success":
+            raise ValueError("measurement owned-pod cleanup incomplete; block next observation")
+        artifacts = github(f"actions/runs/{run['id']}/artifacts?per_page=100")
+        matches = [a for a in artifacts["artifacts"] if a["name"] == f"pt8a-measurement-{run['id']}"]
+        if artifacts["total_count"] != len(artifacts["artifacts"]) or artifacts["total_count"] > 100 or len(matches) != 1:
+            raise ValueError("measurement evidence history incomplete; no resubmission")
+        predecessors[case] = {"runId": run["id"], "artifactId": matches[0]["id"], "digest": matches[0]["digest"],
+            "sourceSha": source, "conclusion": run["conclusion"]}
+    ordered = [predecessors[c]["runId"] for c in expected if c in predecessors]
+    if set(predecessors) != set(expected) or ordered != sorted(ordered):
+        raise ValueError("measurement predecessor order/inventory incomplete")
+    prior = predecessors[expected[-1]] if expected else {"runId": 0, "artifactId": 0}
+    if (request["priorRunId"], request["priorArtifactId"]) != (prior["runId"], prior["artifactId"]):
+        raise ValueError("stale measurement predecessor; cannot reset episode")
+    writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
+    if (not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes)
+            or any(r["id"] > ORIGIN_CLEAN_RUN for r in writes)):
+        raise ValueError("known writer history changed; no retained-vector reuse")
+    return {"allSourcesInspected": True, "predecessors": predecessors, "knownLaterIngestionDispatches": 0,
+        "completeAllWriterAuditAvailable": False, "vectorWriteContinuity": "UNPROVEN"}
+
+
+def measurement_quality(record, review):
+    values = [review.get("dimension_" + d) for d in SCORING]
+    if (any(v not in ("PASS", "FAIL", "PARTIAL", "UNKNOWN", "NOT_OBSERVED", "NOT_APPLICABLE") for v in values)
+            or review.get("material_defect") not in ("true", "false")
+            or not re.fullmatch(r"0|[1-9][0-9]*", review.get("false_trusted_success", ""))):
+        raise ValueError("incomplete independent ten-dimension findings")
+    if (record.get("status") == "NOT_PASS" or any(v in ("FAIL", "PARTIAL") for v in values)
+            or review["material_defect"] == "true" or review["false_trusted_success"] != "0"):
+        return "NOT_PASS"
+    return "PASS" if all(v == "PASS" for v in values) else "UNDETERMINED"
+
+
+def measurement_results(rows, reviews):
+    """Aggregate already authenticated reviews, never score a model or invent missing observations."""
+    complete = (tuple(r["caseId"] for r in rows) == CASES and set(reviews) == set(CASES)
+        and all(r.get("consumed") is True and r.get("uploadAttempts") == 1
+            and r.get("terminalState") in ("FAILED", "SUCCEEDED") and "censoredObservationMs" not in r for r in rows))
+    quality = [measurement_quality(r, reviews[r["caseId"]]) for r in rows if r["caseId"] in reviews]
+    return {"measurementState": "COMPLETE" if complete else "INCOMPLETE",
+        "productQuality": "NOT_PASS" if "NOT_PASS" in quality else "PASS" if complete and all(q == "PASS" for q in quality) else "UNDETERMINED",
+        "terminalProductFailures": sum(r.get("terminalState") == "FAILED" for r in rows),
+        "officialAcceptancePromotion": False, "releaseAcceptance": "NOT_GRANTED",
+        "generalizationClaim": "NONE_FIVE_FROZEN_POSITIVE_INPUTS_ONLY"}
+
+
 def diagnostic_contract_sha256():
     return sha(json.dumps(DIAGNOSTIC_CONTRACT, sort_keys=True, separators=(",", ":")).encode())
 
@@ -741,7 +950,7 @@ def generation_diagnostic_history(source, current_run):
         if run["id"] == current_run:
             if job["name"] != DIAGNOSTIC_OPERATION + "/" + CASES[0] or job.get("conclusion") == "skipped":
                 raise ValueError("current single-generation diagnostic operation identity mismatch")
-        elif job["name"] not in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME, SKIPPED_RECOVERY_JOB_NAME):
+        elif job["name"] not in (SKIPPED_PT8A_JOB_NAME, SKIPPED_DIAGNOSTIC_JOB_NAME, SKIPPED_RECOVERY_JOB_NAME, SKIPPED_MEASUREMENT_JOB_NAME):
             raise ValueError("another post-timeout PT8A dispatch exists; no retry/reset/overlap")
     writes = complete_dispatch_history("gcp-target-corpus-ingestion.yml")
     if (not any(r["id"] == ORIGIN_CLEAN_RUN and r["head_sha"] == ORIGIN_SOURCE for r in writes)
@@ -845,29 +1054,44 @@ def diagnostic_history(request, source, current_run_id):
             "completeAllWriterAuditAvailable": False, "vectorWriteContinuity": "UNPROVEN"}
 
 
-def diagnostic_predecessor(request, history, private):
-    origin, _ = diagnostic_origin(private)
+def diagnostic_predecessor(request, history, private, *, measurement=False, final=False):
+    origin = ([{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in CASES]
+        if measurement else diagnostic_origin(private)[0])
+    cases = CASES if measurement else DIAGNOSTIC_CASES
+    contract_sha = measurement_contract_sha256() if measurement else diagnostic_contract_sha256()
+    classification = "REVIEWABLE_DRAFT_MEASUREMENT_ONLY" if measurement else "DIAGNOSTIC_ONLY"
+    chain_file = "measurement-chain.json" if measurement else "diagnostic-chain.json"
+    disposition_file = "measurement-disposition.json" if measurement else "diagnostic-disposition.json"
+    reviews = {}
     reference = {"runId": request["priorRunId"], "artifactId": request["priorArtifactId"],
                  "reviewCommentId": request["priorReviewCommentId"]}
     ledger = None
-    for case in reversed(DIAGNOSTIC_CASES[:DIAGNOSTIC_CASES.index(request["caseId"])]):
+    for case in reversed(cases[:len(cases) if final else cases.index(request["caseId"])]):
         expected = history["predecessors"][case]
         if any(reference.get(k) != expected[k] for k in ("runId", "artifactId")):
             raise ValueError("diagnostic predecessor link/history mismatch")
         data, bound = bound_artifact(reference["runId"], reference["artifactId"],
-            ["inventory.json", "binding.json", "ledger.json", "diagnostic-chain.json", "diagnostic-disposition.json",
+            ["inventory.json", "binding.json", "ledger.json", chain_file, disposition_file,
              "release.json", "readiness.json", "post-admission.json", "input-identity.json",
              "observation/accepted.json", "observation/job.json", "observation/presentation.json",
-             "observation/retrieval.json", "observation/cli.json", "observation/draft-identity.json"],
+             "observation/retrieval.json", "observation/cli.json", "observation/draft-identity.json"] + (["cleanup.json"] if measurement else []),
             private, ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
+        if measurement and data["cleanup.json"].get("JWKSRestored") is not True:
+            raise ValueError("measurement identity cleanup failed; block next observation")
         b = data["binding.json"]
         if (bound != expected or any(b.get(k) != v for k, v in {"sourceSha": bound["sourceSha"], "runId": bound["runId"],
-                "mode": DIAGNOSTIC_MODE, "caseId": case, "candidateIdentity": IDENTITY,
-                "procedureSha256": diagnostic_contract_sha256(),
-                "diagnosticContractSha256": diagnostic_contract_sha256(), "classification": "DIAGNOSTIC_ONLY"}.items())):
+                "mode": MEASUREMENT_MODE if measurement else DIAGNOSTIC_MODE, "caseId": case, "candidateIdentity": IDENTITY,
+                "procedureSha256": contract_sha,
+                "measurementContractSha256" if measurement else "diagnosticContractSha256": contract_sha,
+                "classification": classification}.items())):
             raise ValueError("diagnostic predecessor binding mismatch")
         approval = authority_comment(b["liveApprovalCommentId"], "[HUMAN_GATE_APPROVAL:v1]")
-        if any(approval.get(k) != v for k, v in diagnostic_live_fields(bound["sourceSha"], b["image"]).items()):
+        if measurement and any(b.get(k) != request[k] for k in
+                ("liveApprovalCommentId", "amendmentPullRequest", "amendmentReviewCommentId", "policyApprovalCommentId")):
+            raise ValueError("measurement source/image/authority cannot rebind between cases")
+        live_fields = (measurement_live_fields(request, bound["sourceSha"], b["image"]) if measurement
+            else diagnostic_live_fields(bound["sourceSha"], b["image"]))
+        if any(approval.get(k) != v for k, v in live_fields.items()):
             raise ValueError("diagnostic predecessor original live authority mismatch")
         corrective_release(data["release.json"], bound["sourceSha"], b["image"])
         for snapshot in (data["readiness.json"], data["post-admission.json"]):
@@ -881,7 +1105,7 @@ def diagnostic_predecessor(request, history, private):
         rows = data["ledger.json"]
         position = CASES.index(case)
         record, accepted, job = rows[position], data["observation/accepted.json"], data["observation/job.json"]
-        if (tuple(r["caseId"] for r in rows) != CASES or rows[0] != origin[0]
+        if (tuple(r["caseId"] for r in rows) != CASES or (not measurement and rows[0] != origin[0])
                 or rows[position+1:] != origin[position+1:] or record.get("status") not in ("NOT_PASS", "REVIEW_PENDING")
                 or record.get("consumed") is not True or record.get("uploadAttempts") != 1
                 or record.get("terminalState") not in ("FAILED", "SUCCEEDED") or "censoredObservationMs" in record
@@ -890,8 +1114,8 @@ def diagnostic_predecessor(request, history, private):
                 or job.get("projectId") != accepted.get("projectId") or job.get("sourceFileId") != accepted.get("sourceFileId")
                 or job.get("status") != record.get("terminalState")
                 or data["input-identity.json"] != next(c for c in frozen_inputs() if c["caseId"] == case)
-                or any(data["diagnostic-disposition.json"].get(k) != v for k, v in {
-                    "classification": "DIAGNOSTIC_ONLY", "officialAcceptance": "NOT_ACCEPTANCE", "dispatchConsumed": True,
+                or any(data[disposition_file].get(k) != v for k, v in {
+                    "classification": classification, "officialAcceptance": "NOT_ACCEPTANCE", "dispatchConsumed": True,
                     "observedStatus": record["status"], "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION"}.items())):
             raise ValueError("diagnostic predecessor incomplete/ambiguous or rewritten observation")
         presentation, retrieved = data["observation/presentation.json"], data["observation/retrieval.json"]
@@ -910,24 +1134,32 @@ def diagnostic_predecessor(request, history, private):
                 "reason": "BACKEND_FAILED" if job["status"] == "FAILED" and not job.get("resultObjectKey") else "NO_REVIEWABLE_DRAFT",
                 "AWSPlanApply": False}):
             raise ValueError("diagnostic missing draft cannot fabricate CLI validity")
-        review = authority_comment(reference["reviewCommentId"], "[PT8A_DIAGNOSTIC_REVIEW:v1]")
-        required = {"decision": "ACKNOWLEDGED_DIAGNOSTIC_ONLY", "observation_class": "PRODUCT_OBSERVATION",
-            "infrastructure_auth_provenance": "VERIFIED", "official_acceptance": "NOT_ACCEPTANCE", "allow_next_diagnostic": "true",
+        review = authority_comment(reference["reviewCommentId"],
+            "[PT8A_DRAFT_MEASUREMENT_REVIEW:v1]" if measurement else "[PT8A_DIAGNOSTIC_REVIEW:v1]")
+        required = {"decision": "EVIDENCE_VALID_MEASUREMENT_ONLY" if measurement else "ACKNOWLEDGED_DIAGNOSTIC_ONLY", "observation_class": "PRODUCT_OBSERVATION",
+            "infrastructure_auth_provenance": "VERIFIED", "official_acceptance": "NOT_ACCEPTANCE", "allow_next_measurement" if measurement else "allow_next_diagnostic": "false" if measurement and case == CASES[-1] else "true",
             "reviewed_source_sha": bound["sourceSha"], "backend_image": b["image"], "candidate_identity": IDENTITY,
-            "diagnostic_contract_sha256": diagnostic_contract_sha256(), "run_id": str(bound["runId"]),
+            "measurement_contract_sha256" if measurement else "diagnostic_contract_sha256": contract_sha, "run_id": str(bound["runId"]),
             "artifact_id": str(bound["artifactId"]), "artifact_digest": bound["digest"], "case_id": case,
             "observed_status": record["status"], "vector_write_continuity": "VECTOR_WRITE_CONTINUITY_UNPROVEN"}
         if (any(review.get(k) != v for k, v in required.items())
                 or any(review.get("dimension_" + d) not in ("PASS", "FAIL", "PARTIAL", "UNKNOWN", "NOT_OBSERVED", "NOT_APPLICABLE") for d in SCORING)):
             raise ValueError("authenticated diagnostic classification/review missing; no next case")
+        if measurement:
+            if review.get("product_quality") != measurement_quality(record, review):
+                raise ValueError("measurement review cannot promote FAIL/UNKNOWN to quality PASS")
+            reviews[case] = review
         if ledger is None:
             ledger = rows
         elif ledger[:position+1] != rows[:position+1]:
             raise ValueError("diagnostic ledger rewrote a previous FAIL/UNKNOWN observation")
-        reference = data["diagnostic-chain.json"]["prior"]
-    if reference != {"runId": CASE_A_RUN, "artifactId": CASE_A_ARTIFACT, "reviewCommentId": CASE_A_REVIEW}:
+        reference = data[chain_file]["prior"]
+    anchor = ({"runId": 0, "artifactId": 0, "reviewCommentId": 0} if measurement else
+        {"runId": CASE_A_RUN, "artifactId": CASE_A_ARTIFACT, "reviewCommentId": CASE_A_REVIEW})
+    if reference != anchor:
         raise ValueError("diagnostic chain does not end at original rejected Case A")
-    return json.loads(json.dumps(ledger if ledger is not None else origin))
+    rows = json.loads(json.dumps(ledger if ledger is not None else origin))
+    return {"ledger": rows, "reviews": reviews} if measurement else rows
 
 
 def recovery_contract_sha256():
@@ -1702,14 +1934,41 @@ def main():
     source, image = os.environ["GITHUB_SHA"], os.environ["BACKEND_IMAGE"]
     if request.get("mode") == RECOVERY_MODE:
         return recovery_cli(args, request, source, image)
+    if request.get("mode") == MEASUREMENT_MODE and args.action == "finish":
+        if os.environ.get("OPERATION") != MEASUREMENT_OPERATION:
+            raise ValueError("measurement finalization is read-only and restricted to its episode")
+        measurement_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+        history = measurement_history(request, source, int(os.environ["GITHUB_RUN_ID"]), final=True)
+        with tempfile.TemporaryDirectory(prefix="pt8a-final-review-") as directory:
+            measurement_originals(Path(directory))
+            reviewed = diagnostic_predecessor(request, history, Path(directory), measurement=True, final=True)
+        args.output.mkdir(parents=True, exist_ok=False)
+        write(args.output / "measurement-summary.json", measurement_results(reviewed["ledger"], reviewed["reviews"]))
+        write(args.output / "review-bindings.json", {"history": history, "reviews": reviewed["reviews"]})
+        seal(args.output)
+        return
     if args.action in ("finish", "checkpoint"):
         raise ValueError("finish/checkpoint is restricted to the separate recovery campaign")
     corrective = request.get("mode") == CORRECTIVE_MODE
     qualified = request.get("mode") == QUALIFIED_MODE
     generation_diagnostic = request.get("mode") == GENERATION_DIAGNOSTIC_MODE
-    diagnostic = request.get("mode") == DIAGNOSTIC_MODE or generation_diagnostic
+    measurement = request.get("mode") == MEASUREMENT_MODE
+    diagnostic = request.get("mode") == DIAGNOSTIC_MODE or generation_diagnostic or measurement
+    classification = "REVIEWABLE_DRAFT_MEASUREMENT_ONLY" if measurement else "DIAGNOSTIC_ONLY"
+    disposition_file = "measurement-disposition.json" if measurement else "diagnostic-disposition.json"
+    chain_file = "measurement-chain.json" if measurement else "diagnostic-chain.json"
     risk_path = corrective or qualified or diagnostic
-    if generation_diagnostic:
+    if measurement:
+        if os.environ.get("OPERATION") != MEASUREMENT_OPERATION:
+            raise ValueError("measurement cannot use an old acceptance/diagnostic operation")
+        authority = measurement_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+        history = measurement_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
+        if args.action == "preflight":
+            with tempfile.TemporaryDirectory(prefix="pt8a-measurement-") as directory:
+                corrective_origins(Path(directory))
+                measurement_originals(Path(directory))
+                diagnostic_predecessor(request, history, Path(directory), measurement=True)
+    elif generation_diagnostic:
         if os.environ.get("OPERATION") != DIAGNOSTIC_OPERATION:
             raise ValueError("single-generation diagnostic requires the existing diagnostic workflow operation")
         authority = generation_diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
@@ -1745,7 +2004,7 @@ def main():
             with tempfile.TemporaryDirectory(prefix="pt8a-origin-") as directory:
                 corrective_origins(Path(directory))
     else:
-        if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION, DIAGNOSTIC_OPERATION, RECOVERY_OPERATION):
+        if os.environ.get("OPERATION") in (CORRECTIVE_OPERATION, QUALIFIED_OPERATION, DIAGNOSTIC_OPERATION, RECOVERY_OPERATION, MEASUREMENT_OPERATION):
             raise ValueError("qualified/corrective operation cannot execute ordinary readiness or official cases")
         request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
         ensure_latest_dispatch(request, source, int(os.environ["GITHUB_RUN_ID"]))
@@ -1757,21 +2016,28 @@ def main():
     ledger = None if diagnostic else [{"caseId": c, "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False} for c in CASES]
     record = None
     if diagnostic:
-        write(output / "diagnostic-contract.json", GENERATION_DIAGNOSTIC_CONTRACT if generation_diagnostic else DIAGNOSTIC_CONTRACT)
-        write(output / "diagnostic-disposition.json", {"classification": "DIAGNOSTIC_ONLY",
+        write(output / ("measurement-contract.json" if measurement else "diagnostic-contract.json"),
+            MEASUREMENT_CONTRACT if measurement else GENERATION_DIAGNOSTIC_CONTRACT if generation_diagnostic else DIAGNOSTIC_CONTRACT)
+        write(output / disposition_file, {"classification": classification,
             "officialAcceptance": "NOT_ACCEPTANCE", "evidenceValidity": "INCOMPLETE", "dispatchConsumed": True})
     try:
         with tempfile.TemporaryDirectory(prefix="pt8a-private-") as temporary:
             private = Path(temporary)
             if risk_path:
-                if generation_diagnostic:
+                if measurement:
+                    original = measurement_originals(private)
+                    write(output / "original-observations.json", original)
+                    reviewed = diagnostic_predecessor(request, history, private, measurement=True)
+                    ledger = reviewed["ledger"]
+                    original_ledger = json.loads(json.dumps(ledger))
+                elif generation_diagnostic:
                     original = generation_diagnostic_origin(private)
                     write(output / "original-observations.json", original)
                 elif diagnostic:
                     ledger = diagnostic_predecessor(request, history, private)
                     original_ledger = json.loads(json.dumps(ledger))
                 corrective_release(release, source, image)
-                if generation_diagnostic and (release.get("modelProject") != "terraformers-platform"
+                if (generation_diagnostic or measurement) and (release.get("modelProject") != "terraformers-platform"
                         or release.get("modelLocation") != "global"):
                     raise ValueError("single-generation diagnostic runtime project/location mismatch")
                 origin_receipt, binding, failed_binding = corrective_origins(private)
@@ -1780,7 +2046,7 @@ def main():
                     "originApprovalCommentId": ORIGIN_APPROVAL, "originalFailedJobConsumed": True})
                 write(output / "known-writer-history.json", history)
                 if diagnostic:
-                    write(output / "diagnostic-chain.json", {"prior": {"runId": request["priorRunId"],
+                    write(output / chain_file, {"prior": {"runId": request["priorRunId"],
                         "artifactId": request["priorArtifactId"], "reviewCommentId": request["priorReviewCommentId"]}})
                 elif qualified:
                     ledger = qualified_predecessor(request, source, image, campaign, history, private)
@@ -1810,17 +2076,18 @@ def main():
             if readiness["classification"] != ("RISK_QUALIFIED_RETAINED_V4" if risk_path else "EXACT_REUSABLE_COMPLETED_V4"):
                 raise ValueError("readiness does not authorize case A; no automatic ingestion")
             write(output / "binding.json", {"sourceSha": source, "image": image, "candidateIdentity": IDENTITY,
-                "procedureSha256": generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256() if diagnostic else sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
+                "procedureSha256": measurement_contract_sha256() if measurement else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256() if diagnostic else sha((ROOT / (CORRECTIVE_PROCEDURE if risk_path else PROCEDURE)).read_bytes()),
                 "mode": request["mode"], "caseId": request.get("caseId"),
                 "liveApprovalCommentId": request["liveApprovalCommentId"], "runId": int(os.environ["GITHUB_RUN_ID"]),
-                **({"classification": "DIAGNOSTIC_ONLY", "diagnosticContractSha256": generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256(),
+                **({"classification": classification, "measurementContractSha256" if measurement else "diagnosticContractSha256": measurement_contract_sha256() if measurement else generation_diagnostic_contract_sha256() if generation_diagnostic else diagnostic_contract_sha256(),
+                    **({k: request[k] for k in ("amendmentPullRequest", "amendmentReviewCommentId", "policyApprovalCommentId")} if measurement else {}),
                     "frozenV2Sha256": V2_SHA256, "frozenV3Sha256": V3_SHA256} if diagnostic else {})})
             if qualified or diagnostic:
                 record = ({"caseId": CASES[0], "status": "NOT_RUN", "uploadAttempts": 0, "consumed": False,
                     "mode": GENERATION_DIAGNOSTIC_MODE, "officialAcceptance": "NOT_ACCEPTANCE"}
                     if generation_diagnostic else ledger[CASES.index(request["caseId"])])
                 if diagnostic:
-                    record.update(classification="DIAGNOSTIC_ONLY", dispatchConsumed=True)
+                    record.update(classification=classification, dispatchConsumed=True)
                 case = next(c for c in frozen_inputs() if c["caseId"] == request["caseId"])
                 fixture = acquire(case, private)
                 write(output / "input-identity.json", case)
@@ -1856,7 +2123,12 @@ def main():
                 private_fixture = private / "input.png"; private_fixture.write_bytes(fixture.read_bytes()); fixture = private_fixture
             if transport.current_main() != source:
                 raise ValueError("HUMAN_REQUIRED: MAIN_DRIFT before inference")
-            if generation_diagnostic:
+            if measurement:
+                authority = measurement_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                history = measurement_history(request, source, int(os.environ["GITHUB_RUN_ID"]))
+                if diagnostic_predecessor(request, history, private, measurement=True)["ledger"] != original_ledger or measurement_originals(private) != original:
+                    raise ValueError("measurement origin/predecessor changed before upload")
+            elif generation_diagnostic:
                 authority = generation_diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                 history = generation_diagnostic_history(source, int(os.environ["GITHUB_RUN_ID"]))
                 if generation_diagnostic_origin(private) != original:
@@ -1887,7 +2159,10 @@ def main():
                     manifest, schema, documents, checksum, origin_receipt, binding, authority)
                 write(output / "post-admission.json", post)
                 if diagnostic:
-                    if generation_diagnostic:
+                    if measurement:
+                        write(output / "post-known-writer-history.json", measurement_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
+                        measurement_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
+                    elif generation_diagnostic:
                         write(output / "post-known-writer-history.json", generation_diagnostic_history(source, int(os.environ["GITHUB_RUN_ID"])))
                         generation_diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                     else:
@@ -1895,7 +2170,7 @@ def main():
                         diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                     complete = (record.get("consumed") is True and record.get("uploadAttempts") == 1
                         and record.get("terminalState") in ("FAILED", "SUCCEEDED") and "censoredObservationMs" not in record)
-                    write(output / "diagnostic-disposition.json", {"classification": "DIAGNOSTIC_ONLY",
+                    write(output / disposition_file, {"classification": classification,
                         "officialAcceptance": "NOT_ACCEPTANCE", "observedStatus": record["status"], "dispatchConsumed": True,
                         "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION" if complete else "INCOMPLETE"})
                 elif qualified:
@@ -1913,7 +2188,7 @@ def main():
                 raise ValueError("material technical/product failure; preserve later cases NOT_RUN")
     except Exception as error:
         write(output / "error.json", {"class": type(error).__name__, "reason": str(error)[:300],
-            **({"classification": "DIAGNOSTIC_ONLY", "officialAcceptance": "NOT_ACCEPTANCE",
+            **({"classification": classification, "officialAcceptance": "NOT_ACCEPTANCE",
                 "failureClassification": "INDEPENDENT_EVIDENCE_CLASSIFICATION_REQUIRED"} if diagnostic else {})})
         raise
     finally:

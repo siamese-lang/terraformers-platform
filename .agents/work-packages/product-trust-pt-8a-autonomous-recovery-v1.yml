@@ -240,3 +240,14 @@ work_package:
       new_existing_suite_tests: 2
       backend_workflow_JWKS_changes: 0
       previous_backend_and_RAG_results_preserved_not_reexecuted_locally: true
+  proposed_successor_measurement_amendment:
+    status: PROPOSED_D_DECISION_NOT_ADOPTED
+    procedure: docs/evaluation/product-trust-pt-8a-draft-measurement-amendment.md
+    separate_atomic_preparation_base_sha: 1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a
+    current_decision_gate: PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW
+    historical_work_package_base_and_exhausted_repair_counters: unchanged
+    repository_preparation_authority: USER_reviewable_draft_measurement_contract_realignment
+    proposed_operation: pt8a-draft-measurement
+    live_execution_authorized: false
+    criteria_adoption_requires: independent_review_explicit_USER_policy_approval_USER_merge
+    existing_v2_v3_diagnostic_recovery_contracts: unchanged

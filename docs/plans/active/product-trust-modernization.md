@@ -2,6 +2,19 @@
 
 ## Status
 
+Current: **PT-8A reviewable-draft measurement amendment / PROPOSED D_DECISION NOT ADOPTED**,
+repository-only preparation bound to `1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a` after USER-merged
+PR #270. [Decision proposal](../../evaluation/product-trust-pt-8a-draft-measurement-amendment.md)
+separates five valid first observations/reviews from an all-ten-dimensions quality PASS. It proposes
+one separately authorized A-E episode in the existing runner/workflow; reviewed product negatives
+can precede the next first observation, integrity/ambiguous/censored evidence cannot. Old consumed
+episodes, truth, artifacts, Policy D and exhausted historical counters stay unchanged.
+Independent implementation review, explicit USER policy approval and USER merge are prerequisites;
+new exact live source/image/risk/cost authority remains separate. No live execution or automatic
+PT-8B/release acceptance. Gate: **PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW**.
+
+### Historical autonomous Recovery implementation checkpoint
+
 Current: **PT-8A autonomous Recovery implementation / INDEPENDENT ACCEPTANCE PENDING**, bound to
 `c789d433f13da744e14c6a6f31db2d4fd3cf1d74`. USER approved same-PR repository implementation with
 max 3 bounded corrections; [contract/evidence](../../evaluation/product-trust-pt-8a-autonomous-recovery-decision.md)

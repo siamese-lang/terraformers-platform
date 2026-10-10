@@ -521,6 +521,25 @@ program:
       live_reviewed_source_sha: null
       frozen_procedure: docs/evaluation/product-trust-pt-8a-official-acceptance-procedure.md
       execution_unit: one_official_case_per_dispatch_then_independent_post_inference_review
+      proposed_draft_measurement_amendment:
+        status: PROPOSED_D_DECISION_NOT_ADOPTED
+        procedure: docs/evaluation/product-trust-pt-8a-draft-measurement-amendment.md
+        repository_preparation_base_sha: 1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a
+        operation: pt8a-draft-measurement
+        mode: draft-measurement-case
+        execution_authorized: false
+        original_completion_and_modes: unchanged_until_explicit_USER_policy_adoption
+        proposed_measurement_completion: five_valid_first_observations_and_authenticated_independent_reviews_including_E
+        proposed_quality_PASS: all_ten_original_dimensions_PASS_each_case_no_material_defect_or_false_trust
+        technical_product_failure: measured_negative_result_not_product_PASS
+        progression: evidence_validity_review_not_quality_PASS
+        integrity_auth_provenance_ambiguity_censor_or_cleanup_failure: INCOMPLETE_STOP_no_resubmission
+        history: one_dispatch_attempt_and_at_most_one_upload_per_case_across_sources_and_approvals
+        original_episodes_truth_results_and_counters: immutable_no_promotion_or_replacement
+        adoption_requires: independent_exact_head_acceptance_USER_policy_approval_and_USER_merge
+        live_requires: separate_exact_source_image_contract_risk_and_numeric_budget_approval_existing_protected_environment
+        final_review: existing_runner_read_only_finish_verifies_full_A_E_evidence_and_reviews
+        downstream_release_claim: not_granted_by_measurement_completion_requires_final_review_and_USER_residual_disposition
       autonomous_recovery:
         work_package: .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
         repository_implementation_approval: APPROVE_PT8A_A_TO_E_AUTONOMOUS_RECOVERY_REPOSITORY_IMPLEMENTATION_ON_PR265

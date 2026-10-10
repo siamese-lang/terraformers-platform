@@ -8,7 +8,7 @@
   "lastCompletedPhase": "PT-7",
   "activeWorkPackage": "product-trust-pt-8a-autonomous-recovery-v1",
   "activePullRequest": null,
-  "humanGate": "PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE",
+  "humanGate": "PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW",
   "pendingRecovery": {
     "workPackage": ".agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml",
     "decisionBrief": "docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md",
@@ -2420,5 +2420,42 @@
     "newUploads": 0,
     "newLiveDispatches": 0,
     "furtherLiveExecutionAuthorized": false
+  },
+  "pendingReviewableDraftMeasurementAmendment": {
+    "status": "PROPOSED_D_DECISION_NOT_ADOPTED",
+    "repositoryPreparationBaseSha": "1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a",
+    "procedure": "docs/evaluation/product-trust-pt-8a-draft-measurement-amendment.md",
+    "amendmentSha256": "a80e11ba1f1195b35aa0ddf38920a7d78b23e6b008c8efa4cd1d3b9dd1b77530",
+    "measurementContractSha256": "67c5c9cdc9f47a2cd4f3ab70f73c9cf91e53e53917cd187e675770b590068154",
+    "humanGate": "PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW",
+    "policyAdopted": false,
+    "liveExecutionAuthorized": false,
+    "proposedOperation": "pt8a-draft-measurement",
+    "proposedMode": "draft-measurement-case",
+    "measurementCompletion": "ALL_FIVE_VALID_FIRST_OBSERVATIONS_AND_INDEPENDENT_REVIEWS_INCLUDING_E",
+    "productQualityVerdict": "SEPARATE_PASS_NOT_PASS_OR_UNDETERMINED_NOT_MEASUREMENT_COMPLETION",
+    "proposedProgression": "AUTHENTICATED_EVIDENCE_VALIDITY_REVIEW_NOT_QUALITY_PASS",
+    "ambiguousAcceptanceCensorOrIntegrityFailure": "INCOMPLETE_STOP_NO_RESUBMISSION",
+    "historicalEpisodesTruthImagesArtifactsCountersAndPolicyD": "UNCHANGED",
+    "existingAcceptanceContracts": "UNCHANGED_PENDING_EXPLICIT_USER_POLICY_ADOPTION",
+    "adoptionRequires": [
+      "INDEPENDENT_EXACT_HEAD_ACCEPTANCE",
+      "EXPLICIT_USER_D_DECISION_APPROVAL",
+      "USER_MERGE"
+    ],
+    "liveRequires": "NEW_EXACT_SOURCE_IMAGE_PROCEDURE_CANDIDATE_HISTORY_COST_RISK_APPROVAL_AND_EXISTING_PROTECTED_ENVIRONMENT",
+    "downstreamReleaseAcceptance": "NOT_GRANTED_NO_AUTOMATIC_PT8B",
+    "repositoryOnlyValidation": {
+      "observerTests": 86,
+      "observerFailuresAfterOneTestHarnessCorrection": 0,
+      "initialFailure": "ONE_EXISTING_WORKFLOW_TEST_OMITTED_ACTUAL_OPERATION_ENVIRONMENT",
+      "RAGTests": 55,
+      "RAGFailures": 0,
+      "CIScopeTests": 23,
+      "CIScopeFailures": 0,
+      "productionBackendAndFrontendChanged": false,
+      "liveExecutions": 0,
+      "normalExactHeadCI": "GITHUB_AUTHORITATIVE_NOT_TRANSIENT_PROGRAM_STATE"
+    }
   }
 }

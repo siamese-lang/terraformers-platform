@@ -12,6 +12,40 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
+The current USER-authorized repository-only atomic task prepares a **proposed D_DECISION**
+measurement-contract amendment after merged PR #270. Remote main was read once and bound to
+`1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a`; subsequent reads are drift checks only.
+Current decision gate: **PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW**.
+
+- Proposal: [reviewable-draft measurement amendment](evaluation/product-trust-pt-8a-draft-measurement-amendment.md).
+  Existing truth, image-first semantic criteria, editable inputs, RAG and real CLI/provider rules
+  already fit the product goal. The changed boundary is measurement completion/progression,
+  not generation, scoring dimensions or the old acceptance campaign.
+- Proposed COMPLETE measurement requires five valid terminal first observations and independent
+  evidence reviews, even when product quality is NOT_PASS or UNDETERMINED. Quality PASS remains
+  a separate all-ten-dimensions/all-five-cases verdict. Integrity/auth/provenance/cleanup failure,
+  ambiguous acceptance, censoring or missing review remains INCOMPLETE and blocks submission.
+- Existing runner/workflow gain one separately authorized A-E measurement episode, each case
+  once across sources/approvals. Reuse authenticated artifact/history/diagnostic observation,
+  read-only retained-v4 admission and independent review; no new workflow or evaluator. Original
+  accepted/rejected/failed consumed episodes are authenticated and never replaced or promoted.
+- Repository preparation/CI does not adopt criteria or authorize live execution. The new operation
+  requires exact independent implementation acceptance, explicit USER policy approval on the
+  amendment PR, USER merge, separate exact live source/image/contract/risk/budget authority and
+  the unchanged protected environment. Proposed bounds are 5 uploads / 30 model-call reservations
+  / 5 attempt-1 dispatches / 35 minutes each / 540-second job observation. USD ceiling unproved;
+  publication/rollout need separate authority. No paid work is performed here.
+- Final read-only `finish` verifies E and every predecessor/review and reports measurement and
+  product quality separately. Measurement completeness grants neither release acceptance nor
+  PT-8B activation; negative/unknown residuals require independent final review and USER disposition.
+- PT-8A currently remains INCOMPLETE. Frozen procedures/truth, all old measurements/consumption,
+  Policy D and historical execution bases/exhausted counters are preserved. Timeout cause remains
+  unresolved; there are no backend/prompt/model/retrieval/quality-policy changes.
+
+### Historical PR #270 product-contract correction (USER-merged)
+
+The following checkpoint is preserved as history; its merge-pending wording predates USER merge.
+
 The current USER-authorized correction on the existing product task removes deployment-completion
 requirements from the reviewable Terraform draft contract. The once-bound atomic execution base
 remains `739877718c25d77c694a2e5f2020a59e0c4a87cf`; earlier Work Package bases and correction

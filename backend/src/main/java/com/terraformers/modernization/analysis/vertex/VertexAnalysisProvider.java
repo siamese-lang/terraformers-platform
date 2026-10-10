@@ -114,7 +114,11 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         List<ReferenceDocument> references = outcome.finalReferences();
         String terraform = outcome.finalTerraform();
         EvidenceQualityAssessment quality = assess(retrieval, references, terraform);
-        List<String> warnings = new ArrayList<>(generated.warnings());
+        // Repair returns HCL only. Retain initial uncertainties without presenting them as final-code findings.
+        List<String> warnings = new ArrayList<>(generated.warnings().stream()
+                .map(warning -> outcome.repairAttempted()
+                        ? "Initial draft (before grounding repair; not revalidated): " + warning : warning)
+                .toList());
         if (quality != null) {
             List<String> extractedUnknown = quality.extractedResourceTypes().stream()
                     .filter(type -> !schemaCatalog.contains(type)).toList();

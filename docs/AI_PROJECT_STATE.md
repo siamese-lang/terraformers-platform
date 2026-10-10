@@ -12,6 +12,87 @@ M0 closure was validated against this main SHA. Current `main` may differ after 
 
 ## Current execution mode
 
+- Current USER-authorized task independently audits the reviewable-draft product boundary after
+  merged PR #269, bound once to remote main `739877718c25d77c694a2e5f2020a59e0c4a87cf`.
+  This task preserves prior Work Package bases, exhausted counters, truth and consumed evidence.
+  Technical choices are delegated by the USER; this does not authorize live cost, merge or a new
+  evaluation campaign. The following older checkpoint is retained as history.
+- Two demonstrated draft-contract defects are corrected through existing mechanisms: exact
+  `count`/`for_each` certificate-instance imports now remain declared external boundaries, while
+  wrong-instance/null imports cannot suppress the omission; after HCL-only grounding repair,
+  retained model warnings are explicitly labeled as initial-draft information that was not
+  revalidated. Neither a fresh certificate resource nor a particular DNS implementation is forced.
+  No timeout, model, prompt, retrieval, scoring, CLI or evaluation-history policy changes.
+- Before correction, a local count-indexed issued-certificate import passed real offline Terraform
+  1.8.5 / AWS Provider 5.100.0 init/validate (0 errors/warnings) but the inspector flagged it.
+  Two targeted regressions failed on the bound production tree. The first corrected focused run
+  retained a quoted-instance-key mismatch (51 tests / 1 failure); one bounded correction preserves
+  those literal keys. The unchanged assertions then passed: **51 tests / 0 failures / 0 errors**.
+  Full offline backend clean/package ran once: **598 total / 594 PASS / 4 MariaDB-prerequisite SKIP / 0 failures / 0 errors**, BUILD SUCCESS.
+  These are local regression samples, never new PT-8A observations or acceptance evidence.
+
+### Existing diagnostic: image-first quality disposition
+
+The original **38011709155 / 11654405275** remains DIAGNOSTIC_ONLY, consumed, NOT_ACCEPTANCE.
+Original persisted values and archive bytes are unchanged. This audit compares the actual final HCL
+with Case A's frozen `image_observable_truth`; documentation context supplies no extra image facts.
+
+| Dimension | Evidence-bounded disposition |
+| --- | --- |
+| Architecture classification | Architecture correctly recognized; raw first vision facts are not exposed. |
+| Core services | Route 53, CloudFront, API Gateway, Cognito, ACM, three Lambda intents, DynamoDB and three roles present. |
+| Directed relationships | PARTIAL: API/Cognito verification, three API-to-Lambda branches and Lambda/DynamoDB permissions exist. Route 53 has no endpoint mapping; API/domain-to-ACM/custom-TLS intent lacks wiring or a coherent declared external binding. |
+| Boundaries/cardinality | Three distinct paths/functions/roles preserved, no invented VPC/subnet/AZ layout. A DynamoDB symbol does not require a particular table count. |
+| Forbidden interpretations | No forced S3 origin, EC2/container/RDS replacement, invented CloudFront-to-API edge or Cognito-to-Lambda invocation in final HCL. |
+| Resource intent | PARTIAL for DNS/custom-domain/TLS relationships; isolated zone/certificate declarations do not implement them. New provisioning is not required if coherent external references implement the intent. |
+| Personalized inputs | Required domain/origin/package variables are valid editable boundaries. Missing actual account, region, certificate ARN, ownership or package bytes is not itself a failure. No real identifiers need to be acquired. |
+| Official evidence | Final 15 managed resource types have selected official-provider documents. The initial unrelated EKS/IRSA project reference is not proof of this image's intent. Document coverage does not prove every edge. |
+| Real CLI / chosen implementation | Original init/validate PASS. Its newly requested DNS certificate directly feeds CloudFront without issuance ordering: a separate usability defect, exposed by merged #269 as DEGRADED, not a provider-schema/CLI failure. |
+| Persisted/visible trust | Original job/project agree on technical PASS, knowledge COMPLETE and quality UNKNOWN; not semantic PASS. Reasons were empty. Warnings describe first-draft dummy/S3 choices absent from final HCL; this correction preserves them with explicit provenance. Browser rendering was not observed here, so full visible-trust acceptance and a false-trusted-success rate are not established. |
+
+The observed draft is **NOT ACCEPTANCE-READY**. Newer instructions/quality checks and local tests
+cannot be claimed as improved model fidelity without a new independently reviewed observation.
+The 220s historical timeout's SDK chain, request elapsed time and upstream status remain absent;
+a 30.535s successful initial request does not establish transient capacity or a structural fix.
+No evidence warrants changing Policy D, thinking, SDK, model or retries.
+
+### Minimum remaining PT-8A completion work (proposal, not execution authority)
+
+1. Independent review and USER merge of these product-boundary fixes. No synthetic checkout/source
+   identity substitution; bind the actual resulting main only at the next authorized activation.
+2. A reviewed bounded successor amendment of the existing runner/Recovery contract is required
+   before new acceptance measurement: original qualified A is rejected/consumed and blocks B;
+   diagnostic B is consumed; generation-diagnostic is globally consumed across sources/approvals;
+   Recovery stops on the consumed initial-generation technical failure and cannot rebind its source.
+   A new approval comment alone cannot overcome these guards. Preserve all those episodes, do not
+   promote the successful diagnostic or reset old counters, and do not add another workflow/evaluator.
+3. Proposed successor proof is one frozen-order observation each for A-E on one actual reviewed
+   source/image, at most **5 uploads / 30 model-call reservations including embeddings**, at most
+   **2 dispatches / attempt 1 / 90 minutes each**, **540s** accepted-job observation, unchanged
+   Policy D. Only proven-zero-POST interruption may resume an unsubmitted input within budget;
+   accepted/ambiguous inputs never repeat. Preserve technical failures and stop; complete product
+   observations remain reviewable FAIL/PARTIAL/UNKNOWN and must never be manufactured PASS.
+   These bounds are a proposed new authorization, not the unused balance of the failed campaign.
+4. Separate existing protected workflows, only if the exact reviewed source is not already published
+   and deployed: immutable publication once (45 minutes), then revision rollout once (20 minutes).
+   Bind the actual publication digest and read-back current Deployment image/source; neither is
+   inferred from an old run. Last observed deployed source is `afa08e5c…` / image
+   `sha256:eaa29f5d6097b54b8773b19f9981ab35f7fad437801007e744a13a159095b532`, not a fresh live read.
+5. Before upload, authenticate original clean-v4 receipt/run/artifact/digest and perform existing
+   read-only exact mapping/5395-ID/non-vector-content/UUID/vector-shape/runtime/history admission.
+   Explicitly accept **VECTOR_WRITE_CONTINUITY_UNPROVEN**; no reembedding or index writes.
+   Freeze the successor contract hash and exact source/image/approval fields before outcomes.
+   USD cost is not established: execution-count/time ceilings are not a dollar guarantee.
+6. Independent final review must find all ten frozen dimensions satisfied for each A-E image, zero
+   demonstrated false trusted successes and the original terminality contract. CLI/CI success alone
+   cannot complete PT-8A. This is a bounded five-image claim, not timeout reliability or generalization.
+   PT-8B/PT-9, IAM, infrastructure mutation and teardown remain unauthorized.
+
+No new live execution is authorized by this proposal. Stop for implementation review/USER merge;
+combine successor-contract and exact live-budget decisions at the next required decision checkpoint.
+
+### Historical PR #269 certificate-issuance checkpoint
+
 - Current atomic task is the USER-authorized independent PT-8A artifact/confirmed-defect correction,
   bound once to authoritative main `afa08e5c2a335aa1714d740bd50276184db47d1b`. PR #268's
   [independent acceptance 6085508577](https://github.com/siamese-lang/terraformers-platform/pull/268#issuecomment-6085508577)

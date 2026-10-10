@@ -85,6 +85,28 @@ class GeneratedTerraformContractInspectorTest {
                 "\"edge\"", "\"other_edge\"").replace("pending", "other_pending"))).isTrue();
     }
 
+    @Test
+    void acceptsOnlyTheConsumedImportedCertificateInstance() {
+        for (String index : List.of("0", "\"existing\"")) {
+            String draft = pendingCertificateDraft().replace("pending.arn", "pending[" + index + "].arn");
+            String imported = "\nimport {\n  to = aws_acm_certificate.pending[" + index
+                    + "]\n  id = var.existing_issued_certificate_arn\n}\n";
+            assertThat(inspector.missingCloudFrontCertificateValidation(draft + imported)).isFalse();
+            assertThat(inspector.missingCloudFrontCertificateValidation(draft)).isTrue();
+            assertThat(inspector.missingCloudFrontCertificateValidation(draft + imported.replace(
+                    "pending[" + index + "]", "pending[\"other\"]"))).isTrue();
+            assertThat(inspector.missingCloudFrontCertificateValidation(draft + imported.replace(
+                    "var.existing_issued_certificate_arn", "null"))).isTrue();
+        }
+        String indexed = pendingCertificateDraft().replace("pending.arn", "pending[0].arn");
+        assertThat(inspector.missingCloudFrontCertificateValidation(indexed + """
+                import {
+                  to = aws_acm_certificate.pending
+                  id = var.existing_issued_certificate_arn
+                }
+                """)).isTrue();
+    }
+
     private String pendingCertificateDraft() {
         return """
                 resource "aws_acm_certificate" "pending" {

@@ -87,27 +87,58 @@ public class GeneratedTerraformContractInspector {
         for (Block distribution : resources) {
             if (!distribution.type().equals("aws_cloudfront_distribution")) continue;
             for (Block viewer : blocks(distribution.body(), "viewer_certificate")) {
-                String arn = expression(resolveAliases(attribute(viewer.body(), "acm_certificate_arn"), locals, 0));
+                List<Token> arn = resolveAliases(attribute(viewer.body(), "acm_certificate_arn"), locals, 0);
                 for (Block certificate : resources) {
                     if (!certificate.type().equals("aws_acm_certificate")) continue;
                     List<Token> method = resolveAliases(attribute(certificate.body(), "validation_method"), locals, 0);
                     if (method.size() != 1 || !method.get(0).quoted()
                             || !Set.of("DNS", "EMAIL").contains(method.get(0).value())) continue;
-                    if (!referencesResource(arn, certificate.type(), certificate.name(), "arn")) continue;
-                    if (blocks(source, "import").stream().anyMatch(block ->
-                            expression(attribute(block.body(), "to")).equals(certificate.type() + "." + certificate.name())
-                            && !emptyExpression(attribute(block.body(), "id")))) continue;
+                    List<List<Token>> addresses = certificateArnAddresses(arn, certificate);
+                    if (addresses.isEmpty()) continue;
+                    // An import declares only its exact instance; another index is not an external boundary.
+                    if (addresses.stream().allMatch(address -> blocks(source, "import").stream().anyMatch(block ->
+                            attribute(block.body(), "to").equals(address)
+                            && !emptyExpression(attribute(block.body(), "id"))))) continue;
                     boolean ordered = resources.stream()
                             .filter(block -> block.type().equals("aws_acm_certificate_validation"))
-                            .filter(block -> referencesResource(expression(resolveAliases(
-                                    attribute(block.body(), "certificate_arn"), locals, 0)),
-                                    certificate.type(), certificate.name(), "arn"))
+                            .filter(block -> !certificateArnAddresses(resolveAliases(
+                                    attribute(block.body(), "certificate_arn"), locals, 0), certificate).isEmpty())
                             .anyMatch(block -> dependsOn(distribution, block, resources, locals, new LinkedHashSet<>()));
                     if (!ordered) return true;
                 }
             }
         }
         return false;
+    }
+
+    private List<List<Token>> certificateArnAddresses(List<Token> value, Block certificate) {
+        List<Token> references = new ArrayList<>();
+        for (Token token : value) {
+            // Keep quoted instance keys; is() below excludes literal strings as traversal starts.
+            references.add(token);
+            if (token.quoted()) {
+                Matcher interpolation = Pattern.compile("(?<!\\$)\\$\\{([^}]+)}").matcher(token.value());
+                while (interpolation.find()) references.addAll(tokens(interpolation.group(1)));
+            }
+        }
+        String address = certificate.type() + "." + certificate.name();
+        List<List<Token>> result = new ArrayList<>();
+        for (int i = 0; i < references.size(); i++) {
+            if (references.get(i).is(address + ".arn")) result.add(List.of(new Token(address, false)));
+            if (!references.get(i).is(address) || i + 1 >= references.size()
+                    || !references.get(i + 1).is("[")) continue;
+            int end = i + 2;
+            int depth = 1;
+            while (end < references.size() && depth > 0) {
+                if (references.get(end).is("[")) depth++;
+                if (references.get(end).is("]")) depth--;
+                end++;
+            }
+            if (depth == 0 && end < references.size() && references.get(end).is(".arn")) {
+                result.add(List.copyOf(references.subList(i, end)));
+            }
+        }
+        return result;
     }
 
     private boolean dependsOn(Block consumer, Block validation, List<Block> resources,

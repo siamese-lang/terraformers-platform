@@ -94,13 +94,19 @@ MEASUREMENT_MODE = "draft-measurement-case"
 MEASUREMENT_OPERATION = "pt8a-draft-measurement"
 MEASUREMENT_PURPOSE = "PT8A_REVIEWABLE_DRAFT_MEASUREMENT_A_TO_E_ONCE"
 MEASUREMENT_PROCEDURE = "docs/evaluation/product-trust-pt-8a-draft-measurement-amendment.md"
-MEASUREMENT_BASE = "1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a"
+# Successor diagnostics contract only; the frozen v1 amendment retains its original base.
+MEASUREMENT_BASE = "2302a85ff828411a24f235919ceddcab3cd6c89e"
 GENERATION_OBSERVATION_RUN, GENERATION_OBSERVATION_ARTIFACT = 38011709155, 11654405275
 GENERATION_OBSERVATION_SOURCE = "afa08e5c2a335aa1714d740bd50276184db47d1b"
 GENERATION_OBSERVATION_DIGEST = "sha256:acca008b5c4b954c5b559225695b54c2d877612b6e56347886249fabfa8f72ca"
 MEASUREMENT_CONTRACT = {
-    "version": "pt8a-reviewable-draft-measurement-v1", "cases": CASES, "candidateIdentity": IDENTITY,
+    "version": "pt8a-reviewable-draft-measurement-v2-diagnostics",
+    "failureDiagnosability": "OWNER_RETRIEVABLE_ORIGINALS_AND_SAFE_STAGE_DIAGNOSTICS_REQUIRED",
+    "missingDiagnosticEvidence": "DIAGNOSTIC_EVIDENCE_INCOMPLETE_BLOCK_NEXT_PAID_MEASUREMENT",
+    "oldEpisodeResumption": False, "diagnosticReadbackMaximumGets": 7, "diagnosticReadbackWaitSeconds": 30, "cases": CASES, "candidateIdentity": IDENTITY,
     "classification": "REVIEWABLE_DRAFT_MEASUREMENT_ONLY", "executionBase": MEASUREMENT_BASE,
+    "unclassifiedInternalEvidence": "INCOMPLETE_EVEN_WITH_CANDIDATE",
+    "postStopEpisodeSupport": "NOT_IMPLEMENTED_EXISTING_CONSUMED_HISTORY_STILL_BLOCKS",
     "frozenV2Sha256": V2_SHA256, "frozenV3Sha256": V3_SHA256,
     "dispatchesPerCaseAcrossSourcesAndApprovals": 1, "uploadsPerCase": 1,
     "dispatchBudget": 5, "uploadBudget": 5, "reservedModelCallsIncludingEmbedding": 30,
@@ -665,8 +671,16 @@ def measurement_contract_sha256():
     return sha(json.dumps(MEASUREMENT_CONTRACT, sort_keys=True, separators=(",", ":")).encode())
 
 
+DIAGNOSTIC_EVIDENCE_AMENDMENT = "docs/evaluation/product-trust-pt-8a-diagnostic-evidence-amendment.md"
+
+
+def diagnostic_evidence_amendment_sha256():
+    return sha((ROOT / DIAGNOSTIC_EVIDENCE_AMENDMENT).read_bytes())
+
+
 def measurement_policy_fields():
-    return {"gate": "PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW", "decision": "APPROVED",
+    return {"gate": "PT8A_FAILURE_DIAGNOSABILITY_AMENDMENT_REVIEW", "decision": "APPROVED",
+        "diagnostic_evidence_amendment_sha256": diagnostic_evidence_amendment_sha256(),
         "execution_base_sha": MEASUREMENT_BASE, "candidate_identity": IDENTITY,
         "measurement_contract_sha256": measurement_contract_sha256(),
         "amendment_sha256": sha((ROOT / MEASUREMENT_PROCEDURE).read_bytes()),
@@ -677,6 +691,7 @@ def measurement_policy_fields():
 def measurement_live_fields(request, source, image):
     return {"gate": "FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE", "decision": "APPROVED",
         "purpose": MEASUREMENT_PURPOSE, "reviewed_source_sha": source, "backend_image": image,
+        "diagnostic_evidence_amendment_sha256": diagnostic_evidence_amendment_sha256(),
         "candidate_identity": IDENTITY, "procedure_sha256": sha((ROOT / MEASUREMENT_PROCEDURE).read_bytes()),
         "measurement_contract_sha256": measurement_contract_sha256(),
         "amendment_pr": str(request["amendmentPullRequest"]),
@@ -728,6 +743,7 @@ def measurement_request_contract(request, source, image, attempt):
     reviewed_head = pr["head"]["sha"]
     required_review = {"decision": "ACCEPTED", "reviewed_head": reviewed_head,
         "execution_base_sha": MEASUREMENT_BASE, "measurement_contract_sha256": measurement_contract_sha256(),
+        "diagnostic_evidence_amendment_sha256": diagnostic_evidence_amendment_sha256(),
         "amendment_sha256": sha((ROOT / MEASUREMENT_PROCEDURE).read_bytes())}
     if (any(review.get(k) != v for k,v in required_review.items())
             or any(policy.get(k) != v for k,v in (measurement_policy_fields() | {"reviewed_head": reviewed_head}).items())
@@ -1074,7 +1090,7 @@ def diagnostic_predecessor(request, history, private, *, measurement=False, fina
             ["inventory.json", "binding.json", "ledger.json", chain_file, disposition_file,
              "release.json", "readiness.json", "post-admission.json", "input-identity.json",
              "observation/accepted.json", "observation/job.json", "observation/presentation.json",
-             "observation/retrieval.json", "observation/cli.json", "observation/draft-identity.json"] + (["cleanup.json"] if measurement else []),
+             "observation/retrieval.json", "observation/cli.json", "observation/draft-identity.json"] + (["cleanup.json", "observation/diagnostics.json"] if measurement else []),
             private, ".github/workflows/gcp-target-runtime-dependencies.yml", verify_inventory=True)
         if measurement and data["cleanup.json"].get("JWKSRestored") is not True:
             raise ValueError("measurement identity cleanup failed; block next observation")
@@ -1118,6 +1134,10 @@ def diagnostic_predecessor(request, history, private, *, measurement=False, fina
                     "classification": classification, "officialAcceptance": "NOT_ACCEPTANCE", "dispatchConsumed": True,
                     "observedStatus": record["status"], "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION"}.items())):
             raise ValueError("diagnostic predecessor incomplete/ambiguous or rewritten observation")
+        if measurement:
+            require_diagnostic_evidence(data["observation/diagnostics.json"], job)
+            if record.get("diagnosticEvidence") != "AVAILABLE":
+                raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: predecessor cannot permit next paid case")
         presentation, retrieved = data["observation/presentation.json"], data["observation/retrieval.json"]
         if (presentation.get("projectId") != accepted.get("projectId")
                 or presentation.get("latestAnalysisJobId") != job["id"] or retrieved.get("jobId") != job["id"]):
@@ -1146,6 +1166,8 @@ def diagnostic_predecessor(request, history, private, *, measurement=False, fina
                 or any(review.get("dimension_" + d) not in ("PASS", "FAIL", "PARTIAL", "UNKNOWN", "NOT_OBSERVED", "NOT_APPLICABLE") for d in SCORING)):
             raise ValueError("authenticated diagnostic classification/review missing; no next case")
         if measurement:
+            if review.get("failure_diagnosability") != "VERIFIED" or review.get("diagnostic_evidence_sha256") != data["observation/diagnostics.json"]["evidenceSha256"]:
+                raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: independent cause-analysis review missing")
             if review.get("product_quality") != measurement_quality(record, review):
                 raise ValueError("measurement review cannot promote FAIL/UNKNOWN to quality PASS")
             reviews[case] = review
@@ -1668,7 +1690,110 @@ def validate_draft(hcl, private, pod):
             "hclSha256": sha(hcl.encode()), "AWSPlanApply": False}
 
 
-def observe(client, fixture, directory, record, documents, pod, clock=time.monotonic, wait=time.sleep, *, diagnostic=False, resume_accepted=False, record_path=None):
+DIAGNOSTIC_STAGES = {"provider", "schema_grounding", "quality_assessment", "ownership_fence", "source_read", "facts", "retrieval", "initial_generation", "closure", "repair",
+    "final_evidence", "initial_context", "repair_context", "draft_validation", "cli_init", "cli_validate", "result_finalization"}
+DIAGNOSTIC_CATEGORIES = {"INIT_TIMEOUT", "PROVIDER_CLOSURE", "INIT_CONFIGURATION", "VALIDATE_TIMEOUT",
+    "VALIDATE_CONFIGURATION", "COMMAND_EXECUTION", "INTERRUPTED", "INTERNAL", "PROVIDER_TIMEOUT",
+    "OUTPUT_TRUNCATED", "INPUT_REJECTED", "RESPONSE_FORMAT", "CONTENT_BLOCKED", "EMPTY_RESPONSE",
+    "RATE_LIMITED", "PROVIDER_ERROR", "OWNERSHIP_OR_DEADLINE_LOST", "UNCLASSIFIED_INTERNAL_FAILURE"}
+DIAGNOSTIC_CATEGORIES |= {"FACTS_" + reason for reason in ("PROVIDER_RUNTIME", "PROVIDER_CONTENT_BLOCKED", "PROVIDER_TIMEOUT",
+    "PROVIDER_RATE_LIMITED", "PROVIDER_ERROR", "RESPONSE_TRUNCATED", "EMPTY_RESPONSE", "INVALID_RESPONSE", "EMPTY_FACTS")}
+DIAGNOSTIC_CATEGORIES |= {"OBJECT_STORAGE_NOT_FOUND", "OBJECT_STORAGE_UNAVAILABLE", "OBJECT_STORAGE_UPSTREAM_FAILURE"}
+DIAGNOSTIC_CLASSES = {"CONFIGURATION_SYNTAX", "MISSING_REQUIRED_ARGUMENT", "UNDECLARED_REFERENCE", "UNKNOWN",
+    "UNSUPPORTED_ARGUMENT_OR_BLOCK"}
+DIAGNOSTIC_SUMMARIES = {"Invalid Terraform configuration syntax", "Missing required argument",
+    "Reference to undeclared resource, variable or module", "Unsupported argument or block",
+    "Unclassified Terraform diagnostic; raw message withheld"}
+
+
+def require_diagnostic_evidence(evidence, job):
+    """Owner read-back proof, not a quality PASS. Never accepts archive integrity alone."""
+    if (not isinstance(evidence, dict) or set(evidence) - {"contractVersion", "jobId", "projectId", "claimGeneration",
+            "complete", "stages", "candidates", "failure", "cliDiagnostics", "factsStatus", "status", "storageStatus", "evidenceSha256", "expiresAt"}
+            or evidence.get("factsStatus") not in ("CAPTURED", "NOT_CAPTURED") or evidence.get("status") != "AVAILABLE"
+            or evidence.get("complete") is not True or evidence.get("contractVersion") != "analysis-diagnostics-v1"
+            or evidence.get("jobId") != job.get("id") or evidence.get("projectId") != job.get("projectId")
+            or type(evidence.get("claimGeneration")) is not int or evidence.get("claimGeneration") != 1
+            or evidence.get("storageStatus") not in (None, "AVAILABLE")
+            or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,9})?Z", evidence.get("expiresAt", "")) or not re.fullmatch(r"[0-9a-f]{64}", evidence.get("evidenceSha256", ""))
+            or not isinstance(evidence.get("stages"), dict) or not isinstance(evidence.get("candidates"), dict)
+            or "facts" in evidence or "retrieval" in evidence):
+        raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: owner-scoped storage/readback unavailable")
+    for stage, detail in evidence["stages"].items():
+        if stage not in DIAGNOSTIC_STAGES or not isinstance(detail, dict) or set(detail) - {
+                "status", "inputId", "outputId", "exitCode", "elapsedMs"} or detail.get("status") not in {
+                "NOT_CAPTURED", "STARTED", "CAPTURED", "FAILED"}:
+            raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: invalid stage evidence")
+        for key in ("inputId", "outputId"):
+            if key in detail and not re.fullmatch(r"(?:[a-z_]+:)*(?:sha256:[0-9a-f]{64}|source-file:[0-9]+)", str(detail[key])):
+                raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: unsafe stage identity")
+        for key in ("exitCode", "elapsedMs"):
+            if detail.get(key) is not None and (type(detail[key]) is not int or abs(detail[key]) > 10**9):
+                raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: invalid execution observation")
+    for name, candidate in evidence["candidates"].items():
+        if (name not in ("initial", "final", "validated") or not isinstance(candidate, dict)
+                or set(candidate) != {"status", "sha256", "bytes"} or candidate.get("status") != "CAPTURED"
+                or not re.fullmatch(r"[0-9a-f]{64}", candidate.get("sha256", ""))
+                or type(candidate.get("bytes")) is not int or not 0 < candidate["bytes"] <= 262144):
+            raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: missing/unsafe original candidate")
+    diagnostics = evidence.get("cliDiagnostics")
+    if diagnostics is not None:
+        if (not isinstance(diagnostics, dict) or set(diagnostics) != {"diagnosticClasses", "errorCount", "warningCount", "details"}
+                or not isinstance(diagnostics["diagnosticClasses"], list)
+                or not set(diagnostics["diagnosticClasses"]) <= DIAGNOSTIC_CLASSES
+                or any(type(diagnostics[k]) is not int or not 0 <= diagnostics[k] <= 1000 for k in ("errorCount", "warningCount"))
+                or not isinstance(diagnostics["details"], list) or len(diagnostics["details"]) > 32):
+            raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: invalid CLI diagnostic reduction")
+        for detail in diagnostics["details"]:
+            if (not isinstance(detail, dict) or set(detail) != {"diagnosticClass", "summary", "line", "column"}
+                    or detail["diagnosticClass"] not in DIAGNOSTIC_CLASSES or detail["summary"] not in DIAGNOSTIC_SUMMARIES
+                    or any(detail[k] is not None and (type(detail[k]) is not int or not 0 < detail[k] <= 1000000)
+                           for k in ("line", "column"))):
+                raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: unsafe CLI diagnostic")
+    failure = evidence.get("failure")
+    if job.get("status") == "FAILED":
+        if (not isinstance(failure, dict) or set(failure) != {"stage", "category", "exceptionType"}
+                or failure["stage"] not in DIAGNOSTIC_STAGES or failure["category"] not in DIAGNOSTIC_CATEGORIES
+                or not re.fullmatch(r"[A-Za-z][A-Za-z0-9]{0,100}", failure["exceptionType"])
+                or evidence["stages"].get(failure["stage"], {}).get("status") != "FAILED"):
+            raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: exact failed stage/category missing")
+        if failure["category"] in ("UNCLASSIFIED_INTERNAL_FAILURE", "INTERNAL"):
+            raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: internal cause not classified; stage/class or candidate alone is insufficient")
+        if failure["stage"] in ("draft_validation", "cli_init", "cli_validate", "result_finalization") and "final" not in evidence["candidates"]:
+            raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: failed candidate lost")
+        if failure["stage"] in ("cli_init", "cli_validate") and "validated" not in evidence["candidates"]:
+            raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: exact sanitized CLI input lost")
+        if failure["category"] in ("INIT_CONFIGURATION", "VALIDATE_CONFIGURATION") and diagnostics is None:
+            raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: Terraform error diagnostics lost")
+    elif job.get("status") != "SUCCEEDED" or "final" not in evidence["candidates"] or failure is not None:
+        raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: terminal/candidate mismatch")
+    return evidence
+
+
+def capture_diagnostic_evidence(client, job, private, directory, wait=time.sleep):
+    # Terminal state may commit just before the external evidence write finishes. These are bounded
+    # owner-scoped read-only polls, never another upload/model call or a replacement observation.
+    for attempt in range(7):
+        response = client.request("GET", "/api/analysis/jobs/" + job["id"] + "/diagnostics", private, "diagnostics-" + str(attempt))
+        pending = response.get("json")
+        if (response.get("httpStatus") != 200 or not isinstance(pending, dict)
+                or pending.get("jobId") != job["id"] or pending.get("projectId") != job.get("projectId")
+                or pending.get("storageStatus") != "PENDING" or attempt == 6):
+            break
+        wait(5)
+    evidence = response.get("json")
+    try:
+        if response.get("httpStatus") != 200: raise ValueError("owner access unavailable")
+        require_diagnostic_evidence(evidence, job)
+    except (ValueError, TypeError, KeyError):
+        # Never export arbitrary upstream bodies or raw content on an error response.
+        evidence = {"jobId": job["id"], "projectId": job.get("projectId"),
+                    "status": "DIAGNOSTIC_EVIDENCE_INCOMPLETE", "complete": False}
+    write(directory / "diagnostics.json", evidence)
+    return evidence
+
+
+def observe(client, fixture, directory, record, documents, pod, clock=time.monotonic, wait=time.sleep, *, diagnostic=False, resume_accepted=False, record_path=None, require_diagnostics=False):
     if resume_accepted:
         if record.get("consumed") is not True or not record.get("jobId") or record.get("uploadAttempts") != 1:
             raise ValueError("read-only drain requires the original accepted owner/job")
@@ -1708,6 +1833,9 @@ def observe(client, fixture, directory, record, documents, pod, clock=time.monot
     record.update(terminalState=terminal["status"], terminalAt=(terminal.get("timing") or {}).get("terminalAt"),
                   acceptedToTerminalMs=(terminal.get("timing") or {}).get("acceptedToTerminalMs"),
                   deadlineClassification="OPERATING_SERVICE_480000_PLUS_CONDITIONAL_DELTA_REVIEW_REQUIRED")
+    if require_diagnostics:
+        evidence = capture_diagnostic_evidence(client, terminal, fixture.parent, directory)
+        record["diagnosticEvidence"] = evidence["status"]
     quality = terminal.get("quality") or {}
     retrieved = retrieval_evidence(record["jobId"], record["acceptedAt"], documents)
     write(directory / "retrieval.json", retrieved)
@@ -2150,7 +2278,7 @@ def main():
             client = transport.CurlClient(Path(os.environ["RUNNER_TEMP"]) / "case-c-access.token")
             try:
                 observe(client, fixture, output / "observation", record, documents, "terraformers-pt8a-validation",
-                        **({"diagnostic": True} if diagnostic else {}))
+                        **({"diagnostic": True, **({"require_diagnostics": True} if measurement else {})} if diagnostic else {}))
             finally:
                 client.close()
             if risk_path and (record["status"] == "REVIEW_PENDING" or diagnostic):
@@ -2169,10 +2297,12 @@ def main():
                         write(output / "post-known-writer-history.json", diagnostic_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
                         diagnostic_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
                     complete = (record.get("consumed") is True and record.get("uploadAttempts") == 1
-                        and record.get("terminalState") in ("FAILED", "SUCCEEDED") and "censoredObservationMs" not in record)
+                        and record.get("terminalState") in ("FAILED", "SUCCEEDED") and "censoredObservationMs" not in record
+                        and (not measurement or record.get("diagnosticEvidence") == "AVAILABLE"))
                     write(output / disposition_file, {"classification": classification,
                         "officialAcceptance": "NOT_ACCEPTANCE", "observedStatus": record["status"], "dispatchConsumed": True,
-                        "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION" if complete else "INCOMPLETE"})
+                        "evidenceValidity": "COMPLETE_AWAITING_INDEPENDENT_CLASSIFICATION" if complete else
+                            "DIAGNOSTIC_EVIDENCE_INCOMPLETE" if measurement else "INCOMPLETE"})
                 elif qualified:
                     write(output / "post-known-writer-history.json", qualified_history(request, source, int(os.environ["GITHUB_RUN_ID"])))
                     qualified_request_contract(request, source, image, os.environ["GITHUB_RUN_ATTEMPT"])
@@ -2184,6 +2314,8 @@ def main():
                 write(output / "readiness.json", readiness)
                 if not qualified:
                     write(output / "readiness-job.json", record)
+            if measurement and record.get("diagnosticEvidence") != "AVAILABLE":
+                raise ValueError("DIAGNOSTIC_EVIDENCE_INCOMPLETE: preserve original observation; no next paid case")
             if record["status"] == "NOT_PASS":
                 raise ValueError("material technical/product failure; preserve later cases NOT_RUN")
     except Exception as error:

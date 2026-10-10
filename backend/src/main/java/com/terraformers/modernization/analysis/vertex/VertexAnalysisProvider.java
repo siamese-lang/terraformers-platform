@@ -1,6 +1,7 @@
 package com.terraformers.modernization.analysis.vertex;
 
 import com.terraformers.modernization.analysis.AnalysisInputRejectedException;
+import com.terraformers.modernization.analysis.AnalysisDiagnosticEvidence;
 import com.terraformers.modernization.analysis.AnalysisProvider;
 import com.terraformers.modernization.analysis.AnalysisProviderFailureException;
 import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
@@ -104,16 +105,29 @@ public class VertexAnalysisProvider implements AnalysisProvider {
     }
 
     private AnalysisResult analyzeWithVertex(AnalysisRequestContext context) {
+        AnalysisDiagnosticEvidence.stage("source_read");
         ObjectContent source = objectReader.readContent(new ObjectReference(
                 context.sourceBucket(),
                 context.sourceKey()
         ));
+        if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().source(source.bytes());
         RetrievalOutcome retrieval = retrieveReferences(source);
-        var outcome = groundedGeneration.generate(context, source, retrieval.facts(), retrieval.references());
+        AnalysisDiagnosticEvidence.stage("initial_generation");
+        var outcome = groundedGeneration.generate(context, source, retrieval.facts(), retrieval.references(), update -> {
+            var evidence = AnalysisDiagnosticEvidence.current();
+            if (evidence == null) return;
+            evidence.candidate("initial", update.firstDraftTerraform());
+        });
         var generated = outcome.firstGeneration();
         List<ReferenceDocument> references = outcome.finalReferences();
         String terraform = outcome.finalTerraform();
+        if (AnalysisDiagnosticEvidence.current() != null) {
+            AnalysisDiagnosticEvidence.current().candidate("final", terraform);
+            AnalysisDiagnosticEvidence.current().references("final_evidence", references);
+        }
+        AnalysisDiagnosticEvidence.stage("quality_assessment");
         EvidenceQualityAssessment quality = assess(retrieval, references, terraform);
+        if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().captured("quality_assessment");
         // Repair returns HCL only. Retain initial uncertainties without presenting them as final-code findings.
         List<String> warnings = new ArrayList<>(generated.warnings().stream()
                 .map(warning -> outcome.repairAttempted()
@@ -176,7 +190,10 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         if (mode == RetrievalMode.DISABLED) {
             return new RetrievalOutcome(new ArchitectureRetrievalFacts("", List.of(), List.of(), List.of()), List.of());
         }
+        AnalysisDiagnosticEvidence.stage("facts");
         ArchitectureRetrievalFacts facts = factsExtractor.extract(source);
+        if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().facts(facts);
+        AnalysisDiagnosticEvidence.stage("retrieval");
         ReferenceQuery query = new ReferenceQuery(
                 queryTextBuilder.build(facts),
                 facts.resourceTypes(),
@@ -184,6 +201,7 @@ public class VertexAnalysisProvider implements AnalysisProvider {
         );
         try {
             List<ReferenceDocument> references = referenceRetriever.retrieve(query);
+            if (AnalysisDiagnosticEvidence.current() != null) AnalysisDiagnosticEvidence.current().references("retrieval", references);
             log.info(
                     "Vertex reference retrieval outcome=success mode={} corpusVersion={} referenceCount={}",
                     mode,

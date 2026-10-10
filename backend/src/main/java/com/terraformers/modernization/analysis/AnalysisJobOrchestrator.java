@@ -40,6 +40,7 @@ public class AnalysisJobOrchestrator {
 
     public AnalysisResult executeProviderAndValidate(AnalysisJobEntity entity) {
         AnalysisResult result;
+        AnalysisDiagnosticEvidence.stage("provider");
         try {
             result = analysisProvider.analyze(toContext(entity));
         } catch (AnalysisProviderTimeoutException exception) {
@@ -54,15 +55,25 @@ public class AnalysisJobOrchestrator {
         }
         log.info("Analysis provider completed provider={}", result.provider());
 
+        var diagnostic = AnalysisDiagnosticEvidence.current();
+        if (diagnostic != null) {
+            // Non-Vertex providers do not expose original vision/initial candidates; do not invent them.
+            diagnostic.candidate("final", result.terraformCode());
+        }
+        AnalysisDiagnosticEvidence.stage("draft_validation");
         TerraformDraftValidation validation = terraformDraftValidator.validate(result.terraformCode());
         if (!validation.valid()) {
             log.warn("Terraform draft validation failed reason={}", validation.reason());
             throw new IllegalStateException(validation.reason());
         }
+        if (diagnostic != null) diagnostic.captured("draft_validation");
         log.info("Terraform draft validation passed");
 
+        if (diagnostic != null) diagnostic.candidate("validated", validation.sanitizedContent());
+        AnalysisDiagnosticEvidence.stage("cli_init");
         TerraformDraftValidation executableValidation =
                 terraformExecutableValidator.validate(validation.sanitizedContent());
+        if (diagnostic != null) diagnostic.cli(executableValidation);
         if (!executableValidation.valid()) {
             log.warn("Terraform executable validation failed reason={}", executableValidation.reason());
             throw TerraformValidationFailureException.fromSafeReason(

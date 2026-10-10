@@ -33,7 +33,12 @@ public class AnalysisResultCleanupDispatcher {
         this.clock = clock;
     }
 
+    private AnalysisDiagnosticStorage diagnostics;
+    @org.springframework.beans.factory.annotation.Autowired
+    void setDiagnosticStorage(AnalysisDiagnosticStorage diagnostics) { this.diagnostics = diagnostics; }
+
     public void dispatchPending() {
+        if (diagnostics != null) diagnostics.dispatchExpired(executor, properties.getDispatchBatchSize());
         if (!properties.isDispatchEnabled()) return;
         var candidates = stateService.findPendingCleanupJobIds(properties.getDispatchBatchSize());
         observability.cleanupScanCandidates(candidates.size());

@@ -8,7 +8,7 @@
   "lastCompletedPhase": "PT-7",
   "activeWorkPackage": "product-trust-pt-8a-autonomous-recovery-v1",
   "activePullRequest": null,
-  "humanGate": "PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW",
+  "humanGate": "PT8A_FAILURE_DIAGNOSABILITY_CORRECTION_ACCEPTANCE_AND_USER_MERGE",
   "pendingRecovery": {
     "workPackage": ".agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml",
     "decisionBrief": "docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md",
@@ -2422,13 +2422,13 @@
     "furtherLiveExecutionAuthorized": false
   },
   "pendingReviewableDraftMeasurementAmendment": {
-    "status": "PROPOSED_D_DECISION_NOT_ADOPTED",
+    "status": "ADOPTED_HISTORICAL_EPISODE_STOPPED",
     "repositoryPreparationBaseSha": "1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a",
     "procedure": "docs/evaluation/product-trust-pt-8a-draft-measurement-amendment.md",
     "amendmentSha256": "a80e11ba1f1195b35aa0ddf38920a7d78b23e6b008c8efa4cd1d3b9dd1b77530",
     "measurementContractSha256": "67c5c9cdc9f47a2cd4f3ab70f73c9cf91e53e53917cd187e675770b590068154",
-    "humanGate": "PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW",
-    "policyAdopted": false,
+    "humanGate": "PT8A_FAILURE_DIAGNOSABILITY_CORRECTION_ACCEPTANCE_AND_USER_MERGE",
+    "policyAdopted": true,
     "liveExecutionAuthorized": false,
     "proposedOperation": "pt8a-draft-measurement",
     "proposedMode": "draft-measurement-case",
@@ -2437,7 +2437,7 @@
     "proposedProgression": "AUTHENTICATED_EVIDENCE_VALIDITY_REVIEW_NOT_QUALITY_PASS",
     "ambiguousAcceptanceCensorOrIntegrityFailure": "INCOMPLETE_STOP_NO_RESUBMISSION",
     "historicalEpisodesTruthImagesArtifactsCountersAndPolicyD": "UNCHANGED",
-    "existingAcceptanceContracts": "UNCHANGED_PENDING_EXPLICIT_USER_POLICY_ADOPTION",
+    "existingAcceptanceContracts": "ORIGINAL_MODES_UNCHANGED_HISTORICAL_MEASUREMENT_POLICY_ADOPTED_EPISODE_STOPPED",
     "adoptionRequires": [
       "INDEPENDENT_EXACT_HEAD_ACCEPTANCE",
       "EXPLICIT_USER_D_DECISION_APPROVAL",
@@ -2456,6 +2456,108 @@
       "productionBackendAndFrontendChanged": false,
       "liveExecutions": 0,
       "normalExactHeadCI": "GITHUB_AUTHORITATIVE_NOT_TRANSIENT_PROGRAM_STATE"
+    },
+    "policyApprovalCommentId": 6094107885,
+    "independentReviewCommentId": 6094103989,
+    "mergedSourceSha": "2302a85ff828411a24f235919ceddcab3cd6c89e"
+  },
+  "failureDiagnosabilityCorrection": {
+    "executionBaseSha": "2302a85ff828411a24f235919ceddcab3cd6c89e",
+    "authorityCommentId": 6094591490,
+    "status": "IMPLEMENTATION_INDEPENDENT_ACCEPTANCE_PENDING",
+    "humanGate": "PT8A_FAILURE_DIAGNOSABILITY_CORRECTION_ACCEPTANCE_AND_USER_MERGE",
+    "amendment": "docs/evaluation/product-trust-pt-8a-diagnostic-evidence-amendment.md",
+    "amendmentSha256": "cda2d90b26c9aba6c574bcc10f56ceca771144faf5fdfe3540bfdb0e9888fc98",
+    "successorMeasurementContractSha256": "50bd9d006347a2b2fb8dc9211bee5bbdfca736d05d1f5e06454c837ffb647872",
+    "historicalMeasurementContractSha256": "67c5c9cdc9f47a2cd4f3ab70f73c9cf91e53e53917cd187e675770b590068154",
+    "failureState": "DIAGNOSTIC_EVIDENCE_INCOMPLETE",
+    "furtherLiveExecutionAuthorized": false,
+    "newEpisodeAuthorized": false,
+    "historicalRepairCountersReset": false,
+    "historicalMeasurementReclassified": false,
+    "stoppedEpisode": {
+      "liveApprovalCommentId": 6094259044,
+      "sourceSha": "2302a85ff828411a24f235919ceddcab3cd6c89e",
+      "A": {
+        "runId": 38028039113,
+        "artifactId": 11660394315,
+        "reviewId": 6094373643,
+        "originalObservationUnchanged": true
+      },
+      "B": {
+        "runId": 38029022214,
+        "artifactId": 11661990598,
+        "reviewId": 6094486765,
+        "status": "FAILED",
+        "measurement": "NOT_PASS",
+        "consumed": true,
+        "failedHcl": "NOT_CAPTURED_IRRECOVERABLE",
+        "exactCliDiagnostic": "NOT_CAPTURED_IRRECOVERABLE"
+      },
+      "C": {
+        "runId": 38029924066,
+        "status": "CANCELLED",
+        "originalHistoryUnchanged": true
+      },
+      "D": "NOT_RUN",
+      "E": "NOT_RUN"
+    },
+    "newModelCalls": 0,
+    "newUploads": 0,
+    "newLiveDispatches": 0,
+    "repositoryOnlyValidation": {
+      "causalControl": "Execution-base Orchestrator with the same real pinned CLI recovery test: 1 expected assertion failure; failed candidate absent, DIAGNOSTIC_EVIDENCE_INCOMPLETE. Corrected production path: PASS.",
+      "focusedTests": 77,
+      "focusedFailures": 0,
+      "focusedErrors": 0,
+      "focusedSkipped": 0,
+      "fullBackendTests": 600,
+      "fullBackendFailures": 0,
+      "fullBackendErrors": 0,
+      "fullBackendSkipped": 4,
+      "fullBackendSkipReason": "Existing MariaDB-only smoke tests; no local database execution authorized",
+      "fullBackendInvocation": "Offline clean package; repeated once after adding post-commit stage evidence and correcting the deletion-failure test race. Final tree: 600/0/0/4.",
+      "observerTests": 89,
+      "observerFailures": 0,
+      "ragTests": 55,
+      "ragFailures": 0,
+      "ciScopeTests": 23,
+      "ciScopeFailures": 0,
+      "metadataScopeFrozenHashAndDiffChecks": "PASS",
+      "initialDevelopmentFailures": "Preserved: absent diagnostic endpoint; fixture persistence/Mockito signature; fresh-transaction visibility/late cleanup; observer fixture omitted evidence. Not product observations or historical repair counter resets. Final post-commit metadata regression exposed cleanup beating the test deletion-failure injection; injection is now fenced before expiry is published.",
+      "liveActions": 0,
+      "normalExactHeadCI": "GitHub-authoritative ordinary regression; not durable transient lifecycle or new Product Trust observation",
+      "fullBackendPackageInvocations": 2,
+      "finalizationMetadataFocusedTests": 14,
+      "finalizationMetadataFocusedFailures": 0
+    },
+    "supersededPreReviewContractSha256": "64e7cb22b6d5c41b7d09b674a014db03e9b48d62280a8bd2c3db8aea97cf0be2",
+    "supersededPreReviewAmendmentSha256": "e995d64cc3a1b877d084942a7a76c99413ada608e43f7d7a460d7e83a8854640",
+    "reviewCorrectiveIteration": {
+      "authority": "USER explicit PR272 BLOCKED review correction; same branch/WP",
+      "reviewedHead": "e27608d62dcb5ac25911595fc882b6943e9e66bf",
+      "status": "IMPLEMENTATION_INDEPENDENT_ACCEPTANCE_PENDING",
+      "scope": "Unclassified/internal cause evidence cannot be complete; stopped measurement episode remains blocked across sources",
+      "priorValidationPreserved": true,
+      "newEpisodeSupport": "NOT_IMPLEMENTED_NOT_AUTHORIZED",
+      "historicalCountersReset": false,
+      "newLiveActions": 0,
+      "validation": {
+        "beforeBackend": "1 expected failure: complete=false expected, true actual",
+        "beforeObserver": "1 test / 4 expected failing subcases: unclassified/internal with/without candidate accepted",
+        "focusedBackendTests": 42,
+        "focusedFailures": 0,
+        "fullBackendTests": 601,
+        "fullBackendFailures": 0,
+        "fullBackendErrors": 0,
+        "fullBackendSkipped": 4,
+        "skipReason": "Existing local MariaDB-only regressions",
+        "observerTests": 91,
+        "observerFailures": 0,
+        "realStoppedEpisodeHistoryRegression": "A/B/C original job metadata rejects new-source Case A; no exception/partition added",
+        "frozenScopePolicyHashAndDiffChecks": "PASS",
+        "normalExactHeadCI": "GitHub-authoritative ordinary regression only"
+      }
     }
   }
 }

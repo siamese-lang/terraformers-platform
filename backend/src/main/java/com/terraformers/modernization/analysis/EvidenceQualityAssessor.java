@@ -99,18 +99,12 @@ public final class EvidenceQualityAssessor {
         if (missingOriginAuthorization) {
             reasons.add(Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING);
         }
-        boolean missingCertificateValidation =
-                terraformInspector.missingCloudFrontCertificateValidation(input.generatedTerraform());
-        if (missingCertificateValidation) {
-            reasons.add(Reason.CLOUDFRONT_CERTIFICATE_VALIDATION_MISSING);
-        }
 
         KnowledgeStatus knowledgeStatus = knowledgeStatus(
                 extracted, extractedUnknownToProvider, missingOfficialKnowledge);
 
         boolean deterministicDegradation = !missingSelectedEvidence.isEmpty()
                 || missingOriginAuthorization
-                || missingCertificateValidation
                 || !generatedAbsentFromProvider.isEmpty()
                 || !generatedWithoutSelectedEvidence.isEmpty()
                 || projectDecisions.status() == ProjectDecisionStatus.INCOMPLETE;

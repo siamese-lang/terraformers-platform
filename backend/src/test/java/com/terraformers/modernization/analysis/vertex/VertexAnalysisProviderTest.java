@@ -78,44 +78,6 @@ class VertexAnalysisProviderTest {
     }
 
     @Test
-    void certificateOmissionInFinalRepairDegradesWithoutAnotherGenerationCycle() {
-        String pending = """
-                resource "aws_acm_certificate" "requested" {
-                  domain_name = var.domain
-                  validation_method = "DNS"
-                }
-                resource "aws_cloudfront_distribution" "edge" {
-                  viewer_certificate { acm_certificate_arn = aws_acm_certificate.requested.arn }
-                }
-                """;
-        String ordered = pending.replace("viewer_certificate {",
-                "depends_on = [aws_acm_certificate_validation.issued]\n viewer_certificate {") + """
-                resource "aws_acm_certificate_validation" "issued" {
-                  certificate_arn = aws_acm_certificate.requested.arn
-                  validation_record_fqdns = var.external_validation_fqdns
-                }
-                """;
-        for (String finalDraft : List.of(pending, ordered)) {
-            var fixture = closureFixture(List.of(official("vpc", "aws_vpc"),
-                    official("edge", "aws_cloudfront_distribution")),
-                    List.of(official("certificate", "aws_acm_certificate")), pending, finalDraft);
-            when(fixture.catalog().contains("aws_acm_certificate")).thenReturn(true);
-            when(fixture.catalog().contains("aws_acm_certificate_validation")).thenReturn(true);
-            when(fixture.retriever().retrieveOfficialDocumentation("aws_acm_certificate_validation"))
-                    .thenReturn(List.of(official("validation", "aws_acm_certificate_validation")));
-            var result = fixture.provider().analyze(context());
-            assertThat(result.terraformCode()).isEqualTo(finalDraft);
-            assertThat(result.qualityAssessment().reasons().contains(
-                    com.terraformers.modernization.analysis.EvidenceQualityAssessment.Reason.CLOUDFRONT_CERTIFICATE_VALIDATION_MISSING))
-                    .isEqualTo(finalDraft.equals(pending));
-            assertThat(result.qualityAssessment().generatedResourcesWithoutSelectedEvidence()).isEmpty();
-            verify(fixture.stage(), times(1)).generate(any(), any(), any(), any());
-            verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
-            verify(fixture.retriever(), times(2)).retrieve(any());
-        }
-    }
-
-    @Test
     void finalOriginOmissionDegradesWithoutAnotherProviderOrRetrievalCall() throws Exception {
         String missing = java.nio.file.Files.readString(java.nio.file.Path.of(
                 "src/test/resources/terraform/pt3-origin-without-authorization.tf"));

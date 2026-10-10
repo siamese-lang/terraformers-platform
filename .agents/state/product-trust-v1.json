@@ -2391,5 +2391,34 @@
       "Full browser trust not observed; original UNKNOWN quality is not semantic PASS",
       "No timeout reliability or post-change model fidelity established"
     ]
+  },
+  "reviewableDraftProductContractRealignment": {
+    "authority": "USER selective ACM reversal on existing product task; repository-only; technical implementation delegated",
+    "atomicTaskExecutionBaseSha": "739877718c25d77c694a2e5f2020a59e0c4a87cf",
+    "status": "REPOSITORY_CORRECTION_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE_PENDING",
+    "humanGate": "PT8A_RECOVERY_IMPLEMENTATION_ACCEPTANCE_AND_USER_MERGE",
+    "supersededCurrentImplementationInterpretations": [
+      "certificateIssuanceCorrection",
+      "reviewableDraftBoundaryAudit ACM issuance/import/instance enforcement only"
+    ],
+    "implementation": "Remove ACM issuance dependency inspector, dedicated reason/UI and mandatory issuance/custom-domain instruction; retain image-first draft boundaries, final evidence/schema/CLI validation and initial-warning provenance",
+    "preservedObservedDraftRegression": "Original observed Terraform bytes retain technical PASS, selected knowledge COMPLETE and UNKNOWN quality/applicability without a dedicated deployment-completion finding; no semantic acceptance inference",
+    "otherResourceSpecificChecks": "Existing CloudFront OAC/new S3 origin declaration check and provider-region coherence instructions retained; no effective IAM, deployed certificate or DNS status guarantee",
+    "acceptanceAlignment": "Frozen v4 already permits variables/external references and excludes page-only issuance/DNS semantics; clarification proposal documented but not applied",
+    "originalEvidenceAndConsumption": "All original runs/artifacts, failed and successful DIAGNOSTIC_ONLY observations, persisted outcomes and consumed attempts unchanged",
+    "timeoutPhysicalCause": "UNRESOLVED_NO_EVIDENCE_FOR_POLICY_CHANGE",
+    "humanAuthorizedCorrection": "Separate USER-authorized product-contract correction; does not reset or consume additional autonomous repair authority",
+    "historicalBasesCountersTruthProceduresAndGuardsUnchanged": true,
+    "validation": {
+      "focusedBackend": "80 PASS; inspector/assessor/provider/prompt/generation/CLI regressions",
+      "focusedFrontend": "15 PASS; existing AnalysisStatus suite",
+      "fullBackend": "One offline clean package: BUILD SUCCESS; 593 total / 589 PASS / 4 MariaDB-prerequisite SKIP / 0 failures / 0 errors",
+      "fullFrontend": "13 suites / 82 PASS / 0 failures",
+      "normalPrCI": "GitHub_authoritative_no_manual_dispatch_or_rerun"
+    },
+    "newModelCalls": 0,
+    "newUploads": 0,
+    "newLiveDispatches": 0,
+    "furtherLiveExecutionAuthorized": false
   }
 }

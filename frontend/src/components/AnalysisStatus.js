@@ -14,7 +14,6 @@ const qualityLabels = {
 };
 const reasonLabels = {
   CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING: 'CloudFront에서 새 S3 원본을 읽기 위한 권한 선언을 찾지 못했습니다. 원본과 권한 설정을 검토하세요.',
-  CLOUDFRONT_CERTIFICATE_VALIDATION_MISSING: 'CloudFront에 연결된 새 인증서의 발급 완료 의존성을 찾지 못했습니다. 인증서 검증과 연결을 검토하세요.',
   RESOURCE_UNKNOWN_TO_PROVIDER: '공급자 schema에서 확인되지 않은 리소스 유형이 있습니다.',
   OFFICIAL_KNOWLEDGE_NOT_AVAILABLE: '일부 리소스 유형의 공식 지식이 없습니다.',
   REQUIRED_EVIDENCE_NOT_RETRIEVED: '필요한 근거 일부를 검색하지 못했습니다.',

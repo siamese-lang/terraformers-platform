@@ -34,7 +34,7 @@ work_package:
     consumed A/B failures and all Policy D behavior; final semantic acceptance and
     live execution remain separately gated.
   decision_brief: docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md
-  current_human_gate: PT8A_FAILURE_DIAGNOSABILITY_CORRECTION_ACCEPTANCE_AND_USER_MERGE
+  current_human_gate: PT8A_FOLLOWUP_MEASUREMENT_EPISODE_ACCEPTANCE_AND_USER_MERGE
   original_contract:
     work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
     auto_repairs_used: 1
@@ -241,10 +241,10 @@ work_package:
       backend_workflow_JWKS_changes: 0
       previous_backend_and_RAG_results_preserved_not_reexecuted_locally: true
   proposed_successor_measurement_amendment:
-    status: PROPOSED_D_DECISION_NOT_ADOPTED
+    status: ADOPTED_HISTORICAL_EPISODE_STOPPED
     procedure: docs/evaluation/product-trust-pt-8a-draft-measurement-amendment.md
     separate_atomic_preparation_base_sha: 1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a
-    current_decision_gate: PT8A_REVIEWABLE_DRAFT_MEASUREMENT_AMENDMENT_REVIEW
+    current_decision_gate: HISTORICAL_CLOSED_BY_USER_MERGE_PR271
     historical_work_package_base_and_exhausted_repair_counters: unchanged
     repository_preparation_authority: USER_reviewable_draft_measurement_contract_realignment
     proposed_operation: pt8a-draft-measurement
@@ -255,7 +255,7 @@ work_package:
   failure_diagnosability_correction:
     authority: USER_explicit_mandatory_correction_and_comment_6094591490
     execution_base_sha: 2302a85ff828411a24f235919ceddcab3cd6c89e
-    status: IMPLEMENTATION_INDEPENDENT_ACCEPTANCE_PENDING
+    status: INDEPENDENT_ACCEPTANCE_PASS_USER_MERGED_PR272
     separate_from_exhausted_historical_recovery_repairs: true
     historical_auto_repairs_used: 3
     historical_counters_reset: false
@@ -263,5 +263,24 @@ work_package:
     prohibited: live_model_upload_dispatch_GCP_IAM_ingestion_new_workflow_evaluator_merge_or_phase_progression
     amendment: docs/evaluation/product-trust-pt-8a-diagnostic-evidence-amendment.md
     acceptance: original_failed_candidates_and_safe_cause_recoverable_with_owner_isolation_bounded_retention_and_fail_closed_measurement
-    human_gate: PT8A_FAILURE_DIAGNOSABILITY_CORRECTION_ACCEPTANCE_AND_USER_MERGE
+    human_gate: CLOSED_BY_USER_MERGE_PR272
     new_episode_or_live_execution_authorized: false
+
+  followup_measurement_episode:
+    authority: USER_explicit_repository_only_episode_reconciliation_after_PR272_merge
+    execution_base_sha: 228367c6df7ad8bbb74b1c9a0c135f768d780310
+    episode_id: pt8a-reviewable-draft-diagnostics-episode-2
+    start_after_run_id: 38029924066
+    original_A_B_C: AUTHENTICATED_PREDECESSOR_NOT_NEW_EPISODE_RESULTS
+    original_B: FAILED_NOT_PASS_CONSUMED_IRRECOVERABLE_CLI_DETAIL
+    original_C: CANCELLED_NO_ARTIFACT
+    new_episode_status: REPOSITORY_IMPLEMENTATION_PENDING_INDEPENDENT_ACCEPTANCE_AND_USER_MERGE
+    contract_sha256: 933785c78faf55dfcc36fbded65a2842aedf365a5849ba6101e56967b782835c
+    episode_procedure: docs/evaluation/product-trust-pt-8a-followup-measurement-episode.md
+    episode_procedure_sha256: 5f7bc4fcf67b99318716f4e17837ed9433f90e4a73c3292e3783ff75a2890231
+    new_live_execution_authorized: false
+    separate_exact_source_image_contract_risk_budget_approval_required_after_merge: true
+    old_episode_approval_not_reused: 6094259044
+    independent_review_per_new_case: required
+    backend_generation_model_prompt_RAG_frozen_truth_and_policy_D: unchanged
+    PT8B_and_teardown: unauthorized

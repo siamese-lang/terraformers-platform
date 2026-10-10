@@ -2,6 +2,23 @@
 
 ## Status
 
+Current: **PT-8A follow-up measurement episode / REPOSITORY IMPLEMENTATION FOR REVIEW**.
+PR #272's failure-diagnosis correction is accepted and USER-merged at main
+`228367c6df7ad8bbb74b1c9a0c135f768d780310`. The existing workflow/runner now
+propose distinct episode `pt8a-reviewable-draft-diagnostics-episode-2` after cancelled
+run `38029924066`, authenticating prior A/B archives, reviews, approval, upload
+consumption and C cancellation before allowing a new A. Within the episode, source,
+image, contract, approval, attempt/upload and A→E order remain fenced. A private
+owner HCL readback with hash verification and safe CLI cause/location is mandatory
+before failed-candidate evidence can be independently reviewed. The prior B failure
+is still NOT_PASS/consumed and unrecoverable; it is not part of new quality totals.
+[Episode proposal](../../evaluation/product-trust-pt-8a-followup-measurement-episode.md)
+requires independent acceptance, explicit USER policy approval, USER merge, then a
+separate exact live source/image/risk/cost approval before dispatch. PT-8B remains
+unauthorized. Gate: **PT8A_FOLLOWUP_MEASUREMENT_EPISODE_ACCEPTANCE_AND_USER_MERGE**.
+
+### Historical reviewable-draft proposal checkpoint
+
 Current: **PT-8A reviewable-draft measurement amendment / PROPOSED D_DECISION NOT ADOPTED**,
 repository-only preparation bound to `1460b1ad8f34e0a63ebe16af3c205f01b4c28a0a` after USER-merged
 PR #270. [Decision proposal](../../evaluation/product-trust-pt-8a-draft-measurement-amendment.md)

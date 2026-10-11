@@ -4,8 +4,10 @@ import java.util.Locale;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 @Component
+@ConditionalOnProperty(name = "terraformers.security.jwt.provider", havingValue = "cognito", matchIfMissing = true)
 public class CognitoJwtExternalIdentityMapper implements JwtExternalIdentityMapper {
 
     static final String PROVIDER = "cognito";

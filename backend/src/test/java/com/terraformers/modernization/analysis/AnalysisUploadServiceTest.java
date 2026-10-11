@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.terraformers.modernization.identity.AuthenticatedUserService;
 import com.terraformers.modernization.identity.UserEntity;
+import com.terraformers.modernization.security.BillableAnalysisPolicy;
 import com.terraformers.modernization.project.ProjectVisibility;
 import com.terraformers.modernization.projectcore.OwnedProjectEntity;
 import com.terraformers.modernization.projectcore.ProjectArtifactService;
@@ -45,7 +46,8 @@ class AnalysisUploadServiceTest {
                 projectDomainService,
                 projectArtifactService,
                 storageService,
-                analysisJobService
+                analysisJobService,
+                mock(BillableAnalysisPolicy.class)
         );
 
         assertThatThrownBy(() -> service.upload(file, "New Project", jwt))

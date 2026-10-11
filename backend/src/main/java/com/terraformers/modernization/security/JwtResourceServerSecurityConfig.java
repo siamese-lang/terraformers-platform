@@ -1,17 +1,21 @@
 package com.terraformers.modernization.security;
 
+import com.terraformers.modernization.identity.AuthenticatedUserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -19,7 +23,7 @@ public class JwtResourceServerSecurityConfig {
 
     @Bean
     @ConditionalOnProperty(name = "terraformers.security.jwt.enabled", havingValue = "true")
-    SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http, AuthenticatedUserService users) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
@@ -38,7 +42,19 @@ public class JwtResourceServerSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**",
                                 "/actuator/info", "/actuator/prometheus", "/internal/runtime/required-config")
                         .permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().access((authentication, context) -> {
+                            Object principal = authentication.get().getPrincipal();
+                            if (!(principal instanceof org.springframework.security.oauth2.jwt.Jwt jwt)) {
+                                return new AuthorizationDecision(false);
+                            }
+                            try {
+                                users.getOrCreate(jwt);
+                                return new AuthorizationDecision(true);
+                            } catch (RuntimeException denied) {
+                                // DB-disabled accounts and identity conflicts fail closed on every protected route.
+                                return new AuthorizationDecision(false);
+                            }
+                        }))
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable());
@@ -46,6 +62,7 @@ public class JwtResourceServerSecurityConfig {
     }
 
     @Bean
+    @Profile({"local", "test"})
     @ConditionalOnProperty(name = "terraformers.security.jwt.enabled", havingValue = "false", matchIfMissing = true)
     SecurityFilterChain localPermitAllSecurityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -64,7 +81,8 @@ public class JwtResourceServerSecurityConfig {
             @Value("${terraformers.security.jwt.jwk-set-uri}") String jwkSetUri,
             JwtProviderTokenValidator providerTokenValidator
     ) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+                .jwsAlgorithm(SignatureAlgorithm.RS256).build();
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
                 JwtValidators.createDefaultWithIssuer(issuerUri),
                 providerTokenValidator

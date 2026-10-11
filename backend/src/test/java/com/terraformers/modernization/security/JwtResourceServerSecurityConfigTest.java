@@ -1,5 +1,8 @@
 package com.terraformers.modernization.security;
 
+import com.terraformers.modernization.identity.UserEntity;
+import com.terraformers.modernization.identity.UserRepository;
+import com.terraformers.modernization.identity.UserStatus;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
@@ -29,6 +32,9 @@ class JwtResourceServerSecurityConfigTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private UserRepository users;
+
     @Test
     void protectedRouteRequiresAuthentication() throws Exception {
         mockMvc.perform(get("/api/projects"))
@@ -41,6 +47,18 @@ class JwtResourceServerSecurityConfigTest {
                         .claim("sub", "security-test-subject")
                         .claim("cognito:username", "security-test-user"))))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void disabledDatabaseAccountIsDeniedOnAnOtherwiseUnlistedProtectedRoute() throws Exception {
+        UserEntity user = new UserEntity();
+        user.setExternalIdentity("cognito", "disabled-security-subject");
+        user.setDisplayName("Disabled");
+        user.setStatus(UserStatus.DISABLED);
+        users.saveAndFlush(user);
+        mockMvc.perform(get("/api/security-regression/unlisted").with(jwt().jwt(token -> token
+                        .claim("sub", "disabled-security-subject"))))
+                .andExpect(status().isForbidden());
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.terraformers.modernization.analysis;
 
 import com.terraformers.modernization.identity.AuthenticatedUserService;
 import com.terraformers.modernization.identity.UserEntity;
+import com.terraformers.modernization.security.BillableAnalysisPolicy;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.NoSuchElementException;
@@ -24,13 +25,16 @@ public class AnalysisJobController {
 
     private final AnalysisJobService service;
     private final AuthenticatedUserService authenticatedUserService;
+    private final BillableAnalysisPolicy billableAnalysisPolicy;
 
     public AnalysisJobController(
             AnalysisJobService service,
-            AuthenticatedUserService authenticatedUserService
+            AuthenticatedUserService authenticatedUserService,
+            BillableAnalysisPolicy billableAnalysisPolicy
     ) {
         this.service = service;
         this.authenticatedUserService = authenticatedUserService;
+        this.billableAnalysisPolicy = billableAnalysisPolicy;
     }
 
     @PostMapping
@@ -39,6 +43,7 @@ public class AnalysisJobController {
             @AuthenticationPrincipal Jwt jwt
     ) {
         UserEntity requester = authenticatedUserService.getOrCreate(jwt);
+        billableAnalysisPolicy.requireAllowed(jwt, requester);
         AnalysisJobResponse response = service.create(request, requester);
         return ResponseEntity
                 .created(URI.create("/api/analysis/jobs/" + response.id()))

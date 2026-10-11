@@ -52,3 +52,9 @@ Offline RS256 signed/unsigned and claim rejection tests, UID mapping and entitle
 tests, common disabled-user protection, existing owner/public-route regressions and
 the full backend package test the boundary. Release can remain on explicit Cognito
 mode until F4 authorizes Firebase activation. The test JWKS path is retained.
+
+F3/F4 deployment blockers: a hosted release must select the Firebase-only profile,
+bind the exact Firebase project issuer and official Google JWKS, and reject any test
+JWKS, Cognito fallback or development permit-all configuration. Public routing must
+exclude `/actuator/*` and `/internal/*` while preserving private operational access.
+The application's anonymous monitoring GETs do not authorize public ingress exposure.

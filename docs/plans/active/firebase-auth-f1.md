@@ -15,3 +15,9 @@ F1 excludes React, Firebase tenant activation, GCP/IAM/Ingress changes, live bro
 journey, model calls and PT-8A outcome changes. F2–F5 require their own authority.
 The F4 live checkpoint must review the token revocation gap, per-process throttle and
 missing distributed/lifetime cost quota before allowing public billable users.
+F3/F4 hosted deployment is blocked until the release configuration proves Firebase-only
+JWT mode with the exact project issuer and official Google JWKS (no test JWKS, Cognito
+fallback or development permit-all profile). The public ingress must exclude
+`/actuator/*` and `/internal/*`; their backend health, metrics and runtime handlers
+are for private operational access, even where the application permits anonymous GET.
+F1 neither changes that ingress nor authorizes a hosted release.

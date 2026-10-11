@@ -1,5 +1,7 @@
 # Terraformers — final GCP live evidence snapshot (2026-10-11 UTC)
 
+> **Historical live-test snapshot:** The `GCP_TEARDOWN_NOT_YET_EXECUTED` disposition below was accurate **at T1/T2 observation time**. The GCP runtime was subsequently dismantled; see [final teardown closure receipt](../lifecycle/gcp-2026-final-teardown-receipt.md). This later infrastructure lifecycle result does **not** alter T1/T2 findings or promote Product Trust acceptance.
+
 > **Disposition: PORTFOLIO_EVIDENCE_BACKED_ENGINEERING_CLAIMS_SUFFICIENT / FULL_PRODUCT_TRUST_ACCEPTANCE_NOT_ESTABLISHED / GCP_TEARDOWN_NOT_YET_EXECUTED.**
 >
 > This is a **sanitized operator-observed evidence transcript**, not a signed CI artifact or independent replay. Source: USER-supplied Cloud Shell, Cloud Logging, browser Network and authenticated API observations during the 2026-10-11 T1/T2 session. No bearer tokens, Firebase UIDs, passwords, prompts, raw images or private Terraform HCL are committed. The original official PT-8A negative/not-run ledger is preserved unchanged.

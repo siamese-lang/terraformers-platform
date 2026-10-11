@@ -1,5 +1,7 @@
 # GCP 2026 hosted runtime — FINAL teardown delta, preservation and preflight
 
+> **HISTORICAL PREFLIGHT (superseded 2026-10-11 UTC):** The reviewed teardown was executed after this planning document. See [actual GCP hosted teardown closure receipt](gcp-2026-final-teardown-receipt.md) for the 29-delete GitHub Actions run, missed 15 GiB OpenSearch disk, manual recovery, bootstrap cleanup, billing unlink and operator-confirmed Firebase user deletion. Statements below that no teardown has occurred describe the **earlier planning snapshot**, not current state. The original safeguards remain part of the record.
+
 > **Status: DOCUMENTATION / NOT A DESTRUCTIVE AUTHORIZATION.** User selected “final evidence preservation, then GCP teardown” on 2026-10-11. No live deletion, Terraform destroy, scale-to-zero, secret export or Firebase-account deletion has been executed by this documentation task. **A separately reviewed current resource inventory, deletion-only plan and explicit USER destructive checkpoint are required.**
 
 ## 1. Why the previous teardown procedure is not executable as-is

@@ -1,5 +1,7 @@
 # Terraformers Modernization Master Plan
 
+> **2026-10-12 LIFECYCLE OVERRIDE:** The historical M0–M10 and Product Trust plans below must not be treated as open work queues. User-approved portfolio evidence closure and actual `GCP_RUNTIME_TORN_DOWN` supersede earlier active-roadmap labels. [Current README](../../README.md), [project checkpoint](../AI_PROJECT_STATE.md), [GCP teardown receipt](../lifecycle/gcp-2026-final-teardown-receipt.md). Original PT-8A negative/UNKNOWN and PT-8B admission conditions are **not** waived. No cloud reconstruction or new feature phase is authorized by this notice.
+
 > **CURRENT OVERRIDE — PORTFOLIO COMPLETION (2026-10-11).** The active single next-task plan is [Portfolio Final Completion](active/portfolio-final-completion.md) and the single current checkpoint is [AI Project State](../AI_PROJECT_STATE.md). Original sequential M0–M10 rules below are historical where superseded by portfolio reassessment and Product Trust user decisions; they do **not** authorize resuming unfinished milestone TODOs. Case A/B/C remain historically portfolio-closed, PT-8A is user-qualified-closed but original full acceptance not achieved, and PT-8B/PT-9 are blocked without explicit future authorization.
 
 ---

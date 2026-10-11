@@ -1,5 +1,7 @@
 # Terraformers Portfolio Closure and Lifecycle Plan
 
+> **HISTORICAL AWS CLOSURE ROADMAP:** This document recorded the AWS lifecycle completion before the later 2026 GCP modernization. Its “current source of truth”, “read this first” and next-action language are historical, **not** the present execution authority. The latest [README](../README.md), [project state](AI_PROJECT_STATE.md) and [GCP teardown receipt](lifecycle/gcp-2026-final-teardown-receipt.md) supersede its status and work queue. Do not relaunch former AWS or GCP runtimes by following old instructions.
+
 Status: **AWS lifecycle closure and repository publication complete**
 
 ## 1. Authority and conflict resolution

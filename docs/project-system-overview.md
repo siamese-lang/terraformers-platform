@@ -1,5 +1,7 @@
 # Terraformers Modernization 프로젝트 전체 구성 안내서
 
+> **AWS-ERA SYSTEM OVERVIEW — HISTORICAL (superseded 2026-10-12 KST):** This long-form document explains the former EKS/RDS/Cognito/Bedrock/AOSS/CloudFront architecture and its AWS lifecycle closure; it is **not** the latest GCP-hosted implementation or the authoritative 2026 project status. Start with the [current portfolio README](../README.md), [GCP modernization engineering account](portfolio/terraformers-modernization-final-engineering-account-20261011.md) and [final GCP teardown](lifecycle/gcp-2026-final-teardown-receipt.md). Legacy “current” labels below are contemporaneous AWS records.
+
 Status: canonical technical overview of the last verified deployed architecture; runtime and bootstrap closure complete; project-scoped zero-AWS-resource proof verified; redeployment documented but not executed
 
 ## 1. 이 문서를 먼저 읽는 이유

@@ -4,7 +4,7 @@
 
 - **Authoritative lifecycle:** GCP hosted runtime and its Terraform 29 managed instances were removed by [run 38177854068](https://github.com/siamese-lang/terraformers-platform/actions/runs/38177854068) at source `91a8181295a4e74c1ac3881a2b2f45638d536cb0`; the omitted 15 GiB OpenSearch disk was separately verified unused and deleted. Terraform bootstrap/state and diagnostic reader were deleted, billing was unlinked (`billingEnabled=false`), and two Firebase Authentication users were operator-confirmed deleted. **Firebase/GCP project and selected configuration remain.** Full event/result boundaries: [2026 hosted teardown closure receipt](lifecycle/gcp-2026-final-teardown-receipt.md).
 - **Quality remains independent of teardown:** `PORTFOLIO_EVIDENCE_BACKED_ENGINEERING_CLAIMS_SUFFICIENT` and `FULL_PRODUCT_TRUST_ACCEPTANCE_NOT_ESTABLISHED`. PT-8A remains qualified-closed, not original A–E full PASS; `qualityStatus=UNKNOWN` on supplementary five-case cohort, and PT-8B original admission gate remains unmet. No new live work is authorized.
-- **Earlier checkpoints and preflight/portfolio documents below are dated history**, including any `CURRENT`, `ACTIVE_RETAINED`, `GCP_TEARDOWN_NOT_EXECUTED`, `Next single task` or prior-source-SHA wording. They are not instructions to reactivate a torn-down runtime. This documentation-only PR is subject to USER review and merge; it does not itself mutate GCP.
+- **Earlier checkpoints and preflight/portfolio documents below are dated history**, including any `CURRENT`, `ACTIVE_RETAINED`, `GCP_TEARDOWN_NOT_EXECUTED`, `Next single task` or prior-source-SHA wording. They are not instructions to reactivate a torn-down runtime. The already-merged final-teardown documentation did not itself mutate GCP.
 
 ---
 

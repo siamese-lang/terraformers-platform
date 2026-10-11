@@ -1,5 +1,7 @@
 # Current Status
 
+> **ARCHIVED 2026-07-14 INITIAL SNAPSHOT:** This was the first public-repository baseline and its “not yet completed” items are not current open tasks. For present portfolio/lifecycle state see the [README](../README.md) and [GCP teardown receipt](lifecycle/gcp-2026-final-teardown-receipt.md). The original dated content is retained unchanged below.
+
 ## 2026-07-14
 
 ### Completed

@@ -217,12 +217,24 @@ jobs:
               else
                 echo "Source-SHA tag already exists and will not be moved: $image_tag" >&2
               fi
-              exit 1
+              return 1
             fi
-            [[ "$response" == *NOT_FOUND* || "$response" == *NOT_FOUND:* ]] || {
-              echo 'Cannot prove image tag is absent; refusing publication.' >&2
-              exit 1
-            }
+            if [[ "$response" == 'ERROR: (gcloud.artifacts.docker.images.describe) Image not found.' ]]; then
+              return 0
+            fi
+
+            local error_class=UNCLASSIFIED
+            if [[ "$response" =~ (PERMISSION_DENIED|403) ]]; then
+              error_class=PERMISSION_DENIED
+            elif [[ "$response" =~ (UNAUTHENTICATED|401|invalid_grant) ]]; then
+              error_class=AUTHENTICATION
+            elif [[ "$response" =~ (UNAVAILABLE|DEADLINE_EXCEEDED|timed.out|could.not.resolve|connection.reset) ]]; then
+              error_class=NETWORK_OR_SERVICE
+            fi
+            local diagnostic_sha256
+            diagnostic_sha256="$(printf '%s' "$response" | sha256sum | cut -d' ' -f1)"
+            echo "Registry tag lookup failed closed (error_class=$error_class, diagnostic_sha256=$diagnostic_sha256); publication was not attempted." >&2
+            return 1
           }
           reject_existing_tag
 

@@ -62,6 +62,9 @@ terraformers:
       provider: ${JWT_PROVIDER:cognito}
       issuer-uri: ${JWT_ISSUER_URI}
       jwk-set-uri: ${JWT_JWK_SET_URI}
+      firebase:
+        project-id: ${FIREBASE_PROJECT_ID:}
+        billable-uids: ${FIREBASE_BILLABLE_UIDS:}
   upload:
     source-bucket: ${UPLOAD_SOURCE_BUCKET}
     source-prefix: browser-uploads

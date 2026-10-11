@@ -4,8 +4,10 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 @Component
+@ConditionalOnProperty(name = "terraformers.security.jwt.provider", havingValue = "cognito", matchIfMissing = true)
 public class CognitoAccessTokenValidator implements JwtProviderTokenValidator {
 
     private final String clientId;

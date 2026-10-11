@@ -1,5 +1,9 @@
 # Terraformers — Portfolio Completion & Single Current State Plan
 
+> Separate USER-approved backend F1 authentication work is tracked in
+> [firebase-auth-f1.md](firebase-auth-f1.md). It does not change qualified PT-8A
+> evidence or authorize the S2 live browser observation in this plan.
+
 > **S1 READ-ONLY AUDIT RESULT (2026-10-11; repository-only, subject to independent review and USER merge):** [Current evidence prioritization and browser-readiness decision](../../portfolio/current-evidence-prioritization-20261011.md). Latest PR #274/#277 cross-stage facts/intent/repair correction plus actual five-image observations are promoted to lead portfolio candidates; B5 failure injection and Case C pod replacement remain the strongest for different invariants. S1 repository review completed; present-time GCP cluster/owner/JWKS readback **not performed**. Last verified rollout source `6e448698…` differs from PR #278 preview script's default source `435ca32d…`, but the existing `GCP_PREVIEW_BACKEND_SOURCE_SHA` override is available *after fresh readback*. New preview subject does not automatically own existing A/B/N1–N3 Jobs. No S2 authority, model call, JWKS mutation or Product Trust gate waiver.
 
 ---

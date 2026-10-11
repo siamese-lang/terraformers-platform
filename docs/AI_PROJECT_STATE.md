@@ -1,5 +1,15 @@
 # AI Project State
 
+## Current F1 repository-only authentication proposal
+
+Issue #281 selects Firebase Authentication with the existing GKE backend JWT Resource
+Server as the future real-user boundary. The bounded F1 implementation is based on
+remote main `33a98dd9ae21415b74fb22580a8fffaace0f7483` and awaits independent
+review and USER merge. [ADR-009](architecture/decisions/ADR-009-firebase-id-token-backend-boundary.md)
+and the [F1 plan](plans/active/firebase-auth-f1.md) record security limits. F1 is
+repository-only; no Firebase tenant, GCP/IAM action, hosted frontend, paid analysis,
+F2 or PT-8B is authorized. Qualified PT-8A evidence below remains unchanged.
+
 ## SINGLE CURRENT CHECKPOINT — 2026-10-11 / GOAL & PORTFOLIO RECONCILIATION
 
 - **Authoritative actual main at preparation:** `6e4486988b97ad1abdaa09a15db18b6ea30fc838`, PR #278 merged. This proposed PR must receive independent review and USER merge before becoming authoritative `main` state. Historical source SHAs below are not current source.

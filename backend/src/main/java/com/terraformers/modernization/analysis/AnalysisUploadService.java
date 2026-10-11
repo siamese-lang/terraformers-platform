@@ -2,6 +2,7 @@ package com.terraformers.modernization.analysis;
 
 import com.terraformers.modernization.identity.AuthenticatedUserService;
 import com.terraformers.modernization.identity.UserEntity;
+import com.terraformers.modernization.security.BillableAnalysisPolicy;
 import com.terraformers.modernization.project.ProjectVisibility;
 import com.terraformers.modernization.projectcore.OwnedProjectEntity;
 import com.terraformers.modernization.projectcore.ProjectArtifactService;
@@ -22,19 +23,22 @@ public class AnalysisUploadService {
     private final ProjectArtifactService projectArtifactService;
     private final UploadObjectStorageService uploadObjectStorageService;
     private final AnalysisJobService analysisJobService;
+    private final BillableAnalysisPolicy billableAnalysisPolicy;
 
     public AnalysisUploadService(
             AuthenticatedUserService authenticatedUserService,
             ProjectDomainService projectDomainService,
             ProjectArtifactService projectArtifactService,
             UploadObjectStorageService uploadObjectStorageService,
-            AnalysisJobService analysisJobService
+            AnalysisJobService analysisJobService,
+            BillableAnalysisPolicy billableAnalysisPolicy
     ) {
         this.authenticatedUserService = authenticatedUserService;
         this.projectDomainService = projectDomainService;
         this.projectArtifactService = projectArtifactService;
         this.uploadObjectStorageService = uploadObjectStorageService;
         this.analysisJobService = analysisJobService;
+        this.billableAnalysisPolicy = billableAnalysisPolicy;
     }
 
     public AnalysisUploadResponse upload(
@@ -47,6 +51,7 @@ public class AnalysisUploadService {
         }
 
         UserEntity currentUser = authenticatedUserService.getOrCreate(jwt);
+        billableAnalysisPolicy.requireAllowed(jwt, currentUser);
         String originalFilename = safeOriginalFilename(file);
         OwnedProjectEntity project = resolveProject(requestedProjectName, currentUser);
 

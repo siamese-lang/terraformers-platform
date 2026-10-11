@@ -8,6 +8,7 @@ import com.terraformers.modernization.config.RuntimeContractProperties;
 import com.terraformers.modernization.reference.opensearch.AwsOpenSearchRuntimeProperties;
 import com.terraformers.modernization.security.CognitoJwtRuntimeProperties;
 import com.terraformers.modernization.security.JwtRuntimeProperties;
+import com.terraformers.modernization.security.FirebaseJwtRuntimeProperties;
 import com.terraformers.modernization.storage.StorageRuntimeProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,7 +18,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @EnableConfigurationProperties({RuntimeContractProperties.class, AnalysisRuntimeProperties.class, BedrockRuntimeProperties.class,
         VertexRuntimeProperties.class,
         SqsRuntimeProperties.class, AwsOpenSearchRuntimeProperties.class, JwtRuntimeProperties.class,
-        CognitoJwtRuntimeProperties.class, StorageRuntimeProperties.class})
+        CognitoJwtRuntimeProperties.class, FirebaseJwtRuntimeProperties.class, StorageRuntimeProperties.class})
 public class TerraformersBackendApplication {
 
     public static void main(String[] args) {

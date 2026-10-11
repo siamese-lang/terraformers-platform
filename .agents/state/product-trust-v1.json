@@ -4,17 +4,19 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": "PT-8A",
+  "activePhase": null,
   "lastCompletedPhase": "PT-7",
-  "activeWorkPackage": "product-trust-pt-8a-evidence-grounded-correction-v1",
+  "activeWorkPackage": null,
   "activePullRequest": null,
-  "humanGate": "PT8A_EVIDENCE_GROUNDED_CORRECTION_ACCEPTANCE_AND_USER_MERGE",
+  "humanGate": "POST_PT8A_QUALIFIED_CLOSURE_INTEGRATED_PROOF_SCOPE_DECISION",
   "pt8aEvidenceGroundedCorrection": {
     "executionBaseSha": "eb0c685e04dbfdfd3cc8aeb5e737883b62ef54f4",
-    "status": "REPOSITORY_ONLY_INDEPENDENT_ACCEPTANCE_PENDING",
+    "status": "PR277_MERGED_REPOSITORY_CORRECTION_QUALIFIED_CLOSURE",
     "historicalCaseResultsAndConsumptionUnchanged": true,
     "liveExecutionAuthorized": false,
-    "nextPhaseAuthorized": false
+    "nextPhaseAuthorized": false,
+    "mergedPullRequest": 277,
+    "mergeCommitSha": "435ca32d4ef194f512c3019925acaac19507b7af"
   },
   "pendingRecovery": {
     "workPackage": ".agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml",
@@ -142,11 +144,11 @@
     "USER-authorized governance-only correction for review 6031593870 preserves accepted PT-6R1 code, all evidence, the bound execution base and repair/correction counters. PT-6R1 acceptance and USER merge lead to HUMAN_REQUIRED: PRODUCT_TRUST_EVIDENCE_VALIDITY_REASSESSMENT, not automatic PT-6R2 activation. A subsequent reviewed, explicitly USER-approved, independently accepted and USER-merged evidence-validity amendment must release the pause; its content/version/base are not selected here.",
     "PR #252 latest independent review 6031698220 accepted tree c9792b42b4a6a9b8529a904d240c5bccf5d08d10 at head 2b63e79; merge-policy-only empty head 25336fa preserves that tree. USER merged as 38f995b. PT-6R1 is COMPLETE without new database/behavioral measurements or counter changes. USER authorizes this substantive v4 evidence-validity preparation only. Historical reference-derived truth remains frozen but controlled regression; five exact official candidates require new human freeze. PT-6R2 stays unauthorized until amendment review, explicit USER approval, independent acceptance and USER merge. No future base, live/model/cloud action or self-acceptance is inferred.",
     "USER-authorized bounded correction for PR #253 review 6032307527 separates all five cases into image_observable_truth, documentation_context and conditional draft_technical_closure. Official image/source provenance is unchanged; exact pre-freeze candidate identity fad3627 and both pinned files are archived. New revision 2 remains unapproved, unexecuted and model count 0. V4 autonomous repair remains 1; human corrective iteration 1 is recorded separately. Base, accepted structural DAG, PT-6R1 completion and historical evidence/counters remain unchanged; no live/model/PT-6R2 authority.",
-    "PR #253 review 6032563396 accepted immutable AWS candidate revision 2; USER merged as 406981a8c629a02503f5660453dcc7921b8d5177 and approval 6032637762 externally freezes identity 3e105771\u2026 without changing candidate bytes. Exactly PT-6R2 audit activates on that once-read main. SDK 1.72.0 defaults five attempts and removes transport timeouts; synchronous worker plus independent heartbeat has no accepted-age terminal cutoff. Four options are recommendations only. Stop at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION; no production implementation, model/cloud/OpenSearch/database/browser action or PT-7 authority. Historical evidence/counters stay exact; transient PR/branch fields stay null.",
+    "PR #253 review 6032563396 accepted immutable AWS candidate revision 2; USER merged as 406981a8c629a02503f5660453dcc7921b8d5177 and approval 6032637762 externally freezes identity 3e105771… without changing candidate bytes. Exactly PT-6R2 audit activates on that once-read main. SDK 1.72.0 defaults five attempts and removes transport timeouts; synchronous worker plus independent heartbeat has no accepted-age terminal cutoff. Four options are recommendations only. Stop at PROVIDER_OR_JOB_LATENCY_BUDGET_DECISION; no production implementation, model/cloud/OpenSearch/database/browser action or PT-7 authority. Historical evidence/counters stay exact; transient PR/branch fields stay null.",
     "Explicit USER policy D approval selects facts 370s, generation/compact/repair 220s, embeddings 10s, SDK attempts 1 / no retryable statuses, durable attempts 1 and original accepted-age cutoff 8 minutes. One existing H2 state-service run (5 existing tests plus 1 temporary lock diagnostic) confirms terminal SQL waits on the external-I/O finalization row lock. Stop at the USER-declared PT6R2_TERMINAL_ENFORCEMENT_SCOPE_DECISION before redesigning finalization or weakening cutoff; no production configuration/implementation or live action occurred. Temporary test bytes restored. Historical audit/evidence/counters remain unchanged; diagnostic is not a PT-6R1 measurement or PT-6R2 acceptance.",
     "USER explicitly authorizes narrow PT6R2 finalization fencing following independent scope review 6036430154 at c516288. Candidate code implements policy D, external write outside finalization transaction, post-write/post-commit fencing, accepted-age sweep and one durable claim. Compile/test-compile pass. First focused 130 tests: 1 failure / 6 errors; one test-only repair rerun 11 tests: 2 failures / 0 errors. Two legacy assertions were missed; no second repair or full suite is run. Stop HUMAN_REQUIRED: PT6R2_BOUNDED_REPAIR_LIMIT_REACHED on the same Work Package/PR. No acceptance, deployment, live/model/database remeasurement, PT7 or counter reset; immutable historical evidence and frozen bytes stay exact.",
     "USER explicitly authorizes one test-contract-only human correction following review 6037186101 at 2ac19e2. Exactly three legacy regression files align with existing finalization order / attempts=1; production bytes and PT6R1 identity scenario/counters remain unchanged. One local focused invocation passes 11/0/0/0; one offline clean package passes 576/0/0/4 (MariaDB skipped locally). Prior failed validation evidence is immutable. Autonomous repairs stay 1; human corrective iterations become 1. Return to PT6R2 implementation complete / independent acceptance pending. Exact corrective-head automatic Backend Local Verification is GitHub-authoritative regression only, not a PT6R1 before/after measurement. No manual DB/model/cloud/OpenSearch/browser/dispatch, PT7, self-acceptance or merge authority.",
-    "PR #254 independent review 6037528315 accepted head 987ec944; USER merged as 6228d69b. PT6R2 COMPLETE is reconciled inside this substantive PT7 PR with original base/evidence/auto repair 1/human correction 1 and conditional \u0394 limits preserved. Explicit USER PT7 request binds that main once. Existing backend workflow gets separate backend/image scope and one always-present backend-required-verification; actual ruleset is read-only and still Terraform-only. Stop after exact-head normal CI at PT7_REQUIRED_CHECK_RULESET_CHANGE, then require explicit ruleset authority, independent phase acceptance and USER merge. No live/model/cloud/OpenSearch/runtime operation, PT8A execution, new workflow or transient PR lifecycle state.",
+    "PR #254 independent review 6037528315 accepted head 987ec944; USER merged as 6228d69b. PT6R2 COMPLETE is reconciled inside this substantive PT7 PR with original base/evidence/auto repair 1/human correction 1 and conditional Δ limits preserved. Explicit USER PT7 request binds that main once. Existing backend workflow gets separate backend/image scope and one always-present backend-required-verification; actual ruleset is read-only and still Terraform-only. Stop after exact-head normal CI at PT7_REQUIRED_CHECK_RULESET_CHANGE, then require explicit ruleset authority, independent phase acceptance and USER merge. No live/model/cloud/OpenSearch/runtime operation, PT8A execution, new workflow or transient PR lifecycle state.",
     "PR #255 review 6038261202 accepted head b8645e56; USER merged as 2bdb73d2. Authorized administrator added only backend-required-verification/15368, preserving Terraform/15368 and other ruleset settings. PT7 COMPLETE reconciles in this substantive PT8A preparation PR. Explicit USER preparation binds main once and freezes one-case-per-dispatch/independent review plus exact v4 IDs/non-vector source and clean model-lineage readiness. Historical corrected ingestion 37344219922/artifact 11359644809 lacks retained UUID/fresh-vs-skipped lineage: MODEL_PROVENANCE_UNPROVEN, not live current-index proof. All frozen bytes and historical evidence/counters stay exact. Model/input/live counts remain zero; live source/digest null. Stop FINAL_REALISTIC_AI_RAG_LIVE_MODEL_COST_ACCEPTANCE; no automatic ingestion, dispatch, acceptance, merge, PT8B or teardown; GitHub owns transient lifecycle.",
     "Review 6039675842 sole lineage blocker: USER authorizes one repository-only clean-v4 correction. Human correction 1 is separate from preserved autonomous repair 1. Procedure v1 bytes/hash are superseded, v2 frozen before outcomes. Existing workflow clean mode pins historical source/checksum, requires exact live authority, full non-vector/UUID admission and all-5395 vector overwrites, then completed receipt before first readiness. No live/cloud/model/image activity; independent acceptance pending."
   ],
@@ -256,7 +258,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "228367c6df7ad8bbb74b1c9a0c135f768d780310",
+  "lastObservedMainSha": "6e4486988b97ad1abdaa09a15db18b6ea30fc838",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -1193,7 +1195,7 @@
         "acceptedJobTerminalStatus": "SUCCEEDED",
         "acceptedToTerminalMs": 6642,
         "qualitySnapshot": null,
-        "qualityUi": "\ud3c9\uac00 \uae30\ub85d \uc5c6\uc74c; editable/reference draft and conditional limits visible",
+        "qualityUi": "평가 기록 없음; editable/reference draft and conditional limits visible",
         "realValidator": "TerraformCliValidator",
         "realCommandExecutor": "ProcessCommandExecutor",
         "terraformVersion": "1.8.5",
@@ -1298,7 +1300,7 @@
       "additionalBeforeStateExecutionLimit": 1,
       "additionalBeforeStateExecutionsUsed": 1,
       "humanCorrectiveIteration1": {
-        "authority": "USER explicit reply: \ucd94\uac00 before-state 1\ud68c \uc2b9\uc778",
+        "authority": "USER explicit reply: 추가 before-state 1회 승인",
         "scope": "One additional real-MariaDB before-state only; conditional minimum product correction and one after-state remain under original authority.",
         "maximumAdditionalBeforeExecutions": 1,
         "additionalBeforeExecutionsUsed": 1,
@@ -2608,5 +2610,26 @@
     "separateExactSourceImageContractRiskBudgetApprovalAfterMerge": true,
     "productQualityAndMeasurementCompletenessSeparate": true,
     "PT8BAndTeardownAuthorized": false
+  },
+  "pt8aQualifiedClosure": {
+    "authority": "USER",
+    "decisionDate": "2026-10-11",
+    "status": "QUALIFIED_CLOSED_NOT_OFFICIAL_A_E_ACCEPTANCE",
+    "originalOfficialAcceptance": "NOT_PASS_OR_NOT_RUN_PRESERVED",
+    "observations": [
+      "A",
+      "B",
+      "N1",
+      "N2",
+      "N3"
+    ],
+    "terminalSuccessCount": 5,
+    "terraformCliPassCount": 5,
+    "qualityStatus": "UNKNOWN",
+    "semanticPassClaim": false,
+    "n3Residual": "DOMAIN_SETTINGS_IMAGE_UNKNOWN_AND_INTERNAL_CONFIGURATION_CONSISTENCY",
+    "pt8bOriginalDependency": "INDEPENDENT_PT8A_ACCEPTANCE_REQUIRED_UNCHANGED_UNMET",
+    "nextAction": "READ_ONLY_GCP_BROWSER_PROOF_READINESS_DECISION",
+    "plan": "docs/plans/active/portfolio-final-completion.md"
   }
 }

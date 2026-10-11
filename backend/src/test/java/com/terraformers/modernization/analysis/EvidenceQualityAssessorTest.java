@@ -20,6 +20,24 @@ import org.junit.jupiter.api.Test;
 
 class EvidenceQualityAssessorTest {
 
+    @Test
+    void implicitDefaultWithAllAliasedAwsProvidersDegradesOtherwiseDocumentedDraft() {
+        String aliased = """
+                provider "aws" { alias = "central" region = var.central_region }
+                provider "aws" { alias = "remote" region = var.remote_region }
+                resource "aws_iam_role" "worker" { name = var.role_name }
+                """;
+        EvidenceQualityAssessment assessment = assessSupportedOrigin(aliased, ProjectDecisionApplicability.NOT_APPLICABLE);
+        assertThat(assessment.technicalStatus()).isEqualTo(TechnicalStatus.PASS);
+        assertThat(assessment.generatedResourcesWithoutSelectedEvidence()).isEmpty();
+        assertThat(assessment.qualityStatus()).isEqualTo(QualityStatus.DEGRADED);
+        assertThat(assessment.reasons()).containsExactly(Reason.ALIASED_AWS_PROVIDER_IMPLICIT_DEFAULT);
+        assertThat(assessSupportedOrigin(aliased.replace("name = var.role_name",
+                "provider = aws.central\n name = var.role_name"),
+                ProjectDecisionApplicability.NOT_APPLICABLE).qualityStatus())
+                .isEqualTo(QualityStatus.EVIDENCE_BACKED);
+    }
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final AwsProviderSchemaCatalog catalog = new AwsProviderSchemaCatalog(
             objectMapper,

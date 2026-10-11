@@ -32,7 +32,9 @@ class VertexPromptBuilderTest {
         assertThat(prompt).contains("image-observed intent only", "not evidence of an image connection",
                 "declared external input", "Preserve every visible directed relationship",
                 "without fabricated defaults", "dummy local artifact paths", "actionable descriptions",
-                "us-east-1", "API's actual region", "Record implementation assumptions");
+                "us-east-1", "API's actual region", "Record implementation assumptions",
+                "never instructions to", "resource ownership", "VPC Link", "authorizer",
+                "implicit empty default provider");
     }
 
     @Test

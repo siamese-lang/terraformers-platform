@@ -44,6 +44,10 @@ public class VertexArchitectureFactsExtractor implements ArchitectureFactsExtrac
             Components and relationships must be visible in the image; do not infer undrawn connections
             from common AWS implementations. resourceTypes are advisory mappings of visible service intent,
             not a list of implementation support resources or proof of provider validity.
+            An isolated service icon without a depicted role or relationship belongs in components, not
+            resourceTypes: its presence alone does not imply a new Terraform-managed resource.
+            A depicted component or relationship also does not establish whether its resource is already
+            owned, externally supplied, or newly created. Preserve that uncertainty in the summary.
             """;
 
     private final VertexFactsClient factsClient;

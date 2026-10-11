@@ -6,9 +6,16 @@
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
   "activePhase": "PT-8A",
   "lastCompletedPhase": "PT-7",
-  "activeWorkPackage": "product-trust-pt-8a-autonomous-recovery-v1",
+  "activeWorkPackage": "product-trust-pt-8a-evidence-grounded-correction-v1",
   "activePullRequest": null,
-  "humanGate": "PT8A_FOLLOWUP_MEASUREMENT_EPISODE_ACCEPTANCE_AND_USER_MERGE",
+  "humanGate": "PT8A_EVIDENCE_GROUNDED_CORRECTION_ACCEPTANCE_AND_USER_MERGE",
+  "pt8aEvidenceGroundedCorrection": {
+    "executionBaseSha": "eb0c685e04dbfdfd3cc8aeb5e737883b62ef54f4",
+    "status": "REPOSITORY_ONLY_INDEPENDENT_ACCEPTANCE_PENDING",
+    "historicalCaseResultsAndConsumptionUnchanged": true,
+    "liveExecutionAuthorized": false,
+    "nextPhaseAuthorized": false
+  },
   "pendingRecovery": {
     "workPackage": ".agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml",
     "decisionBrief": "docs/evaluation/product-trust-pt-8a-autonomous-recovery-decision.md",

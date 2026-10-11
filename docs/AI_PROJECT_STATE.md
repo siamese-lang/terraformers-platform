@@ -1,5 +1,18 @@
 # AI Project State
 
+## Current PT-8A checkpoint: evidence-grounded product correction
+
+Repository-only correction bound to remote main `eb0c685e04dbfdfd3cc8aeb5e737883b62ef54f4`.
+The consumed A–E diagnostic reviews (A `6099185607`, B `6100264295`, C `6100409001`,
+D `6100517376`, E `6100656286`) support targeted corrections to facts/resource intent,
+generation instructions, aliased-provider quality and repair syntax acceptance. The original
+artifacts and dispositions remain unchanged. Deterministic tests cannot establish that model
+outputs now preserve every architecture relationship; a separate reviewed source/image and
+live authority would be required for that claim. Current gate:
+**PT8A_EVIDENCE_GROUNDED_CORRECTION_ACCEPTANCE_AND_USER_MERGE**. No live/model action,
+PT-8B, or teardown is authorized by this repository-only Work Package. Older checkpoints
+below are historical where superseded.
+
 ## Current PT-8A checkpoint: B–E cause-focused diagnostic proposal
 
 Authoritative activation main: `f79bea4b09f56b0bbbb38e37c909ff0f43d7d6d2`.

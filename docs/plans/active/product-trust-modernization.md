@@ -1,5 +1,14 @@
 # Product Trust Modernization
 
+## Current correction gate
+
+PT-8A B–E diagnostics are consumed under source `eb0c685e04dbfdfd3cc8aeb5e737883b62ef54f4`.
+The [evidence-grounded correction Work Package](../../../.agents/work-packages/product-trust-pt-8a-evidence-grounded-correction-v1.yml)
+is repository-only and awaits independent acceptance and USER merge. It preserves the
+historical quality dispositions and does not authorize a model rerun, deployment, PT-8B or
+teardown. Gate: **PT8A_EVIDENCE_GROUNDED_CORRECTION_ACCEPTANCE_AND_USER_MERGE**.
+Earlier status sections are historical where superseded by this checkpoint.
+
 ## Status
 
 Current: **PT-8A follow-up measurement episode / REPOSITORY IMPLEMENTATION FOR REVIEW**.

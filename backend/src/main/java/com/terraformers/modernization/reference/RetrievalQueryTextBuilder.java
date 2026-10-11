@@ -9,7 +9,7 @@ public class RetrievalQueryTextBuilder {
         if (facts == null || facts.isEmpty()) {
             throw new IllegalStateException("architecture retrieval facts must not be empty");
         }
-        return "Architecture summary: %s. Components: %s. Relationships: %s. Terraform resource candidates: %s."
+        return "Architecture summary: %s. Components: %s. Relationships: %s. Provider documentation lookup hints (not CREATE intent): %s."
                 .formatted(facts.summary(), join(facts.components()), join(facts.relationships()), join(facts.resourceTypes()));
     }
 

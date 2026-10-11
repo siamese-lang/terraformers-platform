@@ -7,6 +7,9 @@ import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
 import com.terraformers.modernization.analysis.RequiredGroundingPolicy;
+import com.terraformers.modernization.analysis.TerraformCliValidator;
+import com.terraformers.modernization.analysis.TerraformDraftValidation;
+import com.terraformers.modernization.analysis.TerraformValidationFailureException;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
 import com.terraformers.modernization.reference.AwsProviderSchemaEvidence;
@@ -26,6 +29,7 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,15 +47,25 @@ public class VertexGroundedGenerationOrchestrator {
     private final AnalysisRuntimeProperties properties;
     private final AwsProviderSchemaCatalog schemaCatalog;
     private final GeneratedTerraformContractInspector contractInspector;
+    private final TerraformCliValidator syntaxValidator;
 
+    @Autowired
     public VertexGroundedGenerationOrchestrator(VertexGenerationStage generationStage,
             ReferenceRetriever referenceRetriever, AnalysisRuntimeProperties properties,
-            AwsProviderSchemaCatalog schemaCatalog, GeneratedTerraformContractInspector contractInspector) {
+            AwsProviderSchemaCatalog schemaCatalog, GeneratedTerraformContractInspector contractInspector,
+            TerraformCliValidator syntaxValidator) {
         this.generationStage = generationStage;
         this.referenceRetriever = referenceRetriever;
         this.properties = properties;
         this.schemaCatalog = schemaCatalog;
         this.contractInspector = contractInspector;
+        this.syntaxValidator = syntaxValidator;
+    }
+
+    public VertexGroundedGenerationOrchestrator(VertexGenerationStage generationStage,
+            ReferenceRetriever referenceRetriever, AnalysisRuntimeProperties properties,
+            AwsProviderSchemaCatalog schemaCatalog, GeneratedTerraformContractInspector contractInspector) {
+        this(generationStage, referenceRetriever, properties, schemaCatalog, contractInspector, null);
     }
 
     public Outcome generate(AnalysisRequestContext context, ObjectContent source,
@@ -125,6 +139,16 @@ public class VertexGroundedGenerationOrchestrator {
             if (AnalysisDiagnosticEvidence.current() != null) {
                 AnalysisDiagnosticEvidence.current().candidate("final", repaired);
                 AnalysisDiagnosticEvidence.current().captured("repair");
+            }
+            if (syntaxValidator != null) {
+                TerraformDraftValidation syntax = syntaxValidator.validateSyntax(repaired);
+                if (!syntax.valid()) {
+                    if (AnalysisDiagnosticEvidence.current() != null) {
+                        AnalysisDiagnosticEvidence.current().repairSyntaxFailure(syntax);
+                    }
+                    throw TerraformValidationFailureException.fromSafeReason(
+                            syntax.reason(), syntax.diagnosticSummary());
+                }
             }
             outcome = new Outcome(generated, initial, outcome.closureRetrieval(), selected,
                     true, repaired, List.of());

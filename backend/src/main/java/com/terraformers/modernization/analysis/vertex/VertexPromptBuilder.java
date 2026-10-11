@@ -16,17 +16,27 @@ public class VertexPromptBuilder {
             Image facts and implementation boundaries:
             - Summary, components and relationships describe image-observed intent only. Provider examples
               and PROJECT_DECISION text are not evidence of an image connection or additional service.
+            - Resource candidates and retrieved documents are syntax lookup hints, never instructions to
+              CREATE. A service icon alone does not establish resource ownership, quantity or lifecycle.
+              For an existing or ownership-unknown endpoint use a data reference or declared external
+              input where possible; create it only when the image or request supports that choice.
             - Do not connect depicted services merely because they commonly appear together in examples.
               For an undrawn required endpoint/origin, use a declared external input rather than inventing
               a connection to another depicted service. Preserve every visible directed relationship.
             - Include implementation support wiring and authorization for the relationships actually chosen;
               such support resources are not additional image-observed components or relationships.
+              If an API route uses an identity provider, wire that route to its authorizer; a separate
+              identity-provider resource does not enforce authentication. If an HTTP API targets a private
+              load balancer, supply its VPC Link and private integration connection. A private container
+              task needs a coherent image-pull network path through NAT or appropriate endpoints.
             - PROJECT_DECISION applicability requires its architectural context, not just a shared support
               resource such as an IAM role. Do not import unrelated platform constraints.
             - Missing personalized domain, hosted zone, certificate, region, account and code artifact values
               must be declared inputs/references with actionable descriptions, without fabricated defaults
               or dummy local artifact paths. Editable inputs are valid; claim neither asset existence nor deployment.
             - Keep region-dependent resources and endpoints coherent with their provider configuration.
+              When every AWS provider configuration is aliased, assign managed resources to the intended
+              alias rather than relying on Terraform's implicit empty default provider.
               CloudFront ACM certificates require us-east-1; regional API Gateway certificates and origins
               must match the API's actual region. Use separate provider aliases or declared external
               certificates when necessary, not an undeclared region embedded in an endpoint string.
@@ -144,6 +154,8 @@ public class VertexPromptBuilder {
                   relationship prose does not implement their connection. Repair missing grounded wiring;
                   leave uncertain connections unresolved rather than inventing them.
                 - Correct HCL using supplied official provider documentation and exact AWS Provider 5.100.0 schema.
+                - Preserve syntactically valid block headers and references while replacing the complete
+                  HCL; a repair that cannot be completed safely must not masquerade as validated code.
                 - Do not introduce unrelated architecture components. Preserve necessary implementation
                   support resources and validate them against the provider schema.
                 - Module blocks are forbidden. Do not invent structurally invalid arguments or nested blocks.

@@ -20,6 +20,43 @@ class TerraformCliValidatorTest {
     Path tempRoot;
 
     @Test
+    void repairSyntaxCheckUsesOnlyOfflineTerraformFmtAndDoesNotLeakCandidate() {
+        String candidate = "resource \"aws_ecs_cluster\" \"cluster\"\n{\n name = \"PRIVATE\"\n}";
+        RecordingExecutor executor = new RecordingExecutor(result(1, false,
+                "Error: Invalid block definition\nPRIVATE"));
+        TerraformDraftValidation failed = validator(executor).validateSyntax(candidate);
+        assertThat(failed.valid()).isFalse();
+        assertThat(failed.reason()).startsWith("INIT_CONFIGURATION:").doesNotContain("PRIVATE");
+        assertThat(failed.diagnosticSummary().diagnosticClasses())
+                .containsExactly(TerraformDiagnosticSummary.DiagnosticClass.CONFIGURATION_SYNTAX);
+        assertThat(executor.commands()).singleElement().satisfies(command -> assertThat(command)
+                .containsExactly("terraform", "fmt", "-write=false", "-list=false", "-no-color", "main.tf")
+                .doesNotContain("init", "validate", "plan", "apply"));
+        assertTempRootEmpty();
+
+        RecordingExecutor valid = new RecordingExecutor(result(0, false, ""));
+        assertThat(validator(valid).validateSyntax("resource \"aws_ecs_cluster\" \"cluster\" {}")
+                .valid()).isTrue();
+        assertTempRootEmpty();
+    }
+
+    @Test
+    void realPinnedTerraformRejectsRepairSplitBlockButKeepsValidDraft() throws Exception {
+        org.junit.jupiter.api.Assumptions.assumeTrue(System.getProperty("pt8a.testTerraform") != null);
+        var real = new TerraformCliValidator(new ObjectMapper(), new TerraformCliValidator.ProcessCommandExecutor(),
+                System.getProperty("pt8a.testTerraform"), tempRoot, Duration.ofSeconds(60),
+                Duration.ofSeconds(20), tempRoot);
+        String initial = "resource \"aws_ecs_cluster\" \"cluster\" {\n name = \"reviewable\"\n}\n";
+        String repaired = initial.replace("\"cluster\" {", "\"cluster\"\n{");
+        assertThat(real.validateSyntax(initial).valid()).isTrue();
+        TerraformDraftValidation failed = real.validateSyntax(repaired);
+        assertThat(failed.valid()).isFalse();
+        assertThat(failed.diagnosticSummary().diagnosticClasses())
+                .contains(TerraformDiagnosticSummary.DiagnosticClass.CONFIGURATION_SYNTAX);
+        assertTempRootEmpty();
+    }
+
+    @Test
     void realOfflineMissingProviderCannotBeMistakenForHclSchemaFailure() throws Exception {
         org.junit.jupiter.api.Assumptions.assumeTrue(System.getProperty("pt8a.testTerraform") != null,
                 "uses already checked Dockerfile-pinned local executable when supplied; no test download");

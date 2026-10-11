@@ -12,7 +12,7 @@ class RetrievalQueryTextBuilderTest {
                 "private EKS workload with managed database", List.of("EKS", "RDS", "VPC"),
                 List.of("EKS workloads connect to RDS in private subnets"), List.of("aws_eks_cluster", "aws_db_instance")));
 
-        assertThat(query).contains("EKS", "RDS", "aws_eks_cluster")
+        assertThat(query).contains("EKS", "RDS", "aws_eks_cluster", "not CREATE intent")
                 .doesNotContain("project-", "bucket", "key", "https://", "pdf", "page");
     }
 }

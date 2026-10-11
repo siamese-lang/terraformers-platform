@@ -27,6 +27,9 @@ import com.terraformers.modernization.analysis.AnalysisProviderFailureReason;
 import com.terraformers.modernization.analysis.AnalysisRequestContext;
 import com.terraformers.modernization.analysis.AnalysisRuntimeProperties;
 import com.terraformers.modernization.analysis.GeneratedTerraformContractInspector;
+import com.terraformers.modernization.analysis.TerraformCliValidator;
+import com.terraformers.modernization.analysis.TerraformDraftValidation;
+import com.terraformers.modernization.analysis.TerraformValidationFailureException;
 import com.terraformers.modernization.analysis.EvidenceQualityAssessor;
 import com.terraformers.modernization.reference.ArchitectureRetrievalFacts;
 import com.terraformers.modernization.reference.AwsProviderSchemaCatalog;
@@ -602,6 +605,54 @@ class VertexAnalysisProviderTest {
         assertThat(draft.getValue().terraformCode()).isEqualTo(first);
         verify(fixture.retriever(), times(2)).retrieve(any());
         verify(fixture.inspector()).inspect(repaired);
+    }
+
+    @Test
+    void malformedRepairIsNotPromotedAndValidRepairKeepsSingleClosure() {
+        String initial = "resource \"aws_vpc\" \"main\" {}\nresource \"aws_subnet\" \"support\" {}";
+        String broken = initial + "\nresource \"aws_ecs_cluster\" \"cluster\"\n{}";
+        for (boolean valid : List.of(false, true)) {
+            String repaired = valid ? initial + "\nresource \"aws_security_group\" \"support\" {}" : broken;
+            ClosureFixture fixture = closureFixture(List.of(official("vpc", "aws_vpc")),
+                    List.of(official("subnet", "aws_subnet")), initial, repaired);
+            TerraformCliValidator syntax = mock(TerraformCliValidator.class);
+            when(syntax.validateSyntax(repaired)).thenReturn(new TerraformDraftValidation(valid, repaired,
+                    valid ? null : "INIT_CONFIGURATION: Terraform repair has invalid HCL syntax",
+                    valid ? null : new com.terraformers.modernization.analysis.TerraformDiagnosticSummary(
+                            List.of(com.terraformers.modernization.analysis.TerraformDiagnosticSummary.DiagnosticClass.CONFIGURATION_SYNTAX),
+                            1, 0)));
+            var orchestrator = new VertexGroundedGenerationOrchestrator(fixture.stage(), fixture.retriever(),
+                    fixture.properties(), fixture.catalog(), fixture.inspector(), syntax);
+            var facts = new ArchitectureRetrievalFacts("VPC", List.of("VPC"), List.of("VPC -> app"),
+                    List.of("aws_vpc"));
+            if (valid) {
+                assertThat(orchestrator.generate(context(), source(), facts,
+                        List.of(official("vpc", "aws_vpc"))).finalTerraform()).isEqualTo(repaired);
+            } else {
+                var job = new com.terraformers.modernization.analysis.AnalysisJobEntity();
+                job.setProjectId(1L); job.setSourceFileId(2L);
+                try (var evidence = com.terraformers.modernization.analysis.AnalysisDiagnosticEvidence.open(job)) {
+                    try {
+                        orchestrator.generate(context(), source(), facts, List.of(official("vpc", "aws_vpc")));
+                        throw new AssertionError("malformed repair accepted");
+                    } catch (TerraformValidationFailureException failure) {
+                        assertThat(failure.getMessage()).contains("invalid HCL syntax");
+                        evidence.failed(failure);
+                    }
+                    var bundle = evidence.bundle(new ObjectMapper());
+                    assertThat(bundle.get("complete")).isEqualTo(true);
+                    assertThat(new ObjectMapper().valueToTree(bundle).path("candidates").path("initial")
+                            .path("content").asText()).isEqualTo(initial);
+                    assertThat(new ObjectMapper().valueToTree(bundle).path("candidates").path("final")
+                            .path("content").asText()).isEqualTo(repaired);
+                    assertThat(new ObjectMapper().valueToTree(bundle).path("failure").path("stage")
+                            .asText()).isEqualTo("repair");
+                }
+            }
+            verify(syntax).validateSyntax(repaired);
+            verify(fixture.stage(), times(1)).repair(any(), any(), any(), any());
+            verify(fixture.retriever(), times(1)).retrieve(any());
+        }
     }
 
     @Test

@@ -4,10 +4,10 @@ program:
   contract_status: APPROVED_V4_INDEPENDENTLY_ACCEPTED_AND_USER_MERGED
   active_amendment: null
   active_phase: PT-8A
-  active_work_package: .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
+  active_work_package: .agents/work-packages/product-trust-pt-8a-evidence-grounded-correction-v1.yml
   amendment_preparation_authority: USER_explicit_repository_only_v4_request
   exact_candidate_truth_approved: true
-  current_human_gate: PT8A_FOLLOWUP_MEASUREMENT_EPISODE_ACCEPTANCE_AND_USER_MERGE
+  current_human_gate: PT8A_EVIDENCE_GROUNDED_CORRECTION_ACCEPTANCE_AND_USER_MERGE
   status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"

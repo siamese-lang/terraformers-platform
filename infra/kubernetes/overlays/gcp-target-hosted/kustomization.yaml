@@ -38,5 +38,5 @@ images:
     newName: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-backend
     digest: sha256:REPLACE_WITH_REVIEWED_BACKEND_DIGEST
   - name: terraformers-frontend-hosted
-    newName: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-frontend/terraformers-frontend
+    newName: asia-northeast3-docker.pkg.dev/terraformers-platform/terraformers-backend/terraformers-frontend
     digest: sha256:REPLACE_WITH_REVIEWED_FRONTEND_DIGEST

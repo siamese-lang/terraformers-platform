@@ -6,7 +6,7 @@
 
 **Program/State:** `.agents/programs/product-trust-v1.yml` and `.agents/state/product-trust-v1.json` identify **no eligible automatic next phase**. The unchanged original PT-8B full-PT8A acceptance dependency is not met; any alternate qualified-evidence transition requires an explicit later D_DECISION. This document's historical proposed gates are not active.
 
-**Next single task:** After independent acceptance and USER merge of the repository state sync, perform read-only **integrated GCP browser proof readiness and minimum-scope decision**, not new product implementation. Check existing deployed source and existing Job ownership/JWKS/reuse possibility first; authorizations for auth-fixture mutation, paid model invocation and destruction remain separate. [Authoritative current roadmap](portfolio-final-completion.md).
+**Next single task:** After independent acceptance and USER merge of the repository state sync, perform **read-only portfolio evidence promotion and optional integrated GCP browser proof-readiness decision**, not new product implementation. First rank the latest PR #274/#277 structural corrections and official A/B + new N1/N2/N3 results against older Case-specific evidence. Then check deployed source, existing Job ownership, JWKS, and whether any browser evidence is actually needed. Auth-fixture mutation, paid model invocation and destruction require separate authority. [Authoritative current roadmap](portfolio-final-completion.md).
 
 **Historical note:** All headings/checkpoints below are preserved as historical records of what was current *at their time*; do not interpret them as later work authorization.
 

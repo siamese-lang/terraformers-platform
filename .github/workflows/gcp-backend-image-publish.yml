@@ -212,7 +212,11 @@ jobs:
             if response="$(gcloud artifacts docker images describe "$image_tag" \
                 --project="$GCP_PROJECT" \
                 --format='value(image_summary.digest)' 2>&1)"; then
-              echo "Immutable source/config tag already exists and will not be moved: $image_tag" >&2
+              if [[ "$IMAGE_KIND" == frontend ]]; then
+                echo "Immutable frontend source/config tag already exists and will not be moved: $image_tag" >&2
+              else
+                echo "Source-SHA tag already exists and will not be moved: $image_tag" >&2
+              fi
               exit 1
             fi
             [[ "$response" == *NOT_FOUND* || "$response" == *NOT_FOUND:* ]] || {

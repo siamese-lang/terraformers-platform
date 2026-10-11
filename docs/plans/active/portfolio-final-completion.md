@@ -1,5 +1,7 @@
 # Terraformers — Portfolio Completion & Single Current State Plan
 
+> **ARCHIVED EXECUTION ROADMAP:** S0–S4 below describe the 2026-10-11 plan and historical decision gates, not a new implementation queue. S4 hosted teardown, extra OpenSearch-disk recovery, bootstrap cleanup, billing unlink and operator-confirmed Firebase user deletion have since occurred. Current lifecycle state: `GCP_RUNTIME_TORN_DOWN`; see [final closure receipt](../../lifecycle/gcp-2026-final-teardown-receipt.md). The original PT-8A/PT-8B quality acceptance criteria remain unchanged.
+
 > Separate USER-approved backend F1 authentication work is tracked in
 > [firebase-auth-f1.md](firebase-auth-f1.md). It does not change qualified PT-8A
 > evidence or authorize the S2 live browser observation in this plan.

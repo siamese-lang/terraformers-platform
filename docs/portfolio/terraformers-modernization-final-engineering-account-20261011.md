@@ -1,5 +1,7 @@
 # Terraformers — 2026 modernization engineering account (Case A/B/C → Product Trust → GCP live)
 
+> **Lifecycle update (after this historical engineering account):** The recorded `GCP_TEARDOWN_NOT_EXECUTED` is a test-time snapshot; the actual 2026-10-11 UTC teardown and final operator inventory are in the [GCP closure receipt](../lifecycle/gcp-2026-final-teardown-receipt.md). Engineering evidence and negative/UNKNOWN Product Trust boundaries below are unchanged.
+
 > **Scope:** THIS modernization program only. This is an evidence-ranked account of the early Case A/B/C work **and** the later Product Trust/Firebase/T1/T2 work. It is not a team-project history or a description of another modernization effort.
 >
 > **Disposition:** `PORTFOLIO_EVIDENCE_BACKED_ENGINEERING_CLAIMS_SUFFICIENT`; `FULL_PRODUCT_TRUST_ACCEPTANCE_NOT_ESTABLISHED`; `GCP_TEARDOWN_NOT_EXECUTED`. At final T1/T2 test, `main` and deployed Backend revision were `5dd67b046ed802089b1a55b7bf07343b7a6316e6`. Earlier cases were executed on different, frozen revisions and must not be represented as one same-source benchmark.

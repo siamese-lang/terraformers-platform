@@ -17,30 +17,6 @@ The earlier Case A/B/C names distinguish workstreams, **not an enforced number o
 
 **Explicit grouping:** 1+2 are naturally one deeper AI evidence→grounding→generation→validation story; 3 and 4 are different infrastructure/backend reliability problems. The final number and grouping are **not fixed**. Stronger old AWS incidents may be used as examples if appropriate, clearly marked historical, rather than promoted to today's GCP architecture.
 
-## 1A. 소재은행 인덱스 — 대표 소재에서 빠져도 버리지 않는다
-
-**선정/보존은 경쟁 관계가 아니다.** 위 순위는 *이번 포트폴리오 본문에서 무엇을 먼저 설명할지*의 발표 우선순위일 뿐이다. 아래는 향후 직무별 자기소개서, 면접, 기술 블로그, 프로젝트 회고를 위한 **활용 후보 인덱스**다. 순위 밖 항목은 폐기·품질 불합격·과거 근거 삭제를 뜻하지 않는다. 분류 `CURRENT` / `SUPPORTING` / `HISTORICAL` / `UNPROVEN`은 **적용 시점과 현재 주장 범위**이며, 소재 가치의 등급이 아니다. 각 링크의 독립 검증·Before/After 증거를 실제 사용 시 다시 확인하고, 검증하지 않은 성공을 만들어 쓰지 않는다.
-
-| 활용 가능한 경험 · 질문 관점 | 근거 및 추적 시작점 | 사용 시 경계 |
-|---|---|---|
-| 이미지 해석 → structured facts → RAG → 초기 생성 사이 **정보 손실 및 관계 복구** | [PR #274](https://github.com/siamese-lang/terraformers-platform/pull/274), [PR #277](https://github.com/siamese-lang/terraformers-platform/pull/277), [PT-8A five-case ledger](../evaluation/pt8a-qualified-five-case-disposition.md) | **CURRENT**, 선도 사례 후보; 의미 품질 전건 PASS 아님 |
-| RAG corpus 부족(초기 30종) → 폭넓은 공식 참조·검색 정책·적응형 근거 선택 | [Case A grounding decision](../plans/active/case-a-retrieval-grounding-decision.md), [A7-0 knowledge](../evaluation/case-a-a7-0-authoritative-knowledge-coverage.md), [Case A closure](../evaluation/case-a-final-closure.md) | **SUPPORTING**, v3 정규/holdout과 v4 지식 범위는 서로 다른 근거 |
-| 품질 지표의 **false-green**, 근거 완전성과 이미지 의미 일치 분리 | [A7-1 quality contract](../evaluation/case-a-a7-1-evidence-quality-contract.md), [A7-2 false-green calibration](../evaluation/case-a-a7-2-false-green-calibration.md) | **SUPPORTING**, 자동 `UNKNOWN`을 결과 FAIL/PASS로 조작하지 않음 |
-| 안전한 Terraform CLI 진단: 생성 코드·개인정보 원문 노출 없이 원인 범주 기록 | [A7-5 safe executable diagnostics](../evaluation/case-a-a7-5-safe-executable-diagnostics.md) | **SUPPORTING**, 사용자에게 검증된 실제 CLI 실패 범위만 설명 |
-| Vertex/Gemini 긴 지연, 단계별 텔레메트리·가설 배제·호출 한도 결정 | [Gemini fact-reuse latency investigation](../evaluation/gemini-fact-reuse-latency-diagnostic-closure.md), [PT-6R2 terminality](../evaluation/product-trust-pt-6r2-provider-terminality.md) | **SUPPORTING**, 상위 Provider 물리 원인과 timeout 완전 해결은 미확정 |
-| 신규 외부 사용자 **동시 생성** 중 DB unique 충돌과 트랜잭션 격리 | [PT-6R1 MariaDB actual concurrency](../evaluation/product-trust-pt-6r1-first-user-identity-concurrency.md) | **SUPPORTING**, 첫 테스트 도구 오류와 최종 실제 DB 재현을 구별 |
-| 비동기 Job의 lease/fencing/recovery, 부분 저장, cleanup/재시도 | [B1](../evaluation/case-b-b1-durable-state-fencing.md), [B2](../evaluation/case-b-b2-durable-dispatch-recovery.md), [B3](../evaluation/case-b-b3-selective-bounded-retry.md), [B4](../evaluation/case-b-b4-result-idempotency-cleanup.md), [B5 closure](../evaluation/case-b-integrated-closure.md) | **CURRENT/SUPPORTING**, 다섯 최근 성공 Job이 장애 주입을 대체하지 않음 |
-| 기존 5인 팀 결과물의 도메인/RDB/API 재사용과 객체 저장 책임 분리 | [원본 AWS-era 경험 가이드](final-evidence-and-interview-guide.md), [object byte storage parity](../verification/m2-object-byte-storage-parity.md) | **HISTORICAL/SUPPORTING**, 원팀 기여와 개인 현대화 기여 구분 |
-| GCP에서 MariaDB VM+PD 채택, Cloud SQL·GKE DB 대안 비교 | [Case C relational hosting](../plans/active/case-c-relational-hosting-decision.md), [Case C closure](../evaluation/case-c-portfolio-closure.md) | **CURRENT**, HA·성능·비용 최적화 결과로 과장하지 않음 |
-| GKE source→immutable image→rollout 검증, Secret Sync·OIDC/WIF 경계 | [Case C closure](../evaluation/case-c-portfolio-closure.md), [GCP delivery ADR](../architecture/decisions/ADR-006-gcp-delivery-state-and-identity.md) | **CURRENT**, CI 성공과 런타임 버전 확인을 분리 |
-| 로컬 Chromium/Stub과 실제 GCP API 분석의 **서로 다른 통합 검증 범위** | [PT-6 browser journey](../evaluation/product-trust-pt-6-browser-journey.md), [GCP browser preview](../runbooks/gcp-local-browser-preview.md) | **SUPPORTING / UNPROVEN**, 한 세션의 React→실제 Vertex 사용자 여정은 아직 실증 전 |
-| 계측을 통한 장애 원인 분리, 실행 근거·Job/Stage 영속 진단 | [A7-4 observability](../evaluation/case-a-a7-4-durable-runtime-quality-observability.md), [A7-6 observability decision](../evaluation/case-a-a7-6-observability-backend-decision.md) | **SUPPORTING**, 자동 관측성과 실제 외부 대시보드 운영 증거 구분 |
-| 원 AWS: Terraform 부분 apply/state 복구, IAM/SigV4, Bedrock JSON 잘림 | [AWS-era 난관·면접 가이드](final-evidence-and-interview-guide.md), [AWS lifecycle closure](../lifecycle/aws-runtime-teardown-closure.md) | **HISTORICAL**, 과거 AWS 문제 해결 경력 소재로 보존, 현재 GCP 제품이라고 소개 금지 |
-| 원 AWS: GitOps immutable digest, OpenTelemetry 주입 실패·CloudWatch/X-Ray 확인 | [AWS pre-teardown verified evidence](last-verified-live-evidence.md), [AWS-era incident explanations](final-evidence-and-interview-guide.md) | **HISTORICAL**, 당시 실제 관측 수치의 출처를 함께 제시 |
-| GCP 용량 평가·성능 실험 설계와 **미완료 실험을 멈춘 판단** | [Case C capacity baseline](../evaluation/case-c-capacity-baseline.md), [Case C portfolio closure](../evaluation/case-c-portfolio-closure.md) | **UNPROVEN capacity**, 성공적인 throughput/HA 측정이라고 주장하지 않음 |
-
-**소재은행 활용 원칙:** 후보를 삭제하지 않고 질문·직무별로 여러 경험을 골라 연결한다. 대표 사례 선정은 *서술 깊이와 페이지 수 최적화*일 뿐 **소재 수 상한·탈락 심사**가 아니다. 새 근거가 생기면 해당 항목의 `strongest evidence`를 갱신하며, 같은 경험을 새로운 이름의 별도 검증/PR로 재구현할 필요는 없다. 필요 시 이 표를 독립적인 소재은행 문서로 추출할 수 있으나, 본 PR에서 새 관리 시스템이나 검증 프레임워크는 만들지 않는다.
-
 ## 2. Recent five observations — raw data boundaries
 
 All five inputs are *real original external AWS diagrams* but only A and B match the original frozen official sample bytes. N1/N2/N3 are **different images**, not substitutes for original frozen C–E. Supplemental private raw A/B reviews and N1–N3 JSON were inspected during the 2026-10-11 S1 review, but **this document is a safe summary, not an original artifact or fresh independent live result**. Do not publish raw prompts, sensitive HCL or private project objects.

@@ -1,5 +1,9 @@
 # Terraformers Modernization Master Plan
 
+> **CURRENT OVERRIDE — PORTFOLIO COMPLETION (2026-10-11).** The active single next-task plan is [Portfolio Final Completion](active/portfolio-final-completion.md) and the single current checkpoint is [AI Project State](../AI_PROJECT_STATE.md). Original sequential M0–M10 rules below are historical where superseded by portfolio reassessment and Product Trust user decisions; they do **not** authorize resuming unfinished milestone TODOs. Case A/B/C remain historically portfolio-closed, PT-8A is user-qualified-closed but original full acceptance not achieved, and PT-8B/PT-9 are blocked without explicit future authorization.
+
+---
+
 ## Purpose
 
 이 문서는 Terraformers modernization의 장기 실행 순서와 milestone별 완료 evidence를 고정한다. 프로젝트는 단순한 AWS → GCP migration이 아니라 기존 domain/business flow와 portable contract를 재사용하면서 backend reliability, AI/RAG evaluation과 targeted improvement, 실제 장애 진단 중심 observability, cloud portability를 개선한다. Logical/application architecture는 cloud-provider-neutral로 유지하고 현재 deployment target만 GCP로 둔다.

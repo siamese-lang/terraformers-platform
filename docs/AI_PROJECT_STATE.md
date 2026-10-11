@@ -1,6 +1,21 @@
 # AI Project State
 
-## Current PT-8A checkpoint: evidence-grounded product correction
+## SINGLE CURRENT CHECKPOINT — 2026-10-11 / GOAL & PORTFOLIO RECONCILIATION
+
+- **Authoritative actual main at preparation:** `6e4486988b97ad1abdaa09a15db18b6ea30fc838`, PR #278 merged. This proposed PR must receive independent review and USER merge before becoming authoritative `main` state. Historical source SHAs below are not current source.
+- **Goal:** preserve original Terraformers team project/domain and produce **a flexible, small set of repository-evidenced engineering problem-solving narratives** in reliability, AI/RAG, failure diagnosis/observability and cloud portability; logical core provider-neutral, single representative **GCP** target. Do not use historical AWS/Bedrock/Cognito deployment plans as active target. `AGENTS.md` remains the highest policy authority after actual code.
+- **Portfolio evidence priority:** old Case A/B/C are convenient theme labels, **not a mandatory count or fixed narrative**. Historical bounded closures remain valid only for their claims. Current lead candidates include PT-8A facts→generation wiring corrected in PR #274, intent/repair/quality correction in PR #277, same-input official A/B and diverse N1/N2/N3 GCP CLI-positive observations; older v3 N=3/holdout, B5 failure injection and Case C pod-replacement evidence remain stronger for their distinct invariants. Final portfolio content must rank mechanisms and strongest newest proof, not repeat the old three closures. Details: `docs/plans/active/portfolio-final-completion.md`.
+- **PT-8A:** USER explicitly selected **QUALIFIED_CLOSED** on 2026-10-11. The original official frozen A–E ledger/failures/missing observations are immutable and do **not** meet original full PT-8A PASS. The separate A/B/N1/N2/N3 five-case cohort had 5 terminal successes and 5 Terraform CLI PASS but **qualityStatus UNKNOWN**, not semantic 5/5 PASS; A and N3 residuals remain. PRs #274/#277 corrected confirmed dataflow/intent/repair defects; PR #278 added a development-only GCP browser preview.
+- **Product/browser gap:** local PT-6 real Chromium/JWT/Backend journey uses a stub model; GCP real Vertex/OpenSearch/DB/GCS Jobs were exercised via authenticated API. A **same-source, same-GCP-browser-to-real-model user journey** is not yet demonstrated; Hosted IdP/public ingress is excluded by approved Product Trust scope.
+- **Program state:** PT-8A qualified closure recorded separately; `activePhase=null`, `lastCompletedPhase=PT-7` denotes *last fully accepted phase in the original DAG*. `nextEligiblePhase=null`. Original PT-8B `INDEPENDENT_PT8A_ACCEPTANCE_REQUIRED` gate is **not satisfied or waived**. Current gate is **POST_PT8A_QUALIFIED_CLOSURE_INTEGRATED_PROOF_SCOPE_DECISION**. PT-9 teardown and all live/cloud/model/IAM actions remain separately USER-gated.
+- **Next single task after this documentation-only PR is independently reviewed and USER-merged:** **read-only evidence promotion and integrated-proof readiness decision**; first rank the most recent structural corrections and A/B/N1/N2/N3 evidence against historical case-specific proofs, then check deployed source/digest, existing-job ownership, GCP Browser Preview feasibility/JWKS state and whether additional UI proof is necessary. Do **not** trigger browser fixture mutation/model call by default. Details and stopping rules: `docs/plans/active/portfolio-final-completion.md`.
+- **Single-current semantics:** All following `Historical PT-8A checkpoint` sections retain original immutable facts and their *then-current* gates. They are not instructions to resume those phases. No automatic PT-8B or PT-9 transition is authorized.
+
+---
+
+## Historical checkpoint archive (retained verbatim except headings identifying their historical status)
+
+## Historical PT-8A checkpoint: evidence-grounded product correction
 
 Repository-only correction bound to remote main `eb0c685e04dbfdfd3cc8aeb5e737883b62ef54f4`.
 The consumed A–E diagnostic reviews (A `6099185607`, B `6100264295`, C `6100409001`,
@@ -13,7 +28,7 @@ live authority would be required for that claim. Current gate:
 PT-8B, or teardown is authorized by this repository-only Work Package. Older checkpoints
 below are historical where superseded.
 
-## Current PT-8A checkpoint: B–E cause-focused diagnostic proposal
+## Historical PT-8A checkpoint: B–E cause-focused diagnostic proposal
 
 Authoritative activation main: `f79bea4b09f56b0bbbb38e37c909ff0f43d7d6d2`.
 Post-correction Case A run `38063586496` / artifact `11673954499` remains consumed,
@@ -29,7 +44,7 @@ PT-8A remains INCOMPLETE. All older artifacts, consumption and quality decisions
 unchanged; PT-8B and teardown remain unauthorized. Earlier pending wording below is
 historical where superseded by this checkpoint.
 
-## Current PT-8A checkpoint: distinct follow-up measurement episode proposal
+## Historical PT-8A checkpoint: distinct follow-up measurement episode proposal
 
 PR #272 was independently accepted and USER-merged into authoritative main
 `228367c6df7ad8bbb74b1c9a0c135f768d780310`. Its private failed-HCL and safe
@@ -55,7 +70,7 @@ contract/risk/cost approval and the existing protected environment are needed be
 the first new A dispatch. No live action, old-result replacement, PT-8B or teardown.
 The sections below are historical checkpoints where their pending wording is superseded.
 
-## Current PT-8A checkpoint: failure diagnosability correction
+## Historical PT-8A checkpoint: failure diagnosability correction
 
 USER decision [6094591490](https://github.com/siamese-lang/terraformers-platform/pull/271#issuecomment-6094591490)
 stops further paid measurements. Repository-only correction binds remote main

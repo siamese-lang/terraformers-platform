@@ -4,17 +4,19 @@
   "status": "HUMAN_REQUIRED",
   "definedFromMainSha": "688119631a790e876235565711c07085aff15124",
   "activationBaseSha": "3caae454661d21d84c3e469a7d76aff5633d5b26",
-  "activePhase": "PT-8A",
+  "activePhase": null,
   "lastCompletedPhase": "PT-7",
-  "activeWorkPackage": "product-trust-pt-8a-evidence-grounded-correction-v1",
+  "activeWorkPackage": null,
   "activePullRequest": null,
-  "humanGate": "PT8A_EVIDENCE_GROUNDED_CORRECTION_ACCEPTANCE_AND_USER_MERGE",
+  "humanGate": "POST_PT8A_QUALIFIED_CLOSURE_INTEGRATED_PROOF_SCOPE_DECISION",
   "pt8aEvidenceGroundedCorrection": {
     "executionBaseSha": "eb0c685e04dbfdfd3cc8aeb5e737883b62ef54f4",
-    "status": "REPOSITORY_ONLY_INDEPENDENT_ACCEPTANCE_PENDING",
+    "status": "PR277_MERGED_REPOSITORY_CORRECTION_QUALIFIED_CLOSURE",
     "historicalCaseResultsAndConsumptionUnchanged": true,
     "liveExecutionAuthorized": false,
-    "nextPhaseAuthorized": false
+    "nextPhaseAuthorized": false,
+    "mergedPullRequest": 277,
+    "mergeCommitSha": "435ca32d4ef194f512c3019925acaac19507b7af"
   },
   "pendingRecovery": {
     "workPackage": ".agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml",
@@ -256,7 +258,7 @@
     }
   },
   "activePullRequestUrl": null,
-  "lastObservedMainSha": "228367c6df7ad8bbb74b1c9a0c135f768d780310",
+  "lastObservedMainSha": "6e4486988b97ad1abdaa09a15db18b6ea30fc838",
   "humanReviewCorrectiveIterations": [
     {
       "iteration": 1,
@@ -2608,5 +2610,26 @@
     "separateExactSourceImageContractRiskBudgetApprovalAfterMerge": true,
     "productQualityAndMeasurementCompletenessSeparate": true,
     "PT8BAndTeardownAuthorized": false
+  },
+  "pt8aQualifiedClosure": {
+    "authority": "USER",
+    "decisionDate": "2026-10-11",
+    "status": "QUALIFIED_CLOSED_NOT_OFFICIAL_A_E_ACCEPTANCE",
+    "originalOfficialAcceptance": "NOT_PASS_OR_NOT_RUN_PRESERVED",
+    "observations": [
+      "A",
+      "B",
+      "N1",
+      "N2",
+      "N3"
+    ],
+    "terminalSuccessCount": 5,
+    "terraformCliPassCount": 5,
+    "qualityStatus": "UNKNOWN",
+    "semanticPassClaim": false,
+    "n3Residual": "DOMAIN_SETTINGS_IMAGE_UNKNOWN_AND_INTERNAL_CONFIGURATION_CONSISTENCY",
+    "pt8bOriginalDependency": "INDEPENDENT_PT8A_ACCEPTANCE_REQUIRED_UNCHANGED_UNMET",
+    "nextAction": "READ_ONLY_PORTFOLIO_EVIDENCE_PROMOTION_AND_OPTIONAL_GCP_BROWSER_PROOF_READINESS_DECISION",
+    "plan": "docs/plans/active/portfolio-final-completion.md"
   }
 }

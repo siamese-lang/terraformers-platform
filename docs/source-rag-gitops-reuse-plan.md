@@ -1,5 +1,9 @@
 # Terraformers Modernization Completion Plan
 
+> **HISTORICAL AWS COMPLETION PLAN — NOT ACTIVE (2026-10-11).** This file documents the earlier AWS/EKS/Bedrock/Cognito/AOSS/ArgoCD completion proposal and must **not** be interpreted as a current GCP deployment target, live authorization, or remaining portfolio work queue. The current decision hierarchy is [AGENTS.md](../AGENTS.md) → [single current state](AI_PROJECT_STATE.md) → [portfolio completion roadmap](plans/active/portfolio-final-completion.md). Preserve this legacy plan only as historical context and technology-decision provenance.
+
+---
+
 ## 1. Purpose and project identity
 
 Terraformers-modernization is the operational modernization of the 2024 AWS Cloud School five-person Terraformers team project. It is not a new personal project, a replacement product, or a separate demonstration service.

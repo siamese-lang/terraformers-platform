@@ -1,5 +1,9 @@
 # Current Modernization State
 
+> **HISTORICAL EARLY-MODERNIZATION SNAPSHOT — SUPERSEDED.** This file describes the PR #6–#9 baseline, not the 2026-10-11 deployed GCP/Product Trust state. The [single current state](AI_PROJECT_STATE.md) and [portfolio final roadmap](plans/active/portfolio-final-completion.md) take precedence. Do not use the AWS-specific old "recommended next PR" section as an execution queue.
+
+---
+
 ## 1. Purpose
 
 This document records the current `main` branch state after the core Terraformers modernization contracts and follow-up adapter contracts have been merged.

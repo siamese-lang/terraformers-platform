@@ -1,5 +1,9 @@
 # Portfolio Case Reassessment
 
+> **HISTORICAL CASE REASSESSMENT WITH FINAL CLOSURES LATER RECORDED.** Earlier "Case A semantic extension not started" wording below is a dated decision history, superseded by merged A7 work, [Case A final closure](../../evaluation/case-a-final-closure.md), and Product Trust v4. The **current** goal, qualified PT-8A status, product evidence gap and next tasks are fixed in [Portfolio Final Completion](portfolio-final-completion.md) and [AI Project State](../../AI_PROJECT_STATE.md). Do not resume the old implementation queue.
+
+---
+
 ## Status
 
 **CASE A EVIDENCE-BACKED QUALITY EXTENSION FROZEN — CASE B/C CLOSED**

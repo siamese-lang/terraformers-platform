@@ -3,11 +3,25 @@ program:
   version: 4
   contract_status: APPROVED_V4_INDEPENDENTLY_ACCEPTED_AND_USER_MERGED
   active_amendment: null
-  active_phase: PT-8A
-  active_work_package: .agents/work-packages/product-trust-pt-8a-evidence-grounded-correction-v1.yml
+  active_phase: null  # PT-8A USER qualified-closed, PT-8B not eligible under its unchanged gate
+  active_work_package: null
   amendment_preparation_authority: USER_explicit_repository_only_v4_request
   exact_candidate_truth_approved: true
-  current_human_gate: PT8A_EVIDENCE_GROUNDED_CORRECTION_ACCEPTANCE_AND_USER_MERGE
+  current_human_gate: POST_PT8A_QUALIFIED_CLOSURE_INTEGRATED_PROOF_SCOPE_DECISION
+  current_state_plan: docs/plans/active/portfolio-final-completion.md
+  user_qualified_closure:
+    phase: PT-8A
+    decision_date: "2026-10-11"
+    authority: USER_EXPLICIT
+    status: QUALIFIED_CLOSED_NOT_OFFICIAL_A_E_ACCEPTANCE
+    historical_official_results: IMMUTABLE_ORIGINAL_NEGATIVES_AND_NOT_RUN
+    supplemental_observations: [A, B, N1, N2, N3]
+    supplemental_technical_result: FIVE_TERMINAL_SUCCESSES_AND_FIVE_TERRAFORM_CLI_PASS
+    supplemental_quality_result: QUALITY_UNKNOWN_NOT_FIVE_SEMANTIC_PASS
+    unsolved: IMAGE_UNCERTAINTY_RELATIONSHIP_FIDELITY_AND_N3_DOMAIN_CONFIG_INTERNAL_CONSISTENCY
+    PT8B_existing_dependency: INDEPENDENT_PT8A_ACCEPTANCE_REQUIRED_UNCHANGED_NOT_MET
+    next_eligible_phase: null
+    proof_readiness: READ_ONLY_SCOPE_DECISION_FIRST_NO_LIVE_AUTHORITY
   status: HUMAN_REQUIRED
   approved_on: "2026-10-06"
   approval_evidence: "User explicitly approved: APPROVE product-trust-v1"
@@ -16,7 +30,7 @@ program:
   state: .agents/state/product-trust-v1.json
   integrity_audit: docs/evaluation/product-trust-v4-evidence-validity-audit.md
   historical_v3_audit: docs/evaluation/product-trust-v3-cross-phase-integrity-audit.md
-  remaining_mandatory_order: [PT-8A, PT-8B, PT-9]
+  remaining_mandatory_order: [PT-8A, PT-8B, PT-9] # Historical original accepted DAG, not auto-authority to advance from qualified closure
 
   approved_amendments:
     - id: PT2_FINAL_INCOMPLETE_TO_BOUNDED_PT3
@@ -512,8 +526,10 @@ program:
     - id: PT-8A
       title: Final external official AI RAG deployed acceptance
       kind: live_acceptance
-      status: HUMAN_REQUIRED_PREPARATION_ONLY
-      active_work_package: .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
+      status: USER_QUALIFIED_CLOSED_ORIGINAL_ACCEPTANCE_NOT_PASS
+      active_work_package: null
+      historical_preparation_work_package: .agents/work-packages/product-trust-pt-8a-autonomous-recovery-v1.yml
+      accepted_scope: QUALIFIED_CLOSURE_ONLY_SEPARATE_A_B_N1_N2_N3_OBSERVATIONS
       original_execution_work_package: .agents/work-packages/product-trust-pt-8a-official-deployed-acceptance-v1.yml
       preparation_execution_base_sha: 2bdb73d20486262856bfa6b680b7bf221fa23ca0
       preparation_authorized: true

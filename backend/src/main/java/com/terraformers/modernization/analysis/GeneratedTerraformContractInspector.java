@@ -50,6 +50,18 @@ public class GeneratedTerraformContractInspector {
         return List.copyOf(resourceTypes);
     }
 
+    /** All-alias AWS provider blocks do not configure Terraform's implicit default provider. */
+    public boolean hasImplicitAwsDefaultWithOnlyAliases(String terraform) {
+        List<Token> source = tokens(terraform == null ? "" : terraform);
+        List<Block> providers = blocks(source, "provider").stream()
+                .filter(block -> block.type().equals("aws")).toList();
+        if (providers.isEmpty() || providers.stream()
+                .anyMatch(block -> emptyExpression(attribute(block.body(), "alias")))) return false;
+        return blocks(source, "resource").stream()
+                .anyMatch(block -> block.type().startsWith("aws_")
+                        && emptyExpression(attribute(block.body(), "provider")));
+    }
+
     /**
      * Detects absent authorization wiring, independently of provider/CLI validity. This is an
      * omission check for directly identifiable new S3 origins, not an IAM policy evaluator:

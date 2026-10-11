@@ -53,7 +53,8 @@ class VertexArchitectureFactsExtractorTest {
                     .contains("AWS::EC2::VPC", "AWS::RDS::DBInstance")
                     .contains("empty", "resourceTypes")
                     .contains("components and relationships to at most 8")
-                    .contains("resourceTypes to at most 16");
+                    .contains("resourceTypes to at most 16", "isolated service icon", "does not imply a new Terraform-managed resource",
+                            "already", "externally supplied", "newly created");
             assertThat(content.parts().orElseThrow().stream().flatMap(part -> part.text().stream())
                     .collect(java.util.stream.Collectors.joining("\n")))
                     .contains("do not infer undrawn connections", "advisory mappings of visible service intent",

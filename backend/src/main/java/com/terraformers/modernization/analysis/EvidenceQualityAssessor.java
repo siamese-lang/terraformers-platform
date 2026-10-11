@@ -99,12 +99,15 @@ public final class EvidenceQualityAssessor {
         if (missingOriginAuthorization) {
             reasons.add(Reason.CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING);
         }
+        boolean implicitAwsDefault = terraformInspector.hasImplicitAwsDefaultWithOnlyAliases(input.generatedTerraform());
+        if (implicitAwsDefault) reasons.add(Reason.ALIASED_AWS_PROVIDER_IMPLICIT_DEFAULT);
 
         KnowledgeStatus knowledgeStatus = knowledgeStatus(
                 extracted, extractedUnknownToProvider, missingOfficialKnowledge);
 
         boolean deterministicDegradation = !missingSelectedEvidence.isEmpty()
                 || missingOriginAuthorization
+                || implicitAwsDefault
                 || !generatedAbsentFromProvider.isEmpty()
                 || !generatedWithoutSelectedEvidence.isEmpty()
                 || projectDecisions.status() == ProjectDecisionStatus.INCOMPLETE;

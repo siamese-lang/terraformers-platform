@@ -1,0 +1,52 @@
+work_package:
+  id: product-trust-pt-8a-evidence-grounded-correction-v1
+  program: product-trust-v1
+  phase: PT-8A
+  kind: repository_only_product_correction
+  status: INDEPENDENT_ACCEPTANCE_PENDING
+  approved_base_sha: eb0c685e04dbfdfd3cc8aeb5e737883b62ef54f4
+  execution_base_sha: eb0c685e04dbfdfd3cc8aeb5e737883b62ef54f4
+  main_drift: STOP_WITHOUT_REBASE_OR_REBIND
+  objective: >
+    Reduce ungrounded CREATE intent, missing chosen relationship wiring, implicit AWS provider
+    selection, and repair syntax regressions found in the consumed A–E diagnostic episode.
+  evidence:
+    A: {run: 38063586496, disposition: NOT_PASS_CONSUMED}
+    B: {run: 38071021631, artifact: 11676692785, review: 6100264295, first_divergence: facts}
+    C: {run: 38072161321, artifact: 11676794350, review: 6100409001, first_divergence: initial_generation}
+    D: {run: 38073154761, artifact: 11678265581, review: 6100517376, result: REPAIR_CORRECTED_INITIAL_HCL}
+    E: {run: 38074022896, artifact: 11677927721, review: 6100656286, terminal: REPAIR_INTRODUCED_SYNTAX_FAILURE}
+  allowed_paths:
+    - backend/src/main/java/com/terraformers/modernization/reference/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/vertex/**
+    - backend/src/main/java/com/terraformers/modernization/analysis/AnalysisDiagnosticEvidence.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/EvidenceQualityAssessment.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/EvidenceQualityAssessor.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/GeneratedTerraformContractInspector.java
+    - backend/src/main/java/com/terraformers/modernization/analysis/TerraformCliValidator.java
+    - backend/src/test/java/com/terraformers/modernization/reference/**
+    - backend/src/test/java/com/terraformers/modernization/analysis/**
+    - .agents/work-packages/product-trust-pt-8a-evidence-grounded-correction-v1.yml
+    - .agents/programs/product-trust-v1.yml
+    - .agents/state/product-trust-v1.json
+    - docs/AI_PROJECT_STATE.md
+    - docs/plans/active/product-trust-modernization.md
+  allowed_actions: [repository_only_implementation, deterministic_tests, normal_CI, one_PR]
+  prohibited_actions:
+    - live_GCP_or_model_calls
+    - image_publication_or_rollout
+    - frozen_truth_or_artifact_or_consumption_changes
+    - corpus_index_model_SDK_or_Policy_D_change
+    - AWS_plan_apply_or_IAM_change
+    - new_workflow_or_evaluator_or_agent_framework
+    - self_accept_or_merge
+  acceptance_criteria:
+    - advisory_resource_types_do_not_define_CREATE_or_ownership
+    - directed_relationships_remain_in_initial_and_repair_generation_inputs
+    - chosen_private_integration_authorization_and_network_wiring_remain_required
+    - all_aliased_aws_providers_without_resource_selection_degrade_quality
+    - malformed_repair_is_rejected_with_both_candidates_and_safe_CLI_diagnostic_preserved
+    - valid_repair_and_existing_technical_validation_remain_supported
+    - focused_and_full_backend_tests_and_normal_PR_CI_reported_truthfully
+  auto_repair_limit: 1
+  stop_on: [main_drift, new_architecture_decision, expanded_scope, live_cost_gate, independent_acceptance, USER_merge]

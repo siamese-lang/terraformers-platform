@@ -121,6 +121,13 @@ public final class AnalysisDiagnosticEvidence implements AutoCloseable {
         stages.put(stage, execution);
     }
 
+    public void repairSyntaxFailure(TerraformDraftValidation validation) {
+        // The existing CLI parsed the repair before it could replace the initial draft.
+        // Keep the failure at repair, and retain only the allowlisted diagnostic reduction.
+        activeStage = "repair";
+        cliDiagnostics = validation.diagnosticSummary();
+    }
+
     public void failed(RuntimeException exception) {
         String category = "UNCLASSIFIED_INTERNAL_FAILURE";
         if (exception instanceof TerraformValidationFailureException cli) category = cli.category().name();
@@ -153,7 +160,8 @@ public final class AnalysisDiagnosticEvidence implements AutoCloseable {
                 complete &= candidates.containsKey("final");
             if (stage.startsWith("cli_")) complete &= candidates.containsKey("validated");
             if (List.of("INIT_CONFIGURATION", "VALIDATE_CONFIGURATION").contains(failure.get("category")))
-                complete &= cliDiagnostics != null && candidates.containsKey("validated");
+                complete &= cliDiagnostics != null && candidates.containsKey(
+                        stage.equals("repair") ? "final" : "validated");
         }
         value.put("complete", complete);
         value.put("stages", stages); value.put("facts", facts); value.put("retrieval", retrieval);

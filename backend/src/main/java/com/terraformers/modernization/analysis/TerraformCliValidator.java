@@ -112,6 +112,43 @@ public class TerraformCliValidator implements TerraformExecutableValidator {
                 ? outcome.withExecution(phase, null, (System.nanoTime() - started) / 1_000_000) : outcome;
     }
 
+    /** Parse a repair candidate with the pinned Terraform CLI without provider initialization. */
+    public TerraformDraftValidation validateSyntax(String candidate) {
+        String content = candidate == null ? "" : candidate;
+        Path workspace = null;
+        TerraformDraftValidation outcome;
+        try {
+            workspace = createWorkspace();
+            Files.writeString(workspace.resolve("main.tf"), content, StandardCharsets.UTF_8);
+            CommandResult format = executor.run(List.of(terraformBinary, "fmt", "-write=false",
+                    "-list=false", "-no-color", "main.tf"), workspace, validationTimeout);
+            if (format.timedOut()) {
+                outcome = failure(content, TerraformValidationFailureException.Category.VALIDATE_TIMEOUT,
+                        "Terraform repair syntax check timed out");
+            } else if (format.exitCode() != 0) {
+                outcome = failure(content, TerraformValidationFailureException.Category.INIT_CONFIGURATION,
+                        "Terraform repair has invalid HCL syntax", reduceInitializationDiagnostics(format.output()));
+            } else {
+                outcome = new TerraformDraftValidation(true, content, null);
+            }
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            outcome = failure(content, TerraformValidationFailureException.Category.INTERRUPTED,
+                    "Terraform repair syntax check was interrupted");
+        } catch (IOException exception) {
+            outcome = failure(content, TerraformValidationFailureException.Category.COMMAND_EXECUTION,
+                    "Terraform repair syntax check could not execute");
+        } catch (RuntimeException exception) {
+            outcome = failure(content, TerraformValidationFailureException.Category.INTERNAL,
+                    "Terraform repair syntax check could not be completed");
+        }
+        if (!deleteWorkspace(workspace)) {
+            return failure(content, TerraformValidationFailureException.Category.INTERNAL,
+                    "Terraform repair syntax workspace cleanup failed");
+        }
+        return outcome;
+    }
+
     private TerraformDraftValidation validateInitializedWorkspace(String content, Path workspace)
             throws IOException, InterruptedException {
         long started = System.nanoTime();

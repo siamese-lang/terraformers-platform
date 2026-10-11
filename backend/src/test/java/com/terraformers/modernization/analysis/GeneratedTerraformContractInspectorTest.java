@@ -17,6 +17,22 @@ class GeneratedTerraformContractInspectorTest {
     private final GeneratedTerraformContractInspector inspector = new GeneratedTerraformContractInspector(catalog);
 
     @Test
+    void allAliasedProvidersRequireExplicitManagedResourceSelection() {
+        String providers = """
+                provider "aws" { alias = "central" region = var.central_region }
+                provider "aws" { alias = "remote" region = var.remote_region }
+                """;
+        String resource = "resource \"aws_iam_role\" \"worker\" { name = var.role_name }";
+        assertThat(inspector.hasImplicitAwsDefaultWithOnlyAliases(providers + resource)).isTrue();
+        assertThat(inspector.hasImplicitAwsDefaultWithOnlyAliases(providers +
+                "resource \"aws_iam_role\" \"worker\" { provider = aws.central name = var.role_name }"))
+                .isFalse();
+        assertThat(inspector.hasImplicitAwsDefaultWithOnlyAliases(providers +
+                "provider \"aws\" { region = var.default_region }" + resource)).isFalse();
+        assertThat(inspector.hasImplicitAwsDefaultWithOnlyAliases(resource)).isFalse();
+    }
+
+    @Test
     void detectsOmissionAcrossNamesInterpolationAndMultipleOrigins() throws Exception {
         String draft = originDraft();
         assertThat(inspector.missingCloudFrontS3Authorization(draft)).isTrue();

@@ -1,6 +1,18 @@
 # Product Trust Modernization
 
-## Current correction gate
+## SINGLE CURRENT STATUS — 2026-10-11 (supersedes every historical "Current" below)
+
+**User decision:** PT-8A is **qualified-closed** for the bounded A/B/N1/N2/N3 five-case observations, not an original official A–E/ten-dimension quality acceptance PASS. All original failed/consumed/NOT_RUN observations are preserved; five terminal/CLI PASS and quality UNKNOWN must remain separate. The user has **not** authorized PT-8B, new model calls, public ingress/IdP, or PT-9 teardown.
+
+**Program/State:** `.agents/programs/product-trust-v1.yml` and `.agents/state/product-trust-v1.json` identify **no eligible automatic next phase**. The unchanged original PT-8B full-PT8A acceptance dependency is not met; any alternate qualified-evidence transition requires an explicit later D_DECISION. This document's historical proposed gates are not active.
+
+**Next single task:** After independent acceptance and USER merge of the repository state sync, perform read-only **integrated GCP browser proof readiness and minimum-scope decision**, not new product implementation. Check existing deployed source and existing Job ownership/JWKS/reuse possibility first; authorizations for auth-fixture mutation, paid model invocation and destruction remain separate. [Authoritative current roadmap](portfolio-final-completion.md).
+
+**Historical note:** All headings/checkpoints below are preserved as historical records of what was current *at their time*; do not interpret them as later work authorization.
+
+---
+
+## Historical correction gate
 
 PT-8A B–E diagnostics are consumed under source `eb0c685e04dbfdfd3cc8aeb5e737883b62ef54f4`.
 The [evidence-grounded correction Work Package](../../../.agents/work-packages/product-trust-pt-8a-evidence-grounded-correction-v1.yml)
@@ -9,7 +21,7 @@ historical quality dispositions and does not authorize a model rerun, deployment
 teardown. Gate: **PT8A_EVIDENCE_GROUNDED_CORRECTION_ACCEPTANCE_AND_USER_MERGE**.
 Earlier status sections are historical where superseded by this checkpoint.
 
-## Status
+## Historical status
 
 Current: **PT-8A follow-up measurement episode / REPOSITORY IMPLEMENTATION FOR REVIEW**.
 PR #272's failure-diagnosis correction is accepted and USER-merged at main

@@ -32,7 +32,7 @@
 ## Primary success criterion — portfolio-grade engineering cases
 
 이 프로젝트의 최종 성공 기준은 milestone 개수, PR 개수, workflow PASS 개수, 기술 목록이 아니다.
-**실제 문제를 근거로 기술적 판단을 설명할 수 있는 2~3개의 강한 engineering case**가 핵심 산출물이다.
+**실제 문제를 근거로 기술적 판단을 설명할 수 있는 소수의 강한 engineering case**가 핵심 산출물이다. 과거 Case A/B/C와 '2~3개'는 관리상 예시·주제 구분이며 **반드시 세 건을 채우거나 그 틀을 유지하라는 수량·분류 제한이 아니다**. 확인된 공통 원인과 최신 증거의 설명력을 기준으로 최종 사례를 합치거나 재구성할 수 있다.
 
 대표 case는 최소한 다음 흐름을 repository evidence로 설명할 수 있어야 한다.
 
@@ -47,6 +47,7 @@ same-scenario before/after validation → residual risk`
 - 작은 결함을 고친 뒤 PASS했다고 바로 "문제 해결 경험 확보" 또는 milestone complete로 간주하지 않는다.
 - 같은 subsystem/root boundary에서 나온 여러 증상은 가능한 한 하나의 case로 연결한다.
 - case가 충분히 깊어지지 않았다면 과거 `COMPLETE` 표기도 재감사 후 `REASSESS/REOPENED`로 바꿀 수 있다.
+- 원본 evidence·실패 이력은 변조 없이 보존하되, 더 최근·더 강한 실측과 구조 변경이 확인되면 **현재 대표 주장과 사용 근거를 승격·교체**한다. 오래된 종료 문서나 Case A/B/C 묶음을 그대로 유지하는 것은 목표가 아니다. 서로 다른 입력/설정의 결과를 동일 조건 before/after나 통계적 신뢰성으로 과장하지 않는다.
 - M10에서 처음 case를 만드는 것이 아니라, active 개선 작업 자체가 처음부터 case depth를 목표로 해야 한다.
 
 ## Single live target runtime rule

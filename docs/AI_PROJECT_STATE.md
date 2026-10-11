@@ -1,5 +1,17 @@
 # AI Project State
 
+## SINGLE CURRENT CHECKPOINT — Final portfolio evidence and GCP teardown preparation (2026-10-11 UTC)
+
+- **Source identity:** user-observed GKE Backend `BUILD_SOURCE_REVISION` matched GitHub authoritative `main` `5dd67b046ed802089b1a55b7bf07343b7a6316e6`; deployed image was `sha256:228c9be0...` at snapshot time. This documentation PR changes **no** runtime code, GCP resource, IAM or paid model policy.
+- **USER project decision:** `PORTFOLIO_EVIDENCE_BACKED_ENGINEERING_CLAIMS_SUFFICIENT`; stop speculative generation repairs, T3, repeated model runs and new evaluation framework. `FULL_PRODUCT_TRUST_ACCEPTANCE_NOT_ESTABLISHED` still applies; frozen official PT-8A remains NOT PASS/NOT RUN as originally recorded, and PT-8B's original gate is not waived. The user selected final evidence preservation followed by **reviewed GCP teardown**.
+- **Actual Firebase/GCP browser T1:** two real users A/B; authenticated B access to A's private Project 29, related Job, Terraform result and private diagnostics each returned HTTP 403; signed-in B upload 403/no new project; direct Job POST 403 with explicit billable-denied error after AUTH_CHECK 200. Paid UID override was removed after tests. Source and limits: [final live evidence](portfolio/terraformers-gcp-final-live-evidence-20261011.md).
+- **Actual GKE interruption T2:** Project 30, Job `f8c00ef4-fb4e-4cdd-b30a-d1d5f5226559`; original Pod terminated after one normal deletion request during RUNNING. Vertex facts completed; concurrent shutdown caused `BeanCreationNotAllowedException` during REQUIRED RAG search; original generation 1/attempt 1 recorded FAILED in ~13 s with `resultFileId=null` and `resultObjectKey=null`. Replacement Backend Ready/public HTTP 200; final `FIREBASE_BILLABLE_UIDS` override ABSENT. **Not** evidence of 60s lease expiry, ungraceful crash, complete GCS cleanup or a fixed shutdown bug.
+- **Current closure references (documentation proposed, not yet merged):** [final live evidence](portfolio/terraformers-gcp-final-live-evidence-20261011.md); [project engineering account](portfolio/terraformers-modernization-final-engineering-account-20261011.md); [hosted GCP teardown safety preflight](lifecycle/gcp-2026-hosted-teardown-preflight.md).
+- **Next single task:** independent review and USER merge of this one documentation PR; create/provide a self-contained source-bank revision input from accepted source-backed claims; then collect **read-only** exact GCP/Firebase/HTTPS/Ingress/LB/Terraform-state/billing inventory and obtain a **separate exact destructive approval**. The historical 29-delete script is not presumed valid for the later hosted release. No resource teardown has been run.
+- **Historical headings below:** retained as the contemporaneous S0/S1/F1–F3/PT preparation record, not instructions overriding this checkpoint.
+
+---
+
 ## Current F3 repository-only hosted delivery proposal
 
 Issue #285 binds F3 to remote main `752a4ec4fda26ed13409299daefb1465bf260b28`.

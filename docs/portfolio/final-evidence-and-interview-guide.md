@@ -1,5 +1,10 @@
 # Terraformers 최종 증빙 및 면접 설명 가이드
 
+> **HISTORICAL AWS-ERA PORTFOLIO NARRATIVE — NOT CURRENT (2026-10-11).** This document records the earlier AWS/EKS/Bedrock/AOSS/Cognito, GitOps and teardown experience. Its "final" wording refers to that **past AWS phase**, not the currently retained GCP/Vertex/OpenSearch v4 Backend or latest PT-8A facts→generation corrections. Use [Current Evidence Prioritization](current-evidence-prioritization-20261011.md) and [Portfolio Final Completion](../plans/active/portfolio-final-completion.md) for today's leading claims, source-bound evidence and next scope. **Keep this historical document for original engineering incidents; do not copy its 90-second answer as the current product summary.**
+
+---
+
+
 ## 1. 문서 목적
 
 이 문서는 AWS 리소스를 철거한 뒤에도 Terraformers-modernization 프로젝트를 구체적으로 설명할 수 있도록 다음을 고정한다.

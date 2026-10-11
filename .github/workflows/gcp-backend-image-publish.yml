@@ -207,36 +207,20 @@ jobs:
             image_tag="${image_base}:${GITHUB_SHA}"
           fi
 
-          reject_existing_tag() {
-            local response
-            if response="$(gcloud artifacts docker images describe "$image_tag" \
-                --project="$GCP_PROJECT" \
-                --format='value(image_summary.digest)' 2>&1)"; then
-              if [[ "$IMAGE_KIND" == frontend ]]; then
-                echo "Immutable frontend source/config tag already exists and will not be moved: $image_tag" >&2
-              else
-                echo "Source-SHA tag already exists and will not be moved: $image_tag" >&2
-              fi
-              return 1
+          # List at repository scope so a not-yet-created frontend image is not an error.
+          # A listing failure stops publication and preserves the original gcloud error.
+          existing_tags="$(gcloud artifacts docker tags list \
+            "${REGISTRY_HOST}/${GCP_PROJECT}/${REGISTRY_REPOSITORY}" \
+            --project="$GCP_PROJECT" \
+            --format='csv[no-heading](image,tag)')"
+          if grep -Fxq "${image_base},${image_tag##*:}" <<< "$existing_tags"; then
+            if [[ "$IMAGE_KIND" == frontend ]]; then
+              echo "Immutable frontend source/config tag already exists and will not be moved: $image_tag" >&2
+            else
+              echo "Source-SHA tag already exists and will not be moved: $image_tag" >&2
             fi
-            if [[ "$response" == 'ERROR: (gcloud.artifacts.docker.images.describe) Image not found.' ]]; then
-              return 0
-            fi
-
-            local error_class=UNCLASSIFIED
-            if [[ "$response" =~ (PERMISSION_DENIED|403) ]]; then
-              error_class=PERMISSION_DENIED
-            elif [[ "$response" =~ (UNAUTHENTICATED|401|invalid_grant) ]]; then
-              error_class=AUTHENTICATION
-            elif [[ "$response" =~ (UNAVAILABLE|DEADLINE_EXCEEDED|timed.out|could.not.resolve|connection.reset) ]]; then
-              error_class=NETWORK_OR_SERVICE
-            fi
-            local diagnostic_sha256
-            diagnostic_sha256="$(printf '%s' "$response" | sha256sum | cut -d' ' -f1)"
-            echo "Registry tag lookup failed closed (error_class=$error_class, diagnostic_sha256=$diagnostic_sha256); publication was not attempted." >&2
-            return 1
-          }
-          reject_existing_tag
+            exit 1
+          fi
 
           if [[ "$IMAGE_KIND" == frontend ]]; then
             docker build \
@@ -263,7 +247,6 @@ jobs:
               | grep -Fx "BUILD_SOURCE_REVISION=${GITHUB_SHA}"
           fi
 
-          reject_existing_tag
           docker push "$image_tag"
 
           digest="$(

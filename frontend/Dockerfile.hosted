@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1.7
+FROM node:24.19.0-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN --mount=type=secret,id=npm_ca,required=false \
+    if [ -f /run/secrets/npm_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/npm_ca; fi; \
+    npm ci --legacy-peer-deps --no-audit --no-fund
+COPY public ./public
+COPY src ./src
+ARG REACT_APP_FIREBASE_API_KEY
+ARG REACT_APP_FIREBASE_AUTH_DOMAIN
+ARG REACT_APP_FIREBASE_PROJECT_ID
+ARG REACT_APP_FIREBASE_APP_ID
+ARG HOSTED_HOSTNAME
+RUN test -n "$REACT_APP_FIREBASE_API_KEY" \
+ && test -n "$REACT_APP_FIREBASE_APP_ID" \
+ && printf '%s' "$REACT_APP_FIREBASE_AUTH_DOMAIN" | grep -Eq '^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$' \
+ && printf '%s' "$REACT_APP_FIREBASE_PROJECT_ID" | grep -Eq '^[a-z][a-z0-9-]{4,29}$' \
+ && printf '%s' "$HOSTED_HOSTNAME" | grep -Eq '^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$' \
+ && REACT_APP_AUTH_PROVIDER=firebase REACT_APP_API_BASE_URL= \
+    REACT_APP_GCP_BROWSER_PREVIEW=false npm run build \
+ && test -s build/index.html
+
+FROM nginx:1.27.5-alpine
+COPY nginx-hosted.conf /etc/nginx/nginx.conf
+COPY --from=build --chown=101:101 /app/build /usr/share/nginx/html
+ARG HOSTED_HOSTNAME
+RUN chmod 644 /etc/nginx/nginx.conf \
+ && chmod -R a+rX /usr/share/nginx/html \
+ && printf '%s' "$HOSTED_HOSTNAME" | grep -Eq '^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$' \
+ && sed -i "s/__HOSTED_HOSTNAME__/$HOSTED_HOSTNAME/g" /etc/nginx/nginx.conf \
+ && nginx -t
+USER 101:101
+EXPOSE 8080
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]

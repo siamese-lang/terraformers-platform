@@ -1,0 +1,7 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: terraformers-frontend-hosted
+spec:
+  domains:
+    - REPLACE_WITH_OWNED_HOSTNAME.invalid

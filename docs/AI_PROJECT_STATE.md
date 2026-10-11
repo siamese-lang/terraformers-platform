@@ -1,5 +1,15 @@
 # AI Project State
 
+## Current F3 repository-only hosted delivery proposal
+
+Issue #285 binds F3 to remote main `752a4ec4fda26ed13409299daefb1465bf260b28`.
+The [F3 plan](plans/active/firebase-auth-f3.md) and
+[runbook](runbooks/firebase-auth-f3-hosted-gke.md) describe an **opt-in**
+Firebase-only frontend and GKE HTTPS Ingress proposal. F1/F2 are merged; F3
+awaits independent review and USER merge. The canonical GCP runtime stays
+private. No domain, certificate, image publication, rollout, live Firebase/GCP
+work, cloud cost or F4 is authorized by this repository-only proposal.
+
 ## Current F2 repository-only authentication proposal
 
 Issue #283 authorizes only the React Firebase Authentication adapter and existing

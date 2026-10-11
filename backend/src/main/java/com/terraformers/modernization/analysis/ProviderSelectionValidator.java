@@ -38,6 +38,10 @@ public class ProviderSelectionValidator {
         if (environment.acceptsProfiles(Profiles.of("prod")) && !jwtProperties.isEnabled()) {
             throw new IllegalStateException("production JWT authentication cannot be disabled");
         }
+        if (environment.acceptsProfiles(Profiles.of("prod"))
+                && environment.acceptsProfiles(Profiles.of("test"))) {
+            throw new IllegalStateException("test profile cannot be combined with production JWT authentication");
+        }
         if (jwtProperties.isFirebase()) {
             String projectId = firebaseProperties.getProjectId();
             if (!jwtProperties.isEnabled() || projectId == null

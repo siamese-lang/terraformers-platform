@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: terraformers-hosted
+  annotations:
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.global-static-ip-name: REPLACE_WITH_RESERVED_STATIC_IP_NAME
+    networking.gke.io/managed-certificates: terraformers-frontend-hosted
+    networking.gke.io/v1beta1.FrontendConfig: terraformers-frontend-hosted
+spec:
+  defaultBackend:
+    service:
+      name: terraformers-frontend-hosted
+      port:
+        number: 80
+  rules:
+    - host: REPLACE_WITH_OWNED_HOSTNAME.invalid
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: terraformers-backend
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: terraformers-frontend-hosted
+                port:
+                  number: 80

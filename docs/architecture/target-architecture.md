@@ -1,5 +1,7 @@
 # Target Architecture
 
+> **ARCHITECTURAL DESIGN REFERENCE (runtime decommissioned):** The cloud-neutral ports/adapters below record the modernization design, **not a currently deployed GCP service**. The representative hosted environment was later built, observed and torn down. [Current project overview](../../README.md) · [engineering evidence](../portfolio/terraformers-modernization-final-engineering-account-20261011.md) · [final teardown](../lifecycle/gcp-2026-final-teardown-receipt.md). “Current target” and unresolved-choice wording below belongs to its original decision date.
+
 ## Purpose
 
 This document is the single logical target architecture for the current Terraformers

@@ -1,5 +1,7 @@
 # Next Steps
 
+> **HISTORICAL EARLY-IMPLEMENTATION PLAN:** The “next priority”, verification order and adapter import items below describe an earlier development phase; they are **not** an active to-do list. The project is closed and GCP runtime/billing dismantled. Use the [current README](../README.md), [final engineering account](portfolio/terraformers-modernization-final-engineering-account-20261011.md), and [teardown receipt](lifecycle/gcp-2026-final-teardown-receipt.md).
+
 ## 1. Current validation policy
 
 Local workstation checks should be minimized because the current local environment is slow and disk constrained.

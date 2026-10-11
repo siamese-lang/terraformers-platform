@@ -1,5 +1,7 @@
 # Runbooks
 
+> **REFERENCE RUNBOOK ARCHIVE:** The deployment/evaluation steps in this folder are retained as historical engineering evidence, not live service instructions. The GCP runtime and state/WIF bootstrap are gone. [Current README](../../README.md) · [actual GCP final teardown receipt](../lifecycle/gcp-2026-final-teardown-receipt.md). Any new paid/cloud action requires fresh explicit authority and state design.
+
 ## 1. Purpose
 
 This directory contains operational runbooks for the Terraformers backend and cloud infrastructure modernization project.

@@ -1,63 +1,26 @@
-# Backend Modernization Baseline
+# Terraformers Backend — Modernization Source
 
-이 디렉터리는 Terraformers 후속 고도화 작업 중 **백엔드 개발과 운영환경 정리**에 해당하는 공개 기준선입니다.
+> **상태:** 2026년 GCP 실증 후 런타임 철거 완료. 이 디렉터리는 재사용 가능한 Spring Boot 구현과 테스트를 보존합니다. 이전의 “Backend 기본 골격만 있고 API import를 기다린다”는 초기 설명은 역사적 단계입니다. 현재 배포 중인 서비스는 없습니다.
 
-## 1. 목적
+## 역할
 
-원본 팀 프로젝트의 전체 backend source를 무조건 공개 저장소에 복사하는 것이 아니라, 다음 항목을 공개 가능한 형태로 정리합니다.
+Spring Boot Backend는 Terraformers의 Project/User/File/Comment API, 인증 사용자와 소유권 검사, 비동기 `AnalysisJob`, 이미지 및 생성 결과의 객체 저장 경계, 아키텍처 사실 추출·근거 검색·Terraform 초안 생성과 품질/CLI 진단을 소유합니다.
 
-- Spring Boot backend 실행 기준
-- RDB/Flyway schema migration 기준
-- S3/SQS/Cognito/Secrets Manager runtime config contract
-- Docker image build 기준
-- 배포 후 health/runtime config 점검 기준
+- **지속 상태:** MariaDB / Flyway 기반 분석 작업, lease/fencing, 선택적 재시도, 결과 의도·보상 정리. [Case B 증거](../docs/evaluation/case-b-integrated-closure.md)
+- **AI/RAG:** 이미지에서 식별한 facts 및 directed relationships와 공식/provider 근거를 생성 단계에 전달. 결과의 구문/CLI 타당성과 의미적 품질을 구분. [현재 결과의 한계](../docs/evaluation/pt8a-qualified-five-case-disposition.md)
+- **클라우드 adapter:** GCP Vertex AI/GCS/OpenSearch 및 역사적 AWS Bedrock/S3/AOSS 호환 경계. 모든 adapter가 동시에 동일 환경에서 활성화됐다는 의미는 아닙니다.
+- **인증:** GCP hosted T1 단계에는 Firebase ID token 기반 인증·owner authorization을 검증했으며, 이전 AWS 단계의 Cognito 연동은 역사적 참고입니다.
 
-## 2. 현재 포함된 항목
-
-```text
-backend/
-  pom.xml
-  Dockerfile
-  src/main/java/com/terraformers/modernization/
-  src/main/resources/application.yml
-  src/main/resources/application-prod.yml
-  src/main/resources/db/migration/
-  src/test/java/
-```
-
-현재 단계는 **public-safe backend baseline**입니다. 원본 Terraformers의 모든 API 구현을 옮긴 상태가 아니라, 후속 고도화 저장소에서 Maven/Docker/Flyway/runtime config 검증을 시작하기 위한 기준선입니다.
-
-## 3. Local verification
-
-```bash
-cd backend
-mvn -q test
-mvn -q -DskipTests package
-docker build -t terraformers-backend:local .
-```
-
-## 4. Runtime config contract
-
-`prod` profile은 다음 값을 환경 변수 또는 Kubernetes Secret/ExternalSecret 경로로 주입받는 것을 전제로 합니다.
-
-- `SPRING_DATASOURCE_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `COGNITO_REGION`
-- `COGNITO_USER_POOL_ID`
-- `COGNITO_USER_POOL_CLIENT_ID`
-- `COGNITO_JWKS_URL`
-- `S3_BUCKET_NAME`
-- `AI_LOG_QUEUE_URL`
-- `TERRAFORM_LOG_QUEUE_URL`
-
-검증 시에는 secret value를 출력하지 않고 key 존재 여부만 확인합니다.
-
-## 5. Runtime check endpoint
+## 구성 및 검증
 
 ```text
-GET /actuator/health
-GET /internal/runtime/required-config
+pom.xml                         Maven build
+src/main/java/...               Spring Boot application, domain and adapters
+src/main/resources/application*.yml
+src/main/resources/db/migration Flyway migrations
+src/test/                       deterministic tests / local validation
 ```
 
-`/internal/runtime/required-config`는 운영 노출용 public API가 아니라, 배포 후 runtime key 존재 여부를 점검하기 위한 내부 점검 surface입니다. 실제 배포에서는 ingress/security policy로 외부 노출을 제한해야 합니다.
+로컬 의존성 및 테스트 환경을 갖춘 경우 `cd backend && mvn test`로 해당 소스의 단위/통합 테스트를 실행할 수 있습니다. **GCP 실환경은 이미 철거됐으므로** 해당 명령이 실제 Firebase/GCS/Vertex/GKE 통합 실증을 재현하는 것은 아닙니다. 새 live 배포를 위해 과거 Secret·Terraform 상태를 추측하여 생성하거나 자동으로 클라우드 자원을 만들지 마세요.
+
+[프로젝트 전체 안내](../README.md) · [GCP 실증](../docs/portfolio/terraformers-gcp-final-live-evidence-20261011.md) · [최종 철거](../docs/lifecycle/gcp-2026-final-teardown-receipt.md).

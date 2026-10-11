@@ -1,5 +1,7 @@
 # GCP Deployment Architecture
 
+> **HISTORICAL DEPLOYMENT PLAN / RETIRED LIVE ENVIRONMENT:** This file contains earlier proposed/gated GCP deployment choices, some of which were later executed for the 2026 hosted T1/T2 proof. Its old “no resources created” and F3/F4 future-tense statements are **snapshot language, not current facts**. Actual hosted architecture/results: [engineering account](../portfolio/terraformers-modernization-final-engineering-account-20261011.md) and [T1/T2 live evidence](../portfolio/terraformers-gcp-final-live-evidence-20261011.md); final 29-instance destroy, missed disk recovery and billing unlink: [teardown receipt](../lifecycle/gcp-2026-final-teardown-receipt.md). This document is not permission to deploy.
+
 F3 proposes an opt-in hosted GKE Ingress and non-root static React image in
 `infra/kubernetes/overlays/gcp-target-hosted`; see the
 [F3 hosted runbook](../runbooks/firebase-auth-f3-hosted-gke.md). The canonical

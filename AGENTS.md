@@ -1,5 +1,7 @@
 # Repository Working Contract
 
+> **CURRENT LIFECYCLE NOTICE (2026-10-12 KST):** The portfolio evidence program is closed and the GCP runtime, Terraform bootstrap and billing link were removed after [reviewed teardown](docs/lifecycle/gcp-2026-final-teardown-receipt.md). References below to “current GCP deployment target”, automatic next work, or planned GCP live experiments are **historical implementation rules, not authorization to rebuild the retired environment**. The approval, source-of-truth and evidence integrity constraints remain applicable to any separately approved future work. This notice changes no validation criteria or agent permissions.
+
 이 문서는 이 repository에서 작업하는 ChatGPT/Codex와 모든 contributor가 여러 대화와 장기간의 작업에서도 프로젝트 목표, 완료된 결정, active milestone, 기술 도입 기준을 임의로 변경하지 않도록 하는 repository-level working contract다. 작업을 시작하기 전에 현재 repository를 직접 확인하고 이 문서를 따른다.
 
 ## Source of truth

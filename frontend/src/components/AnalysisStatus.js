@@ -14,6 +14,7 @@ const qualityLabels = {
 };
 const reasonLabels = {
   CLOUDFRONT_S3_ORIGIN_AUTHORIZATION_MISSING: 'CloudFront에서 새 S3 원본을 읽기 위한 권한 선언을 찾지 못했습니다. 원본과 권한 설정을 검토하세요.',
+  ALIASED_AWS_PROVIDER_IMPLICIT_DEFAULT: 'AWS Provider에 별칭만 정의됐지만 일부 리소스가 기본 Provider를 사용합니다. 리전 배치를 확인하세요.',
   RESOURCE_UNKNOWN_TO_PROVIDER: '공급자 schema에서 확인되지 않은 리소스 유형이 있습니다.',
   OFFICIAL_KNOWLEDGE_NOT_AVAILABLE: '일부 리소스 유형의 공식 지식이 없습니다.',
   REQUIRED_EVIDENCE_NOT_RETRIEVED: '필요한 근거 일부를 검색하지 못했습니다.',

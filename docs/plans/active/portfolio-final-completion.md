@@ -1,5 +1,10 @@
 # Terraformers — Portfolio Completion & Single Current State Plan
 
+> **S1 READ-ONLY AUDIT RESULT (2026-10-11; repository-only, subject to independent review and USER merge):** [Current evidence prioritization and browser-readiness decision](../../portfolio/current-evidence-prioritization-20261011.md). Latest PR #274/#277 cross-stage facts/intent/repair correction plus actual five-image observations are promoted to lead portfolio candidates; B5 failure injection and Case C pod replacement remain the strongest for different invariants. S1 repository review completed; present-time GCP cluster/owner/JWKS readback **not performed**. Last verified rollout source `6e448698…` differs from PR #278 preview script's default source `435ca32d…`, but the existing `GCP_PREVIEW_BACKEND_SOURCE_SHA` override is available *after fresh readback*. New preview subject does not automatically own existing A/B/N1–N3 Jobs. No S2 authority, model call, JWKS mutation or Product Trust gate waiver.
+
+---
+
+
 > **CURRENT DECISION / 2026-10-11** — Base: `main` `6e4486988b97ad1abdaa09a15db18b6ea30fc838` (PR #278 merged). This is the **single current completion roadmap**. `AGENTS.md` and actual `main` code remain higher authority. Historical milestone/AWS plans are not automatic work queues.
 >
 > **Status:** Goal/state reconciliation **PROPOSED FOR INDEPENDENT REVIEW / USER MERGE**. No GitHub PR/CI or future work is pre-approved by this document. Source code, cloud, security/IAM, provider calls and destructive operations are unchanged.

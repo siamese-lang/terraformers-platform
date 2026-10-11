@@ -1,9 +1,13 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AuthSessionProvider, useAuthSession } from './AuthSessionContext';
 import api from '../utils/api';
-import { getCurrentUser, signOut } from './authClient';
+import { getCurrentUser, signOut, subscribeAuthState } from './authClient';
 
-jest.mock('./authClient', () => ({ getCurrentUser: jest.fn(), signOut: jest.fn() }));
+let mockFirebase = false;
+jest.mock('./authClient', () => ({
+  getCurrentUser: jest.fn(), signOut: jest.fn(), subscribeAuthState: jest.fn(() => () => {}),
+  get isFirebaseAuth() { return mockFirebase; },
+}));
 jest.mock('../utils/api', () => ({ patch: jest.fn() }));
 
 function SessionState() {
@@ -22,8 +26,10 @@ const user = { userId: 'user-1', username: 'user', email: 'user@example.com', ni
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockFirebase = false;
   getCurrentUser.mockResolvedValue(user);
   api.patch.mockResolvedValue({});
+  subscribeAuthState.mockReturnValue(() => {});
 });
 
 test('resolves initial checking state to an authenticated neutral user and syncs nickname', async () => {
@@ -87,4 +93,20 @@ test('auth-expired event clears the session', async () => {
   act(() => window.dispatchEvent(new Event('terraformers:auth-expired')));
   expect(screen.getByText('guest')).toBeInTheDocument();
   expect(screen.getByText('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.')).toBeInTheDocument();
+});
+
+test('restored unverified Firebase user remains outside protected session until auth observer updates', async () => {
+  mockFirebase = true;
+  getCurrentUser.mockResolvedValue({ ...user, emailVerified: false });
+  let observer;
+  subscribeAuthState.mockImplementation((listener) => {
+    observer = listener;
+    return () => {};
+  });
+  render(<AuthSessionProvider><SessionState /></AuthSessionProvider>);
+  expect(await screen.findByText('verification-required')).toBeInTheDocument();
+  expect(api.patch).not.toHaveBeenCalled();
+  getCurrentUser.mockResolvedValue({ ...user, emailVerified: true });
+  await act(async () => observer());
+  expect(await screen.findByText('authenticated')).toBeInTheDocument();
 });

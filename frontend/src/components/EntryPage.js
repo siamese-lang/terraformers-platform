@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isGcpBrowserPreview } from '../auth/authClient';
+import { authErrorMessage, isFirebaseAuth, isGcpBrowserPreview } from '../auth/authClient';
 import {
-  getToken,
+  getApiToken,
   requestPasswordReset,
   signIn,
   signUp,
@@ -15,13 +15,15 @@ function EntryPage() {
   const [formData, setFormData] = useState({ nickname: '', email: '', username: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [previewToken, setPreviewToken] = useState('');
   const navigate = useNavigate();
-  const { refresh } = useAuthSession();
+  const { refresh, error: sessionError } = useAuthSession();
 
   const changeView = (view) => {
     setCurrentView(view);
     setError('');
+    setNotice('');
   };
 
   const handleInputChange = (event) => {
@@ -46,23 +48,25 @@ function EntryPage() {
           username: formData.username,
           password: formData.password,
         });
-        const token = await getToken('access');
+        const token = await getApiToken();
         if (token !== null) {
           await refresh();
           navigate('/generate', { replace: true });
         } else {
-          setError('Operation failed: missing access token after sign-in. Please check authentication configuration.');
+          if (isFirebaseAuth) navigate('/confirm-sign-up', { replace: true });
+          else setError('Operation failed: missing access token after sign-in. Please check authentication configuration.');
         }
       } else if (currentView === 'PWReset') {
         await requestPasswordReset(formData.email);
         changeView('logIn');
+        setNotice('비밀번호 재설정 메일을 보냈습니다. 받은 편지함을 확인해 주세요.');
       }
     } catch (authError) {
       console.error('[auth] Sign-up/sign-in failed. Check browser auth configuration.', {
         name: authError?.name,
-        message: authError?.message,
+        code: authError?.code,
       });
-      setError(`Operation failed: ${authError.message}`);
+      setError(authErrorMessage(authError));
     } finally {
       setLoading(false);
     }
@@ -126,11 +130,12 @@ function EntryPage() {
               <label htmlFor="email">Email</label>
               <input type="email" id="email" value={formData.email} onChange={handleInputChange} required />
               <label htmlFor="password">Password</label>
-              <input type="password" id="password" value={formData.password} onChange={handleInputChange} autoComplete="current-password" required />
+              <input type="password" id="password" value={formData.password} onChange={handleInputChange} autoComplete="new-password" required />
             </fieldset>
             <button type="submit" disabled={loading}>{loading ? 'Submitting...' : 'Submit'}</button>
             <button type="button" onClick={() => changeView('logIn')} disabled={loading}>Have an account?</button>
             {error && <p className="error">{error}</p>}
+            {notice && <p role="status">{notice}</p>}
           </form>
         );
       case 'logIn':
@@ -148,6 +153,7 @@ function EntryPage() {
             <button type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
             <button type="button" onClick={() => changeView('signUp')} disabled={loading}>Create an Account</button>
             {error && <p className="error">{error}</p>}
+            {notice && <p role="status">{notice}</p>}
           </form>
         );
       case 'PWReset':
@@ -170,7 +176,12 @@ function EntryPage() {
     }
   };
 
-  return <section id="entry-page">{renderView()}</section>;
+  return (
+    <section id="entry-page">
+      {sessionError && <p role="alert" className="error">{sessionError}</p>}
+      {renderView()}
+    </section>
+  );
 }
 
 export default EntryPage;

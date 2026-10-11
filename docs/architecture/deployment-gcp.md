@@ -1,5 +1,11 @@
 # GCP Deployment Architecture
 
+F3 proposes an opt-in hosted GKE Ingress and non-root static React image in
+`infra/kubernetes/overlays/gcp-target-hosted`; see the
+[F3 hosted runbook](../runbooks/firebase-auth-f3-hosted-gke.md). The canonical
+target overlay remains private. F4 must approve and verify domain, TLS, capacity,
+identity and ongoing load-balancer/IP cost before any apply.
+
 ## Purpose
 
 This planning document maps the provider-neutral [target architecture](target-architecture.md) to capabilities that can be deployed on the current target, GCP. GCP migration is not itself the project goal: the goals remain backend reliability, evaluated AI/RAG improvement, failure-diagnosis observability, and cloud portability. The logical/application architecture stays cloud-provider-neutral, while provider-specific details are confined to adapter and deployment layers.

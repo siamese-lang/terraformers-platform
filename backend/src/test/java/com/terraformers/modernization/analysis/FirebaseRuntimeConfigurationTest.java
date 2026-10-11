@@ -13,6 +13,28 @@ import org.springframework.core.env.Profiles;
 
 class FirebaseRuntimeConfigurationTest {
     @Test
+    void productionRejectsMixedTestProfileEvenWithOfficialFirebaseJwks() {
+        AnalysisRuntimeProperties analysis = mock(AnalysisRuntimeProperties.class);
+        StorageRuntimeProperties storage = mock(StorageRuntimeProperties.class);
+        Environment environment = mock(Environment.class);
+        when(environment.acceptsProfiles(org.mockito.ArgumentMatchers.any(Profiles.class)))
+                .thenAnswer(call -> ((Profiles) call.getArgument(0))
+                        .matches(profile -> "prod".equals(profile) || "test".equals(profile)));
+        JwtRuntimeProperties jwt = new JwtRuntimeProperties();
+        jwt.setEnabled(true);
+        jwt.setProvider("firebase");
+        jwt.setIssuerUri("https://securetoken.google.com/terraformers-test");
+        jwt.setJwkSetUri(FirebaseJwtRuntimeProperties.JWK_SET_URI);
+        FirebaseJwtRuntimeProperties firebase = new FirebaseJwtRuntimeProperties();
+        firebase.setProjectId("terraformers-test");
+        ProviderSelectionValidator validator = new ProviderSelectionValidator(
+                analysis, jwt, storage, firebase, environment);
+        assertThatThrownBy(validator::validate)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("test profile");
+    }
+
+    @Test
     void productionRejectsDisabledJwtAndWrongFirebaseIssuerOrJwks() {
         AnalysisRuntimeProperties analysis = mock(AnalysisRuntimeProperties.class);
         StorageRuntimeProperties storage = mock(StorageRuntimeProperties.class);

@@ -119,6 +119,12 @@ function AppShell() {
             </NavLink>
           )}
 
+          {status === 'verification-required' && (
+            <NavLink className="sidebar-login-link" to="/confirm-sign-up">
+              이메일 인증 필요
+            </NavLink>
+          )}
+
           {status === 'authenticated' && user && (
             <>
               <button

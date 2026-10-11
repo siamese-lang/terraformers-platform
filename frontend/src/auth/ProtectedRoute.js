@@ -12,7 +12,7 @@ function ProtectedRoute({ children }) {
   if (status !== 'authenticated') {
     return (
       <Navigate
-        to="/login"
+        to={status === 'verification-required' ? '/confirm-sign-up' : '/login'}
         replace
         state={{ from: `${location.pathname}${location.search}` }}
       />

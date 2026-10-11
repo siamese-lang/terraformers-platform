@@ -1,41 +1,49 @@
 import api, { isAuthRequiredRequest } from './api';
-import { getToken } from '../auth/authClient';
+import { getApiToken, needsEmailVerification } from '../auth/authClient';
 
-jest.mock('../auth/authClient', () => ({ getToken: jest.fn() }));
+jest.mock('../auth/authClient', () => ({
+  getApiToken: jest.fn(), needsEmailVerification: jest.fn(() => false),
+}));
 
-beforeEach(() => jest.clearAllMocks());
-
-test('attaches the default access bearer token', async () => {
-  getToken.mockResolvedValue('access-token');
-  const adapter = jest.fn().mockResolvedValue({ data: {}, status: 200, statusText: 'OK', headers: {}, config: {} });
-  await api.get('/api/private', { adapter });
-  expect(getToken).toHaveBeenCalledWith('access');
-  expect(adapter.mock.calls[0][0].headers.Authorization).toBe('Bearer access-token');
+beforeEach(() => {
+  jest.clearAllMocks();
+  needsEmailVerification.mockReturnValue(false);
 });
 
-test('uses the requested id token type', async () => {
-  getToken.mockResolvedValue('id-token');
+test('attaches the provider-selected API bearer token', async () => {
+  getApiToken.mockResolvedValue('id-token');
   const adapter = jest.fn().mockResolvedValue({ data: {}, status: 200, statusText: 'OK', headers: {}, config: {} });
-  await api.get('/api/private', { adapter, tokenType: 'id' });
-  expect(getToken).toHaveBeenCalledWith('id');
+  await api.get('/api/private', { adapter });
+  expect(getApiToken).toHaveBeenCalledWith(false);
   expect(adapter.mock.calls[0][0].headers.Authorization).toBe('Bearer id-token');
 });
 
+test('request tokenType cannot override the selected provider token', async () => {
+  getApiToken.mockResolvedValue('provider-token');
+  const adapter = jest.fn().mockResolvedValue({ data: {}, status: 200, statusText: 'OK', headers: {}, config: {} });
+  await api.get('/api/private', { adapter, tokenType: 'access' });
+  expect(getApiToken).toHaveBeenCalledWith(false);
+  expect(adapter.mock.calls[0][0].headers.Authorization).toBe('Bearer provider-token');
+});
+
 test('retries a 401 only once with a refreshed token', async () => {
-  getToken.mockResolvedValueOnce('initial').mockResolvedValueOnce('refreshed').mockResolvedValueOnce('refreshed');
+  getApiToken.mockResolvedValueOnce('initial').mockResolvedValueOnce('refreshed');
   const adapter = jest.fn();
   adapter
     .mockRejectedValueOnce({ response: { status: 401 }, config: { url: '/api/private', method: 'get', headers: {}, adapter } })
     .mockResolvedValueOnce({ data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config: {} });
   await expect(api.get('/api/private', { adapter })).resolves.toMatchObject({ data: { ok: true } });
   expect(adapter).toHaveBeenCalledTimes(2);
-  expect(getToken).toHaveBeenCalledTimes(3);
+  expect(getApiToken).toHaveBeenNthCalledWith(1, false);
+  expect(getApiToken).toHaveBeenNthCalledWith(2, true);
+  expect(getApiToken).toHaveBeenCalledTimes(2);
+  expect(adapter.mock.calls[1][0].headers.Authorization).toBe('Bearer refreshed');
 });
 
 test('emits auth expiration when token refresh is missing after 401', async () => {
   const listener = jest.fn();
   window.addEventListener('terraformers:auth-expired', listener);
-  getToken.mockResolvedValueOnce('initial').mockResolvedValueOnce(null);
+  getApiToken.mockResolvedValueOnce('initial').mockResolvedValueOnce(null);
   const adapter = jest.fn();
   adapter.mockRejectedValue({ response: { status: 401 }, config: { url: '/api/private', method: 'get', headers: {}, adapter } });
   await expect(api.get('/api/private', { adapter })).rejects.toBeTruthy();
@@ -47,7 +55,7 @@ test('emits auth expiration when token refresh is missing after 401', async () =
 test('emits auth expiration when retry also returns 401', async () => {
   const listener = jest.fn();
   window.addEventListener('terraformers:auth-expired', listener);
-  getToken.mockResolvedValueOnce('initial').mockResolvedValueOnce('refreshed').mockResolvedValueOnce('refreshed');
+  getApiToken.mockResolvedValueOnce('initial').mockResolvedValueOnce('refreshed');
   const adapter = jest.fn();
   adapter
     .mockRejectedValueOnce({ response: { status: 401 }, config: { url: '/api/private', method: 'get', headers: {}, adapter } })
@@ -55,6 +63,21 @@ test('emits auth expiration when retry also returns 401', async () => {
   await expect(api.get('/api/private', { adapter })).rejects.toBeTruthy();
   expect(adapter).toHaveBeenCalledTimes(2);
   expect(listener).toHaveBeenCalledTimes(1);
+  expect(getApiToken).toHaveBeenCalledTimes(2);
+  window.removeEventListener('terraformers:auth-expired', listener);
+});
+
+test('403 is not retried or treated as session expiration', async () => {
+  const listener = jest.fn();
+  window.addEventListener('terraformers:auth-expired', listener);
+  getApiToken.mockResolvedValue('id-token');
+  const adapter = jest.fn().mockRejectedValue({
+    response: { status: 403 }, config: { url: '/api/private', method: 'get', headers: {} },
+  });
+  await expect(api.get('/api/private', { adapter })).rejects.toBeTruthy();
+  expect(adapter).toHaveBeenCalledTimes(1);
+  expect(getApiToken).toHaveBeenCalledTimes(1);
+  expect(listener).not.toHaveBeenCalled();
   window.removeEventListener('terraformers:auth-expired', listener);
 });
 
@@ -66,7 +89,7 @@ test('classifies public and authenticated API requests', () => {
 });
 
 test('redirects an authenticated request without a token to login', async () => {
-  getToken.mockResolvedValue(null);
+  getApiToken.mockResolvedValue(null);
   const assign = jest.fn();
   const originalLocation = window.location;
   delete window.location;
@@ -74,5 +97,18 @@ test('redirects an authenticated request without a token to login', async () => 
   const adapter = jest.fn().mockResolvedValue({ data: {}, status: 200, statusText: 'OK', headers: {}, config: {} });
   await api.get('/api/projects', { adapter });
   expect(assign).toHaveBeenCalledWith('/login');
+  window.location = originalLocation;
+});
+
+test('missing token for an unverified Firebase user routes to link verification', async () => {
+  getApiToken.mockResolvedValue(null);
+  needsEmailVerification.mockReturnValue(true);
+  const assign = jest.fn();
+  const originalLocation = window.location;
+  delete window.location;
+  window.location = { pathname: '/projects', assign };
+  const adapter = jest.fn().mockResolvedValue({ data: {}, status: 200, statusText: 'OK', headers: {}, config: {} });
+  await api.get('/api/projects', { adapter });
+  expect(assign).toHaveBeenCalledWith('/confirm-sign-up');
   window.location = originalLocation;
 });

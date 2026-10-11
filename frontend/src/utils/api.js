@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getToken as getAuthToken } from '../auth/authClient';
+import { getApiToken, needsEmailVerification } from '../auth/authClient';
 
 const envApiBaseUrl = process.env.REACT_APP_API_BASE_URL?.trim();
 const API_BASE_URL = envApiBaseUrl || '';
@@ -61,21 +61,24 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-const getToken = async (tokenType) => {
+const getToken = async (forceRefresh = false) => {
   try {
-    return await getAuthToken(tokenType);
+    return await getApiToken(forceRefresh);
   } catch (sessionError) {
     console.error('[api] Failed to fetch auth session. Check auth configuration and sign-in state.', {
       name: sessionError?.name,
-      message: sessionError?.message,
+      code: sessionError?.code,
     });
   }
   return null;
 };
 
 api.interceptors.request.use(async (config) => {
-  const tokenType = config.tokenType || 'access';
-  const token = await getToken(tokenType);
+  if (config._refreshedBearerReady) {
+    delete config._refreshedBearerReady;
+    return config;
+  }
+  const token = await getToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -87,8 +90,9 @@ api.interceptors.request.use(async (config) => {
       method: String(config.method || 'get').toUpperCase(),
       url: config.url,
     });
-    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-      window.location.assign('/login');
+    const destination = needsEmailVerification() ? '/confirm-sign-up' : '/login';
+    if (typeof window !== 'undefined' && window.location.pathname !== destination) {
+      window.location.assign(destination);
     }
   }
 
@@ -108,18 +112,20 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response.status === 401 && originalRequest && !originalRequest._retry) {
+    if (error.response.status === 401 && originalRequest &&
+        isAuthRequiredRequest(originalRequest) && !originalRequest._retry) {
       originalRequest._retry = true;
-      const tokenType = originalRequest.tokenType || 'access';
-      const token = await getToken(tokenType);
+      const token = await getToken(true);
 
       if (token) {
         originalRequest.headers.Authorization = `Bearer ${token}`;
+        originalRequest._refreshedBearerReady = true;
         return api(originalRequest);
       }
 
       emitAuthExpired();
-    } else if (error.response.status === 401 && originalRequest?._retry) {
+    } else if (error.response.status === 401 && originalRequest?._retry &&
+               isAuthRequiredRequest(originalRequest)) {
       emitAuthExpired();
     }
 

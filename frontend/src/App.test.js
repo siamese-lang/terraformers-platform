@@ -6,6 +6,8 @@ import { getCurrentUser, signOut } from './auth/authClient';
 jest.mock('./auth/authClient', () => ({
   getCurrentUser: jest.fn(),
   signOut: jest.fn(),
+  subscribeAuthState: jest.fn(() => () => {}),
+  isFirebaseAuth: false,
 }));
 
 jest.mock('./components/EntryPage', () => function EntryPage() {

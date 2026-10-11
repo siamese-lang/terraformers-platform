@@ -1,5 +1,15 @@
 # AI Project State
 
+## Current F2 repository-only authentication proposal
+
+Issue #283 authorizes only the React Firebase Authentication adapter and existing
+auth UI/API integration from main `db5695f89bc54565dc158b7f7d2a3ed746f77b02`.
+F1 PR #282 is USER-merged; [ADR-009](architecture/decisions/ADR-009-firebase-id-token-backend-boundary.md)
+remains the backend boundary. The [F2 plan](plans/active/firebase-auth-f2.md)
+records the proposed client contract and F4 live blockers. No Firebase tenant,
+GCP/IAM/ingress action, paid analysis, F3 or PT-8B is authorized by this proposal.
+Older pending F1 wording below is retained as historical preparation context.
+
 ## Current F1 repository-only authentication proposal
 
 Issue #281 selects Firebase Authentication with the existing GKE backend JWT Resource

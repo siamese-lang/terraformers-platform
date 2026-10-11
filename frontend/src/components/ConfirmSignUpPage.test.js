@@ -7,7 +7,10 @@ const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'), useNavigate: () => mockNavigate,
 }));
-jest.mock('../auth/authClient', () => ({ confirmSignUp: jest.fn() }));
+jest.mock('../auth/authClient', () => ({
+  confirmSignUp: jest.fn(), isFirebaseAuth: false, authErrorMessage: (error) => error.message,
+}));
+jest.mock('../auth/AuthSessionContext', () => ({ useAuthSession: () => ({ refresh: jest.fn(), user: null }) }));
 
 test('confirmation success navigates to login', async () => {
   confirmSignUp.mockResolvedValue({});

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { isGcpBrowserPreview } from '../auth/authClient';
 import {
   getToken,
   requestPasswordReset,
@@ -14,6 +15,7 @@ function EntryPage() {
   const [formData, setFormData] = useState({ nickname: '', email: '', username: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [previewToken, setPreviewToken] = useState('');
   const navigate = useNavigate();
   const { refresh } = useAuthSession();
 
@@ -65,6 +67,51 @@ function EntryPage() {
       setLoading(false);
     }
   };
+
+  const handlePreviewSignIn = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await signIn({ token: previewToken.trim() });
+      setPreviewToken('');
+      if (!await refresh()) {
+        throw new Error('local session unavailable');
+      }
+      navigate('/generate', { replace: true });
+    } catch (_) {
+      setError('임시 테스트 토큰이 만료되었거나 유효하지 않습니다. 인증된 새 토큰을 사용하세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Only available through the development server, never through a production build.
+  if (isGcpBrowserPreview) {
+    return (
+      <section id="entry-page">
+        <form onSubmit={handlePreviewSignIn}>
+          <h2>GCP Backend 개발 미리보기</h2>
+          <p>운영 계정 로그인이 아닙니다. 관리자가 승인한 임시 JWT/JWKS 테스트 세션만 사용합니다.</p>
+          <label htmlFor="preview-access-token">임시 Access Token</label>
+          <input
+            id="preview-access-token"
+            type="password"
+            autoComplete="off"
+            spellCheck={false}
+            value={previewToken}
+            onChange={(event) => setPreviewToken(event.target.value)}
+            required
+          />
+          <p>토큰은 브라우저 메모리에만 보관되며 새로고침하거나 로그아웃하면 사라집니다.</p>
+          <button type="submit" disabled={loading}>
+            {loading ? '확인 중...' : '개발용 세션 시작'}
+          </button>
+          {error && <p role="alert" className="error">{error}</p>}
+        </form>
+      </section>
+    );
+  }
 
   const renderView = () => {
     switch (currentView) {
